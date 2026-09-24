@@ -92,3 +92,11 @@ If any of that is you, let's talk.
 ---
 
 *Ticket-Easy: your policies, your data, one agent that follows both.*
+
+## Team
+
+- George Emil ([@georgeemiL787](https://github.com/georgeemiL787))
+- Asmaa Nazeh ([@Asmaa-Nazeh](https://github.com/Asmaa-Nazeh))
+- Omar Essam ([@omarEssam-11](https://github.com/omarEssam-11))
+- Basel Elhofy ([@Basel-Elhofy](https://github.com/Basel-Elhofy))
+- Basmala Hesham ([@pasmala2004](https://github.com/pasmala2004))

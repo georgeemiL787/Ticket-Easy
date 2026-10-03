@@ -1,0 +1,35 @@
+{% macro hidden(p) %}<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="proposal_id" value="{{ p.proposal_id }}"><input type="hidden" name="version" value="{{ p.version }}"><input type="hidden" name="revision" value="{{ p.review_revision }}">{% endmacro %}
+
+{% macro csrf_field() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+
+{% macro steps(current) %}
+{% set items = [("connect", "1. Connect your system"), ("tools", "2. Get tools"), ("review", "3. Review and approve"), ("build", "4. Build and test"), ("publish", "5. Publish (test only)")] %}
+<ol class="steps">{% for key, label in items %}<li class="{{ 'current' if key == current }}">{{ label }}</li>{% endfor %}</ol>
+{% endmacro %}
+
+{% macro crumbs(items) %}
+<nav class="crumbs"><a href="/">Home</a>{% for label, href in items %} › {% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}<span>{{ label }}</span>{% endif %}{% endfor %}</nav>
+{% endmacro %}
+
+{% macro next(title, text="") %}
+<div class="next"><strong>Next: {{ title }}</strong>{% if text %}<span>{{ text }}</span>{% endif %}</div>
+{% endmacro %}
+
+{% set LABELS = {
+  "proposal": {"needs_clarification": ("Needs your answers", "warn"), "needs_reconciliation": ("Answers to check", "warn"), "ready_for_review": ("Ready for your decision", "info"),
+               "approved_to_build": ("Approved to build", "ok"), "rejected": ("Rejected", "bad"), "changes_requested": ("Changes requested", "bad"), "superseded": ("Replaced by a newer version", "muted")},
+  "request": {"processing": ("Processing", "info"), "needs_clarification": ("Needs clarification", "warn"), "proposed": ("Proposal created", "ok"),
+              "existing_tool": ("Already exists", "info"), "unavailable": ("Not possible with this API", "bad"), "failed": ("Failed", "bad")},
+  "suggestion": {"open": ("Open", "info"), "accepted": ("Accepted", "ok"), "dismissed": ("Dismissed", "muted"), "revised": ("Revised", "muted")},
+  "category": {"feasible": ("Feasible", "ok"), "needs_clarification": ("Needs information", "warn"), "blocked_by_missing_api": ("Blocked: API is missing something", "bad")},
+  "operation": {"eligible": ("Can be used", "ok"), "restricted": ("Restricted", "bad"), "requires_clarification": ("Can be used", "ok"), "technically_unsupported": ("Not supported", "muted"), "unsupported": ("Not supported", "muted")},
+  "test": {"passed": ("Passed", "ok"), "failed": ("Failed", "bad")},
+  "execution": {"succeeded": ("Succeeded", "ok"), "failed": ("Failed", "bad"), "rejected": ("Rejected before running", "bad"), "partial": ("Partly applied", "bad"),
+                "outcome_unknown": ("Outcome unknown", "warn"), "interrupted": ("Interrupted", "warn"), "running": ("Running", "info"), "error": ("Error", "bad")},
+  "publication": {"published": ("Published (test only)", "ok"), "disabled": ("Disabled", "muted")},
+  "enforcement": {"awaiting_review": ("Awaiting review", "warn"), "approved": ("Approved", "ok")},
+  "requirement": {"owner_confirmed": ("Confirmed", "ok"), "answer_sufficient": ("Answer accepted, confirm it", "info")},
+  "run": {"succeeded": ("Succeeded", "ok"), "failed": ("Failed", "bad"), "running": ("Running", "info"), "interrupted": ("Interrupted", "warn")}
+} %}
+
+{% macro badge(state, kind="proposal") %}{% set entry = LABELS.get(kind, {}).get(state) %}<span class="badge b-{{ entry[1] if entry else 'muted' }}" title="{{ state }}">{{ entry[0] if entry else (state or 'unknown')|replace('_', ' ') }}</span>{% endmacro %}

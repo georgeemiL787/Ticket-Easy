@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Unable to complete this step</h1>
+<p class="notice">{{ error.message }}</p>
+<p><a href="javascript:history.back()">Go back to the previous page</a> · <a href="/">Home</a>{% if error.details.run_id %} · <a href="/runs/{{ error.details.run_id }}">View the recorded AI attempt</a>{% endif %}</p>
+<details class="tech"><summary>Technical details</summary><pre>{{ error|tojson(indent=2) }}</pre></details>
+{% endblock %}

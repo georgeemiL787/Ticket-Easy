@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% block content %}
+<h1>{{ title }}</h1>
+{% if busy %}<p class="notice">Your new action was not started: the AI is still busy with this one. Start it again when this finishes.</p>{% endif %}
+<p id="status" class="next" {% if job.status == 'failed' %}hidden{% endif %}><strong>The AI is working. This page updates by itself and moves on when it finishes.</strong><span id="elapsed">{{ job.elapsed }} s so far</span></p>
+{% if job.status == 'running' %}<form id="stop" method="post" action="/live/{{ job.id }}/cancel">{{ m.csrf_field() }}<button class="secondary" {% if job.cancelled %}disabled{% endif %}>{{ 'Stopping...' if job.cancelled else 'Stop' }}</button> <span class="small muted">Ends the AI's work on this step; nothing from this run is used.</span></form>{% endif %}
+<p class="small muted">On this computer the model writes a few words per second, so each step can take several minutes. What the AI is thinking is shown while it works; it is a rough draft, not a checked explanation, and it is not saved. The final answer is still checked before anything is stored.</p>
+<div id="steps">
+{% for s in job.steps %}<article><h3>{{ s.label }}</h3><pre>{{ s.thinking }}</pre></article>{% endfor %}
+</div>
+<div id="failed" class="notice" {% if job.status != 'failed' %}hidden{% endif %}>{% if job.error %}{{ 'Stopped. Nothing from this run was used.' if job.error.code == 'cancelled' else 'Unable to complete this step: ' ~ job.error.message }}{% if job.error.errors %}<p class="small">What the check found:</p><ul class="small">{% for e in job.error.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% endif %}</div>
+<p><a href="{{ job.back }}">Back to the previous page</a> <span class="small muted">(the work continues in the background)</span></p>
+<script>
+const box = document.getElementById("steps");
+function render(job) {
+  document.getElementById("elapsed").textContent = Math.floor(job.elapsed / 60) + " min " + (job.elapsed % 60) + " s so far";
+  box.replaceChildren(...job.steps.map((s, i) => {
+    const a = document.createElement("article");
+    const h = document.createElement("h3");
+    const state = s.done ? "done" : (i === job.steps.length - 1 ? "working" : "");
+    h.textContent = (i + 1) + ". " + s.label + " (" + state + ", " + s.seconds + " s)";
+    const p = document.createElement("p");
+    p.className = "small muted";
+    p.textContent = s.thinking_on ? (s.answer_tokens ? "Thinking finished; writing the answer (" + s.answer_tokens + " tokens so far)." : "Thinking...")
+                                  : "This step writes its answer directly, without thinking (" + s.answer_tokens + " tokens so far).";
+    a.append(h, p);
+    if (s.thinking) { const pre = document.createElement("pre"); pre.style.maxHeight = "24em"; pre.style.overflow = "auto"; pre.textContent = s.thinking; a.append(pre); }
+    return a;
+  }));
+  const last = box.querySelector("article:last-child pre");
+  if (last) last.scrollTop = last.scrollHeight;
+}
+async function poll() {
+  try {
+    const job = await (await fetch("/api/v1/live/{{ job.id }}")).json();
+    if (job.code) { document.getElementById("elapsed").textContent = job.message; return; }
+    render(job);
+    if (job.status === "done") { location.href = job.url; return; }
+    if (job.cancelled) { const b = document.querySelector("#stop button"); if (b) { b.disabled = true; b.textContent = "Stopping..."; } }
+    if (job.status === "failed") {
+      const f = document.getElementById("failed");
+      f.hidden = false;
+      if (job.error.code === "cancelled") {
+        f.textContent = "Stopped. Nothing from this run was used.";
+      } else {
+        f.textContent = "Unable to complete this step: " + job.error.message;
+        if (job.error.run_id) { const l = document.createElement("a"); l.href = "/runs/" + job.error.run_id; l.textContent = " View the recorded AI attempt"; f.append(l); }
+        if (job.error.errors.length) {
+          const p = document.createElement("p"); p.className = "small"; p.textContent = "What the check found:";
+          const ul = document.createElement("ul"); ul.className = "small";
+          job.error.errors.forEach(e => { const li = document.createElement("li"); li.textContent = e; ul.append(li); });
+          f.append(p, ul);
+        }
+      }
+      document.getElementById("status").hidden = true;
+      const stop = document.getElementById("stop");
+      if (stop) stop.hidden = true;
+      return;
+    }
+  } catch (e) {}
+  setTimeout(poll, 1500);
+}
+poll();
+</script>
+{% endblock %}

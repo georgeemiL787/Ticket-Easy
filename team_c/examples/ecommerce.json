@@ -1,0 +1,24 @@
+{
+  "openapi": "3.0.4",
+  "info": {"title": "Small Shop", "version": "1.0.0"},
+  "security": [{"bearerAuth": []}],
+  "paths": {
+    "/orders/{order_id}": {"get": {
+      "operationId": "getOrder", "summary": "Look up an order", "description": "Returns order information. This does not verify the caller's identity or ownership.",
+      "parameters": [{"name": "order_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "responses": {"200": {"description": "Order", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Order"}}}}, "404": {"description": "Order not found"}}
+    }},
+    "/tickets": {"post": {
+      "operationId": "createTicket", "summary": "Create a support ticket", "description": "Creates a ticket referencing an existing order and its customer. queue_id is a business-level configuration setting, not a runtime customer question.",
+      "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/TicketInput"}}}},
+      "responses": {"201": {"description": "Ticket created", "content": {"application/json": {"schema": {"type": "object", "required": ["ticket_id"], "properties": {"ticket_id": {"type": "string"}}}}}}}
+    }}
+  },
+  "components": {
+    "securitySchemes": {"bearerAuth": {"type": "http", "scheme": "bearer"}},
+    "schemas": {
+      "Order": {"type": "object", "required": ["order_id", "customer_id", "status"], "properties": {"order_id": {"type": "string"}, "customer_id": {"type": "string"}, "status": {"type": "string"}}},
+      "TicketInput": {"type": "object", "required": ["order_id", "customer_id", "summary", "queue_id"], "properties": {"order_id": {"type": "string"}, "customer_id": {"type": "string"}, "summary": {"type": "string"}, "queue_id": {"type": "string"}}}
+    }
+  }
+}

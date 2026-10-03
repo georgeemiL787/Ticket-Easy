@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% block content %}
+<h1>Business tools, reviewed before building</h1>
+<article>
+<h2>How it works</h2>
+{{ m.steps("") }}
+<ol class="small">
+<li><strong>Connect your system:</strong> upload or fetch its OpenAPI description. Team C lists what the API can do; nothing is called.</li>
+<li><strong>Get tools:</strong> describe a tool in plain language, or ask Team C to suggest some. The AI turns them into proposals.</li>
+<li><strong>Review and approve:</strong> answer the proposal's questions, check the answers, confirm who may use it, then approve it to build.</li>
+<li><strong>Build and test:</strong> set up access enforcement, build the tool and run sandbox tests against test accounts.</li>
+<li><strong>Publish (test only):</strong> expose the tested tool to a local sandbox MCP server. Production is never touched.</li>
+</ol>
+</article>
+<div class="grid">
+<article>
+<h2>Start with a new business</h2>
+<form method="post" action="/actions/business">{{ m.csrf_field() }}
+<label>Business name<input name="name" required maxlength="200"></label>
+<label>What does the business do?<textarea name="description" required maxlength="10000" placeholder="For example: holiday lettings; customers report problems with their bookings and staff fix them."></textarea></label>
+<button>Create business</button>
+</form>
+</article>
+<article>
+<h2>Your businesses</h2>
+{% for b in businesses %}<p><a href="/businesses/{{ b.id }}"><strong>{{ b.name }}</strong></a><br><span class="muted small">{{ b.description[:160] }}</span></p>{% else %}<p class="muted">No businesses yet. Create one to begin.</p>{% endfor %}
+</article>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+openapi: 3.0.4
+info:
+  title: Meeting Room Service
+  version: 1.0.0
+security:
+  - serviceKey: []
+paths:
+  /reservations/{reservation_id}:
+    get:
+      operationId: getReservation
+      summary: Look up a room reservation
+      parameters:
+        - name: reservation_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reservation details; caller identity is not verified by this declaration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          description: Reservation not found
+  /service-requests:
+    post:
+      operationId: createServiceRequest
+      summary: Request service for the reserved room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [room_id, message, team_id]
+              properties:
+                room_id:
+                  type: string
+                message:
+                  type: string
+                team_id:
+                  type: string
+      responses:
+        '201':
+          description: Request created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [request_id]
+                properties:
+                  request_id:
+                    type: string
+components:
+  securitySchemes:
+    serviceKey:
+      type: apiKey
+      in: header
+      name: X-Service-Key
+  schemas:
+    Reservation:
+      type: object
+      required: [reservation_id, room_id]
+      properties:
+        reservation_id:
+          type: string
+        room_id:
+          type: string

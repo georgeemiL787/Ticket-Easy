@@ -1,0 +1,268 @@
+{
+  "original_run_id": "19dcb7d5-0470-4ec2-8be4-d89c9491deed",
+  "reproduction_run_id": "69720f5b-76ed-45f8-8ed7-0988f5a243ef",
+  "input_hash": "7bca6dc3e42688833e78f6bda54ac92df7394fabba4fe32d78a1975071fa70de",
+  "stages": [
+    {
+      "stage": "model_response",
+      "payload": {
+        "bytes": 4131,
+        "model": "qwen3:8b",
+        "provider": "ollama",
+        "sha256": "7265c4c0bbe745b067b010d106182a57a7cc004d49dce027cdae4227a770c8d2",
+        "structure": {
+          "proposals": [
+            {
+              "configuration": [
+                {
+                  "key": "verification_method",
+                  "value_present": false
+                },
+                {
+                  "key": "allowed_service_request_categories",
+                  "value_present": false
+                }
+              ],
+              "outputs": [
+                {
+                  "name": "reservation_details",
+                  "pointer": "/reservation_id",
+                  "response_status": "200",
+                  "step_id": "s1"
+                },
+                {
+                  "name": "service_request",
+                  "pointer": "/request_id",
+                  "response_status": "201",
+                  "step_id": "s2"
+                }
+              ],
+              "questions": [
+                {
+                  "configuration_key": "verification_method",
+                  "id": "q1"
+                },
+                {
+                  "configuration_key": "allowed_service_request_categories",
+                  "id": "q2"
+                }
+              ],
+              "steps": [
+                {
+                  "bindings": [
+                    {
+                      "kind": "runtime_argument",
+                      "reference": "booking_reference",
+                      "response_status": null,
+                      "step_id": null,
+                      "target": "path.booking_reference"
+                    }
+                  ],
+                  "id": "s1",
+                  "operation_id": "b821fd4c-2686-5202-9c04-d23a1e1c9258"
+                },
+                {
+                  "bindings": [
+                    {
+                      "kind": "runtime_argument",
+                      "reference": "category",
+                      "response_status": null,
+                      "step_id": null,
+                      "target": "body.category"
+                    },
+                    {
+                      "kind": "runtime_argument",
+                      "reference": "message",
+                      "response_status": null,
+                      "step_id": null,
+                      "target": "body.message"
+                    },
+                    {
+                      "kind": "previous_operation_output",
+                      "reference": "/reservation_id",
+                      "response_status": "200",
+                      "step_id": "s1",
+                      "target": "body.reservation_id"
+                    }
+                  ],
+                  "id": "s2",
+                  "operation_id": "83add5de-5143-5041-b301-8b467c9e988d"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "stage": "parsed_output",
+      "payload": {
+        "proposals": [
+          {
+            "configuration": [
+              {
+                "key": "verification_method",
+                "value_present": false
+              },
+              {
+                "key": "allowed_service_request_categories",
+                "value_present": false
+              }
+            ],
+            "outputs": [
+              {
+                "name": "reservation_details",
+                "pointer": "/reservation_id",
+                "response_status": "200",
+                "step_id": "s1"
+              },
+              {
+                "name": "service_request",
+                "pointer": "/request_id",
+                "response_status": "201",
+                "step_id": "s2"
+              }
+            ],
+            "questions": [
+              {
+                "configuration_key": "verification_method",
+                "id": "q1"
+              },
+              {
+                "configuration_key": "allowed_service_request_categories",
+                "id": "q2"
+              }
+            ],
+            "steps": [
+              {
+                "bindings": [
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "booking_reference",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "path.booking_reference"
+                  }
+                ],
+                "id": "s1",
+                "operation_id": "b821fd4c-2686-5202-9c04-d23a1e1c9258"
+              },
+              {
+                "bindings": [
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "category",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "body.category"
+                  },
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "message",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "body.message"
+                  },
+                  {
+                    "kind": "previous_operation_output",
+                    "reference": "/reservation_id",
+                    "response_status": "200",
+                    "step_id": "s1",
+                    "target": "body.reservation_id"
+                  }
+                ],
+                "id": "s2",
+                "operation_id": "83add5de-5143-5041-b301-8b467c9e988d"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "stage": "normalized_output",
+      "payload": {
+        "proposals": [
+          {
+            "configuration": [
+              {
+                "key": "allowed_service_request_categories",
+                "value_present": false
+              },
+              {
+                "key": "verification_method",
+                "value_present": false
+              }
+            ],
+            "outputs": [
+              {
+                "name": "reservation_details",
+                "pointer": "/reservation_id",
+                "response_status": "200",
+                "step_id": "s1"
+              },
+              {
+                "name": "service_request",
+                "pointer": "/request_id",
+                "response_status": "201",
+                "step_id": "s2"
+              }
+            ],
+            "questions": [
+              {
+                "configuration_key": "verification_method",
+                "id": "q1"
+              },
+              {
+                "configuration_key": "allowed_service_request_categories",
+                "id": "q2"
+              }
+            ],
+            "steps": [
+              {
+                "bindings": [
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "booking_reference",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "path.booking_reference"
+                  }
+                ],
+                "id": "s1",
+                "operation_id": "b821fd4c-2686-5202-9c04-d23a1e1c9258"
+              },
+              {
+                "bindings": [
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "category",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "body.category"
+                  },
+                  {
+                    "kind": "runtime_argument",
+                    "reference": "message",
+                    "response_status": null,
+                    "step_id": null,
+                    "target": "body.message"
+                  },
+                  {
+                    "kind": "previous_operation_output",
+                    "reference": "/reservation_id",
+                    "response_status": "200",
+                    "step_id": "s1",
+                    "target": "body.reservation_id"
+                  }
+                ],
+                "id": "s2",
+                "operation_id": "83add5de-5143-5041-b301-8b467c9e988d"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

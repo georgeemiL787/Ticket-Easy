@@ -1,0 +1,174 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NileStay Hotel Test API",
+    "version": "1.0.0",
+    "description": "Fictional API specification for offline discovery tests. No running backend. Guest ownership verification is not specified."
+  },
+  "servers": [
+    {
+      "url": "https://nilestay.example.invalid"
+    }
+  ],
+  "security": [
+    {
+      "ServiceBearer": []
+    }
+  ],
+  "paths": {
+    "/reservations/by-reference/{booking_reference}": {
+      "get": {
+        "operationId": "getReservationByReference",
+        "summary": "Find a reservation by its guest-facing booking reference",
+        "description": "Returns the internal reservation_id needed to create a service request. A booking reference alone does not establish guest ownership.",
+        "parameters": [
+          {
+            "name": "booking_reference",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reservation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reservation not found"
+          }
+        }
+      }
+    },
+    "/service-requests": {
+      "post": {
+        "operationId": "createServiceRequest",
+        "summary": "Create a service request for a reservation",
+        "description": "Requires the internal reservation_id, not the guest-facing booking reference. Guest ownership verification must be defined before customer-facing use.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "Reservation not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ServiceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Service credential only; does not establish which guest owns a reservation."
+      }
+    },
+    "schemas": {
+      "Reservation": {
+        "type": "object",
+        "required": [
+          "reservation_id",
+          "booking_reference",
+          "status"
+        ],
+        "properties": {
+          "reservation_id": {
+            "type": "string",
+            "description": "Internal reservation identifier"
+          },
+          "booking_reference": {
+            "type": "string",
+            "description": "Guest-facing reference; distinct from reservation_id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "checked_in",
+              "checked_out",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "CreateServiceRequest": {
+        "type": "object",
+        "required": [
+          "reservation_id",
+          "category",
+          "message"
+        ],
+        "properties": {
+          "reservation_id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "housekeeping",
+              "maintenance"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "ServiceRequest": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "reservation_id",
+          "status"
+        ],
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "reservation_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "closed"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

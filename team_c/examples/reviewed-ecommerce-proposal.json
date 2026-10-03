@@ -1,0 +1,132 @@
+{
+  "note": "Actual live qwen3:4b result, manually approved for building only; historical example, not a runtime provider substitute.",
+  "proposal_id": "dd2c92e5-8d70-4883-817f-bc9fc4d085ce",
+  "version": 3,
+  "state": "approved_to_build",
+  "content": {
+    "assumptions": [
+      "queue_id is a business configuration setting"
+    ],
+    "business_purpose": "Small Shop sells household goods; need to create support tickets for orders",
+    "configuration": [
+      {
+        "key": "queue_id",
+        "value_json": "\"support\""
+      }
+    ],
+    "description": "Looks up an order by order_id and creates a support ticket for the customer using the order's customer_id. Requires queue_id configuration from business settings.",
+    "expected_reads": [
+      "customer_id",
+      "order_id",
+      "status"
+    ],
+    "expected_writes": [
+      "ticket_id"
+    ],
+    "limitations": [
+      "API access and customer authorization are unverified"
+    ],
+    "name": "Order Lookup and Support Ticket Creation",
+    "outputs": [
+      {
+        "name": "ticket_id",
+        "pointer": "/ticket_id",
+        "response_status": "201",
+        "step_id": "s2"
+      }
+    ],
+    "questions": [
+      {
+        "configuration_key": "queue_id",
+        "id": "q1",
+        "text": "What queue should be used for support tickets? (e.g., 'priority', 'standard')"
+      }
+    ],
+    "risk": "unknown",
+    "risk_rationale": "API access and customer authorization remain unverified",
+    "steps": [
+      {
+        "bindings": [
+          {
+            "kind": "runtime_argument",
+            "reference": "order_id",
+            "response_status": null,
+            "step_id": null,
+            "target": "path.order_id"
+          }
+        ],
+        "id": "s1",
+        "operation_id": "d7d537ed-dfb6-5567-b360-d92b8a402d64",
+        "purpose": "Look up order"
+      },
+      {
+        "bindings": [
+          {
+            "kind": "previous_operation_output",
+            "reference": "/customer_id",
+            "response_status": "200",
+            "step_id": "s1",
+            "target": "body.customer_id"
+          },
+          {
+            "kind": "runtime_argument",
+            "reference": "order_id",
+            "response_status": null,
+            "step_id": null,
+            "target": "body.order_id"
+          },
+          {
+            "kind": "business_configuration",
+            "reference": "queue_id",
+            "response_status": null,
+            "step_id": null,
+            "target": "body.queue_id"
+          },
+          {
+            "kind": "runtime_argument",
+            "reference": "summary",
+            "response_status": null,
+            "step_id": null,
+            "target": "body.summary"
+          }
+        ],
+        "id": "s2",
+        "operation_id": "55ad0084-1af7-587e-b29e-b3a6dcfad5a8",
+        "purpose": "Create support ticket"
+      }
+    ]
+  },
+  "derived": {
+    "blockers": [],
+    "facts_vs_interpretation": "Schemas and method/path are extracted facts; purpose, effects and risk are AI interpretations. Security/authorization unverified.",
+    "generation_capability_gaps": [],
+    "outputs": {
+      "ticket_id": {
+        "guaranteed": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "runtime_inputs": {
+      "order_id": {
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "summary": {
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "source_operations": [
+      "d7d537ed-dfb6-5567-b360-d92b8a402d64",
+      "55ad0084-1af7-587e-b29e-b3a6dcfad5a8"
+    ]
+  },
+  "business_id": "26a4d005-a59b-4e10-9d9f-62c59305f86e",
+  "source_file": "ecommerce.json"
+}

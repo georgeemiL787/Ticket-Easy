@@ -1,0 +1,7 @@
+NileStay is a hotel in Cairo. We want a customer-support assistant that helps guests retrieve reservation details and submit service requests linked to their reservations.
+
+Use the uploaded API specification to determine which operations are actually available. Do not assume that cancellation, refunds, payments, or reservation changes are supported.
+
+Guests may know their booking reference, while internal operations may require a different reservation identifier. Identify the required inputs from the specification.
+
+Our process for verifying that a guest owns a reservation has not been defined yet. Ask us to clarify this before approving any proposed tool that accesses private reservation information.

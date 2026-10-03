@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% set open = p.state not in ['approved_to_build','rejected','changes_requested','superseded'] %}
+{% set current = p.version == p.current_version %}
+{% block crumbs %}{{ m.crumbs([(business.name, "/businesses/" ~ p.business_id), (p.content.name, None)]) }}{% endblock %}
+{% block steps %}{{ m.steps("build" if p.state == 'approved_to_build' else "review") }}{% endblock %}
+{% block content %}
+<h1>{{ p.content.name }}</h1>
+<p>Version {{ p.version }} · {{ m.badge(p.state) }}</p>
+<p class="small">Approved to build: <strong>{{ 'yes' if p.lifecycle.approved_to_build else 'no' }}</strong> | Access requirements owner-confirmed: <strong>{{ 'yes' if p.lifecycle.requirements_confirmed else 'no' }}</strong> | Runtime-ready: <strong>no</strong></p>
+
+{% if not current %}{{ m.next("open the current version", "You are looking at version " ~ p.version ~ ". Version " ~ p.current_version ~ " is the current one.") }}<p><a href="/proposals/{{ p.proposal_id }}">Go to version {{ p.current_version }}</a></p>
+{% elif p.state == 'needs_clarification' %}{{ m.next("answer the questions", "Fill in every question and access requirement below, press Save answers, then press Check answers.") }}
+{% elif p.state == 'needs_reconciliation' %}{{ m.next("check your answers", "Press Check answers so Team C can verify that each answer is specific enough.") }}
+{% elif p.state == 'ready_for_review' and not p.lifecycle.requirements_confirmed %}{{ m.next("confirm the access requirements", "Press Confirm for each accepted access requirement below, then make your decision.") }}
+{% elif p.state == 'ready_for_review' %}{{ m.next("make your decision", "Approve to build, reject, or request changes in the Owner decision section.") }}
+{% elif p.state == 'approved_to_build' and artifacts %}{{ m.next("test the built tool", "Open the artifact below to run sandbox tests and publish it to the test-only MCP server.") }}
+{% elif p.state == 'approved_to_build' and p.enforcement and p.enforcement.status == 'awaiting_review' %}{{ m.next("review the enforcement configuration", "Check the access enforcement below and approve it, then build the artifact.") }}
+{% elif p.state == 'approved_to_build' and p.enforcement %}{{ m.next("build the tool", "Choose the connector and press Build artifact below.") }}
+{% elif p.state == 'approved_to_build' %}{{ m.next("set up access enforcement", "Submit how each access requirement is enforced, review it, then build the artifact.") }}
+{% else %}{{ m.next("this version is closed", "Create a new version at the bottom of the page if you want to continue.") }}{% endif %}
+
+<article>
+<h2>What this tool does</h2>
+<p>{{ p.content.description }}</p>
+<p><strong>Purpose:</strong> {{ p.content.business_purpose }}</p>
+<div class="grid">
+<div><h3>Information it reads</h3><ul>{% for x in p.content.expected_reads %}<li>{{ x }}</li>{% else %}<li>Nothing listed.</li>{% endfor %}</ul></div>
+<div><h3>Changes it can make</h3><ul>{% for x in p.content.expected_writes %}<li>{{ x }}</li>{% else %}<li>No writes proposed.</li>{% endfor %}</ul></div>
+</div>
+<p>Proposed risk: <strong>{{ p.content.risk }}</strong> — {{ p.content.risk_rationale }}</p>
+{% if p.content.assumptions or p.content.limitations %}<details><summary>Assumptions and limitations</summary><ul>{% for x in p.content.assumptions + p.content.limitations %}<li>{{ x }}</li>{% endfor %}</ul></details>{% endif %}
+<details {% if p.state == 'ready_for_review' %}open{% endif %}><summary>Steps and where each input comes from</summary>
+{% for s in p.content.steps %}<h3>{{ s.id }} · {{ s.purpose }}</h3><p class="small"><code>{{ operations[s.operation_id].method }} {{ operations[s.operation_id].path }}</code> · Technically supported: {{ p.operation_states.get(s.operation_id,{}).get('technically_supported') }} · Eligible for proposals: {{ p.operation_states.get(s.operation_id,{}).get('proposal_eligible') }}</p>
+<table><tr><th>API input</th><th>Comes from</th><th>Reference</th></tr>{% for b in s.bindings %}<tr><td>{{ b.target }}</td><td>{{ {'runtime_argument':'Future user input','business_configuration':'Business setting','trusted_application_context':'Trusted application context','previous_operation_output':'Earlier operation result'}[b.kind] }}</td><td>{{ b.reference }} {% if b.step_id %}from {{ b.step_id }} / {{ b.response_status }}{% endif %}</td></tr>{% endfor %}</table>{% endfor %}
+</details>
+<p class="muted small">Purpose, reads/writes and risk are AI interpretations. Schema facts and operation references are validated separately. {{ p.lifecycle.note }}</p>
+</article>
+
+{% if previous %}
+<article>
+<h2>What changed in this version</h2>
+<p class="small muted">Approval never carries over from an earlier version.</p>
+<h3>Changes from version {{ p.version - 1 }}</h3>
+<ul>{% for line in p.change_summary %}<li>{{ line }}</li>{% else %}<li>No content changes.</li>{% endfor %}</ul>
+<details class="tech"><summary>Raw differences</summary>{% for key,value in p.content.items() %}{% if value != previous.get(key) %}<p><strong>{{ key }}</strong></p><p class="small">Before</p><pre>{{ previous.get(key)|tojson(indent=2) }}</pre><p class="small">Now</p><pre>{{ value|tojson(indent=2) }}</pre>{% endif %}{% endfor %}</details>
+</article>
+{% endif %}
+
+<article>
+<h2>Questions and access requirements</h2>
+<p class="small muted">Every answer is checked by Team C (reconciliation); saving a non-empty answer is not enough on its own.</p>
+<form method="post" action="/actions/answers">{{ m.hidden(p) }}
+<h3>Questions about the tool</h3>
+{% for q in p.content.questions %}<label>{{ q.id }}: {{ q.text }}<textarea name="q:{{ q.id }}">{{ p.answers.get(q.id,{}).get('text','') }}</textarea></label>
+{% for n in p.question_review if n.question_id == q.id %}<p class="notice small">Question review: {{ n.note }} Returned by: {{ n.returned_by|join(', ') }}.</p>{% endfor %}
+{% else %}<p class="muted">No questions from the AI.</p>{% endfor %}
+<h3>Access and identity requirements</h3>
+<p class="small muted">Added by Team C from the operations used, whether or not the AI asked. Each one blocks approval until its answer is accepted and you confirm it.</p>
+{% for r in p.requirements %}<label>{{ r.text }} {{ m.badge(r.status, "requirement") }}<textarea name="q:{{ r.id }}">{{ (r.answer or {}).get('text','') }}</textarea></label>
+<details class="tech"><summary>Evidence</summary><p class="small">Source-documented: {{ r.evidence.source_documented|join('; ') }}<br>Owner-confirmed: {{ r.evidence.owner_confirmed or 'not confirmed' }} | Verified by a test: none | Runtime implementation: awaiting implementation</p></details>
+{% else %}<p class="muted">No access requirements for these operations.</p>{% endfor %}
+{% if open and (p.content.questions or p.requirements) %}<button>Save answers</button>{% endif %}
+</form>
+{% if open %}
+<form method="post" action="/actions/reconcile">{{ m.hidden(p) }}<button>Check answers</button></form>
+{% for r in p.requirements if r.status == 'answer_sufficient' %}<form method="post" action="/actions/confirm_requirement">{{ m.hidden(p) }}<input type="hidden" name="requirement_id" value="{{ r.id }}"><button>Confirm as intended behavior: {{ r.id }}</button></form>{% endfor %}
+{% for q in p.content.questions if not q.configuration_key %}<details><summary>Remove question {{ q.id }} (supersede)</summary><form method="post" action="/actions/supersede_question">{{ m.hidden(p) }}<input type="hidden" name="question_id" value="{{ q.id }}"><label>Reason (kept in history)<textarea name="reason" required></textarea></label><button class="secondary">Supersede {{ q.id }} and create a new version</button></form></details>{% endfor %}
+{% endif %}
+{% for r in p.reconciliations %}
+<h3>Result of the last check</h3>
+{% for f in r.result.findings %}<p class="small"><strong>{{ f.question_id }} · {{ f.status|replace('_', ' ') }}</strong> — {{ f.explanation }}</p>{% endfor %}
+{% for gap in r.result.capability_gaps %}<p class="notice">Missing capability: {{ gap.explanation }}</p>{% endfor %}
+{% for b in r.result.validation_blockers %}<p class="notice">{{ b }}</p>{% endfor %}
+<p class="small"><a href="/runs/{{ r.run_id }}">AI run details</a></p>
+{% endfor %}
+</article>
+
+{% if open %}
+<article>
+<h2>Owner decision</h2>
+{% if p.state != 'ready_for_review' %}<p class="notice">Approval is blocked until current answers are reconciled and all validation passes.</p>{% endif %}
+{% if not p.lifecycle.requirements_confirmed %}<p class="notice">Approval is blocked until every access requirement is owner-confirmed.</p>{% endif %}
+<p class="muted small">Approving means approved to build only; it does not activate the tool or implement runtime authorization.</p>
+<form method="post" action="/actions/decision">{{ m.hidden(p) }}<input type="hidden" name="idempotency_key" value="{{ decision_key }}">
+<label>Reason or requested changes<textarea name="reason"></textarea></label>
+<button name="decision" value="approve_to_build" {% if p.state != 'ready_for_review' or not p.lifecycle.requirements_confirmed %}disabled{% endif %}>Approve to build</button><button class="secondary" name="decision" value="reject">Reject</button><button class="secondary" name="decision" value="request_changes">Request changes</button></form>
+</article>
+{% endif %}
+
+{% if p.state == 'approved_to_build' or artifacts %}
+<article>
+<h2>Build and test</h2>
+<h3>Access enforcement</h3>
+{% if p.enforcement %}<p>Configuration {{ p.enforcement.id[:8] }} for connector {{ p.enforcement.connector_id }}: {{ m.badge(p.enforcement.status, "enforcement") }} <span class="muted small">({{ p.enforcement.status }}; submitted by {{ p.enforcement.submitted_by }}{% if p.enforcement.reviewed_at %}, reviewed by {{ p.enforcement.reviewed_by }}: {{ p.enforcement.review_note }}{% endif %})</span></p>
+<details class="tech"><summary>Enforcement configuration</summary><pre>{{ p.enforcement.content.enforcement|tojson(indent=2) }}</pre></details>
+{% if p.enforcement.status == 'awaiting_review' %}<form method="post" action="/actions/review_enforcement">{{ m.csrf_field() }}<input type="hidden" name="enforcement_id" value="{{ p.enforcement.id }}"><label>Review note<input name="note" required></label><button>Approve this enforcement configuration</button></form>{% endif %}
+{% else %}<p>No enforcement configured yet. Requirements without a reviewed mechanism block execution.</p>{% endif %}
+{% if p.state == 'approved_to_build' and current %}
+<details {% if not p.enforcement %}open{% endif %}><summary>{{ 'Submit a new enforcement configuration' if p.enforcement else 'Submit the enforcement configuration' }}</summary>
+<form method="post" action="/actions/submit_enforcement">{{ m.csrf_field() }}<input type="hidden" name="proposal_id" value="{{ p.proposal_id }}">
+<label>Connector<select name="connector_id">{% for cid in connectors %}<option>{{ cid }}</option>{% else %}<option value="">No connector configured (set CONNECTORS_FILE)</option>{% endfor %}</select></label>
+<label>Mechanisms (JSON)<textarea name="json">{ {% for r in p.requirements %}"{{ r.id }}": {}{% if not loop.last %}, {% endif %}{% endfor %} }</textarea></label>
+<p class="small muted">caller_access: {"mechanism": "delegated_user_credential"}. record_scope: {"mechanism": "response_field_matches_context", "step_id", "response_status", "pointer", "context_field" (declared by the connector), "comparison": "equals", "check_point": "after_step"}. A new configuration needs a new review and a rebuild.</p>
+<button>Submit enforcement for review</button></form>
+</details>
+<form method="post" action="/actions/build_artifact">{{ m.csrf_field() }}<input type="hidden" name="proposal_id" value="{{ p.proposal_id }}"><label>Connector<select name="connector_id">{% for cid in connectors %}<option>{{ cid }}</option>{% endfor %}</select></label><button>Build artifact</button></form>
+{% endif %}
+<h3>Executable artifacts</h3>
+<p class="small muted">Built from this approved version for sandbox testing only. Nothing is activated. Publishing is a separate decision on each artifact page.</p>
+{% for a in artifacts %}<p><a href="/artifacts/{{ a.id }}">Open artifact for v{{ a.version }}</a> <span class="muted small">built {{ a.created_at[:16]|replace('T', ' ') }} · SHA-256 {{ a.sha256[:12] }}</span></p>{% else %}<p class="muted">No artifact built yet.</p>{% endfor %}
+</article>
+{% endif %}
+
+{% if current %}
+<details><summary>Create a new version (ask the AI to change this tool)</summary>
+<article><p class="small muted">The AI revises this proposal or explains what is missing. Every new version needs a fresh review.</p>
+<form method="post" action="/actions/revise">{{ m.hidden(p) }}<label>What should change?<textarea name="instruction" required></textarea></label><button>Generate revision</button></form></article>
+</details>
+{% endif %}
+
+{% if p.repairs %}
+<details><summary>Repair history ({{ p.repairs|length }})</summary>
+{% for r in p.repairs %}<p class="small">{{ r.created_at }} | case {{ r.case_name }} | attempt {{ r.attempt }} from v{{ r.from_version }} | <strong>{{ r.outcome }}</strong>{% if r.new_version %} &rarr; v{{ r.new_version }} (needs fresh review){% endif %}<br>{{ r.detail }}</p>{% endfor %}
+</details>
+{% endif %}
+
+<details class="tech"><summary>History and technical details</summary>
+{% for v in p.versions %}<p class="small"><a href="/proposals/{{ p.proposal_id }}?version={{ v.version }}">Version {{ v.version }}</a> · {{ v.state|replace('_', ' ') }}</p>{% endfor %}
+{% for d in p.decisions %}<p class="small">v{{ d.version }} · {{ d.action }} · {{ d.reviewer }} · {{ d.reason }} · {{ d.created_at }}</p>{% endfor %}
+{% for s in p.supersessions %}<p class="small">v{{ s.version }} question {{ s.question_id }} superseded by {{ s.reviewer }} (new version {{ s.new_version }}): {{ s.question }} | Reason: {{ s.reason }}</p>{% endfor %}
+<p class="small"><a href="/specifications/{{ p.spec_id }}">Source specification</a> · <a href="/runs/{{ p.run_id }}">Proposal generation run</a></p>
+<details><summary>Validated input/output schemas</summary><pre>{{ p.derived|tojson(indent=2) }}</pre></details>
+<details><summary>Requirement events</summary><pre>{{ p.requirements|map(attribute='events')|list|tojson(indent=2) }}</pre></details>
+<details><summary>Answer revision history</summary><pre>{{ p.answer_history|tojson(indent=2) }}</pre></details>
+</details>
+{% endblock %}

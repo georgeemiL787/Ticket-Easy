@@ -1,0 +1,11 @@
+# Office lock files (created while a .docx/.xlsx is open)
+~$*
+
+# Built search index (rebuild with: python -m team_a ingest --tenant <tenant>)
+var/
+
+# Local environment
+.venv/
+.env
+__pycache__/
+*.pyc

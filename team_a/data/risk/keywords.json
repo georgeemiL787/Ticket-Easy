@@ -1,0 +1,30 @@
+{
+  "description": "Mandatory-escalation triggers. Matching is on normalized text (see team_a.text.normalize), substring-based. The LLM may add categories but can never remove a keyword hit.",
+  "categories": {
+    "fraud_suspected": [
+      "احتيال", "نصب", "نصاب", "سرقة", "اتسرقت", "اتسرق", "عملية مش انا", "مش انا اللي", "معملتش العملية", "معملتهاش", "ماعملتهاش", "معملتوش", "معملتش الدفع", "مدفعتش", "خصم من غير", "اتخصم من غير", "بطاقتي اتسرقت",
+      "fraud", "scam", "stolen", "unauthorized", "didn't make this payment", "did not make this payment", "not my transaction", "charged without",
+      "nasb", "na9b", "etsara2", "etsara2t", "sere2", "mesh ana elly", "msh ana elly", "3amaleya msh ana", "etkhasam mn gher", "ma3maltahash", "m3maltha4", "ma3maltesh", "madafa3tesh"
+    ],
+    "legal_regulatory": [
+      "محامي", "قضية", "هرفع قضية", "المحكمة", "النيابة", "جهاز حماية المستهلك", "حماية المستهلك", "شكوى رسمية", "بلاغ", "هبلغ", "تنظيم الاتصالات",
+      "lawyer", "attorney", "lawsuit", "sue you", "court", "consumer protection", "legal action", "regulator", "police report",
+      "ma7ami", "mo7ami", "2adeya", "2adiya", "7emayet el mostahlek", "hemayet el mostahlek", "7mayet el mosthlk", "mahkama", "ma7kama", "hablagh", "balagh"
+    ],
+    "medical_safety": [
+      "تسمم", "حساسية", "طفح جلدي", "اصابة", "اتصبت", "اتعورت", "حرق", "اتحرق", "ولع", "مستشفى", "دكتور", "خطر", "صعق", "كهربا مسكتني",
+      "poison", "allergic", "allergy", "rash", "injury", "injured", "burn", "caught fire", "hospital", "unsafe", "electric shock",
+      "tasamom", "7asaseya", "hasaseya", "mostashfa", "mostshfa", "et7ara2", "wele3", "we le3", "etsa3a2t", "3awwarny", "et3awart"
+    ],
+    "compensation_demand": [
+      "تعويض", "عايز تعويض", "اعوض", "عوضوني", "تعويضي",
+      "compensation", "compensate", "reimburse me for", "damages",
+      "ta3weed", "ta3wid", "t3wed", "3awadony", "3awdoni", "ta3wed"
+    ],
+    "identity_concern": [
+      "حد دخل على حسابي", "حسابي اتهكر", "اتهكر", "مش حسابي", "حد غير رقمي", "حد بينتحل", "انتحال",
+      "hacked", "someone else logged", "not my account", "account was compromised", "impersonat", "changed my password",
+      "et7aked", "ethaked", "ethacked", "7esaby et", "hesaby et", "msh 7esaby", "mesh hesaby", "7ad da5al", "had dakhal"
+    ]
+  }
+}

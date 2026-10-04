@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/knowledge/passages",
+    "query": {
+      "tenant_id": "shop_001",
+      "citation": "return_policy@v9#s2"
+    }
+  },
+  "response": {
+    "status": 404,
+    "body": {
+      "schema_version": "1.0",
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "No passage with citation 'return_policy@v9#s2'",
+        "request_id": null
+      }
+    }
+  }
+}

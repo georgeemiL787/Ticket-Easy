@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/policy/classify-risk",
+    "body": {
+      "request_id": "req-0010",
+      "tenant_id": "shop_001",
+      "message": "في عملية دفع على بطاقتي معملتهاش",
+      "use_llm": false
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0010",
+      "tenant_id": "shop_001",
+      "categories": [
+        "fraud_suspected"
+      ],
+      "mandatory_escalation": true,
+      "method": "keywords",
+      "matched_terms": [
+        "معملتهاش"
+      ],
+      "llm_rationale": null
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{"id": "Q01", "style": "en", "question": "How many days do I have to return an item?", "expected": ["return_policy@v2#s2"]}
+{"id": "Q02", "style": "ar", "question": "ممكن أرجع المنتج بعد كام يوم؟", "expected": ["return_policy@v2#s2"]}
+{"id": "Q03", "style": "arabizi", "question": "momken araga3 el 7aga ba3d kam yom?", "expected": ["return_policy@v2#s2"]}
+{"id": "Q04", "style": "en", "question": "Can I return underwear or swimwear?", "expected": ["return_policy@v2#s4"]}
+{"id": "Q05", "style": "ar", "question": "هل ينفع أرجع برفان فتحته؟", "expected": ["return_policy@v2#s4"]}
+{"id": "Q06", "style": "arabizi", "question": "ينفع araga3 3atr fata7to?", "expected": ["return_policy@v2#s4"]}
+{"id": "Q07", "style": "en", "question": "The shoes arrived damaged, what should I do?", "expected": ["return_policy@v2#s6"]}
+{"id": "Q08", "style": "ar", "question": "المنتج وصلني مكسور أعمل ايه؟", "expected": ["return_policy@v2#s6"]}
+{"id": "Q09", "style": "arabizi", "question": "el montag wesel maksoor a3mel eh", "expected": ["return_policy@v2#s6"]}
+{"id": "Q10", "style": "en", "question": "Can I exchange for a different size?", "expected": ["return_policy@v2#s5"]}
+{"id": "Q11", "style": "arabizi", "question": "momken abadel el ma2as b size akbar?", "expected": ["return_policy@v2#s5", "faq@v1#q03"]}
+{"id": "Q12", "style": "ar", "question": "بيتخصم كام مصاريف شحن لما أرجع المنتج؟", "expected": ["return_policy@v2#s8"]}
+{"id": "Q13", "style": "en", "question": "How do I submit a return request?", "expected": ["return_policy@v2#s7"]}
+{"id": "Q14", "style": "arabizi", "question": "el mandoob hayeegy emta yestelem el morta ga3?", "expected": ["return_policy@v2#s7"]}
+{"id": "Q15", "style": "ar", "question": "لو القطعة اتغسلت ينفع ترجع؟", "expected": ["return_policy@v2#s3"]}
+{"id": "Q16", "style": "en", "question": "How long does delivery take to Alexandria?", "expected": ["shipping_policy@v1#s2"]}
+{"id": "Q17", "style": "ar", "question": "التوصيل للصعيد بياخد قد ايه؟", "expected": ["shipping_policy@v1#s2"]}
+{"id": "Q18", "style": "arabizi", "question": "el tawseel l Aswan byakhod kam yom?", "expected": ["shipping_policy@v1#s2"]}
+{"id": "Q19", "style": "en", "question": "How much is shipping to Cairo?", "expected": ["shipping_policy@v1#s3"]}
+{"id": "Q20", "style": "arabizi", "question": "el sha7n bala4 emta?", "expected": ["shipping_policy@v1#s3"]}
+{"id": "Q21", "style": "ar", "question": "مصاريف الشحن للمحافظات كام؟", "expected": ["shipping_policy@v1#s3"]}
+{"id": "Q22", "style": "en", "question": "Is cash on delivery available for a 6000 pound order?", "expected": ["shipping_policy@v1#s4", "faq@v1#q02"]}
+{"id": "Q23", "style": "arabizi", "question": "momken adfa3 cash 3and el estelam?", "expected": ["shipping_policy@v1#s4", "faq@v1#q02"]}
+{"id": "Q24", "style": "en", "question": "Can I change the delivery address after the order shipped?", "expected": ["shipping_policy@v1#s5"]}
+{"id": "Q25", "style": "arabizi", "question": "3ayez a8ayar el 3onwan bta3 el order", "expected": ["shipping_policy@v1#s5"]}
+{"id": "Q26", "style": "ar", "question": "الأوردر متأخر، ليا تعويض؟", "expected": ["shipping_policy@v1#s6"]}
+{"id": "Q27", "style": "arabizi", "question": "el order et2akhar 5 ayam, fe kobon?", "expected": ["shipping_policy@v1#s6"]}
+{"id": "Q28", "style": "en", "question": "What happens if I'm not home when the courier comes?", "expected": ["shipping_policy@v1#s7"]}
+{"id": "Q29", "style": "ar", "question": "إزاي ألغي الطلب؟", "expected": ["shipping_policy@v1#s8"]}
+{"id": "Q30", "style": "arabizi", "question": "3ayez al8y el order", "expected": ["shipping_policy@v1#s8"]}
+{"id": "Q31", "style": "en", "question": "How can I track my order?", "expected": ["shipping_policy@v1#s9"]}
+{"id": "Q32", "style": "arabizi", "question": "fein el order bta3y? 3ayez atba3o", "expected": ["shipping_policy@v1#s9"]}
+{"id": "Q33", "style": "en", "question": "How long does a refund to my card take?", "expected": ["refund_policy@v1#s2"]}
+{"id": "Q34", "style": "ar", "question": "الفلوس بترجع على المحفظة في قد ايه؟", "expected": ["refund_policy@v1#s2"]}
+{"id": "Q35", "style": "arabizi", "question": "el flos btrga3 emta law dafa3t cash?", "expected": ["refund_policy@v1#s2"]}
+{"id": "Q36", "style": "ar", "question": "لو المبلغ كبير أكتر من 3000 جنيه بيترد عادي؟", "expected": ["refund_policy@v1#s3"]}
+{"id": "Q37", "style": "en", "question": "Are shipping fees refunded?", "expected": ["refund_policy@v1#s4", "return_policy@v2#s8"]}
+{"id": "Q38", "style": "en", "question": "There is a payment on my card I did not make", "expected": ["refund_policy@v1#s6"]}
+{"id": "Q39", "style": "ar", "question": "خدمة العملاء بتشتغل لحد الساعة كام؟", "expected": ["faq@v1#q01"]}
+{"id": "Q40", "style": "arabizi", "question": "mawa3eed el shoghl emta?", "expected": ["faq@v1#q01"]}
+{"id": "Q41", "style": "en", "question": "Do you have a store I can visit?", "expected": ["faq@v1#q04"]}
+{"id": "Q42", "style": "ar", "question": "ينفع استخدم كوبونين في نفس الطلب؟", "expected": ["faq@v1#q07"]}
+{"id": "Q43", "style": "en", "question": "Do you ship to Saudi Arabia?", "expected": ["faq@v1#q08", "shipping_policy@v1#s1"]}
+{"id": "Q44", "style": "ar", "question": "نقاط الولاء بتنتهي امتى؟", "expected": ["faq@v1#q09"]}
+{"id": "Q45", "style": "arabizi", "question": "fe ta8lef hedeya?", "expected": ["faq@v1#q05"]}
+{"id": "Q46", "style": "en", "question": "Do you sell laptops or phones?", "expected": []}
+{"id": "Q47", "style": "ar", "question": "هل عندكم وظائف خالية؟", "expected": []}
+{"id": "Q48", "style": "arabizi", "question": "el gaw 3amel eh el naharda?", "expected": []}
+{"id": "Q49", "style": "en", "question": "What is the price of bitcoin today?", "expected": []}
+{"id": "Q50", "style": "ar", "question": "مين كسب ماتش الأهلي امبارح؟", "expected": []}

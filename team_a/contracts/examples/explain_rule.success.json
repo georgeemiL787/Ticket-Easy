@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "path": "/v1/policy/rules/R-REFUND-14D/explain",
+    "query": {
+      "tenant_id": "shop_001"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "rule_id": "R-REFUND-14D",
+      "tenant_id": "shop_001",
+      "active": true,
+      "approval_status": "approved",
+      "summary": "For 'create_refund': if days_since_delivery <= 14 then allow, otherwise deny. Applies only when order_status in ['delivered', 'returned'].",
+      "predicate": "days_since_delivery <= 14",
+      "effect": "allow",
+      "else_effect": "deny",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s1",
+        "quote": "لا يتم رد المبلغ لأي طلب مر على استلامه أكثر من 14 يومًا."
+      },
+      "user_message": {
+        "ar": "للأسف مينفعش أرجّع المبلغ لأن الطلب مر على استلامه أكتر من 14 يوم. هحوّلك لزميل من خدمة العملاء يراجع حالتك.",
+        "en": "I can't issue a refund because more than 14 days have passed since delivery. I'll connect you with a colleague to review your case."
+      }
+    }
+  }
+}

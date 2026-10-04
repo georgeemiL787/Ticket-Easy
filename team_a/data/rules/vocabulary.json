@@ -1,0 +1,28 @@
+{
+  "description": "Actions (Team C tool names) and facts that rules may reference. The extractor rejects candidates that use anything else. Agree changes with Team C.",
+  "actions": {
+    "get_order_status": "read an order's status and tracking",
+    "create_return": "open a return request for a delivered item",
+    "create_exchange": "open a size/colour exchange request",
+    "create_refund": "refund money to the customer",
+    "update_delivery_address": "change the delivery address of an order",
+    "cancel_order": "cancel an order",
+    "apply_voucher": "issue a compensation voucher to the customer",
+    "create_ticket": "open a support ticket"
+  },
+  "facts": {
+    "order_status": {"type": "enum", "values": ["pending", "processing", "shipped", "delivered", "returned", "cancelled"]},
+    "delivered_at": {"type": "date"},
+    "expected_delivery_date": {"type": "date"},
+    "days_since_delivery": {"type": "integer", "derived_from": "delivered_at"},
+    "days_late": {"type": "integer", "derived_from": "expected_delivery_date, delivered_at"},
+    "order_total": {"type": "number", "unit": "EGP"},
+    "product_category": {"type": "enum", "values": ["clothing", "shoes", "accessories", "underwear", "swimwear", "perfume", "cosmetics", "gift_card"]},
+    "is_clearance": {"type": "boolean"},
+    "item_condition": {"type": "enum", "values": ["unused", "used", "damaged_on_arrival", "defective"]},
+    "hours_since_delivery": {"type": "integer"}
+  },
+  "arguments": {
+    "amount": {"type": "number", "unit": "EGP", "used_by": ["create_refund", "apply_voucher"]}
+  }
+}

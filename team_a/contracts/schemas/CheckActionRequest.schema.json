@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "IdentityContext": {
+      "properties": {
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "customer_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customer Id"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
+        }
+      },
+      "title": "IdentityContext",
+      "type": "object"
+    },
+    "ToolContext": {
+      "description": "What Team C's ToolSpec says about the tool being called.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_kind": {
+          "enum": [
+            "read",
+            "create",
+            "update",
+            "delete"
+          ],
+          "title": "Operation Kind",
+          "type": "string"
+        },
+        "risk": {
+          "default": "medium",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Risk",
+          "type": "string"
+        },
+        "exposes_personal_data": {
+          "default": true,
+          "title": "Exposes Personal Data",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "operation_kind"
+      ],
+      "title": "ToolContext",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "request_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversation Id"
+    },
+    "tool": {
+      "$ref": "#/$defs/ToolContext"
+    },
+    "arguments": {
+      "additionalProperties": true,
+      "title": "Arguments",
+      "type": "object"
+    },
+    "facts": {
+      "additionalProperties": true,
+      "description": "Verified facts from backend records, e.g. order_status, delivered_at, amount",
+      "title": "Facts",
+      "type": "object"
+    },
+    "identity": {
+      "$ref": "#/$defs/IdentityContext"
+    },
+    "resource_tenant_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Tenant that owns the order/customer record being touched",
+      "title": "Resource Tenant Id"
+    },
+    "risk_categories": {
+      "description": "Output of classify_risk for this conversation",
+      "items": {
+        "type": "string"
+      },
+      "title": "Risk Categories",
+      "type": "array"
+    },
+    "as_of": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Evaluation date; defaults to today",
+      "title": "As Of"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "tool"
+  ],
+  "title": "CheckActionRequest",
+  "type": "object"
+}

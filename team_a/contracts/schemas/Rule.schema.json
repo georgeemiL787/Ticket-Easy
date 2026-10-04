@@ -1,0 +1,207 @@
+{
+  "$defs": {
+    "Condition": {
+      "description": "`field` is read from verified backend `facts` by default. Use `from_: \"arguments\"` only for\nvalues the agent proposes (e.g. a requested refund amount); facts can never come from arguments.",
+      "properties": {
+        "field": {
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "title": "Field",
+          "type": "string"
+        },
+        "op": {
+          "enum": [
+            "<=",
+            "<",
+            ">=",
+            ">",
+            "==",
+            "!=",
+            "in",
+            "not_in"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value"
+        },
+        "from": {
+          "default": "facts",
+          "enum": [
+            "facts",
+            "arguments"
+          ],
+          "title": "From",
+          "type": "string"
+        }
+      },
+      "required": [
+        "field",
+        "op",
+        "value"
+      ],
+      "title": "Condition",
+      "type": "object"
+    },
+    "LocalizedText": {
+      "properties": {
+        "ar": {
+          "title": "Ar",
+          "type": "string"
+        },
+        "en": {
+          "title": "En",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ar",
+        "en"
+      ],
+      "title": "LocalizedText",
+      "type": "object"
+    },
+    "RuleSource": {
+      "properties": {
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Exact source span the rule was derived from",
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "version",
+        "citation",
+        "quote"
+      ],
+      "title": "RuleSource",
+      "type": "object"
+    }
+  },
+  "description": "An enforceable constraint derived from policy text.\n\nThe rule only takes part when every `applies_if` condition holds (e.g. the 14-day refund\nwindow applies to delivered orders, not to orders cancelled before shipping). Then, if every\ncondition holds the rule yields `effect`, otherwise `else_effect`. A rule with no conditions\nalways yields `effect`. Only `approved` rules whose `effective_date` has passed are used.",
+  "properties": {
+    "rule_id": {
+      "pattern": "^[A-Z][A-Z0-9-]{2,63}$",
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/RuleSource"
+    },
+    "scope": {
+      "title": "Scope",
+      "type": "string"
+    },
+    "action": {
+      "description": "Tool name the rule governs, e.g. create_refund",
+      "title": "Action",
+      "type": "string"
+    },
+    "applies_if": {
+      "items": {
+        "$ref": "#/$defs/Condition"
+      },
+      "title": "Applies If",
+      "type": "array"
+    },
+    "conditions": {
+      "items": {
+        "$ref": "#/$defs/Condition"
+      },
+      "title": "Conditions",
+      "type": "array"
+    },
+    "effect": {
+      "enum": [
+        "allow",
+        "deny",
+        "require_human"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "else_effect": {
+      "default": "deny",
+      "enum": [
+        "allow",
+        "deny",
+        "require_human"
+      ],
+      "title": "Else Effect",
+      "type": "string"
+    },
+    "user_message": {
+      "$ref": "#/$defs/LocalizedText"
+    },
+    "approval_status": {
+      "default": "proposed",
+      "enum": [
+        "proposed",
+        "approved",
+        "rejected"
+      ],
+      "title": "Approval Status",
+      "type": "string"
+    },
+    "effective_date": {
+      "format": "date",
+      "title": "Effective Date",
+      "type": "string"
+    },
+    "approved_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved By"
+    },
+    "approved_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approved At"
+    }
+  },
+  "required": [
+    "rule_id",
+    "tenant_id",
+    "source",
+    "scope",
+    "action",
+    "effect",
+    "user_message",
+    "effective_date"
+  ],
+  "title": "Rule",
+  "type": "object"
+}

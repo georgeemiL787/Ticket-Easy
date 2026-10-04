@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "LocalizedText": {
+      "properties": {
+        "ar": {
+          "title": "Ar",
+          "type": "string"
+        },
+        "en": {
+          "title": "En",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ar",
+        "en"
+      ],
+      "title": "LocalizedText",
+      "type": "object"
+    },
+    "RuleSource": {
+      "properties": {
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Exact source span the rule was derived from",
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "version",
+        "citation",
+        "quote"
+      ],
+      "title": "RuleSource",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "rule_id": {
+      "title": "Rule Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "active": {
+      "title": "Active",
+      "type": "boolean"
+    },
+    "approval_status": {
+      "enum": [
+        "proposed",
+        "approved",
+        "rejected"
+      ],
+      "title": "Approval Status",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "predicate": {
+      "title": "Predicate",
+      "type": "string"
+    },
+    "effect": {
+      "enum": [
+        "allow",
+        "deny",
+        "require_human"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "else_effect": {
+      "enum": [
+        "allow",
+        "deny",
+        "require_human"
+      ],
+      "title": "Else Effect",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/RuleSource"
+    },
+    "user_message": {
+      "$ref": "#/$defs/LocalizedText"
+    }
+  },
+  "required": [
+    "rule_id",
+    "tenant_id",
+    "active",
+    "approval_status",
+    "summary",
+    "predicate",
+    "effect",
+    "else_effect",
+    "source",
+    "user_message"
+  ],
+  "title": "RuleExplanation",
+  "type": "object"
+}

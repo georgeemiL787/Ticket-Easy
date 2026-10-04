@@ -1,0 +1,175 @@
+{
+  "$defs": {
+    "LocalizedText": {
+      "properties": {
+        "ar": {
+          "title": "Ar",
+          "type": "string"
+        },
+        "en": {
+          "title": "En",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ar",
+        "en"
+      ],
+      "title": "LocalizedText",
+      "type": "object"
+    },
+    "RuleOutcome": {
+      "properties": {
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "predicate": {
+          "title": "Predicate",
+          "type": "string"
+        },
+        "held": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null when a required fact was missing",
+          "title": "Held"
+        },
+        "effect_applied": {
+          "enum": [
+            "allow",
+            "deny",
+            "require_human"
+          ],
+          "title": "Effect Applied",
+          "type": "string"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "predicate",
+        "held",
+        "effect_applied",
+        "citation"
+      ],
+      "title": "RuleOutcome",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversation Id"
+    },
+    "action": {
+      "title": "Action",
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "allow",
+        "deny",
+        "require_human"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "reason_code": {
+      "enum": [
+        "RULES_PASSED",
+        "RULE_BLOCKED",
+        "RULE_REQUIRES_HUMAN",
+        "NO_RULE_READ_ONLY",
+        "NO_RULE_SIDE_EFFECT",
+        "HIGH_RISK_DEFAULT",
+        "MISSING_CONTEXT",
+        "IDENTITY_REQUIRED",
+        "TENANT_MISMATCH",
+        "MANDATORY_RISK"
+      ],
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "rationale": {
+      "title": "Rationale",
+      "type": "string"
+    },
+    "rule_outcomes": {
+      "items": {
+        "$ref": "#/$defs/RuleOutcome"
+      },
+      "title": "Rule Outcomes",
+      "type": "array"
+    },
+    "citations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Citations",
+      "type": "array"
+    },
+    "user_message": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LocalizedText"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "missing_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missing Fields",
+      "type": "array"
+    },
+    "evaluated_at": {
+      "format": "date-time",
+      "title": "Evaluated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "action",
+    "decision",
+    "reason_code",
+    "rationale"
+  ],
+  "title": "PolicyDecision",
+  "type": "object"
+}

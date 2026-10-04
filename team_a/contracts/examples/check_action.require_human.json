@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/policy/check-action",
+    "body": {
+      "request_id": "req-0008",
+      "tenant_id": "shop_001",
+      "conversation_id": "conv-42",
+      "as_of": "2026-09-28",
+      "tool": {
+        "name": "create_refund",
+        "operation_kind": "create",
+        "risk": "high"
+      },
+      "facts": {
+        "order_status": "delivered",
+        "delivered_at": "2026-09-23"
+      },
+      "arguments": {
+        "order_id": "NS-20877",
+        "amount": 4500
+      },
+      "identity": {
+        "verified": true,
+        "customer_id": "C-100",
+        "method": "phone+order_id"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0008",
+      "tenant_id": "shop_001",
+      "conversation_id": "conv-42",
+      "action": "create_refund",
+      "decision": "require_human",
+      "reason_code": "RULE_REQUIRES_HUMAN",
+      "rationale": "R-REFUND-LIMIT: arguments.amount <= 3000 is false -> require_human",
+      "rule_outcomes": [
+        {
+          "rule_id": "R-REFUND-14D",
+          "predicate": "days_since_delivery <= 14",
+          "held": true,
+          "effect_applied": "allow",
+          "citation": "refund_policy@v1#s1"
+        },
+        {
+          "rule_id": "R-REFUND-LIMIT",
+          "predicate": "arguments.amount <= 3000",
+          "held": false,
+          "effect_applied": "require_human",
+          "citation": "refund_policy@v1#s3"
+        },
+        {
+          "rule_id": "R-REFUND-STATUS",
+          "predicate": "order_status in ['delivered', 'returned', 'cancelled']",
+          "held": true,
+          "effect_applied": "allow",
+          "citation": "refund_policy@v1#s5"
+        }
+      ],
+      "citations": [
+        "refund_policy@v1#s3"
+      ],
+      "user_message": {
+        "ar": "المبالغ اللي فوق 3000 جنيه لازم تتراجع من فريق خدمة العملاء قبل ما تترد. هحوّل طلبك ليهم دلوقتي.",
+        "en": "Refunds above EGP 3,000 need approval from our customer care team. I'm passing your request to them now."
+      },
+      "missing_fields": [],
+      "evaluated_at": "2026-09-28T19:02:06.769186Z"
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$defs": {
+    "Passage": {
+      "properties": {
+        "passage_id": {
+          "title": "Passage Id",
+          "type": "string"
+        },
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "section": {
+          "title": "Section",
+          "type": "string"
+        },
+        "language": {
+          "enum": [
+            "ar",
+            "en",
+            "mixed"
+          ],
+          "title": "Language",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passage_id",
+        "document_id",
+        "version",
+        "section",
+        "language",
+        "text",
+        "score",
+        "citation"
+      ],
+      "title": "Passage",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "query": {
+      "title": "Query",
+      "type": "string"
+    },
+    "passages": {
+      "items": {
+        "$ref": "#/$defs/Passage"
+      },
+      "title": "Passages",
+      "type": "array"
+    },
+    "empty_reason": {
+      "anyOf": [
+        {
+          "enum": [
+            "below_threshold",
+            "no_documents"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Empty Reason"
+    },
+    "retrieval_mode": {
+      "default": "hybrid",
+      "enum": [
+        "hybrid",
+        "keyword_only"
+      ],
+      "title": "Retrieval Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "query",
+    "passages"
+  ],
+  "title": "RetrievalResult",
+  "type": "object"
+}

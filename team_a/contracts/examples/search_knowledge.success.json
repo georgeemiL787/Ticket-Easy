@@ -1,0 +1,56 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/knowledge/search",
+    "body": {
+      "request_id": "req-0002",
+      "tenant_id": "shop_001",
+      "conversation_id": "conv-42",
+      "query": "momken araga3 el 7aga ba3d 20 yom?",
+      "top_k": 3
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0002",
+      "tenant_id": "shop_001",
+      "query": "momken araga3 el 7aga ba3d 20 yom?",
+      "passages": [
+        {
+          "passage_id": "return_policy@v2#s2",
+          "document_id": "return_policy",
+          "version": "v2",
+          "section": "2. مدة الاسترجاع",
+          "language": "ar",
+          "text": "يحق للعميل استرجاع المنتج خلال 14 يومًا من تاريخ الاستلام. بعد مرور 14 يومًا من تاريخ الاستلام لا يمكن قبول طلب الاسترجاع ولا رد المبلغ، ويمكن للعميل التواصل مع خدمة العملاء لبحث حالته.",
+          "score": 0.6636,
+          "citation": "return_policy@v2#s2"
+        },
+        {
+          "passage_id": "return_policy@v2#s7",
+          "document_id": "return_policy",
+          "version": "v2",
+          "section": "7. طريقة تقديم طلب الاسترجاع",
+          "language": "ar",
+          "text": "يقدم طلب الاسترجاع عبر واتساب أو صفحة \"طلباتي\" على الموقع مع ذكر رقم الطلب (يبدأ بـ NS-). بعد قبول الطلب يمر مندوب الشحن لاستلام المنتج خلال 3 أيام عمل.",
+          "score": 0.6017,
+          "citation": "return_policy@v2#s7"
+        },
+        {
+          "passage_id": "refund_policy@v1#s1",
+          "document_id": "refund_policy",
+          "version": "v1",
+          "section": "1. متى يتم رد المبلغ",
+          "language": "ar",
+          "text": "يتم رد المبلغ بعد استلام المنتج المرتجع في المخزن وفحصه والتأكد من مطابقته لشروط الاسترجاع. لا يتم رد المبلغ لأي طلب مر على استلامه أكثر من 14 يومًا.",
+          "score": 0.5999,
+          "citation": "refund_policy@v1#s1"
+        }
+      ],
+      "empty_reason": null,
+      "retrieval_mode": "hybrid"
+    }
+  }
+}

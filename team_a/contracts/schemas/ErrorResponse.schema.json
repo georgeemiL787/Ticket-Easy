@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "ErrorBody": {
+      "properties": {
+        "code": {
+          "enum": [
+            "INVALID_REQUEST",
+            "TENANT_NOT_FOUND",
+            "NOT_FOUND",
+            "INDEX_NOT_BUILT",
+            "EMBEDDING_UNAVAILABLE",
+            "LLM_UNAVAILABLE",
+            "INTERNAL_ERROR"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "request_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Id"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorBody",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "error": {
+      "$ref": "#/$defs/ErrorBody"
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "title": "ErrorResponse",
+  "type": "object"
+}

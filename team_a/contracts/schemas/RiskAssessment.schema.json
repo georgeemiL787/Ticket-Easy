@@ -1,0 +1,71 @@
+{
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "categories": {
+      "items": {
+        "enum": [
+          "fraud_suspected",
+          "legal_regulatory",
+          "medical_safety",
+          "compensation_demand",
+          "identity_concern"
+        ],
+        "type": "string"
+      },
+      "title": "Categories",
+      "type": "array"
+    },
+    "mandatory_escalation": {
+      "title": "Mandatory Escalation",
+      "type": "boolean"
+    },
+    "method": {
+      "enum": [
+        "keywords",
+        "keywords+llm"
+      ],
+      "title": "Method",
+      "type": "string"
+    },
+    "matched_terms": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Matched Terms",
+      "type": "array"
+    },
+    "llm_rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Llm Rationale"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "categories",
+    "mandatory_escalation",
+    "method"
+  ],
+  "title": "RiskAssessment",
+  "type": "object"
+}

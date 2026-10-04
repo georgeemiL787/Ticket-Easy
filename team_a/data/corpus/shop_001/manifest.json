@@ -1,0 +1,11 @@
+{
+  "tenant_id": "shop_001",
+  "tenant_name": "Nile Style (fictional e-commerce fashion brand)",
+  "documents": [
+    {"file": "return_policy_v2.md", "document_id": "return_policy", "version": "v2", "effective_date": "2026-09-01", "current": true},
+    {"file": "return_policy_v1.md", "document_id": "return_policy", "version": "v1", "effective_date": "2026-01-01", "current": false},
+    {"file": "shipping_policy.pdf", "document_id": "shipping_policy", "version": "v1", "effective_date": "2026-09-01", "current": true},
+    {"file": "refund_policy.docx", "document_id": "refund_policy", "version": "v1", "effective_date": "2026-09-01", "current": true},
+    {"file": "faq.xlsx", "document_id": "faq", "version": "v1", "effective_date": "2026-09-01", "current": true}
+  ]
+}

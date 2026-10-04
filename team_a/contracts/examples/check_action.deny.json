@@ -1,0 +1,75 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/policy/check-action",
+    "body": {
+      "request_id": "req-0001",
+      "tenant_id": "shop_001",
+      "conversation_id": "conv-42",
+      "as_of": "2026-09-28",
+      "tool": {
+        "name": "create_refund",
+        "operation_kind": "create",
+        "risk": "high"
+      },
+      "facts": {
+        "order_status": "delivered",
+        "delivered_at": "2026-09-08"
+      },
+      "arguments": {
+        "order_id": "NS-20877",
+        "amount": 800
+      },
+      "identity": {
+        "verified": true,
+        "customer_id": "C-100",
+        "method": "phone+order_id"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0001",
+      "tenant_id": "shop_001",
+      "conversation_id": "conv-42",
+      "action": "create_refund",
+      "decision": "deny",
+      "reason_code": "RULE_BLOCKED",
+      "rationale": "R-REFUND-14D: days_since_delivery <= 14 is false -> deny",
+      "rule_outcomes": [
+        {
+          "rule_id": "R-REFUND-14D",
+          "predicate": "days_since_delivery <= 14",
+          "held": false,
+          "effect_applied": "deny",
+          "citation": "refund_policy@v1#s1"
+        },
+        {
+          "rule_id": "R-REFUND-LIMIT",
+          "predicate": "arguments.amount <= 3000",
+          "held": true,
+          "effect_applied": "allow",
+          "citation": "refund_policy@v1#s3"
+        },
+        {
+          "rule_id": "R-REFUND-STATUS",
+          "predicate": "order_status in ['delivered', 'returned', 'cancelled']",
+          "held": true,
+          "effect_applied": "allow",
+          "citation": "refund_policy@v1#s5"
+        }
+      ],
+      "citations": [
+        "refund_policy@v1#s1"
+      ],
+      "user_message": {
+        "ar": "للأسف مينفعش أرجّع المبلغ لأن الطلب مر على استلامه أكتر من 14 يوم. هحوّلك لزميل من خدمة العملاء يراجع حالتك.",
+        "en": "I can't issue a refund because more than 14 days have passed since delivery. I'll connect you with a colleague to review your case."
+      },
+      "missing_fields": [],
+      "evaluated_at": "2026-09-28T19:02:06.758240Z"
+    }
+  }
+}

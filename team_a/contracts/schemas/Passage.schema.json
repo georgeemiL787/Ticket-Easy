@@ -1,0 +1,53 @@
+{
+  "properties": {
+    "passage_id": {
+      "title": "Passage Id",
+      "type": "string"
+    },
+    "document_id": {
+      "title": "Document Id",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "section": {
+      "title": "Section",
+      "type": "string"
+    },
+    "language": {
+      "enum": [
+        "ar",
+        "en",
+        "mixed"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "citation": {
+      "title": "Citation",
+      "type": "string"
+    }
+  },
+  "required": [
+    "passage_id",
+    "document_id",
+    "version",
+    "section",
+    "language",
+    "text",
+    "score",
+    "citation"
+  ],
+  "title": "Passage",
+  "type": "object"
+}

@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "request_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversation Id"
+    },
+    "query": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Query",
+      "type": "string"
+    },
+    "top_k": {
+      "default": 3,
+      "maximum": 10,
+      "minimum": 1,
+      "title": "Top K",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "query"
+  ],
+  "title": "SearchPastTicketsRequest",
+  "type": "object"
+}

@@ -1,0 +1,439 @@
+{
+  "tenant_id": "shop_001",
+  "rules": [
+    {
+      "rule_id": "R-RETURN-14D",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s2",
+        "quote": "يحق للعميل استرجاع المنتج خلال 14 يومًا من تاريخ الاستلام."
+      },
+      "scope": "returns",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "للأسف مدة الاسترجاع 14 يوم من تاريخ الاستلام وعدّت، فمش هقدر أعمل طلب استرجاع. هحوّلك لزميل من خدمة العملاء يبص على حالتك.",
+        "en": "Returns are accepted within 14 days of delivery and that period has passed. I'll connect you with a colleague to review your case."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-RETURN-EXCLUDED",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s4",
+        "quote": "لا يمكن استرجاع الفئات التالية: الملابس الداخلية وملابس السباحة، العطور ومستحضرات التجميل بعد فتحها، بطاقات الهدايا"
+      },
+      "scope": "returns",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "product_category",
+          "op": "not_in",
+          "value": [
+            "underwear",
+            "swimwear",
+            "gift_card"
+          ],
+          "from": "facts"
+        },
+        {
+          "field": "is_clearance",
+          "op": "==",
+          "value": false,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "المنتج ده من الفئات اللي مينفعش تترجع حسب سياسة الاسترجاع.",
+        "en": "This item belongs to a category that cannot be returned under our return policy."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-RETURN-UNUSED",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s3",
+        "quote": "المنتجات التي تظهر عليها علامات استخدام أو غسيل لا تقبل للاسترجاع."
+      },
+      "scope": "returns",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "!=",
+          "value": "used",
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "المنتجات المستخدمة مينفعش تترجع، لازم المنتج يكون بحالته الأصلية.",
+        "en": "Used items cannot be returned; the item must be in its original condition."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-EXCHANGE-14D",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s5",
+        "quote": "يمكن استبدال المنتج بمقاس أو لون آخر خلال 14 يومًا من الاستلام بنفس شروط الاسترجاع"
+      },
+      "scope": "exchanges",
+      "action": "create_exchange",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "الاستبدال متاح خلال 14 يوم من الاستلام بس، والمدة دي عدّت.",
+        "en": "Exchanges are available within 14 days of delivery, and that period has passed."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-REFUND-14D",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s1",
+        "quote": "لا يتم رد المبلغ لأي طلب مر على استلامه أكثر من 14 يومًا."
+      },
+      "scope": "refunds",
+      "action": "create_refund",
+      "applies_if": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "delivered",
+            "returned"
+          ],
+          "from": "facts"
+        }
+      ],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "للأسف مينفعش أرجّع المبلغ لأن الطلب مر على استلامه أكتر من 14 يوم. هحوّلك لزميل من خدمة العملاء يراجع حالتك.",
+        "en": "I can't issue a refund because more than 14 days have passed since delivery. I'll connect you with a colleague to review your case."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-REFUND-LIMIT",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s3",
+        "quote": "طلبات رد المبالغ التي تزيد عن 3000 جنيه تحتاج إلى مراجعة وموافقة من فريق خدمة العملاء قبل التنفيذ"
+      },
+      "scope": "refunds",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": "<=",
+          "value": 3000,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "المبالغ اللي فوق 3000 جنيه لازم تتراجع من فريق خدمة العملاء قبل ما تترد. هحوّل طلبك ليهم دلوقتي.",
+        "en": "Refunds above EGP 3,000 need approval from our customer care team. I'm passing your request to them now."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-REFUND-STATUS",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s5",
+        "quote": "يمكن رد المبلغ فقط للطلبات التي تم استلامها أو إرجاعها أو إلغاؤها قبل الشحن."
+      },
+      "scope": "refunds",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "delivered",
+            "returned",
+            "cancelled"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "الطلب لسه في الطريق، فمينفعش نرد المبلغ غير لما يوصل أو يرجع للمخزن.",
+        "en": "The order is still in transit; a refund is possible once it is delivered or returned to the warehouse."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-ADDRESS-BEFORE-SHIP",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s5",
+        "quote": "The delivery address can be changed only while the order status is pending or processing."
+      },
+      "scope": "shipping",
+      "action": "update_delivery_address",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "pending",
+            "processing"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "الطلب اتشحن خلاص فمينفعش أغير العنوان. تقدر ترفض الاستلام وتعمل طلب جديد بالعنوان الصح.",
+        "en": "The order has already shipped, so the address can't be changed. You can refuse the delivery and place a new order."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-CANCEL-BEFORE-SHIP",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s8",
+        "quote": "An order can be cancelled free of charge before it is shipped. After shipping, cancellation is handled by the customer care team"
+      },
+      "scope": "shipping",
+      "action": "cancel_order",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "pending",
+            "processing"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "الطلب اتشحن، فالإلغاء دلوقتي بيتم عن طريق فريق خدمة العملاء. هحوّلك ليهم.",
+        "en": "The order has shipped, so cancellation is handled by our customer care team. I'm transferring you."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-VOUCHER-LATE-3D",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s6",
+        "quote": "If an order arrives more than 3 business days after the latest estimated delivery date, the customer receives a EGP 100 voucher for the next order."
+      },
+      "scope": "compensation",
+      "action": "apply_voucher",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_late",
+          "op": ">",
+          "value": 3,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "كوبون التأخير بيتصرف لما الطلب يتأخر أكتر من 3 أيام عمل عن آخر موعد متوقع، وده مش منطبق على طلبك.",
+        "en": "The late-delivery voucher applies when an order is more than 3 business days late, which is not the case here."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-VOUCHER-MAX-100",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s6",
+        "quote": "Requests for compensation above this amount are reviewed by the customer care team and are not approved by the chat assistant."
+      },
+      "scope": "compensation",
+      "action": "apply_voucher",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": "<=",
+          "value": 100,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "التعويض بأكتر من 100 جنيه لازم يتراجع من فريق خدمة العملاء. هحوّل طلبك ليهم.",
+        "en": "Compensation above EGP 100 must be reviewed by our customer care team. I'm passing your request on."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-TICKET-ALLOWED",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "faq",
+        "version": "v1",
+        "citation": "faq@v1#q01",
+        "quote": "فريق خدمة العملاء متاح يوميًا من 10 صباحًا حتى 10 مساءً، والمساعد الآلي متاح 24 ساعة."
+      },
+      "scope": "support",
+      "action": "create_ticket",
+      "applies_if": [],
+      "conditions": [],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "تم فتح تذكرة وفريق خدمة العملاء هيتابعها.",
+        "en": "A ticket has been opened and our team will follow up."
+      },
+      "approval_status": "approved",
+      "effective_date": "2026-09-01",
+      "approved_by": "team_a_policy_owner",
+      "approved_at": "2026-09-28T12:00:00Z"
+    },
+    {
+      "rule_id": "R-DEFECT-48H",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s6",
+        "quote": "إذا وصل المنتج تالفًا أو به عيب صناعة يجب إبلاغنا خلال 48 ساعة من الاستلام مع إرسال صور واضحة للمنتج والعيب."
+      },
+      "scope": "returns",
+      "action": "create_return",
+      "applies_if": [
+        {
+          "field": "item_condition",
+          "op": "in",
+          "value": [
+            "damaged_on_arrival",
+            "defective"
+          ],
+          "from": "facts"
+        }
+      ],
+      "conditions": [
+        {
+          "field": "hours_since_delivery",
+          "op": "<=",
+          "value": 48,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "استرجاع المنتجات التالفة بيكون مجاني لو اتبلّغ عنه خلال 48 ساعة من الاستلام.",
+        "en": "Damaged items qualify for free return shipping when reported within 48 hours of delivery."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01"
+    }
+  ]
+}

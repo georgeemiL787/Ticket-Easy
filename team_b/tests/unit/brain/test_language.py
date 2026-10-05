@@ -149,6 +149,6 @@ def test_load_lexicon_ignores_keys_it_does_not_own(tmp_path: object) -> None:
     from pathlib import Path
 
     path = Path(str(tmp_path)) / "lex.json"
-    path.write_text('{"arabizi_tokens": ["Yalla"], "yes": ["aywa"]}', encoding="utf-8")
+    path.write_text('{"arabizi_tokens": ["Yalla"], "something_else": ["aywa"]}', encoding="utf-8")
     assert load_lexicon(path).arabizi_tokens == frozenset({"yalla"})
     assert (PROJECT_ROOT / "data" / "lexicon" / "default.json").is_file()

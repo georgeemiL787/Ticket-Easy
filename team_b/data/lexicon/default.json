@@ -1,35 +1,400 @@
 {
-  "description": "Word lists shared by every business. Matching is on normalized text (see brain/text.py). Each step reads only the keys it owns.",
+  "description": "Word lists shared by every business, written per style (en, ar = Egyptian Arabic, arabizi, mixed = code-switched). Matching is on normalized text (brain/text.py): case, alef/yaa/taa-marbuta variants and diacritics do not matter, and Arabic words match with one attached prefix letter. Each step reads only the keys it owns.",
   "arabizi_tokens": [
-    "ana", "enta", "inta", "enti", "inti", "enty", "howa", "hwa", "heya", "hya",
-    "ezay", "ezzay", "izay", "izzay", "ezayak", "ezayek", "ezzayak", "ezayko",
-    "feen", "fein", "fen", "emta", "imta", "emty", "leh", "leeh", "lih",
-    "haga", "hagat", "hagaat", "kteer", "kter", "ktir", "awi", "awy", "gedan", "giddan", "gdn", "bgd",
-    "tamam", "tmam", "tamaam", "mashi", "mashy", "mashee", "tayeb", "tayyeb", "tayb", "tyb",
-    "aywa", "ayowa", "aiwa", "aywah", "ayoa", "eywa",
-    "mesh", "msh", "mish", "moush", "mosh",
-    "da", "dah", "deh", "dih",
-    "el", "elly", "elli", "illi", "elle", "mn",
-    "ma3lesh", "malesh", "maaleesh", "maalesh", "ma3leesh",
-    "shokran", "shukran", "afwan", "gazilan", "gazeelan", "fadlak", "fadlek", "samaht", "samahet", "samahti",
-    "yaani", "yani", "y3ni", "ya3ni", "khalas", "5alas", "bas", "kaman", "kman", "bardo", "bardu", "brdo",
-    "keda", "kda", "kdh", "kedah",
+    "ana", "enta", "inta", "enti", "inti", "enty", "howa", "hwa", "heya", "hya", "ezay", "ezzay", "izay", "izzay",
+    "ezayak", "ezayek", "ezzayak", "ezayko", "feen", "fein", "fen", "emta", "imta", "emty", "leh", "leeh", "lih",
+    "haga", "hagat", "hagaat", "kteer", "kter", "ktir", "awi", "awy", "gedan", "giddan", "gdn", "bgd", "tamam",
+    "tmam", "tamaam", "mashi", "mashy", "mashee", "tayeb", "tayyeb", "tayb", "tyb", "aywa", "ayowa", "aiwa",
+    "aywah", "ayoa", "eywa", "mesh", "msh", "mish", "moush", "mosh", "da", "dah", "deh", "dih", "el", "elly",
+    "elli", "illi", "elle", "mn", "ma3lesh", "malesh", "maaleesh", "maalesh", "ma3leesh", "shokran", "shukran",
+    "afwan", "gazilan", "gazeelan", "fadlak", "fadlek", "samaht", "samahet", "samahti", "yaani", "yani", "y3ni",
+    "ya3ni", "khalas", "5alas", "bas", "kaman", "kman", "bardo", "bardu", "brdo", "keda", "kda", "kdh", "kedah",
     "lessa", "lsa", "lesa", "lw", "bokra", "bokrah", "bukra", "yalla", "yala", "ahlan", "ahla", "salam", "sallam",
     "momken", "mumken", "momkn", "mmkn", "mafeesh", "mafish", "mfish", "mafiish", "mawgod", "mawgood", "mawgoda",
-    "shwaya", "shwayet", "hena", "henak", "hnak", "kollo", "kolo",
-    "talab", "talabat", "talabi", "ordery", "flousi", "felousy", "flos", "floos", "fulus", "felos", "flouss",
-    "bta3i", "bta3ty", "bta3k", "beta3", "beta3y", "bta3", "bta3et", "betaa3", "btaai",
-    "wasal", "wasl", "wsl", "wasalny", "wasalni", "tawsil", "tawseel", "tawsel", "shehna", "shehn", "shahn",
-    "a3mel", "a3ml", "ab3at", "ab3t", "araga3", "araga3o", "raga3", "rga3", "rag3", "a8ayar", "a8yar", "a3raf", "a3rf",
-    "3ayez", "3ayz", "3ayza", "3ayzah", "3awez", "3awz", "3awza", "ayez", "ayza", "3ayzeen", "3ayzin",
-    "3andy", "3ndy", "3andi", "3ndi", "3ndk", "3ando", "ma3ndeesh", "ma3ndish",
-    "et2akhar", "et2khar", "etakhar", "t2khar", "ta2akhar", "ta2khar",
-    "dlw2ty", "dilwa2ty", "delwa2ty", "delwa2ti", "dilwaqty",
-    "mkalemnish", "mekalemnish", "mkalmnish",
-    "la2", "la2a", "laa", "ah", "aah", "aha", "ahh",
-    "montag", "montage", "montaga", "talabak", "talabek", "talabko", "sa3a", "sa3at", "yom", "ayam",
-    "3enwan", "3anwan", "3unwan", "3enwany", "ta3ala", "ta3ali", "ta3alo", "yarab", "inshallah", "inshaallah", "mashallah",
-    "bokra", "embare7", "elnaharda", "enharda", "nharda", "naharda", "elnahar"
+    "shwaya", "shwayet", "hena", "henak", "hnak", "kollo", "kolo", "talab", "talabat", "talabi", "ordery", "flousi",
+    "felousy", "flos", "floos", "fulus", "felos", "flouss", "bta3i", "bta3ty", "bta3k", "beta3", "beta3y", "bta3",
+    "bta3et", "betaa3", "btaai", "wasal", "wasl", "wsl", "wasalny", "wasalni", "tawsil", "tawseel", "tawsel",
+    "shehna", "shehn", "shahn", "a3mel", "a3ml", "ab3at", "ab3t", "araga3", "araga3o", "raga3", "rga3", "rag3",
+    "a8ayar", "a8yar", "a3raf", "a3rf", "3ayez", "3ayz", "3ayza", "3ayzah", "3awez", "3awz", "3awza", "ayez",
+    "ayza", "3ayzeen", "3ayzin", "3andy", "3ndy", "3andi", "3ndi", "3ndk", "3ando", "ma3ndeesh", "ma3ndish",
+    "et2akhar", "et2khar", "etakhar", "t2khar", "ta2akhar", "ta2khar", "dlw2ty", "dilwa2ty", "delwa2ty", "delwa2ti",
+    "dilwaqty", "mkalemnish", "mekalemnish", "mkalmnish", "la2", "la2a", "laa", "ah", "aah", "aha", "ahh", "montag",
+    "montage", "montaga", "talabak", "talabek", "talabko", "sa3a", "sa3at", "yom", "ayam", "3enwan", "3anwan",
+    "3unwan", "3enwany", "ta3ala", "ta3ali", "ta3alo", "yarab", "inshallah", "inshaallah", "mashallah", "bokra",
+    "embare7", "elnaharda", "enharda", "nharda", "naharda", "elnahar"
   ],
-  "arabizi_ignore_note": "Words that are also common English words (la, me, we, men, law, ya, al, ok) are left out on purpose."
+  "intents": {
+    "greeting": {
+      "en": [
+        "hello", "hi", "hey", "good morning", "good evening", "good afternoon", "thanks", "thank you", "thx", "bye",
+        "goodbye", "see you"
+      ],
+      "ar": [
+        "السلام عليكم", "سلام عليكم", "اهلا", "اهلا بيك", "مرحبا", "صباح الخير", "مساء الخير", "شكرا", "شكرا ليك",
+        "شكرا ليكم", "تسلم", "مع السلامة", "يسلمو"
+      ],
+      "arabizi": [
+        "ahlan", "ahlan bik", "ezayak", "ezayek", "ezzayak", "salam", "salam 3alaykom", "sabah el kheir",
+        "masa2 el kheir", "shokran", "shukran", "tslm", "ma3 el salama", "m3 el salama"
+      ],
+      "mixed": [
+        "hello يا", "hi يا", "thanks يا", "thank you يا"
+      ]
+    },
+    "policy_question": {
+      "en": [
+        "policy", "policies", "return policy", "refund policy", "shipping policy", "return window", "how many days",
+        "how long", "how much is shipping", "shipping cost", "shipping fee", "shipping fees", "delivery time",
+        "delivery fee", "delivery fees", "delivery cost", "cash on delivery", "payment methods", "payment options",
+        "exchange policy", "do you ship", "outside egypt", "gift wrap", "gift wrapping", "loyalty points",
+        "working hours", "opening hours", "customer service hours"
+      ],
+      "ar": [
+        "سياسة", "سياسه الاسترجاع", "سياسة الاسترجاع", "سياسة الاستبدال", "سياسة الشحن", "مدة الاسترجاع",
+        "مده الاسترجاع", "كام يوم", "بعد كام يوم", "الشحن بكام", "مصاريف الشحن", "مصروفات الشحن", "تكلفة الشحن",
+        "تكلفه الشحن", "مدة التوصيل", "مواعيد التوصيل", "الدفع عند الاستلام", "طرق الدفع", "تغليف هدايا", "تغليف هديه",
+        "نقاط الولاء", "بتشحنوا", "تشحنوا", "مواعيد العمل", "مواعيد الشغل"
+      ],
+      "arabizi": [
+        "policy", "siyasa", "siyasit el estrga3", "siyaset el estrga3", "kam yom", "ba3d kam yom", "el shahn bekam",
+        "shahn bekam", "masrouf el shahn", "masarif el shahn", "ta2leef el shahn", "el dafa3 3and el estlam",
+        "dafa3 3and el estlam", "toro2 el dafa3", "ta8leef hadaya", "ne2at el wala2", "mawa3id el 3amal", "bteshnou",
+        "beteshnu"
+      ],
+      "mixed": [
+        "الـ policy", "سياسة الـ return", "سياسة الـ refund", "مدة الـ delivery", "الـ shipping cost",
+        "مصاريف الـ shipping", "cash on delivery بتاع"
+      ]
+    },
+    "order_status": {
+      "en": [
+        "where is my order", "wheres my order", "where's my order", "where is my package", "where is my parcel",
+        "where is it", "track my order", "track order", "tracking", "order status", "status of my order",
+        "delivery status", "when will my order arrive", "when will it arrive", "when is my order coming",
+        "has my order shipped", "hasn't arrived", "hasnt arrived", "has not arrived", "did not arrive", "didnt arrive",
+        "not arrived", "still waiting for my order"
+      ],
+      "ar": [
+        "فين الاوردر", "فين الاوردر بتاعي", "الاوردر فين", "الاوردر بتاعي فين", "الاوردر وصل فين", "وصل فين",
+        "فين الطلب", "الطلب فين", "فين طلبي", "طلبي فين", "اوردري فين", "فين اوردري", "تتبع", "حالة الاوردر",
+        "حاله الاوردر", "حالة الطلب", "حاله الطلب", "امتي هيوصل", "الاوردر هيوصل امتي", "هيوصل امتي", "لسه موصلش",
+        "لسه مجاش", "موصلش", "مجاش"
+      ],
+      "arabizi": [
+        "feen el order", "el order feen", "order feen", "feen order", "a3raf feen", "3ayez a3raf feen", "wasal feen",
+        "el order wasal feen", "feen talabi", "talabi feen", "feen el talab", "tracking", "el order lessa",
+        "lessa mawsalsh", "mawsalsh", "emta hayosal", "emta haywsal", "emta el order", "el order emta"
+      ],
+      "mixed": [
+        "فين الـ order", "الـ order فين", "الـ order وصل فين", "فين الـ package", "فين الـ parcel",
+        "الـ tracking number", "tracking number", "الـ status بتاع", "الـ tracking"
+      ]
+    },
+    "return_request": {
+      "en": [
+        "return", "return it", "send back", "send it back", "give it back", "want to return", "return the item",
+        "return my order", "returning"
+      ],
+      "ar": [
+        "ارجع", "ارجعه", "ارجعها", "ارجع المنتج", "ارجاع", "استرجاع", "استرجع", "ترجيع", "رجع المنتج", "ارجع الاوردر",
+        "ارجاع المنتج", "ارجع الطلب"
+      ],
+      "arabizi": [
+        "araga3", "arga3", "araga3o", "aragga3", "raga3", "estrga3", "estirgaa3", "estergaa3", "a3mel return",
+        "a3ml return", "araga3 el montag", "arga3 el montag", "raga3 el montag"
+      ],
+      "mixed": [
+        "اعمل return", "عايز return", "اعمل returns", "return للمنتج", "return للاوردر", "اعمل ارجاع"
+      ]
+    },
+    "exchange_request": {
+      "en": [
+        "exchange", "swap", "replace it", "replacement", "different size", "bigger size", "smaller size",
+        "another size", "other size", "different colour", "different color", "other color", "other colour",
+        "change the size", "change size", "change the colour", "change the color"
+      ],
+      "ar": [
+        "ابدل", "ابدّل", "استبدال", "استبدل", "تبديل", "بدل المنتج", "اغير المقاس", "غير المقاس", "مقاس تاني",
+        "مقاس تانى", "لون تاني", "لون تانى", "تغيير المقاس", "تغيير اللون"
+      ],
+      "arabizi": [
+        "abdel", "abaddel", "abadel", "estebdal", "estebdl", "a8ayar el ma2as", "a8yar el ma2as", "a8ayar el size",
+        "ma2as tany", "lon tany", "ghayar el ma2as", "taghyeer el ma2as", "3ayza abdel", "3ayez abdel"
+      ],
+      "mixed": [
+        "اعمل exchange", "عايز exchange", "exchange للـ size", "exchange للمنتج", "اغير الـ size", "اغير الـ color",
+        "size تاني", "color تاني"
+      ]
+    },
+    "refund_request": {
+      "en": [
+        "refund", "money back", "get my money back", "want my money back", "reimburse", "reimbursement",
+        "give me my money"
+      ],
+      "ar": [
+        "استرداد", "رد المبلغ", "رد فلوس", "رد الفلوس", "ارجع فلوسي", "رجعوا فلوسي", "رجعولي فلوسي", "ردوا فلوسي",
+        "فلوسي", "الفلوس", "استرجاع فلوس", "استرجاع المبلغ", "استرجاع الفلوس"
+      ],
+      "arabizi": [
+        "flousi", "floosi", "felousy", "flosy", "flos", "rag3ouly flousi", "raga3ly felousy", "rg3ly flousi",
+        "rag3o felousy", "ardd flousi", "estrdad", "estirdad", "el flous", "el floos", "el felous"
+      ],
+      "mixed": [
+        "refund للاوردر", "refund ده", "اعمل refund", "عايز refund", "الـ refund", "رد الـ refund"
+      ]
+    },
+    "cancel_order": {
+      "en": [
+        "cancel", "cancel my order", "cancel it", "cancel the order", "call off", "cancellation"
+      ],
+      "ar": [
+        "الغي", "الغيه", "الغيها", "الغاء", "الغاء الاوردر", "الغي الاوردر", "لغي", "لغي الاوردر", "الغي الطلب"
+      ],
+      "arabizi": [
+        "alghy", "algy", "alghi", "elghy", "alghee", "elghaa", "elgha2", "alghy el order", "a3mel cancel", "a3ml cancel"
+      ],
+      "mixed": [
+        "اعمل cancel", "عايز cancel", "cancel للاوردر", "cancel للطلب", "الـ cancellation"
+      ]
+    },
+    "change_address": {
+      "en": [
+        "change the address", "change my address", "change the delivery address", "change delivery address",
+        "update the address", "update my address", "update the delivery address", "new address", "wrong address",
+        "different address", "address change", "deliver to another address", "deliver it to a different address"
+      ],
+      "ar": [
+        "اغير عنوان", "اغير العنوان", "تغيير العنوان", "تغيير عنوان", "غير العنوان", "عنوان التوصيل", "العنوان الجديد",
+        "عنوان جديد", "العنوان غلط", "العنوان الغلط", "عنوان تاني"
+      ],
+      "arabizi": [
+        "a8ayar el 3enwan", "a8yar el 3enwan", "a8ayar 3enwan", "3enwan gdid", "el 3enwan el gdid", "el 3enwan gdeed",
+        "el 3enwan", "3enwan", "ghayar el 3enwan", "taghyeer el 3enwan"
+      ],
+      "mixed": [
+        "اغير الـ address", "الـ address بتاع", "الـ address الجديد", "change الـ address", "address جديد",
+        "غير الـ address"
+      ]
+    },
+    "voucher_request": {
+      "en": [
+        "voucher", "coupon", "compensation", "compensate", "compensated", "discount for the delay",
+        "discount for the delivery delay"
+      ],
+      "ar": [
+        "كوبون", "قسيمة", "قسيمه", "تعويض", "عايز تعويض", "خصم عشان التاخير", "خصم للتاخير"
+      ],
+      "arabizi": [
+        "kobon", "coupon", "couponat", "ta3weed", "ta3wid", "ta3wed", "3ayez ta3weed", "fi kobon"
+      ],
+      "mixed": [
+        "عايز voucher", "voucher عشان التأخير", "عايز coupon", "الـ voucher", "الـ coupon", "الـ compensation"
+      ]
+    },
+    "complaint": {
+      "en": [
+        "complaint", "complain", "file a complaint", "report a problem", "bad service", "terrible service",
+        "poor service", "not satisfied", "unsatisfied", "unhappy with", "rude courier", "rude driver", "rude delivery"
+      ],
+      "ar": [
+        "شكوى", "شكوي", "اشتكي", "اشتكى", "اقدم شكوى", "اقدم شكوي", "خدمة وحشة", "خدمه وحشه", "مش راضي", "مش راضيه",
+        "المندوب وحش", "المندوب مش محترم"
+      ],
+      "arabizi": [
+        "shakwa", "shakwy", "ashtaky", "ashtaki", "a2adem shakwa", "a2dm shakwa", "khedma wehsha", "khedma wesekha",
+        "msh radi", "mesh radi", "mesh 3agebny", "msh 3agebny", "el mandoob wehesh"
+      ],
+      "mixed": [
+        "عايز اعمل complaint", "complaint على", "اقدم complaint", "الـ complaint"
+      ]
+    },
+    "human_request": {
+      "en": [
+        "talk to a human", "talk to a person", "talk to someone", "speak to a human", "speak to a person",
+        "speak to someone", "speak with a human", "a human agent", "human agent", "real person", "real human",
+        "live agent", "live person", "customer service", "customer care", "customer support", "an agent", "the manager",
+        "a manager", "representative", "connect me to"
+      ],
+      "ar": [
+        "اكلم حد", "اكلم موظف", "اكلم شخص", "حد من خدمة العملاء", "حد من خدمه العملاء", "خدمة العملاء", "خدمه العملاء",
+        "موظف", "موظفة", "مندوب خدمة", "عايز بني ادم", "المدير", "مسؤول", "مسئول", "كلموني حد"
+      ],
+      "arabizi": [
+        "akalem mowazaf", "akalem 7ad", "akalem 7ad men khedmet el 3omala", "mowazaf", "mowaz3", "khedmet el 3omala",
+        "khedmet el 3omala2", "khedma 3omala", "7ad men el khedma", "3ayez bani adam", "el modeer", "mas2ool",
+        "mo3ayen", "7ad yekalemny"
+      ],
+      "mixed": [
+        "اكلم agent", "عايز agent", "عايز اتكلم مع human", "customer service لو سمحت", "اكلم الـ agent", "اكلم support"
+      ]
+    }
+  },
+  "want_markers": {
+    "en": [
+      "i want", "i need", "i would like", "i'd like", "id like", "i wanna", "i'd want", "please", "pls", "plz",
+      "kindly"
+    ],
+    "ar": [
+      "عايز", "عايزة", "عاوز", "عاوزة", "محتاج", "محتاجة", "نفسي", "ياريت", "يا ريت", "لو سمحت", "من فضلك", "ارجوك"
+    ],
+    "arabizi": [
+      "3ayez", "3ayz", "3ayza", "3ayzah", "3awez", "3awz", "3awza", "ayez", "ayza", "mehtag", "me7tag", "nefsi",
+      "yarait", "law samaht", "men fadlak", "plz"
+    ],
+    "mixed": [
+      "عايز اعمل", "عايز اطلب", "please يا"
+    ]
+  },
+  "question_markers": {
+    "en": [
+      "?", "how", "what", "when", "where", "which", "who", "why", "can i", "could i", "may i", "is it possible",
+      "do you", "does it", "does the", "are you", "are there", "is there", "how many", "how long", "how much",
+      "can you tell"
+    ],
+    "ar": [
+      "ازاي", "ايه", "امتي", "فين", "كام", "هل", "ممكن", "ينفع", "هينفع", "مين", "ليه", "كيف", "متي", "كم", "ازاى"
+    ],
+    "arabizi": [
+      "ezay", "ezzay", "izay", "eh", "eih", "emta", "imta", "feen", "kam", "hal", "momken", "yenfa3", "yanfa3", "leh",
+      "lih", "meen"
+    ],
+    "mixed": [
+      "how يا", "ممكن اعرف", "ينفع اعمل"
+    ]
+  },
+  "policy_timing_markers": {
+    "en": [
+      "how many days", "how long", "how soon", "within how many days", "after how many days", "how much time",
+      "what is the deadline", "time limit"
+    ],
+    "ar": [
+      "كام يوم", "بعد كام", "كام ساعة", "كام ساعه", "مدة", "مده", "المدة", "المده", "الوقت المسموح", "اخر موعد"
+    ],
+    "arabizi": [
+      "kam yom", "ba3d kam", "emta a2dar", "emta momken", "kam sa3a", "moddet", "modet", "akher maw3ed"
+    ],
+    "mixed": [
+      "بعد كام يوم من الـ", "كام يوم من الـ", "how many days بعد"
+    ]
+  },
+  "yes": {
+    "en": [
+      "yes", "yeah", "yep", "yup", "ok", "okay", "sure", "go ahead", "confirm", "confirmed", "proceed", "do it",
+      "that is right", "thats right", "correct", "please do", "alright"
+    ],
+    "ar": [
+      "ايوه", "ايوة", "اه", "ايوا", "اي", "تمام", "ماشي", "موافق", "اكيد", "طبعا", "ايوه عايز", "اتفضل نفذ", "نفذ",
+      "اكد", "اوكي", "اوك", "صح", "تمام كده"
+    ],
+    "arabizi": [
+      "ah", "aah", "aywa", "aywah", "ayowa", "aiwa", "tamam", "tmam", "mashi", "mashy", "mwafe2", "akeed", "aked",
+      "tab3an", "nafez", "nafezha", "okey"
+    ],
+    "mixed": [
+      "yes تمام", "ok تمام", "ok ماشي", "ايوه yes"
+    ]
+  },
+  "no": {
+    "en": [
+      "no", "nope", "nah", "not now", "cancel that", "dont", "don't", "do not", "stop", "never mind", "nevermind",
+      "forget it", "i changed my mind", "not really", "no thanks", "no thank you", "mesh 3ayez"
+    ],
+    "ar": [
+      "لا", "لأ", "لاء", "مش عايز", "مش عايزة", "مش عاوز", "مش موافق", "بلاش", "خلاص بلاش", "مش دلوقتي", "غيرت رايي",
+      "مش عايز كده", "الغي ده"
+    ],
+    "arabizi": [
+      "la2", "la2a", "laa", "la", "mesh 3ayez", "msh 3ayez", "mish 3ayez", "moush 3ayez", "msh 3awez", "balash",
+      "balash keda", "khalas balash", "msh dlw2ty", "mesh dilwa2ty", "ghayart ra2yi"
+    ],
+    "mixed": [
+      "no شكرا", "no thanks يا", "لا no", "لا thanks"
+    ]
+  },
+  "filler": {
+    "en": [
+      "please", "pls", "plz", "thanks", "thank you", "thx", "now", "then", "sir", "madam", "ma'am", "you", "it",
+      "that", "this", "thanks a lot"
+    ],
+    "ar": [
+      "لو سمحت", "من فضلك", "شكرا", "يا", "ده", "دي", "كده", "دلوقتي", "يا فندم", "فندم", "يا باشا", "يا هندسة"
+    ],
+    "arabizi": [
+      "plz", "shokran", "shukran", "ya", "da", "dah", "di", "deh", "keda", "kda", "dilwa2ty", "dlw2ty", "ya fandem",
+      "fandem", "ya basha"
+    ],
+    "mixed": [
+      "please يا", "thanks يا"
+    ]
+  },
+  "human_markers": {
+    "en": [
+      "human", "agent", "person", "someone", "manager", "representative", "operator", "customer service",
+      "customer care", "support"
+    ],
+    "ar": [
+      "موظف", "موظفة", "حد", "شخص", "بني ادم", "مدير", "المدير", "خدمة العملاء", "خدمه العملاء", "مسؤول", "مسئول"
+    ],
+    "arabizi": [
+      "mowazaf", "7ad", "had", "shakhs", "bani adam", "modeer", "el modeer", "khedmet el 3omala", "khedma 3omala",
+      "mas2ool"
+    ],
+    "mixed": [
+      "agent", "human", "support", "customer service"
+    ]
+  },
+  "negation": {
+    "en": [
+      "don't", "dont", "do not", "doesn't", "doesnt", "not", "no", "never", "without", "no need to"
+    ],
+    "ar": [
+      "مش", "مو", "بلاش", "لا", "مبقاش", "مش عايز", "مفيش داعي"
+    ],
+    "arabizi": [
+      "msh", "mesh", "mish", "moush", "mosh", "balash", "la2", "la2a", "mafeesh da3y"
+    ],
+    "mixed": [
+      "no", "not", "مش", "لا"
+    ]
+  },
+  "frustration": {
+    "strong": {
+      "en": [
+        "ridiculous", "worst", "furious", "fed up", "sick of", "unacceptable", "terrible", "horrible", "disgusting",
+        "awful", "hate", "stupid", "incompetent", "worst service", "so angry", "very angry", "extremely angry",
+        "i am angry", "im angry", "never again", "joke"
+      ],
+      "ar": [
+        "مش معقول", "اسوا", "اسوأ", "وحش جدا", "وحشة جدا", "قرفتوني", "زهقت", "زهقتوني", "هتجنن", "غبي", "غبية",
+        "بجد قرف", "قرف", "نصب", "مهزلة", "مهزله", "عيب عليكم", "مستحيل كده"
+      ],
+      "arabizi": [
+        "msh ma3ool", "mesh ma3ool", "mesh m3a2ool", "msh m3a2ool", "asw2", "aswa2", "afsha", "afsha khedma", "zah2t",
+        "zaha2t", "zahe2t", "3eeb 3alekom", "mohzela", "2araf", "2arafto"
+      ],
+      "mixed": [
+        "worst يا", "ridiculous يا", "اسوأ service", "مش معقول ridiculous", "terrible service زهقت"
+      ]
+    },
+    "medium": {
+      "en": [
+        "already asked", "already told", "already said", "again", "still waiting", "still no", "why is it so slow",
+        "why so slow", "annoyed", "annoying", "disappointed", "frustrated", "useless", "no one answers",
+        "nobody answers", "nobody is helping", "not helpful", "waste of time", "how many times", "i told you",
+        "you keep"
+      ],
+      "ar": [
+        "محدش بيرد", "محدش كلمني", "محدش بيساعد", "قلتلكم", "قلتلك", "كام مرة", "لسه", "تاني", "زعلان", "زعلانة",
+        "متضايق", "متضايقة", "مفيش فايدة", "ملهوش لازمة", "مضيعة وقت", "مضيعه وقت", "مش بيرد"
+      ],
+      "arabizi": [
+        "mafeesh 7ad byrod", "mafish 7ad byrod", "mafeesh 7ad byrod 3alaya", "mo7ad byrod", "2olt", "2oltelkom",
+        "kam mara", "lessa", "tany", "zo3lan", "zan3lan", "mot2ayee2", "mot2ay2", "mafeesh fayda", "mafish fayda",
+        "mad3at wa2t", "mesh byrod"
+      ],
+      "mixed": [
+        "useless يا", "لسه waiting", "محدش بيرد useless"
+      ]
+    }
+  }
 }

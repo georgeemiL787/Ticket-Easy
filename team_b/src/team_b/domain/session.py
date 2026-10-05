@@ -7,6 +7,7 @@ from pydantic import Field, model_validator
 
 from team_b.domain.actions import ActionProposal
 from team_b.domain.base import FrozenModel, MutableModel
+from team_b.domain.decision import EscalationReason
 from team_b.domain.understanding import Language
 
 MessageRole = Literal["customer", "agent", "human_agent", "system"]
@@ -46,6 +47,8 @@ class SessionState(MutableModel):
     turn_index: int = Field(default=0, ge=0)
     active_intent: str | None = None
     intent_queue: list[str] = Field(default_factory=list)
+    intents_seen: list[str] = Field(default_factory=list)  # every intent of this conversation, in order, no repeats
+    last_escalation: EscalationReason | None = None
     slots: dict[str, str] = Field(default_factory=dict)  # details collected so far (order_id, phone, ...)
     awaiting: str | None = None  # what the agent waits for next, e.g. slot:phone, confirmation, human
     facts: dict[str, Any] = Field(default_factory=dict)  # real facts from the shop, never customer-supplied

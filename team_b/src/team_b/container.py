@@ -17,6 +17,7 @@ from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
 from team_b.brain.orchestrator import Orchestrator
+from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
 from team_b.ports import (
@@ -81,10 +82,18 @@ def build_container(settings: Settings) -> Container:
         shop=shop,
         policy_search=policy_search,
     )
+    summarizer: HistorySummarizer = (
+        LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
+    )
     return replace(
         container,
         orchestrator=Orchestrator(
-            clock=clock, tenants=tenants, sessions=container.sessions, traces=container.traces, cases=container.cases
+            clock=clock,
+            tenants=tenants,
+            sessions=container.sessions,
+            traces=container.traces,
+            cases=container.cases,
+            summarizer=summarizer,
         ),
     )
 

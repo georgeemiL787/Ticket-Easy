@@ -1,0 +1,18 @@
+{
+  "greeting": "Ahlan beek! a2dar asa3dak ezay?",
+  "thanks": "El 3afw! te7eb asa3dak fe 7aga tanya?",
+  "ask_rephrase": "Momken twadda7ly aktar me7tag mosa3da fe eh?",
+  "ask_order_id": "Tamam, a2dar asa3dak fe da. eh ra2am el order?",
+  "ask_phone": "Shokran. 3ashan at2akked enaha 7adretak, ab3atly ra2am el telephone el mosajjal 3ala el order.",
+  "ask_item": "Da bekhosos anhy montag?",
+  "ask_reason": "Eh el sabab? kelmetein kefaya.",
+  "ask_amount": "Eh el mablagh el matloub?",
+  "ask_new_address": "Eh 3enwan el tawseel el gedeed?",
+  "ask_description": "Momken twasafly el moshkela fe kelmetein?",
+  "ask_generic": "Momken te2olly {slot}?",
+  "disambiguate_intent": "Te2sod {a} wala {b}? momken te2ol el awel aw el tany.",
+  "disambiguate_order": "Te2sod anhy order?\n{orders}\nMomken te2ol el awel aw el tany, aw tebba3atly ra2am el order.",
+  "lookup_failed": "Ma3raftesh agib el ma3loma di delwa2ty. Garrab tany kamen shwaya.",
+  "unsupported": "Asef, da mesh 7aga a2dar a3melha hena, bas zameel men el fari2 ye2dar.",
+  "dependency_down": "Goz2 men el system mesh shaghal delwa2ty fa ma2darsh a3mel da 7alan. Garrab tany ba3d shwaya."
+}

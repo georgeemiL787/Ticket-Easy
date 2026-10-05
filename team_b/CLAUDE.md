@@ -56,7 +56,7 @@ team_b/
                  rejects any new number/date/month/id/currency/link/citation/time word and any dropped one -> the template is sent;
                  policy passages are appended after the rewrite, never sent to the model; trace step 'rewrite' + versions.rewrite_prompt)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
-                 {placeholders}; texts in data/locales/{en,ar,arabizi}.json, flat, 58 keys, same keys everywhere; keys: ask_<slot>,
+                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 58 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
@@ -139,3 +139,32 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 - Run the suite on SQLite: `TEAM_B_STORE=sqlite make test` (a temp database per test)
 - Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
 - Regenerate JSON Schemas after changing DecisionTrace, HandoffPackage, HandoffCase or AgentReply: `make schemas`
+
+## Ownership (two-person team)
+Track A (the agent that acts) owns: brain/identity.py, brain/lookup.py, brain/actions.py, brain/registry.py, brain/gates.py,
+brain/alerts.py, adapters/standins/shop.py, rule_checker.py, safety_screen.py, api/alerts.py, api/auth.py,
+data/locales/*/actions.json, tests/adversarial/, loadtest/, docker files, and tests named test_a_*.py.
+Track B owns: brain/knowledge.py, brain/handoff.py, brain/summarizer.py, brain/metrics.py, adapters/standins/policy_search.py,
+adapters/*_store.py, adapters/migrations/ (except files numbered for A), api/inbox.py, api/dashboard.py, web/inbox/, dashboard/,
+eval/, .github/workflows/, data/locales/*/knowledge.json and handoff.json, and tests named test_b_*.py.
+Shared: brain/orchestrator.py, domain/, contracts/, ports/, container.py, config.py, Makefile, CLAUDE.md,
+data/locales/*/core.json, tests/integration/test_scenarios.py.
+
+Rules:
+- Never change a stub's name, inputs or return type: the other track depends on it.
+- Edit shared files only by adding small pieces, and mention them in the commit message so the other person can spot them.
+- A scenario is activated only by its owner (the "owner" field: A, B, or sync = both), or by a sync prompt for "sync" ones.
+- If a task truly needs the other track's file, make the smallest change and list it in the report.
+
+Stubs (signatures are fixed; the orchestrator routes by intent kind through them):
+- brain/knowledge.py (B): `answer(ctx) -> Step`, `quote_for(ctx, query) -> list[Passage]`. Kind "knowledge".
+- brain/identity.py (A): `ensure_verified(ctx) -> Step | None`.
+- brain/lookup.py (A): `answer(ctx, intent_spec) -> Step`. Kind "lookup".
+- brain/actions.py (A): `handle(ctx, intent_spec) -> Step`, `on_confirmation(ctx, nlu) -> Step`. Kind "action"; a yes to a pending action.
+- brain/handoff.py (B): `open_case(ctx, reason, detail, pending_approval=None) -> case_id`; called by the handoff stage for every escalation.
+- Orchestrator human methods: `human_reply(case_id, agent, text)`, `human_decide(case_id, agent, approve, note=None)` (A, raises
+  NotImplementedError until built), `return_to_agent(case_id, agent, note=None)`, `resolve(case_id, agent, note=None)`,
+  `claim(case_id, agent)`, `release(case_id, agent)`. The case is found by id across the configured tenants.
+- domain/alerts.py: the `Alert` model (A fills the engine).
+Reply texts live in data/locales/<locale>/{core,actions,knowledge,handoff}.json; the composer merges them and rejects a key defined twice.
+Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ ask first (see adapters/migrations/README.md).

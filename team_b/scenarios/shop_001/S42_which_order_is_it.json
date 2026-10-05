@@ -2,6 +2,7 @@
   "id": "S42",
   "title": "A verified customer with several orders is shown them, masked, and picks one",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "Phase 2 (identity check with verify_customer, rule checker, confirmation and execution)",
   "setup": {
     "today": "2026-09-28"

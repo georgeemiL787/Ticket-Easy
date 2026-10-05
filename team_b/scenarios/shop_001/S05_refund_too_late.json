@@ -2,6 +2,7 @@
   "id": "S05",
   "title": "Refund 20 days after delivery is denied by R-REFUND-14D and handed to a human",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

@@ -2,6 +2,7 @@
   "id": "S30",
   "title": "Refund write with an unknown outcome: handoff, never claimed done or failed",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b action flow + result verification (uncertain write -> unverified_result)",
   "setup": {
     "today": "2026-09-28"

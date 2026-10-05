@@ -1,8 +1,8 @@
-"""The reply writer: every sentence the agent says, in the customer's style, from data/locales/<locale>.json.
+"""The reply writer: every sentence the agent says, in the customer's style, from data/locales/<locale>/*.json.
 
-The files are flat {key: text} with {placeholders}. PLACEHOLDERS is the contract between code and templates: for each
-key that takes values it names them, and a test checks every locale against it (so an Arabizi template cannot
-forget a number, and code cannot pass a value no template uses).
+Each locale is a folder of flat {key: text} files (core, actions, knowledge, handoff) with {placeholders}. PLACEHOLDERS
+is the contract between code and templates: for each key that takes values it names them, and a test checks every
+locale against it (so an Arabizi template cannot forget a number, and code cannot pass a value no template uses).
 
 Naming: ask_<slot>, confirm_action_<capability> (confirm_action_default as the fallback), status_<order status>,
 handoff_<escalation reason> (handoff_generic as the fallback).
@@ -43,6 +43,21 @@ PLACEHOLDERS: Mapping[str, frozenset[str]] = {
 }
 
 
+def load_locale(folder: Path) -> dict[str, str]:
+    """All the texts of one locale: the merge of every .json file in its folder. Duplicate keys are rejected."""
+    texts: dict[str, str] = {}
+    owner: dict[str, str] = {}
+    files = sorted(folder.glob("*.json"))
+    if not files:
+        raise FileNotFoundError(f"no locale files in {folder}")
+    for file in files:
+        for key, text in json.loads(file.read_text(encoding="utf-8")).items():
+            if key in texts:
+                raise ValueError(f"template {key!r} is defined in both {owner[key]} and {file.name} ({folder.name})")
+            texts[key], owner[key] = text, file.name
+    return texts
+
+
 def placeholders_in(template: str) -> frozenset[str]:
     """The {names} a template expects."""
     return frozenset(name for _, name, _, _ in string.Formatter().parse(template) if name)
@@ -57,7 +72,10 @@ class ResponseComposer:
 
     @classmethod
     def from_dir(cls, directory: Path = LOCALES_DIR) -> "ResponseComposer":
-        return cls({locale: json.loads((directory / f"{locale.value}.json").read_text("utf-8")) for locale in Locale})
+        """Load data/locales/<locale>/*.json (core, actions, knowledge, handoff) and merge each locale's files.
+
+        The same key in two files of one locale is an error: every sentence has exactly one owner."""
+        return cls({locale: load_locale(directory / locale.value) for locale in Locale})
 
     def keys(self, locale: Locale) -> frozenset[str]:
         return frozenset(self._texts[locale])

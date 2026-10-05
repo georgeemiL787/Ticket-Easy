@@ -2,6 +2,7 @@
   "id": "S07",
   "title": "A fraud report always goes to a human, urgently",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4a turn pipeline + safety screen stand-in (Phase 2)",
   "setup": {
     "today": "2026-09-28"

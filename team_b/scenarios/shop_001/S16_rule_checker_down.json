@@ -2,6 +2,7 @@
   "id": "S16",
   "title": "Rule checker unavailable: fail closed, handoff, nothing written",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "Phase 2 rule checker stand-in with a failure switch (inject plug rule_checker) + P1.4b action flow",
   "setup": {
     "today": "2026-09-28"

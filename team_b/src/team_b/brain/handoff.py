@@ -6,14 +6,14 @@ The full briefing (summaries, policy quotes, suggested wording) and the human ac
 """
 
 import uuid
-from datetime import datetime
 
 from team_b.brain.redaction import redact
+from team_b.brain.turn import TurnContext
+from team_b.domain.actions import ActionProposal
 from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import CustomerSnapshot, HandoffCase, HandoffPackage, Priority
+from team_b.domain.handoff import CustomerSnapshot, HandoffCase, HandoffPackage, PendingApproval, Priority
 from team_b.domain.session import SessionState
 from team_b.domain.trace import PolicyRecord
-from team_b.ports import CaseStore
 
 R = EscalationReason
 # reason -> (priority, what a human should do first)
@@ -59,20 +59,38 @@ def build_package(
 
 
 async def open_case(
-    cases: CaseStore, session: SessionState, reason: EscalationReason, summary: str, *, at: datetime
-) -> HandoffCase:
-    """Store a new open case for this conversation and mark the session as handed off."""
+    ctx: TurnContext,
+    reason: EscalationReason,
+    detail: str,
+    pending_approval: ActionProposal | None = None,
+) -> str:
+    """Store a new open case for this conversation, mark the session handed off, and return the case id.
+
+    `pending_approval` is the action a human must approve (reason approval_required); it is recorded on the case."""
+    session = ctx.session
+    waiting = (
+        PendingApproval(
+            proposal_id=pending_approval.proposal_id,
+            tool=pending_approval.tool,
+            capability=pending_approval.capability,
+            arguments=dict(pending_approval.arguments),
+            reason=detail,
+        )
+        if pending_approval is not None
+        else None
+    )
     case = HandoffCase(
         case_id=f"case-{uuid.uuid4().hex[:12]}",
         tenant_id=session.tenant_id,
         conversation_id=session.conversation_id,
-        package=build_package(session, reason, summary),
-        created_at=at,
-        updated_at=at,
+        package=build_package(session, reason, f"Handed off ({reason.value}): {detail}."),
+        pending_approval=waiting,
+        created_at=ctx.now,
+        updated_at=ctx.now,
     )
-    await cases.add(case)
+    await ctx.deps.cases.add(case)
     session.status = "handed_off"
     session.handoff_case_id = case.case_id
     session.last_escalation = reason
     session.handoff_notice_sent = False
-    return case
+    return case.case_id

@@ -2,6 +2,7 @@
   "id": "S28",
   "title": "Order id and +20 10 1234 5601 in one Arabizi message: verified in one turn",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

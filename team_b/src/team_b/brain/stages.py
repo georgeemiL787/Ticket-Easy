@@ -12,6 +12,7 @@ import time
 import uuid
 from dataclasses import replace
 
+from team_b.brain import actions
 from team_b.brain.choices import (
     MAX_ORDER_CHOICES,
     conflicting_pair,
@@ -21,7 +22,7 @@ from team_b.brain.choices import (
     says_both,
 )
 from team_b.brain.composer import default_composer
-from team_b.brain.handoff import open_case
+from team_b.brain.handoff import ESCALATION_DEFAULTS, open_case
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
@@ -164,13 +165,8 @@ async def pending_confirmation(ctx: TurnContext) -> str:
     has_new_topic = bool(understanding and understanding.intents)
 
     if answer == "yes":
-        # Executing is the job of the action flow, which is not built yet; never execute from here.
-        ctx.step = Step(
-            Decision.CLARIFY,
-            reason="the customer confirmed; executing actions is not built yet",
-            reply_key="ask_rephrase",
-            awaiting="detail",
-        )
+        assert understanding is not None
+        ctx.step = await actions.on_confirmation(ctx, understanding)  # Track A: re-check, execute, verify
         return f"yes to {proposal.tool}: handed to the action flow (not built yet)"
     if answer == "no" or has_new_topic:
         proposal.transition(
@@ -501,13 +497,8 @@ async def handoff(ctx: TurnContext) -> str:
     """A stage chose to escalate: open the case. (A stub: the real briefing is built by the handoff step.)"""
     step = ctx.step
     assert step is not None and step.escalation is not None
-    case = await open_case(
-        ctx.deps.cases,
-        ctx.session,
-        step.escalation,
-        f"Handed off ({step.escalation.value}): {step.reason}.",
-        at=ctx.now,
-    )
-    ctx.handoff_case_id = case.case_id
+    waiting = next((a for a in ctx.session.actions if a.state is ActionState.AWAITING_HUMAN), None)
+    case_id = await open_case(ctx, step.escalation, step.reason, pending_approval=waiting)
+    ctx.handoff_case_id = case_id
     ctx.step = replace(step, awaiting="human")
-    return f"case {case.case_id} opened ({case.package.priority})"
+    return f"case {case_id} opened ({ESCALATION_DEFAULTS[step.escalation][0]})"

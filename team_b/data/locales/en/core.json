@@ -1,0 +1,18 @@
+{
+  "greeting": "Hello! How can I help you today?",
+  "thanks": "You're welcome! Is there anything else I can help you with?",
+  "ask_rephrase": "Could you tell me a little more about what you need help with?",
+  "ask_order_id": "Sure, I can help with that. What is your order number?",
+  "ask_phone": "Thank you. To confirm that it is you, please send the phone number on the order.",
+  "ask_item": "Which item is this about?",
+  "ask_reason": "What is the reason? A few words are enough.",
+  "ask_amount": "What amount are you asking for?",
+  "ask_new_address": "What is the new delivery address?",
+  "ask_description": "Please describe the problem in a few words.",
+  "ask_generic": "Could you tell me your {slot}?",
+  "disambiguate_intent": "Do you want to {a} or {b}? You can say the first or the second.",
+  "disambiguate_order": "Which order do you mean?\n{orders}\nYou can say the first, the second, or send the order number.",
+  "lookup_failed": "I could not look that up right now. Please try again in a moment.",
+  "unsupported": "I'm sorry, I can't do that here, but a colleague can.",
+  "dependency_down": "Part of our system is not available right now, so I can't do that yet. Please try again shortly."
+}

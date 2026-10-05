@@ -2,6 +2,7 @@
   "id": "S34",
   "title": "Policy search down: no invented answer, handoff dependency_unavailable",
   "status": "pending",
+  "owner": "B",
   "pending_reason": "P1.4a pipeline + knowledge handler with upstream-failure handling",
   "setup": {
     "today": "2026-09-28"

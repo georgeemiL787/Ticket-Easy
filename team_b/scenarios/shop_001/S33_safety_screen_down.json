@@ -2,6 +2,7 @@
   "id": "S33",
   "title": "Safety screen down: policy question still answered, refund blocked and handed off",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "Phase 2 safety screen stand-in with a failure switch (inject plug safety_screen) + P1.4b action flow",
   "setup": {
     "today": "2026-09-28"

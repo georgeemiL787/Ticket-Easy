@@ -2,12 +2,29 @@
   "id": "S00",
   "title": "A greeting gets a valid reply and trace",
   "status": "active",
-  "setup": {"today": "2026-09-28"},
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
   "turns": [
     {
       "say": "Hello",
-      "expect": {"decision": "answer", "awaiting": null, "locale": "en", "escalation": null, "text_contains_any": ["Hello", "Hi"]}
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en",
+        "escalation": null,
+        "text_contains_any": [
+          "Hello",
+          "Hi"
+        ]
+      }
     }
   ],
-  "final": {"no_writes": true, "audit_count": 0, "case_reason": null, "trace_invariants": true}
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
 }

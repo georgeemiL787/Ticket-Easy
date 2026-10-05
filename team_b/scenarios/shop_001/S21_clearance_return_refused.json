@@ -2,6 +2,7 @@
   "id": "S21",
   "title": "Clearance item return is refused by R-RETURN-EXCLUDED",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

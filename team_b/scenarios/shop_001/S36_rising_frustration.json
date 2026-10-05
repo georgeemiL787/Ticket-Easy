@@ -2,6 +2,7 @@
   "id": "S36",
   "title": "Frustration rising over three turns ends in handoff high_frustration",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.3b understanding (frustration) + P1.4a pipeline",
   "setup": {
     "today": "2026-09-28"

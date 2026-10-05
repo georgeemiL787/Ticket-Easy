@@ -2,6 +2,7 @@
   "id": "S01",
   "title": "English return-window question is answered from return_policy v2",
   "status": "pending",
+  "owner": "B",
   "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
   "setup": {
     "today": "2026-09-28"

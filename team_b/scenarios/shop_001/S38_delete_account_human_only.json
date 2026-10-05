@@ -2,6 +2,7 @@
   "id": "S38",
   "title": "Delete my account is a human-only tool: handoff unsupported",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b action flow + permission gate (human-only and unlisted tools)",
   "setup": {
     "today": "2026-09-28"

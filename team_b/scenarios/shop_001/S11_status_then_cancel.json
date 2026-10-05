@@ -2,6 +2,7 @@
   "id": "S11",
   "title": "Where is my order and cancel it: status first, then confirmed cancellation",
   "status": "pending",
+  "owner": "sync",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

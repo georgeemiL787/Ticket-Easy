@@ -2,6 +2,7 @@
   "id": "S39",
   "title": "Handoff, the human returns the chat, the agent resumes remembering identity and order",
   "status": "pending",
+  "owner": "B",
   "pending_reason": "Phase 3 handoff (human actions) + P1.2a session handling",
   "setup": {
     "today": "2026-09-28"

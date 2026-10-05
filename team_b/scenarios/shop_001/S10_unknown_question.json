@@ -2,6 +2,7 @@
   "id": "S10",
   "title": "An unanswerable question: clarify once, then handoff no_evidence",
   "status": "pending",
+  "owner": "B",
   "pending_reason": "P1.4a pipeline + knowledge handler with the no-evidence path",
   "setup": {
     "today": "2026-09-28"

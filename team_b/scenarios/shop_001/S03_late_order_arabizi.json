@@ -2,6 +2,7 @@
   "id": "S03",
   "title": "Arabizi late order: order id, then phone, then status with the late-delivery policy",
   "status": "pending",
+  "owner": "sync",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

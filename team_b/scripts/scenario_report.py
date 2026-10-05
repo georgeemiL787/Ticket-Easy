@@ -10,7 +10,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from tests.integration.scenario_format import discover, load_scenario  # noqa: E402
 from tests.integration.scenario_runner import ScenarioResult, run_scenario  # noqa: E402
 
-COLUMNS = ("id", "title", "status", "result", "decision", "escalation")
+COLUMNS = ("id", "owner", "title", "status", "result", "decision", "escalation")
 
 
 async def run_all() -> list[ScenarioResult]:
@@ -18,7 +18,15 @@ async def run_all() -> list[ScenarioResult]:
 
 
 def row(r: ScenarioResult) -> tuple[str, ...]:
-    return (r.scenario_id, r.title, r.status, r.outcome, r.final_decision or "-", r.escalation_reason or "-")
+    return (
+        r.scenario_id,
+        r.owner or "-",
+        r.title,
+        r.status,
+        r.outcome,
+        r.final_decision or "-",
+        r.escalation_reason or "-",
+    )
 
 
 def render(results: list[ScenarioResult]) -> str:

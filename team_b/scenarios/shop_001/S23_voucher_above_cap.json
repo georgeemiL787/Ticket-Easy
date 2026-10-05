@@ -2,6 +2,7 @@
   "id": "S23",
   "title": "Voucher above EGP 100 on a late order: LATE-3D allows, MAX-100 requires a human, strictest wins",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

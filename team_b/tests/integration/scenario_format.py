@@ -83,6 +83,9 @@ class Scenario(Strict):
     id: str = Field(min_length=1)
     title: str = Field(min_length=1)
     status: Literal["active", "pending"]
+    owner: Literal["A", "B", "sync"] | None = (
+        None  # who activates it: track A, track B, or both (sync); the runner ignores it
+    )
     pending_reason: str | None = None
     setup: Setup = Field(default_factory=Setup)
     inject: list[Inject] = []

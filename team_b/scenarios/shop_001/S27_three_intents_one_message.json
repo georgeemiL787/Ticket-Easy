@@ -2,6 +2,7 @@
   "id": "S27",
   "title": "Three intents in one message: status, address change, refund, each action confirmed",
   "status": "pending",
+  "owner": "sync",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

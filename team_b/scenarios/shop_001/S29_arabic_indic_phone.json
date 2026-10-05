@@ -2,6 +2,7 @@
   "id": "S29",
   "title": "A phone in Arabic-Indic digits is verified",
   "status": "pending",
+  "owner": "A",
   "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"

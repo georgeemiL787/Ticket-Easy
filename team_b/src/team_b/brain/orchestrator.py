@@ -14,12 +14,14 @@ The human methods share one signature so the scenario runner can call them by na
 from collections.abc import Mapping
 from typing import Any, Protocol
 
+from team_b.brain import actions, knowledge, lookup
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
 from team_b.brain.rewrite import Rewriter
-from team_b.brain.stages import handoff_handler, placeholder_handler, slot_handler, smalltalk_handler
+from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
-from team_b.brain.turn import Deps, Handler
+from team_b.brain.turn import Deps, Handler, PlannedIntent, Step, TurnContext
+from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message
 from team_b.domain.tenant import TenantRegistry
@@ -36,12 +38,26 @@ from team_b.ports import (
 
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English ask_rephrase text
 
+
+async def _knowledge(ctx: TurnContext, planned: PlannedIntent) -> Step:
+    return await knowledge.answer(ctx)
+
+
+async def _lookup(ctx: TurnContext, planned: PlannedIntent) -> Step:
+    return await lookup.answer(ctx, ctx.tenant.intents[planned.name])
+
+
+async def _action(ctx: TurnContext, planned: PlannedIntent) -> Step:
+    return await actions.handle(ctx, ctx.tenant.intents[planned.name])
+
+
+# One handler per intent kind. Knowledge is Track B's module, lookups and actions are Track A's.
 DEFAULT_HANDLERS: Mapping[str, Handler] = {
     "smalltalk": smalltalk_handler,
     "handoff": handoff_handler,
-    "knowledge": placeholder_handler,
-    "lookup": slot_handler,
-    "action": slot_handler,
+    "knowledge": _knowledge,
+    "lookup": _lookup,
+    "action": _action,
 }
 
 
@@ -116,22 +132,48 @@ class Orchestrator:
             self._events.publish(tenant_id, conversation_id, message.model_dump(mode="json"))
         return message
 
-    # ---- human actions (built with the handoff step) ----
+    # ---- human actions. Final signatures; Track B finishes them, Track A fills human_decide. ----
 
-    async def claim(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def _case(self, case_id: str) -> HandoffCase:
+        for tenant_id in self._tenants.tenant_ids():
+            found = await self._deps.cases.get(tenant_id, case_id)
+            if found is not None:
+                return found
+        raise NotFoundError(f"case {case_id} does not exist")
 
-    async def reply(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def claim(self, case_id: str, agent: str) -> None:
+        """The agent takes the case: from now on they own the conversation."""
+        case = await self._case(case_id)
+        case.transition(CaseStatus.CLAIMED, actor=agent, at=self._clock.now())
+        await self._deps.cases.save(case)
 
-    async def approve(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def release(self, case_id: str, agent: str) -> None:
+        """The agent gives the case back to the queue."""
+        case = await self._case(case_id)
+        case.transition(CaseStatus.OPEN, actor=agent, at=self._clock.now())
+        await self._deps.cases.save(case)
 
-    async def reject(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def human_reply(self, case_id: str, agent: str, text: str) -> None:
+        """The agent writes to the customer: recorded on the case and delivered live through the outbox."""
+        case = await self._case(case_id)
+        if case.status is CaseStatus.OPEN:
+            case.transition(CaseStatus.CLAIMED, actor=agent, at=self._clock.now())
+        case.add_event(actor=agent, kind="reply", at=self._clock.now(), note=text)
+        await self._deps.cases.save(case)
+        await self.push_to_customer(case.tenant_id, case.conversation_id, text)
 
-    async def resolve(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def human_decide(self, case_id: str, agent: str, approve: bool, note: str | None = None) -> None:
+        """Approve or reject the action waiting on this case. Track A builds this; it must never override a deny."""
+        raise NotImplementedError("human_decide is built by Track A (approval that can never override a no)")
 
-    async def return_to_agent(self, tenant_id: str, case_id: str, *, actor: str, text: str = "") -> None:
-        raise NotImplementedError("human actions arrive with the handoff step")
+    async def return_to_agent(self, case_id: str, agent: str, note: str | None = None) -> None:
+        """The agent hands the conversation back to the assistant."""
+        case = await self._case(case_id)
+        case.transition(CaseStatus.RETURNED_TO_AGENT, actor=agent, at=self._clock.now(), note=note or "")
+        await self._deps.cases.save(case)
+
+    async def resolve(self, case_id: str, agent: str, note: str | None = None) -> None:
+        """The agent closes the case."""
+        case = await self._case(case_id)
+        case.transition(CaseStatus.RESOLVED, actor=agent, at=self._clock.now(), note=note or "")
+        await self._deps.cases.save(case)

@@ -31,6 +31,7 @@ class OrchestratorLike(Protocol):
 class ScenarioResult:
     scenario_id: str
     title: str
+    owner: str | None
     status: str  # active | pending
     outcome: str  # passed | failed | skipped
     failures: list[str] = field(default_factory=list)
@@ -47,6 +48,21 @@ class TurnOutcome:
     locale: str | None
     citations: tuple[str, ...]
     text: str
+
+
+async def call_human(orchestrator: Any, action: str, case_id: str, text: str) -> None:
+    """Map a scenario's human action to the orchestrator method with that meaning."""
+    note = text or None
+    if action == "claim":
+        await orchestrator.claim(case_id, HUMAN_ACTOR)
+    elif action == "reply":
+        await orchestrator.human_reply(case_id, HUMAN_ACTOR, text)
+    elif action in ("approve", "reject"):
+        await orchestrator.human_decide(case_id, HUMAN_ACTOR, action == "approve", note)
+    elif action == "resolve":
+        await orchestrator.resolve(case_id, HUMAN_ACTOR, note)
+    else:
+        await orchestrator.return_to_agent(case_id, HUMAN_ACTOR, note)
 
 
 def conversation_id_of(scenario: Scenario) -> str:
@@ -217,7 +233,7 @@ async def run_scenario(scenario: Scenario, tenant_id: str, *, customize: Customi
 
     customize may wrap the container (tests use it to swap the orchestrator for a misbehaving one)."""
     sid = scenario.id
-    result = ScenarioResult(sid, scenario.title, scenario.status, "passed")
+    result = ScenarioResult(sid, scenario.title, scenario.owner, scenario.status, "passed")
     if scenario.status == "pending":
         result.outcome, result.skip_reason = "skipped", scenario.pending_reason
         return result
@@ -286,8 +302,7 @@ async def _play(
                 if case_id is None:
                     result.failures.append(f"{label} human.{turn.human.action}: the conversation has no handoff case")
                     return
-                action = getattr(orchestrator, turn.human.action)
-                await action(tenant_id, case_id, actor=HUMAN_ACTOR, text=turn.human.text)
+                await call_human(orchestrator, turn.human.action, case_id, turn.human.text)
             reply = None
             if turn.say is not None:
                 reply = await orchestrator.handle_turn(tenant_id, conversation_id, turn.say)

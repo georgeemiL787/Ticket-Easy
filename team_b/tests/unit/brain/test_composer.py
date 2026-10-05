@@ -12,6 +12,7 @@ from team_b.brain.composer import (
     ResponseComposer,
     default_composer,
     keys_used_in,
+    load_locale,
     placeholders_in,
     render,
 )
@@ -22,7 +23,8 @@ from team_b.domain.decision import EscalationReason
 from team_b.domain.understanding import Locale
 
 COMPOSER = default_composer()
-FILES = {locale: json.loads((LOCALES_DIR / f"{locale.value}.json").read_text(encoding="utf-8")) for locale in Locale}
+FILES = {locale: load_locale(LOCALES_DIR / locale.value) for locale in Locale}
+PART_FILES = ["actions.json", "core.json", "handoff.json", "knowledge.json"]
 ARABIC = re.compile(r"[؀-ۿ]")
 BRAIN = PROJECT_ROOT / "src" / "team_b" / "brain"
 
@@ -30,8 +32,39 @@ BRAIN = PROJECT_ROOT / "src" / "team_b" / "brain"
 # ---- the files ----
 
 
-def test_there_is_one_file_per_locale() -> None:
-    assert sorted(p.name for p in LOCALES_DIR.glob("*.json")) == ["ar.json", "arabizi.json", "en.json"]
+def test_there_is_one_folder_per_locale_with_one_file_per_owner() -> None:
+    assert sorted(p.name for p in LOCALES_DIR.iterdir() if p.is_dir() and p.name != "__pycache__") == [
+        "ar",
+        "arabizi",
+        "en",
+    ]
+    for locale in Locale:
+        assert sorted(p.name for p in (LOCALES_DIR / locale.value).glob("*.json")) == PART_FILES
+
+
+@pytest.mark.parametrize("name", PART_FILES)
+def test_every_file_has_the_same_keys_in_every_locale(name: str) -> None:
+    keys = {
+        locale: set(json.loads((LOCALES_DIR / locale.value / name).read_text(encoding="utf-8"))) for locale in Locale
+    }
+    assert keys[Locale.AR] == keys[Locale.EN] == keys[Locale.ARABIZI], name
+
+
+def test_the_same_key_in_two_files_of_one_locale_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "core.json").write_text('{"greeting": "hi", "thanks": "ty"}', encoding="utf-8")
+    (tmp_path / "actions.json").write_text('{"thanks": "thank you", "action_done": "done"}', encoding="utf-8")
+    with pytest.raises(ValueError, match="'thanks' is defined in both actions.json and core.json"):
+        load_locale(tmp_path)
+
+
+def test_files_of_a_locale_are_merged_and_an_empty_folder_is_an_error(tmp_path: Path) -> None:
+    (tmp_path / "core.json").write_text('{"greeting": "hi"}', encoding="utf-8")
+    (tmp_path / "handoff.json").write_text('{"handoff_generic": "bye"}', encoding="utf-8")
+    assert load_locale(tmp_path) == {"greeting": "hi", "handoff_generic": "bye"}
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(FileNotFoundError):
+        load_locale(empty)
 
 
 def test_every_locale_has_exactly_the_same_keys() -> None:

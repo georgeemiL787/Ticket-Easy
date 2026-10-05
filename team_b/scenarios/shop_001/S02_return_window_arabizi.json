@@ -2,6 +2,7 @@
   "id": "S02",
   "title": "Same question in Arabizi gets the same citation in an Arabizi reply",
   "status": "pending",
+  "owner": "B",
   "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
   "setup": {
     "today": "2026-09-28"

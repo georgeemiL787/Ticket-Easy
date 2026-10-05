@@ -173,17 +173,21 @@ async def finish(ctx: TurnContext) -> AgentReply:
     )
 
 
-async def _load(deps: Deps, tenant: TenantConfig, conversation_id: str, text: str) -> TurnContext:
+async def _load(
+    deps: Deps, tenant: TenantConfig, conversation_id: str, text: str, request_id: str | None, channel: str
+) -> TurnContext:
     started = time.perf_counter()
     now = deps.clock.now()
-    session = await deps.sessions.load(tenant.tenant_id, conversation_id) or _new_session(tenant, conversation_id, now)
+    session = await deps.sessions.load(tenant.tenant_id, conversation_id) or _new_session(
+        tenant, conversation_id, now, channel
+    )
     ctx = TurnContext(
         deps=deps,
         tenant=tenant,
         session=session,
         text=text,
         now=now,
-        request_id=uuid.uuid4().hex,
+        request_id=request_id or uuid.uuid4().hex,
         trace_id=uuid.uuid4().hex,
     )
     session.history.append(Message(role="customer", text=text, at=now, trace_id=ctx.trace_id))
@@ -196,20 +200,29 @@ async def _load(deps: Deps, tenant: TenantConfig, conversation_id: str, text: st
     return ctx
 
 
-def _new_session(tenant: TenantConfig, conversation_id: str, now: datetime) -> SessionState:
+def _new_session(tenant: TenantConfig, conversation_id: str, now: datetime, channel: str) -> SessionState:
     return SessionState(
         tenant_id=tenant.tenant_id,
         conversation_id=conversation_id,
+        channel=channel,
         language=Language(tenant.default_locale.value),
         created_at=now,
         updated_at=now,
     )
 
 
-async def run_turn(deps: Deps, tenant: TenantConfig, conversation_id: str, text: str) -> AgentReply:
+async def run_turn(
+    deps: Deps,
+    tenant: TenantConfig,
+    conversation_id: str,
+    text: str,
+    *,
+    request_id: str | None = None,
+    channel: str = "web",
+) -> AgentReply:
     """Handle one customer message start to finish, one message at a time per conversation."""
     async with deps.sessions.lock(tenant.tenant_id, conversation_id):
-        ctx = await _load(deps, tenant, conversation_id, text)
+        ctx = await _load(deps, tenant, conversation_id, text, request_id, channel)
         for stage in STAGES:
             await run_stage(ctx, stage)
         return await finish(ctx)

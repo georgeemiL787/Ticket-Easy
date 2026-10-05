@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket-Easy chat</title>
+  <link rel="stylesheet" href="/chat/static/style.css">
+</head>
+<body>
+  <main class="chat" id="chat">
+    <header class="chat-header">
+      <h1 id="title">Chat</h1>
+      <label class="dev-toggle" title="Show how the agent decided">
+        <input type="checkbox" id="dev-toggle"> developer
+      </label>
+    </header>
+
+    <ol class="messages" id="messages" aria-live="polite"></ol>
+    <p class="status" id="status" role="status" hidden></p>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <input id="input" name="text" type="text" dir="auto" maxlength="2000"
+             placeholder="Type a message" aria-label="Message" required>
+      <button type="submit" id="send">Send</button>
+    </form>
+  </main>
+  <script src="/chat/static/chat.js"></script>
+</body>
+</html>

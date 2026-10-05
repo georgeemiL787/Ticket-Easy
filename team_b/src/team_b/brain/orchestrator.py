@@ -12,6 +12,7 @@ The human methods share one signature so the scenario runner can call them by na
 """
 
 from collections.abc import Mapping
+from typing import Any, Protocol
 
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
@@ -20,12 +21,14 @@ from team_b.brain.stages import handoff_handler, placeholder_handler, slot_handl
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import Deps, Handler
 from team_b.domain.reply import AgentReply
+from team_b.domain.session import Message
 from team_b.domain.tenant import TenantRegistry
 from team_b.ports import (
     CapabilityClient,
     CaseStore,
     Clock,
     EvidenceProvider,
+    NotFoundError,
     SessionConflictError,
     SessionStore,
     TraceStore,
@@ -40,6 +43,12 @@ DEFAULT_HANDLERS: Mapping[str, Handler] = {
     "lookup": slot_handler,
     "action": slot_handler,
 }
+
+
+class Publisher(Protocol):
+    """Where messages for the customer go to reach an open chat page (the in-process event hub)."""
+
+    def publish(self, tenant_id: str, conversation_id: str, event: dict[str, Any]) -> int: ...
 
 
 class Orchestrator:
@@ -57,8 +66,11 @@ class Orchestrator:
         handlers: Mapping[str, Handler] | None = None,
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
+        events: Publisher | None = None,
     ) -> None:
         self._tenants = tenants
+        self._events = events
+        self._clock = clock
         self._deps = Deps(
             clock=clock,
             sessions=sessions,
@@ -72,16 +84,37 @@ class Orchestrator:
             rewriter=rewriter,
         )
 
-    async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:
+    async def handle_turn(
+        self, tenant_id: str, conversation_id: str, text: str, *, request_id: str | None = None, channel: str = "web"
+    ) -> AgentReply:
         """Answer one customer message. Raises UnknownTenantError for a tenant that is not configured.
 
         If another writer saved the session first (a second process on the same database), the turn is redone once on
         the fresh session; a second conflict is raised to the caller. Nothing is stored for a failed attempt."""
         tenant = self._tenants.get(tenant_id)
         try:
-            return await run_turn(self._deps, tenant, conversation_id, text)
+            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
         except SessionConflictError:
-            return await run_turn(self._deps, tenant, conversation_id, text)
+            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+
+    async def push_to_customer(
+        self, tenant_id: str, conversation_id: str, text: str, *, role: str = "human_agent"
+    ) -> Message:
+        """Put a message in the customer's outbox and send it live to their open chat pages.
+
+        Used when a person writes to the customer (built into the human actions by the handoff step)."""
+        self._tenants.get(tenant_id)
+        deps = self._deps
+        async with deps.sessions.lock(tenant_id, conversation_id):
+            session = await deps.sessions.load(tenant_id, conversation_id)
+            if session is None:
+                raise NotFoundError(f"conversation {conversation_id} does not exist")
+            message = Message(role=role, text=text, at=self._clock.now())  # type: ignore[arg-type]
+            session.outbox.append(message)
+            await deps.sessions.save(session)
+        if self._events is not None:
+            self._events.publish(tenant_id, conversation_id, message.model_dump(mode="json"))
+        return message
 
     # ---- human actions (built with the handoff step) ----
 

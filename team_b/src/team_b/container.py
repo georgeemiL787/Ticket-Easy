@@ -1,7 +1,7 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
 from collections.abc import Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from team_b.adapters.llm import OpenAICompatibleLLM
@@ -25,6 +25,7 @@ from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
+from team_b.events import EventHub
 from team_b.ports import (
     CapabilityClient,
     CaseStore,
@@ -57,6 +58,7 @@ class Container:
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
+    events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
 
 
 def build_container(settings: Settings) -> Container:
@@ -106,6 +108,7 @@ def build_container(settings: Settings) -> Container:
             evidence=container.evidence,
             capabilities=container.capabilities,
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
+            events=container.events,
         ),
     )
 

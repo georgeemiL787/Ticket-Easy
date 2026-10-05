@@ -31,11 +31,12 @@ class ErrorEnvelope(BaseModel):
 class ApiError(Exception):
     """Raise this from a route to answer with the standard error format."""
 
-    def __init__(self, status_code: int, code: str, message: str) -> None:
+    def __init__(self, status_code: int, code: str, message: str, headers: dict[str, str] | None = None) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.code = code
         self.message = message
+        self.headers = headers or {}
 
 
 def invalid_request(message: str) -> ApiError:
@@ -54,6 +55,15 @@ def invalid_state(message: str) -> ApiError:
     return ApiError(409, "INVALID_STATE", message)
 
 
+def rate_limited(retry_after_s: int) -> ApiError:
+    return ApiError(
+        429,
+        "RATE_LIMITED",
+        "too many messages in this conversation, please wait a moment",
+        {"Retry-After": str(retry_after_s)},
+    )
+
+
 def upstream_unavailable(message: str) -> ApiError:
     return ApiError(503, "UPSTREAM_UNAVAILABLE", message)
 
@@ -63,9 +73,11 @@ def request_id_of(request: Request) -> str | None:
     return value if isinstance(value, str) else None
 
 
-def error_response(request: Request, status_code: int, code: str, message: str) -> JSONResponse:
+def error_response(
+    request: Request, status_code: int, code: str, message: str, headers: dict[str, str] | None = None
+) -> JSONResponse:
     envelope = ErrorEnvelope(error=ErrorBody(code=code, message=message, request_id=request_id_of(request)))
-    return JSONResponse(status_code=status_code, content=envelope.model_dump(mode="json"))
+    return JSONResponse(status_code=status_code, content=envelope.model_dump(mode="json"), headers=headers)
 
 
 def _describe_validation_errors(exc: RequestValidationError) -> str:
@@ -80,7 +92,7 @@ def _describe_validation_errors(exc: RequestValidationError) -> str:
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def _api_error(request: Request, exc: ApiError) -> JSONResponse:
-        return error_response(request, exc.status_code, exc.code, exc.message)
+        return error_response(request, exc.status_code, exc.code, exc.message, exc.headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -115,4 +127,4 @@ def install_error_handlers(app: FastAPI) -> None:
 
 def error_responses_doc() -> dict[int | str, dict[str, Any]]:
     """OpenAPI description of the error format, for routes that want to document it."""
-    return {code: {"model": ErrorEnvelope} for code in (404, 409, 422, 503)}
+    return {code: {"model": ErrorEnvelope} for code in (404, 409, 422, 429, 503)}

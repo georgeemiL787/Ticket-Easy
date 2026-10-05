@@ -6,15 +6,34 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
+from team_b.api import chat, traces
 from team_b.api.errors import install_error_handlers
-from team_b.config import Settings
+from team_b.api.ratelimit import RateLimiter
+from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
 from team_b.observability import bind_context, clear_context, configure_logging, get_logger
 from team_b.retention import retention_loop
 
 REQUEST_ID_HEADER = "X-Request-ID"
 log = get_logger(__name__)
+
+
+CHAT_DIR = PROJECT_ROOT / "web" / "chat"
+
+
+def mount_chat_page(app: FastAPI) -> None:
+    """The browser chat: /chat?tenant_id=shop_001 (plain HTML and JavaScript, no build step)."""
+    if not (CHAT_DIR / "index.html").is_file():
+        return
+
+    @app.get("/chat", include_in_schema=False)
+    async def chat_page() -> FileResponse:
+        return FileResponse(CHAT_DIR / "index.html", media_type="text/html")
+
+    app.mount("/chat/static", StaticFiles(directory=CHAT_DIR), name="chat-static")
 
 
 def create_app(*, settings: Settings | None = None, container: Container | None = None) -> FastAPI:
@@ -28,6 +47,8 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             configure_logging(json_logs=resolved.log_json)
             built = build_container(resolved)
         app.state.container = built
+        app.state.events = built.events
+        app.state.rate_limiter = RateLimiter(built.settings.rate_limit_per_minute)
         log.info("started", mode=built.settings.mode, tenants=list(built.tenants.tenant_ids()))
         retention = asyncio.create_task(retention_loop(built))
         try:
@@ -38,6 +59,9 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
 
     app = FastAPI(title="Ticket-Easy Team B", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
+    app.include_router(chat.router)
+    app.include_router(traces.router)
+    mount_chat_page(app)
 
     @app.middleware("http")
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

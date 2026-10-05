@@ -1,7 +1,7 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from team_b.adapters.memory_store import (
@@ -16,6 +16,7 @@ from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
+from team_b.brain.orchestrator import Orchestrator
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
 from team_b.ports import (
@@ -48,6 +49,7 @@ class Container:
     cases: CaseStore
     shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
+    orchestrator: Orchestrator | None = None  # handles every customer message and human action
 
 
 def build_container(settings: Settings) -> Container:
@@ -65,7 +67,7 @@ def build_container(settings: Settings) -> Container:
     tenants = TenantRegistry.from_dir(settings.config_dir)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
     policy_search = PolicySearchStandin(settings.fixtures_dir)
-    return Container(
+    container = Container(
         settings=settings,
         clock=clock,
         tenants=tenants,
@@ -78,6 +80,12 @@ def build_container(settings: Settings) -> Container:
         cases=InMemoryCaseStore(),
         shop=shop,
         policy_search=policy_search,
+    )
+    return replace(
+        container,
+        orchestrator=Orchestrator(
+            clock=clock, tenants=tenants, sessions=container.sessions, traces=container.traces, cases=container.cases
+        ),
     )
 
 

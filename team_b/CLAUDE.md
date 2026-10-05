@@ -41,7 +41,8 @@ team_b/
     ports/       __init__.py: the Protocols EvidenceProvider, PolicyGate, CapabilityClient, LLMClient,
                  SessionStore, TraceStore, CaseStore, Clock + store errors (strict mypy)
     brain/       language, text, nlu, slots, knowledge, identity, registry, gates, actions,
-                 composer, handoff, summarizer, metrics, alerts, orchestrator             (modules planned)
+                 composer, handoff, summarizer, metrics, alerts                                   (modules planned)
+                 orchestrator: minimal version (handle_turn -> clarify reply + valid trace; human methods raise NotImplementedError)
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)
                  standins/ shop (StandinShop: the fake Nile Style shop with audit log, idempotent replay, policy
                            safety net and failure switches; shop_backend.py = tool behaviour; json_schema.py)
@@ -59,13 +60,14 @@ team_b/
   prompts/                                                                                 (planned)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations
-  scripts/     export_schemas.py
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00 active)
+  scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir
   tests/unit/  contracts/  domain/  adapters/  api/  test_config.py  test_container.py  ...
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
-  tests/integration  tests/adversarial                                                     (planned)
+  tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top)
+  tests/adversarial                                                                        (planned)
   web/chat  web/inbox  web/dashboard (built)                                               (planned)
   eval/                                                                                    (planned)
 dashboard/   (repo root, next to team_b/; Phase 4 React app)                               (planned)
@@ -95,5 +97,5 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 ## Commands
 - Install: `pip install -e . -r requirements-dev.txt`
 - Settings: environment variables listed in `.env.example` (all optional)
-- Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
+- Scenarios: `make scenarios` (pending ones are skipped with their reason) � Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
 - Regenerate JSON Schemas after changing DecisionTrace, HandoffPackage, HandoffCase or AgentReply: `make schemas`

@@ -3,7 +3,7 @@
 import asyncio
 from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus, HandoffCase
@@ -36,6 +36,12 @@ class FixedClock:
 
     def now(self) -> datetime:
         return self._now
+
+    def advance(self, days: int) -> None:
+        """Move the clock forward (scenarios use this for 'three days later'). Going back is not allowed."""
+        if days < 0:
+            raise ValueError("a clock only moves forward")
+        self._now += timedelta(days=days)
 
 
 class InMemorySessionStore:

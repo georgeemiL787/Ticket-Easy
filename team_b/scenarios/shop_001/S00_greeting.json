@@ -1,0 +1,13 @@
+{
+  "id": "S00",
+  "title": "A greeting gets a valid reply and trace",
+  "status": "active",
+  "setup": {"today": "2026-09-28"},
+  "turns": [
+    {
+      "say": "Hello",
+      "expect": {"decision": "clarify", "awaiting": "detail", "locale": "en", "escalation": null}
+    }
+  ],
+  "final": {"no_writes": true, "audit_count": 0, "trace_invariants": true}
+}

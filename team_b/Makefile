@@ -21,14 +21,9 @@ fmt:
 run:
 	$(PYTHON) -m uvicorn team_b.api.app:app --app-dir src --port 8010
 
-# Runs once P1.1a creates both files; until then it only says so (and exits 0).
-ifneq ($(and $(wildcard tests/integration/test_scenarios.py),$(wildcard scripts/scenario_report.py)),)
+# Not a pytest marker selection: an empty selection would exit with code 5.
 scenarios:
 	$(PYTHON) -m pytest -q tests/integration/test_scenarios.py && $(PYTHON) scripts/scenario_report.py
-else
-scenarios:
-	@echo no scenarios yet
-endif
 
 cov:
 	$(PYTHON) -m pytest --cov=team_b --cov-report=term-missing -q

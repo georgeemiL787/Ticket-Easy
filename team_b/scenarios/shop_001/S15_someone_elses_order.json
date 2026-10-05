@@ -1,0 +1,44 @@
+{
+  "id": "S15",
+  "title": "Asking about another customer order: ownership mismatch, no data",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "NS-20877"
+      }
+    },
+    {
+      "say": "and what about order NS-20790?",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "ownership_mismatch",
+        "awaiting": "human",
+        "text_not_contains": [
+          "Polo shirt",
+          "640",
+          "TRK-20790"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "ownership_mismatch",
+    "trace_invariants": true
+  }
+}

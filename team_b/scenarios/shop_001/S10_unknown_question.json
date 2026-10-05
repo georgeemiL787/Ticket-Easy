@@ -1,0 +1,33 @@
+{
+  "id": "S10",
+  "title": "An unanswerable question: clarify once, then handoff no_evidence",
+  "status": "pending",
+  "pending_reason": "P1.4a pipeline + knowledge handler with the no-evidence path",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Do you offer a five year warranty on electronics?",
+      "expect": {
+        "decision": "clarify",
+        "escalation": null,
+        "awaiting": "detail"
+      }
+    },
+    {
+      "say": "I mean the warranty for electronic devices",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "no_evidence",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "no_evidence",
+    "trace_invariants": true
+  }
+}

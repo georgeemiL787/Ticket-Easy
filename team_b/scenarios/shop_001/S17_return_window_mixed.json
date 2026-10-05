@@ -1,0 +1,27 @@
+{
+  "id": "S17",
+  "title": "Mixed Arabic-English return question is answered in Arabic",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "ممكن اعمل return للمنتج بعد كام يوم من الـ delivery؟",
+      "expect": {
+        "decision": "answer",
+        "locale": "ar",
+        "citations_include": [
+          "return_policy@v2#s2"
+        ],
+        "text_contains": "14"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

@@ -25,7 +25,7 @@ Format (strict: an unknown field is an error; models in scenario_format.py):
                           "text_contains_any",    # at least one of these
                           "text_not_contains"}}], # none of these
    "final":  {"executed_tools": [...],   # successful, non-replayed writes, in order
-              "audit_count": N,          # every call that reached the stand-in shop, reads included
+              "audit_count": N,          # write calls that reached the stand-in shop
               "no_writes": true,         # no write call reached the shop at all
               "case_reason", "case_priority",   # of the conversation's handoff case; null = no case
               "case_has_pending_approval": bool,

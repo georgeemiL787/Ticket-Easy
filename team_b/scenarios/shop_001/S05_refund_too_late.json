@@ -1,0 +1,37 @@
+{
+  "id": "S05",
+  "title": "Refund 20 days after delivery is denied by R-REFUND-14D and handed to a human",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want a refund for order NS-20512",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "policy_denied",
+        "citations_include": [
+          "refund_policy@v1#s1"
+        ],
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "policy_denied",
+    "case_has_pending_approval": false,
+    "trace_invariants": true
+  }
+}

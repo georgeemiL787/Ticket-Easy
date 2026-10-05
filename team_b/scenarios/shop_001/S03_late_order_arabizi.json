@@ -1,0 +1,49 @@
+{
+  "id": "S03",
+  "title": "Arabizi late order: order id, then phone, then status with the late-delivery policy",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "el order bta3i et2akhar, 3ayez a3raf feen",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "slot:order_id",
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "NS-20877",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "arabizi",
+        "text_not_contains": [
+          "Linen summer dress",
+          "TRK-20877"
+        ]
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi",
+        "escalation": null,
+        "citations_include": [
+          "shipping_policy@v1#s6"
+        ],
+        "text_contains": "NS-20877"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

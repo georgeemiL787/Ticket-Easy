@@ -1,0 +1,40 @@
+{
+  "id": "S13",
+  "title": "A customer who says no to the confirmation: nothing executes",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want to return order NS-20790, the size is wrong",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01123456702",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation"
+      }
+    },
+    {
+      "say": "no",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "escalation": null,
+        "text_not_contains": "RET-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [],
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "S07",
+  "title": "A fraud report always goes to a human, urgently",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline + safety screen stand-in (Phase 2)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Someone used my card, I did not make this payment, it is fraud",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "mandatory_risk",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "mandatory_risk",
+    "case_priority": "urgent",
+    "trace_invariants": true
+  }
+}

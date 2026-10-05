@@ -1,0 +1,26 @@
+{
+  "id": "S08",
+  "title": "A customer who asks for a person is handed off",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline (S08 becomes active there)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want to talk to a human agent please",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "customer_request",
+        "awaiting": "human",
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "customer_request",
+    "trace_invariants": true
+  }
+}

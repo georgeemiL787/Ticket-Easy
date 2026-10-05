@@ -1,0 +1,42 @@
+{
+  "id": "S11",
+  "title": "Where is my order and cancel it: status first, then confirmed cancellation",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20960 and cancel it",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01098765405",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "text_contains": "NS-20960"
+      }
+    },
+    {
+      "say": "yes",
+      "expect": {
+        "decision": "execute",
+        "awaiting": null,
+        "text_contains": "CAN-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "cancel_order"
+    ],
+    "audit_count": 1,
+    "trace_invariants": true
+  }
+}

@@ -71,7 +71,7 @@ class Turn(Strict):
 
 class Final(Strict):
     executed_tools: list[str] | None = None  # successful, non-replayed writes, in order
-    audit_count: int | None = None  # every call that reached the stand-in shop, reads included
+    audit_count: int | None = None  # write calls that reached the stand-in shop (one executed write = 1)
     no_writes: bool | None = None  # true: no write call reached the shop at all
     case_reason: str | None = None  # an explicit null means "no handoff case"
     case_priority: str | None = None

@@ -1,0 +1,53 @@
+{
+  "id": "S09",
+  "title": "Order lookup fails on two turns: no invented status, then handoff",
+  "status": "pending",
+  "pending_reason": "P1.4b action flow + tool-failure handling (retry once per turn, repeated_tool_failure after 2 failed turns)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "inject": [
+    {
+      "plug": "shop",
+      "operation": "get_order",
+      "mode": "fail",
+      "code": "BACKEND_UNAVAILABLE",
+      "times": 4
+    }
+  ],
+  "turns": [
+    {
+      "say": "Where is my order NS-20877? My phone is 01012345601",
+      "expect": {
+        "decision": "clarify",
+        "escalation": null,
+        "text_not_contains": [
+          "shipped",
+          "delivered",
+          "out for delivery",
+          "on its way"
+        ]
+      }
+    },
+    {
+      "say": "please try again",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "repeated_tool_failure",
+        "awaiting": "human",
+        "text_not_contains": [
+          "shipped",
+          "delivered",
+          "out for delivery",
+          "on its way"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "repeated_tool_failure",
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "S12",
+  "title": "Wrong phone twice fails identity and shows no order data",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877? My phone is 01099999999",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "text_not_contains": [
+          "Linen summer dress",
+          "TRK-20877",
+          "890"
+        ]
+      }
+    },
+    {
+      "say": "01088888888",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "identity_failed",
+        "awaiting": "human",
+        "text_not_contains": [
+          "Linen summer dress",
+          "TRK-20877",
+          "890"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "identity_failed",
+    "trace_invariants": true
+  }
+}

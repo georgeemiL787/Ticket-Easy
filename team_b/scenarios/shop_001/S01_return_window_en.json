@@ -1,0 +1,32 @@
+{
+  "id": "S01",
+  "title": "English return-window question is answered from return_policy v2",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "How many days do I have to return an item?",
+      "expect": {
+        "decision": "answer",
+        "locale": "en",
+        "escalation": null,
+        "awaiting": null,
+        "citations_include": [
+          "return_policy@v2#s2"
+        ],
+        "citations_exclude": [
+          "return_policy@v1#s2"
+        ],
+        "text_contains": "14"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

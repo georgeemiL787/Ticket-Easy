@@ -181,7 +181,6 @@ async def check_final(
     problems: list[str] = []
     given = final.model_fields_set
     assert container.shop is not None
-    log = container.shop.audit_log(tenant_id)
     writes = write_audit(container, tenant_id, tool_kinds)
 
     def compare(name: str, wanted: object, actual: object) -> None:
@@ -192,7 +191,7 @@ async def check_final(
         done = [e.tool for e in writes if e.status == "success" and not e.replayed]
         compare("executed_tools", final.executed_tools, done)
     if final.audit_count is not None:
-        compare("audit_count", final.audit_count, len(log))
+        compare("audit_count", final.audit_count, len(writes))
     if final.no_writes is not None:
         compare("no_writes", final.no_writes, not writes)
     case = await case_of(container, tenant_id, conversation_id)

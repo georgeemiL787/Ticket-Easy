@@ -1,0 +1,47 @@
+{
+  "id": "S04",
+  "title": "Egyptian Arabic return within the window: confirm, then execute with a reference",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "عايز ارجع الاوردر NS-20790 لان المقاس مش مظبوط",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01123456702",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "ar",
+        "text_contains": "NS-20790",
+        "citations_include": [
+          "return_policy@v2#s2"
+        ]
+      }
+    },
+    {
+      "say": "ايوه",
+      "expect": {
+        "decision": "execute",
+        "awaiting": null,
+        "locale": "ar",
+        "text_contains": "RET-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "create_return"
+    ],
+    "audit_count": 1,
+    "trace_invariants": true
+  }
+}

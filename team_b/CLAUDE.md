@@ -43,7 +43,14 @@ team_b/
                  SessionStore, TraceStore, CaseStore, Clock + store errors (strict mypy)
     brain/       language, text, nlu, slots, knowledge, identity, registry, gates, actions,
                  composer, handoff, metrics, alerts                                              (modules planned)
-                 orchestrator: minimal version (handle_turn retries once on a stale session; session memory, clarify reply, valid redacted trace; human methods raise NotImplementedError)
+                 orchestrator (handle_turn -> pipeline.run_turn, retries once on a stale session; human methods raise
+                 NotImplementedError until the handoff step), pipeline (STAGES, run_stage, finish: compose in the customer's
+                 locale, validate and store trace + session), turn (Step, TurnContext, Deps: stages share state through them),
+                 stages (the 12 stage functions + smalltalk/placeholder/handoff handlers; kinds plug in via Deps.handlers),
+                 templates (minimal reply sentences per locale, replaced by the composer), handoff (stub: ESCALATION_DEFAULTS
+                 and open_case, the real briefing comes later)
+                 Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, merge,
+                 frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
                  open and claimed cases, and their conversation's session and traces, are never purged
                  llm_nlu (LLMNLU: rules first, then the model; validated: catalog-only intents, pattern entities win, invented details
@@ -75,7 +82,7 @@ team_b/
   prompts/nlu_v1.md   the understanding prompt (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00 active; S01-S40, S43 pending until the brain exists)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S08, S40 active; the rest pending until the brain exists)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir

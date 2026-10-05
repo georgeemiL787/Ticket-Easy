@@ -1,32 +1,36 @@
 """The orchestrator: handles one customer message or one human action at a time.
 
-Minimal first version: every customer message is answered with a clarify reply and a valid trace, so the scenario
-runner can be tested end to end. Understanding, gates and actions come with later steps. Memory is real: one session per
-conversation, the last history_max_turns messages kept, older ones folded into history_summary, and the redacted
-transcript stored in the traces. The human methods share one signature so the runner can call them by name:
-(tenant_id, case_id, *, actor, text="").
+A customer message runs through the turn pipeline (brain/pipeline.py): load, handed_off_check, understand, risk_screen,
+human_request, pending_confirmation, merge, frustration, plan, handler, queue, handoff, finish. Greetings and thanks are
+answered from templates, a request for a person or a risky message becomes a handoff, and requests that need the
+knowledge, lookup or action handlers get a placeholder "tell me more" until those are built (they plug in through
+`handlers`, one per intent kind). Memory is real: one session per conversation, the last history_max_turns messages
+kept, older ones folded into history_summary, the redacted transcript stored in the traces.
+
+The human methods share one signature so the scenario runner can call them by name:
+(tenant_id, case_id, *, actor, text=""). They are built with the handoff step.
 """
 
-import time
-import uuid
-from datetime import datetime
-from typing import Any
+from collections.abc import Mapping
 
-from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.nlu import NLU, RuleBasedNLU
-from team_b.brain.redaction import redact
+from team_b.brain.pipeline import run_turn
+from team_b.brain.stages import handoff_handler, placeholder_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
-from team_b.domain.decision import Decision
+from team_b.brain.turn import Deps, Handler
 from team_b.domain.reply import AgentReply
-from team_b.domain.session import Message, SessionState
-from team_b.domain.tenant import TenantConfig, TenantRegistry
-from team_b.domain.trace import DecisionTrace, TraceStep
-from team_b.domain.understanding import Language, Locale, NLUResult
-from team_b.observability import get_logger
-from team_b.ports import CaseStore, Clock, SessionConflictError, SessionStore, TraceStore
+from team_b.domain.tenant import TenantRegistry
+from team_b.ports import CaseStore, Clock, EvidenceProvider, SessionConflictError, SessionStore, TraceStore
 
-log = get_logger(__name__)
-CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"
+CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English clarify_generic template
+
+DEFAULT_HANDLERS: Mapping[str, Handler] = {
+    "smalltalk": smalltalk_handler,
+    "handoff": handoff_handler,
+    "knowledge": placeholder_handler,
+    "lookup": placeholder_handler,
+    "action": placeholder_handler,
+}
 
 
 class Orchestrator:
@@ -40,14 +44,20 @@ class Orchestrator:
         cases: CaseStore,
         summarizer: HistorySummarizer | None = None,
         nlu: NLU | None = None,
+        evidence: EvidenceProvider | None = None,
+        handlers: Mapping[str, Handler] | None = None,
     ) -> None:
-        self._clock = clock
         self._tenants = tenants
-        self._sessions = sessions
-        self._traces = traces
-        self._cases = cases
-        self._summarizer = summarizer or TemplateHistorySummarizer()
-        self._nlu: NLU = nlu or RuleBasedNLU()
+        self._deps = Deps(
+            clock=clock,
+            sessions=sessions,
+            traces=traces,
+            cases=cases,
+            evidence=evidence,
+            nlu=nlu or RuleBasedNLU(),
+            summarizer=summarizer or TemplateHistorySummarizer(),
+            handlers={**DEFAULT_HANDLERS, **(handlers or {})},
+        )
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:
         """Answer one customer message. Raises UnknownTenantError for a tenant that is not configured.
@@ -56,98 +66,9 @@ class Orchestrator:
         the fresh session; a second conflict is raised to the caller. Nothing is stored for a failed attempt."""
         tenant = self._tenants.get(tenant_id)
         try:
-            return await self._handle_turn_once(tenant, conversation_id, text)
+            return await run_turn(self._deps, tenant, conversation_id, text)
         except SessionConflictError:
-            return await self._handle_turn_once(tenant, conversation_id, text)
-
-    async def _handle_turn_once(self, tenant: TenantConfig, conversation_id: str, text: str) -> AgentReply:
-        started = time.perf_counter()
-        tenant_id = tenant.tenant_id
-        async with self._sessions.lock(tenant_id, conversation_id):
-            now = self._clock.now()
-            session = await self._load_or_create(tenant, conversation_id, now)
-            understanding = await self._understand(text, session, tenant)
-            trace_id, request_id = uuid.uuid4().hex, uuid.uuid4().hex
-            session.history.append(Message(role="customer", text=text, at=now, trace_id=trace_id))
-
-            reply_text, decision, awaiting = CLARIFY_TEXT, Decision.CLARIFY, "detail"  # processing goes here
-            session.history.append(Message(role="agent", text=reply_text, at=now, trace_id=trace_id))
-            trace = DecisionTrace(
-                trace_id=trace_id,
-                request_id=request_id,
-                tenant_id=tenant_id,
-                conversation_id=conversation_id,
-                turn_index=session.turn_index,
-                customer_message=redact(text),
-                **self._understanding_fields(understanding),
-                decision=decision,
-                decision_reason="first version: no understanding yet, so ask for more detail",
-                response_text=reply_text,
-                steps=(TraceStep(stage="orchestrator", status=decision.value),),
-                latency_ms=(time.perf_counter() - started) * 1000,
-            )
-            if understanding is not None and understanding.language_confidence >= LANGUAGE_TRUST:
-                session.language = understanding.language  # a message with no language content keeps the old one
-            session.awaiting = awaiting
-            session.turn_index += 1
-            session.updated_at = now
-            await self._trim_history(session, tenant)
-            await self._sessions.save(session)
-            await self._traces.add(trace)
-        return AgentReply(
-            request_id=request_id,
-            tenant_id=tenant_id,
-            conversation_id=conversation_id,
-            text=reply_text,
-            locale=Locale.EN,  # the placeholder reply is English; the composer picks the locale later
-            decision=decision,
-            trace_id=trace_id,
-            awaiting=awaiting,
-        )
-
-    async def _understand(self, text: str, session: SessionState, tenant: TenantConfig) -> NLUResult | None:
-        """Read the message. Understanding never stops a turn: if even the fallback fails, the turn goes on."""
-        try:
-            return await self._nlu.understand(text, session, tenant)
-        except Exception:
-            log.exception("understanding_failed")
-            return None
-
-    @staticmethod
-    def _understanding_fields(result: NLUResult | None) -> dict[str, Any]:
-        """What the trace records about how the message was read (values redacted; details are not copied raw)."""
-        if result is None:
-            return {}
-        return {
-            "language": result.language,
-            "intents": result.intents,
-            "entities": {key: redact(value) for key, value in result.entities.items()},
-            "nlu_method": result.method,
-            "frustration": result.frustration,
-            "risk_categories": result.safety_flags,
-            "versions": {"prompt": result.prompt_version} if result.prompt_version else {},
-        }
-
-    async def _load_or_create(self, tenant: TenantConfig, conversation_id: str, now: datetime) -> SessionState:
-        existing = await self._sessions.load(tenant.tenant_id, conversation_id)
-        if existing is not None:
-            return existing
-        return SessionState(
-            tenant_id=tenant.tenant_id,
-            conversation_id=conversation_id,
-            language=Language(tenant.default_locale.value),
-            created_at=now,
-            updated_at=now,
-        )
-
-    async def _trim_history(self, session: SessionState, tenant: TenantConfig) -> None:
-        """Keep the last history_max_turns messages; the older ones are folded into history_summary."""
-        excess = len(session.history) - tenant.history_max_turns
-        if excess <= 0:
-            return
-        folded = session.history[:excess]
-        session.history_summary = await self._summarizer.summarize(session, folded, tenant)
-        del session.history[:excess]
+            return await run_turn(self._deps, tenant, conversation_id, text)
 
     # ---- human actions (built with the handoff step) ----
 

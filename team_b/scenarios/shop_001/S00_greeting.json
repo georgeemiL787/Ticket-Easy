@@ -6,8 +6,8 @@
   "turns": [
     {
       "say": "Hello",
-      "expect": {"decision": "clarify", "awaiting": "detail", "locale": "en", "escalation": null}
+      "expect": {"decision": "answer", "awaiting": null, "locale": "en", "escalation": null, "text_contains_any": ["Hello", "Hi"]}
     }
   ],
-  "final": {"no_writes": true, "audit_count": 0, "trace_invariants": true}
+  "final": {"no_writes": true, "audit_count": 0, "case_reason": null, "trace_invariants": true}
 }

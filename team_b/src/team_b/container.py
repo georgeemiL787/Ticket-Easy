@@ -99,6 +99,7 @@ def build_container(settings: Settings) -> Container:
             cases=container.cases,
             summarizer=summarizer,
             nlu=nlu,
+            evidence=container.evidence,
         ),
     )
 

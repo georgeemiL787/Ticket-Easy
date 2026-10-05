@@ -1,8 +1,7 @@
 {
   "id": "S08",
   "title": "A customer who asks for a person is handed off",
-  "status": "pending",
-  "pending_reason": "P1.4a turn pipeline (S08 becomes active there)",
+  "status": "active",
   "setup": {
     "today": "2026-09-28"
   },

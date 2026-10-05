@@ -20,7 +20,7 @@ def orch(container: Container) -> Orchestrator:
 
 async def test_first_turn_creates_the_session_and_remembers_the_detected_language(c: Container) -> None:
     assert c.orchestrator is not None
-    reply = await c.orchestrator.handle_turn(T, C, "Hello")
+    reply = await c.orchestrator.handle_turn(T, C, "asdf qwer zxcv")
     session = await c.sessions.load(T, C)
     assert session is not None
     assert (session.turn_index, session.language, session.awaiting) == (1, Language.EN, "detail")

@@ -61,6 +61,7 @@ class SessionState(MutableModel):
     tool_failures: int = Field(default=0, ge=0)
     no_evidence_count: int = Field(default=0, ge=0)
     handoff_case_id: str | None = None
+    handoff_notice_sent: bool = False  # the customer was already told that a colleague will reply
     outbox: list[Message] = Field(default_factory=list)  # replies waiting to be shown to the customer (human replies)
     version: int = Field(default=0, ge=0)  # bumped on every save: detects two writers at once
     created_at: datetime

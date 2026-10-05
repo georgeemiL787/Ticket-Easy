@@ -48,7 +48,7 @@ def scenario(**overrides: Any) -> Scenario:
         "id": "S99",
         "title": "sample",
         "status": "active",
-        "turns": [{"say": "Hello", "expect": {"decision": "clarify"}}],
+        "turns": [{"say": "asdf qwer zxcv", "expect": {"decision": "clarify"}}],
     }
     return Scenario.model_validate({**data, **overrides})
 
@@ -56,7 +56,7 @@ def scenario(**overrides: Any) -> Scenario:
 BROKEN = scenario(
     turns=[
         {
-            "say": "Hello",
+            "say": "asdf qwer zxcv",
             "expect": {
                 "decision": "handoff",
                 "escalation": "mandatory_risk",
@@ -120,9 +120,9 @@ async def test_a_clean_scenario_passes() -> None:
 
 
 async def test_an_explicit_null_means_none_and_a_missing_key_is_not_checked() -> None:
-    ok = scenario(turns=[{"say": "Hi", "expect": {"escalation": None}}], final={"case_reason": None})
+    ok = scenario(turns=[{"say": "asdf qwer", "expect": {"escalation": None}}], final={"case_reason": None})
     assert (await run_scenario(ok, T)).outcome == "passed"
-    bad = scenario(turns=[{"say": "Hi", "expect": {"awaiting": None}}])
+    bad = scenario(turns=[{"say": "asdf qwer", "expect": {"awaiting": None}}])
     assert "expect.awaiting: expected None, got 'detail'" in (await run_scenario(bad, T)).failures[0]
 
 
@@ -145,7 +145,7 @@ class CrashingOrchestrator:
 
 async def test_a_crash_in_the_orchestrator_is_a_failed_scenario_not_a_broken_run() -> None:
     crash = lambda c: replace(c, orchestrator=CrashingOrchestrator())  # type: ignore[arg-type]  # noqa: E731
-    result = await run_scenario(scenario(turns=[{"say": "Hi"}]), T, customize=crash)
+    result = await run_scenario(scenario(turns=[{"say": "asdf qwer"}]), T, customize=crash)
     assert result.outcome == "failed" and result.failures[0] == "S99 turn 1 raised RuntimeError: boom"
 
 
@@ -156,7 +156,7 @@ async def test_advance_days_moves_the_clock_of_the_scenario() -> None:
         seen.append(container.clock.today())
         return container
 
-    sample = scenario(setup={"today": "2026-09-28"}, turns=[{"say": "Hi", "advance_days": 3}])
+    sample = scenario(setup={"today": "2026-09-28"}, turns=[{"say": "asdf qwer", "advance_days": 3}])
     assert (await run_scenario(sample, T, customize=spy)).outcome == "passed"
     assert seen == [date(2026, 9, 28)]
 

@@ -12,6 +12,9 @@ dynamic = ["dependencies"]
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 
+[tool.setuptools.package-data]
+team_b = ["adapters/migrations/*.sql"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

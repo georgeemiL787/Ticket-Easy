@@ -11,6 +11,7 @@ from team_b.adapters.memory_store import (
     InMemoryTraceStore,
     SystemClock,
 )
+from team_b.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
 from team_b.adapters.standins.evidence import StandinEvidenceProvider
 from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
@@ -59,13 +60,12 @@ def build_container(settings: Settings) -> Container:
             "TEAM_B_MODE=live is not available until Phase 6 (real Team A and Team C services). "
             "Use TEAM_B_MODE=standin."
         )
-    if settings.store == "sqlite":
-        raise ContainerError("TEAM_B_STORE=sqlite is not available yet. Use TEAM_B_STORE=memory.")
     if settings.llm != "none":
         raise ContainerError(f"TEAM_B_LLM={settings.llm} is not available yet. Use TEAM_B_LLM=none (rules only).")
 
     clock = FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock()
     tenants = TenantRegistry.from_dir(settings.config_dir)
+    sessions, traces, cases = build_stores(settings, clock)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
     policy_search = PolicySearchStandin(settings.fixtures_dir)
     container = Container(
@@ -76,9 +76,9 @@ def build_container(settings: Settings) -> Container:
         policy=RuleCheckerStandin(),
         capabilities=shop,
         llm=None,
-        sessions=InMemorySessionStore(),
-        traces=InMemoryTraceStore(),
-        cases=InMemoryCaseStore(),
+        sessions=sessions,
+        traces=traces,
+        cases=cases,
         shop=shop,
         policy_search=policy_search,
     )
@@ -96,6 +96,14 @@ def build_container(settings: Settings) -> Container:
             summarizer=summarizer,
         ),
     )
+
+
+def build_stores(settings: Settings, clock: Clock) -> tuple[SessionStore, TraceStore, CaseStore]:
+    """The stores TEAM_B_STORE asks for: memory (gone on restart) or sqlite (the file at TEAM_B_DB_PATH)."""
+    if settings.store == "sqlite":
+        db = SqliteDatabase(settings.db_path)
+        return SqliteSessionStore(db), SqliteTraceStore(db, clock), SqliteCaseStore(db)
+    return InMemorySessionStore(), InMemoryTraceStore(), InMemoryCaseStore()
 
 
 def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:

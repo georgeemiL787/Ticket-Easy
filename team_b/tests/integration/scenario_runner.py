@@ -4,16 +4,18 @@ Failures are collected as plain sentences ("S07 turn 2 expect.decision: expected
 scenario says what went wrong without a debugger. The write-safety check at the end runs for every active scenario.
 """
 
+import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol
 
-from team_b.config import Settings
 from team_b.container import Container, build_container, inject
 from team_b.domain.handoff import HandoffCase
 from team_b.domain.reply import AgentReply
 from team_b.domain.trace import DecisionTrace
 from tests.integration.scenario_format import Expect, Final, Inject, Scenario
+from tests.support import make_settings
 
 HUMAN_ACTOR = "scenario-agent"
 Customize = Callable[[Container], Container]
@@ -220,7 +222,15 @@ async def run_scenario(scenario: Scenario, tenant_id: str, *, customize: Customi
         result.outcome, result.skip_reason = "skipped", scenario.pending_reason
         return result
 
-    container = build_container(Settings(fixed_today=scenario.setup.today))
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as db_dir:
+        container = build_container(make_settings(Path(db_dir), fixed_today=scenario.setup.today))
+        return await _run(scenario, tenant_id, container, result, customize)
+
+
+async def _run(
+    scenario: Scenario, tenant_id: str, container: Container, result: ScenarioResult, customize: Customize | None
+) -> ScenarioResult:
+    sid = scenario.id
     if customize is not None:
         container = customize(container)
     conversation_id = conversation_id_of(scenario)

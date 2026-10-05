@@ -51,8 +51,8 @@ def test_system_clock_is_timezone_aware_and_current() -> None:
 # --- session store ---
 
 
-async def test_session_roundtrip_and_missing() -> None:
-    store = InMemorySessionStore()
+async def test_session_roundtrip_and_missing(session_store: SessionStore) -> None:
+    store = session_store
     assert await store.load("shop_001", "conv-1") is None
     s = session()
     s.slots["order_id"] = "NS-20877"
@@ -61,8 +61,8 @@ async def test_session_roundtrip_and_missing() -> None:
     assert loaded is not None and loaded.slots == {"order_id": "NS-20877"}
 
 
-async def test_save_bumps_the_version() -> None:
-    store = InMemorySessionStore()
+async def test_save_bumps_the_version(session_store: SessionStore) -> None:
+    store = session_store
     s = session()
     assert s.version == 0
     await store.save(s)
@@ -73,8 +73,8 @@ async def test_save_bumps_the_version() -> None:
     assert loaded is not None and loaded.version == 2
 
 
-async def test_stale_version_is_a_conflict() -> None:
-    store = InMemorySessionStore()
+async def test_stale_version_is_a_conflict(session_store: SessionStore) -> None:
+    store = session_store
     await store.save(session())
     first = await store.load("shop_001", "conv-1")
     second = await store.load("shop_001", "conv-1")
@@ -88,15 +88,15 @@ async def test_stale_version_is_a_conflict() -> None:
     assert stored is not None and stored.turn_index == 1  # the loser did not overwrite
 
 
-async def test_a_new_session_with_a_version_is_a_conflict() -> None:
+async def test_a_new_session_with_a_version_is_a_conflict(session_store: SessionStore) -> None:
     s = session()
     s.version = 4
     with pytest.raises(SessionConflictError):
-        await InMemorySessionStore().save(s)
+        await session_store.save(s)
 
 
-async def test_load_returns_a_copy_so_edits_do_not_change_the_store() -> None:
-    store = InMemorySessionStore()
+async def test_load_returns_a_copy_so_edits_do_not_change_the_store(session_store: SessionStore) -> None:
+    store = session_store
     await store.save(session())
     loaded = await store.load("shop_001", "conv-1")
     assert loaded is not None
@@ -106,8 +106,8 @@ async def test_load_returns_a_copy_so_edits_do_not_change_the_store() -> None:
     assert again is not None and again.slots == {} and again.history_summary == ""
 
 
-async def test_saving_stores_a_copy_too() -> None:
-    store = InMemorySessionStore()
+async def test_saving_stores_a_copy_too(session_store: SessionStore) -> None:
+    store = session_store
     s = session()
     await store.save(s)
     s.slots["phone"] = "x"  # edit after saving, without saving again
@@ -115,15 +115,15 @@ async def test_saving_stores_a_copy_too() -> None:
     assert again is not None and again.slots == {}
 
 
-async def test_sessions_are_separated_by_tenant_and_conversation() -> None:
-    store = InMemorySessionStore()
+async def test_sessions_are_separated_by_tenant_and_conversation(session_store: SessionStore) -> None:
+    store = session_store
     await store.save(session("shop_001", "conv-1"))
     assert await store.load("shop_002", "conv-1") is None
     assert await store.load("shop_001", "conv-2") is None
 
 
-async def test_lock_runs_one_message_at_a_time_per_conversation() -> None:
-    store = InMemorySessionStore()
+async def test_lock_runs_one_message_at_a_time_per_conversation(session_store: SessionStore) -> None:
+    store = session_store
     await store.save(session())
     running = 0
     peak = 0
@@ -149,8 +149,8 @@ async def test_lock_runs_one_message_at_a_time_per_conversation() -> None:
     assert final is not None and final.turn_index == 20 and final.version == 21
 
 
-async def test_without_the_lock_concurrent_writers_conflict() -> None:
-    store = InMemorySessionStore()
+async def test_without_the_lock_concurrent_writers_conflict(session_store: SessionStore) -> None:
+    store = session_store
     await store.save(session())
 
     async def message() -> None:
@@ -163,8 +163,8 @@ async def test_without_the_lock_concurrent_writers_conflict() -> None:
     assert any(isinstance(r, SessionConflictError) for r in results)
 
 
-async def test_different_conversations_do_not_block_each_other() -> None:
-    store = InMemorySessionStore()
+async def test_different_conversations_do_not_block_each_other(session_store: SessionStore) -> None:
+    store = session_store
     entered = asyncio.Event()
     release = asyncio.Event()
 
@@ -184,8 +184,8 @@ async def test_different_conversations_do_not_block_each_other() -> None:
     await task
 
 
-async def test_lock_is_released_after_an_error() -> None:
-    store = InMemorySessionStore()
+async def test_lock_is_released_after_an_error(session_store: SessionStore) -> None:
+    store = session_store
     with pytest.raises(RuntimeError):
         async with store.lock("shop_001", "conv-1"):
             raise RuntimeError("boom")

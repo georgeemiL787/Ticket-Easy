@@ -13,6 +13,7 @@ from team_b.api.app import create_app
 from team_b.config import Settings
 from team_b.container import Container, build_container
 from team_b.contracts.tools import ToolCallRequest, ToolResult
+from tests.support import make_settings
 
 FIXED_TODAY = date(2026, 9, 28)  # the seeded demo data depends on this date
 
@@ -26,13 +27,13 @@ def tenants_dir(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def settings(tenants_dir: Path) -> Settings:
-    return Settings(mode="standin", store="memory", llm="none", fixed_today=FIXED_TODAY, config_dir=tenants_dir)
+def settings(tenants_dir: Path, tmp_path: Path) -> Settings:
+    return make_settings(tmp_path, mode="standin", fixed_today=FIXED_TODAY, config_dir=tenants_dir)
 
 
 @pytest.fixture
 def container(settings: Settings) -> Container:
-    """Stand-in mode, memory stores, a clock fixed at 2026-09-28."""
+    """Stand-in mode, the store from TEAM_B_STORE (memory by default), a clock fixed at 2026-09-28."""
     return build_container(settings)
 
 

@@ -2,11 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from team_b.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
 from team_b.domain.trace import DecisionTrace
-from team_b.ports import AlreadyExistsError, NotFoundError
+from team_b.ports import AlreadyExistsError, CaseStore, NotFoundError, TraceStore
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 
@@ -40,8 +39,8 @@ def case(case_id: str, *, tenant: str = "shop_001", at: datetime = NOW) -> Hando
 # --- trace store ---
 
 
-async def test_trace_add_and_get() -> None:
-    store = InMemoryTraceStore()
+async def test_trace_add_and_get(trace_store: TraceStore) -> None:
+    store = trace_store
     t = trace("t1")
     await store.add(t)
     assert await store.get("shop_001", "t1") == t
@@ -49,16 +48,16 @@ async def test_trace_add_and_get() -> None:
     assert await store.get("shop_002", "t1") is None  # another tenant cannot read it
 
 
-async def test_trace_duplicate_id_is_rejected() -> None:
-    store = InMemoryTraceStore()
+async def test_trace_duplicate_id_is_rejected(trace_store: TraceStore) -> None:
+    store = trace_store
     await store.add(trace("t1"))
     with pytest.raises(AlreadyExistsError):
         await store.add(trace("t1"))
     await store.add(trace("t1", tenant="shop_002"))  # the same id in another tenant is fine
 
 
-async def test_for_conversation_is_oldest_first_and_scoped() -> None:
-    store = InMemoryTraceStore()
+async def test_for_conversation_is_oldest_first_and_scoped(trace_store: TraceStore) -> None:
+    store = trace_store
     for n in range(3):
         await store.add(trace(f"t{n}", turn_index=n))
     await store.add(trace("other", conversation="conv-2"))
@@ -68,8 +67,8 @@ async def test_for_conversation_is_oldest_first_and_scoped() -> None:
     assert await store.for_conversation("shop_001", "missing") == []
 
 
-async def test_query_filters_and_orders_newest_first() -> None:
-    store = InMemoryTraceStore()
+async def test_query_filters_and_orders_newest_first(trace_store: TraceStore) -> None:
+    store = trace_store
     await store.add(trace("a"))
     await store.add(trace("b", decision=Decision.HANDOFF, escalation_reason=EscalationReason.POLICY_DENIED))
     await store.add(trace("c", decision=Decision.HANDOFF, escalation_reason=EscalationReason.NO_EVIDENCE))
@@ -86,8 +85,8 @@ async def test_query_filters_and_orders_newest_first() -> None:
 # --- case store ---
 
 
-async def test_case_add_get_and_isolation() -> None:
-    store = InMemoryCaseStore()
+async def test_case_add_get_and_isolation(case_store: CaseStore) -> None:
+    store = case_store
     await store.add(case("c1"))
     got = await store.get("shop_001", "c1")
     assert got is not None and got.case_id == "c1"
@@ -95,8 +94,8 @@ async def test_case_add_get_and_isolation() -> None:
     assert await store.get("shop_001", "nope") is None
 
 
-async def test_case_add_twice_and_save_missing() -> None:
-    store = InMemoryCaseStore()
+async def test_case_add_twice_and_save_missing(case_store: CaseStore) -> None:
+    store = case_store
     await store.add(case("c1"))
     with pytest.raises(AlreadyExistsError):
         await store.add(case("c1"))
@@ -104,8 +103,8 @@ async def test_case_add_twice_and_save_missing() -> None:
         await store.save(case("never-added"))
 
 
-async def test_case_save_persists_changes_and_get_returns_copies() -> None:
-    store = InMemoryCaseStore()
+async def test_case_save_persists_changes_and_get_returns_copies(case_store: CaseStore) -> None:
+    store = case_store
     await store.add(case("c1"))
     c = await store.get("shop_001", "c1")
     assert c is not None
@@ -117,8 +116,8 @@ async def test_case_save_persists_changes_and_get_returns_copies() -> None:
     assert saved is not None and saved.status is CaseStatus.CLAIMED and saved.claimed_by == "staff-1"
 
 
-async def test_case_list_filters_and_is_oldest_first() -> None:
-    store = InMemoryCaseStore()
+async def test_case_list_filters_and_is_oldest_first(case_store: CaseStore) -> None:
+    store = case_store
     await store.add(case("late", at=NOW + timedelta(hours=2)))
     await store.add(case("early", at=NOW))
     await store.add(case("mid", at=NOW + timedelta(hours=1)))

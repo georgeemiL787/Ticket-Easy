@@ -21,9 +21,13 @@ def test_standin_container_wires_every_dependency(container: Container) -> None:
     assert isinstance(container.evidence, EvidenceProvider)
     assert isinstance(container.policy, PolicyGate)
     assert isinstance(container.capabilities, CapabilityClient)
-    assert isinstance(container.sessions, SessionStore) and isinstance(container.sessions, InMemorySessionStore)
-    assert isinstance(container.traces, TraceStore) and isinstance(container.traces, InMemoryTraceStore)
-    assert isinstance(container.cases, CaseStore) and isinstance(container.cases, InMemoryCaseStore)
+    assert isinstance(container.sessions, SessionStore)
+    assert isinstance(container.traces, TraceStore)
+    assert isinstance(container.cases, CaseStore)
+    if container.settings.store == "memory":  # the suite can also run with TEAM_B_STORE=sqlite
+        assert isinstance(container.sessions, InMemorySessionStore)
+        assert isinstance(container.traces, InMemoryTraceStore)
+        assert isinstance(container.cases, InMemoryCaseStore)
     assert isinstance(container.clock, Clock)
     assert container.llm is None  # rules only
     assert len(container.tenants) == 0
@@ -44,9 +48,7 @@ def test_live_mode_is_not_available_yet(tenants_dir: Path) -> None:
         build_container(Settings(mode="live", config_dir=tenants_dir))
 
 
-def test_sqlite_store_and_llm_providers_are_not_available_yet(tenants_dir: Path) -> None:
-    with pytest.raises(ContainerError, match="TEAM_B_STORE=sqlite"):
-        build_container(Settings(store="sqlite", config_dir=tenants_dir))
+def test_llm_providers_are_not_available_yet(tenants_dir: Path) -> None:
     with pytest.raises(ContainerError, match="TEAM_B_LLM=ollama"):
         build_container(Settings(llm="ollama", config_dir=tenants_dir))
 

@@ -51,7 +51,9 @@ team_b/
                  standins/ policy_search (PolicySearchStandin: keyword + Arabizi-synonym search, text_search.py = the engine;
                            skips superseded passages, empty_reason no_match, fail_next switch)
                            safety_screen, rule_checker (placeholders that raise NotImplementedError until their prompt)
-                 sqlite_store, migrations/, llm                                            (planned)
+                 sqlite_store (SqliteDatabase: one short connection per call, numbered migrations/NNN_*.sql applied on first use;
+                           SqliteSessionStore/TraceStore/CaseStore, same behaviour as the memory stores; TEAM_B_STORE=sqlite)
+                 llm                                                                       (planned)
                  Phase 6 adds team_a_http and mcp_client                                   (planned)
     api/         app (create_app, GET /health, request-id middleware), errors (error envelope + handlers)
                  chat, inbox, traces, dashboard, auth                                      (planned)
@@ -70,6 +72,7 @@ team_b/
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
   tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
   tests/fakes.py      FakeLLM (scripted responses)
+  tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)
   web/chat  web/inbox  web/dashboard (built)                                               (planned)
   eval/                                                                                    (planned)
@@ -100,5 +103,6 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 ## Commands
 - Install: `pip install -e . -r requirements-dev.txt`
 - Settings: environment variables listed in `.env.example` (all optional)
+- Run the suite on SQLite: `TEAM_B_STORE=sqlite make test` (a temp database per test)
 - Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
 - Regenerate JSON Schemas after changing DecisionTrace, HandoffPackage, HandoffCase or AgentReply: `make schemas`

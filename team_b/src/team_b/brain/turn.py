@@ -27,7 +27,7 @@ class Step:
 
     decision: Decision
     reason: str  # for the trace, in plain words
-    reply_key: str  # which template to say (see brain/templates.py)
+    reply_key: str  # which template to say (see data/locales and brain/composer.py)
     values: Mapping[str, str] = field(default_factory=dict)
     citations: tuple[str, ...] = ()
     escalation: EscalationReason | None = None  # required when decision is HANDOFF

@@ -52,7 +52,9 @@ team_b/
                  choices (conflicting_pair, ordinal_choice "the second"/el awel/الأول, says_both, mask_order_id, describe_orders):
                  "do you mean A or B?" for tenant conflicting_intents within 0.1 confidence; a verified customer without an order id
                  is shown up to 3 open orders (list_customer_orders, masked, newest first); stage `disambiguate` resolves the answers
-                 templates (minimal reply sentences per locale, replaced by the composer), handoff (stub: ESCALATION_DEFAULTS
+                 composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
+                 {placeholders}; texts in data/locales/{en,ar,arabizi}.json, flat, 58 keys, same keys everywhere; keys: ask_<slot>,
+                 confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).

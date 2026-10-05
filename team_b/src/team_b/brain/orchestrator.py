@@ -30,7 +30,7 @@ from team_b.ports import (
     TraceStore,
 )
 
-CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English clarify_generic template
+CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English ask_rephrase text
 
 DEFAULT_HANDLERS: Mapping[str, Handler] = {
     "smalltalk": smalltalk_handler,

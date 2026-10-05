@@ -20,12 +20,12 @@ from team_b.brain.choices import (
     ordinal_choice,
     says_both,
 )
+from team_b.brain.composer import default_composer
 from team_b.brain.handoff import open_case
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
-from team_b.brain.templates import TEMPLATES
 from team_b.brain.text import find_spans, normalize
 from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
@@ -34,7 +34,7 @@ from team_b.domain.actions import ActionState
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus
 from team_b.domain.trace import ToolCallRecord
-from team_b.domain.understanding import IntentCandidate
+from team_b.domain.understanding import IntentCandidate, Locale
 from team_b.observability import get_logger
 
 log = get_logger(__name__)
@@ -83,7 +83,7 @@ async def handed_off_check(ctx: TurnContext) -> str:
     ctx.step = Step(
         Decision.HANDOFF,
         reason="a colleague owns this conversation; the message was added to the case",
-        reply_key="handed_off_wait",
+        reply_key="human_will_reply",
         escalation=session.last_escalation or EscalationReason.CUSTOMER_REQUEST,
         awaiting="human",
         silent=not first,
@@ -168,7 +168,7 @@ async def pending_confirmation(ctx: TurnContext) -> str:
         ctx.step = Step(
             Decision.CLARIFY,
             reason="the customer confirmed; executing actions is not built yet",
-            reply_key="clarify_generic",
+            reply_key="ask_rephrase",
             awaiting="detail",
         )
         return f"yes to {proposal.tool}: handed to the action flow (not built yet)"
@@ -312,7 +312,7 @@ async def frustration(ctx: TurnContext) -> str:
         ctx.step = Step(
             Decision.HANDOFF,
             reason="the customer is very frustrated",
-            reply_key="handoff_generic",
+            reply_key="handoff_high_frustration",
             escalation=EscalationReason.HIGH_FRUSTRATION,
             awaiting="human",
         )
@@ -348,7 +348,7 @@ async def placeholder_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     return Step(
         Decision.CLARIFY,
         reason=f"{planned.kind} handling for {planned.name} is not built yet",
-        reply_key="clarify_generic",
+        reply_key="ask_rephrase",
         awaiting="detail",
     )
 
@@ -371,7 +371,7 @@ def _count_clarification(ctx: TurnContext, asking: str) -> bool:
 
 
 def _give_up(ctx: TurnContext, reason: EscalationReason, why: str) -> Step:
-    return Step(Decision.HANDOFF, reason=why, reply_key="handoff_generic", escalation=reason, awaiting="human")
+    return Step(Decision.HANDOFF, reason=why, reply_key=f"handoff_{reason.value}", escalation=reason, awaiting="human")
 
 
 async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
@@ -452,7 +452,7 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
         return Step(
             Decision.CLARIFY,
             reason=f"{planned.name} needs order_id: offered {len(listing)} of the customer's orders",
-            reply_key="ask_order_choice",
+            reply_key="disambiguate_order",
             values={"orders": describe_orders(listing, locale_of(ctx))},
             awaiting="order_choice",
         )
@@ -460,7 +460,7 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     if _count_clarification(ctx, f"slot:{slot}"):
         why = f"asked for {slot} {session.clarifications} times without an answer"
         return _give_up(ctx, EscalationReason.LOW_CONFIDENCE, why)
-    key = f"ask_{slot}" if f"ask_{slot}" in TEMPLATES else "ask_generic"
+    key = f"ask_{slot}" if default_composer().has(Locale.EN, f"ask_{slot}") else "ask_generic"
     own = slot in spec.required_slots or slot in resolution.missing
     return Step(
         Decision.CLARIFY if own else Decision.VERIFY_IDENTITY,
@@ -476,7 +476,7 @@ async def handler(ctx: TurnContext) -> str:
         if _count_clarification(ctx, "detail"):
             ctx.step = _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the request is still unclear after asking")
             return "no intent: giving up after repeated clarifications"
-        ctx.step = Step(Decision.CLARIFY, reason="no intent understood", reply_key="clarify_generic", awaiting="detail")
+        ctx.step = Step(Decision.CLARIFY, reason="no intent understood", reply_key="ask_rephrase", awaiting="detail")
         return "no intent: asking for detail"
     chosen = ctx.deps.handlers.get(ctx.plan.kind, placeholder_handler)
     ctx.step = await chosen(ctx, ctx.plan)

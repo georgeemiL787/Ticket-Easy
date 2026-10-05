@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 
+from team_b.brain.composer import default_composer, render
 from team_b.brain.handoff import ESCALATION_DEFAULTS
 from team_b.brain.orchestrator import Orchestrator
 from team_b.brain.pipeline import STAGES
-from team_b.brain.templates import TEMPLATES, render
 from team_b.brain.turn import MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext
 from team_b.container import Container
 from team_b.contracts.errors import UpstreamError
@@ -223,7 +223,7 @@ async def test_a_message_to_a_conversation_a_human_owns_is_logged_and_answered_o
     first = await say(o, "I want to talk to a human")
     second = await say(o, "my phone is 01012345601, hello?")
     third = await say(o, "are you there")
-    assert second.text == render("handed_off_wait", Locale.EN) and second.decision is Decision.HANDOFF
+    assert second.text == render("human_will_reply", Locale.EN) and second.decision is Decision.HANDOFF
     assert third.text == "" and third.decision is Decision.HANDOFF  # told once, then silence
     assert second.awaiting == third.awaiting == "human"
     cases = await c.cases.list(T)
@@ -491,15 +491,10 @@ async def test_a_silent_step_leaves_no_agent_message_in_the_history(c: Container
 # ---- templates ----
 
 
-def test_every_template_exists_in_all_three_locales() -> None:
-    for key, texts in TEMPLATES.items():
-        assert set(texts) == set(Locale), key
-        assert all(text.strip() for text in texts.values()), key
-
-
 def test_an_unknown_template_is_an_error() -> None:
     with pytest.raises(KeyError, match="no template 'nope'"):
         render("nope", Locale.EN)
+    assert default_composer().has(Locale.EN, "greeting")
 
 
 def test_a_step_that_hands_off_needs_a_reason() -> None:

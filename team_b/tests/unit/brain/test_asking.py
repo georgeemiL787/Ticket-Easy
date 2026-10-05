@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
+from team_b.brain.composer import render
 from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.templates import render
 from team_b.container import Container
 from team_b.contracts.errors import UpstreamError
 from team_b.domain.decision import Decision, EscalationReason

@@ -14,8 +14,8 @@ from datetime import datetime
 from typing import Any
 
 from team_b.brain import stages
+from team_b.brain.composer import render
 from team_b.brain.redaction import redact
-from team_b.brain.templates import render
 from team_b.brain.turn import Deps, StageFn, TurnContext, locale_of
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply

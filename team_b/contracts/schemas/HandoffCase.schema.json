@@ -1,0 +1,484 @@
+{
+  "$defs": {
+    "AttemptedAction": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "proposal_id": {
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "tool",
+        "state"
+      ],
+      "title": "AttemptedAction",
+      "type": "object"
+    },
+    "CaseEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "minLength": 1,
+          "title": "Actor",
+          "type": "string"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "actor",
+        "kind",
+        "at"
+      ],
+      "title": "CaseEvent",
+      "type": "object"
+    },
+    "CaseStatus": {
+      "enum": [
+        "open",
+        "claimed",
+        "resolved",
+        "returned_to_agent"
+      ],
+      "title": "CaseStatus",
+      "type": "string"
+    },
+    "CustomerSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "customer_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customer Id"
+        },
+        "orders": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Orders",
+          "type": "array"
+        },
+        "phone_masked": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phone Masked"
+        },
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        }
+      },
+      "title": "CustomerSnapshot",
+      "type": "object"
+    },
+    "EscalationReason": {
+      "description": "Why a conversation goes to a human. Each one has a priority and a suggested next step (later prompts).",
+      "enum": [
+        "customer_request",
+        "mandatory_risk",
+        "policy_denied",
+        "approval_required",
+        "repeated_tool_failure",
+        "unverified_result",
+        "no_evidence",
+        "dependency_unavailable",
+        "low_confidence",
+        "identity_failed",
+        "ownership_mismatch",
+        "high_frustration",
+        "capability_missing",
+        "unsupported"
+      ],
+      "title": "EscalationReason",
+      "type": "string"
+    },
+    "HandoffPackage": {
+      "additionalProperties": false,
+      "description": "Everything a human needs, built from recorded facts so the customer never has to repeat anything.",
+      "properties": {
+        "ai_suggestion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ai Suggestion"
+        },
+        "ai_summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ai Summary"
+        },
+        "attempted_actions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AttemptedAction"
+          },
+          "title": "Attempted Actions",
+          "type": "array"
+        },
+        "customer": {
+          "$ref": "#/$defs/CustomerSnapshot"
+        },
+        "details": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Details",
+          "type": "object"
+        },
+        "failures": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Failures",
+          "type": "array"
+        },
+        "order_facts": {
+          "additionalProperties": true,
+          "title": "Order Facts",
+          "type": "object"
+        },
+        "policy_quotes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PolicyQuote"
+          },
+          "title": "Policy Quotes",
+          "type": "array"
+        },
+        "priority": {
+          "enum": [
+            "urgent",
+            "high",
+            "normal",
+            "low"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "reason": {
+          "$ref": "#/$defs/EscalationReason"
+        },
+        "rule_answers": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PolicyRecord"
+          },
+          "title": "Rule Answers",
+          "type": "array"
+        },
+        "safety_flags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Safety Flags",
+          "type": "array"
+        },
+        "suggested_next_step": {
+          "title": "Suggested Next Step",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "transcript": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Message"
+          },
+          "title": "Transcript",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "reason",
+        "priority",
+        "suggested_next_step"
+      ],
+      "title": "HandoffPackage",
+      "type": "object"
+    },
+    "Message": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "customer",
+            "agent",
+            "human_agent",
+            "system"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "trace_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trace Id"
+        }
+      },
+      "required": [
+        "role",
+        "text",
+        "at"
+      ],
+      "title": "Message",
+      "type": "object"
+    },
+    "PendingApproval": {
+      "additionalProperties": false,
+      "description": "An action that waits for a human to approve it.",
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "capability": {
+          "title": "Capability",
+          "type": "string"
+        },
+        "proposal_id": {
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "tool",
+        "capability"
+      ],
+      "title": "PendingApproval",
+      "type": "object"
+    },
+    "PolicyQuote": {
+      "additionalProperties": false,
+      "description": "A policy passage quoted exactly as written, with its source.",
+      "properties": {
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "citation",
+        "text"
+      ],
+      "title": "PolicyQuote",
+      "type": "object"
+    },
+    "PolicyRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "citations": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "decision": {
+          "enum": [
+            "allow",
+            "deny",
+            "require_human"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "reason_code": {
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "action",
+        "decision",
+        "reason_code"
+      ],
+      "title": "PolicyRecord",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "case_id": {
+      "minLength": 1,
+      "title": "Case Id",
+      "type": "string"
+    },
+    "claimed_by": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Claimed By"
+    },
+    "conversation_id": {
+      "minLength": 1,
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "events": {
+      "items": {
+        "$ref": "#/$defs/CaseEvent"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "package": {
+      "$ref": "#/$defs/HandoffPackage"
+    },
+    "pending_approval": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PendingApproval"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "status": {
+      "$ref": "#/$defs/CaseStatus",
+      "default": "open"
+    },
+    "tenant_id": {
+      "minLength": 1,
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "updated_at": {
+      "format": "date-time",
+      "title": "Updated At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "tenant_id",
+    "conversation_id",
+    "package",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "HandoffCase",
+  "type": "object"
+}

@@ -1,7 +1,7 @@
 # Use the project's virtualenv when present (Windows, then POSIX); otherwise whatever `python` is on PATH.
 PYTHON ?= $(if $(wildcard .venv/Scripts/python.exe),.venv/Scripts/python.exe,$(if $(wildcard .venv/bin/python),.venv/bin/python,python))
 
-.PHONY: install test lint fmt run scenarios cov
+.PHONY: install test lint fmt run scenarios cov schemas
 
 install:
 	$(PYTHON) -m pip install -e . -r requirements-dev.txt
@@ -32,3 +32,6 @@ endif
 
 cov:
 	$(PYTHON) -m pytest --cov=team_b --cov-report=term-missing -q
+
+schemas:
+	$(PYTHON) scripts/export_schemas.py

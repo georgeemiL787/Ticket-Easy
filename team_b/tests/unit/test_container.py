@@ -61,8 +61,6 @@ async def test_standin_services_are_placeholders_until_phase_2(container: Contai
         await container.evidence.search_knowledge("shop_001", "q", request_id="r")
     with pytest.raises(NotImplementedError, match="Phase 2"):
         await container.evidence.classify_risk("shop_001", "hello", request_id="r")
-    with pytest.raises(NotImplementedError, match="Phase 2"):
-        await container.capabilities.list_tools("shop_001")
     request = CheckActionRequest.model_validate(
         {"request_id": "r", "tenant_id": "shop_001", "action": "a", "tool": {"name": "a", "operation_kind": "read"}}
     )

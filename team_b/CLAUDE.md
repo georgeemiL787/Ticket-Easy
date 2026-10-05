@@ -43,8 +43,10 @@ team_b/
     brain/       language, text, nlu, slots, knowledge, identity, registry, gates, actions,
                  composer, handoff, summarizer, metrics, alerts, orchestrator             (modules planned)
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)
-                 standins/ evidence, policy_search, safety_screen, rule_checker, shop
-                           (placeholders that raise NotImplementedError until Phase 2)
+                 standins/ shop (StandinShop: the fake Nile Style shop with audit log, idempotent replay, policy
+                           safety net and failure switches; shop_backend.py = tool behaviour; json_schema.py)
+                           evidence, policy_search, safety_screen, rule_checker
+                           (placeholders that raise NotImplementedError until their Phase 2 prompt)
                  sqlite_store, migrations/, llm                                            (planned)
                  Phase 6 adds team_a_http and mcp_client                                   (planned)
     api/         app (create_app, GET /health, request-id middleware), errors (error envelope + handlers)
@@ -74,6 +76,8 @@ Fixture conventions (shop_001): copied from Team A sources, never loaded from te
 demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment 4 days late; backend.json demo_guide says
 what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
+
+container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner).
 
 Error format of every API error: {"schema_version": "1.0", "error": {"code", "message", "request_id"}}. Codes: INVALID_REQUEST 422, NOT_FOUND / TENANT_NOT_FOUND 404, INVALID_STATE 409, UPSTREAM_UNAVAILABLE 503, INTERNAL_ERROR 500. Raise ApiError (api/errors.py) from routes; never put request values or internal details in messages.
 

@@ -1,14 +1,18 @@
-from collections.abc import AsyncIterator
+import itertools
+from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import date
 from pathlib import Path
+from typing import Any, Literal
 
 import httpx
 import pytest
 from fastapi import FastAPI
 
+from team_b.adapters.standins.shop import StandinShop
 from team_b.api.app import create_app
 from team_b.config import Settings
 from team_b.container import Container, build_container
+from team_b.contracts.tools import ToolCallRequest, ToolResult
 
 FIXED_TODAY = date(2026, 9, 28)  # the seeded demo data depends on this date
 
@@ -45,3 +49,38 @@ async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
         transport = httpx.ASGITransport(app=app, raise_app_exceptions=False)
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
             yield http
+
+
+@pytest.fixture
+def shop(container: Container) -> StandinShop:
+    assert container.shop is not None
+    return container.shop
+
+
+@pytest.fixture
+def call(shop: StandinShop) -> Callable[..., Awaitable[ToolResult]]:
+    """call("get_order", {"order_id": "NS-20877"}): a call with fresh ids; policy=None omits the policy id."""
+    numbers = itertools.count(1)
+
+    async def _call(
+        tool: str,
+        arguments: dict[str, Any] | None = None,
+        *,
+        actor: Literal["customer", "human"] = "customer",
+        key: str | None = None,
+        policy: str | None = "pol-1",
+        approval: str | None = None,
+    ) -> ToolResult:
+        n = next(numbers)
+        request = ToolCallRequest(
+            request_id=f"req-{n}",
+            tool=tool,
+            arguments=arguments or {},
+            idempotency_key=key or f"idem-{n}",
+            policy_request_id=policy,
+            approval_id=approval,
+            actor=actor,
+        )
+        return await shop.call_tool("shop_001", request)
+
+    return _call

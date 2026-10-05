@@ -1,6 +1,8 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from team_b.adapters.memory_store import (
     FixedClock,
@@ -13,7 +15,7 @@ from team_b.adapters.standins.evidence import StandinEvidenceProvider
 from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
-from team_b.adapters.standins.shop import ShopStandin
+from team_b.adapters.standins.shop import StandinShop
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
 from team_b.ports import (
@@ -44,6 +46,7 @@ class Container:
     sessions: SessionStore
     traces: TraceStore
     cases: CaseStore
+    shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
 
 
 def build_container(settings: Settings) -> Container:
@@ -57,15 +60,27 @@ def build_container(settings: Settings) -> Container:
     if settings.llm != "none":
         raise ContainerError(f"TEAM_B_LLM={settings.llm} is not available yet. Use TEAM_B_LLM=none (rules only).")
 
+    clock = FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock()
+    tenants = TenantRegistry.from_dir(settings.config_dir)
+    shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
     return Container(
         settings=settings,
-        clock=FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock(),
-        tenants=TenantRegistry.from_dir(settings.config_dir),
+        clock=clock,
+        tenants=tenants,
         evidence=StandinEvidenceProvider(PolicySearchStandin(), SafetyScreenStandin()),
         policy=RuleCheckerStandin(),
-        capabilities=ShopStandin(),
+        capabilities=shop,
         llm=None,
         sessions=InMemorySessionStore(),
         traces=InMemoryTraceStore(),
         cases=InMemoryCaseStore(),
+        shop=shop,
     )
+
+
+def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:
+    """Flip a failure switch on a stand-in, for the scenario runner: inject: {plug: shop, switch: fail_next, ...}."""
+    if plug == "shop" and container.shop is not None:
+        container.shop.inject(spec)
+        return
+    raise ValueError(f"no failure switches for plug {plug!r} (only the shop has them so far)")

@@ -104,3 +104,22 @@ def test_tenant_config_has_the_eleven_intents_with_three_examples_each(tenant: T
         assert any(ARABIC.search(e) for e in spec.examples), name  # Egyptian Arabic
         assert any(not ARABIC.search(e) for e in spec.examples), name  # English / Arabizi
     assert re.fullmatch(tenant.order_id_pattern, "NS-20877") and not re.fullmatch(tenant.order_id_pattern, "XX-1")
+
+
+JSON_TYPES = {"string", "number", "integer", "boolean", "object", "array", "null"}
+
+
+def _types_are_valid(schema: dict, where: str) -> None:
+    kinds = schema.get("type", "object")
+    for kind in [kinds] if isinstance(kinds, str) else kinds:
+        assert kind in JSON_TYPES, f"{where}: {kind!r} is not a JSON Schema type"
+    for name, sub in schema.get("properties", {}).items():
+        _types_are_valid(sub, f"{where}.{name}")
+    if "items" in schema:
+        _types_are_valid(schema["items"], f"{where}[]")
+
+
+def test_every_tool_schema_uses_real_json_schema_types() -> None:
+    for t in read("tools.json")["tools"]:
+        for side in ("input_schema", "output_schema"):
+            _types_are_valid(t[side], f"{t['name']}.{side}")

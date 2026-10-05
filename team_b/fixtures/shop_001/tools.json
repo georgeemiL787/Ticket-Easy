@@ -170,8 +170,29 @@
         "type": "object",
         "properties": {
           "orders": {
-            "type": "type",
-            "description": "items"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "order_id": {
+                  "type": "string"
+                },
+                "order_status": {
+                  "type": "string"
+                },
+                "order_total": {
+                  "type": "number"
+                },
+                "placed_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "order_id",
+                "order_status"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [

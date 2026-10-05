@@ -1,0 +1,32 @@
+{
+  "id": "S37",
+  "title": "Book me a flight: refused politely with an offer of a person",
+  "status": "pending",
+  "pending_reason": "P1.4a pipeline + P1.5a templates (refuse_unsupported)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Please book me a flight to Dubai",
+      "expect": {
+        "decision": "refuse",
+        "escalation": null,
+        "locale": "en",
+        "text_contains_any": [
+          "person",
+          "human",
+          "agent",
+          "colleague",
+          "team"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

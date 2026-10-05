@@ -1,0 +1,50 @@
+{
+  "id": "S33",
+  "title": "Safety screen down: policy question still answered, refund blocked and handed off",
+  "status": "pending",
+  "pending_reason": "Phase 2 safety screen stand-in with a failure switch (inject plug safety_screen) + P1.4b action flow",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "inject": [
+    {
+      "plug": "safety_screen",
+      "operation": "classify_risk",
+      "mode": "fail",
+      "times": 10
+    }
+  ],
+  "turns": [
+    {
+      "say": "What is your return policy?",
+      "expect": {
+        "decision": "answer",
+        "locale": "en",
+        "citations_include": [
+          "return_policy@v2#s2"
+        ]
+      }
+    },
+    {
+      "say": "I want a refund for order NS-20745",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "dependency_unavailable",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "dependency_unavailable",
+    "trace_invariants": true
+  }
+}

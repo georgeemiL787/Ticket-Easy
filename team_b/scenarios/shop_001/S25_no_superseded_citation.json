@@ -1,0 +1,31 @@
+{
+  "id": "S25",
+  "title": "A return question never cites the superseded return_policy v1",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "What is your return policy?",
+      "expect": {
+        "decision": "answer",
+        "locale": "en",
+        "citations_include": [
+          "return_policy@v2#s2"
+        ],
+        "citations_exclude": [
+          "return_policy@v1#s1",
+          "return_policy@v1#s2",
+          "return_policy@v1#s3"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

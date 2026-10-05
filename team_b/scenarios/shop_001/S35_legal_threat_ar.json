@@ -1,0 +1,27 @@
+{
+  "id": "S35",
+  "title": "A legal threat in Egyptian Arabic goes to a human urgently",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline + safety screen stand-in (Phase 2)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "هرفع قضية عليكم وهبلغ حماية المستهلك",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "mandatory_risk",
+        "awaiting": "human",
+        "locale": "ar"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "mandatory_risk",
+    "case_priority": "urgent",
+    "trace_invariants": true
+  }
+}

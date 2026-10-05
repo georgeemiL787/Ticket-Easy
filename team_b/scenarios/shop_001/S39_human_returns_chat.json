@@ -1,0 +1,68 @@
+{
+  "id": "S39",
+  "title": "Handoff, the human returns the chat, the agent resumes remembering identity and order",
+  "status": "pending",
+  "pending_reason": "Phase 3 handoff (human actions) + P1.2a session handling",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "NS-20877"
+      }
+    },
+    {
+      "say": "I want to talk to a human agent",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "customer_request",
+        "awaiting": "human"
+      }
+    },
+    {
+      "human": {
+        "action": "claim"
+      },
+      "expect": {}
+    },
+    {
+      "human": {
+        "action": "reply",
+        "text": "Hello, I am here to help."
+      },
+      "expect": {}
+    },
+    {
+      "human": {
+        "action": "return_to_agent",
+        "text": "Back to the assistant."
+      },
+      "expect": {}
+    },
+    {
+      "say": "ok, where is my order again?",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "text_contains": "NS-20877",
+        "text_not_contains": "phone"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "customer_request",
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "id": "S27",
+  "title": "Three intents in one message: status, address change, refund, each action confirmed",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "feen el order NS-20955, 3ayez a8ayar el 3enwan le 5 Corniche El Nil El Maadi, w 3ayez flousi el order NS-20701",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "01187654306",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "arabizi",
+        "text_contains": "NS-20955"
+      }
+    },
+    {
+      "say": "aywa",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "arabizi",
+        "text_contains": [
+          "ADR-",
+          "NS-20701"
+        ]
+      }
+    },
+    {
+      "say": "aywa",
+      "expect": {
+        "decision": "execute",
+        "awaiting": null,
+        "locale": "arabizi",
+        "text_contains": "REF-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "update_delivery_address",
+      "create_refund"
+    ],
+    "audit_count": 2,
+    "trace_invariants": true
+  }
+}

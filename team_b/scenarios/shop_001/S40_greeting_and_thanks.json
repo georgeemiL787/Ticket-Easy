@@ -1,0 +1,35 @@
+{
+  "id": "S40",
+  "title": "Greeting and thanks: answered from templates, no intent opened, no case",
+  "status": "pending",
+  "pending_reason": "P1.4a turn pipeline (S40 becomes active there)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Hello",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "escalation": null,
+        "locale": "en"
+      }
+    },
+    {
+      "say": "thanks, bye",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "escalation": null,
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "S38",
+  "title": "Delete my account is a human-only tool: handoff unsupported",
+  "status": "pending",
+  "pending_reason": "P1.4b action flow + permission gate (human-only and unlisted tools)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Please delete my account and all my data",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "unsupported",
+        "awaiting": "human",
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "unsupported",
+    "trace_invariants": true
+  }
+}

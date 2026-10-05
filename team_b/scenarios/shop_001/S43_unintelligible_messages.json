@@ -1,0 +1,41 @@
+{
+  "id": "S43",
+  "title": "Messages that cannot be understood: clarify twice, then handoff low_confidence",
+  "status": "pending",
+  "pending_reason": "P1.4b slots and asking (max_clarifications -> low_confidence)",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "asdf qwer zxcv",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "detail",
+        "escalation": null
+      }
+    },
+    {
+      "say": "lkjh poiu",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "detail",
+        "escalation": null
+      }
+    },
+    {
+      "say": "mnbv",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "low_confidence",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "low_confidence",
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "S21",
+  "title": "Clearance item return is refused by R-RETURN-EXCLUDED",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want to return order NS-20822, the colour is not what I expected",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01276543207",
+      "expect": {
+        "decision": "refuse",
+        "escalation": null,
+        "citations_include": [
+          "return_policy@v2#s4"
+        ],
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [],
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

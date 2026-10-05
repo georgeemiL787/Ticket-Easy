@@ -1,0 +1,41 @@
+{
+  "id": "S36",
+  "title": "Frustration rising over three turns ends in handoff high_frustration",
+  "status": "pending",
+  "pending_reason": "P1.3b understanding (frustration) + P1.4a pipeline",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877? It is late",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "escalation": null
+      }
+    },
+    {
+      "say": "I already asked, this is useless, why is it so slow?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "escalation": null
+      }
+    },
+    {
+      "say": "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "high_frustration",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "high_frustration",
+    "trace_invariants": true
+  }
+}

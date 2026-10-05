@@ -1,0 +1,25 @@
+{
+  "id": "S28",
+  "title": "Order id and +20 10 1234 5601 in one Arabizi message: verified in one turn",
+  "status": "pending",
+  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "feen el order NS-20877, ra2mi +20 10 1234 5601",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi",
+        "text_contains": "NS-20877"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

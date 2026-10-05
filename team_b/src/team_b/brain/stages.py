@@ -13,9 +13,12 @@ from dataclasses import replace
 from team_b.brain.handoff import open_case
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.redaction import redact
+from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
+from team_b.brain.templates import TEMPLATES
 from team_b.brain.text import find_spans, normalize
 from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext
 from team_b.contracts.errors import UpstreamError
+from team_b.contracts.tools import ToolSpec
 from team_b.domain.actions import ActionState
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus
@@ -189,6 +192,7 @@ async def merge(ctx: TurnContext) -> str:
             session.intents_seen.append(name)
         if session.active_intent is None:
             session.active_intent = name
+            session.clarifications = 0  # clarifications are counted per intent
         elif name != session.active_intent and name not in session.intent_queue:
             session.intent_queue.append(name)
     if answering_a_question:
@@ -253,8 +257,70 @@ async def handoff_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     )
 
 
+def _count_clarification(ctx: TurnContext, asking: str) -> bool:
+    """Asking for the same thing again (nothing was gained since last turn) counts; True once the limit is reached."""
+    session = ctx.session
+    session.clarifications = session.clarifications + 1 if session.awaiting == asking else 0
+    return session.clarifications >= ctx.tenant.escalation.max_clarifications
+
+
+def _give_up(ctx: TurnContext, reason: EscalationReason, why: str) -> Step:
+    return Step(Decision.HANDOFF, reason=why, reply_key="handoff_generic", escalation=reason, awaiting="human")
+
+
+async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
+    """The shop's published tools by name, or None when they cannot be listed (then the safe assumptions apply)."""
+    if ctx.deps.capabilities is None:
+        return None
+    try:
+        return {t.name: t for t in await ctx.deps.capabilities.list_tools(ctx.tenant.tenant_id)}
+    except UpstreamError:
+        ctx.errors.append("the shop tool list is unavailable")
+        return None
+
+
+async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
+    """Lookup and action requests: find out which details are still missing and ask for the next one.
+
+    When nothing is missing the rest of the flow (identity check, facts, rules, confirmation, execution) takes over;
+    that is built by later steps, so for now this ends in the placeholder reply."""
+    spec, session = ctx.tenant.intents[planned.name], ctx.session
+    tool_name = spec.lookup_tool if planned.kind == "lookup" else spec.action_tool
+    tools = await _tools(ctx)
+    tool = tools.get(tool_name) if tools is not None and tool_name else None
+    needs_identity = (tool.requires_identity if tool is not None else True) and not session.identity.verified
+
+    resolution = resolve_arguments(spec, tool, session, session.facts)
+    if resolution.unsourced:
+        why = f"no source for required argument(s): {', '.join(resolution.unsourced)}"
+        return _give_up(ctx, EscalationReason.UNSUPPORTED, why)
+
+    wanted = required_slots(spec, tool, needs_identity, ctx.tenant.identity.required_slots)
+    missing = [s for s in order_questions(wanted) if not session.slots.get(s) or s in resolution.missing]
+    slot = next_question(missing)
+    if slot is None:
+        session.clarifications = 0
+        return await placeholder_handler(ctx, planned)
+
+    if _count_clarification(ctx, f"slot:{slot}"):
+        why = f"asked for {slot} {session.clarifications} times without an answer"
+        return _give_up(ctx, EscalationReason.LOW_CONFIDENCE, why)
+    key = f"ask_{slot}" if f"ask_{slot}" in TEMPLATES else "ask_generic"
+    own = slot in spec.required_slots or slot in resolution.missing
+    return Step(
+        Decision.CLARIFY if own else Decision.VERIFY_IDENTITY,
+        reason=f"{planned.name} needs {slot}" + ("" if own else " to verify the customer"),
+        reply_key=key,
+        values={"slot": slot},
+        awaiting=f"slot:{slot}",
+    )
+
+
 async def handler(ctx: TurnContext) -> str:
     if ctx.plan is None:
+        if _count_clarification(ctx, "detail"):
+            ctx.step = _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the request is still unclear after asking")
+            return "no intent: giving up after repeated clarifications"
         ctx.step = Step(Decision.CLARIFY, reason="no intent understood", reply_key="clarify_generic", awaiting="detail")
         return "no intent: asking for detail"
     chosen = ctx.deps.handlers.get(ctx.plan.kind, placeholder_handler)

@@ -392,17 +392,8 @@ async def test_small_talk_is_answered_from_templates(c: Container, text: str, ke
     assert (reply.decision, reply.text, reply.awaiting) == (Decision.ANSWER, expected, None)
 
 
-@pytest.mark.parametrize(
-    "text",
-    [
-        "Where is my order NS-20877?",
-        "I want a refund",
-        "What is your return policy?",
-        "I need to change the delivery address",
-    ],
-)
-async def test_knowledge_lookup_and_action_requests_get_the_placeholder_for_now(c: Container, text: str) -> None:
-    reply = await say(orch(c), text)
+async def test_a_knowledge_request_gets_the_placeholder_for_now(c: Container) -> None:
+    reply = await say(orch(c), "What is your return policy?")
     assert (reply.decision, reply.awaiting) == (Decision.CLARIFY, "detail")
     assert "not built yet" in (await last_trace(c)).decision_reason
 
@@ -448,7 +439,8 @@ async def test_queued_intents_run_in_order_after_a_completed_one(c: Container) -
 async def test_a_queued_intent_waits_when_the_first_one_needs_the_customer(c: Container) -> None:
     reply = await say(orch(c), "Where is my order NS-20960 and cancel it")  # the placeholder is a clarify
     session = await c.sessions.load(T, C)
-    assert reply.decision is Decision.CLARIFY and session is not None and session.intent_queue == ["cancel_order"]
+    assert reply.decision is Decision.VERIFY_IDENTITY and reply.awaiting == "slot:phone"
+    assert session is not None and session.intent_queue == ["cancel_order"]
     assert next(s.detail for s in (await last_trace(c)).steps if s.stage == "queue") == "nothing queued"
 
 

@@ -60,7 +60,7 @@ async def test_unknown_tenant_is_an_error_and_stores_nothing(c: Container) -> No
 async def test_fifty_messages_keep_history_at_the_limit_with_a_summary(c: Container) -> None:
     limit = c.tenants.get(T).history_max_turns
     for n in range(25):  # 25 customer messages + 25 replies = 50 messages
-        await orch(c).handle_turn(T, C, f"message {n} about NS-20877" if n == 0 else f"message {n}")
+        await orch(c).handle_turn(T, C, "Hello, my order is NS-20877" if n == 0 else f"hello again {n}")
     session = await c.sessions.load(T, C)
     assert session is not None
     assert session.turn_index == 25 and len(session.history) == limit

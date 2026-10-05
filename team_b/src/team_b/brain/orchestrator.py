@@ -15,12 +15,20 @@ from collections.abc import Mapping
 
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
-from team_b.brain.stages import handoff_handler, placeholder_handler, smalltalk_handler
+from team_b.brain.stages import handoff_handler, placeholder_handler, slot_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import Deps, Handler
 from team_b.domain.reply import AgentReply
 from team_b.domain.tenant import TenantRegistry
-from team_b.ports import CaseStore, Clock, EvidenceProvider, SessionConflictError, SessionStore, TraceStore
+from team_b.ports import (
+    CapabilityClient,
+    CaseStore,
+    Clock,
+    EvidenceProvider,
+    SessionConflictError,
+    SessionStore,
+    TraceStore,
+)
 
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English clarify_generic template
 
@@ -28,8 +36,8 @@ DEFAULT_HANDLERS: Mapping[str, Handler] = {
     "smalltalk": smalltalk_handler,
     "handoff": handoff_handler,
     "knowledge": placeholder_handler,
-    "lookup": placeholder_handler,
-    "action": placeholder_handler,
+    "lookup": slot_handler,
+    "action": slot_handler,
 }
 
 
@@ -46,6 +54,7 @@ class Orchestrator:
         nlu: NLU | None = None,
         evidence: EvidenceProvider | None = None,
         handlers: Mapping[str, Handler] | None = None,
+        capabilities: CapabilityClient | None = None,
     ) -> None:
         self._tenants = tenants
         self._deps = Deps(
@@ -57,6 +66,7 @@ class Orchestrator:
             nlu=nlu or RuleBasedNLU(),
             summarizer=summarizer or TemplateHistorySummarizer(),
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
+            capabilities=capabilities,
         )
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:

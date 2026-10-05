@@ -13,7 +13,7 @@ from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
 from team_b.domain.trace import TraceStep
 from team_b.domain.understanding import NLUResult
-from team_b.ports import CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
+from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
 
 # after one of these the next queued intent may run
 COMPLETED = frozenset({Decision.ANSWER, Decision.EXECUTE, Decision.REFUSE})
@@ -82,3 +82,4 @@ class Deps:
     nlu: NLU
     summarizer: HistorySummarizer
     handlers: Mapping[str, Handler]  # by intent kind
+    capabilities: CapabilityClient | None = None  # the shop tools; None means none are known

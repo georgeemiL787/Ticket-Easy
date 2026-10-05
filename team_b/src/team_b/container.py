@@ -100,6 +100,7 @@ def build_container(settings: Settings) -> Container:
             summarizer=summarizer,
             nlu=nlu,
             evidence=container.evidence,
+            capabilities=container.capabilities,
         ),
     )
 

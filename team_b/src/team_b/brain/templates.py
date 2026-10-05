@@ -26,6 +26,46 @@ TEMPLATES: Mapping[str, Mapping[Locale, str]] = {
         AR: "ممكن توضحلي أكتر محتاج مساعدة في إيه؟",
         AZ: "Momken twadda7ly aktar me7tag mosa3da fe eh?",
     },
+    "ask_order_id": {
+        EN: "Sure, I can help with that. What is your order number?",
+        AR: "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟",
+        AZ: "Tamam, a2dar asa3dak fe da. eh ra2am el order?",
+    },
+    "ask_phone": {
+        EN: "Thank you. To confirm that it is you, please send the phone number on the order.",
+        AR: "شكرًا. عشان أتأكد إنه حضرتك، ابعتلي رقم التليفون المسجل على الأوردر.",
+        AZ: "Shokran. 3ashan at2akked enaha 7adretak, ab3atly ra2am el telephone el mosajjal 3ala el order.",
+    },
+    "ask_item": {
+        EN: "Which item is this about?",
+        AR: "ده بخصوص أنهي منتج؟",
+        AZ: "Da bekhosos anhy montag?",
+    },
+    "ask_reason": {
+        EN: "What is the reason? A few words are enough.",
+        AR: "إيه السبب؟ كلمتين كفاية.",
+        AZ: "Eh el sabab? kelmetein kefaya.",
+    },
+    "ask_amount": {
+        EN: "What amount are you asking for?",
+        AR: "إيه المبلغ المطلوب؟",
+        AZ: "Eh el mablagh el matloub?",
+    },
+    "ask_new_address": {
+        EN: "What is the new delivery address?",
+        AR: "إيه عنوان التوصيل الجديد؟",
+        AZ: "Eh 3enwan el tawseel el gedeed?",
+    },
+    "ask_description": {
+        EN: "Please describe the problem in a few words.",
+        AR: "ممكن توصفلي المشكلة في كلمتين؟",
+        AZ: "Momken twasafly el moshkela fe kelmetein?",
+    },
+    "ask_generic": {
+        EN: "Could you tell me your {slot}?",
+        AR: "ممكن تقولي {slot}؟",
+        AZ: "Momken te2olly {slot}?",
+    },
     "confirm_again": {
         EN: "Please answer yes to go ahead or no to cancel.",
         AR: "لو سمحت قولي أيوه عشان أكمّل أو لأ عشان ألغي.",

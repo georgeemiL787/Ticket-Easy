@@ -1,8 +1,7 @@
 {
   "id": "S43",
   "title": "Messages that cannot be understood: clarify twice, then handoff low_confidence",
-  "status": "pending",
-  "pending_reason": "P1.4b slots and asking (max_clarifications -> low_confidence)",
+  "status": "active",
   "setup": {
     "today": "2026-09-28"
   },

@@ -28,7 +28,8 @@ team_b/
     config.py         Settings.from_env(): all TEAM_B_* / OLLAMA_* / OPENROUTER_* variables (see .env.example)
     container.py      build_container(settings) -> Container; the only place that picks implementations
     observability.py  structlog setup; bind_context() puts tenant/conversation/request/trace ids on every log line
-    __main__.py                                                                            (planned)
+    __main__.py       python -m team_b eval-nlu [--mode rules|llm|both] [--save-baseline]
+    nlu_eval.py       labelled-message evaluation: accuracy, multi-intent, entities, language, worst misses; baseline in eval/nlu_baseline.json
     contracts/   data formats exchanged with the plugs
                  base (PlugModel ignores extra fields, RequestModel forbids them), errors (UpstreamError),
                  evidence (Passage, RetrievalResult, PastTicketResult, RiskAssessment),
@@ -82,7 +83,7 @@ team_b/
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)
   web/chat  web/inbox  web/dashboard (built)                                               (planned)
-  eval/                                                                                    (planned)
+  eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)
 dashboard/   (repo root, next to team_b/; Phase 4 React app)                               (planned)
 ```
 

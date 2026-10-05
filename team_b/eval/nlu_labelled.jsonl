@@ -1,0 +1,151 @@
+{"id": "en-001", "text": "Where is my order NS-20877?", "language": "en", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "en-002", "text": "when will my package arrive", "language": "en", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "en-003", "text": "I want to return my order NS-20512", "language": "en", "intents": ["return_request"], "entities": {"order_id": "NS-20512"}, "wants_human": false}
+{"id": "en-004", "text": "this jacket is too small, I want to send it back", "language": "en", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "en-005", "text": "I'd like a refund for NS-20745", "language": "en", "intents": ["refund_request"], "entities": {"order_id": "NS-20745"}, "wants_human": false}
+{"id": "en-006", "text": "give me my money back please", "language": "en", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "en-007", "text": "Please cancel my order NS-20960", "language": "en", "intents": ["cancel_order"], "entities": {"order_id": "NS-20960"}, "wants_human": false}
+{"id": "en-008", "text": "can you cancel it, I changed my mind", "language": "en", "intents": ["cancel_order"], "entities": {}, "wants_human": false}
+{"id": "en-009", "text": "I need to change the delivery address for NS-20955", "language": "en", "intents": ["change_address"], "entities": {"order_id": "NS-20955"}, "wants_human": false}
+{"id": "en-010", "text": "I typed the wrong address, can you fix it", "language": "en", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "en-011", "text": "I want to exchange the shoes for a bigger size", "language": "en", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "en-012", "text": "can I swap this for another color", "language": "en", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "en-013", "text": "my order is late, is there any compensation?", "language": "en", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "en-014", "text": "I want to file a complaint about the courier", "language": "en", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "en-015", "text": "the courier was rude to me", "language": "en", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "en-016", "text": "I want to talk to a human", "language": "en", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "en-017", "text": "Let me speak to someone from customer service", "language": "en", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "en-018", "text": "What is your return policy?", "language": "en", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "en-019", "text": "How many days do I have to return an item?", "language": "en", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "en-020", "text": "Do you ship outside Egypt?", "language": "en", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "en-021", "text": "Hello", "language": "en", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "en-022", "text": "Good morning, thanks for your help", "language": "en", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "en-023", "text": "I don't want to return it, I want a refund", "language": "en", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "en-024", "text": "Don't cancel my order", "language": "en", "intents": [], "entities": {}, "wants_human": false}
+{"id": "en-025", "text": "Where is my order NS-20877 and cancel it", "language": "en", "intents": ["order_status", "cancel_order"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "en-026", "text": "I want a refund of 300 EGP for NS-20512, my phone is 01012345601", "language": "en", "intents": ["refund_request"], "entities": {"order_id": "NS-20512", "amount": "300", "phone": "01012345601"}, "wants_human": false}
+{"id": "en-027", "text": "Please book me a flight to Dubai", "language": "en", "intents": [], "entities": {}, "wants_human": false}
+{"id": "en-028", "text": "What is the weather today", "language": "en", "intents": [], "entities": {}, "wants_human": false}
+{"id": "en-029", "text": "ok", "language": "en", "intents": [], "entities": {}, "wants_human": false}
+{"id": "en-030", "text": "My number is +20 10 1234 5601", "language": "en", "intents": [], "entities": {"phone": "01012345601"}, "wants_human": false}
+{"id": "en-031", "text": "cancel my order and give me a refund", "language": "en", "intents": ["cancel_order", "refund_request"], "entities": {}, "wants_human": false}
+{"id": "en-032", "text": "is the shipping free for orders above 1000 EGP?", "language": "en", "intents": ["policy_question"], "entities": {"amount": "1000"}, "wants_human": false}
+{"id": "en-033", "text": "Hi, can I get a voucher for the late delivery?", "language": "en", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "ar-001", "text": "فين الاوردر بتاعي؟", "language": "ar", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "ar-002", "text": "الاوردر وصل فين NS-20877", "language": "ar", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "ar-003", "text": "عايز ارجع المنتج لان المقاس مش مظبوط", "language": "ar", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "ar-004", "text": "المنتج ده مش عاجبني عايز ارجعه", "language": "ar", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "ar-005", "text": "عايز فلوسي ترجع", "language": "ar", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "ar-006", "text": "عايز استرداد المبلغ للاوردر NS-20512", "language": "ar", "intents": ["refund_request"], "entities": {"order_id": "NS-20512"}, "wants_human": false}
+{"id": "ar-007", "text": "الغي الاوردر لو سمحت", "language": "ar", "intents": ["cancel_order"], "entities": {}, "wants_human": false}
+{"id": "ar-008", "text": "لو سمحت عايز الغي الطلب NS-20960", "language": "ar", "intents": ["cancel_order"], "entities": {"order_id": "NS-20960"}, "wants_human": false}
+{"id": "ar-009", "text": "عايز اغير عنوان التوصيل", "language": "ar", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "ar-010", "text": "العنوان اللي كتبته غلط", "language": "ar", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "ar-011", "text": "عايز ابدل المقاس", "language": "ar", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "ar-012", "text": "عايز اغير المقاس لـ 42", "language": "ar", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "ar-013", "text": "الاوردر اتاخر وعايز كوبون", "language": "ar", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "ar-014", "text": "عايز اقدم شكوى على المندوب", "language": "ar", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "ar-015", "text": "المندوب كان وحش جدا", "language": "ar", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "ar-016", "text": "عايز اكلم حد من خدمة العملاء", "language": "ar", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "ar-017", "text": "ممكن اكلم موظف؟", "language": "ar", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "ar-018", "text": "سياسة الاسترجاع ايه؟", "language": "ar", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "ar-019", "text": "ممكن ارجع المنتج بعد كام يوم من الاستلام؟", "language": "ar", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "ar-020", "text": "الشحن بكام لاسكندرية؟", "language": "ar", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "ar-021", "text": "السلام عليكم", "language": "ar", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "ar-022", "text": "شكرا ليك", "language": "ar", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "ar-023", "text": "مش عايز ارجع المنتج عايز ابدله", "language": "ar", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "ar-024", "text": "لا مش عايز الغي الاوردر", "language": "ar", "intents": [], "entities": {}, "wants_human": false}
+{"id": "ar-025", "text": "عايز اعرف الاوردر وصل فين وعايز الغيه", "language": "ar", "intents": ["order_status", "cancel_order"], "entities": {}, "wants_human": false}
+{"id": "ar-026", "text": "عايز اغير العنوان وعايز فلوسي", "language": "ar", "intents": ["change_address", "refund_request"], "entities": {}, "wants_human": false}
+{"id": "ar-027", "text": "رقمي ٠١٠١٢٣٤٥٦٠١", "language": "ar", "intents": [], "entities": {"phone": "01012345601"}, "wants_human": false}
+{"id": "ar-028", "text": "عايز احجز تذكرة طيران", "language": "ar", "intents": [], "entities": {}, "wants_human": false}
+{"id": "ar-029", "text": "هو الدفع عند الاستلام متاح؟", "language": "ar", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "ar-030", "text": "عايز تعويض عن التأخير", "language": "ar", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "ar-031", "text": "اسوأ خدمة، محدش بيرد عليا", "language": "ar", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "ar-032", "text": "عايز ارجع فلوسي ٣٠٠ جنيه", "language": "ar", "intents": ["refund_request"], "entities": {"amount": "300"}, "wants_human": false}
+{"id": "mixed-001", "text": "ممكن اعمل return للمنتج بعد كام يوم من الـ delivery؟", "language": "mixed", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "mixed-002", "text": "عايز refund للاوردر NS-20512", "language": "mixed", "intents": ["refund_request"], "entities": {"order_id": "NS-20512"}, "wants_human": false}
+{"id": "mixed-003", "text": "ازاي اعمل cancel للاوردر؟", "language": "mixed", "intents": ["cancel_order"], "entities": {}, "wants_human": false}
+{"id": "mixed-004", "text": "الـ order بتاعي وصل فين؟", "language": "mixed", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "mixed-005", "text": "عايز اغير الـ address بتاع الاوردر", "language": "mixed", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "mixed-006", "text": "عايز اعمل exchange للـ size", "language": "mixed", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-007", "text": "عايز voucher عشان التأخير", "language": "mixed", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-008", "text": "عايز اعمل complaint على المندوب", "language": "mixed", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "mixed-009", "text": "عايز اكلم agent", "language": "mixed", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "mixed-010", "text": "I want to return المنتج ده", "language": "mixed", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-011", "text": "Hello عايز اسأل عن الشحن", "language": "mixed", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "mixed-012", "text": "الـ tracking number بتاع الاوردر ايه؟", "language": "mixed", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "mixed-013", "text": "cancel الاوردر NS-20960 لو سمحت", "language": "mixed", "intents": ["cancel_order"], "entities": {"order_id": "NS-20960"}, "wants_human": false}
+{"id": "mixed-014", "text": "عايز refund بس مش عايز exchange", "language": "mixed", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-015", "text": "مش عايز return عايز refund", "language": "mixed", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-016", "text": "where is الاوردر بتاعي", "language": "mixed", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "mixed-017", "text": "الـ refund هيرجع امتى على الكارت؟", "language": "mixed", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "mixed-018", "text": "thanks يا باشا", "language": "mixed", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "mixed-019", "text": "hi، ازيك", "language": "mixed", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "mixed-020", "text": "change الـ address للاوردر NS-20955", "language": "mixed", "intents": ["change_address"], "entities": {"order_id": "NS-20955"}, "wants_human": false}
+{"id": "mixed-021", "text": "الـ coupon بتاع التأخير", "language": "mixed", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-022", "text": "customer service لو سمحت", "language": "mixed", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "mixed-023", "text": "ممكن اعرف الـ status بتاع الاوردر NS-20877", "language": "mixed", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "mixed-024", "text": "عايز اعمل return و refund", "language": "mixed", "intents": ["return_request", "refund_request"], "entities": {}, "wants_human": false}
+{"id": "mixed-025", "text": "فين الـ package بتاعي NS-20877", "language": "mixed", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "mixed-026", "text": "احنا نقدر نعمل cancel بعد الشحن؟", "language": "mixed", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "mixed-027", "text": "عايز اطلب pizza", "language": "mixed", "intents": [], "entities": {}, "wants_human": false}
+{"id": "mixed-028", "text": "01012345601 ده رقمي and the order is NS-20877", "language": "mixed", "intents": [], "entities": {"phone": "01012345601", "order_id": "NS-20877"}, "wants_human": false}
+{"id": "mixed-029", "text": "الـ delivery fee كام؟", "language": "mixed", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-001", "text": "emta a2dar araga3 el montag?", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-002", "text": "el order bta3i et2akhar, 3ayez a3raf feen", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-003", "text": "3ayez araga3 el order NS-20512 3shan el ma2as msh mazboot", "language": "arabizi", "intents": ["return_request"], "entities": {"order_id": "NS-20512"}, "wants_human": false}
+{"id": "arabizi-004", "text": "3ayez flousi el order mesh 3agebny", "language": "arabizi", "intents": ["refund_request", "complaint"], "entities": {}, "wants_human": false}
+{"id": "arabizi-005", "text": "3ayez alghy el order", "language": "arabizi", "intents": ["cancel_order"], "entities": {}, "wants_human": false}
+{"id": "arabizi-006", "text": "3ayez a8ayar el 3enwan", "language": "arabizi", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "arabizi-007", "text": "3ayza abdel el ma2as", "language": "arabizi", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-008", "text": "el order et2akhar, fi kobon ta3weed?", "language": "arabizi", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-009", "text": "3ayez a2adem shakwa 3an el mandoob", "language": "arabizi", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "arabizi-010", "text": "3ayez akalem mowazaf", "language": "arabizi", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "arabizi-011", "text": "ahlan, ezayak", "language": "arabizi", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "arabizi-012", "text": "feen el order NS-20877", "language": "arabizi", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "arabizi-013", "text": "el order lessa mawasalsh", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-014", "text": "el order wasal feen?", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-015", "text": "3awez a3raf el order wasal wala la2", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-016", "text": "3ayez a-return el order", "language": "arabizi", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-017", "text": "momken araga3 el order ba3d kam yom?", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-018", "text": "el shahn bekam lel eskandareya?", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-019", "text": "fi masrouf lel shahn?", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-020", "text": "ezay a8ayar 3enwan el tawsil", "language": "arabizi", "intents": ["change_address"], "entities": {}, "wants_human": false}
+{"id": "arabizi-021", "text": "3ayez arga3 el montag", "language": "arabizi", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-022", "text": "3ayz araga3 el gazma", "language": "arabizi", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-023", "text": "3awz flousi tragaa3", "language": "arabizi", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-024", "text": "rag3ouly felousy law samaht", "language": "arabizi", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-025", "text": "msh 3ayez araga3 el order, 3ayez abdel", "language": "arabizi", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-026", "text": "3ayez alghy el order NS-20960 plz", "language": "arabizi", "intents": ["cancel_order"], "entities": {"order_id": "NS-20960"}, "wants_human": false}
+{"id": "arabizi-027", "text": "la2 msh 3ayez alghy", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}
+{"id": "arabizi-028", "text": "ya 3am 3ayez akalem 7ad men khedmet el 3omala", "language": "arabizi", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "arabizi-029", "text": "salam 3alaykom", "language": "arabizi", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "arabizi-030", "text": "shokran awi", "language": "arabizi", "intents": ["greeting"], "entities": {}, "wants_human": false}
+{"id": "arabizi-031", "text": "3ayez a8ayar el size men 40 l 42", "language": "arabizi", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-032", "text": "3ayza abdel el lon", "language": "arabizi", "intents": ["exchange_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-033", "text": "3ayez ta3weed 3an el ta2kheer", "language": "arabizi", "intents": ["voucher_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-034", "text": "fein el order bta3i NS-20877 w 3ayez alghyh", "language": "arabizi", "intents": ["order_status", "cancel_order"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "arabizi-035", "text": "3ayez a8ayar el 3enwan w a3raf el order wasal feen", "language": "arabizi", "intents": ["change_address", "order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-036", "text": "3ayez flousi w 3ayez a2adem shakwa", "language": "arabizi", "intents": ["refund_request", "complaint"], "entities": {}, "wants_human": false}
+{"id": "arabizi-037", "text": "emta el order hayosal?", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-038", "text": "el order msh wasel", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-039", "text": "momken a3raf feen el talab bta3i?", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-040", "text": "7asal 7aga f el order, 3ayez a2adem shakwa", "language": "arabizi", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "arabizi-041", "text": "el mandoob kan wesekh", "language": "arabizi", "intents": ["complaint"], "entities": {}, "wants_human": false}
+{"id": "arabizi-042", "text": "3ayez a3raf el siyasa bta3et el estrga3", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-043", "text": "el dafa3 3and el estlam mawgood?", "language": "arabizi", "intents": ["policy_question"], "entities": {}, "wants_human": false}
+{"id": "arabizi-044", "text": "ezzay a3mel return?", "language": "arabizi", "intents": ["return_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-045", "text": "3ayez a3mel cancel", "language": "arabizi", "intents": ["cancel_order"], "entities": {}, "wants_human": false}
+{"id": "arabizi-046", "text": "3ayez a3mel refund", "language": "arabizi", "intents": ["refund_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-047", "text": "salam, 3ayez a3raf feen el order", "language": "arabizi", "intents": ["order_status"], "entities": {}, "wants_human": false}
+{"id": "arabizi-048", "text": "ana msh 3ayez a3raf, ana 3ayez akalem mowazaf", "language": "arabizi", "intents": ["human_request"], "entities": {}, "wants_human": true}
+{"id": "arabizi-049", "text": "tamam", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}
+{"id": "arabizi-050", "text": "la2 balash", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}
+{"id": "arabizi-051", "text": "3ayez ahgez tazkara tayara", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}
+{"id": "arabizi-052", "text": "el order raqam NS-20877 wasal?", "language": "arabizi", "intents": ["order_status"], "entities": {"order_id": "NS-20877"}, "wants_human": false}
+{"id": "arabizi-053", "text": "el telephone bta3i 01012345601", "language": "arabizi", "intents": [], "entities": {"phone": "01012345601"}, "wants_human": false}
+{"id": "arabizi-054", "text": "3ayez 500 geneh ta3weed", "language": "arabizi", "intents": ["voucher_request"], "entities": {"amount": "500"}, "wants_human": false}
+{"id": "arabizi-055", "text": "3ayez flousi 3000 geneh", "language": "arabizi", "intents": ["refund_request"], "entities": {"amount": "3000"}, "wants_human": false}
+{"id": "arabizi-056", "text": "3ayez araga3 w a3mel refund", "language": "arabizi", "intents": ["return_request", "refund_request"], "entities": {}, "wants_human": false}
+{"id": "arabizi-057", "text": "mesh 3ayez a8ayar el 3enwan", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}

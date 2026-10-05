@@ -15,6 +15,7 @@ from collections.abc import Mapping
 
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
+from team_b.brain.rewrite import Rewriter
 from team_b.brain.stages import handoff_handler, placeholder_handler, slot_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import Deps, Handler
@@ -55,6 +56,7 @@ class Orchestrator:
         evidence: EvidenceProvider | None = None,
         handlers: Mapping[str, Handler] | None = None,
         capabilities: CapabilityClient | None = None,
+        rewriter: Rewriter | None = None,
     ) -> None:
         self._tenants = tenants
         self._deps = Deps(
@@ -67,6 +69,7 @@ class Orchestrator:
             summarizer=summarizer or TemplateHistorySummarizer(),
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
             capabilities=capabilities,
+            rewriter=rewriter,
         )
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:

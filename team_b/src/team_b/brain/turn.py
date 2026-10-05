@@ -7,8 +7,9 @@ from datetime import datetime
 
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
+from team_b.brain.rewrite import Rewriter
 from team_b.brain.summarizer import HistorySummarizer
-from team_b.contracts.evidence import RiskAssessment
+from team_b.contracts.evidence import Passage, RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
@@ -33,6 +34,7 @@ class Step:
     escalation: EscalationReason | None = None  # required when decision is HANDOFF
     awaiting: str | None = None  # what the agent waits for next: slot:<name>, confirmation, detail, human
     silent: bool = False  # say nothing (a customer message that only goes to the human who owns the chat)
+    passages: tuple[Passage, ...] = ()  # policy passages quoted verbatim after the reply; never sent to the AI model
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:
@@ -65,6 +67,7 @@ class TurnContext:
     handoff_case_id: str | None = None
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)
+    versions: dict[str, str] = field(default_factory=dict)  # prompt versions used this turn
     errors: list[str] = field(default_factory=list)
 
 
@@ -91,3 +94,4 @@ class Deps:
     summarizer: HistorySummarizer
     handlers: Mapping[str, Handler]  # by intent kind
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
+    rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies

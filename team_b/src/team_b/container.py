@@ -21,6 +21,7 @@ from team_b.adapters.standins.shop import StandinShop
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
+from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
@@ -65,6 +66,9 @@ def build_container(settings: Settings) -> Container:
             "Use TEAM_B_MODE=standin."
         )
 
+    if settings.llm_rewrite and settings.llm == "none":
+        raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
+
     clock = FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock()
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
@@ -101,6 +105,7 @@ def build_container(settings: Settings) -> Container:
             nlu=nlu,
             evidence=container.evidence,
             capabilities=container.capabilities,
+            rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
         ),
     )
 

@@ -14,9 +14,10 @@ from datetime import datetime
 from typing import Any
 
 from team_b.brain import stages
-from team_b.brain.composer import render
+from team_b.brain.composer import default_composer
 from team_b.brain.redaction import redact
-from team_b.brain.turn import Deps, StageFn, TurnContext, locale_of
+from team_b.brain.rewrite import REWRITABLE
+from team_b.brain.turn import Deps, StageFn, Step, TurnContext, locale_of
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
@@ -66,11 +67,27 @@ async def run_stage(ctx: TurnContext, stage: Stage) -> None:
     )
 
 
-def compose(ctx: TurnContext, locale: Locale) -> str:
+async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
+    """One step's reply: the template, optionally reworded by the AI model (only if the fact check passes), then the
+    policy passages appended verbatim. The passages are added after the rewrite, so the model never sees them."""
+    composer = default_composer()
+    text = composer.t(locale, step.reply_key, **step.values)
+    rewriter = ctx.deps.rewriter
+    if rewriter is not None and step.decision in REWRITABLE and not step.silent:
+        result = await rewriter.reword(text, locale, {k: str(v) for k, v in step.values.items()})
+        ctx.steps.append(TraceStep(stage="rewrite", status=result.status, detail=result.detail))
+        ctx.versions["rewrite_prompt"] = getattr(rewriter, "prompt_version", "unknown")
+        text = result.text
+    if step.passages:
+        text = f"{text}\n\n{composer.passage_block(step.passages)}"
+    return text
+
+
+async def compose(ctx: TurnContext, locale: Locale) -> str:
     """The replies of every completed step and the final one, joined, in the customer's locale."""
     assert ctx.step is not None
     parts = [*ctx.earlier, ctx.step]
-    return "\n\n".join(render(s.reply_key, locale, **s.values) for s in parts if not s.silent)
+    return "\n\n".join([await say_step(ctx, s, locale) for s in parts if not s.silent])
 
 
 def understanding_fields(result: NLUResult | None) -> dict[str, Any]:
@@ -102,7 +119,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
     step, session = ctx.step, ctx.session
     assert step is not None, "a turn must end with a decision"
     locale = locale_of(ctx)
-    text = compose(ctx, locale)
+    text = await compose(ctx, locale)
     if text:
         session.history.append(Message(role="agent", text=text, at=ctx.now, trace_id=ctx.trace_id))
     session.awaiting = step.awaiting
@@ -116,6 +133,8 @@ async def finish(ctx: TurnContext) -> AgentReply:
     )
 
     citations = tuple(dict.fromkeys(c for s in (*ctx.earlier, step) for c in s.citations))
+    fields = understanding_fields(ctx.understanding)
+    fields["versions"] = {**fields.get("versions", {}), **ctx.versions}
     trace = DecisionTrace(
         trace_id=ctx.trace_id,
         request_id=ctx.request_id,
@@ -123,7 +142,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
         conversation_id=session.conversation_id,
         turn_index=session.turn_index - 1,
         customer_message=redact(ctx.text),
-        **understanding_fields(ctx.understanding),
+        **fields,
         active_intent=session.active_intent,
         identity=session.identity.model_copy(),
         risk_categories=tuple(session.risk_categories),

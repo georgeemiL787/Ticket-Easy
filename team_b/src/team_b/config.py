@@ -32,6 +32,7 @@ ENV_VARS: dict[str, str] = {
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
+    "llm_rewrite": "TEAM_B_LLM_REWRITE",
 }
 
 
@@ -57,6 +58,7 @@ class Settings(BaseModel):
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
     log_json: bool = True
+    llm_rewrite: bool = False  # let the AI model reword replies (checked: it may not add any fact); needs TEAM_B_LLM
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
 
     @model_validator(mode="after")

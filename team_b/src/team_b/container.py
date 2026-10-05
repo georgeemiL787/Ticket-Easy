@@ -47,6 +47,7 @@ class Container:
     traces: TraceStore
     cases: CaseStore
     shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
+    policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
 
 
 def build_container(settings: Settings) -> Container:
@@ -63,11 +64,12 @@ def build_container(settings: Settings) -> Container:
     clock = FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock()
     tenants = TenantRegistry.from_dir(settings.config_dir)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
+    policy_search = PolicySearchStandin(settings.fixtures_dir)
     return Container(
         settings=settings,
         clock=clock,
         tenants=tenants,
-        evidence=StandinEvidenceProvider(PolicySearchStandin(), SafetyScreenStandin()),
+        evidence=StandinEvidenceProvider(policy_search, SafetyScreenStandin()),
         policy=RuleCheckerStandin(),
         capabilities=shop,
         llm=None,
@@ -75,6 +77,7 @@ def build_container(settings: Settings) -> Container:
         traces=InMemoryTraceStore(),
         cases=InMemoryCaseStore(),
         shop=shop,
+        policy_search=policy_search,
     )
 
 
@@ -83,4 +86,7 @@ def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:
     if plug == "shop" and container.shop is not None:
         container.shop.inject(spec)
         return
-    raise ValueError(f"no failure switches for plug {plug!r} (only the shop has them so far)")
+    if plug == "policy_search" and container.policy_search is not None:
+        container.policy_search.inject(spec)
+        return
+    raise ValueError(f"no failure switches for plug {plug!r} (only shop and policy_search have them so far)")

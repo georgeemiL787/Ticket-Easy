@@ -58,8 +58,6 @@ def test_a_missing_tenant_directory_fails_clearly(tmp_path: Path) -> None:
 
 async def test_standin_services_are_placeholders_until_phase_2(container: Container) -> None:
     with pytest.raises(NotImplementedError, match="Phase 2"):
-        await container.evidence.search_knowledge("shop_001", "q", request_id="r")
-    with pytest.raises(NotImplementedError, match="Phase 2"):
         await container.evidence.classify_risk("shop_001", "hello", request_id="r")
     request = CheckActionRequest.model_validate(
         {"request_id": "r", "tenant_id": "shop_001", "action": "a", "tool": {"name": "a", "operation_kind": "read"}}

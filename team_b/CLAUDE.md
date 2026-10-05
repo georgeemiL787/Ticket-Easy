@@ -45,8 +45,9 @@ team_b/
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)
                  standins/ shop (StandinShop: the fake Nile Style shop with audit log, idempotent replay, policy
                            safety net and failure switches; shop_backend.py = tool behaviour; json_schema.py)
-                           evidence, policy_search, safety_screen, rule_checker
-                           (placeholders that raise NotImplementedError until their Phase 2 prompt)
+                 standins/ policy_search (PolicySearchStandin: keyword + Arabizi-synonym search, text_search.py = the engine;
+                           skips superseded passages, empty_reason no_match, fail_next switch)
+                           safety_screen, rule_checker (placeholders that raise NotImplementedError until their prompt)
                  sqlite_store, migrations/, llm                                            (planned)
                  Phase 6 adds team_a_http and mcp_client                                   (planned)
     api/         app (create_app, GET /health, request-id middleware), errors (error envelope + handlers)
@@ -77,7 +78,7 @@ demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment
 what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
 
-container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner).
+container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search).
 
 Error format of every API error: {"schema_version": "1.0", "error": {"code", "message", "request_id"}}. Codes: INVALID_REQUEST 422, NOT_FOUND / TENANT_NOT_FOUND 404, INVALID_STATE 409, UPSTREAM_UNAVAILABLE 503, INTERNAL_ERROR 500. Raise ApiError (api/errors.py) from routes; never put request values or internal details in messages.
 

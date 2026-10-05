@@ -7,7 +7,9 @@ from pydantic import AliasChoices, Field, model_validator
 
 from team_b.contracts.base import PlugModel
 
-EmptyReason = Literal["below_threshold", "no_documents"]
+EmptyReason = Literal[
+    "below_threshold", "no_documents", "no_match"
+]  # no_match: Team B stand-in; Team A says below_threshold
 
 
 class Passage(PlugModel):

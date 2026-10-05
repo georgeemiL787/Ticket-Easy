@@ -78,7 +78,17 @@
         "arga3",
         "estergaa3",
         "kam yom",
-        "mooda el estergaa3"
+        "mooda el estergaa3",
+        "how long to return",
+        "time limit for returns",
+        "return deadline",
+        "kam yom a2dar araga3",
+        "عدد ايام الاسترجاع",
+        "after days",
+        "days after delivery",
+        "بعد كام يوم",
+        "بعد ايام",
+        "بعد 14 يوم"
       ],
       "superseded": false,
       "effective_date": "2026-09-01"
@@ -304,7 +314,13 @@
         "flousi",
         "floos",
         "esterdad",
-        "emta el flous tergaa3"
+        "emta el flous tergaa3",
+        "weeks ago",
+        "days ago",
+        "refund period",
+        "refund deadline",
+        "too late for a refund",
+        "min esbou3ein"
       ],
       "superseded": false,
       "effective_date": "2026-09-01"
@@ -331,7 +347,17 @@
         "الدفع عند الاستلام",
         "el flous hatrga3 ezay",
         "kam yom el refund",
-        "ma7faza"
+        "ma7faza",
+        "when will i get my money back",
+        "money back",
+        "refund time card",
+        "المبلغ هيرجع امتى",
+        "الفلوس هترجع امتى",
+        "flousi hatrga3 emta",
+        "bel visa",
+        "bel kart",
+        "بالكارت",
+        "بالفيزا"
       ],
       "superseded": false,
       "effective_date": "2026-09-01"
@@ -354,7 +380,12 @@
         "مراجعة",
         "mablagh kebeer",
         "3000 gneh",
-        "mowafa2a"
+        "mowafa2a",
+        "refund limit",
+        "refund approval",
+        "refund over 3000",
+        "needs approval",
+        "حد رد المبلغ"
       ],
       "superseded": false,
       "effective_date": "2026-09-01"

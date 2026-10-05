@@ -43,3 +43,4 @@ class NLUResult(FrozenModel):
     frustration: Frustration = "low"
     safety_flags: tuple[str, ...] = ()
     method: NluMethod = "rules"
+    prompt_version: str | None = None  # which prompt file the AI model was given, when it was used

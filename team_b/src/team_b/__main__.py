@@ -6,19 +6,22 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.config import Settings
+from team_b.container import build_llm
 from team_b.domain.tenant import TenantRegistry
 from team_b.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
 
 
 def build_nlu(mode: str, settings: Settings) -> NLU:
-    """The understanding to measure. The AI-assisted mode arrives with the AI model client."""
+    """The understanding to measure: the rules alone, or the AI-assisted one when an AI model is configured."""
     if mode == "rules":
         return RuleBasedNLU()
-    if settings.llm == "none":
+    llm = build_llm(settings)
+    if llm is None:
         raise SystemExit("--mode llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
-    raise SystemExit("--mode llm is not available yet: the AI-assisted understanding is built in a later step.")
+    return LLMNLU(llm)
 
 
 async def eval_nlu(mode: str, tenant_id: str, data: Path, save: bool) -> list[EvalReport]:

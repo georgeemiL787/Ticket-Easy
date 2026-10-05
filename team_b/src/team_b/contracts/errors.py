@@ -10,3 +10,11 @@ class UpstreamError(Exception):
         self.code = code
         self.message = message
         self.retryable = retryable
+
+
+class InvalidLLMOutput(ValueError):
+    """The AI model answered, but not with a JSON object. `raw` is what it said (for one repair attempt)."""
+
+    def __init__(self, message: str, raw: str) -> None:
+        super().__init__(message)
+        self.raw = raw

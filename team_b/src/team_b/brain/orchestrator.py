@@ -10,7 +10,10 @@ transcript stored in the traces. The human methods share one signature so the ru
 import time
 import uuid
 from datetime import datetime
+from typing import Any
 
+from team_b.brain.language import LANGUAGE_TRUST
+from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.redaction import redact
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.domain.decision import Decision
@@ -18,9 +21,11 @@ from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig, TenantRegistry
 from team_b.domain.trace import DecisionTrace, TraceStep
-from team_b.domain.understanding import Language, Locale
+from team_b.domain.understanding import Language, Locale, NLUResult
+from team_b.observability import get_logger
 from team_b.ports import CaseStore, Clock, SessionConflictError, SessionStore, TraceStore
 
+log = get_logger(__name__)
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"
 
 
@@ -34,6 +39,7 @@ class Orchestrator:
         traces: TraceStore,
         cases: CaseStore,
         summarizer: HistorySummarizer | None = None,
+        nlu: NLU | None = None,
     ) -> None:
         self._clock = clock
         self._tenants = tenants
@@ -41,6 +47,7 @@ class Orchestrator:
         self._traces = traces
         self._cases = cases
         self._summarizer = summarizer or TemplateHistorySummarizer()
+        self._nlu: NLU = nlu or RuleBasedNLU()
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:
         """Answer one customer message. Raises UnknownTenantError for a tenant that is not configured.
@@ -59,6 +66,7 @@ class Orchestrator:
         async with self._sessions.lock(tenant_id, conversation_id):
             now = self._clock.now()
             session = await self._load_or_create(tenant, conversation_id, now)
+            understanding = await self._understand(text, session, tenant)
             trace_id, request_id = uuid.uuid4().hex, uuid.uuid4().hex
             session.history.append(Message(role="customer", text=text, at=now, trace_id=trace_id))
 
@@ -71,12 +79,15 @@ class Orchestrator:
                 conversation_id=conversation_id,
                 turn_index=session.turn_index,
                 customer_message=redact(text),
+                **self._understanding_fields(understanding),
                 decision=decision,
                 decision_reason="first version: no understanding yet, so ask for more detail",
                 response_text=reply_text,
                 steps=(TraceStep(stage="orchestrator", status=decision.value),),
                 latency_ms=(time.perf_counter() - started) * 1000,
             )
+            if understanding is not None and understanding.language_confidence >= LANGUAGE_TRUST:
+                session.language = understanding.language  # a message with no language content keeps the old one
             session.awaiting = awaiting
             session.turn_index += 1
             session.updated_at = now
@@ -93,6 +104,29 @@ class Orchestrator:
             trace_id=trace_id,
             awaiting=awaiting,
         )
+
+    async def _understand(self, text: str, session: SessionState, tenant: TenantConfig) -> NLUResult | None:
+        """Read the message. Understanding never stops a turn: if even the fallback fails, the turn goes on."""
+        try:
+            return await self._nlu.understand(text, session, tenant)
+        except Exception:
+            log.exception("understanding_failed")
+            return None
+
+    @staticmethod
+    def _understanding_fields(result: NLUResult | None) -> dict[str, Any]:
+        """What the trace records about how the message was read (values redacted; details are not copied raw)."""
+        if result is None:
+            return {}
+        return {
+            "language": result.language,
+            "intents": result.intents,
+            "entities": {key: redact(value) for key, value in result.entities.items()},
+            "nlu_method": result.method,
+            "frustration": result.frustration,
+            "risk_categories": result.safety_flags,
+            "versions": {"prompt": result.prompt_version} if result.prompt_version else {},
+        }
 
     async def _load_or_create(self, tenant: TenantConfig, conversation_id: str, now: datetime) -> SessionState:
         existing = await self._sessions.load(tenant.tenant_id, conversation_id)

@@ -209,3 +209,11 @@ def test_the_command_runs_offline_and_prints_the_report(capsys: pytest.CaptureFi
 def test_the_llm_mode_explains_what_is_missing() -> None:
     with pytest.raises(SystemExit, match="--mode llm needs an AI model"):
         main(["eval-nlu", "--mode", "llm"])
+
+
+def test_the_llm_mode_builds_the_ai_assisted_understanding_when_a_model_is_configured() -> None:
+    from team_b.__main__ import build_nlu
+    from team_b.brain.llm_nlu import LLMNLU
+
+    assert isinstance(build_nlu("rules", Settings(llm="ollama")), RuleBasedNLU)
+    assert isinstance(build_nlu("llm", Settings(llm="ollama")), LLMNLU)

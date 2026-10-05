@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from team_b.adapters.llm import OpenAICompatibleLLM
 from team_b.adapters.memory_store import (
     FixedClock,
     InMemoryCaseStore,
@@ -10,11 +11,22 @@ from team_b.adapters.memory_store import (
     InMemoryTraceStore,
     SystemClock,
 )
+from team_b.brain.llm_nlu import LLMNLU
+from team_b.brain.nlu import RuleBasedNLU
 from team_b.config import Settings
 from team_b.container import Container, ContainerError, build_container
 from team_b.contracts.policy import CheckActionRequest
 from team_b.domain.tenant import TenantConfigError
-from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, PolicyGate, SessionStore, TraceStore
+from team_b.ports import (
+    CapabilityClient,
+    CaseStore,
+    Clock,
+    EvidenceProvider,
+    LLMClient,
+    PolicyGate,
+    SessionStore,
+    TraceStore,
+)
 
 
 def test_standin_container_wires_every_dependency(container: Container) -> None:
@@ -48,9 +60,27 @@ def test_live_mode_is_not_available_yet(tenants_dir: Path) -> None:
         build_container(Settings(mode="live", config_dir=tenants_dir))
 
 
-def test_llm_providers_are_not_available_yet(tenants_dir: Path) -> None:
-    with pytest.raises(ContainerError, match="TEAM_B_LLM=ollama"):
-        build_container(Settings(llm="ollama", config_dir=tenants_dir))
+def test_no_llm_means_rules_only(tenants_dir: Path) -> None:
+    built = build_container(Settings(llm="none", config_dir=tenants_dir))
+    assert built.llm is None and isinstance(built.nlu, RuleBasedNLU)
+
+
+def test_ollama_builds_the_openai_compatible_client_without_a_key(tenants_dir: Path) -> None:
+    built = build_container(Settings(llm="ollama", ollama_url="http://host:11434/", config_dir=tenants_dir))
+    assert isinstance(built.llm, OpenAICompatibleLLM) and isinstance(built.llm, LLMClient)
+    assert isinstance(built.nlu, LLMNLU)
+    assert built.llm._url == "http://host:11434/v1/chat/completions"  # type: ignore[attr-defined]
+    assert built.llm._model == "qwen3:8b" and built.llm._headers == {}  # type: ignore[attr-defined]
+
+
+def test_openrouter_builds_the_client_with_the_key_and_a_default_model(tenants_dir: Path) -> None:
+    settings = Settings(llm="openrouter", openrouter_api_key="sk-secret", config_dir=tenants_dir)  # type: ignore[arg-type]
+    built = build_container(settings)
+    assert isinstance(built.llm, OpenAICompatibleLLM)
+    assert built.llm._url == "https://openrouter.ai/api/v1/chat/completions"  # type: ignore[attr-defined]
+    assert built.llm._headers == {"Authorization": "Bearer sk-secret"}  # type: ignore[attr-defined]
+    assert built.llm._model == "anthropic/claude-haiku-4.5"  # type: ignore[attr-defined]
+    assert Settings(llm="ollama", llm_model="llama3").llm_model == "llama3"
 
 
 def test_a_missing_tenant_directory_fails_clearly(tmp_path: Path) -> None:

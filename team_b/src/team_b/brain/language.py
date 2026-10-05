@@ -25,6 +25,7 @@ LOCALE_FOR: Mapping[Language, Locale] = {
     Language.ARABIZI: Locale.ARABIZI,
 }
 
+LANGUAGE_TRUST = 0.6  # a detected language with at least this confidence replaces the conversation language
 MIXED_MIN_SHARE = 0.15  # each of Arabic and English must be at least this share of the words to count as mixed
 ARABIZI_MIN_SHARE = 0.25  # markers as a share of the Latin words (two or more markers always count)
 NEUTRAL_WORDS = frozenset({"ok", "okay", "k", "kk", "lol", "hmm", "hm", "mm"})  # say nothing about the language

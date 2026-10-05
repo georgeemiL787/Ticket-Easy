@@ -1,0 +1,64 @@
+# Ticket-Easy · Team B (AI brain, orchestration, human handoff)
+
+## What this service does
+Ticket-Easy is a customer-service agent for e-commerce shops. Customers write in English, Egyptian Arabic, mixed Arabic-English, or Arabizi (Arabic in Latin letters and digits, e.g. "3ayez a3raf el order feen"). For every customer message this service decides exactly one outcome: answer, clarify, verify_identity, confirm, execute, refuse, or handoff, and records why in a DecisionTrace.
+
+## The journey of one message
+load memory → understand (language, intents, entities, yes/no, wants human, frustration) → risk screen → customer wants a human? → pending confirmation? → missing information? → route by intent kind (knowledge / lookup / action) → handoff if needed → compose reply in the customer's register → save trace and session.
+
+## Non-negotiable rules
+1. The LLM proposes, code decides. Identity, ownership, permission, policy check, confirmation and result verification are deterministic code. The LLM may fill structured fields that code validates; it may raise safety flags but never clear them; it never chooses a tool.
+2. Never invent. No policy claim without a retrieved passage and its citation. No order fact without a tool result. No "done" without a verified tool result (success + audit id + required output fields + reference id for creates).
+3. Fail closed. If the policy check, risk screen or identity check cannot run, no side effect happens and the case is handed off.
+4. Fixed gate order for actions: required slots → identity verified → facts loaded from a read tool → ownership → permission gate → risk screen completed this turn → policy check_action → customer confirmation (or human approval) → renewed check_action → execution authorized → call tool → verify result.
+5. Writes are never retried automatically. Uncertain write outcomes escalate as unverified_result.
+6. A human can never turn a policy "deny" into an execution.
+7. Configuration over code: everything shop-specific lives in config/tenants/<tenant>.json, data/lexicon, data/locales and fixtures/<tenant>. Adding a business must not need brain code changes.
+8. The brain imports only team_b.ports interfaces and team_b.domain / team_b.contracts models. Implementations live in team_b.adapters; container.py wires them from settings.
+
+## Stand-ins
+Team A (policy search, rule checker, risk screen) and Team C (shop actions) are unfinished. Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from team_a/ or team_c/, and never make a test depend on their services. You may READ team_a/contracts/schemas and team_a/data/corpus as reference for data formats and policy texts.
+
+## Layout
+Paths are relative to team_b/ unless noted. "(planned)" marks anything not created yet; remove it when a prompt creates the item, and add new modules here.
+```
+team_b/
+  CLAUDE.md  README.md  pyproject.toml  requirements.txt  requirements-dev.txt  Makefile
+  src/team_b/
+    config.py  container.py  observability.py  __main__.py     (planned)
+    contracts/   data formats exchanged with the plugs (evidence, policy, tools, errors)   (modules planned)
+    domain/      the brain's own data models (session, understanding, tenant, actions,
+                 trace, handoff, reply)                                                    (modules planned)
+    ports/       the plugs: interfaces the brain depends on                                (modules planned)
+    brain/       language, text, nlu, slots, knowledge, identity, registry, gates, actions,
+                 composer, handoff, summarizer, metrics, alerts, orchestrator             (modules planned)
+    adapters/    memory_store, sqlite_store, migrations/, llm, standins/ (shop,
+                 policy_search, rule_checker, safety_screen)                               (modules planned)
+                 Phase 6 adds team_a_http and mcp_client                                   (planned)
+    api/         app, chat, inbox, traces, dashboard, auth                                 (modules planned)
+  config/tenants/      one JSON file per business (shop_001 = demo shop "Nile Style")
+  data/lexicon/  data/locales/
+  prompts/                                                                                 (planned)
+  fixtures/shop_001/   demo shop data
+  scenarios/shop_001/  scripted test conversations
+  scripts/                                                                                 (planned)
+  tests/unit/
+  tests/contract  tests/integration  tests/adversarial                                     (planned)
+  web/chat  web/inbox  web/dashboard (built)                                               (planned)
+  eval/                                                                                    (planned)
+dashboard/   (repo root, next to team_b/; Phase 4 React app)                               (planned)
+```
+
+## How to work in this repo
+- Before editing, read the modules you will touch and their tests. Write a short plan, then implement.
+- Stay inside the current task. Do not refactor unrelated code or rename public functions unless asked.
+- Every behaviour change gets a test. Safety behaviour gets a scenario in scenarios/shop_001.
+- Before finishing: `make test` and `make lint` must pass.
+- Tests use a fixed date (2026-09-28) through the injectable Clock; never use the real date in brain code.
+- Pydantic v2 models, async functions, full type hints, small functions, structlog for logs.
+- Redact phone, email, address, card and OTP values in traces and logs.
+- Keep this file updated when you add a module or a command.
+
+## Commands
+- Install: `pip install -e . -r requirements-dev.txt`
+- Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)

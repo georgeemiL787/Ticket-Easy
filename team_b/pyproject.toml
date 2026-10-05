@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ticket-easy-team-b"
+version = "0.1.0"
+description = "Ticket-Easy Team B: AI brain, orchestration and human handoff"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = ["scenario: end-to-end conversation scenarios (scenarios/<tenant>)"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC"]
+
+[tool.mypy]
+mypy_path = "src"
+packages = ["team_b"]
+python_version = "3.11"
+warn_unused_configs = true
+
+# Strict checking for the safety-critical packages (per-module sections cannot use `strict = true`).
+[[tool.mypy.overrides]]
+module = ["team_b.domain.*", "team_b.ports.*", "team_b.brain.*"]
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_return_any = true
+warn_unused_ignores = true
+no_implicit_reexport = true
+strict_equality = true
+extra_checks = true

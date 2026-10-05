@@ -54,6 +54,7 @@ class IntentSpec(FrozenModel):
     argument_map: dict[str, str] = Field(default_factory=dict)  # tool argument name -> slot or fact name
     knowledge_query: str | None = None  # hint added to the policy search for this intent
     knowledge_when: str | None = None  # condition (a named fact) under which a policy quote is also shown
+    labels: dict[str, str] = Field(default_factory=dict)  # locale (en/ar/arabizi) -> short name used in questions
 
     @model_validator(mode="after")
     def _kind_has_its_tool(self) -> Self:
@@ -75,6 +76,7 @@ class TenantConfig(FrozenModel):
     escalation: EscalationConfig = Field(default_factory=EscalationConfig)
     permissions: PermissionsConfig = Field(default_factory=PermissionsConfig)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
+    conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
 
     @field_validator("order_id_pattern")
     @classmethod

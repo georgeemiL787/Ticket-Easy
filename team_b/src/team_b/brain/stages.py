@@ -8,20 +8,33 @@ Knowledge, lookup and action requests still get a placeholder "tell me more" rep
 later steps through Deps.handlers (one handler per intent kind).
 """
 
+import time
+import uuid
 from dataclasses import replace
 
+from team_b.brain.choices import (
+    MAX_ORDER_CHOICES,
+    conflicting_pair,
+    describe_orders,
+    label_of,
+    ordinal_choice,
+    says_both,
+)
 from team_b.brain.handoff import open_case
 from team_b.brain.language import LANGUAGE_TRUST
+from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
 from team_b.brain.templates import TEMPLATES
 from team_b.brain.text import find_spans, normalize
-from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext
+from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolSpec
+from team_b.contracts.tools import ToolCallRequest, ToolSpec
 from team_b.domain.actions import ActionState
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus
+from team_b.domain.trace import ToolCallRecord
+from team_b.domain.understanding import IntentCandidate
 from team_b.observability import get_logger
 
 log = get_logger(__name__)
@@ -177,6 +190,95 @@ async def pending_confirmation(ctx: TurnContext) -> str:
 # ---- what the customer wants ----
 
 
+def _store_entities(ctx: TurnContext) -> None:
+    if ctx.understanding is not None:
+        for key, value in ctx.understanding.entities.items():
+            if key in SLOT_KEYS:
+                ctx.session.slots[key] = value
+
+
+def _wanted_names(ctx: TurnContext, intents: tuple[IntentCandidate, ...]) -> list[str]:
+    return [i.name for i in intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
+
+
+def _ask_which_intent(ctx: TurnContext, options: list[str], *, again: bool) -> Step:
+    session = ctx.session
+    session.choice_options = options
+    locale = locale_of(ctx)
+    return Step(
+        Decision.CLARIFY,
+        reason=f"cannot tell {options[0]} from {options[1]}" + (" (asked again)" if again else ""),
+        reply_key="disambiguate_intent",
+        values={"a": label_of(ctx.tenant, options[0], locale), "b": label_of(ctx.tenant, options[1], locale)},
+        awaiting="intent_choice",
+    )
+
+
+def _resolve_intent_choice(ctx: TurnContext) -> str:
+    """The answer to "do you mean A or B?": a position, a name, both, or a change of subject."""
+    session, understanding = ctx.session, ctx.understanding
+    options, lexicon = list(session.choice_options), default_lexicon()
+    chosen: list[str] = []
+    if says_both(ctx.text, lexicon):
+        chosen = options
+    elif (idx := ordinal_choice(ctx.text, lexicon, len(options))) is not None:
+        chosen = [options[idx]]
+    elif understanding is not None:
+        named = list(dict.fromkeys(n for n in _wanted_names(ctx, understanding.intents) if n in options))
+        if len(named) == 1:
+            chosen = named
+        elif not named and _wanted_names(ctx, understanding.intents):
+            session.choice_options, session.awaiting = [], None  # the customer moved on to something else
+            return "topic change: the question is dropped"
+    if chosen and understanding is not None:
+        others = tuple(i for i in understanding.intents if i.name not in options)
+        picked = tuple(IntentCandidate(name=n, confidence=0.9) for n in chosen)
+        ctx.understanding = understanding.model_copy(update={"intents": picked + others})
+        session.choice_options, session.awaiting, session.clarifications = [], None, 0
+        return f"chose {', '.join(chosen)}"
+    if _count_clarification(ctx, "intent_choice"):
+        ctx.step = _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the customer did not say which request they meant")
+        return "no answer after asking: giving up"
+    ctx.step = _ask_which_intent(ctx, options, again=True)
+    return "no clear answer: asked again"
+
+
+def _resolve_order_choice(ctx: TurnContext) -> str:
+    """The answer to "which order?": the number typed in full, a position in the list, or a change of subject."""
+    session, understanding = ctx.session, ctx.understanding
+    if understanding is not None and understanding.entities.get("order_id"):
+        session.order_choices = []
+        return "the customer typed the order number"
+    idx = ordinal_choice(ctx.text, default_lexicon(), len(session.order_choices))
+    if idx is not None:
+        session.slots["order_id"] = session.order_choices[idx]
+        session.order_choices = []
+        return f"chose position {idx + 1}"
+    if understanding is not None and _wanted_names(ctx, understanding.intents):
+        session.order_choices = []
+        return "topic change: the list is dropped"
+    return "no usable answer: the list is shown again"
+
+
+async def disambiguate(ctx: TurnContext) -> str:
+    """Ask instead of guessing: two requests that cannot both be meant, or which of the customer's orders."""
+    session, understanding = ctx.session, ctx.understanding
+    if session.awaiting == "order_choice" and session.order_choices:
+        return _resolve_order_choice(ctx)
+    if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
+        return _resolve_intent_choice(ctx)
+    pair = conflicting_pair(understanding.intents, ctx.tenant) if understanding else None
+    if pair is None:
+        return "no conflict"
+    _store_entities(ctx)
+    for name in _wanted_names(ctx, understanding.intents if understanding else ()):
+        if name not in pair and name not in session.intent_queue:
+            session.intent_queue.append(name)  # the rest of the message waits its turn
+    session.clarifications = 0
+    ctx.step = _ask_which_intent(ctx, list(pair), again=False)
+    return f"asked: {pair[0]} or {pair[1]}"
+
+
 async def merge(ctx: TurnContext) -> str:
     """Details go into slots; new intents start or queue. A short answer to a question is not a new intent."""
     understanding, session = ctx.understanding, ctx.session
@@ -186,7 +288,11 @@ async def merge(ctx: TurnContext) -> str:
         if key in SLOT_KEYS:
             session.slots[key] = value
     wanted = [i.name for i in understanding.intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
-    answering_a_question = bool(session.awaiting and session.awaiting.startswith("slot:") and not wanted)
+    answering_a_question = bool(
+        session.awaiting
+        and (session.awaiting.startswith("slot:") or session.awaiting in ("order_choice", "intent_choice"))
+        and not wanted
+    )
     for name in wanted:
         if name not in session.intents_seen:
             session.intents_seen.append(name)
@@ -279,6 +385,43 @@ async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
         return None
 
 
+async def _list_orders(ctx: TurnContext) -> list[dict[str, str]] | None:
+    """A verified customer's open orders, newest first (at most three), read from the shop. None: ask for the number."""
+    session, capabilities = ctx.session, ctx.deps.capabilities
+    if capabilities is None or not session.identity.verified or not session.identity.customer_id:
+        return None
+    request = ToolCallRequest(
+        request_id=uuid.uuid4().hex,
+        tool="list_customer_orders",
+        arguments={"customer_id": session.identity.customer_id},
+        idempotency_key=uuid.uuid4().hex,
+    )
+    started = time.perf_counter()
+    try:
+        result = await capabilities.call_tool(ctx.tenant.tenant_id, request)
+    except UpstreamError as exc:
+        ctx.errors.append(f"order list unavailable: {exc.code}")
+        return None
+    ctx.tool_calls.append(
+        ToolCallRecord(
+            request_id=request.request_id,
+            tool=request.tool,
+            operation_kind="read",
+            arguments=dict(request.arguments),
+            status=result.status,
+            error_code=result.error_code,
+            audit_id=result.audit_id,
+            latency_ms=(time.perf_counter() - started) * 1000,
+        )
+    )
+    if result.status != "success":
+        ctx.errors.append(f"order list failed: {result.error_code}")
+        return None
+    orders = [o for o in result.data.get("orders", []) if o.get("order_status") != "cancelled"]
+    orders.sort(key=lambda o: str(o.get("placed_at", "")), reverse=True)
+    return orders[:MAX_ORDER_CHOICES] or None
+
+
 async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     """Lookup and action requests: find out which details are still missing and ask for the next one.
 
@@ -301,6 +444,18 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     if slot is None:
         session.clarifications = 0
         return await placeholder_handler(ctx, planned)
+
+    if slot == "order_id" and (listing := await _list_orders(ctx)) is not None:
+        if _count_clarification(ctx, "order_choice"):
+            return _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the customer did not say which order they meant")
+        session.order_choices = [o["order_id"] for o in listing]
+        return Step(
+            Decision.CLARIFY,
+            reason=f"{planned.name} needs order_id: offered {len(listing)} of the customer's orders",
+            reply_key="ask_order_choice",
+            values={"orders": describe_orders(listing, locale_of(ctx))},
+            awaiting="order_choice",
+        )
 
     if _count_clarification(ctx, f"slot:{slot}"):
         why = f"asked for {slot} {session.clarifications} times without an answer"

@@ -23,9 +23,21 @@ from tests.fakes import FakeEvidence, ScriptedNLU
 
 T, C = "shop_001", "conv-1"
 STAGE_NAMES = [
-    "load", "handed_off_check", "understand", "risk_screen", "human_request", "pending_confirmation", "merge",
-    "frustration", "plan", "handler", "queue", "handoff", "finish",
-]  # fmt: skip
+    "load",
+    "handed_off_check",
+    "understand",
+    "risk_screen",
+    "human_request",
+    "pending_confirmation",
+    "disambiguate",
+    "merge",
+    "frustration",
+    "plan",
+    "handler",
+    "queue",
+    "handoff",
+    "finish",
+]
 
 
 def orch(c: Container, **kw: Any) -> Orchestrator:
@@ -68,7 +80,7 @@ async def test_stages_after_a_decision_are_recorded_as_skipped(c: Container) -> 
     await say(orch(c), "I want to talk to a human agent please")
     status = stage_status(await last_trace(c))
     assert status["human_request"] == "ok" and status["handoff"] == "ok" and status["finish"] == "ok"
-    for skipped in ("pending_confirmation", "merge", "frustration", "plan", "handler"):
+    for skipped in ("pending_confirmation", "disambiguate", "merge", "frustration", "plan", "handler"):
         assert status[skipped] == "skipped", skipped
 
 
@@ -445,7 +457,7 @@ async def test_a_queued_intent_waits_when_the_first_one_needs_the_customer(c: Co
 
 
 async def test_at_most_three_queued_intents_run_in_one_turn(c: Container) -> None:
-    names = ["order_status", "cancel_order", "refund_request", "return_request", "exchange_request"]
+    names = ["order_status", "cancel_order", "refund_request", "complaint", "voucher_request"]
     nlu = ScriptedNLU(reading(*names))
     handlers = {"lookup": answering, "action": answering}
     reply = await say(orch(c, nlu=nlu, handlers=handlers), "five things")

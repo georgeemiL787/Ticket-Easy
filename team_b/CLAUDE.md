@@ -49,9 +49,12 @@ team_b/
                  stages (the 12 stage functions + smalltalk/placeholder/handoff handlers; kinds plug in via Deps.handlers),
                  slots (required_slots, resolve_arguments -> Resolution(arguments, missing, missing_facts, unsourced, needs_identity),
                  next_question: order id, phone, item, reason, amount; sources slot:/fact:/identity:/const:, facts beat the customer)
+                 choices (conflicting_pair, ordinal_choice "the second"/el awel/الأول, says_both, mask_order_id, describe_orders):
+                 "do you mean A or B?" for tenant conflicting_intents within 0.1 confidence; a verified customer without an order id
+                 is shown up to 3 open orders (list_customer_orders, masked, newest first); stage `disambiguate` resolves the answers
                  templates (minimal reply sentences per locale, replaced by the composer), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
-                 Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, merge,
+                 Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
                  open and claimed cases, and their conversation's session and traces, are never purged
@@ -84,7 +87,7 @@ team_b/
   prompts/nlu_v1.md   the understanding prompt (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S08, S40, S43 active; the rest pending until the brain exists)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S08, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir

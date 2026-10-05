@@ -277,6 +277,64 @@
       "بعد كام يوم من الـ", "كام يوم من الـ", "how many days بعد"
     ]
   },
+  "ordinals": {
+    "1": {
+      "en": [
+        "first", "the first", "first one", "the first one", "1st", "1"
+      ],
+      "ar": [
+        "الاول", "الأول", "الاولي", "اول واحد", "الاولى", "١", "1"
+      ],
+      "arabizi": [
+        "el awel", "awel", "el awal", "el aw2al", "awwel wa7ed", "1"
+      ],
+      "mixed": [
+        "first الاول", "الاول first"
+      ]
+    },
+    "2": {
+      "en": [
+        "second", "the second", "second one", "the second one", "2nd", "2"
+      ],
+      "ar": [
+        "التاني", "الثاني", "التانى", "التاني ده", "٢", "2"
+      ],
+      "arabizi": [
+        "el tany", "tany", "el tani", "el thany", "el tanya", "2"
+      ],
+      "mixed": [
+        "second التاني", "التاني second"
+      ]
+    },
+    "3": {
+      "en": [
+        "third", "the third", "third one", "the third one", "3rd", "3"
+      ],
+      "ar": [
+        "التالت", "الثالث", "التالتة", "٣", "3"
+      ],
+      "arabizi": [
+        "el talet", "talet", "el thalith", "el talta", "3"
+      ],
+      "mixed": [
+        "third التالت", "التالت third"
+      ]
+    }
+  },
+  "both": {
+    "en": [
+      "both", "both of them", "all of them", "the two", "both please"
+    ],
+    "ar": [
+      "الاتنين", "الاثنين", "الاتنين مع بعض", "كلهم"
+    ],
+    "arabizi": [
+      "el etneen", "el etnein", "el etnen", "kolohom", "el etneen ma3 ba3d"
+    ],
+    "mixed": [
+      "both الاتنين", "الاتنين both"
+    ]
+  },
   "yes": {
     "en": [
       "yes", "yeah", "yep", "yup", "ok", "okay", "sure", "go ahead", "confirm", "confirmed", "proceed", "do it",

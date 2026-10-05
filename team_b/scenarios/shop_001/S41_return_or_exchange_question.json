@@ -1,0 +1,65 @@
+{
+  "id": "S41",
+  "title": "Return or exchange: the agent asks which one, then continues with the answer",
+  "status": "pending",
+  "pending_reason": "Phase 2 (identity check, rule checker) for the rest of the flow; the question itself works since P1.4c",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want to return or exchange order NS-20790",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "intent_choice",
+        "locale": "en",
+        "escalation": null,
+        "text_contains": [
+          "return",
+          "exchange"
+        ]
+      }
+    },
+    {
+      "say": "the second",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01123456702",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "slot:reason"
+      }
+    },
+    {
+      "say": "it is too small",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "text_contains": "NS-20790",
+        "citations_include": [
+          "return_policy@v2#s5"
+        ]
+      }
+    },
+    {
+      "say": "yes",
+      "expect": {
+        "decision": "execute",
+        "awaiting": null,
+        "text_contains": "EXC-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "create_exchange"
+    ],
+    "audit_count": 1,
+    "trace_invariants": true
+  }
+}

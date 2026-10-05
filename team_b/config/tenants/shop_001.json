@@ -97,6 +97,11 @@
       "argument_map": {
         "order_id": "slot:order_id",
         "reason": "slot:reason"
+      },
+      "labels": {
+        "en": "return the item",
+        "ar": "ترجيع المنتج",
+        "arabizi": "return el montag"
       }
     },
     "exchange_request": {
@@ -117,6 +122,11 @@
       "argument_map": {
         "order_id": "slot:order_id",
         "reason": "slot:reason"
+      },
+      "labels": {
+        "en": "exchange it",
+        "ar": "استبدال المنتج",
+        "arabizi": "estebdal el montag"
       }
     },
     "refund_request": {
@@ -136,6 +146,11 @@
       "argument_map": {
         "order_id": "slot:order_id",
         "amount": "fact:order_total"
+      },
+      "labels": {
+        "en": "get a refund",
+        "ar": "استرداد الفلوس",
+        "arabizi": "estredad el felous"
       }
     },
     "cancel_order": {
@@ -154,6 +169,11 @@
       "knowledge_query": "cancel order",
       "argument_map": {
         "order_id": "slot:order_id"
+      },
+      "labels": {
+        "en": "cancel the order",
+        "ar": "إلغاء الأوردر",
+        "arabizi": "elgha2 el order"
       }
     },
     "change_address": {
@@ -226,5 +246,23 @@
       "required_slots": [],
       "argument_map": {}
     }
-  }
+  },
+  "conflicting_intents": [
+    [
+      "return_request",
+      "exchange_request"
+    ],
+    [
+      "exchange_request",
+      "refund_request"
+    ],
+    [
+      "return_request",
+      "cancel_order"
+    ],
+    [
+      "exchange_request",
+      "cancel_order"
+    ]
+  ]
 }

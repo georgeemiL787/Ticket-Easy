@@ -66,6 +66,16 @@ TEMPLATES: Mapping[str, Mapping[Locale, str]] = {
         AR: "ممكن تقولي {slot}؟",
         AZ: "Momken te2olly {slot}?",
     },
+    "disambiguate_intent": {
+        EN: "Do you want to {a} or {b}? You can say the first or the second.",
+        AR: "تقصد {a} ولا {b}؟ ممكن تقول الأول أو التاني.",
+        AZ: "Te2sod {a} wala {b}? momken te2ol el awel aw el tany.",
+    },
+    "ask_order_choice": {
+        EN: "Which order do you mean?\n{orders}\nYou can say the first, the second, or send the order number.",
+        AR: "تقصد أنهي أوردر؟\n{orders}\nممكن تقول الأول أو التاني، أو تبعتلي رقم الأوردر.",
+        AZ: "Te2sod anhy order?\n{orders}\nMomken te2ol el awel aw el tany, aw tebba3atly ra2am el order.",
+    },
     "confirm_again": {
         EN: "Please answer yes to go ahead or no to cancel.",
         AR: "لو سمحت قولي أيوه عشان أكمّل أو لأ عشان ألغي.",

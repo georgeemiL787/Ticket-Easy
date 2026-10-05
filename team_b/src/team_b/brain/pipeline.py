@@ -1,7 +1,7 @@
 """One turn, as an explicit pipeline of stages, each recorded in the trace with its duration.
 
-load -> handed_off_check -> understand -> risk_screen -> human_request -> pending_confirmation -> merge -> frustration
--> plan -> handler -> queue -> handoff -> finish
+load -> handed_off_check -> understand -> risk_screen -> human_request -> pending_confirmation -> disambiguate
+-> merge -> frustration -> plan -> handler -> queue -> handoff -> finish
 
 A stage that runs after a decision was made is recorded as skipped (handoff runs only for a handoff decision, finish
 always runs). finish composes the reply in the customer's locale, validates the trace, and saves session and trace.
@@ -14,10 +14,9 @@ from datetime import datetime
 from typing import Any
 
 from team_b.brain import stages
-from team_b.brain.language import LOCALE_FOR
 from team_b.brain.redaction import redact
 from team_b.brain.templates import render
-from team_b.brain.turn import Deps, StageFn, TurnContext
+from team_b.brain.turn import Deps, StageFn, TurnContext, locale_of
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
@@ -40,6 +39,7 @@ STAGES: tuple[Stage, ...] = (
     Stage("risk_screen", stages.risk_screen),
     Stage("human_request", stages.human_request),
     Stage("pending_confirmation", stages.pending_confirmation),
+    Stage("disambiguate", stages.disambiguate),
     Stage("merge", stages.merge),
     Stage("frustration", stages.frustration),
     Stage("plan", stages.plan),
@@ -64,11 +64,6 @@ async def run_stage(ctx: TurnContext, stage: Stage) -> None:
     ctx.steps.append(
         TraceStep(stage=stage.name, status="ok", duration_ms=(time.perf_counter() - started) * 1000, detail=detail)
     )
-
-
-def locale_of(ctx: TurnContext) -> Locale:
-    language = ctx.session.language
-    return LOCALE_FOR[language] if language is not None else Locale(ctx.tenant.default_locale.value)
 
 
 def compose(ctx: TurnContext, locale: Locale) -> str:
@@ -138,6 +133,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
         response_citations=citations,
         escalation_reason=step.escalation if step.decision is Decision.HANDOFF else None,
         handoff_case_id=(ctx.handoff_case_id or session.handoff_case_id) if step.decision is Decision.HANDOFF else None,
+        tool_calls=tuple(ctx.tool_calls),
         errors=tuple(ctx.errors),
         steps=tuple(ctx.steps),
         latency_ms=(time.perf_counter() - ctx.started) * 1000,

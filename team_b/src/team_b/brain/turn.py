@@ -5,14 +5,15 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import TraceStep
-from team_b.domain.understanding import NLUResult
+from team_b.domain.trace import ToolCallRecord, TraceStep
+from team_b.domain.understanding import Locale, NLUResult
 from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
 
 # after one of these the next queued intent may run
@@ -63,7 +64,14 @@ class TurnContext:
     earlier: list[Step] = field(default_factory=list)  # completed steps whose replies come before the final one
     handoff_case_id: str | None = None
     steps: list[TraceStep] = field(default_factory=list)
+    tool_calls: list[ToolCallRecord] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+
+
+def locale_of(ctx: TurnContext) -> Locale:
+    """The reply style: the conversation language mapped through the one locale table, else the tenant default."""
+    language = ctx.session.language
+    return LOCALE_FOR[language] if language is not None else Locale(ctx.tenant.default_locale.value)
 
 
 Handler = Callable[[TurnContext, PlannedIntent], Awaitable[Step]]

@@ -1,0 +1,577 @@
+{
+  "tenant_id": "shop_001",
+  "tools": [
+    {
+      "name": "verify_customer",
+      "capability": "verify_customer",
+      "title": "Verify customer",
+      "description": "Check that a phone number belongs to the customer who placed an order.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": false,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "phone"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "verified",
+          "customer_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_order",
+      "capability": "get_order",
+      "title": "Get order",
+      "description": "Look up one order: status, dates, total and item facts.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "customer_id": {
+            "type": "string"
+          },
+          "order_status": {
+            "type": "string"
+          },
+          "payment_status": {
+            "type": "string"
+          },
+          "order_total": {
+            "type": "number"
+          },
+          "placed_at": {
+            "type": "string"
+          },
+          "shipped_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "delivered_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_delivery_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "product_category": {
+            "type": "string"
+          },
+          "is_clearance": {
+            "type": "boolean"
+          },
+          "item_condition": {
+            "type": "string"
+          },
+          "tracking_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "order_id",
+          "customer_id",
+          "order_status",
+          "order_total",
+          "delivered_at",
+          "expected_delivery_date",
+          "product_category",
+          "is_clearance",
+          "item_condition"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_customer_orders",
+      "capability": "list_customer_orders",
+      "title": "List customer orders",
+      "description": "List the orders of a verified customer.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "type",
+            "description": "items"
+          }
+        },
+        "required": [
+          "orders"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_return",
+      "capability": "create_return",
+      "title": "Create return",
+      "description": "Open a return for a delivered order.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string",
+            "description": "Shop reference for the change, e.g. RET-30001"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "order_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_exchange",
+      "capability": "create_exchange",
+      "title": "Create exchange",
+      "description": "Open an exchange (another size or color) for a delivered order.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "new_size": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string",
+            "description": "Shop reference for the change, e.g. RET-30001"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "order_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_refund",
+      "capability": "create_refund",
+      "title": "Create refund",
+      "description": "Refund the order to the original payment method.",
+      "operation_kind": "create",
+      "risk": "high",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string",
+            "description": "Shop reference for the change, e.g. RET-30001"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_id",
+          "order_id",
+          "amount",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "cancel_order",
+      "capability": "cancel_order",
+      "title": "Cancel order",
+      "description": "Cancel an order that has not shipped yet.",
+      "operation_kind": "update",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string",
+            "description": "Shop reference for the change, e.g. RET-30001"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "order_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "update_delivery_address",
+      "capability": "update_delivery_address",
+      "title": "Update delivery address",
+      "description": "Change the delivery address of an order that has not shipped yet.",
+      "operation_kind": "update",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "new_address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "new_address"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string",
+            "description": "Shop reference for the change, e.g. RET-30001"
+          },
+          "order_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "order_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "apply_voucher",
+      "capability": "apply_voucher",
+      "title": "Apply voucher",
+      "description": "Issue a voucher for the customer next order (late delivery compensation).",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "amount",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string"
+          },
+          "voucher_code": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "voucher_code",
+          "amount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_ticket",
+      "capability": "create_ticket",
+      "title": "Create ticket",
+      "description": "Open a support ticket for the customer care team.",
+      "operation_kind": "create",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": false,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "description"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "delete_customer",
+      "capability": "delete_customer",
+      "title": "Delete customer",
+      "description": "Delete a customer account. Only a human may use this; the agent must never run it.",
+      "operation_kind": "delete",
+      "risk": "high",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": true,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "customer_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

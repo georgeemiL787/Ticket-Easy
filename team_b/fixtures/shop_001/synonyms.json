@@ -1,0 +1,1074 @@
+{
+  "tenant_id": "shop_001",
+  "description": "Query expansions: any variant found in a customer query adds its means to the search. origin says whether the entry came from Team A or was added by Team B.",
+  "entries": [
+    {
+      "variants": [
+        "مكسور",
+        "مكسوره",
+        "اتكسر",
+        "اتكسرت",
+        "باظ",
+        "بايظ",
+        "بايظه",
+        "damaged",
+        "broken"
+      ],
+      "means": [
+        "تالف",
+        "تالفا",
+        "damaged"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "الغي",
+        "ألغي",
+        "لغي",
+        "الغيه",
+        "الغيها",
+        "cancel"
+      ],
+      "means": [
+        "الغاء",
+        "cancel",
+        "cancelled",
+        "cancellation"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "الصعيد",
+        "صعيد",
+        "اسوان",
+        "الاقصر",
+        "سوهاج",
+        "قنا",
+        "اسيوط",
+        "المنيا",
+        "aswan",
+        "luxor",
+        "sohag",
+        "assiut",
+        "asyut",
+        "minya",
+        "qena"
+      ],
+      "means": [
+        "upper egypt",
+        "الصعيد"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "برفان",
+        "بارفان",
+        "برفيوم",
+        "عطر",
+        "العطر"
+      ],
+      "means": [
+        "العطور",
+        "perfume"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "فتحته",
+        "فتحتها",
+        "فتحت",
+        "مفتوح",
+        "مفتوحه"
+      ],
+      "means": [
+        "فتحها",
+        "opened"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "return",
+        "returns",
+        "returning"
+      ],
+      "means": [
+        "استرجاع",
+        "مرتجع"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "refunded",
+        "refundable",
+        "reimbursed"
+      ],
+      "means": [
+        "ترد",
+        "رد المبلغ",
+        "refund"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "اتغسل",
+        "اتغسلت",
+        "غسلته",
+        "washed"
+      ],
+      "means": [
+        "غسيل",
+        "استخدام",
+        "used"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "araga3",
+        "arga3",
+        "raga3",
+        "rag3",
+        "erga3",
+        "arag3",
+        "nerga3",
+        "narga3",
+        "yerga3",
+        "rage3"
+      ],
+      "means": [
+        "ارجع",
+        "استرجاع",
+        "return"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "estergaa3",
+        "estrgaa3",
+        "esterga3",
+        "istirgaa3",
+        "estergaa",
+        "morta ga3",
+        "mortaga3",
+        "martg3"
+      ],
+      "means": [
+        "استرجاع",
+        "مرتجع",
+        "return"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "flos",
+        "floos",
+        "fulus",
+        "felos",
+        "folos"
+      ],
+      "means": [
+        "فلوس",
+        "المبلغ",
+        "استرداد",
+        "refund"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "esterdad",
+        "istirdad",
+        "refund"
+      ],
+      "means": [
+        "استرداد",
+        "رد المبلغ",
+        "refund"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "yom",
+        "youm",
+        "yoom",
+        "yawm"
+      ],
+      "means": [
+        "يوم",
+        "يومًا",
+        "day"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ba3d",
+        "ba3do",
+        "b3d"
+      ],
+      "means": [
+        "بعد",
+        "مرور",
+        "after"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ayam",
+        "ayyam",
+        "iyam"
+      ],
+      "means": [
+        "ايام",
+        "days"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "sha7n",
+        "shahn",
+        "sha7an",
+        "shaan"
+      ],
+      "means": [
+        "شحن",
+        "shipping"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "tawseel",
+        "taw9eel",
+        "twseel",
+        "tawsil",
+        "twsil",
+        "tawsel"
+      ],
+      "means": [
+        "توصيل",
+        "delivery"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "etakhar",
+        "et2akhar",
+        "it2akhar",
+        "mt2akhar",
+        "met2akhar",
+        "mit2akhar",
+        "metakhar",
+        "t2khir",
+        "ta2kheer",
+        "ta2khir",
+        "late"
+      ],
+      "means": [
+        "تأخير",
+        "متأخر",
+        "late",
+        "delay"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "emta",
+        "imta",
+        "amta"
+      ],
+      "means": [
+        "امتى",
+        "موعد",
+        "when"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "fein",
+        "fen",
+        "feen",
+        "fain"
+      ],
+      "means": [
+        "فين",
+        "where",
+        "tracking"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mo2as",
+        "ma2as",
+        "maqas",
+        "mqas",
+        "m2as"
+      ],
+      "means": [
+        "مقاس",
+        "size"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "7aga",
+        "7ga",
+        "haga"
+      ],
+      "means": [
+        "منتج",
+        "product"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "montag",
+        "mantag",
+        "mntg"
+      ],
+      "means": [
+        "منتج",
+        "product"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "order",
+        "orders",
+        "talab",
+        "talaby",
+        "el order",
+        "elorder",
+        "otder"
+      ],
+      "means": [
+        "طلب",
+        "اوردر",
+        "order"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "estebdal",
+        "istibdal",
+        "astabdel",
+        "abdel",
+        "tabdeel",
+        "tabdil",
+        "abadel"
+      ],
+      "means": [
+        "استبدال",
+        "exchange"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "elgha2",
+        "el8a2",
+        "ilgha2",
+        "elghaa",
+        "alghy",
+        "al8y",
+        "algha",
+        "a2la3"
+      ],
+      "means": [
+        "الغاء",
+        "cancel"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "kash",
+        "kaash",
+        "cash",
+        "cod"
+      ],
+      "means": [
+        "الدفع عند الاستلام",
+        "cash on delivery"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ma7faza",
+        "mahfaza",
+        "m7faza",
+        "wallet"
+      ],
+      "means": [
+        "محفظة",
+        "wallet"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "kobon",
+        "copon",
+        "coupon",
+        "kopon",
+        "voucher",
+        "vocher"
+      ],
+      "means": [
+        "كوبون",
+        "قسيمة",
+        "voucher"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "maksoor",
+        "maksour",
+        "maksoura",
+        "maksora",
+        "etkasar",
+        "mkasar"
+      ],
+      "means": [
+        "مكسور",
+        "تالف",
+        "damaged"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "3otl",
+        "3atlan",
+        "3atla",
+        "3eib",
+        "3eeb",
+        "3ayeb",
+        "3ayba"
+      ],
+      "means": [
+        "عيب",
+        "معيب",
+        "defective"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ta3weed",
+        "ta3wid",
+        "t3wed",
+        "ta3wed"
+      ],
+      "means": [
+        "تعويض",
+        "compensation"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "shakwa",
+        "shakwah",
+        "shakawa"
+      ],
+      "means": [
+        "شكوى",
+        "complaint"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mandoob",
+        "mandob",
+        "mandub"
+      ],
+      "means": [
+        "مندوب",
+        "courier"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "3onwan",
+        "3enwan",
+        "onwan",
+        "3nwan"
+      ],
+      "means": [
+        "عنوان",
+        "address"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "aghayar",
+        "a8ayar",
+        "ghayar",
+        "8ayar",
+        "ghayyar",
+        "taghyeer",
+        "ta8yer",
+        "t8yer"
+      ],
+      "means": [
+        "تغيير",
+        "change"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "khasm",
+        "5asm",
+        "5asem"
+      ],
+      "means": [
+        "خصم",
+        "discount"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mawa3eed",
+        "mawa3ed",
+        "ma3ad",
+        "me3ad",
+        "mi3ad"
+      ],
+      "means": [
+        "مواعيد",
+        "موعد",
+        "hours"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "sa3at",
+        "sa3aat",
+        "sa3a"
+      ],
+      "means": [
+        "ساعات",
+        "hours"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "shoghl",
+        "sho8l",
+        "shoghol"
+      ],
+      "means": [
+        "العمل",
+        "working"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mas2areef",
+        "masareef",
+        "masaref",
+        "mas2arif",
+        "tamn",
+        "taman",
+        "si3r",
+        "se3r"
+      ],
+      "means": [
+        "مصاريف",
+        "رسوم",
+        "fees"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "bala4",
+        "balash",
+        "bbalash",
+        "maggany",
+        "magany",
+        "free"
+      ],
+      "means": [
+        "مجاني",
+        "free"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mo7afza",
+        "mohafza",
+        "m7afza",
+        "mo7afzat"
+      ],
+      "means": [
+        "محافظة",
+        "محافظات",
+        "governorate"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "sa3id",
+        "se3id",
+        "sa3eed"
+      ],
+      "means": [
+        "الصعيد",
+        "upper egypt"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "visa",
+        "kart",
+        "card",
+        "kard"
+      ],
+      "means": [
+        "بطاقة",
+        "card"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "instapay",
+        "insta",
+        "tahweel",
+        "ta7weel",
+        "t7wel"
+      ],
+      "means": [
+        "انستاباي",
+        "تحويل",
+        "transfer"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "dafa3",
+        "daf3",
+        "dfa3",
+        "nedfa3",
+        "adfa3"
+      ],
+      "means": [
+        "الدفع",
+        "payment"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "hedeya",
+        "hedya",
+        "hdya",
+        "gift"
+      ],
+      "means": [
+        "هدية",
+        "gift"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ta3be2a",
+        "taghleef",
+        "ta8lef",
+        "taghlif"
+      ],
+      "means": [
+        "تغليف",
+        "wrapping"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "no2at",
+        "no2ta",
+        "points",
+        "noqat"
+      ],
+      "means": [
+        "نقاط",
+        "points"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "barra",
+        "bara",
+        "kharg",
+        "5arg"
+      ],
+      "means": [
+        "خارج",
+        "international"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "far3",
+        "fer3",
+        "ma7al",
+        "mahal"
+      ],
+      "means": [
+        "فرع",
+        "محل",
+        "store"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "raqam",
+        "ra2am",
+        "rakam",
+        "nemra",
+        "nmra"
+      ],
+      "means": [
+        "رقم",
+        "number"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mobile",
+        "mobil",
+        "telephone",
+        "telefon"
+      ],
+      "means": [
+        "موبايل",
+        "هاتف",
+        "phone"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "7esab",
+        "hesab",
+        "7sab",
+        "account"
+      ],
+      "means": [
+        "حساب",
+        "account"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "erga3ly",
+        "rage3ly",
+        "raga3ly",
+        "rag3ly"
+      ],
+      "means": [
+        "رد",
+        "استرداد",
+        "refund"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "mafto7",
+        "maftoo7",
+        "fata7t",
+        "fata7to",
+        "fata7"
+      ],
+      "means": [
+        "مفتوح",
+        "فتح",
+        "opened"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "3atr",
+        "parfum",
+        "perfume",
+        "barfan"
+      ],
+      "means": [
+        "عطر",
+        "عطور",
+        "perfume"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "malabes",
+        "hodoom",
+        "hdom",
+        "7odom"
+      ],
+      "means": [
+        "ملابس",
+        "clothes"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "dakhleya",
+        "dakhlya",
+        "dakhli"
+      ],
+      "means": [
+        "داخلية",
+        "underwear"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "tasfeya",
+        "tasfya",
+        "sale",
+        "okazyon",
+        "okazion"
+      ],
+      "means": [
+        "تصفية",
+        "تخفيضات",
+        "sale"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "sora",
+        "sowar",
+        "swar",
+        "soura",
+        "photo",
+        "photos"
+      ],
+      "means": [
+        "صور",
+        "photos"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "wasal",
+        "weslet",
+        "wesel",
+        "westlni",
+        "weslny",
+        "istalamt",
+        "estalamt",
+        "estlmt"
+      ],
+      "means": [
+        "استلام",
+        "وصل",
+        "delivered"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "fa7s",
+        "fahs",
+        "fa7as"
+      ],
+      "means": [
+        "فحص",
+        "inspection"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "bank",
+        "banky"
+      ],
+      "means": [
+        "بنك",
+        "بنكي",
+        "bank"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "ta2reban",
+        "ta2riban",
+        "t2reban"
+      ],
+      "means": [
+        "تقريبا",
+        "approximately"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "tatabo3",
+        "tatabu3",
+        "track",
+        "tracking",
+        "atba3"
+      ],
+      "means": [
+        "تتبع",
+        "tracking"
+      ],
+      "origin": "team_a"
+    },
+    {
+      "variants": [
+        "flousi",
+        "flosy",
+        "floosy",
+        "flousy"
+      ],
+      "means": [
+        "فلوسي",
+        "المبلغ",
+        "استرداد",
+        "refund"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "3ayez",
+        "3ayza",
+        "ayez",
+        "ayza",
+        "3ayzeen"
+      ],
+      "means": [
+        "عايز",
+        "اريد",
+        "want"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "mesh",
+        "msh",
+        "mish"
+      ],
+      "means": [
+        "مش",
+        "ليس",
+        "not"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "ahlan",
+        "salam",
+        "mar7aba",
+        "marhaba",
+        "ezayak",
+        "azayak",
+        "hello",
+        "hi"
+      ],
+      "means": [
+        "اهلا",
+        "مرحبا",
+        "hello"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "a3raf",
+        "a3ref",
+        "a3rf"
+      ],
+      "means": [
+        "اعرف",
+        "معرفة",
+        "know"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "human",
+        "agent",
+        "insan",
+        "mowazaf",
+        "moazaf",
+        "customer care",
+        "khedmet el 3omala"
+      ],
+      "means": [
+        "موظف",
+        "خدمة العملاء",
+        "human"
+      ],
+      "origin": "team_b"
+    },
+    {
+      "variants": [
+        "ta3deel",
+        "ta3dil",
+        "t3deel"
+      ],
+      "means": [
+        "تعديل",
+        "modify"
+      ],
+      "origin": "team_b"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 """In-memory stores and clocks: used by tests and by the light demo mode. Nothing survives a restart."""
 
 import asyncio
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncIterator, Collection, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, time, timedelta
 
@@ -9,7 +9,7 @@ from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
-from team_b.ports import AlreadyExistsError, NotFoundError, SessionConflictError
+from team_b.ports import AlreadyExistsError, Clock, NotFoundError, SessionConflictError
 
 
 class SystemClock:
@@ -73,11 +73,19 @@ class InMemorySessionStore:
         async with lock:
             yield
 
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        old = [key for key, s in self._sessions.items() if s.updated_at < cutoff and key not in keep]
+        for key in old:
+            del self._sessions[key]
+        return len(old)
+
 
 class InMemoryTraceStore:
-    def __init__(self) -> None:
+    def __init__(self, clock: Clock | None = None) -> None:
+        self._clock: Clock = clock or SystemClock()
         self._by_id: dict[tuple[str, str], DecisionTrace] = {}
         self._order: list[DecisionTrace] = []  # insertion order
+        self._stored_at: dict[tuple[str, str], datetime] = {}
 
     async def add(self, trace: DecisionTrace) -> None:
         key = (trace.tenant_id, trace.trace_id)
@@ -85,6 +93,7 @@ class InMemoryTraceStore:
             raise AlreadyExistsError(f"trace {trace.trace_id} already stored")
         self._by_id[key] = trace
         self._order.append(trace)
+        self._stored_at[key] = self._clock.now()
 
     async def get(self, tenant_id: str, trace_id: str) -> DecisionTrace | None:
         return self._by_id.get((tenant_id, trace_id))
@@ -110,6 +119,18 @@ class InMemoryTraceStore:
             and (escalation_reason is None or t.escalation_reason is escalation_reason)
         ]
         return found[:limit]
+
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        old = {
+            key
+            for key, stored in self._stored_at.items()
+            if stored < cutoff and (self._by_id[key].tenant_id, self._by_id[key].conversation_id) not in keep
+        }
+        self._order = [t for t in self._order if (t.tenant_id, t.trace_id) not in old]
+        for key in old:
+            del self._by_id[key]
+            del self._stored_at[key]
+        return len(old)
 
 
 class InMemoryCaseStore:
@@ -139,3 +160,10 @@ class InMemoryCaseStore:
             if c.tenant_id == tenant_id and (status is None or c.status is status)
         ]
         return sorted(found, key=lambda c: c.created_at)
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        finished = (CaseStatus.RESOLVED, CaseStatus.RETURNED_TO_AGENT)
+        old = [key for key, c in self._cases.items() if c.status in finished and c.updated_at < cutoff]
+        for key in old:
+            del self._cases[key]
+        return len(old)

@@ -12,8 +12,9 @@ import asyncio
 import re
 import sqlite3
 from collections import defaultdict
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncIterator, Collection, Iterable, Sequence
 from contextlib import asynccontextmanager, suppress
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,21 @@ async def apply_migrations(db: aiosqlite.Connection, directory: Path = MIGRATION
         )
         current = version
     return current
+
+
+def _iso(moment: datetime) -> str:
+    """Timestamps are stored as UTC ISO strings, which sort the same way as the moments they name."""
+    return moment.astimezone(UTC).isoformat()
+
+
+async def _delete_unless_kept(
+    db: aiosqlite.Connection, table: str, rows: Iterable[Sequence[str]], keep: Collection[tuple[str, str]]
+) -> int:
+    """Delete rows (tenant_id, conversation_id, key) unless their conversation is in keep. table is fixed code."""
+    doomed = [(t, k) for t, conversation, k in rows if (t, conversation) not in keep]
+    key_column = "conversation_id" if table == "sessions" else "trace_id"
+    await db.executemany(f"DELETE FROM {table} WHERE tenant_id = ? AND {key_column} = ?", doomed)
+    return len(doomed)
 
 
 class SqliteDatabase:
@@ -138,7 +154,7 @@ class SqliteSessionStore:
                         session.conversation_id,
                         new_version,
                         stored.model_dump_json(),
-                        session.updated_at.isoformat(),
+                        _iso(session.updated_at),
                     ),
                 )
                 await db.execute("COMMIT")
@@ -152,6 +168,13 @@ class SqliteSessionStore:
     async def lock(self, tenant_id: str, conversation_id: str) -> AsyncIterator[None]:
         async with self._locks[(tenant_id, conversation_id)]:
             yield
+
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        async with self._db.connect() as db:
+            cursor = await db.execute(
+                "SELECT tenant_id, conversation_id, conversation_id FROM sessions WHERE updated_at < ?", (_iso(cutoff),)
+            )
+            return await _delete_unless_kept(db, "sessions", await cursor.fetchall(), keep)
 
 
 class SqliteTraceStore:
@@ -176,7 +199,7 @@ class SqliteTraceStore:
                         trace.escalation_reason.value if trace.escalation_reason else None,
                         trace.language.value if trace.language else None,
                         trace.latency_ms,
-                        self._clock.now().isoformat(),
+                        _iso(self._clock.now()),
                         trace.model_dump_json(),
                     ),
                 )
@@ -212,6 +235,13 @@ class SqliteTraceStore:
                 params.append(value)
         return await self._fetch(f"WHERE {' AND '.join(clauses)} ORDER BY rowid DESC LIMIT ?", (*params, limit))
 
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        async with self._db.connect() as db:
+            cursor = await db.execute(
+                "SELECT tenant_id, conversation_id, trace_id FROM traces WHERE created_at < ?", (_iso(cutoff),)
+            )
+            return await _delete_unless_kept(db, "traces", await cursor.fetchall(), keep)
+
     async def _fetch(self, tail: str, params: Sequence[Any]) -> list[DecisionTrace]:
         # `tail` is built only from fixed fragments above; every value travels as a parameter.
         async with self._db.connect() as db:
@@ -237,8 +267,8 @@ class SqliteCaseStore:
                         case.package.reason.value,
                         case.package.priority,
                         case.claimed_by,
-                        case.created_at.isoformat(),
-                        case.updated_at.isoformat(),
+                        _iso(case.created_at),
+                        _iso(case.updated_at),
                         case.model_dump_json(),
                     ),
                 )
@@ -265,7 +295,7 @@ class SqliteCaseStore:
                     case.package.reason.value,
                     case.package.priority,
                     case.claimed_by,
-                    case.updated_at.isoformat(),
+                    _iso(case.updated_at),
                     case.model_dump_json(),
                     case.tenant_id,
                     case.case_id,
@@ -284,3 +314,11 @@ class SqliteCaseStore:
         async with self._db.connect() as db:
             rows = await (await db.execute(sql + " ORDER BY created_at, rowid", tuple(params))).fetchall()
         return [HandoffCase.model_validate_json(r[0]) for r in rows]
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        async with self._db.connect() as db:
+            cursor = await db.execute(
+                "DELETE FROM cases WHERE status IN (?, ?) AND updated_at < ?",
+                (CaseStatus.RESOLVED.value, CaseStatus.RETURNED_TO_AGENT.value, _iso(cutoff)),
+            )
+            return cursor.rowcount

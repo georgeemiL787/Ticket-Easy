@@ -103,7 +103,7 @@ def build_stores(settings: Settings, clock: Clock) -> tuple[SessionStore, TraceS
     if settings.store == "sqlite":
         db = SqliteDatabase(settings.db_path)
         return SqliteSessionStore(db), SqliteTraceStore(db, clock), SqliteCaseStore(db)
-    return InMemorySessionStore(), InMemoryTraceStore(), InMemoryCaseStore()
+    return InMemorySessionStore(), InMemoryTraceStore(clock), InMemoryCaseStore()
 
 
 def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:

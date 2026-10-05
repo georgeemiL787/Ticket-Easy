@@ -31,6 +31,7 @@ ENV_VARS: dict[str, str] = {
     "fixed_today": "TEAM_B_FIXED_TODAY",
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
     "log_json": "TEAM_B_LOG_JSON",
+    "retention_days": "TEAM_B_RETENTION_DAYS",
 }
 
 
@@ -56,6 +57,7 @@ class Settings(BaseModel):
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
     log_json: bool = True
+    retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
 
     @model_validator(mode="after")
     def _openrouter_needs_a_key(self) -> Self:

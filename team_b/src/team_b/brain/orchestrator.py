@@ -19,7 +19,7 @@ from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig, TenantRegistry
 from team_b.domain.trace import DecisionTrace, TraceStep
 from team_b.domain.understanding import Language, Locale
-from team_b.ports import CaseStore, Clock, SessionStore, TraceStore
+from team_b.ports import CaseStore, Clock, SessionConflictError, SessionStore, TraceStore
 
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"
 
@@ -43,9 +43,19 @@ class Orchestrator:
         self._summarizer = summarizer or TemplateHistorySummarizer()
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply:
-        """Answer one customer message. Raises UnknownTenantError for a tenant that is not configured."""
-        started = time.perf_counter()
+        """Answer one customer message. Raises UnknownTenantError for a tenant that is not configured.
+
+        If another writer saved the session first (a second process on the same database), the turn is redone once on
+        the fresh session; a second conflict is raised to the caller. Nothing is stored for a failed attempt."""
         tenant = self._tenants.get(tenant_id)
+        try:
+            return await self._handle_turn_once(tenant, conversation_id, text)
+        except SessionConflictError:
+            return await self._handle_turn_once(tenant, conversation_id, text)
+
+    async def _handle_turn_once(self, tenant: TenantConfig, conversation_id: str, text: str) -> AgentReply:
+        started = time.perf_counter()
+        tenant_id = tenant.tenant_id
         async with self._sessions.lock(tenant_id, conversation_id):
             now = self._clock.now()
             session = await self._load_or_create(tenant, conversation_id, now)

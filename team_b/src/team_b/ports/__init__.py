@@ -5,7 +5,7 @@ team_b.adapters and are wired together in team_b.container. Every method is asyn
 raises team_b.contracts.errors.UpstreamError; the brain decides what to do about it (usually: hand off).
 """
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from contextlib import AbstractAsyncContextManager
 from datetime import date, datetime
 from typing import Any, Protocol, runtime_checkable
@@ -29,6 +29,7 @@ __all__ = [
     "PolicyGate",
     "SessionConflictError",
     "SessionStore",
+    "StaleSession",
     "StoreError",
     "TraceStore",
 ]
@@ -40,6 +41,9 @@ class StoreError(Exception):
 
 class SessionConflictError(StoreError):
     """The session was saved by someone else since it was loaded (its version is stale)."""
+
+
+StaleSession = SessionConflictError  # the same error under its other name
 
 
 class AlreadyExistsError(StoreError):
@@ -112,6 +116,10 @@ class SessionStore(Protocol):
         """Async context manager: messages of one conversation are handled one at a time."""
         ...
 
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        """Delete sessions last updated before cutoff, except those in keep."""
+        ...
+
 
 @runtime_checkable
 class TraceStore(Protocol):
@@ -123,6 +131,10 @@ class TraceStore(Protocol):
 
     async def for_conversation(self, tenant_id: str, conversation_id: str) -> list[DecisionTrace]:
         """Oldest first."""
+        ...
+
+    async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
+        """Delete traces stored before cutoff, except those of the (tenant, conversation) pairs in keep."""
         ...
 
     async def query(
@@ -150,6 +162,10 @@ class CaseStore(Protocol):
 
     async def list(self, tenant_id: str, *, status: CaseStatus | None = None) -> Sequence[HandoffCase]:
         """Oldest first. The inbox sorts by priority."""
+        ...
+
+    async def purge_older_than(self, cutoff: datetime) -> int:
+        """Delete resolved or returned cases last updated before cutoff. Open and claimed cases are never deleted."""
         ...
 
 

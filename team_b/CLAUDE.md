@@ -42,7 +42,9 @@ team_b/
                  SessionStore, TraceStore, CaseStore, Clock + store errors (strict mypy)
     brain/       language, text, nlu, slots, knowledge, identity, registry, gates, actions,
                  composer, handoff, metrics, alerts                                              (modules planned)
-                 orchestrator: minimal version (handle_turn: session memory, clarify reply, valid redacted trace; human methods raise NotImplementedError)
+                 orchestrator: minimal version (handle_turn retries once on a stale session; session memory, clarify reply, valid redacted trace; human methods raise NotImplementedError)
+                 retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
+                 open and claimed cases, and their conversation's session and traces, are never purged
                  summarizer (Template + LLM history summaries, LLM text rejected on invented facts), redaction (redact: phone/email/card/OTP),
                  transcript (transcript_from_traces)
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)

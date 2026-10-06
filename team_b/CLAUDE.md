@@ -83,7 +83,8 @@ team_b/
                            -> human approval turns require_human into allow, never a deny; facts only from facts, arguments only when
                            "from": "arguments"; days_since_delivery/days_late derived from dates and as_of; fail_next switch;
                            unreadable rules raise UpstreamError)
-                           safety_screen (placeholder that raises NotImplementedError until its prompt)
+                           safety_screen (SafetyScreenStandin.classify_risk: risk.json keywords per category in en/ar/arabizi, normalized whole-word matching, stretched letters collapsed;
+                           flagged = a mandatory category matched; fail_next switch; unreadable risk file raises UpstreamError)
                  sqlite_store (SqliteDatabase: one short connection per call, numbered migrations/NNN_*.sql applied on first use;
                            SqliteSessionStore/TraceStore/CaseStore, same behaviour as the memory stores; TEAM_B_STORE=sqlite)
                  llm (OpenAICompatibleLLM: Ollama or OpenRouter over /chat/completions, JSON mode, UpstreamError / InvalidLLMOutput)
@@ -123,7 +124,7 @@ demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment
 what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
 
-container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker). container.rule_checker is the RuleCheckerStandin behind container.policy.
+container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker, safety_screen). container.rule_checker is the RuleCheckerStandin behind container.policy.
 
 Error format of every API error: {"schema_version": "1.0", "error": {"code", "message", "request_id"}}. Codes: INVALID_REQUEST 422, NOT_FOUND / TENANT_NOT_FOUND 404, INVALID_STATE 409, UPSTREAM_UNAVAILABLE 503, INTERNAL_ERROR 500. Raise ApiError (api/errors.py) from routes; never put request values or internal details in messages.
 

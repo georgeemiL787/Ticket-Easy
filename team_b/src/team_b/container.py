@@ -57,6 +57,7 @@ class Container:
     shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
     rule_checker: RuleCheckerStandin | None = None  # the rule checker behind `policy`, same purpose
+    safety_screen: SafetyScreenStandin | None = None  # the safety screen behind `evidence`, same purpose
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
@@ -78,11 +79,12 @@ def build_container(settings: Settings) -> Container:
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
     policy_search = PolicySearchStandin(settings.fixtures_dir)
     rule_checker = RuleCheckerStandin(settings.fixtures_dir)
+    safety_screen = SafetyScreenStandin(settings.fixtures_dir)
     container = Container(
         settings=settings,
         clock=clock,
         tenants=tenants,
-        evidence=StandinEvidenceProvider(policy_search, SafetyScreenStandin()),
+        evidence=StandinEvidenceProvider(policy_search, safety_screen),
         policy=rule_checker,
         capabilities=shop,
         llm=build_llm(settings),
@@ -92,6 +94,7 @@ def build_container(settings: Settings) -> Container:
         shop=shop,
         policy_search=policy_search,
         rule_checker=rule_checker,
+        safety_screen=safety_screen,
     )
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
@@ -158,6 +161,9 @@ def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:
     if plug == "rule_checker" and container.rule_checker is not None:
         container.rule_checker.inject(spec)
         return
+    if plug == "safety_screen" and container.safety_screen is not None:
+        container.safety_screen.inject(spec)
+        return
     raise ValueError(
-        f"no failure switches for plug {plug!r} (only shop, policy_search and rule_checker have them so far)"
+        f"no failure switches for plug {plug!r} (only shop, policy_search, rule_checker and safety_screen have them)"
     )

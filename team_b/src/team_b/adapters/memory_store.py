@@ -1,12 +1,13 @@
 """In-memory stores and clocks: used by tests and by the light demo mode. Nothing survives a restart."""
 
 import asyncio
+import math
 from collections.abc import AsyncIterator, Collection, Sequence
 from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, time, timedelta
 
 from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.facts import Facts, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
+from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -104,6 +105,22 @@ class InMemoryTraceStore:
             self._turn_facts.append(turn)
         self._tool_facts += calls
         self._policy_facts += policy
+
+    async def summary(self, tenant_id: str, start: datetime, end: datetime) -> FactsSummary:
+        turns = (await self.facts(tenant_id, start, end)).turns
+        latencies = sorted(t.latency_ms for t in turns)
+
+        def nearest(p: float) -> float | None:
+            return latencies[max(1, math.ceil(p * len(latencies))) - 1] if latencies else None
+
+        return FactsSummary(
+            turns=len(turns),
+            conversations=len({t.conversation_id for t in turns}),
+            conversations_with_case=len({t.conversation_id for t in turns if t.decision == "handoff"}),
+            unverified_results=sum(1 for t in turns if t.escalation_reason == "unverified_result"),
+            p50_latency_ms=nearest(0.5),
+            p95_latency_ms=nearest(0.95),
+        )
 
     async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
         def within(row: TurnFact | ToolCallFact | PolicyFact) -> bool:

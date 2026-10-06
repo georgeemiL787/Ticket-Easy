@@ -1,0 +1,95 @@
+{
+  "$defs": {
+    "DashboardToolRow": {
+      "properties": {
+        "calls": {
+          "title": "Calls",
+          "type": "integer"
+        },
+        "errors": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Errors",
+          "type": "object"
+        },
+        "failures": {
+          "title": "Failures",
+          "type": "integer"
+        },
+        "p50_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P50 Ms"
+        },
+        "p95_ms": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P95 Ms"
+        },
+        "rate": {
+          "title": "Rate",
+          "type": "number"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tool",
+        "calls",
+        "failures",
+        "rate",
+        "errors",
+        "p50_ms",
+        "p95_ms"
+      ],
+      "title": "DashboardToolRow",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "tools": {
+      "items": {
+        "$ref": "#/$defs/DashboardToolRow"
+      },
+      "title": "Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "period_start",
+    "period_end",
+    "tools"
+  ],
+  "title": "DashboardTools",
+  "type": "object"
+}

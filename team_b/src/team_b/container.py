@@ -61,7 +61,7 @@ class Container:
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
 
 
-def build_container(settings: Settings) -> Container:
+def build_container(settings: Settings, *, clock: Clock | None = None) -> Container:
     if settings.mode == "live":
         raise ContainerError(
             "TEAM_B_MODE=live is not available until Phase 6 (real Team A and Team C services). "
@@ -71,7 +71,7 @@ def build_container(settings: Settings) -> Container:
     if settings.llm_rewrite and settings.llm == "none":
         raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
 
-    clock = FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock()
+    clock = clock or (FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock())
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())

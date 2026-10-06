@@ -62,6 +62,17 @@ class PolicyFact(FrozenModel):
     reason_code: str
 
 
+class FactsSummary(FrozenModel):
+    """Headline counts of a window, computed by the store without loading every row (the dashboard overview)."""
+
+    turns: int = 0
+    conversations: int = 0
+    conversations_with_case: int = 0
+    unverified_results: int = 0
+    p50_latency_ms: float | None = None
+    p95_latency_ms: float | None = None
+
+
 class Facts(FrozenModel):
     """Everything stored for a tenant in a time window."""
 

@@ -1,0 +1,153 @@
+{
+  "$defs": {
+    "CaseStatus": {
+      "enum": [
+        "open",
+        "claimed",
+        "resolved",
+        "returned_to_agent"
+      ],
+      "title": "CaseStatus",
+      "type": "string"
+    },
+    "DashboardConversationRow": {
+      "properties": {
+        "actions": {
+          "title": "Actions",
+          "type": "integer"
+        },
+        "avg_latency_ms": {
+          "title": "Avg Latency Ms",
+          "type": "number"
+        },
+        "case_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Case Id"
+        },
+        "case_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaseStatus"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conversation_id": {
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "escalation_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Escalation Reason"
+        },
+        "first_at": {
+          "format": "date-time",
+          "title": "First At",
+          "type": "string"
+        },
+        "has_case": {
+          "title": "Has Case",
+          "type": "boolean"
+        },
+        "intents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Intents",
+          "type": "array"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Language"
+        },
+        "last_at": {
+          "format": "date-time",
+          "title": "Last At",
+          "type": "string"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "string"
+        },
+        "problems": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Problems",
+          "type": "array"
+        },
+        "turns": {
+          "title": "Turns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "conversation_id",
+        "first_at",
+        "last_at",
+        "turns",
+        "language",
+        "intents",
+        "outcome",
+        "escalation_reason",
+        "has_case",
+        "case_id",
+        "case_status",
+        "actions",
+        "avg_latency_ms",
+        "problems"
+      ],
+      "title": "DashboardConversationRow",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/DashboardConversationRow"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "next_cursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Cursor"
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "title": "DashboardConversationPage",
+  "type": "object"
+}

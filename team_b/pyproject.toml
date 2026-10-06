@@ -22,7 +22,11 @@ where = ["src"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-markers = ["scenario: end-to-end conversation scenarios (scenarios/<tenant>)"]
+markers = [
+    "scenario: end-to-end conversation scenarios (scenarios/<tenant>)",
+    "slow: performance tests, run with `pytest -m slow` (left out of the normal run)",
+]
+addopts = "-m 'not slow'"
 
 [tool.ruff]
 line-length = 120

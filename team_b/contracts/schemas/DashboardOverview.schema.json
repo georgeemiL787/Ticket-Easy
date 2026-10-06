@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "DashboardKpi": {
+      "properties": {
+        "change": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Change"
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Previous"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value",
+        "previous",
+        "change"
+      ],
+      "title": "DashboardKpi",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "automation_rate": {
+      "$ref": "#/$defs/DashboardKpi"
+    },
+    "conversations": {
+      "$ref": "#/$defs/DashboardKpi"
+    },
+    "escalation_rate": {
+      "$ref": "#/$defs/DashboardKpi"
+    },
+    "open_cases": {
+      "title": "Open Cases",
+      "type": "integer"
+    },
+    "p95_latency_ms": {
+      "$ref": "#/$defs/DashboardKpi"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "previous_end": {
+      "format": "date-time",
+      "title": "Previous End",
+      "type": "string"
+    },
+    "previous_start": {
+      "format": "date-time",
+      "title": "Previous Start",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "unverified_results": {
+      "$ref": "#/$defs/DashboardKpi"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "period_start",
+    "period_end",
+    "previous_start",
+    "previous_end",
+    "conversations",
+    "automation_rate",
+    "escalation_rate",
+    "unverified_results",
+    "p95_latency_ms",
+    "open_cases"
+  ],
+  "title": "DashboardOverview",
+  "type": "object"
+}

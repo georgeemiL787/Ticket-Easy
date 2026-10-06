@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "DashboardRuleCount": {
+      "properties": {
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "decision": {
+          "title": "Decision",
+          "type": "string"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule",
+        "decision",
+        "count"
+      ],
+      "title": "DashboardRuleCount",
+      "type": "object"
+    },
+    "ReasonPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "bucket_start": {
+          "format": "date-time",
+          "title": "Bucket Start",
+          "type": "string"
+        },
+        "by_reason": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "By Reason",
+          "type": "object"
+        },
+        "conversations": {
+          "title": "Conversations",
+          "type": "integer"
+        },
+        "rates": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Rates",
+          "type": "object"
+        }
+      },
+      "required": [
+        "bucket_start",
+        "conversations",
+        "by_reason",
+        "rates"
+      ],
+      "title": "ReasonPoint",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "by_reason": {
+      "items": {
+        "$ref": "#/$defs/ReasonPoint"
+      },
+      "title": "By Reason",
+      "type": "array"
+    },
+    "by_reason_total": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "By Reason Total",
+      "type": "object"
+    },
+    "claimed_cases": {
+      "title": "Claimed Cases",
+      "type": "integer"
+    },
+    "conversations": {
+      "title": "Conversations",
+      "type": "integer"
+    },
+    "open_cases": {
+      "title": "Open Cases",
+      "type": "integer"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "top_rules": {
+      "items": {
+        "$ref": "#/$defs/DashboardRuleCount"
+      },
+      "title": "Top Rules",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "period_start",
+    "period_end",
+    "conversations",
+    "by_reason_total",
+    "by_reason",
+    "open_cases",
+    "claimed_cases",
+    "top_rules"
+  ],
+  "title": "DashboardEscalations",
+  "type": "object"
+}

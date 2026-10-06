@@ -19,7 +19,9 @@ CREATE TABLE turn_facts (
     stage_ms          TEXT    NOT NULL,  -- JSON object: stage -> milliseconds
     PRIMARY KEY (tenant_id, trace_id)
 );
-CREATE INDEX idx_turn_facts_tenant_created ON turn_facts (tenant_id, created_at);
+-- covers the overview query, so it never has to read the table rows
+CREATE INDEX idx_turn_facts_tenant_created ON turn_facts
+    (tenant_id, created_at, conversation_id, decision, escalation_reason, latency_ms);
 CREATE INDEX idx_turn_facts_conversation ON turn_facts (tenant_id, conversation_id);
 
 CREATE TABLE tool_call_facts (

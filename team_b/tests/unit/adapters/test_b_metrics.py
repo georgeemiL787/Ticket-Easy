@@ -368,3 +368,26 @@ def test_percentile_is_nearest_rank() -> None:
     assert percentile([7], 0.95) == 7
     assert [percentile([10, 20, 30, 40], p) for p in (0.25, 0.5, 0.75, 0.95, 1.0)] == [10, 20, 30, 40, 40]
     assert percentile([40, 10, 30, 20], 0.5) == 20  # order does not matter
+
+
+async def test_the_store_summary_matches_the_hand_computed_numbers(store_kind: str, tmp_path: Path) -> None:
+    """The fast summary (one SQL pass on SQLite) agrees with the rows, on both stores."""
+    clock = SteppingClock()
+    if store_kind == "memory":
+        store: Any = InMemoryTraceStore(clock)
+    else:
+        store = SqliteTraceStore(SqliteDatabase(tmp_path / "s.sqlite3"), clock)
+    for moment, record in [*day_one(), *day_two()]:
+        clock.moment = moment
+        await store.add(record)
+    one = await store.summary(T, D1, D2)
+    # latencies 100 300 200 400 500 150 -> sorted 100 150 200 300 400 500: p50 = 3rd, p95 = 6th
+    assert (one.turns, one.conversations, one.conversations_with_case, one.unverified_results) == (6, 5, 2, 1)
+    assert (one.p50_latency_ms, one.p95_latency_ms) == (200.0, 500.0)
+    two = await store.summary(T, D2, END)
+    assert (two.turns, two.conversations, two.conversations_with_case, two.p50_latency_ms, two.p95_latency_ms) == (
+        2, 2, 0, 80.0, 120.0,
+    )  # fmt: skip
+    none = await store.summary(T, END, END + timedelta(days=1))
+    assert (none.turns, none.conversations, none.p50_latency_ms, none.p95_latency_ms) == (0, 0, None, None)
+    assert (await store.summary("tel_001", D1, END)).turns == 0

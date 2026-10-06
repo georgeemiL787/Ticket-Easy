@@ -4,7 +4,19 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-NAMES = ("DecisionTrace", "HandoffPackage", "HandoffCase", "AgentReply")
+NAMES = (
+    "DecisionTrace",
+    "HandoffPackage",
+    "HandoffCase",
+    "AgentReply",
+    "DashboardOverview",
+    "DashboardTimeseries",
+    "DashboardConversationPage",
+    "DashboardConversation",
+    "DashboardEscalations",
+    "DashboardTools",
+    "DashboardKnowledgeGaps",
+)
 
 
 def test_committed_schemas_match_the_models(tmp_path: Path) -> None:

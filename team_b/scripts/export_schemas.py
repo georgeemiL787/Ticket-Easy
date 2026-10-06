@@ -9,12 +9,25 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from team_b.api import dashboard
 from team_b.domain.handoff import HandoffCase, HandoffPackage
 from team_b.domain.reply import AgentReply
 from team_b.domain.trace import DecisionTrace
 
 ROOT = Path(__file__).resolve().parent.parent
-MODELS: tuple[type[BaseModel], ...] = (DecisionTrace, HandoffPackage, HandoffCase, AgentReply)
+MODELS: tuple[type[BaseModel], ...] = (
+    DecisionTrace,
+    HandoffPackage,
+    HandoffCase,
+    AgentReply,
+    dashboard.DashboardOverview,
+    dashboard.DashboardTimeseries,
+    dashboard.DashboardConversationPage,
+    dashboard.DashboardConversation,
+    dashboard.DashboardEscalations,
+    dashboard.DashboardTools,
+    dashboard.DashboardKnowledgeGaps,
+)
 
 
 def render(model: type[BaseModel]) -> str:

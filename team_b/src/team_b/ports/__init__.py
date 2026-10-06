@@ -14,7 +14,7 @@ from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.facts import Facts
+from team_b.domain.facts import Facts, FactsSummary
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -140,6 +140,10 @@ class TraceStore(Protocol):
 
     async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
         """The summary rows written with the traces stored in [start, end), oldest first. They outlive purged traces."""
+        ...
+
+    async def summary(self, tenant_id: str, start: datetime, end: datetime) -> FactsSummary:
+        """Headline counts of [start, end) without loading every row: fast on a large database."""
         ...
 
     async def query(

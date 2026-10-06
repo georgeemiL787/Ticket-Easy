@@ -10,6 +10,7 @@ Behaviour matches the in-memory stores (copies, conflicts, duplicate ids), so th
 
 import asyncio
 import json
+import math
 import re
 import sqlite3
 from collections import defaultdict
@@ -22,7 +23,7 @@ from typing import Any
 import aiosqlite
 
 from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.facts import Facts, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
+from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -256,6 +257,41 @@ class SqliteTraceStore:
             except BaseException:
                 await db.execute("ROLLBACK")
                 raise
+
+    async def summary(self, tenant_id: str, start: datetime, end: datetime) -> FactsSummary:
+        window = (tenant_id, _iso(start), _iso(end))
+        where = "WHERE tenant_id = ? AND created_at >= ? AND created_at < ?"
+        async with self._db.connect() as db:
+            row = await (
+                await db.execute(
+                    "SELECT COUNT(*), COUNT(DISTINCT conversation_id), "
+                    "COUNT(DISTINCT CASE WHEN decision = 'handoff' THEN conversation_id END), "
+                    "COALESCE(SUM(escalation_reason = 'unverified_result'), 0) "
+                    f"FROM turn_facts {where}",
+                    window,
+                )
+            ).fetchone()
+            assert row is not None
+            turns = int(row[0])
+
+            ranks = {max(1, math.ceil(p * turns)) for p in (0.5, 0.95)} if turns else set()
+            picked: dict[int, float] = {}
+            if ranks:  # one sort of the window answers both percentiles (nearest rank)
+                marks = ", ".join("?" for _ in ranks)
+                found = await (
+                    await db.execute(
+                        "SELECT rn, latency_ms FROM (SELECT latency_ms, ROW_NUMBER() OVER (ORDER BY latency_ms) AS rn "
+                        f"FROM turn_facts {where}) WHERE rn IN ({marks})",
+                        (*window, *sorted(ranks)),
+                    )
+                ).fetchall()
+                picked = {int(r[0]): float(r[1]) for r in found}
+            p50 = picked.get(max(1, math.ceil(0.5 * turns))) if turns else None
+            p95 = picked.get(max(1, math.ceil(0.95 * turns))) if turns else None
+        return FactsSummary(
+            turns=turns, conversations=int(row[1]), conversations_with_case=int(row[2]), unverified_results=int(row[3]),
+            p50_latency_ms=p50, p95_latency_ms=p95,
+        )  # fmt: skip
 
     async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
         window = (tenant_id, _iso(start), _iso(end))

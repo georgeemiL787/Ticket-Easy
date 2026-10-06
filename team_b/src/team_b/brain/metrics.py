@@ -5,6 +5,7 @@ buckets included so a chart has no holes. They read only the summary rows (turn_
 and the cases, never message text. Times are UTC. A conversation counts in the bucket of its first turn in the window.
 """
 
+import asyncio
 import math
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Sequence
@@ -13,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal, TypeVar
 
 from team_b.domain.base import FrozenModel
-from team_b.domain.facts import Facts, PolicyFact, ToolCallFact, TurnFact
+from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact
 from team_b.domain.handoff import HandoffCase
 from team_b.ports import CaseStore, TraceStore
 
@@ -526,3 +527,22 @@ class MetricsService:
                 RatePoint(bucket_start=s, numerator=fell, denominator=len(grouped[s]), rate=rate(fell, len(grouped[s])))
             )
         return points
+
+
+# ---- the overview: current period and the one before it ----
+
+
+def previous_period(start: datetime, end: datetime) -> tuple[datetime, datetime]:
+    """The window of the same length that ends where this one starts."""
+    return start - (end - start), start
+
+
+async def overview(
+    traces: TraceStore, tenant_id: str, start: datetime, end: datetime
+) -> tuple[FactsSummary, FactsSummary]:
+    """Headline counts of [start, end) and of the previous period, from the store's fast summary."""
+    before_start, before_end = previous_period(start, end)
+    current, before = await asyncio.gather(
+        traces.summary(tenant_id, start, end), traces.summary(tenant_id, before_start, before_end)
+    )
+    return current, before

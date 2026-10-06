@@ -120,8 +120,10 @@ def capture(
         if _clean(remainder) and (answer := answer_to(asked, text)) is not None:
             found[asked] = answer
             return found
-    if "reason" in wanted and (reason := reason_from(text)) is not None:
-        found["reason"] = reason
+    if (reason := reason_from(text)) is not None:
+        for slot in ("reason", "description"):  # what is wrong, said in the request itself
+            if slot in wanted:
+                found[slot] = reason
     if "new_address" in wanted and (address := address_from(text)) is not None:
         found["new_address"] = address
     return found

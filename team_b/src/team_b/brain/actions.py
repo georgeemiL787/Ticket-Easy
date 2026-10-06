@@ -12,7 +12,8 @@ execution.  A person's approval can turn require_human into allow, never a deny 
 ActionProposal.execution_authorized).
 on_confirmation() runs when the customer says yes: it reads the order again, checks the rules again with the fresh
 facts, and only then executes. Whatever came back is verified before anything is called done:
-  success + audit id + every promised output field + a reference id for creates -> action_done;
+  success + audit id + every promised output field + a reference id for creates + the same order and amount
+  as asked -> action_done;
   a clear error -> action_failed (counted; handoff at the limit); anything unclear -> handoff unverified_result, and the
   reply says neither done nor failed. Writes are never retried.
 Every failure of a check is fail-closed: no rule answer, no safety answer, no shop answer means no write and a handoff.
@@ -69,7 +70,10 @@ class Verdict(StrEnum):
     UNCERTAIN = "uncertain"  # it may or may not have happened: a person must look
 
 
-def verify_result(result: ToolResult, tool: ToolSpec | None) -> Verdict:
+ECHOED = ("order_id", "amount")  # details a result repeats back: they must be the ones that were asked for
+
+
+def verify_result(result: ToolResult, tool: ToolSpec | None, arguments: dict[str, Any] | None = None) -> Verdict:
     """success AND audit id AND every required output field AND a reference id for creates; unclear is UNCERTAIN."""
     if result.write_may_have_applied:
         return Verdict.UNCERTAIN
@@ -81,6 +85,9 @@ def verify_result(result: ToolResult, tool: ToolSpec | None) -> Verdict:
         return Verdict.UNCERTAIN
     if tool.operation_kind == "create" and not result.reference_id:
         return Verdict.UNCERTAIN
+    for key in ECHOED:  # a success that describes another change than the one asked for is not trusted
+        if arguments and key in arguments and key in result.data and result.data[key] != arguments[key]:
+            return Verdict.UNCERTAIN
     return Verdict.VERIFIED
 
 
@@ -347,7 +354,7 @@ async def _execute_and_verify(
         log.error("execution_refused_after_allow", reason=str(exc))
         return _block(ctx, proposal, str(exc), _handoff(EscalationReason.UNSUPPORTED, f"execution refused: {exc}"))
     citations = proposal.policy_decisions[-1].citations
-    verdict = verify_result(result, tool)
+    verdict = verify_result(result, tool, proposal.arguments)
     if verdict is Verdict.VERIFIED:
         proposal.transition(ActionState.CONFIRMED, at=ctx.now, note=f"verified: {result.reference_id}")
         session.write_failures = 0

@@ -1,6 +1,6 @@
 {
-  "id": "S06",
-  "title": "Refund above EGP 3,000 needs human approval (R-REFUND-LIMIT); the person approves and it runs once",
+  "id": "S06b",
+  "title": "Refund above EGP 3,000: the person rejects, nothing runs",
   "status": "active",
   "owner": "A",
   "setup": {
@@ -33,20 +33,18 @@
     },
     {
       "human": {
-        "action": "approve",
-        "text": "checked the order"
+        "action": "reject",
+        "text": "not eligible"
       },
       "expect": {
-        "decision": "execute",
-        "escalation": null
+        "decision": "refuse"
       }
     }
   ],
   "final": {
-    "executed_tools": [
-      "create_refund"
-    ],
-    "audit_count": 1,
+    "executed_tools": [],
+    "no_writes": true,
+    "audit_count": 0,
     "case_reason": "approval_required",
     "case_has_pending_approval": false,
     "trace_invariants": true

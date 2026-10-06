@@ -56,7 +56,7 @@ team_b/
                  rejects any new number/date/month/id/currency/link/citation/time word and any dropped one -> the template is sent;
                  policy passages are appended after the rewrite, never sent to the model; trace step 'rewrite' + versions.rewrite_prompt)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
-                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 60 keys, same keys everywhere; keys: ask_<slot>,
+                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 61 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
                  identity (ensure_verified: verify_tool with order id + phone, attempts counted, wrong phone dropped, identity_failed handoff at max_attempts,
@@ -86,6 +86,10 @@ team_b/
                  one up to Deps.max_queued_runs (TEAM_B_QUEUE_MAX_RUNS, 3); a CONFIRM stops the chain; a new request while a confirmation is pending cancels it and clears the queue
                  stages.handler: a clear request (want-marker, 3+ words) with no intent and no details is REFUSED with out_of_scope (offers a person); stages.merge:
                  a different request after an answered lookup/question replaces it and drops its request slots (order_id, reason, ...), nothing is dropped while awaiting an answer/yes
+                 approval (decide_case, run by Orchestrator.human_decide: case re-read in the conversation lock; approve = order re-read, arguments compared, check_action
+                 with HumanApproval (require_human -> allow, a deny stays a deny and closes the proposal), execute once with actor=human and approval_id=case id, verify,
+                 customer message in the outbox, trace kind human_action, case events approved_and_done/approved_unverified/approval_denied/approval_blocked/decision_failed;
+                 reject = proposal CANCELLED + approval_rejected message; a repeat decision is only noted as decision_ignored) - SAFETY-CRITICAL, second reviewer
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);

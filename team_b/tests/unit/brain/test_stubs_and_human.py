@@ -220,9 +220,11 @@ async def test_the_wrong_moves_are_refused_and_unknown_cases_are_not_found(c: Co
         await o.claim("case-nope", "agent-1")
 
 
-async def test_human_decide_waits_for_track_a(c: Container) -> None:
-    o, case_id = await handed_off(c)
-    with pytest.raises(NotImplementedError, match="Track A"):
+async def test_human_decide_needs_an_action_waiting_for_approval(c: Container) -> None:
+    from team_b.brain.approval import NothingToDecideError
+
+    o, case_id = await handed_off(c)  # a customer request for a person: no action is waiting
+    with pytest.raises(NothingToDecideError):
         await o.human_decide(case_id, "agent-1", True)
 
 

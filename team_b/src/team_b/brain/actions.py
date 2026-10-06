@@ -336,11 +336,13 @@ async def on_confirmation(ctx: TurnContext, nlu: NLUResult) -> Step:
     return await _execute_and_verify(ctx, proposal, tool)
 
 
-async def _execute_and_verify(ctx: TurnContext, proposal: ActionProposal, tool: ToolSpec) -> Step:
+async def _execute_and_verify(
+    ctx: TurnContext, proposal: ActionProposal, tool: ToolSpec, actor: Actor = "customer"
+) -> Step:
     """Execute once, then say what the shop proved: done, failed, or "a colleague will check"."""
     session = ctx.session
     try:
-        result = await COORDINATOR.execute(ctx, proposal)
+        result = await COORDINATOR.execute(ctx, proposal, actor)
     except ExecutionNotAuthorizedError as exc:  # cannot happen after an allow; if it does, fail closed
         log.error("execution_refused_after_allow", reason=str(exc))
         return _block(ctx, proposal, str(exc), _handoff(EscalationReason.UNSUPPORTED, f"execution refused: {exc}"))
@@ -489,11 +491,7 @@ class ActionCoordinator:
                 raise ExecutionNotAuthorizedError("no shop is connected: nothing can be executed")
 
             decision = proposal.policy_decisions[-1]
-            approval_id = (
-                approval_id_of(proposal.human_approval)
-                if decision.decision == "require_human" and proposal.human_approval is not None
-                else None
-            )
+            approval_id = approval_id_of(proposal.human_approval) if proposal.human_approval is not None else None
             kind = await self._operation_kind(ctx, proposal.tool)
             proposal.transition(
                 ActionState.EXECUTED, at=ctx.now, note=f"executing as {actor}"

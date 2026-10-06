@@ -133,3 +133,12 @@ def test_trace_round_trips_through_json() -> None:
         steps=[{"stage": "nlu", "status": "ok", "duration_ms": 1.5}],
     )
     assert DecisionTrace.model_validate_json(t.model_dump_json()) == t
+
+
+def test_a_write_by_a_person_needs_an_approval_id_even_after_an_allow() -> None:
+    with pytest.raises(ValidationError, match="by a person without an approval id"):
+        trace(kind="human_action", tool_calls=[call(actor="human")], policy=[policy("pol-1", "allow")])
+    ok = trace(
+        kind="human_action", tool_calls=[call(actor="human", approval_id="case-1")], policy=[policy("pol-1", "allow")]
+    )
+    assert ok.tool_calls[0].actor == "human"

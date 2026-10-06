@@ -14,7 +14,7 @@ The human methods share one signature so the scenario runner can call them by na
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from team_b.brain import actions, knowledge, lookup
+from team_b.brain import actions, approval, knowledge, lookup
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
 from team_b.brain.registry import CapabilityRegistry
@@ -171,8 +171,11 @@ class Orchestrator:
         await self.push_to_customer(case.tenant_id, case.conversation_id, text)
 
     async def human_decide(self, case_id: str, agent: str, approve: bool, note: str | None = None) -> None:
-        """Approve or reject the action waiting on this case. Track A builds this; it must never override a deny."""
-        raise NotImplementedError("human_decide is built by Track A (approval that can never override a no)")
+        """Approve or reject the action waiting on this case. It never overrides a deny (see brain/approval.py)."""
+        case = await self._case(case_id)
+        message = await approval.decide_case(self._deps, self._tenants.get(case.tenant_id), case, agent, approve, note)
+        if message is not None:
+            await self.push_to_customer(case.tenant_id, case.conversation_id, message, role="agent")
 
     async def return_to_agent(self, case_id: str, agent: str, note: str | None = None) -> None:
         """The agent hands the conversation back to the assistant."""

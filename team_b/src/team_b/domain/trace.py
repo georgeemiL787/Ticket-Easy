@@ -3,7 +3,8 @@
 Two invariants are checked on every trace (safety-critical):
 1. A handoff always has an escalation reason.
 2. Every tool call that is not a read is backed, in the same trace, by a policy entry that allowed it
-   (or by require_human plus an approval id on the call). A write without that cannot even be recorded.
+   (or by require_human plus an approval id on the call). A write by a person also needs an approval id.
+   A write without that cannot even be recorded.
 """
 
 from typing import Any, Literal, Self
@@ -111,6 +112,10 @@ class DecisionTrace(FrozenModel):
         for call in self.tool_calls:
             if call.operation_kind == "read":
                 continue
+            if call.actor == "human" and not call.approval_id:
+                raise ValueError(
+                    f"write call {call.request_id} ({call.tool}) was made by a person without an approval id"
+                )
             entry = policy_by_request.get(call.policy_request_id) if call.policy_request_id else None
             if entry is None:
                 raise ValueError(f"write call {call.request_id} ({call.tool}) has no policy entry in this trace")

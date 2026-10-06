@@ -11,7 +11,7 @@ from tests.unit.brain.test_b_briefing import R, T, rich_context
 from tests.unit.brain.test_pipeline import C, orch, say
 
 GOOD = {
-    "summary_en": "The customer asked for a refund of 450 on order NS-20512. The rule checker said no, so a person has it.",
+    "summary_en": "The customer asked for a refund of 450 on order NS-20512. The rule checker said no.",
     "summary_customer_language": "العميل طلب استرداد 450 للأوردر NS-20512 والطلب اتحول لزميل.",
     "suggested_next_step": "Explain the policy to the customer or decide on an exception.",
 }

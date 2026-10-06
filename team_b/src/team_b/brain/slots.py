@@ -2,8 +2,8 @@
 
 A tenant says, per intent, how each tool argument is filled (argument_map): slot:<name> is something the customer says,
 fact:<name> is a real value read from the shop (an order total), identity:customer_id is who the verified customer is,
-const:<value> is fixed. This module is the one place that turns that into (a) the list of details to ask for and
-(b) the arguments of the tool call.
+const:<value> is a default (a same-named detail the customer states replaces it). This module is the one place
+that turns that into (a) the list of details to ask for and (b) the arguments of the tool call.
 
 Facts beat the customer: an argument mapped to fact:<name> is never filled from what the customer said, so "refund
 5000" on a 1250 order still refunds 1250. A required argument that has no source at all can never be filled, so the
@@ -138,7 +138,9 @@ def resolve_arguments(
             else:
                 needs_identity = True
         else:
-            value = name
+            # A constant is a default: if the customer stated the same detail (a voucher amount) that is used instead,
+            # and the rule checker then judges the amount they asked for.
+            value = session.slots.get(argument) or name
         if value is None or (isinstance(value, str) and not value.strip()):
             if kind == "slot" and (argument in required or name in intent.required_slots):
                 missing.append(name)

@@ -16,7 +16,8 @@ from fastapi import APIRouter, Path, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from team_b.api.chat import TENANT, checked_tenant, container_of
-from team_b.api.errors import ApiError, invalid_request, invalid_state, not_found
+from team_b.api.errors import invalid_request, invalid_state, not_found
+from team_b.brain.approval import CaseNotYoursError, NothingToDecideError
 from team_b.brain.orchestrator import Orchestrator
 from team_b.container import Container
 from team_b.domain.decision import EscalationReason
@@ -182,7 +183,11 @@ async def act(request: Request, case_id: str, work: Any) -> HandoffCase:
         await work(orchestrator_of(built))
     except NotFoundError:
         raise not_found("case not found") from None
-    except IllegalCaseTransitionError as exc:  # includes CaseOwnershipError
+    except (
+        IllegalCaseTransitionError,
+        CaseNotYoursError,
+        NothingToDecideError,
+    ) as exc:  # a move the case does not allow
         raise invalid_state(str(exc)) from None
     return await find_case(built, case_id)
 
@@ -205,7 +210,7 @@ async def reply(case_id: CASE_ID, body: ReplyIn, request: Request) -> HandoffCas
 
 @router.post("/cases/{case_id}/decision", response_model=HandoffCase)
 async def decision(case_id: CASE_ID, body: DecisionIn, request: Request) -> HandoffCase:
-    """Approve or reject the action waiting on this case (built by Track A: 501 until then)."""
+    """Approve or reject the action waiting on this case (the person must have claimed it)."""
     built = container_of(request)
     case = await find_case(built, case_id)
     try:
@@ -214,10 +219,7 @@ async def decision(case_id: CASE_ID, body: DecisionIn, request: Request) -> Hand
         raise invalid_state(str(exc)) from None
     if case.pending_approval is None:
         raise invalid_state("this case has no action waiting for approval")
-    try:
-        return await act(request, case_id, lambda o: o.human_decide(case_id, body.agent, body.approve, body.note))
-    except NotImplementedError:
-        raise ApiError(501, "NOT_IMPLEMENTED", "approving an action is not available yet") from None
+    return await act(request, case_id, lambda o: o.human_decide(case_id, body.agent, body.approve, body.note))
 
 
 @router.post("/cases/{case_id}/resolve", response_model=HandoffCase)

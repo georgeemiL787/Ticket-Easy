@@ -14,13 +14,14 @@ The human methods share one signature so the scenario runner can call them by na
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from team_b.brain import actions, knowledge, lookup
+from team_b.brain import actions, approval, knowledge, lookup
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
+from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
-from team_b.brain.turn import Deps, Handler, PlannedIntent, Step, TurnContext
+from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message
@@ -32,6 +33,7 @@ from team_b.ports import (
     EvidenceProvider,
     LLMClient,
     NotFoundError,
+    PolicyGate,
     SessionConflictError,
     SessionStore,
     TraceStore,
@@ -85,6 +87,9 @@ class Orchestrator:
         rewriter: Rewriter | None = None,
         llm: LLMClient | None = None,
         events: Publisher | None = None,
+        registry: CapabilityRegistry | None = None,
+        policy: PolicyGate | None = None,
+        max_queued_runs: int | None = None,
     ) -> None:
         self._tenants = tenants
         self._events = events
@@ -101,6 +106,9 @@ class Orchestrator:
             capabilities=capabilities,
             rewriter=rewriter,
             llm=llm,
+            registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
+            policy=policy,
+            max_queued_runs=MAX_QUEUED_RUNS if max_queued_runs is None else max_queued_runs,
         )
 
     async def handle_turn(
@@ -178,8 +186,11 @@ class Orchestrator:
         await self.push_to_customer(case.tenant_id, case.conversation_id, text)
 
     async def human_decide(self, case_id: str, agent: str, approve: bool, note: str | None = None) -> None:
-        """Approve or reject the action waiting on this case. Track A builds this; it must never override a deny."""
-        raise NotImplementedError("human_decide is built by Track A (approval that can never override a no)")
+        """Approve or reject the action waiting on this case. It never overrides a deny (see brain/approval.py)."""
+        case = await self._case(case_id)
+        message = await approval.decide_case(self._deps, self._tenants.get(case.tenant_id), case, agent, approve, note)
+        if message is not None:
+            await self.push_to_customer(case.tenant_id, case.conversation_id, message, role="agent")
 
     async def return_to_agent(self, case_id: str, agent: str, note: str | None = None) -> None:
         """The agent hands the conversation back to the assistant."""

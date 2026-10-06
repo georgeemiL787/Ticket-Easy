@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from team_b.api import chat, dashboard, inbox, traces
+from team_b.api import capabilities, chat, dashboard, inbox, traces
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
 from team_b.config import PROJECT_ROOT, Settings
@@ -94,6 +94,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(traces.router)
     app.include_router(inbox.router)
     app.include_router(dashboard.router)
+    app.include_router(capabilities.router)
     mount_chat_page(app)
     mount_inbox_page(app)
     mount_dashboard_app(app)

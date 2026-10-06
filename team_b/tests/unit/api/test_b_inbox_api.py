@@ -228,16 +228,6 @@ async def with_waiting_action(container: Container, case_id: str) -> None:
     await container.cases.save(case)
 
 
-async def test_the_decision_answers_501_until_approval_is_built(
-    chat: httpx.AsyncClient, chat_container: Container
-) -> None:
-    case_id = await hand_off(chat)
-    await post(chat, case_id, "claim", agent="sara")
-    await with_waiting_action(chat_container, case_id)
-    response = await post(chat, case_id, "decision", agent="sara", approve=True)
-    assert (response.status_code, error_code(response)) == (501, "NOT_IMPLEMENTED")
-
-
 async def test_the_decision_needs_an_action_that_is_waiting(chat: httpx.AsyncClient) -> None:
     case_id = await hand_off(chat)
     await post(chat, case_id, "claim", agent="sara")

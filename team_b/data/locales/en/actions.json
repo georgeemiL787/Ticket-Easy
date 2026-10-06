@@ -22,5 +22,8 @@
   "action_cancelled": "Okay, I won't do that. Is there anything else I can help with?",
   "action_failed": "Sorry, I could not complete that. Nothing was changed on your order.",
   "policy_denied": "I'm sorry, I can't do that under our policy.",
-  "approval_pending": "This needs approval from our customer care team. I have sent them your request and a colleague will get back to you."
+  "approval_pending": "This needs approval from our customer care team. I have sent them your request and a colleague will get back to you.",
+  "policy_refusal": "{message}",
+  "action_changed": "Something changed on your order since I asked, so I have not done anything. Please tell me again what you would like.",
+  "approval_rejected": "Thank you for your patience. Our team reviewed your request and could not approve it. Is there anything else I can help with?"
 }

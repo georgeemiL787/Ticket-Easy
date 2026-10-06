@@ -69,6 +69,7 @@ class RiskCategory(Strict):
     en: list[str] = Field(min_length=1)
     ar: list[str] = Field(min_length=1)
     arabizi: list[str] = Field(min_length=1)
+    exempt: list[str] = []  # phrases that contain a keyword but are not a risk
 
 
 class SynonymEntry(Strict):

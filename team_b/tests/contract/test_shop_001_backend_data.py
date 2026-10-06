@@ -84,7 +84,7 @@ def test_tools_parse_as_toolspecs_with_schemas() -> None:
             assert "reference_id" in t.output_schema["required"], t.name
 
 
-def test_tenant_config_has_the_eleven_intents_with_three_examples_each(tenant: TenantConfig) -> None:
+def test_tenant_config_has_the_twelve_intents_with_three_examples_each(tenant: TenantConfig) -> None:
     assert (tenant.tenant_id, tenant.display_name, tenant.order_id_prefix) == ("shop_001", "Nile Style", "NS-")
     assert set(tenant.intents) == {
         "policy_question",
@@ -98,6 +98,7 @@ def test_tenant_config_has_the_eleven_intents_with_three_examples_each(tenant: T
         "voucher_request",
         "complaint",
         "human_request",
+        "delete_account",  # a person-only tool: the permission gate hands it to a human
     }
     for name, spec in tenant.intents.items():
         assert spec.description and len(spec.examples) == 3, name

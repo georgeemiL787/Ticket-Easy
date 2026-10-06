@@ -158,13 +158,19 @@ async def test_the_checker_wants_the_action_waiting_for_approval(c: Container) -
     ctx, proposal = rich_context(c)
     case = await c.cases.get(T, await open_case(ctx, R.APPROVAL_REQUIRED, "above the limit", pending_approval=proposal))
     assert case is not None and incomplete(case) == []
-    broken = case.model_copy(update={"pending_approval": None})
-    assert any("pending approval" in m for m in incomplete(broken))
+    broken = case.model_copy(update={"package": case.package.model_copy(update={"pending_approval": None})})
     assert any("waiting for approval" in m for m in incomplete(broken))
+    decided = case.model_copy(
+        update={"pending_approval": None}
+    )  # the case clears it once decided; the briefing keeps it
+    assert incomplete(decided) == []
 
 
 async def test_failure_reasons_need_their_failures(c: Container) -> None:
     ctx, _ = rich_context(c)
     ctx.session.actions.clear()
     case = await c.cases.get(T, await open_case(ctx, R.REPEATED_TOOL_FAILURE, "the shop keeps failing"))
-    assert case is not None and any("failures" in m for m in incomplete(case))
+    assert case is not None and incomplete(case) == []  # the cause itself is listed as the failure
+    assert [(f.source, f.message) for f in case.package.failures] == [("handoff", "the shop keeps failing")]
+    broken = case.model_copy(update={"package": case.package.model_copy(update={"failures": ()})})
+    assert any("failures" in m for m in incomplete(broken))

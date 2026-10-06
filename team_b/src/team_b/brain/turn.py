@@ -7,15 +7,25 @@ from datetime import datetime
 
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
+from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import Passage, RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import EvidenceRef, ToolCallRecord, TraceStep
+from team_b.domain.trace import EvidenceRef, PolicyRecord, ToolCallRecord, TraceStep
 from team_b.domain.understanding import Locale, NLUResult
-from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, LLMClient, SessionStore, TraceStore
+from team_b.ports import (
+    CapabilityClient,
+    CaseStore,
+    Clock,
+    EvidenceProvider,
+    LLMClient,
+    PolicyGate,
+    SessionStore,
+    TraceStore,
+)
 
 # after one of these the next queued intent may run
 COMPLETED = frozenset({Decision.ANSWER, Decision.EXECUTE, Decision.REFUSE})
@@ -68,6 +78,8 @@ class TurnContext:
     handoff_case_id: str | None = None
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)
+    policy: list[PolicyRecord] = field(default_factory=list)  # every rule-checker answer used this turn
+    proposal_ids: list[str] = field(default_factory=list)  # action proposals created or moved this turn
     versions: dict[str, str] = field(default_factory=dict)  # prompt versions used this turn
     errors: list[str] = field(default_factory=list)
     evidence: list[EvidenceRef] = field(default_factory=list)  # policy passages retrieved this turn
@@ -99,3 +111,6 @@ class Deps:
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
+    registry: CapabilityRegistry | None = None  # the cached list of published shop tools
+    policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
+    max_queued_runs: int = MAX_QUEUED_RUNS  # queued requests that may run after the first one, in a single turn

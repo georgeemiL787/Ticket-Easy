@@ -1,9 +1,8 @@
 {
   "id": "S37",
   "title": "Book me a flight: refused politely with an offer of a person",
-  "status": "pending",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "P1.4a pipeline + P1.5a templates (refuse_unsupported)",
   "setup": {
     "today": "2026-09-28"
   },

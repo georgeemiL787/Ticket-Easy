@@ -3,7 +3,7 @@
   "title": "Safety screen down: policy question still answered, refund blocked and handed off",
   "status": "pending",
   "owner": "A",
-  "pending_reason": "Phase 2 safety screen stand-in with a failure switch (inject plug safety_screen) + P1.4b action flow",
+  "pending_reason": "needs Track B: knowledge.answer for the return-policy question in turn 1 (the safety-screen-down flow is covered by unit tests)",
   "setup": {
     "today": "2026-09-28"
   },

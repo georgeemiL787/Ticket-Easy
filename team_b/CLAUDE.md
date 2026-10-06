@@ -59,11 +59,43 @@ team_b/
                  top passage(s) quoted verbatim; empty -> ask_rephrase once then handoff no_evidence; search down (one retry) ->
                  handoff dependency_unavailable; quote_for, quote_citations via get_passage; trace.knowledge_answer needs evidence + citations)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
-                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 59 keys, same keys everywhere; keys: ask_<slot>,
+                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 62 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>)
                  handoff (DEFAULT_PRIORITY + NEXT_STEP en/ar per reason, tenant escalation.priorities/next_steps override; open_case builds
                  the HandoffPackage from session + traces + get_passage quotes + past tickets; mask_phone; incomplete(case) = briefing
                  completeness check, run by the scenario runner on every case)
+
+                 identity (ensure_verified: verify_tool with order id + phone, attempts counted, wrong phone dropped, identity_failed handoff at max_attempts,
+                 phone not kept once verified) · lookup (answer: details -> identity -> get_order -> ownership (another customer's or a missing order
+                 = handoff ownership_mismatch, no data) -> status from templates + knowledge.quote_for when knowledge_when holds; derive_order_facts)
+                 · shopcalls (call_read: one retry in the turn, every attempt recorded; failed_read: lookup_failed, tool_failures counted, repeated_tool_failure
+                 handoff at max_tool_failures; output_complete)
+                 registry (CapabilityRegistry: list_tools cached per tenant for TEAM_B_CAPABILITY_TTL_S, last good list served stale when the shop is down,
+                 None when nothing is known, drop() on TOOL_NOT_PUBLISHED; Deps.registry, Container.registry) · gates (check_tool: disabled, human_only, not_allowed
+                 ("*" allows all names), risk_too_high -> handoff unsupported with the reason; configured_capabilities) · actions.handle: gate, identity, then
+                 capability_missing / dependency_unavailable (checked after identity), then the details
+                 actions.ActionCoordinator (COORDINATOR; propose(ctx, intent_spec) -> ActionProposal with arguments from slots.py, a facts copy and
+                 idempotency_key = sha256(tenant|conversation|proposal_id); execute(ctx, proposal, actor): refuses unless APPROVED and execution_authorized(),
+                 claims EXECUTED before the one call, sends key + policy_request_id + approval_id + actor, stores the result, never retries; an executed/confirmed
+                 proposal returns its stored result; BACKEND_UNAVAILABLE = clear failure, any other UpstreamError = write_may_have_applied; TurnContext.policy and
+                 .proposal_ids feed the trace) - SAFETY-CRITICAL, needs a second reviewer
+                 actions.handle / on_confirmation (the full gate order: identity -> details -> order read + ownership -> permission gate -> risk screen
+                 answered this turn -> check_policy (check_action, one retry) -> allow: confirm_action_<capability> (CONFIRM, pending_action_id) | require_human:
+                 proposal AWAITING_HUMAN + handoff approval_required | deny: refuse (rules in tenant escalation.final_deny_rules) or handoff policy_denied, both with
+                 the rule's own message (template policy_refusal) and citations; yes: order re-read, arguments compared, check_action again, execute once,
+                 verify_result (VERIFIED -> action_done | FAILED -> action_failed, session.write_failures, handoff at max_tool_failures | UNCERTAIN ->
+                 handoff unverified_result, proposal stays EXECUTED); the request ends (active_intent cleared) on done, refusal, no or topic change)
+                 freetext (reason after because/لان/3shan or a clause after the request, new address "to 5 Nile Corniche", the whole answer to a question that
+                 was asked; used by stages.merge) · slots: a const argument is a default that a same-named stated detail replaces (voucher amount)
+                 multi (assign_order_ids: with two or more order numbers in one message each request gets the number nearest before its keyword, a request without
+                 one keeps the previous request's) -> session.queue_slots[intent] applied when the queued intent runs; queue stage: runs queued requests after a completed
+                 one up to Deps.max_queued_runs (TEAM_B_QUEUE_MAX_RUNS, 3); a CONFIRM stops the chain; a new request while a confirmation is pending cancels it and clears the queue
+                 stages.handler: a clear request (want-marker, 3+ words) with no intent and no details is REFUSED with out_of_scope (offers a person); stages.merge:
+                 a different request after an answered lookup/question replaces it and drops its request slots (order_id, reason, ...), nothing is dropped while awaiting an answer/yes
+                 approval (decide_case, run by Orchestrator.human_decide: case re-read in the conversation lock; approve = order re-read, arguments compared, check_action
+                 with HumanApproval (require_human -> allow, a deny stays a deny and closes the proposal), execute once with actor=human and approval_id=case id, verify,
+                 customer message in the outbox, trace kind human_action, case events approved_and_done/approved_unverified/approval_denied/approval_blocked/decision_failed;
+                 reject = proposal CANCELLED + approval_rejected message; a repeat decision is only noted as decision_ignored) - SAFETY-CRITICAL, second reviewer
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
@@ -95,35 +127,45 @@ team_b/
                            safety net and failure switches; shop_backend.py = tool behaviour; json_schema.py)
                  standins/ policy_search (PolicySearchStandin: keyword + Arabizi-synonym search, text_search.py = the engine;
                            skips superseded passages, empty_reason no_match, fail_next switch)
-                           safety_screen, rule_checker (placeholders that raise NotImplementedError until their prompt)
+                           rule_checker (RuleCheckerStandin, the PolicyGate over fixtures/<tenant>/rules.json: tenant -> identity -> mandatory
+                           risk -> approved rules (deny > require_human > allow, missing/malformed fact = MISSING_CONTEXT) -> no-rule defaults
+                           -> human approval turns require_human into allow, never a deny; facts only from facts, arguments only when
+                           "from": "arguments"; days_since_delivery/days_late derived from dates and as_of; fail_next switch;
+                           unreadable rules raise UpstreamError)
+                           safety_screen (SafetyScreenStandin.classify_risk: risk.json keywords per category in en/ar/arabizi, normalized whole-word matching, stretched letters collapsed;
+                           flagged = a mandatory category matched; fail_next switch; unreadable risk file raises UpstreamError)
                  sqlite_store (SqliteDatabase: one short connection per call, numbered migrations/NNN_*.sql applied on first use;
                            SqliteSessionStore/TraceStore/CaseStore, same behaviour as the memory stores; TEAM_B_STORE=sqlite)
                  llm (OpenAICompatibleLLM: Ollama or OpenRouter over /chat/completions, JSON mode, UpstreamError / InvalidLLMOutput)
                  Phase 6 adds team_a_http and mcp_client                                   (planned)
-    api/         app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
+    api/         capabilities (GET /v1/capabilities?tenant_id=&refresh=: each configured tool available/missing/blocked), app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
                  chat (POST /v1/conversations/{id}/messages, GET .../{id}, .../outbox, .../events SSE, GET /v1/tenants/{t}/welcome),
                  traces (GET /v1/traces/{id}, GET .../{id}/traces), ratelimit (per-conversation sliding window, TEAM_B_RATE_LIMIT_PER_MIN)
                  inbox (GET /v1/handoff/cases?tenant_id=&status=&reason=&priority=&claimed_by=&limit=&cursor= sorted priority then age;
                  GET .../cases/{id}; POST .../claim|release|reply|decision|resolve|return-to-agent with {agent,...}; only the claimer may act,
-                 illegal moves 409 INVALID_STATE, decision 501 NOT_IMPLEMENTED until Track A builds human_decide)
+                 illegal moves 409 INVALID_STATE; decision = Orchestrator.human_decide, claimer only)
                  dashboard (GET /v1/dashboard/overview|timeseries?metric=&bucket=|conversations?status=&reason=&language=&q=|conversations/{id}|
                  escalations|tools|knowledge-gaps, all with tenant_id, from, to; overview = fast TraceStore.summary for this and the previous period;
                  response models exported as contracts/schemas/Dashboard*.schema.json), auth        (planned)
     events.py    EventHub: in-process live delivery of human replies to open chat pages (Orchestrator.push_to_customer)
   contracts/schemas/   JSON Schemas of DecisionTrace, HandoffPackage, HandoffCase, AgentReply
                        (generated by scripts/export_schemas.py; a test fails if they drift from the models)
-  config/tenants/      one JSON file per business: shop_001.json = demo shop "Nile Style" (11 intents)
+  config/tenants/      one JSON file per business: shop_001.json = demo shop "Nile Style" (12 intents)
   data/lexicon/default.json (arabizi_tokens, per-intent keywords x 4 styles, want/question/timing markers, yes/no, filler, human, negation, frustration)  data/locales/
   prompts/nlu_v1.md, rewrite_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S01, S02, S08, S10, S17, S25, S34, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (run `make scenarios` to see which are active and which are pending)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir
   tests/unit/  contracts/  domain/  adapters/  api/  test_config.py  test_container.py  ...
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
-  tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
+                   conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_standins.py runs them on the stand-ins
+  tests/integration/  test_failure_matrix.py (one case per failure row: safety screen, rule checker, reads, writes, unpublished tools, frustration, out of scope, identity, ownership), scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
+                      test_a_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
+                      success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-brain self-tests),
+                      test_a_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)
@@ -143,7 +185,7 @@ demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment
 what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
 
-container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search).
+container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker, safety_screen). container.rule_checker is the RuleCheckerStandin behind container.policy.
 
 Error format of every API error: {"schema_version": "1.0", "error": {"code", "message", "request_id"}}. Codes: INVALID_REQUEST 422, NOT_FOUND / TENANT_NOT_FOUND 404, INVALID_STATE 409, UPSTREAM_UNAVAILABLE 503, INTERNAL_ERROR 500. Raise ApiError (api/errors.py) from routes; never put request values or internal details in messages.
 

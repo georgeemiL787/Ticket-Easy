@@ -47,6 +47,9 @@ class SessionState(MutableModel):
     turn_index: int = Field(default=0, ge=0)
     active_intent: str | None = None
     intent_queue: list[str] = Field(default_factory=list)
+    queue_slots: dict[str, dict[str, str]] = Field(
+        default_factory=dict
+    )  # queued intent -> details that are its own (its order id)
     intents_seen: list[str] = Field(default_factory=list)  # every intent of this conversation, in order, no repeats
     last_escalation: EscalationReason | None = None
     slots: dict[str, str] = Field(default_factory=dict)  # details collected so far (order_id, phone, ...)
@@ -58,7 +61,8 @@ class SessionState(MutableModel):
     citations: list[str] = Field(default_factory=list)
     risk_categories: list[str] = Field(default_factory=list)
     clarifications: int = Field(default=0, ge=0)
-    tool_failures: int = Field(default=0, ge=0)
+    tool_failures: int = Field(default=0, ge=0)  # reads that failed in a row
+    write_failures: int = Field(default=0, ge=0)  # actions the shop clearly refused, since the last success
     no_evidence_count: int = Field(default=0, ge=0)
     handoff_case_id: str | None = None
     choice_options: list[str] = Field(default_factory=list)  # intents offered in a "do you mean A or B?" question

@@ -39,6 +39,8 @@ class EscalationConfig(FrozenModel):
     escalate_on_high_frustration: bool = True
     priorities: dict[str, str] = Field(default_factory=dict)  # reason -> urgent|high|normal|low, replaces the default
     next_steps: dict[str, dict[str, str]] = Field(default_factory=dict)  # reason -> {en, ar} suggested next step
+    # Rules whose deny is final: the customer is told no and no case is opened. Any other deny is handed to a person.
+    final_deny_rules: tuple[str, ...] = ()
 
     @model_validator(mode="after")
     def _overrides_are_valid(self) -> Self:

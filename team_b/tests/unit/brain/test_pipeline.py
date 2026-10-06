@@ -196,7 +196,7 @@ async def test_a_request_for_a_person_is_a_handoff_in_the_customers_style(
 
 
 async def test_handoff_opens_a_case_with_the_transcript_and_marks_the_session(c: Container) -> None:
-    o = orch(c)
+    o = orch(c, capabilities=c.capabilities)
     await say(o, "Where is my order NS-20877? my phone is 01012345601")
     reply = await say(o, "I want to talk to a human")
     session = await c.sessions.load(T, C)
@@ -204,8 +204,9 @@ async def test_handoff_opens_a_case_with_the_transcript_and_marks_the_session(c:
     assert case is not None and session is not None
     assert (case.status, case.package.priority, case.conversation_id) == (CaseStatus.OPEN, "normal", C)
     assert [m.role for m in case.package.transcript] == ["customer", "agent", "customer"]
-    assert "phone" not in case.package.details and case.package.details["order_id"] == "NS-20877"
-    assert case.package.customer.phone_masked == "010****5601"
+    assert (
+        "phone" not in case.package.details and case.package.details["order_id"] == "NS-20877"
+    )  # not kept once verified
     assert case.package.customer.orders == ("NS-20877",)
     assert (session.status, session.handoff_case_id, session.awaiting) == ("handed_off", case.case_id, "human")
     assert session.last_escalation is EscalationReason.CUSTOMER_REQUEST
@@ -289,11 +290,12 @@ async def test_no_cancels_the_pending_action(c: Container) -> None:
     assert session is not None and (session.pending_action_id, session.awaiting) == (None, None)
 
 
-async def test_yes_never_executes_from_here(c: Container) -> None:
+async def test_yes_without_a_shop_and_rule_checker_executes_nothing(c: Container) -> None:
+    """This pipeline has no shop and no rule checker: the yes cannot be checked, so it is blocked and handed off."""
     o, _ = await pending(c)
     reply = await say(o, "yes")
-    assert reply.decision is Decision.CLARIFY and await action_state(c) is ActionState.AWAITING_CONFIRMATION
-    assert "not built yet" in (await last_trace(c)).decision_reason
+    assert reply.decision is Decision.HANDOFF and await action_state(c) is ActionState.BLOCKED
+    assert (await last_trace(c)).tool_calls == ()
 
 
 async def test_a_topic_change_cancels_the_action_and_the_new_message_goes_on(c: Container) -> None:

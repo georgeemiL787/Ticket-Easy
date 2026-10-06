@@ -1,0 +1,52 @@
+{
+  "id": "S06b",
+  "title": "Refund above EGP 3,000: the person rejects, nothing runs",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want a refund for order NS-20934",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01098765405",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "approval_required",
+        "citations_include": [
+          "refund_policy@v1#s3"
+        ],
+        "awaiting": "human"
+      }
+    },
+    {
+      "human": {
+        "action": "claim"
+      }
+    },
+    {
+      "human": {
+        "action": "reject",
+        "text": "not eligible"
+      },
+      "expect": {
+        "decision": "refuse"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [],
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "approval_required",
+    "case_has_pending_approval": false,
+    "trace_invariants": true
+  }
+}

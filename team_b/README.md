@@ -40,7 +40,7 @@ refreshes every 10 seconds. Type your name at the top (it is remembered in the b
    conversation. (Or **Resolve** to close the case.)
 8. Type a different name in the inbox: the claimed case now shows no action buttons, and a direct API call to reply as that
    name is refused with `409 INVALID_STATE`.
-9. Approval of a waiting action (**Approve/Reject**) answers `501 NOT_IMPLEMENTED` until Track A builds `human_decide`.
+9. A case with a waiting action shows **Approve/Reject**; deciding re-checks the rules, runs the action once, and tells the customer in the chat.
 
 API: `GET /v1/handoff/cases?tenant_id=shop_001` and `POST /v1/handoff/cases/{id}/claim|release|reply|decision|resolve|return-to-agent`
 with a body such as `{"agent": "Sara", "text": "Hello"}`.

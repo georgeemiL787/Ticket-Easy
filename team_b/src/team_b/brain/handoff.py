@@ -148,8 +148,11 @@ def _unique(items: list[_T]) -> list[_T]:
     return list(dict.fromkeys(items))
 
 
-def _policy_records(traces: list[DecisionTrace], actions: list[ActionProposal]) -> tuple[PolicyRecord, ...]:
+def _policy_records(
+    traces: list[DecisionTrace], actions: list[ActionProposal], this_turn: list[PolicyRecord]
+) -> tuple[PolicyRecord, ...]:
     found: dict[str, PolicyRecord] = {p.request_id: p for t in traces for p in t.policy}
+    found.update({p.request_id: p for p in this_turn})  # answers of the turn that is handing over
     for action in actions:
         for d in action.policy_decisions:
             found.setdefault(
@@ -265,7 +268,7 @@ async def build_package(
         phone_masked=mask_phone(phone) if phone else None,
         orders=tuple(_unique([i for i in ids if i])),
     )
-    policy = _policy_records(traces, session.actions)
+    policy = _policy_records(traces, session.actions, list(ctx.policy))
     cited = _unique(
         [c for p in policy for c in p.citations]
         + [e.citation for t in traces for e in t.evidence]
@@ -277,6 +280,10 @@ async def build_package(
         TranscriptLine(role="customer", text=redact(ctx.text), trace_id=ctx.trace_id, turn_index=session.turn_index)
     )
     failures = _failures(ctx, traces, session.actions)
+    if reason in NEEDS_FAILURES and not failures:  # the specific cause is itself a recorded fact: list it
+        failures = (
+            FailureRecord(source="handoff", error_code=reason.value.upper(), message=detail, trace_id=ctx.trace_id),
+        )
     intents = tuple(_unique([*session.intents_seen, *([session.active_intent] if session.active_intent else [])]))
     return HandoffPackage(
         summary=template_summary(intents, reason, detail, customer, len(failures)),
@@ -327,9 +334,8 @@ def incomplete(case: HandoffCase) -> list[str]:
     need(any(line.role == "customer" for line in pkg.transcript), "transcript with the customer's messages")
     need(not pkg.customer.verified or bool(pkg.customer.customer_id), "customer id of a verified customer")
     need(FULL_PHONE.search(pkg.model_dump_json()) is None, "phone number hidden (a full number is in the briefing)")
-    need(case.pending_approval == pkg.pending_approval, "pending approval on both the case and the briefing")
-    if pkg.reason is EscalationReason.APPROVAL_REQUIRED:
-        need(case.pending_approval is not None, "the action waiting for approval")
+    if pkg.reason is EscalationReason.APPROVAL_REQUIRED:  # the case clears it once decided; the briefing keeps it
+        need(pkg.pending_approval is not None, "the action waiting for approval")
     if pkg.reason is EscalationReason.MANDATORY_RISK:
         need(bool(pkg.safety_flags), "risk categories")
     if pkg.reason is EscalationReason.POLICY_DENIED:

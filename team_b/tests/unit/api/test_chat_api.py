@@ -162,7 +162,7 @@ async def test_the_session_can_be_read_for_debugging_with_personal_data_hidden(c
     response = await chat.get("/v1/conversations/c1", params={"tenant_id": T})
     session = response.json()
     assert response.status_code == 200 and session["conversation_id"] == "c1" and session["turn_index"] == 1
-    assert session["slots"] == {"order_id": "NS-20877", "phone": "[phone]"}
+    assert session["slots"] == {"order_id": "NS-20877"}  # the phone is dropped once the customer is verified
     assert "01012345601" not in response.text and "[phone]" in session["history"][0]["text"]
 
 

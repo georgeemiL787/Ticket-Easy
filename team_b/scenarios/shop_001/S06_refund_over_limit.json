@@ -1,9 +1,8 @@
 {
   "id": "S06",
-  "title": "Refund above EGP 3,000 needs human approval (R-REFUND-LIMIT)",
-  "status": "pending",
+  "title": "Refund above EGP 3,000 needs human approval (R-REFUND-LIMIT); the person approves and it runs once",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
   "setup": {
     "today": "2026-09-28"
   },
@@ -26,13 +25,30 @@
         ],
         "awaiting": "human"
       }
+    },
+    {
+      "human": {
+        "action": "claim"
+      }
+    },
+    {
+      "human": {
+        "action": "approve",
+        "text": "checked the order"
+      },
+      "expect": {
+        "decision": "execute",
+        "escalation": null
+      }
     }
   ],
   "final": {
-    "no_writes": true,
-    "audit_count": 0,
+    "executed_tools": [
+      "create_refund"
+    ],
+    "audit_count": 1,
     "case_reason": "approval_required",
-    "case_has_pending_approval": true,
+    "case_has_pending_approval": false,
     "trace_invariants": true
   }
 }

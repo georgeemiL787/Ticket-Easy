@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import replace
 
-from team_b.brain import actions
+from team_b.brain import actions, freetext, multi
 from team_b.brain.choices import (
     MAX_ORDER_CHOICES,
     conflicting_pair,
@@ -28,7 +28,7 @@ from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
 from team_b.brain.text import find_spans, normalize
-from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext, locale_of
+from team_b.brain.turn import COMPLETED, PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.tools import ToolCallRequest, ToolSpec
 from team_b.domain.actions import ActionState
@@ -174,6 +174,10 @@ async def pending_confirmation(ctx: TurnContext) -> str:
             ActionState.CANCELLED, at=ctx.now, note="no" if answer == "no" else "the customer changed topic"
         )
         session.pending_action_id, session.awaiting = None, None
+        session.active_intent = None  # the request is over: it must not come back on a later message
+        if answer != "no":  # a new request replaces what was queued behind the cancelled one
+            session.intent_queue.clear()
+            session.queue_slots.clear()
         if answer == "no":
             ctx.step = Step(Decision.ANSWER, reason="the customer declined", reply_key="action_cancelled")
             return f"no: {proposal.tool} cancelled"
@@ -276,15 +280,46 @@ async def disambiguate(ctx: TurnContext) -> str:
     return f"asked: {pair[0]} or {pair[1]}"
 
 
+REQUEST_SLOTS = ("order_id", "reason", "new_address", "description", "item", "amount")
+
+
+def _drop_finished_lookup(ctx: TurnContext, wanted: list[str]) -> None:
+    """A different request after an answered lookup or question replaces it, and does not inherit its order number.
+
+    "Where is NS-20877?" answered, then "I want a refund": the refund is not about NS-20877 unless the customer says so.
+    Nothing is dropped while the agent is waiting for an answer or a yes, or when the same request comes again."""
+    session = ctx.session
+    active = session.active_intent
+    if active is None or not wanted or active in wanted or session.awaiting or session.pending_action_id:
+        return
+    if active in ctx.tenant.intents and ctx.tenant.intents[active].kind in ("lookup", "knowledge"):
+        session.active_intent = None
+        session.clarifications = 0
+        for slot in REQUEST_SLOTS:
+            session.slots.pop(slot, None)
+
+
+def _out_of_scope(ctx: TurnContext) -> bool:
+    """A clear request (it says "please", "I want", "عايز"...) for something this shop agent does not do."""
+    reading = ctx.understanding
+    if reading is None or reading.intents or reading.affirmation or reading.wants_human or reading.entities:
+        return False
+    normalized = normalize(ctx.text)
+    if len(normalized.split()) < 3:
+        return False
+    return any(find_spans(normalized, normalize(term)) for term in default_lexicon().want_markers.all())
+
+
 async def merge(ctx: TurnContext) -> str:
     """Details go into slots; new intents start or queue. A short answer to a question is not a new intent."""
     understanding, session = ctx.understanding, ctx.session
     if understanding is None:
         return "no reading to merge"
+    wanted = [i.name for i in understanding.intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
+    _drop_finished_lookup(ctx, wanted)
     for key, value in understanding.entities.items():
         if key in SLOT_KEYS:
             session.slots[key] = value
-    wanted = [i.name for i in understanding.intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
     answering_a_question = bool(
         session.awaiting
         and (session.awaiting.startswith("slot:") or session.awaiting in ("order_choice", "intent_choice"))
@@ -298,6 +333,26 @@ async def merge(ctx: TurnContext) -> str:
             session.clarifications = 0  # clarifications are counted per intent
         elif name != session.active_intent and name not in session.intent_queue:
             session.intent_queue.append(name)
+    for name, order in multi.assign_order_ids(ctx.text, wanted, ctx.tenant).items():
+        if name == session.active_intent:
+            session.slots["order_id"] = order  # each request about its own order when the message names several
+        elif name in session.intent_queue:
+            session.queue_slots[name] = {"order_id": order}
+    needed = {
+        slot
+        for name in dict.fromkeys([*wanted, *([session.active_intent] if session.active_intent else [])])
+        if name in ctx.tenant.intents
+        for slot in ctx.tenant.intents[name].required_slots
+    }
+    session.slots.update(
+        freetext.capture(
+            ctx.text,
+            needed,
+            session.awaiting,
+            other_intent=any(name != session.active_intent for name in wanted),
+            entities=understanding.entities,
+        )
+    )
     if answering_a_question:
         return "details only: answers the question that was asked"
     return f"active={session.active_intent or 'none'} queued={','.join(session.intent_queue) or 'none'}"
@@ -373,6 +428,11 @@ def _give_up(ctx: TurnContext, reason: EscalationReason, why: str) -> Step:
 
 async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
     """The shop's published tools by name, or None when they cannot be listed (then the safe assumptions apply)."""
+    if ctx.deps.registry is not None:
+        catalog = await ctx.deps.registry.catalog(ctx.tenant.tenant_id)
+        if catalog is None:
+            ctx.errors.append("the shop tool list is unavailable")
+        return catalog.tools if catalog is not None else None
     if ctx.deps.capabilities is None:
         return None
     try:
@@ -414,6 +474,8 @@ async def _list_orders(ctx: TurnContext) -> list[dict[str, str]] | None:
         )
     )
     if result.status != "success":
+        if result.error_code == "TOOL_NOT_PUBLISHED" and ctx.deps.registry is not None:
+            ctx.deps.registry.drop(ctx.tenant.tenant_id)
         ctx.errors.append(f"order list failed: {result.error_code}")
         return None
     orders = [o for o in result.data.get("orders", []) if o.get("order_status") != "cancelled"]
@@ -425,12 +487,22 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     """Lookup and action requests: find out which details are still missing and ask for the next one.
 
     When nothing is missing the rest of the flow (identity check, facts, rules, confirmation, execution) takes over;
-    that is built by later steps, so for now this ends in the placeholder reply."""
+    the action flow is built by later steps, so for now that ends in the placeholder reply."""
+    return await ask_for_details(ctx, planned) or await placeholder_handler(ctx, planned)
+
+
+async def ask_for_details(ctx: TurnContext, planned: PlannedIntent, *, force_identity: bool = False) -> Step | None:
+    """The question for the next missing detail (or a handoff when the request cannot be filled); None: nothing missing.
+
+    The identity slots (order number, phone) are included while the customer is not verified: always when
+    force_identity is set, otherwise when the tool needs a verified customer."""
     spec, session = ctx.tenant.intents[planned.name], ctx.session
     tool_name = spec.lookup_tool if planned.kind == "lookup" else spec.action_tool
     tools = await _tools(ctx)
     tool = tools.get(tool_name) if tools is not None and tool_name else None
-    needs_identity = (tool.requires_identity if tool is not None else True) and not session.identity.verified
+    needs_identity = (force_identity or (tool.requires_identity if tool is not None else True)) and (
+        not session.identity.verified
+    )
 
     resolution = resolve_arguments(spec, tool, session, session.facts)
     if resolution.unsourced:
@@ -442,7 +514,7 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     slot = next_question(missing)
     if slot is None:
         session.clarifications = 0
-        return await placeholder_handler(ctx, planned)
+        return None
 
     if slot == "order_id" and (listing := await _list_orders(ctx)) is not None:
         if _count_clarification(ctx, "order_choice"):
@@ -472,6 +544,9 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
 
 async def handler(ctx: TurnContext) -> str:
     if ctx.plan is None:
+        if _out_of_scope(ctx):
+            ctx.step = Step(Decision.REFUSE, reason="a request this agent does not handle", reply_key="out_of_scope")
+            return "out of scope: refused, a person offered"
         if _count_clarification(ctx, "detail"):
             ctx.step = _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the request is still unclear after asking")
             return "no intent: giving up after repeated clarifications"
@@ -483,10 +558,12 @@ async def handler(ctx: TurnContext) -> str:
 
 
 async def queue(ctx: TurnContext) -> str:
-    """After a completed request, run the next queued one (at most MAX_QUEUED_RUNS in a turn)."""
+    """After a completed request, run the next queued one (at most Deps.max_queued_runs, TEAM_B_QUEUE_MAX_RUNS)."""
     session, ran = ctx.session, 0
-    while ctx.step is not None and ctx.step.decision in COMPLETED and session.intent_queue and ran < MAX_QUEUED_RUNS:
+    cap = ctx.deps.max_queued_runs
+    while ctx.step is not None and ctx.step.decision in COMPLETED and session.intent_queue and ran < cap:
         name = session.intent_queue.pop(0)
+        session.slots.update(session.queue_slots.pop(name, {}))  # e.g. its own order number
         session.active_intent = name
         ctx.earlier.append(ctx.step)
         planned = PlannedIntent(name, _kind(ctx, name))

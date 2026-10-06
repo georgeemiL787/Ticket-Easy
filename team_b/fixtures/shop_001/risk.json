@@ -1,6 +1,6 @@
 {
   "tenant_id": "shop_001",
-  "description": "Topics that always go to a human. Matching is substring-based on normalized text. Category names match Team A RiskAssessment.categories.",
+  "description": "Topics that always go to a human. Matching is substring-based on normalized text. Category names match Team A RiskAssessment.categories. A category may list exempt phrases: a match that lies inside one of them is ignored (the shop's own voucher is not a demand).",
   "categories": {
     "fraud_suspected": {
       "mandatory_escalation": true,
@@ -156,6 +156,18 @@
         "3awadony",
         "3awdoni",
         "ta3wed"
+      ],
+      "exempt": [
+        "compensation voucher",
+        "voucher compensation",
+        "late delivery voucher",
+        "late voucher",
+        "كوبون تعويض",
+        "قسيمه تعويض",
+        "كوبون التأخير",
+        "كوبون التاخير",
+        "kobon ta3weed",
+        "voucher ta3weed"
       ]
     },
     "identity_concern": {

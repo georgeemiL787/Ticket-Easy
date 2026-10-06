@@ -88,11 +88,15 @@ def test_a_missing_tenant_directory_fails_clearly(tmp_path: Path) -> None:
         build_container(Settings(config_dir=tmp_path / "nope"))
 
 
-async def test_standin_services_are_placeholders_until_phase_2(container: Container) -> None:
-    with pytest.raises(NotImplementedError, match="Phase 2"):
-        await container.evidence.classify_risk("shop_001", "hello", request_id="r")
+async def test_evidence_plug_screens_with_the_safety_standin(container: Container) -> None:
+    assert not (await container.evidence.classify_risk("shop_001", "hello", request_id="r")).flagged
+    assert (await container.evidence.classify_risk("shop_001", "this is fraud", request_id="r")).flagged
+
+
+async def test_policy_plug_is_the_rule_checker(container: Container) -> None:
     request = CheckActionRequest.model_validate(
         {"request_id": "r", "tenant_id": "shop_001", "action": "a", "tool": {"name": "a", "operation_kind": "read"}}
     )
-    with pytest.raises(NotImplementedError, match="Phase 2"):
-        await container.policy.check_action(request)
+    assert container.policy is container.rule_checker
+    decision = await container.policy.check_action(request)  # personal data by default, identity not verified
+    assert (decision.decision, decision.reason_code) == ("deny", "IDENTITY_REQUIRED")

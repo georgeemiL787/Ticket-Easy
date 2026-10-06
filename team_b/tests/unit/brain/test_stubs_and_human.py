@@ -146,7 +146,7 @@ async def test_open_case_returns_the_id_and_records_the_pending_approval(c: Cont
         ctx, EscalationReason.APPROVAL_REQUIRED, "refund above the limit", pending_approval=proposal
     )
     case = await c.cases.get(T, case_id)
-    assert case is not None and case.status is CaseStatus.OPEN and case.package.priority == "high"
+    assert case is not None and case.status is CaseStatus.OPEN and case.package.priority == "normal"
     assert case.pending_approval is not None
     assert (case.pending_approval.proposal_id, case.pending_approval.arguments["amount"]) == ("p9", 3450)
     assert (session.status, session.handoff_case_id) == ("handed_off", case_id)

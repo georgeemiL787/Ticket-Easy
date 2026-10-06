@@ -9,8 +9,11 @@ from pydantic import Field, ValidationError, field_validator, model_validator
 
 from team_b.contracts.base import OperationKind, RiskLevel
 from team_b.domain.base import FrozenModel
+from team_b.domain.decision import EscalationReason
 from team_b.domain.understanding import Locale
 
+PRIORITIES = ("urgent", "high", "normal", "low")
+NEXT_STEP_LOCALES = ("en", "ar")
 IntentKind = Literal["knowledge", "lookup", "action", "handoff", "smalltalk"]
 
 
@@ -34,6 +37,32 @@ class EscalationConfig(FrozenModel):
     min_intent_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     escalate_on_deny: bool = True  # a no from the rule checker always goes to a human
     escalate_on_high_frustration: bool = True
+    priorities: dict[str, str] = Field(default_factory=dict)  # reason -> urgent|high|normal|low, replaces the default
+    next_steps: dict[str, dict[str, str]] = Field(default_factory=dict)  # reason -> {en, ar} suggested next step
+
+    @model_validator(mode="after")
+    def _overrides_are_valid(self) -> Self:
+        reasons = {r.value for r in EscalationReason}
+        for reason, priority in self.priorities.items():
+            if reason not in reasons:
+                raise ValueError(
+                    f"escalation.priorities: {reason!r} is not an escalation reason (one of {sorted(reasons)})"
+                )
+            if priority not in PRIORITIES:
+                raise ValueError(f"escalation.priorities.{reason}: {priority!r} must be one of {list(PRIORITIES)}")
+        for reason, texts in self.next_steps.items():
+            if reason not in reasons:
+                raise ValueError(
+                    f"escalation.next_steps: {reason!r} is not an escalation reason (one of {sorted(reasons)})"
+                )
+            for locale, text in texts.items():
+                if locale not in NEXT_STEP_LOCALES:
+                    raise ValueError(
+                        f"escalation.next_steps.{reason}: locale {locale!r} must be one of {list(NEXT_STEP_LOCALES)}"
+                    )
+                if not text.strip():
+                    raise ValueError(f"escalation.next_steps.{reason}.{locale}: the text is empty")
+        return self
 
 
 class PermissionsConfig(FrozenModel):

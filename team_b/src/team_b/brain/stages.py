@@ -22,7 +22,7 @@ from team_b.brain.choices import (
     says_both,
 )
 from team_b.brain.composer import default_composer
-from team_b.brain.handoff import ESCALATION_DEFAULTS, open_case
+from team_b.brain.handoff import open_case, priority_for
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
@@ -501,4 +501,4 @@ async def handoff(ctx: TurnContext) -> str:
     case_id = await open_case(ctx, step.escalation, step.reason, pending_approval=waiting)
     ctx.handoff_case_id = case_id
     ctx.step = replace(step, awaiting="human")
-    return f"case {case_id} opened ({ESCALATION_DEFAULTS[step.escalation][0]})"
+    return f"case {case_id} opened ({priority_for(ctx.tenant, step.escalation)})"

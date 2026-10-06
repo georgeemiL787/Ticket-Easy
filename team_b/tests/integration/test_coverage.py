@@ -52,3 +52,17 @@ def test_scenario_ids_are_unique_and_match_their_file_names() -> None:
     assert len(ids) == len(set(ids)), f"duplicate scenario ids: {sorted(i for i in ids if ids.count(i) > 1)}"
     wrong = [name for i, name in found if not name.startswith(f"{i}_")]
     assert not wrong, f"file name must start with the scenario id: {wrong}"
+
+
+def reasons_by_status(all_scenarios: list[Scenario], status: str) -> set[str]:
+    return expected_values([s for s in all_scenarios if s.status == status])[1]
+
+
+def test_every_escalation_reason_is_covered_by_an_active_scenario_or_waits_on_a_pending_one() -> None:
+    """The goal is all 14 reasons produced by an active scenario. Until Track A's flows exist, the rest must at least
+    be waiting in a pending scenario, so no reason is left without a plan. Print the gap with `pytest -s`."""
+    every = scenarios()
+    active, pending = reasons_by_status(every, "active"), reasons_by_status(every, "pending")
+    uncovered = sorted(r.value for r in EscalationReason if r.value not in active | pending)
+    assert not uncovered, f"no scenario at all produces: {uncovered}"
+    print("reasons not yet produced by an ACTIVE scenario:", sorted(pending - active))

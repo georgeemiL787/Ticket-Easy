@@ -16,5 +16,8 @@ def store_kind() -> StoreKind:
 
 def make_settings(db_dir: Path, **overrides: Any) -> Settings:
     """Stand-in settings with the store from the environment; a sqlite database lives in db_dir (one per test)."""
-    values: dict[str, Any] = {"store": store_kind(), "db_path": db_dir / "team_b.sqlite3", "llm": "none"}
+    values: dict[str, Any] = {
+        "store": store_kind(), "db_path": db_dir / "team_b.sqlite3", "llm": "none",
+        "auth_required": False,  # most tests are about something else; the sign-in tests switch it on
+    }  # fmt: skip
     return Settings(**{**values, **overrides})

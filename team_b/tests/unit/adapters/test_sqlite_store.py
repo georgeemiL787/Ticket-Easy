@@ -31,7 +31,7 @@ def tables(path: Path) -> set[str]:
 
 async def test_first_use_creates_the_schema_and_records_the_version(sqlite_db: SqliteDatabase) -> None:
     assert not sqlite_db.path.exists()
-    assert await sqlite_db.schema_version() == 3
+    assert await sqlite_db.schema_version() == 4
     assert {
         "sessions",
         "traces",
@@ -48,18 +48,18 @@ async def test_migrations_run_once_and_are_safe_to_repeat(tmp_path: Path) -> Non
     path = tmp_path / "db.sqlite3"
     await SqliteDatabase(path).schema_version()
     again = SqliteDatabase(path)  # a new process opening the same file
-    assert await again.schema_version() == 3
+    assert await again.schema_version() == 4
     with sqlite3.connect(path) as db:
-        assert db.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (3,)
+        assert db.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (4,)
 
 
 async def test_the_database_folder_is_created(tmp_path: Path) -> None:
     db = SqliteDatabase(tmp_path / "var" / "nested" / "team_b.sqlite3")
-    assert await db.schema_version() == 3
+    assert await db.schema_version() == 4
 
 
 def test_migration_files_are_numbered_without_gaps(tmp_path: Path) -> None:
-    assert [v for v, _ in migration_files()] == [1, 2, 3]
+    assert [v for v, _ in migration_files()] == [1, 2, 3, 4]
     (tmp_path / "001_a.sql").write_text("SELECT 1;")
     (tmp_path / "003_c.sql").write_text("SELECT 1;")
     with pytest.raises(RuntimeError, match="without gaps"):
@@ -71,14 +71,14 @@ async def test_a_later_migration_is_applied_on_top(tmp_path: Path) -> None:
 
     folder = tmp_path / "migrations"
     folder.mkdir()
-    for name in ("001_init.sql", "002_metric_facts.sql", "003_alerts.sql"):
+    for name in ("001_init.sql", "002_metric_facts.sql", "003_alerts.sql", "004_users.sql"):
         (folder / name).write_text((sqlite_store.MIGRATIONS_DIR / name).read_text(encoding="utf-8"))
     db_path = tmp_path / "db.sqlite3"
     async with SqliteDatabase(db_path).connect() as db:
         await sqlite_store.apply_migrations(db, folder)
-    (folder / "004_extra.sql").write_text("CREATE TABLE extra (x INTEGER);")
+    (folder / "005_extra.sql").write_text("CREATE TABLE extra (x INTEGER);")
     async with SqliteDatabase(db_path).connect() as db:
-        assert await sqlite_store.apply_migrations(db, folder) == 4
+        assert await sqlite_store.apply_migrations(db, folder) == 5
     assert "extra" in tables(db_path)
 
 

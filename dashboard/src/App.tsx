@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useSearchParams } from "react-router-dom";
+import { AuthGate } from "./auth";
 import { Layout } from "./components/Layout";
 import { I18nProvider, isLang } from "./i18n";
 import Actions from "./pages/Actions";
@@ -19,7 +20,8 @@ function WithLanguage({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <WithLanguage>
-      <Routes>
+      <AuthGate>
+        <Routes>
         <Route element={<Layout />}>
           <Route index element={<Overview />} />
           <Route path="conversations" element={<Conversations />} />
@@ -30,7 +32,8 @@ export default function App() {
           <Route path="alerts" element={<Alerts />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-      </Routes>
+        </Routes>
+      </AuthGate>
     </WithLanguage>
   );
 }

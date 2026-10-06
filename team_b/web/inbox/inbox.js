@@ -56,7 +56,7 @@ if (typeof module !== "undefined") {
 
 if (typeof document !== "undefined") {
   const $ = (id) => document.getElementById(id);
-  const state = { selected: null, cursor: null, rows: [], timer: null, current: null };
+  const state = { selected: null, cursor: null, rows: [], timer: null, current: null, csrf: null, me: null, started: false };
   const params = new URLSearchParams(location.search);
 
   function el(tag, props, ...children) {
@@ -86,18 +86,66 @@ if (typeof document !== "undefined") {
   async function api(method, path, body) {
     let response;
     try {
-      response = await fetch(path, {
-        method,
-        headers: body ? { "Content-Type": "application/json" } : {},
-        body: body ? JSON.stringify(body) : undefined,
-      });
+      const headers = body ? { "Content-Type": "application/json" } : {};
+      if (method !== "GET" && state.csrf) headers["X-CSRF-Token"] = state.csrf;
+      response = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     } catch (exc) {
       throw new Error("Cannot reach the server. Check your connection.");
     }
     let data = null;
     try { data = await response.json(); } catch (exc) { /* no body */ }
-    if (!response.ok) throw new Error(errorMessage(response.status, data));
+    if (response.status === 401 && !path.startsWith("/v1/auth/")) showLogin();  // the session ended
+    if (!response.ok) {
+      const failure = new Error(errorMessage(response.status, data));
+      failure.status = response.status;
+      throw failure;
+    }
     return data;
+  }
+
+  /* ---- signing in ---- */
+
+  function applyPerson(me) {
+    state.csrf = me.csrf_token;
+    state.me = me.user;
+    $("signout").hidden = !me.user;
+    if (me.user) {  // the signed-in person is the actor; the name cannot be typed over
+      $("agent").value = me.user.display_name;
+      $("agent").readOnly = true;
+    }
+  }
+
+  function showLogin() {
+    if ($("login")) return;
+    clearInterval(state.timer);
+    const email = el("input", { type: "email", id: "login-email", autocomplete: "username", required: "" });
+    const password = el("input", { type: "password", id: "login-password", autocomplete: "current-password", required: "" });
+    const message = el("p", { class: "error", role: "alert", hidden: "" });
+    const form = el("form", { id: "login", class: "login" },
+      el("h2", { text: "Sign in" }),
+      el("label", {}, "Email ", email),
+      el("label", {}, "Password ", password),
+      message,
+      el("button", { type: "submit", text: "Sign in" }));
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        applyPerson(await api("POST", "/v1/auth/login", { email: email.value, password: password.value }));
+        form.remove();
+        start();
+      } catch (exc) {
+        message.textContent = exc.message;
+        message.hidden = false;
+      }
+    });
+    document.body.prepend(form);
+    email.focus();
+  }
+
+  async function signOut() {
+    try { await api("POST", "/v1/auth/logout", {}); } catch (exc) { /* already signed out */ }
+    state.csrf = null;
+    location.reload();
   }
 
   /* ---- the list ---- */
@@ -257,10 +305,18 @@ if (typeof document !== "undefined") {
 
   /* ---- start ---- */
 
-  function init() {
+  function start() {
+    if (state.started) {  // signed in again after the session ended: just carry on
+      loadList(false);
+      state.timer = setInterval(refresh, REFRESH_MS);
+      return;
+    }
+    state.started = true;
+    $("signout").addEventListener("click", signOut);
     $("agent").value = (() => { try { return localStorage.getItem("inbox.agent") || ""; } catch (e) { return ""; } })();
     if (params.get("tenant_id")) $("tenant").value = params.get("tenant_id");
     for (const reason of REASONS) $("f-reason").append(el("option", { value: reason, text: reason.replaceAll("_", " ") }));
+    if (state.me) $("agent").value = state.me.display_name;
     $("agent").addEventListener("input", () => {
       try { localStorage.setItem("inbox.agent", agent()); } catch (e) { /* private mode */ }
       if (state.current) renderActions(state.current);
@@ -285,10 +341,24 @@ if (typeof document !== "undefined") {
     state.selected = location.hash.slice(1) || null;
     loadList(false);
     if (state.selected) openCase(state.selected);
-    state.timer = setInterval(() => {
-      loadList(false);
-      if (state.selected && document.activeElement !== $("reply-text") && !$("actions").contains(document.activeElement)) openCase(state.selected);
-    }, REFRESH_MS);
+    state.timer = setInterval(refresh, REFRESH_MS);
+  }
+
+  function refresh() {
+    loadList(false);
+    if (state.selected && document.activeElement !== $("reply-text") && !$("actions").contains(document.activeElement)) openCase(state.selected);
+  }
+
+  async function init() {
+    let me = null;
+    try {
+      me = await api("GET", "/v1/auth/me");
+    } catch (exc) {
+      if (exc.status === 401) { showLogin(); return; }  // nobody is signed in
+      me = { csrf_token: null, user: null };  // anything else shows up when the list loads
+    }
+    applyPerson(me);
+    start();
   }
 
   init();

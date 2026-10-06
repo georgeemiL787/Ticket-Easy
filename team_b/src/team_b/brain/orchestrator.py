@@ -170,10 +170,13 @@ class Orchestrator:
         case.transition(CaseStatus.CLAIMED, actor=agent, at=self._clock.now())
         await self._deps.cases.save(case)
 
-    async def assign(self, case_id: str, manager: str, assignee: str) -> None:
-        """A manager gives the case to someone (or takes it from the person who has it)."""
+    async def assign(self, case_id: str, manager: str, assignee: str, *, verified_manager: bool = False) -> None:
+        """A manager gives the case to someone (or takes it from the person who has it).
+
+        verified_manager: the caller already checked that this is a signed-in manager or admin (the API does); otherwise
+        the name must be in the tenant's `managers`."""
         case = await self._case(case_id)
-        if manager not in self._tenants.get(case.tenant_id).managers:
+        if not verified_manager and manager not in self._tenants.get(case.tenant_id).managers:
             raise NotManagerError(f"{manager} is not a manager of {case.tenant_id}")
         case.reassign(assignee, by=manager, at=self._clock.now())
         await self._deps.cases.save(case)

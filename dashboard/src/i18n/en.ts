@@ -21,6 +21,13 @@ const en = {
   "lang.en": "English",
   "lang.ar": "العربية",
 
+  "login.title": "Sign in",
+  "login.email": "Email",
+  "login.password": "Password",
+  "login.submit": "Sign in",
+  "login.wrong": "The email or the password is wrong.",
+  "login.slowDown": "Too many attempts. Wait a few minutes and try again.",
+  "login.signOut": "Sign out",
   "common.loading": "Loading…",
   "common.retry": "Try again",
   "common.refresh": "Refresh",

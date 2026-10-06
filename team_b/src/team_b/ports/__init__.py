@@ -19,6 +19,7 @@ from team_b.domain.facts import Facts, FactsSummary
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
+from team_b.domain.users import User
 
 __all__ = [
     "AlertStore",
@@ -35,6 +36,7 @@ __all__ = [
     "StaleSession",
     "StoreError",
     "TraceStore",
+    "UserStore",
 ]
 
 
@@ -193,6 +195,23 @@ class AlertStore(Protocol):
     async def list(self, tenant_id: str, *, open_only: bool = False, limit: int = 200) -> Sequence[Alert]:
         """Newest first."""
         ...
+
+
+@runtime_checkable
+class UserStore(Protocol):
+    """People who sign in. Emails and display names are unique without regard to case (AlreadyExistsError otherwise)."""
+
+    async def create(self, user: User, password_hash: str) -> None: ...
+
+    async def get(self, user_id: str) -> User | None: ...
+
+    async def get_with_hash(self, email: str) -> tuple[User, str] | None: ...
+
+    async def set_password(self, user_id: str, password_hash: str) -> None: ...
+
+    async def set_active(self, user_id: str, active: bool) -> None: ...
+
+    async def list(self) -> Sequence[User]: ...
 
 
 @runtime_checkable

@@ -23,6 +23,13 @@ const ar: Record<TextKey, string> = {
   "lang.en": "English",
   "lang.ar": "العربية",
 
+  "login.title": "تسجيل الدخول",
+  "login.email": "البريد الإلكتروني",
+  "login.password": "كلمة السر",
+  "login.submit": "دخول",
+  "login.wrong": "البريد أو كلمة السر غلط.",
+  "login.slowDown": "محاولات كتير. استنى كام دقيقة وحاول تاني.",
+  "login.signOut": "تسجيل الخروج",
   "common.loading": "جاري التحميل…",
   "common.retry": "حاول تاني",
   "common.refresh": "تحديث",

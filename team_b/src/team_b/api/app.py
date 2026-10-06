@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from team_b.api import alerts as alerts_api
+from team_b.api import auth as auth_api
 from team_b.api import capabilities, chat, dashboard, inbox, testadmin, traces
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
@@ -98,6 +99,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
 
     app = FastAPI(title="Ticket-Easy Team B", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
+    auth_api.install(app)  # sign-in, and the deny-by-default guard in front of every route below
     app.include_router(chat.router)
     app.include_router(traces.router)
     app.include_router(inbox.router)

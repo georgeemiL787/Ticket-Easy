@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useSearchParams } from "react-router-dom";
+import { useAuth } from "../auth";
 import { useI18n, type Lang } from "../i18n";
 import type { TextKey } from "../i18n/en";
 import { RANGES, type RangeKey } from "../lib/dates";
@@ -19,6 +20,7 @@ function TopBar() {
   const { t } = useI18n();
   const filters = useFilters();
   const tenants = useApi<DashboardTenants>("/v1/dashboard/tenants");
+  const auth = useAuth();
   const choices = tenants.data?.tenants ?? [{ tenant_id: filters.tenant, display_name: filters.tenant, default_locale: "en" }];
   return (
     <header className="topbar">
@@ -64,6 +66,14 @@ function TopBar() {
       <button type="button" className="refresh" onClick={filters.refresh} aria-label={t("common.refresh")} title={t("common.refresh")}>
         ⟳
       </button>
+      {auth?.me.user ? (
+        <span className="whoami">
+          {auth.me.user.display_name} ({auth.me.user.role}){" "}
+          <button type="button" onClick={() => void auth.signOut()}>
+            {t("login.signOut")}
+          </button>
+        </span>
+      ) : null}
     </header>
   );
 }

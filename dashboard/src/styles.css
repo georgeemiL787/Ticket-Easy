@@ -651,3 +651,9 @@ button.primary {
   border-color: var(--accent);
   color: var(--accent-text);
 }
+
+.login { display: grid; place-items: center; min-height: 100vh; padding: 16px; }
+.login form { display: grid; gap: 12px; width: min(100%, 360px); }
+.login label { display: grid; gap: 4px; }
+.login-error { color: var(--bad, #b00020); margin: 0; }
+.whoami { margin-inline-start: auto; display: flex; gap: 8px; align-items: center; }

@@ -28,7 +28,7 @@ This version answers by rules and needs no internet. For the version where an AI
 
 Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
 delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.
-The inbox and the dashboard have no sign-in yet (it comes with the accounts step), so only run the demo on your own computer.
+The inbox and the dashboard need a sign-in. `make demo` creates the admin `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). More people: `python -m team_b create-user --email ... --name ... --role agent|manager|admin --tenants shop_001`.
 
 ---
 

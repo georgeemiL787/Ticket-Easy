@@ -33,6 +33,11 @@ ENV_VARS: dict[str, str] = {
     "queue_max_runs": "TEAM_B_QUEUE_MAX_RUNS",
     "alert_webhook": "TEAM_B_ALERT_WEBHOOK",
     "enable_test_admin": "TEAM_B_ENABLE_TEST_ADMIN",
+    "auth_required": "TEAM_B_AUTH_REQUIRED",
+    "secret_key": "TEAM_B_SECRET_KEY",
+    "cookie_secure": "TEAM_B_COOKIE_SECURE",
+    "session_hours": "TEAM_B_SESSION_HOURS",
+    "chat_api_keys": "TEAM_B_CHAT_API_KEYS",
     "alert_interval_s": "TEAM_B_ALERT_INTERVAL_S",
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
@@ -62,6 +67,11 @@ class Settings(BaseModel):
     llm_timeout_s: float = Field(default=20.0, gt=0)
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
+    auth_required: bool = True  # staff must sign in to the inbox, dashboard and traces. 0 only for local experiments.
+    secret_key: SecretStr | None = None  # signs the sign-in cookie; unset: a random key per start (all sign in again)
+    cookie_secure: bool = False  # 1 when served over https: the cookie is then never sent over plain http
+    session_hours: float = Field(default=12.0, gt=0, le=24 * 30)
+    chat_api_keys: str = ""  # "shop_001=abc,shop_002=def": the chat of those businesses needs the header X-Api-Key
     enable_test_admin: bool = False  # 1: /v1/_test/* (chaos switches, audit report) exists. Never in production.
     alert_webhook: str | None = (
         None  # optional URL that receives every opened and resolved alert (JSON, no message text)

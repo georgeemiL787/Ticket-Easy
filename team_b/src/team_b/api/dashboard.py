@@ -15,6 +15,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
+from team_b.api.auth import visible_tenants
 from team_b.api.chat import CONVERSATION, TENANT, checked_tenant
 from team_b.api.errors import invalid_request, not_found
 from team_b.brain import metrics as m
@@ -234,6 +235,7 @@ async def get_tenants(request: Request) -> DashboardTenants:
         tenants=[
             DashboardTenant(tenant_id=t.tenant_id, display_name=t.display_name, default_locale=t.default_locale.value)
             for t in registry
+            if t.tenant_id in visible_tenants(request, registry.tenant_ids())
         ]
     )
 

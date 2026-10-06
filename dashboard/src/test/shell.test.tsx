@@ -23,9 +23,9 @@ const overview = {
 const tenants = { tenants: [{ tenant_id: "shop_001", display_name: "Nile Style", default_locale: "en" }] };
 
 function mockFetch(routes: Record<string, () => Response | Promise<Response>>) {
-  const fn = vi.fn(async (input: RequestInfo | URL) => {
+  const fn = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
     const url = new URL(String(input), "http://test");
-    const handler = routes[url.pathname];
+    const handler = routes[url.pathname] ?? (url.pathname === "/v1/auth/me" ? json({ auth_required: false, user: null, csrf_token: null }) : undefined);
     return handler ? handler() : new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: "not found" } }), { status: 404 });
   });
   vi.stubGlobal("fetch", fn);
@@ -48,10 +48,43 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("the shell", () => {
+  it("shows the login page when nobody is signed in, and the app after signing in", async () => {
+    const unauthorized = json({ error: { code: "UNAUTHENTICATED", message: "sign in first" } }, 401);
+    const me = { auth_required: true, user: { user_id: "u", email: "m@x.io", display_name: "Mona", role: "manager", tenants: ["shop_001"] }, csrf_token: "tok" };
+    const fetchMock = mockFetch({
+      "/v1/auth/me": unauthorized,
+      "/v1/auth/login": json(me),
+      "/v1/dashboard/tenants": json(tenants),
+      "/v1/dashboard/overview": json(overview),
+    });
+    renderApp("/");
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("Email"), "m@x.io");
+    await user.type(screen.getByLabelText("Password"), "correct horse");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByRole("navigation", { name: "Main navigation" })).toBeTruthy();
+    expect(screen.getByText(/Mona/)).toBeTruthy();
+    const login = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/v1/auth/login"))!;
+    expect(JSON.parse(String((login[1] as RequestInit).body))).toEqual({ email: "m@x.io", password: "correct horse" });
+  });
+
+  it("tells the person when the password is wrong", async () => {
+    mockFetch({
+      "/v1/auth/me": json({ error: { code: "UNAUTHENTICATED", message: "x" } }, 401),
+      "/v1/auth/login": json({ error: { code: "INVALID_CREDENTIALS", message: "x" } }, 401),
+    });
+    renderApp("/");
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("Email"), "m@x.io");
+    await user.type(screen.getByLabelText("Password"), "nope");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("wrong");
+  });
+
   it("shows the navigation, the top bar and the overview numbers", async () => {
     mockFetch({ "/v1/dashboard/tenants": json(tenants), "/v1/dashboard/overview": json(overview) });
     renderApp("/");
-    const nav = screen.getByRole("navigation", { name: "Main navigation" });
+    const nav = await screen.findByRole("navigation", { name: "Main navigation" });
     for (const name of ["Overview", "Conversations", "Escalations", "Actions", "Unanswered questions", "Alerts"]) {
       expect(nav).toHaveTextContent(name);
     }

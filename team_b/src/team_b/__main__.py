@@ -1,4 +1,4 @@
-"""Command line: python -m team_b eval-nlu | eval --set eval/conversations [--llm] [--judge] | seed-demo"""
+"""Command line: python -m team_b eval-nlu | eval --set eval/conversations | seed-demo | create-user"""
 
 import argparse
 import asyncio
@@ -128,6 +128,60 @@ async def outage_incident(container: "Container", clock: "DriftClock") -> None:
         await container.alert_engine.evaluate(TENANT)  # and resolves
 
 
+async def create_user_cmd(args: argparse.Namespace) -> int:
+    """Add a person who may sign in (or, with --reset-password, set a new password for an existing one)."""
+    import getpass
+    import secrets
+
+    from team_b.auth import WeakPasswordError, hash_password
+    from team_b.container import build_container
+    from team_b.ports import AlreadyExistsError
+
+    settings = Settings.from_env().model_copy(update={"store": "sqlite"})
+    container = build_container(settings)
+    assert container.auth is not None and container.users is not None
+    known = set(container.tenants.tenant_ids())
+    tenants = tuple(t.strip() for t in args.tenants.split(",") if t.strip())
+    if unknown := [t for t in tenants if t not in known]:
+        print(f"unknown business(es): {', '.join(unknown)} (known: {', '.join(sorted(known))})")
+        return 1
+    if args.role != "admin" and not tenants:
+        print("a manager or agent needs at least one business: --tenants shop_001")
+        return 1
+    existing = await container.users.get_with_hash(args.email)
+    if existing is not None and args.if_missing and not args.reset_password:
+        print(f"{args.email} already exists: nothing changed")
+        return 0
+    password = args.password
+    generated = False
+    if password is None and args.generate_password:
+        password, generated = secrets.token_urlsafe(12), True
+    if password is None:
+        password = getpass.getpass("Password (at least 10 characters): ")
+    try:
+        if existing is not None:
+            if not args.reset_password:
+                print(f"{args.email} already exists (use --reset-password to set a new password)")
+                return 1
+            await container.users.set_password(existing[0].user_id, hash_password(password))
+            print(f"password changed for {args.email}")
+        else:
+            user = await container.auth.create_user(args.email, args.name, args.role, tenants, password)
+            print(
+                f"created {user.role} {user.display_name} <{user.email}> for: "
+                f"{', '.join(user.tenants) or 'every business'}"
+            )
+    except WeakPasswordError as exc:
+        print(str(exc))
+        return 1
+    except AlreadyExistsError as exc:
+        print(f"cannot create: {exc}")
+        return 1
+    if generated:
+        print(f"password: {password}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m team_b", description="Ticket-Easy Team B tools")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -152,7 +206,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     seed.add_argument("--conversations", type=int, default=150)
     seed.add_argument("--days", type=int, default=14)
     seed.add_argument("--force", action="store_true", help="add conversations even if the database already has some")
+    user = commands.add_parser("create-user", help="add a person who may sign in to the inbox and the dashboard")
+    user.add_argument("--email", required=True)
+    user.add_argument("--name", required=True, help="the name shown in the inbox (unique)")
+    user.add_argument("--role", choices=["agent", "manager", "admin"], default="agent")
+    user.add_argument("--tenants", default="", help="businesses this person may see, comma separated (admin: all)")
+    user.add_argument("--password", help="avoid on a shared computer: it stays in the shell history")
+    user.add_argument("--generate-password", action="store_true", help="make a random password and print it once")
+    user.add_argument("--if-missing", action="store_true", help="do nothing when the email already exists")
+    user.add_argument("--reset-password", action="store_true", help="set a new password for an existing email")
     args = parser.parse_args(argv)
+    if args.command == "create-user":
+        return asyncio.run(create_user_cmd(args))
     if args.command == "eval":
         return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline, args.judge))
     if args.command == "judge-agreement":

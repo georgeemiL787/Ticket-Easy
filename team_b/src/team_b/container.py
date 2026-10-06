@@ -1,5 +1,6 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
+import secrets
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
@@ -19,6 +20,8 @@ from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
+from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
+from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
@@ -39,6 +42,7 @@ from team_b.ports import (
     PolicyGate,
     SessionStore,
     TraceStore,
+    UserStore,
 )
 
 
@@ -65,6 +69,8 @@ class Container:
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
+    users: UserStore | None = None  # people who sign in to the inbox and the dashboard
+    auth: AuthService | None = None  # checks passwords and the sign-in cookie
     alerts: AlertStore | None = None  # alerts for managers (opened and resolved by alert_engine)
     alert_engine: AlertEngine | None = None
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
@@ -111,6 +117,12 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
     alerts: AlertStore = (
         SqliteAlertStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryAlertStore()
     )
+    users: UserStore = (
+        SqliteUserStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryUserStore()
+    )
+    secret = (
+        settings.secret_key.get_secret_value().encode() if settings.secret_key is not None else secrets.token_bytes(32)
+    )  # without TEAM_B_SECRET_KEY every start signs everybody out
     alert_engine = AlertEngine(
         traces=traces,
         cases=cases,
@@ -121,6 +133,8 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
     )
     return replace(
         container,
+        users=users,
+        auth=AuthService(users, secret, session_hours=settings.session_hours),
         alerts=alerts,
         alert_engine=alert_engine,
         nlu=nlu,

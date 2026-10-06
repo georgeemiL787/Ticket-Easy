@@ -15,6 +15,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Path, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from team_b.api.auth import acting_name, current_user, visible_tenants
 from team_b.api.chat import TENANT, checked_tenant, container_of
 from team_b.api.errors import forbidden, invalid_request, invalid_state, not_found
 from team_b.brain.approval import CaseNotYoursError, NothingToDecideError
@@ -93,15 +94,18 @@ def decode_cursor(cursor: str) -> tuple[int, datetime, str]:
 
 
 class AgentIn(BaseModel):
-    """Who is acting. A plain name until logins exist."""
+    """Who is acting. When people sign in, the signed-in person is the actor and `agent` is ignored; without sign-in
+    (TEAM_B_AUTH_REQUIRED=0) it is a plain name."""
 
     model_config = ConfigDict(extra="forbid")
 
-    agent: str = Field(min_length=1, max_length=80)
+    agent: str | None = Field(default=None, min_length=1, max_length=80)
 
     @field_validator("agent")
     @classmethod
-    def _clean(cls, value: str) -> str:
+    def _clean(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         value = value.strip()
         if not value or any(ord(ch) < 32 for ch in value):
             raise ValueError("agent must be a plain name")
@@ -146,8 +150,15 @@ def orchestrator_of(built: Container) -> Orchestrator:
     return built.orchestrator
 
 
-async def find_case(built: Container, case_id: str) -> HandoffCase:
-    for tenant_id in built.tenants.tenant_ids():
+def who(request: Request, body: AgentIn) -> str:
+    """The actor of this request: the signed-in person, else the name in the body."""
+    return acting_name(request, body.agent)
+
+
+async def find_case(built: Container, case_id: str, request: Request | None = None) -> HandoffCase:
+    """The case, looking only in the businesses the person may see (another business's case is "not found")."""
+    tenant_ids = built.tenants.tenant_ids()
+    for tenant_id in tenant_ids if request is None else visible_tenants(request, tenant_ids):
         found = await built.cases.get(tenant_id, case_id)
         if found is not None:
             return found
@@ -186,13 +197,13 @@ async def list_cases(
 @router.get("/cases/{case_id}", response_model=HandoffCase)
 async def get_case(case_id: CASE_ID, request: Request) -> HandoffCase:
     """The whole case: briefing, pending approval and every event."""
-    return await find_case(container_of(request), case_id)
+    return await find_case(container_of(request), case_id, request)
 
 
 async def act(request: Request, case_id: str, work: Any) -> HandoffCase:
     """Run one human action, turning life-cycle mistakes into the standard error format, and return the new case."""
     built = container_of(request)
-    await find_case(built, case_id)  # a clear 404 before anything else
+    await find_case(built, case_id, request)  # a clear 404 before anything else
     try:
         await work(orchestrator_of(built))
     except NotFoundError:
@@ -205,51 +216,63 @@ async def act(request: Request, case_id: str, work: Any) -> HandoffCase:
         NothingToDecideError,
     ) as exc:  # a move the case does not allow
         raise invalid_state(str(exc)) from None
-    return await find_case(built, case_id)
+    return await find_case(built, case_id, request)
 
 
 @router.post("/cases/{case_id}/claim", response_model=HandoffCase)
 async def claim(case_id: CASE_ID, body: AgentIn, request: Request) -> HandoffCase:
-    return await act(request, case_id, lambda o: o.claim(case_id, body.agent))
+    return await act(request, case_id, lambda o: o.claim(case_id, who(request, body)))
 
 
 @router.post("/cases/{case_id}/assign", response_model=HandoffCase)
 async def assign(case_id: CASE_ID, body: AssignIn, request: Request) -> HandoffCase:
-    """A manager gives the case to someone. Only the names in the tenant's `managers` may do it (403 otherwise)."""
-    return await act(request, case_id, lambda o: o.assign(case_id, body.agent, body.assignee))
+    """A manager gives the case to someone.
+
+    Signed in: the role decides (manager or admin, checked before this runs) and the assignee must be a person who may
+    see this business. Without sign-in: only the names in the tenant's `managers` may do it (403 otherwise)."""
+    built = container_of(request)
+    signed_in = current_user(request) is not None
+    if signed_in:
+        case = await find_case(built, case_id, request)
+        people = await built.users.list() if built.users is not None else []
+        if not any(u.display_name.lower() == body.assignee.lower() and u.can_see(case.tenant_id) for u in people):
+            raise invalid_request("the assignee is not a person who works on this business")
+    return await act(
+        request, case_id, lambda o: o.assign(case_id, who(request, body), body.assignee, verified_manager=signed_in)
+    )
 
 
 @router.post("/cases/{case_id}/release", response_model=HandoffCase)
 async def release(case_id: CASE_ID, body: AgentIn, request: Request) -> HandoffCase:
-    return await act(request, case_id, lambda o: o.release(case_id, body.agent))
+    return await act(request, case_id, lambda o: o.release(case_id, who(request, body)))
 
 
 @router.post("/cases/{case_id}/reply", response_model=HandoffCase)
 async def reply(case_id: CASE_ID, body: ReplyIn, request: Request) -> HandoffCase:
     """Write to the customer: it is recorded on the case and shown in their chat at once."""
-    return await act(request, case_id, lambda o: o.human_reply(case_id, body.agent, body.text))
+    return await act(request, case_id, lambda o: o.human_reply(case_id, who(request, body), body.text))
 
 
 @router.post("/cases/{case_id}/decision", response_model=HandoffCase)
 async def decision(case_id: CASE_ID, body: DecisionIn, request: Request) -> HandoffCase:
     """Approve or reject the action waiting on this case (the person must have claimed it)."""
     built = container_of(request)
-    case = await find_case(built, case_id)
+    case = await find_case(built, case_id, request)
     try:
-        case.require_claimer(body.agent)
+        case.require_claimer(who(request, body))
     except IllegalCaseTransitionError as exc:
         raise invalid_state(str(exc)) from None
     if case.pending_approval is None:
         raise invalid_state("this case has no action waiting for approval")
-    return await act(request, case_id, lambda o: o.human_decide(case_id, body.agent, body.approve, body.note))
+    return await act(request, case_id, lambda o: o.human_decide(case_id, who(request, body), body.approve, body.note))
 
 
 @router.post("/cases/{case_id}/resolve", response_model=HandoffCase)
 async def resolve(case_id: CASE_ID, body: NoteIn, request: Request) -> HandoffCase:
-    return await act(request, case_id, lambda o: o.resolve(case_id, body.agent, body.note))
+    return await act(request, case_id, lambda o: o.resolve(case_id, who(request, body), body.note))
 
 
 @router.post("/cases/{case_id}/return-to-agent", response_model=HandoffCase)
 async def return_to_agent(case_id: CASE_ID, body: NoteIn, request: Request) -> HandoffCase:
     """Give the conversation back to the assistant; it continues with its memory intact."""
-    return await act(request, case_id, lambda o: o.return_to_agent(case_id, body.agent, body.note))
+    return await act(request, case_id, lambda o: o.return_to_agent(case_id, who(request, body), body.note))

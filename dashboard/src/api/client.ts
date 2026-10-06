@@ -10,6 +10,18 @@ export class ApiError extends Error {
   }
 }
 
+let csrfToken: string | null = null;
+
+/** The token the service gave at sign-in; it goes in X-CSRF-Token on every call that changes something. */
+export function setCsrfToken(token: string | null): void {
+  csrfToken = token;
+}
+
+/** A 401 on a protected call means the session is gone: the page goes back to the login. */
+function sessionGone(status: number, path: string): void {
+  if (status === 401 && !path.startsWith("/v1/auth/")) window.dispatchEvent(new Event("tb-signed-out"));
+}
+
 export type Params = Record<string, string | number | undefined | null>;
 
 export function withQuery(path: string, params: Params = {}): string {
@@ -38,7 +50,10 @@ export async function apiGet<T>(path: string, params: Params = {}, signal?: Abor
     if (cause instanceof DOMException && cause.name === "AbortError") throw cause;
     throw new ApiError(0, "NETWORK", "Cannot reach the server. Check the connection and try again.");
   }
-  if (!response.ok) throw await failure(response);
+  if (!response.ok) {
+    sessionGone(response.status, path);
+    throw await failure(response);
+  }
   return (await response.json()) as T;
 }
 
@@ -47,12 +62,19 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   try {
     response = await fetch(path, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+      },
       body: JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "NETWORK", "Cannot reach the server. Check the connection and try again.");
   }
-  if (!response.ok) throw await failure(response);
+  if (!response.ok) {
+    sessionGone(response.status, path);
+    throw await failure(response);
+  }
   return (await response.json()) as T;
 }

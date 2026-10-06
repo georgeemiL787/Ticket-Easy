@@ -166,6 +166,7 @@ async def main(argv: list[str] | None = None) -> int:
             tmp = stack.enter_context(tempfile.TemporaryDirectory())
             settings = Settings(
                 store="memory", db_path=Path(tmp) / "load.sqlite3", llm="none", enable_test_admin=True,
+                auth_required=False,
                 rate_limit_per_minute=100000, fixed_today=date(2026, 9, 28),  # the demo data is dated against this day
             )  # fmt: skip
             app = create_app(settings=settings)

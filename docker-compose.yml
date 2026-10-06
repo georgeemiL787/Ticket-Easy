@@ -25,6 +25,11 @@ x-team-b: &team-b
     TEAM_B_QUEUE_MAX_RUNS: ${TEAM_B_QUEUE_MAX_RUNS:-3}
     TEAM_B_ALERT_INTERVAL_S: ${TEAM_B_ALERT_INTERVAL_S:-60}
     TEAM_B_ALERT_WEBHOOK: ${TEAM_B_ALERT_WEBHOOK:-}
+    TEAM_B_AUTH_REQUIRED: ${TEAM_B_AUTH_REQUIRED:-1}
+    TEAM_B_SECRET_KEY: ${TEAM_B_SECRET_KEY:-}
+    TEAM_B_COOKIE_SECURE: ${TEAM_B_COOKIE_SECURE:-0}
+    TEAM_B_SESSION_HOURS: ${TEAM_B_SESSION_HOURS:-12}
+    TEAM_B_CHAT_API_KEYS: ${TEAM_B_CHAT_API_KEYS:-}
   healthcheck:
     test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=2).status == 200 else 1)"]
     interval: 10s

@@ -9,6 +9,7 @@ from fastapi import APIRouter, Path, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from team_b.api.auth import check_chat_key
 from team_b.api.errors import not_found, rate_limited, tenant_not_found
 from team_b.api.ratelimit import RateLimiter
 from team_b.brain.composer import default_composer
@@ -65,6 +66,7 @@ async def load_session(request: Request, tenant_id: str, conversation_id: str) -
 async def post_message(conversation_id: CONVERSATION, body: MessageIn, request: Request) -> AgentReply:
     """One customer message in, the agent's reply out. The X-Request-ID header (or a new id) tags the whole turn."""
     built = checked_tenant(request, body.tenant_id)
+    check_chat_key(request, body.tenant_id)
     limiter: RateLimiter = request.app.state.rate_limiter
     if (wait := limiter.hit((body.tenant_id, conversation_id))) is not None:
         raise rate_limited(wait)

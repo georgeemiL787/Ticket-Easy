@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket-Easy inbox</title>
+  <link rel="stylesheet" href="/inbox/static/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Inbox</h1>
+    <label>Your name <input id="agent" type="text" maxlength="80" placeholder="e.g. Sara" autocomplete="off"></label>
+    <label>Business <input id="tenant" type="text" maxlength="64" value="shop_001" autocomplete="off"></label>
+    <span id="refreshed" class="muted" role="status"></span>
+  </header>
+  <p id="error" class="error" role="alert" hidden></p>
+
+  <div class="layout">
+    <section class="list-pane" aria-label="Cases">
+      <form class="filters" id="filters">
+        <select id="f-status" aria-label="Status">
+          <option value="">any status</option><option>open</option><option>claimed</option>
+          <option>resolved</option><option>returned_to_agent</option>
+        </select>
+        <select id="f-priority" aria-label="Priority">
+          <option value="">any priority</option><option>urgent</option><option>high</option>
+          <option>normal</option><option>low</option>
+        </select>
+        <select id="f-reason" aria-label="Reason"><option value="">any reason</option></select>
+        <label class="inline"><input type="checkbox" id="f-mine"> mine</label>
+      </form>
+      <table class="cases" id="cases">
+        <thead><tr><th>Priority</th><th>Reason</th><th>Lang</th><th>Age</th><th>Status</th><th>Summary</th></tr></thead>
+        <tbody id="case-rows"></tbody>
+      </table>
+      <p id="empty" class="muted" hidden>No cases match.</p>
+      <button type="button" id="more" hidden>Load more</button>
+    </section>
+
+    <section class="case-pane" id="case-pane" aria-label="Case" hidden>
+      <div class="case-head">
+        <h2 id="case-title"></h2>
+        <div class="actions" id="actions"></div>
+      </div>
+      <div id="case-body"></div>
+      <form id="reply-form" class="reply" autocomplete="off" hidden>
+        <textarea id="reply-text" dir="auto" maxlength="2000" rows="3" placeholder="Write to the customer" aria-label="Reply"></textarea>
+        <button type="submit">Send reply</button>
+      </form>
+    </section>
+  </div>
+  <script src="/inbox/static/inbox.js"></script>
+</body>
+</html>

@@ -123,7 +123,8 @@ team_b/
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)
   web/chat/    the browser chat (index.html, chat.js, style.css): /chat?tenant_id=shop_001
-  web/inbox  web/dashboard                                                                 (planned)
+  web/inbox/   the support inbox (index.html, inbox.js, style.css): /inbox; inbox.js exports pure helpers for node tests; no innerHTML
+  web/dashboard                                                                            (planned)
   eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)
 dashboard/   (repo root, next to team_b/; Phase 4 React app)                               (planned)
 ```

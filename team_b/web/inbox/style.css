@@ -1,0 +1,50 @@
+:root {
+  --bg: #f4f5f7; --panel: #fff; --text: #1c1e21; --muted: #667085; --border: #d0d5dd; --accent: #2563eb;
+  --urgent: #b42318; --high: #b54708; --normal: #175cd3; --low: #475467; --ai: #6941c6; --ok: #067647;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", sans-serif; }
+.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; padding: 10px 16px; background: var(--panel);
+  border-bottom: 1px solid var(--border); }
+.top h1 { margin: 0; font-size: 1.15rem; }
+.top label { color: var(--muted); font-size: .85rem; }
+input, select, textarea, button { font: inherit; }
+input[type=text], select, textarea { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+button { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { color: var(--urgent); border-color: var(--urgent); }
+button:disabled { opacity: .5; cursor: default; }
+.muted { color: var(--muted); font-size: .85rem; }
+.error { margin: 8px 16px; padding: 8px 12px; background: #fef3f2; color: var(--urgent); border: 1px solid #fecdca; border-radius: 6px; }
+.layout { display: grid; grid-template-columns: minmax(340px, 5fr) 7fr; gap: 12px; padding: 12px 16px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+.list-pane, .case-pane { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+.inline { color: var(--muted); font-size: .85rem; }
+table.cases { width: 100%; border-collapse: collapse; }
+.cases th { text-align: start; color: var(--muted); font-weight: 600; font-size: .78rem; padding: 4px 6px; }
+.cases td { padding: 6px; border-top: 1px solid var(--border); vertical-align: top; }
+.cases tr.row { cursor: pointer; }
+.cases tr.row:hover, .cases tr.row.selected { background: #eff4ff; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .75rem; font-weight: 600; color: #fff; }
+.badge.urgent { background: var(--urgent); } .badge.high { background: var(--high); }
+.badge.normal { background: var(--normal); } .badge.low { background: var(--low); }
+.tag { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: .72rem; background: #ede9fe; color: var(--ai); }
+.case-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.case-head h2 { margin: 0; font-size: 1.05rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.actions input { width: 160px; }
+.block { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
+.block h3 { margin: 0 0 4px; font-size: .85rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; }
+dl.facts dt { color: var(--muted); } dl.facts dd { margin: 0; word-break: break-word; }
+blockquote { margin: 4px 0; padding: 6px 10px; border-inline-start: 3px solid var(--accent); background: #f8faff; }
+blockquote cite { display: block; color: var(--muted); font-size: .78rem; font-style: normal; }
+ul.plain { margin: 0; padding-inline-start: 18px; }
+.transcript { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; }
+.line { padding: 6px 10px; border-radius: 10px; max-width: 90%; white-space: pre-wrap; word-wrap: break-word; }
+.line.customer { align-self: flex-end; background: #dbeafe; } .line.agent { align-self: flex-start; background: #f1f3f5; }
+.pending { padding: 8px 10px; background: #fffaeb; border: 1px solid #fedf89; border-radius: 6px; }
+.reply { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
+.reply textarea { flex: 1; resize: vertical; }

@@ -22,6 +22,7 @@ log = get_logger(__name__)
 
 
 CHAT_DIR = PROJECT_ROOT / "web" / "chat"
+INBOX_DIR = PROJECT_ROOT / "web" / "inbox"
 
 
 def mount_chat_page(app: FastAPI) -> None:
@@ -34,6 +35,18 @@ def mount_chat_page(app: FastAPI) -> None:
         return FileResponse(CHAT_DIR / "index.html", media_type="text/html")
 
     app.mount("/chat/static", StaticFiles(directory=CHAT_DIR), name="chat-static")
+
+
+def mount_inbox_page(app: FastAPI) -> None:
+    """The support inbox: /inbox (plain HTML and JavaScript, no build step)."""
+    if not (INBOX_DIR / "index.html").is_file():
+        return
+
+    @app.get("/inbox", include_in_schema=False)
+    async def inbox_page() -> FileResponse:
+        return FileResponse(INBOX_DIR / "index.html", media_type="text/html")
+
+    app.mount("/inbox/static", StaticFiles(directory=INBOX_DIR), name="inbox-static")
 
 
 def create_app(*, settings: Settings | None = None, container: Container | None = None) -> FastAPI:
@@ -63,6 +76,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(traces.router)
     app.include_router(inbox.router)
     mount_chat_page(app)
+    mount_inbox_page(app)
 
     @app.middleware("http")
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

@@ -1,6 +1,7 @@
 """Run every scenario in scenarios/<tenant>/ and print one line each, then the counts. Exit 1 if any fails."""
 
 import asyncio
+import logging
 import sys
 from pathlib import Path
 
@@ -9,6 +10,8 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 
 from tests.integration.scenario_format import discover, load_scenario  # noqa: E402
 from tests.integration.scenario_runner import ScenarioResult, run_scenario  # noqa: E402
+
+from team_b.observability import configure_logging  # noqa: E402
 
 COLUMNS = ("id", "owner", "title", "status", "result", "decision", "escalation")
 
@@ -44,6 +47,7 @@ def render(results: list[ScenarioResult]) -> str:
 
 
 def main() -> int:
+    configure_logging(json_logs=False, level=logging.WARNING)  # one log line per turn would bury the table
     results = asyncio.run(run_all())
     print(render(results))
     return 1 if any(r.outcome == "failed" for r in results) else 0

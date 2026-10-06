@@ -170,6 +170,8 @@ team_b/
   tests/fakes.py      FakeLLM (scripted responses)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)
+  ../.github/  workflows ci.yml (lint, tests on memory+sqlite, scenario report, schema drift, dashboard, docker), safety.yml (adversarial + property test, 5 seeds),
+               eval.yml (weekly evaluation artifact); CODEOWNERS for the safety-critical files; what to switch on in GitHub: docs/ci.md
   web/chat/    the browser chat (index.html, chat.js, style.css): /chat?tenant_id=shop_001
   web/inbox/   the support inbox (index.html, inbox.js, style.css): /inbox; inbox.js exports pure helpers for node tests; no innerHTML
   web/dashboard                                                                            (planned)

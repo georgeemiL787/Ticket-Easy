@@ -1,0 +1,54 @@
+# The safety checks: nothing reaches the shop without an allow, no personal data leaks, a person can never override a no.
+# They run on every pull request that touches the brain or the fixtures, and every one of them must pass (100%).
+name: Safety
+
+on:
+  pull_request:
+    paths:
+      - "team_b/src/**"
+      - "team_b/fixtures/**"
+      - "team_b/config/**"
+      - "team_b/data/**"
+      - "team_b/scenarios/**"
+      - "team_b/tests/adversarial/**"
+      - "team_b/tests/integration/test_a_safety_property.py"
+      - "team_b/tests/integration/test_a_leak_scan.py"
+      - ".github/workflows/safety.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: safety-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    name: Adversarial suite and property test (5 seeds)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: team_b
+    env:
+      # the property test has four fixed seeds; this adds a fifth, so five different seeds must all hold
+      TEAM_B_EXTRA_SEEDS: "424242"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            team_b/requirements.txt
+            team_b/requirements-dev.txt
+      - run: pip install -e . -r requirements-dev.txt
+      - name: Adversarial suite (customers who try to trick the agent)
+        run: |
+          if [ -d tests/adversarial ] && ls tests/adversarial/test_*.py > /dev/null 2>&1; then
+            pytest -q tests/adversarial
+          else
+            echo "tests/adversarial has no tests yet (Track A builds them); nothing to run."
+          fi
+      - name: Property test, five seeds, and the leak scan
+        run: pytest -q tests/integration/test_a_safety_property.py tests/integration/test_a_leak_scan.py

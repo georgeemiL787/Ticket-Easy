@@ -1,0 +1,50 @@
+# The full quality evaluation: 200 conversations in four language styles. The report is kept as an artifact.
+# It runs every Monday and whenever someone starts it by hand. With an AI model configured it can also be run with --llm.
+name: Evaluation
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      llm:
+        description: "Also measure the AI-assisted understanding (needs the OPENROUTER_API_KEY secret)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    name: Evaluate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: team_b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            team_b/requirements.txt
+            team_b/requirements-dev.txt
+      - run: pip install -e . -r requirements-dev.txt
+      - name: Evaluate with the rules
+        run: python -m team_b eval --set eval/conversations --out reports
+      - name: Evaluate with the AI model
+        if: ${{ inputs.llm }}
+        env:
+          TEAM_B_LLM: openrouter
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python -m team_b eval --set eval/conversations --llm --out reports
+      - name: Put the table in the job summary
+        run: |
+          for file in reports/eval_*.md; do cat "$file" >> "$GITHUB_STEP_SUMMARY"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: team_b/reports/
+          if-no-files-found: error

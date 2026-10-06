@@ -72,5 +72,5 @@ def test_a_bad_tenant_file_fails_on_load_naming_the_file(tmp_path: Any) -> None:
     data = json.loads((PROJECT_ROOT / "config/tenants/shop_001.json").read_text(encoding="utf-8-sig"))
     data["escalation"]["priorities"] = {"no_evidence": "critical"}
     (tmp_path / "shop_001.json").write_text(json.dumps(data), encoding="utf-8")
-    with pytest.raises(TenantConfigError, match=r"shop_001\.json.*must be one of"):
+    with pytest.raises(TenantConfigError, match=r"(?s)shop_001\.json.*must be one of"):
         TenantRegistry.from_dir(tmp_path)

@@ -30,6 +30,7 @@ ENV_VARS: dict[str, str] = {
     "llm_timeout_s": "TEAM_B_LLM_TIMEOUT_S",
     "fixed_today": "TEAM_B_FIXED_TODAY",
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
+    "queue_max_runs": "TEAM_B_QUEUE_MAX_RUNS",
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
     "llm_rewrite": "TEAM_B_LLM_REWRITE",
@@ -58,6 +59,7 @@ class Settings(BaseModel):
     llm_timeout_s: float = Field(default=20.0, gt=0)
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
+    queue_max_runs: int = Field(default=3, ge=0)  # queued requests answered in one turn (chained in one reply)
     log_json: bool = True
     llm_rewrite: bool = False  # let the AI model reword replies (checked: it may not add any fact); needs TEAM_B_LLM
     rate_limit_per_minute: int = Field(default=20, ge=1)  # messages per conversation per minute (chat API)

@@ -47,6 +47,9 @@ class SessionState(MutableModel):
     turn_index: int = Field(default=0, ge=0)
     active_intent: str | None = None
     intent_queue: list[str] = Field(default_factory=list)
+    queue_slots: dict[str, dict[str, str]] = Field(
+        default_factory=dict
+    )  # queued intent -> details that are its own (its order id)
     intents_seen: list[str] = Field(default_factory=list)  # every intent of this conversation, in order, no repeats
     last_escalation: EscalationReason | None = None
     slots: dict[str, str] = Field(default_factory=dict)  # details collected so far (order_id, phone, ...)

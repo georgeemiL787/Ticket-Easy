@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import replace
 
-from team_b.brain import actions, freetext
+from team_b.brain import actions, freetext, multi
 from team_b.brain.choices import (
     MAX_ORDER_CHOICES,
     conflicting_pair,
@@ -28,7 +28,7 @@ from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
 from team_b.brain.text import find_spans, normalize
-from team_b.brain.turn import COMPLETED, MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext, locale_of
+from team_b.brain.turn import COMPLETED, PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.tools import ToolCallRequest, ToolSpec
 from team_b.domain.actions import ActionState
@@ -174,6 +174,9 @@ async def pending_confirmation(ctx: TurnContext) -> str:
         )
         session.pending_action_id, session.awaiting = None, None
         session.active_intent = None  # the request is over: it must not come back on a later message
+        if answer != "no":  # a new request replaces what was queued behind the cancelled one
+            session.intent_queue.clear()
+            session.queue_slots.clear()
         if answer == "no":
             ctx.step = Step(Decision.ANSWER, reason="the customer declined", reply_key="action_cancelled")
             return f"no: {proposal.tool} cancelled"
@@ -298,6 +301,11 @@ async def merge(ctx: TurnContext) -> str:
             session.clarifications = 0  # clarifications are counted per intent
         elif name != session.active_intent and name not in session.intent_queue:
             session.intent_queue.append(name)
+    for name, order in multi.assign_order_ids(ctx.text, wanted, ctx.tenant).items():
+        if name == session.active_intent:
+            session.slots["order_id"] = order  # each request about its own order when the message names several
+        elif name in session.intent_queue:
+            session.queue_slots[name] = {"order_id": order}
     needed = {
         slot
         for name in dict.fromkeys([*wanted, *([session.active_intent] if session.active_intent else [])])
@@ -513,10 +521,12 @@ async def handler(ctx: TurnContext) -> str:
 
 
 async def queue(ctx: TurnContext) -> str:
-    """After a completed request, run the next queued one (at most MAX_QUEUED_RUNS in a turn)."""
+    """After a completed request, run the next queued one (at most Deps.max_queued_runs, TEAM_B_QUEUE_MAX_RUNS)."""
     session, ran = ctx.session, 0
-    while ctx.step is not None and ctx.step.decision in COMPLETED and session.intent_queue and ran < MAX_QUEUED_RUNS:
+    cap = ctx.deps.max_queued_runs
+    while ctx.step is not None and ctx.step.decision in COMPLETED and session.intent_queue and ran < cap:
         name = session.intent_queue.pop(0)
+        session.slots.update(session.queue_slots.pop(name, {}))  # e.g. its own order number
         session.active_intent = name
         ctx.earlier.append(ctx.step)
         planned = PlannedIntent(name, _kind(ctx, name))

@@ -121,6 +121,7 @@ def build_container(settings: Settings) -> Container:
             events=container.events,
             registry=registry,
             policy=container.policy,
+            max_queued_runs=settings.queue_max_runs,
         ),
     )
 

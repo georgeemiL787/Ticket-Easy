@@ -21,7 +21,7 @@ from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
-from team_b.brain.turn import Deps, Handler, PlannedIntent, Step, TurnContext
+from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message
@@ -87,6 +87,7 @@ class Orchestrator:
         events: Publisher | None = None,
         registry: CapabilityRegistry | None = None,
         policy: PolicyGate | None = None,
+        max_queued_runs: int | None = None,
     ) -> None:
         self._tenants = tenants
         self._events = events
@@ -104,6 +105,7 @@ class Orchestrator:
             rewriter=rewriter,
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
             policy=policy,
+            max_queued_runs=MAX_QUEUED_RUNS if max_queued_runs is None else max_queued_runs,
         )
 
     async def handle_turn(

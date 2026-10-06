@@ -100,3 +100,4 @@ class Deps:
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
+    max_queued_runs: int = MAX_QUEUED_RUNS  # queued requests that may run after the first one, in a single turn

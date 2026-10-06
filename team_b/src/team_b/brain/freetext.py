@@ -59,15 +59,36 @@ def reason_from(text: str) -> str | None:
     return _clean(", ".join(reasons)) or None
 
 
-_ADDRESS_AFTER = re.compile(r"(?:\s+to\s+|(?:^|\s)(?:لـ|الى|إلى|الي)\s*)([0-9٠-٩].*)$", re.IGNORECASE)
+_ADDRESS_AFTER = re.compile(
+    r"(?:\s+(?:to|le|lel|ela|ila)\s+|(?:^|\s)(?:لـ|الى|إلى|الي)\s*)([0-9٠-٩].*)$", re.IGNORECASE
+)
+_PART_SPLIT = re.compile(r"\s*[,;،؛]\s*")
+
+
+def _is_request(part: str) -> bool:
+    """Does this part of a message ask for something (a request keyword or a want-marker)?"""
+    lexicon, normalized = default_lexicon(), normalize(part)
+    if any(find_spans(normalized, normalize(term)) for words in lexicon.intents.values() for term in words.all()):
+        return True
+    return any(find_spans(normalized, normalize(term)) for term in lexicon.want_markers.all())
+
+
+def _before_next_request(value: str) -> str:
+    """The address up to where the next request of the same message starts ("..., Maadi, w 3ayez flousi ...")."""
+    kept: list[str] = []
+    for part in _PART_SPLIT.split(value):
+        if kept and _is_request(part):
+            break
+        kept.append(part)
+    return ", ".join(kept)
 
 
 def address_from(text: str) -> str | None:
-    """A street address after "to" / "لـ" / "الى" when it starts with a street number ("5 Nile Corniche"), or None."""
+    """A street address after "to" / "le" / "لـ" / "الى" when it starts with a street number, or None."""
     found = _ADDRESS_AFTER.search(text.strip())
     if found is None:
         return None
-    value = _clean(found.group(1))
+    value = _clean(_before_next_request(found.group(1)))
     return value if len(value.split()) >= 2 else None
 
 

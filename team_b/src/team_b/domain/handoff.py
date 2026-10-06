@@ -121,8 +121,10 @@ class HandoffPackage(FrozenModel):
     transcript: tuple[TranscriptLine, ...] = ()
     trace_ids: tuple[str, ...] = ()
     similar_tickets: tuple[SimilarTicket, ...] = ()
-    ai_summary: str | None = None  # shown labelled as AI-written
-    ai_suggestion: str | None = None  # shown labelled "suggestion, not approved"
+    ai_summary: str | None = None  # English summary written by the AI model, shown labelled as AI-written
+    ai_summary_local: str | None = None  # the same summary in the customer's language and style
+    prompt_version: str | None = None  # the prompt that wrote the AI summary
+    ai_suggestion: str | None = None  # "AI suggestion, not approved: ...": never replaces suggested_next_step
 
 
 class CaseEvent(FrozenModel):

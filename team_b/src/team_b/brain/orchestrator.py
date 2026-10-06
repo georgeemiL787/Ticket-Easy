@@ -30,6 +30,7 @@ from team_b.ports import (
     CaseStore,
     Clock,
     EvidenceProvider,
+    LLMClient,
     NotFoundError,
     SessionConflictError,
     SessionStore,
@@ -82,6 +83,7 @@ class Orchestrator:
         handlers: Mapping[str, Handler] | None = None,
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
+        llm: LLMClient | None = None,
         events: Publisher | None = None,
     ) -> None:
         self._tenants = tenants
@@ -98,6 +100,7 @@ class Orchestrator:
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
             capabilities=capabilities,
             rewriter=rewriter,
+            llm=llm,
         )
 
     async def handle_turn(

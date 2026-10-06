@@ -410,6 +410,18 @@
       "default": null,
       "title": "Ai Summary"
     },
+    "ai_summary_local": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ai Summary Local"
+    },
     "attempted_actions": {
       "default": [],
       "items": {
@@ -493,6 +505,18 @@
       ],
       "title": "Priority",
       "type": "string"
+    },
+    "prompt_version": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Prompt Version"
     },
     "reason": {
       "$ref": "#/$defs/EscalationReason"

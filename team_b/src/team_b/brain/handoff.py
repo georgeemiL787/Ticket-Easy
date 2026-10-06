@@ -12,6 +12,7 @@ from typing import TypeVar, cast
 
 from team_b.brain.knowledge import quote_citations
 from team_b.brain.redaction import redact
+from team_b.brain.summarizer import add_ai_summary
 from team_b.brain.transcript import transcript_from_traces
 from team_b.brain.turn import TurnContext
 from team_b.contracts.errors import UpstreamError
@@ -360,11 +361,16 @@ async def open_case(
         if pending_approval is not None
         else None
     )
+    package = await build_package(ctx, reason, detail, waiting)
+    if ctx.deps.llm is not None:
+        outcome = await add_ai_summary(ctx.deps.llm, package)
+        package = outcome.package
+        ctx.versions["handoff_summary"] = f"{outcome.status}: {outcome.detail}"
     case = HandoffCase(
         case_id=f"case-{uuid.uuid4().hex[:12]}",
         tenant_id=session.tenant_id,
         conversation_id=session.conversation_id,
-        package=await build_package(ctx, reason, detail, waiting),
+        package=package,
         pending_approval=waiting,
         created_at=ctx.now,
         updated_at=ctx.now,

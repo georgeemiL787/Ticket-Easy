@@ -15,7 +15,7 @@ from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
 from team_b.domain.trace import EvidenceRef, ToolCallRecord, TraceStep
 from team_b.domain.understanding import Locale, NLUResult
-from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
+from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, LLMClient, SessionStore, TraceStore
 
 # after one of these the next queued intent may run
 COMPLETED = frozenset({Decision.ANSWER, Decision.EXECUTE, Decision.REFUSE})
@@ -98,3 +98,4 @@ class Deps:
     handlers: Mapping[str, Handler]  # by intent kind
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
+    llm: LLMClient | None = None  # optional AI model, used for the handoff summary

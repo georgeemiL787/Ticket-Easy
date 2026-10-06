@@ -109,6 +109,7 @@ def build_container(settings: Settings) -> Container:
             capabilities=container.capabilities,
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
             events=container.events,
+            llm=container.llm,
         ),
     )
 

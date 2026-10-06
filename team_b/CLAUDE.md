@@ -76,7 +76,10 @@ team_b/
                  order_id/order_ids/phone/amount; yes/no only if the whole message is one; wants_human; frustration low/medium/high)
                  text (normalize, contains_term, find_spans), lexicon (Lexicon, default_lexicon: data/lexicon/default.json), language
                  (detect_language -> (Language|None, confidence); LOCALE_FOR/locale_for: the one en/ar/mixed->ar/arabizi table)
-                 summarizer (Template + LLM history summaries, LLM text rejected on invented facts), redaction (redact: phone/email/card/OTP),
+                 summarizer (Template + LLM history summaries, LLM text rejected on invented facts);
+                 add_ai_summary (handoff summary from prompts/handoff_summary_v1.md: input = the structured package only, output
+                 summary_en/summary_customer_language/suggested_next_step, check_grounded against the package else the template stays;
+                 package.summary_source ai|template, ai_suggestion labelled 'AI suggestion, not approved'; Deps.llm / Orchestrator(llm=)), redaction (redact: phone/email/card/OTP),
                  transcript (transcript_from_traces)
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)
                  standins/ shop (StandinShop: the fake Nile Style shop with audit log, idempotent replay, policy

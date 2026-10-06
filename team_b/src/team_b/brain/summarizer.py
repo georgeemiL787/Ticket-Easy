@@ -7,10 +7,14 @@ folded messages), it is rejected and the template summary is used. The model can
 
 import re
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Literal, NamedTuple, Protocol
 
+from team_b.brain.composer import check_grounded
+from team_b.brain.llm_nlu import PromptTemplate
+from team_b.domain.handoff import HandoffPackage
 from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig
+from team_b.domain.understanding import Language
 from team_b.ports import LLMClient
 
 _ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
@@ -93,3 +97,67 @@ class LLMHistorySummarizer:
         if not text or invented_facts(text, source, tenant):
             return template
         return text
+
+
+# ---- the handoff summary written by the AI model, for the human who takes over ----
+
+HANDOFF_SUMMARY_PROMPT = "handoff_summary_v1"
+AI_SUGGESTION_LABEL = "AI suggestion, not approved: "
+MAX_PROBLEMS_SHOWN = 4
+SUMMARY_SCHEMA_HINT = {
+    "summary_en": "two or three sentences",
+    "summary_customer_language": "the same summary in the customer's language",
+    "suggested_next_step": "one sentence",
+}
+REGISTER = {
+    Language.EN: "plain English",
+    Language.AR: "Egyptian Arabic, colloquial",
+    Language.MIXED: "Egyptian Arabic, colloquial, English terms may stay in English",
+    Language.ARABIZI: "Arabizi (Egyptian Arabic in Latin letters and digits)",
+}
+
+
+class SummaryOutcome(NamedTuple):
+    package: HandoffPackage
+    status: Literal["ai", "template", "failed"]
+    detail: str
+
+
+def _facts_text(package: HandoffPackage) -> str:
+    """Everything the briefing states, as one text the summary is checked against (the AI fields are not facts)."""
+    return package.model_dump_json(exclude={"ai_summary", "ai_summary_local", "ai_suggestion", "prompt_version"})
+
+
+async def add_ai_summary(
+    llm: LLMClient, package: HandoffPackage, prompt: PromptTemplate | None = None
+) -> SummaryOutcome:
+    """The package with an AI-written summary and suggestion, if the model's text adds no fact the package lacks.
+
+    Factual fields are never touched. On any model error, bad output or ungrounded text the package comes back
+    unchanged with summary_source "template" (the template summary stays the one shown)."""
+    template = prompt or PromptTemplate.load(HANDOFF_SUMMARY_PROMPT)
+    register = REGISTER.get(package.language or Language.EN, REGISTER[Language.EN])
+    facts = _facts_text(package)
+    user = template.render_user(register=register, briefing=facts)
+    system = template.system.replace("{{register}}", register)
+    try:
+        data = await llm.complete_json(system=system, user=user, schema_hint=SUMMARY_SCHEMA_HINT)
+    except Exception as exc:  # any model failure means: the template summary
+        return SummaryOutcome(package, "failed", f"the model failed ({type(exc).__name__})")
+    parts = {k: data.get(k) for k in SUMMARY_SCHEMA_HINT}
+    if not all(isinstance(v, str) and v.strip() for v in parts.values()):
+        return SummaryOutcome(package, "failed", "the model answered without all three texts")
+    texts = {k: str(v).strip() for k, v in parts.items()}
+    problems = [p for text in texts.values() for p in check_grounded(text, [facts])]
+    if problems:
+        return SummaryOutcome(package, "template", "rejected: " + "; ".join(dict.fromkeys(problems))[:200])
+    updated = package.model_copy(
+        update={
+            "ai_summary": texts["summary_en"],
+            "ai_summary_local": texts["summary_customer_language"],
+            "ai_suggestion": AI_SUGGESTION_LABEL + texts["suggested_next_step"],
+            "summary_source": "ai",
+            "prompt_version": template.version,
+        }
+    )
+    return SummaryOutcome(updated, "ai", "written by the model and grounded in the briefing")

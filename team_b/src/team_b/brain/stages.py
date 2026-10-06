@@ -378,6 +378,8 @@ async def plan(ctx: TurnContext) -> str:
     small_talk = [n for n in names if _kind(ctx, n) == "smalltalk"]
     if small_talk and len(small_talk) == len(names):
         ctx.plan = PlannedIntent(small_talk[0], "smalltalk")
+    elif understanding and understanding.affirmation and not names and not session.awaiting:
+        ctx.plan = None  # a lone yes or no with nothing asked: not a reason to run the last request again
     elif session.active_intent is not None:
         ctx.plan = PlannedIntent(session.active_intent, _kind(ctx, session.active_intent))
     else:

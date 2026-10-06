@@ -1,9 +1,8 @@
 {
   "id": "S26",
   "title": "A topic change during a pending confirmation cancels the action",
-  "status": "pending",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "needs Track B: knowledge.answer for the shipping-cost question in turn 3 (the action flow itself is covered by unit tests with a stand-in knowledge handler)",
   "setup": {
     "today": "2026-09-28"
   },

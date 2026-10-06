@@ -1,9 +1,8 @@
 {
   "id": "S33",
   "title": "Safety screen down: policy question still answered, refund blocked and handed off",
-  "status": "pending",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "needs Track B: knowledge.answer for the return-policy question in turn 1 (the safety-screen-down flow is covered by unit tests)",
   "setup": {
     "today": "2026-09-28"
   },

@@ -29,9 +29,8 @@ refreshes every 10 seconds. Type your name at the top (it is remembered in the b
 
 1. `make run`, then open <http://127.0.0.1:8010/chat?tenant_id=shop_001> in one window and <http://127.0.0.1:8010/inbox> in another.
 2. In the chat, write `How many days do I have to return an item?`. You get the return policy quoted with its source.
-3. In the chat, write `I want a refund for order NS-20934` and then `I want to talk to a human`. (Until Track A's action flow
-   is merged, the human request is the way to open a case. After SYNC 1 a refund above the limit opens an
-   `approval_required` case by itself.) The chat says a colleague will reply.
+3. In the chat, write `I want to talk to a human`. The chat says a colleague will reply. (The large-refund demo, where the
+   agent opens the case by itself, is in the next section.)
 4. In the inbox the case appears within 10 seconds (or reload). Type your name, click the case, read the briefing.
 5. Click **Claim**, write a reply and press **Send reply**. It appears in the customer's chat at once.
 6. Write another message in the chat: the agent stays quiet except for one "a colleague will reply" notice, and your inbox
@@ -40,7 +39,24 @@ refreshes every 10 seconds. Type your name at the top (it is remembered in the b
    conversation. (Or **Resolve** to close the case.)
 8. Type a different name in the inbox: the claimed case now shows no action buttons, and a direct API call to reply as that
    name is refused with `409 INVALID_STATE`.
-9. A case with a waiting action shows **Approve/Reject**; deciding re-checks the rules, runs the action once, and tells the customer in the chat.
+9. A case with a waiting action shows **Approve/Reject**; deciding re-checks the rules, runs the action once, and tells the customer in the chat (see the next section).
+
+### The large-refund demo (the agent acts, a person approves)
+
+A refund above EGP 3,000 may not be done by the assistant alone. This walks through the whole safe path.
+
+1. `make run`, open the chat <http://127.0.0.1:8010/chat?tenant_id=shop_001> and the inbox <http://127.0.0.1:8010/inbox>.
+2. In the chat write `I want a refund for order NS-20934`. The assistant asks for the phone number on the order.
+3. Write `01098765405`. The assistant checks who you are and the rules, finds that the refund (EGP 3,450) needs approval, and
+   says a colleague will review it. Nothing has been refunded yet.
+4. In the inbox (within 10 seconds) a case appears with reason **approval_required**. Type your name, open it: the briefing
+   shows the order facts, the rule that asked for a person (R-REFUND-LIMIT, refund_policy@v1#s3) and the waiting refund.
+5. Click **Claim**, then **Approve**. The rules are checked again with the order as it is now, the refund runs exactly once,
+   and the chat shows "Done! Your reference number is REF-...". **Reject** instead tells the customer politely and runs nothing.
+6. Things to try: approve twice (the second does nothing); claim as another name and try to decide (refused with 409);
+   change the order in the shop so the rules now say no, then approve (nothing runs, the case says why, the customer is told).
+
+The same walk-through runs as an automated test: `tests/integration/test_sync1_demo.py`.
 
 API: `GET /v1/handoff/cases?tenant_id=shop_001` and `POST /v1/handoff/cases/{id}/claim|release|reply|decision|resolve|return-to-agent`
 with a body such as `{"agent": "Sara", "text": "Hello"}`.

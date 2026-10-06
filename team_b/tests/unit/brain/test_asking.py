@@ -49,11 +49,8 @@ async def test_an_arabizi_late_order_asks_for_the_order_id_then_the_phone(c: Con
 
     third = await say(o, "01012345601")
     session = await session_of(c)
-    assert session.slots == {"order_id": "NS-20877", "phone": "01012345601"}
-    assert (
-        third.decision is Decision.CLARIFY
-        and "not built yet" in (await c.traces.for_conversation(T, C))[-1].decision_reason
-    )
+    assert session.slots == {"order_id": "NS-20877"}  # verified: the phone is not kept
+    assert session.identity.verified and third.decision is Decision.ANSWER and "NS-20877" in third.text
 
 
 async def test_the_question_is_remembered_as_what_the_agent_waits_for(c: Container) -> None:
@@ -85,13 +82,13 @@ async def test_a_verified_customer_is_not_asked_for_the_phone(c: Container) -> N
     session.identity = SessionIdentity(verified=True, customer_id="C-100", method="test")
     await c.sessions.save(session)
     reply = await say(orch(c), "Where is my order NS-20877?")
-    assert reply.awaiting != "slot:phone"  # nothing to ask: the placeholder stands in for the rest of the flow
-    assert "not built yet" in (await c.traces.for_conversation(T, C))[-1].decision_reason
+    assert reply.awaiting != "slot:phone"  # nothing to ask: the order is read and answered
+    assert reply.decision is Decision.ANSWER and "NS-20877" in reply.text
 
 
 async def test_a_detail_given_up_front_is_not_asked_again(c: Container) -> None:
     reply = await say(orch(c), "Where is my order NS-20877? My phone is 01012345601")
-    assert reply.awaiting == "detail"  # nothing missing: the rest of the flow takes over (placeholder for now)
+    assert (reply.decision, reply.awaiting) == (Decision.ANSWER, None)  # nothing missing: verified and answered
 
 
 async def test_a_slot_name_without_a_template_uses_the_generic_question(c: Container) -> None:

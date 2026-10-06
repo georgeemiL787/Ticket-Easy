@@ -1,9 +1,8 @@
 {
   "id": "S09",
   "title": "Order lookup fails on two turns: no invented status, then handoff",
-  "status": "pending",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "P1.4b action flow + tool-failure handling (retry once per turn, repeated_tool_failure after 2 failed turns)",
   "setup": {
     "today": "2026-09-28"
   },

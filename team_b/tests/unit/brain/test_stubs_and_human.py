@@ -15,7 +15,7 @@ from team_b.domain.actions import ActionProposal, ActionState
 from team_b.domain.alerts import Alert
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus
-from team_b.domain.session import SessionState
+from team_b.domain.session import SessionIdentity, SessionState
 from team_b.domain.understanding import Language, NLUResult
 from team_b.ports import NotFoundError
 from tests.fakes import FakeEvidence
@@ -75,6 +75,9 @@ async def test_the_stubs_return_what_the_pipeline_needs(c: Container) -> None:
     step = await knowledge.answer(ctx)
     assert isinstance(step, Step) and step.decision is Decision.CLARIFY and "not built yet" in step.reason
     assert await knowledge.quote_for(ctx, "return policy") == []
+    asked = await identity.ensure_verified(ctx)  # not verified and no details yet: asks for the first one
+    assert isinstance(asked, Step) and (asked.decision, asked.awaiting) == (Decision.VERIFY_IDENTITY, "slot:order_id")
+    session.identity = SessionIdentity(verified=True, customer_id="C-100", method="test")
     assert await identity.ensure_verified(ctx) is None
     reading = NLUResult(language=Language.EN, language_confidence=0.9, affirmation="yes")
     confirmed = await actions.on_confirmation(ctx, reading)

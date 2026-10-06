@@ -59,6 +59,11 @@ team_b/
                  {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 58 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
+                 identity (ensure_verified: verify_tool with order id + phone, attempts counted, wrong phone dropped, identity_failed handoff at max_attempts,
+                 phone not kept once verified) · lookup (answer: details -> identity -> get_order -> ownership (another customer's or a missing order
+                 = handoff ownership_mismatch, no data) -> status from templates + knowledge.quote_for when knowledge_when holds; derive_order_facts)
+                 · shopcalls (call_read: one retry in the turn, every attempt recorded; failed_read: lookup_failed, tool_failures counted, repeated_tool_failure
+                 handoff at max_tool_failures; output_complete)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
@@ -101,7 +106,7 @@ team_b/
   prompts/nlu_v1.md, rewrite_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S08, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S09, S12, S15, S28, S29, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir

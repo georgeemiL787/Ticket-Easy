@@ -422,12 +422,22 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     """Lookup and action requests: find out which details are still missing and ask for the next one.
 
     When nothing is missing the rest of the flow (identity check, facts, rules, confirmation, execution) takes over;
-    that is built by later steps, so for now this ends in the placeholder reply."""
+    the action flow is built by later steps, so for now that ends in the placeholder reply."""
+    return await ask_for_details(ctx, planned) or await placeholder_handler(ctx, planned)
+
+
+async def ask_for_details(ctx: TurnContext, planned: PlannedIntent, *, force_identity: bool = False) -> Step | None:
+    """The question for the next missing detail (or a handoff when the request cannot be filled); None: nothing missing.
+
+    The identity slots (order number, phone) are included while the customer is not verified: always when
+    force_identity is set, otherwise when the tool needs a verified customer."""
     spec, session = ctx.tenant.intents[planned.name], ctx.session
     tool_name = spec.lookup_tool if planned.kind == "lookup" else spec.action_tool
     tools = await _tools(ctx)
     tool = tools.get(tool_name) if tools is not None and tool_name else None
-    needs_identity = (tool.requires_identity if tool is not None else True) and not session.identity.verified
+    needs_identity = (force_identity or (tool.requires_identity if tool is not None else True)) and (
+        not session.identity.verified
+    )
 
     resolution = resolve_arguments(spec, tool, session, session.facts)
     if resolution.unsourced:
@@ -439,7 +449,7 @@ async def slot_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     slot = next_question(missing)
     if slot is None:
         session.clarifications = 0
-        return await placeholder_handler(ctx, planned)
+        return None
 
     if slot == "order_id" and (listing := await _list_orders(ctx)) is not None:
         if _count_clarification(ctx, "order_choice"):

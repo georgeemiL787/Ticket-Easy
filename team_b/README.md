@@ -71,3 +71,12 @@ for understanding. The gold labels come from the policies and rules (see `script
 agent does. `--save-baseline` records what the rules reach today in `eval/eval_baseline.json`; the test
 `tests/integration/test_b_eval.py` keeps a 20-conversation sample at the targets (intent 0.90, decision 0.92, citation 0.95,
 locale 1.0) or, until they are reached, at that baseline.
+
+### Grading how replies read (`--judge`, optional)
+
+With an AI model configured (`TEAM_B_LLM=ollama` or `openrouter`), `python -m team_b eval --judge` also asks the model to grade
+each reply from 1 to 5 for clarity, politeness, register (does it sound like the customer's language and style) and
+helpfulness, with a one-line reason each (rubric: `prompts/judge_v1.md`). The report shows the average per style. These grades
+are advice: they never decide whether a test passes. Ten percent of the graded replies are written to
+`reports/judge_spotcheck.csv`; a person fills in the `human_*` columns, then `python -m team_b judge-agreement reports/judge_spotcheck.csv`
+prints how often the judge is exactly right and within one point.

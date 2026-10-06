@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -12,6 +13,7 @@ from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.config import Settings
 from team_b.container import build_llm
 from team_b.domain.tenant import TenantRegistry
+from team_b.judge import Judge, agreement, pick_spotcheck, write_spotcheck
 from team_b.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
 
 
@@ -40,18 +42,28 @@ async def eval_nlu(mode: str, tenant_id: str, data: Path, save: bool) -> list[Ev
     return reports
 
 
-async def eval_conversations(directory: Path, use_llm: bool, out: Path, save: bool, tenant_check: bool = True) -> int:
+async def eval_conversations(directory: Path, use_llm: bool, out: Path, save: bool, use_judge: bool = False) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
         raise SystemExit("--llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
     if not use_llm:
         settings = settings.model_copy(update={"llm": "none", "llm_rewrite": False})
+    judge = None
+    if use_judge:
+        llm = build_llm(Settings.from_env())
+        if llm is None:
+            raise SystemExit("--judge needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
+        judge = Judge(llm)
     conversations = convo.load_set(directory)
     mode = "llm" if use_llm else "rules"
-    report = await convo.evaluate(conversations, settings, mode=mode)
+    report = await convo.evaluate(conversations, settings, mode=mode, judge=judge)
     print(convo.render(report))
     markdown, data = convo.write_report(report, out)
     print(f"wrote {markdown} and {data}")
+    if judge is not None:
+        spot = pick_spotcheck(report.judged)
+        path = out / "judge_spotcheck.csv"
+        print(f"wrote {write_spotcheck(spot, path)} replies to {path} for a person to grade")
     if save:
         if use_llm:
             raise SystemExit("the baseline is recorded from the rules (run without --llm)")
@@ -73,10 +85,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     full.add_argument("--set", type=Path, default=convo.CONVERSATIONS_DIR, help="folder of conversations (JSON lines)")
     full.add_argument("--llm", action="store_true", help="use the configured AI model for understanding")
     full.add_argument("--out", type=Path, default=Path("reports"), help="where the report files go")
+    full.add_argument(
+        "--judge", action="store_true", help="also grade how the replies read with the AI judge (advice only)"
+    )
     full.add_argument("--save-baseline", action="store_true", help="record the rules' result as the baseline")
+    agree = commands.add_parser(
+        "judge-agreement", help="compare the judge with the person who graded judge_spotcheck.csv"
+    )
+    agree.add_argument("file", type=Path)
     args = parser.parse_args(argv)
     if args.command == "eval":
-        return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline))
+        return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline, args.judge))
+    if args.command == "judge-agreement":
+        result = agreement(args.file)
+        print(json.dumps(result.as_dict(), indent=2))
+        return 0
     asyncio.run(eval_nlu(args.mode, args.tenant, args.data, args.save_baseline))
     return 0
 

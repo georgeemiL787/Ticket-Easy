@@ -29,6 +29,7 @@ from team_b.brain.metrics import percentile
 from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
 from team_b.domain.base import FrozenModel
+from team_b.judge import CRITERIA, Judge, JudgedTurn, JudgeStats
 
 CONVERSATIONS_DIR = PROJECT_ROOT / "eval" / "conversations"
 BASELINE_PATH = PROJECT_ROOT / "eval" / "eval_baseline.json"
@@ -234,18 +235,26 @@ class EvalReport:
     overall: StyleReport
     worst: list[dict[str, Any]]
     topics: dict[str, Counter] = field(default_factory=dict)  # topic -> conversations with every check right
+    judge: dict[str, JudgeStats] | None = None  # the AI judge's advice per style (never part of pass or fail)
+    judged: list[JudgedTurn] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "mode": self.mode, "date": self.when.isoformat(),
             "topics": {t: {"right": c.right, "total": c.total} for t, c in sorted(self.topics.items())},
+            "judge": None if self.judge is None else {s: j.as_dict() for s, j in self.judge.items()},
             "overall": self.overall.as_dict(), "styles": {s: r.as_dict() for s, r in self.styles.items()},
             "worst_conversations": self.worst,
         }  # fmt: skip
 
 
 async def evaluate(
-    conversations: Sequence[EvalConversation], settings: Settings, *, mode: str = "rules", when: date | None = None
+    conversations: Sequence[EvalConversation],
+    settings: Settings,
+    *,
+    mode: str = "rules",
+    when: date | None = None,
+    judge: Judge | None = None,
 ) -> EvalReport:
     """Run the conversations on one container (each in its own chat) and measure every turn."""
     container = build_container(settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}))
@@ -253,6 +262,8 @@ async def evaluate(
     overall = StyleReport("all")
     scored: list[tuple[int, str, dict[str, Any]]] = []
     topics: dict[str, Counter] = defaultdict(Counter)
+    judge_stats = {s: JudgeStats() for s in (*STYLES, "all")} if judge is not None else None
+    judged: list[JudgedTurn] = []
     for conversation in conversations:
         results = await run_conversation(container, conversation)
         locale = LOCALE_OF_STYLE[conversation.language_style]
@@ -262,6 +273,15 @@ async def evaluate(
         for turn, got in zip(conversation.turns, results, strict=True):
             report.add(turn.gold, got, locale)
             overall.add(turn.gold, got, locale)
+        if judge is not None and judge_stats is not None:
+            for turn, got in zip(conversation.turns, results, strict=True):
+                score = await judge.score(turn.say, got.text, conversation.language_style)
+                judge_stats[conversation.language_style].add(score)
+                judge_stats["all"].add(score)
+                if score is not None:
+                    judged.append(
+                        JudgedTurn(conversation.id, conversation.language_style, got.index, turn.say, got.text, score)
+                    )
         wrong_turns = [r for r in results if r.wrong]
         topics[conversation.topic or "-"].add(not wrong_turns)
         if wrong_turns:
@@ -283,7 +303,9 @@ async def evaluate(
                 )  # fmt: skip
             )
     scored.sort(key=lambda item: (-item[0], item[1]))
-    return EvalReport(mode, when or date.today(), styles, overall, [row for _, _, row in scored[:WORST]], dict(topics))
+    final = EvalReport(mode, when or date.today(), styles, overall, [row for _, _, row in scored[:WORST]], dict(topics))
+    final.judge, final.judged = judge_stats, judged
+    return final
 
 
 def conversation_topic(conversation: EvalConversation) -> str:
@@ -324,6 +346,15 @@ def render(report: EvalReport) -> str:
         "|---|---|---|",
     ]
     lines += [f"| {t} | {c.right} | {c.total} |" for t, c in sorted(report.topics.items())]
+    if report.judge is not None:
+        lines += ["", "## Reply quality, graded by the AI judge (advice only: never part of pass or fail)", ""]
+        lines += [
+            "| style | judged | failed | " + " | ".join(CRITERIA) + " |",
+            "|---|---|---|" + "---|" * len(CRITERIA),
+        ]
+        for name, stats in report.judge.items():
+            means = " | ".join("—" if stats.mean(c) is None else f"{stats.mean(c):.2f}" for c in CRITERIA)
+            lines.append(f"| {name} | {stats.judged} | {stats.failed} | {means} |")
     lines += ["", f"## The {len(report.worst)} conversations that went wrong most", ""]
     if not report.worst:
         lines.append("None: every turn matched its gold labels.")

@@ -7,7 +7,7 @@ Never edit a migration that has been pushed: add a new one.
 |---|---|---|
 | 001 | sessions, traces, cases (done) | B |
 | 002 | turn_facts, tool_call_facts, policy_facts: the dashboard's summary rows (done) | B |
-| 003 | alerts | A |
+| 003 | alerts (done) | A |
 | 004 | users and user_tenants (logins) | A |
 | 005+ | ask the other person first | - |
 

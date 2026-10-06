@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
+from team_b.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
 from team_b.adapters.llm import OpenAICompatibleLLM
 from team_b.adapters.memory_store import (
     FixedClock,
@@ -18,6 +19,7 @@ from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
+from team_b.brain.alerts import AlertEngine, WebhookNotifier
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
@@ -28,6 +30,7 @@ from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
 from team_b.events import EventHub
 from team_b.ports import (
+    AlertStore,
     CapabilityClient,
     CaseStore,
     Clock,
@@ -62,6 +65,8 @@ class Container:
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
+    alerts: AlertStore | None = None  # alerts for managers (opened and resolved by alert_engine)
+    alert_engine: AlertEngine | None = None
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
 
 
@@ -103,8 +108,21 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
         LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
     )
     nlu: NLU = LLMNLU(container.llm) if container.llm is not None else RuleBasedNLU()
+    alerts: AlertStore = (
+        SqliteAlertStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryAlertStore()
+    )
+    alert_engine = AlertEngine(
+        traces=traces,
+        cases=cases,
+        alerts=alerts,
+        clock=clock,
+        tenants=tenants,
+        notifier=WebhookNotifier(settings.alert_webhook) if settings.alert_webhook else None,
+    )
     return replace(
         container,
+        alerts=alerts,
+        alert_engine=alert_engine,
         nlu=nlu,
         registry=registry,
         orchestrator=Orchestrator(

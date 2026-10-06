@@ -75,6 +75,32 @@ class PermissionsConfig(FrozenModel):
     confirm_operation_kinds: tuple[OperationKind, ...] = ("create", "update", "delete")
 
 
+class AlertThresholds(FrozenModel):
+    """When the alert engine warns the managers of this business. Every number can be changed per business."""
+
+    enabled: bool = True
+    service_down_errors: int = Field(default=3, ge=1)  # failures of one service ...
+    service_down_window_min: int = Field(default=5, ge=1)  # ... within this many minutes
+    action_failing_rate: float = Field(default=0.20, gt=0, le=1)  # share of failed changes ...
+    action_failing_min_calls: int = Field(default=10, ge=1)  # ... over at least this many ...
+    action_failing_window_min: int = Field(default=15, ge=1)  # ... in this many minutes
+    unverified_result_window_min: int = Field(default=60, ge=1)  # any unclear result in this window
+    action_missing_window_min: int = Field(default=60, ge=1)  # any missing/blocked tool in this window
+    knowledge_gap_rate: float = Field(default=0.15, gt=0, le=1)  # unanswered share of answered-or-not questions ...
+    knowledge_gap_min_questions: int = Field(default=10, ge=1)
+    knowledge_gap_window_min: int = Field(default=24 * 60, ge=1)  # ... per day
+    knowledge_gap_same_question: int = Field(default=5, ge=2)  # or the same unanswered question this many times
+    slow_p95_ms: float = Field(default=6000.0, gt=0)  # 95th percentile of reply time ...
+    slow_min_turns: int = Field(default=5, ge=1)
+    slow_window_min: int = Field(default=15, ge=1)
+    escalation_spike_factor: float = Field(default=2.0, gt=1)  # handoff share over the last hour vs the last 7 days
+    escalation_spike_min_turns: int = Field(default=10, ge=1)
+    ai_fallback_rate: float = Field(default=0.10, gt=0, le=1)  # AI turns that fell back to the rules ...
+    ai_fallback_min_turns: int = Field(default=5, ge=1)
+    ai_fallback_window_min: int = Field(default=60, ge=1)  # ... in this many minutes
+    backlog_sla_min: int = Field(default=15, ge=1)  # an urgent case nobody claimed for this long
+
+
 class IntentSpec(FrozenModel):
     kind: IntentKind
     description: str = ""
@@ -106,6 +132,7 @@ class TenantConfig(FrozenModel):
     identity: IdentityConfig
     escalation: EscalationConfig = Field(default_factory=EscalationConfig)
     permissions: PermissionsConfig = Field(default_factory=PermissionsConfig)
+    alerts: AlertThresholds = Field(default_factory=AlertThresholds)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
 

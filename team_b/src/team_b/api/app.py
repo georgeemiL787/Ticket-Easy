@@ -10,9 +10,11 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from team_b.api import alerts as alerts_api
 from team_b.api import capabilities, chat, dashboard, inbox, traces
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
+from team_b.brain.alerts import alert_loop
 from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
 from team_b.observability import bind_context, clear_context, configure_logging, get_logger
@@ -82,17 +84,24 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
         app.state.rate_limiter = RateLimiter(built.settings.rate_limit_per_minute)
         log.info("started", mode=built.settings.mode, tenants=list(built.tenants.tenant_ids()))
         retention = asyncio.create_task(retention_loop(built))
+        tasks = [retention]
+        if built.alert_engine is not None:
+            tasks.append(
+                asyncio.create_task(alert_loop(built.alert_engine, interval_s=built.settings.alert_interval_s))
+            )
         try:
             yield
         finally:
-            retention.cancel()
-            await asyncio.gather(retention, return_exceptions=True)
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     app = FastAPI(title="Ticket-Easy Team B", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
     app.include_router(chat.router)
     app.include_router(traces.router)
     app.include_router(inbox.router)
+    app.include_router(alerts_api.router)
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
     mount_chat_page(app)

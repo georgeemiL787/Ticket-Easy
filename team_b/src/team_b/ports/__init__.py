@@ -13,6 +13,7 @@ from typing import Any, Protocol, runtime_checkable
 from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from team_b.domain.alerts import Alert
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.facts import Facts, FactsSummary
 from team_b.domain.handoff import CaseStatus, HandoffCase
@@ -20,6 +21,7 @@ from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
 
 __all__ = [
+    "AlertStore",
     "AlreadyExistsError",
     "CapabilityClient",
     "CaseStore",
@@ -175,6 +177,21 @@ class CaseStore(Protocol):
 
     async def purge_older_than(self, cutoff: datetime) -> int:
         """Delete resolved or returned cases last updated before cutoff. Open and claimed cases are never deleted."""
+        ...
+
+
+@runtime_checkable
+class AlertStore(Protocol):
+    """Alerts. At most one alert is open per (tenant, rule, key): add() of a second one raises AlreadyExistsError."""
+
+    async def add(self, alert: Alert) -> None: ...
+
+    async def get(self, tenant_id: str, alert_id: str) -> Alert | None: ...
+
+    async def save(self, alert: Alert) -> None: ...
+
+    async def list(self, tenant_id: str, *, open_only: bool = False, limit: int = 200) -> Sequence[Alert]:
+        """Newest first."""
         ...
 
 

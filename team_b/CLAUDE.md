@@ -173,6 +173,10 @@ team_b/
   web/chat/    the browser chat (index.html, chat.js, style.css): /chat?tenant_id=shop_001
   web/inbox/   the support inbox (index.html, inbox.js, style.css): /inbox; inbox.js exports pure helpers for node tests; no innerHTML
   web/dashboard                                                                            (planned)
+  eval/conversations/<style>.jsonl (200 conversations, 50 per style, gold per turn: intents, entities, decision, citations, escalation; written by
+  scripts/make_eval_set.py from the policies, not from the brain), eval_baseline.json (what the rules reach; tests/integration/test_b_eval.py holds the
+  20-conversation sample to the targets or the baseline); `python -m team_b eval --set eval/conversations [--llm] [--save-baseline]` writes reports/eval_<date>.md/.json
+  (src/team_b/eval_conversations.py)
   eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)
 dashboard/   (repo root, next to team_b/) React + Vite + TypeScript + Recharts app: types generated from contracts/schemas/Dashboard*.schema.json
              (npm run types; the build fails on stale types), EN/AR with RTL, filters in the URL; `npm run build` -> team_b/web/dashboard (gitignored),

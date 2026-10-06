@@ -60,3 +60,14 @@ The same walk-through runs as an automated test: `tests/integration/test_sync1_d
 
 API: `GET /v1/handoff/cases?tenant_id=shop_001` and `POST /v1/handoff/cases/{id}/claim|release|reply|decision|resolve|return-to-agent`
 with a body such as `{"agent": "Sara", "text": "Hello"}`.
+
+## Measuring quality (`python -m team_b eval`)
+
+`python -m team_b eval --set eval/conversations` runs 200 short conversations (50 each in English, Egyptian Arabic, mixed
+Arabic-English and Arabizi) through the agent and writes `reports/eval_<date>.md` and `.json`: per style intent accuracy,
+decision accuracy, citation accuracy, reply language match, handoff precision and recall, latency p50 and p95, the
+conversations that went wrong most (with their first wrong turn) and a table by topic. `--llm` uses the configured AI model
+for understanding. The gold labels come from the policies and rules (see `scripts/make_eval_set.py`), never from what the
+agent does. `--save-baseline` records what the rules reach today in `eval/eval_baseline.json`; the test
+`tests/integration/test_b_eval.py` keeps a 20-conversation sample at the targets (intent 0.90, decision 0.92, citation 0.95,
+locale 1.0) or, until they are reached, at that baseline.

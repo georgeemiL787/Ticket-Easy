@@ -574,3 +574,80 @@ pre.raw {
   font-size: 1rem;
   direction: ltr;
 }
+
+.name-field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-end: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+tr.overdue td {
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+}
+
+td.late {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.badge.prio-urgent,
+.badge.sev-critical {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+.badge.prio-high,
+.badge.sev-warning {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.inline-form {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.inline-form input {
+  inline-size: 120px;
+}
+
+.case-panel {
+  margin-block: 16px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+
+.case-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.case-panel-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.case-panel .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.case-panel .pending {
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}

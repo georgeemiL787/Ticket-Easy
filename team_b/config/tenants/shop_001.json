@@ -3,6 +3,10 @@
   "display_name": "Nile Style",
   "default_locale": "ar",
   "history_max_turns": 12,
+  "managers": [
+    "manager",
+    "mona"
+  ],
   "order_id_pattern": "NS-\\d{4,6}",
   "order_id_prefix": "NS-",
   "identity": {
@@ -19,6 +23,11 @@
     "min_intent_confidence": 0.55,
     "escalate_on_deny": true,
     "escalate_on_high_frustration": true,
+    "sla_minutes": {
+      "urgent": 15,
+      "high": 60,
+      "normal": 240
+    },
     "final_deny_rules": [
       "R-RETURN-EXCLUDED",
       "R-RETURN-UNUSED",

@@ -88,14 +88,15 @@ export default function Conversations() {
     limit: PAGE,
   };
   const first = useApi<DashboardConversationPage>("/v1/dashboard/conversations", query);
-  const [more, setMore] = useState<DashboardConversationRow[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
+  // rows loaded after the first page, and where the next page starts; dropped whenever the first page is loaded again
+  const [tail, setTail] = useState<{ rows: DashboardConversationRow[]; cursor: string | null } | null>(null);
+  const more = tail?.rows ?? [];
+  const cursor = tail ? tail.cursor : (first.data?.next_cursor ?? null);
   const [moreError, setMoreError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    setMore([]);
-    setCursor(first.data?.next_cursor ?? null);
+    setTail(null);
     setMoreError(null);
   }, [first.data]);
 
@@ -104,8 +105,7 @@ export default function Conversations() {
     setLoadingMore(true);
     try {
       const page = await apiGet<DashboardConversationPage>("/v1/dashboard/conversations", { ...query, cursor });
-      setMore((rows) => [...rows, ...page.items]);
-      setCursor(page.next_cursor ?? null);
+      setTail({ rows: [...more, ...page.items], cursor: page.next_cursor ?? null });
       setMoreError(null);
     } catch (cause) {
       setMoreError(cause instanceof ApiError ? cause.message : String(cause));

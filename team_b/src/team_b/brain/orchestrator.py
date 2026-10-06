@@ -22,7 +22,7 @@ from team_b.brain.rewrite import Rewriter
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
-from team_b.domain.handoff import CaseStatus, HandoffCase
+from team_b.domain.handoff import CaseStatus, HandoffCase, NotManagerError
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message
 from team_b.domain.tenant import TenantRegistry
@@ -168,6 +168,14 @@ class Orchestrator:
         """The agent takes the case: from now on they own the conversation."""
         case = await self._case(case_id)
         case.transition(CaseStatus.CLAIMED, actor=agent, at=self._clock.now())
+        await self._deps.cases.save(case)
+
+    async def assign(self, case_id: str, manager: str, assignee: str) -> None:
+        """A manager gives the case to someone (or takes it from the person who has it)."""
+        case = await self._case(case_id)
+        if manager not in self._tenants.get(case.tenant_id).managers:
+            raise NotManagerError(f"{manager} is not a manager of {case.tenant_id}")
+        case.reassign(assignee, by=manager, at=self._clock.now())
         await self._deps.cases.save(case)
 
     async def release(self, case_id: str, agent: str) -> None:

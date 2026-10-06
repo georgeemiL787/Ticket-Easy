@@ -143,9 +143,10 @@ team_b/
                  traces (GET /v1/traces/{id}, GET .../{id}/traces), ratelimit (per-conversation sliding window, TEAM_B_RATE_LIMIT_PER_MIN)
                  inbox (GET /v1/handoff/cases?tenant_id=&status=&reason=&priority=&claimed_by=&limit=&cursor= sorted priority then age;
                  GET .../cases/{id}; POST .../claim|release|reply|decision|resolve|return-to-agent with {agent,...}; only the claimer may act,
-                 illegal moves 409 INVALID_STATE; decision = Orchestrator.human_decide, claimer only)
+                 illegal moves 409 INVALID_STATE; decision = Orchestrator.human_decide, claimer only; POST .../assign {agent=manager, assignee}: only names in tenant
+                 `managers` (403 FORBIDDEN otherwise), Orchestrator.assign / HandoffCase.reassign; escalation.sla_minutes per priority, default 15/60/240)
                  dashboard (GET /v1/dashboard/overview|timeseries?metric=&bucket=|conversations?status=&reason=&language=&q=|conversations/{id}|
-                 escalations|tools|knowledge-gaps, all with tenant_id, from, to; overview = fast TraceStore.summary for this and the previous period;
+                 escalations|queue (open+claimed cases with SLA time left, overdue first)|tools|knowledge-gaps|passage|tenants, all with tenant_id, from, to; overview = fast TraceStore.summary for this and the previous period;
                  response models exported as contracts/schemas/Dashboard*.schema.json), auth        (planned)
     events.py    EventHub: in-process live delivery of human replies to open chat pages (Orchestrator.push_to_customer)
   contracts/schemas/   JSON Schemas of DecisionTrace, HandoffPackage, HandoffCase, AgentReply

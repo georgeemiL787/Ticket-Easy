@@ -12,6 +12,7 @@ interface AlertRow {
   opened_at: string;
   resolved_at: string | null;
   acknowledged_by: string | null;
+  details?: Record<string, unknown>;
 }
 
 /** The alerts come from the alert engine's endpoint. Until that exists (404) the page says so instead of failing. */
@@ -40,15 +41,19 @@ export default function Alerts() {
                   <th>{t("alerts.severity")}</th>
                   <th>{t("alerts.opened")}</th>
                   <th>{t("alerts.status")}</th>
+                  <th>{t("alerts.acknowledgedBy")}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows(d).map((a) => (
+                {[...rows(d)].sort((a, b) => Number(Boolean(a.resolved_at)) - Number(Boolean(b.resolved_at)) || b.opened_at.localeCompare(a.opened_at)).map((a) => (
                   <tr key={a.alert_id}>
                     <td>{a.rule}</td>
-                    <td>{a.severity}</td>
+                    <td>
+                      <span className={`badge sev-${a.severity}`}>{a.severity}</span>
+                    </td>
                     <td>{formatDateTime(a.opened_at, lang)}</td>
                     <td>{a.resolved_at ? t("alerts.resolved") : t("alerts.open")}</td>
+                    <td>{a.acknowledged_by ?? t("common.noData")}</td>
                   </tr>
                 ))}
               </tbody>

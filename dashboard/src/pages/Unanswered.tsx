@@ -22,24 +22,36 @@ export default function Unanswered() {
             <p className="muted">
               {t("gap.total")}: {d.questions_without_answer}. {t("gap.hint")}
             </p>
-            <table>
-              <thead>
-                <tr>
-                  <th>{t("gap.question")}</th>
-                  <th>{t("gap.count")}</th>
-                  <th>{t("gap.lastSeen")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.groups.map((group) => (
-                  <tr key={group.question}>
-                    <td dir="auto">{group.question}</td>
-                    <td>{group.count}</td>
-                    <td>{formatDateTime(group.last_seen, lang)}</td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t("gap.question")}</th>
+                    <th>{t("gap.count")}</th>
+                    <th>{t("gap.examples")}</th>
+                    <th>{t("gap.lastSeen")}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {d.groups.map((group) => (
+                    <tr key={group.question}>
+                      <td dir="auto">{group.question}</td>
+                      <td>{group.count}</td>
+                      <td>
+                        <ul className="plain">
+                          {group.examples.map((example) => (
+                            <li key={example} dir="auto">
+                              {example}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td>{formatDateTime(group.last_seen, lang)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </Async>

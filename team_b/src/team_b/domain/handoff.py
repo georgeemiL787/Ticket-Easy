@@ -39,6 +39,10 @@ class CaseOwnershipError(IllegalCaseTransitionError):
     """Only the person who claimed a case may work on it."""
 
 
+class NotManagerError(PermissionError):
+    """Only a manager may do this."""
+
+
 class CustomerSnapshot(FrozenModel):
     verified: bool = False
     customer_id: str | None = None
@@ -162,6 +166,15 @@ class HandoffCase(MutableModel):
         elif to is CaseStatus.OPEN:
             self.__dict__["claimed_by"] = None
         self.updated_at = at
+
+    def reassign(self, assignee: str, *, by: str, at: datetime, note: str = "") -> None:
+        """Hand an open or claimed case to `assignee`, who then owns it. The history shows who moved it and to whom."""
+        if self.status is CaseStatus.CLAIMED:
+            if self.claimed_by == assignee:
+                raise IllegalCaseTransitionError(f"the case is already assigned to {assignee}")
+            self.transition(CaseStatus.OPEN, actor=by, at=at, note=f"reassigned from {self.claimed_by}")
+        self.transition(CaseStatus.CLAIMED, actor=assignee, at=at, note=note or f"assigned by {by}")
+        self.add_event(actor=by, kind="assigned", at=at, note=f"to {assignee}")
 
     def require_claimer(self, agent: str) -> None:
         """Raise unless the case is claimed by `agent` (replying, deciding, resolving and returning need this)."""

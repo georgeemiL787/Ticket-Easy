@@ -16,12 +16,12 @@ from fastapi import APIRouter, Path, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from team_b.api.chat import TENANT, checked_tenant, container_of
-from team_b.api.errors import invalid_request, invalid_state, not_found
+from team_b.api.errors import forbidden, invalid_request, invalid_state, not_found
 from team_b.brain.approval import CaseNotYoursError, NothingToDecideError
 from team_b.brain.orchestrator import Orchestrator
 from team_b.container import Container
 from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import CaseStatus, HandoffCase, IllegalCaseTransitionError, Priority
+from team_b.domain.handoff import CaseStatus, HandoffCase, IllegalCaseTransitionError, NotManagerError, Priority
 from team_b.ports import NotFoundError
 
 DEFAULT_LIMIT, MAX_LIMIT = 50, 200
@@ -123,6 +123,20 @@ class ReplyIn(AgentIn):
         return value
 
 
+class AssignIn(AgentIn):
+    """`agent` is the manager who reassigns; `assignee` is who gets the case."""
+
+    assignee: str = Field(min_length=1, max_length=80)
+
+    @field_validator("assignee")
+    @classmethod
+    def _plain_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value or any(ord(ch) < 32 for ch in value):
+            raise ValueError("assignee must be a plain name")
+        return value
+
+
 class DecisionIn(NoteIn):
     approve: bool
 
@@ -183,6 +197,8 @@ async def act(request: Request, case_id: str, work: Any) -> HandoffCase:
         await work(orchestrator_of(built))
     except NotFoundError:
         raise not_found("case not found") from None
+    except NotManagerError as exc:
+        raise forbidden(str(exc)) from None
     except (
         IllegalCaseTransitionError,
         CaseNotYoursError,
@@ -195,6 +211,12 @@ async def act(request: Request, case_id: str, work: Any) -> HandoffCase:
 @router.post("/cases/{case_id}/claim", response_model=HandoffCase)
 async def claim(case_id: CASE_ID, body: AgentIn, request: Request) -> HandoffCase:
     return await act(request, case_id, lambda o: o.claim(case_id, body.agent))
+
+
+@router.post("/cases/{case_id}/assign", response_model=HandoffCase)
+async def assign(case_id: CASE_ID, body: AssignIn, request: Request) -> HandoffCase:
+    """A manager gives the case to someone. Only the names in the tenant's `managers` may do it (403 otherwise)."""
+    return await act(request, case_id, lambda o: o.assign(case_id, body.agent, body.assignee))
 
 
 @router.post("/cases/{case_id}/release", response_model=HandoffCase)

@@ -135,6 +135,30 @@ class DashboardEscalations(BaseModel):
     top_rules: list[DashboardRuleCount]  # the rules behind denied or human-approval answers, most frequent first
 
 
+class DashboardQueueRow(BaseModel):
+    case_id: str
+    conversation_id: str
+    status: CaseStatus
+    claimed_by: str | None
+    reason: str
+    priority: str
+    language: str | None
+    summary: str
+    has_pending_approval: bool
+    created_at: datetime
+    age_seconds: int
+    sla_seconds: int  # how long a case of this priority may wait (the shop's setting)
+    remaining_seconds: int  # negative once the case is overdue
+    overdue: bool
+
+
+class DashboardQueue(BaseModel):
+    tenant_id: str
+    now: datetime
+    overdue: int
+    rows: list[DashboardQueueRow]  # open and claimed cases, overdue first
+
+
 class DashboardToolRow(BaseModel):
     tool: str
     calls: int
@@ -495,6 +519,40 @@ async def get_escalations(
             key=lambda x: (-x.count, x.rule),
         ),
     )
+
+
+PRIORITY_RANK = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
+
+
+@router.get("/queue", response_model=DashboardQueue)
+async def get_queue(request: Request, tenant_id: TENANT) -> DashboardQueue:
+    """Open and claimed cases with the time each has left before its SLA (the shop's setting) runs out."""
+    b = built(request, tenant_id)
+    now = b.clock.now()
+    escalation = b.tenants.get(tenant_id).escalation
+    rows = []
+    for status in (CaseStatus.OPEN, CaseStatus.CLAIMED):
+        for case in await b.cases.list(tenant_id, status=status):
+            package = case.package
+            sla = escalation.sla_for(package.priority) * 60
+            age = max(0, int((now - case.created_at).total_seconds()))
+            rows.append(
+                DashboardQueueRow(
+                    case_id=case.case_id, conversation_id=case.conversation_id, status=case.status,
+                    claimed_by=case.claimed_by, reason=package.reason.value, priority=package.priority,
+                    language=package.language.value if package.language else None, summary=package.summary,
+                    has_pending_approval=case.pending_approval is not None, created_at=case.created_at,
+                    age_seconds=age, sla_seconds=sla, remaining_seconds=sla - age, overdue=age > sla,
+                )
+            )  # fmt: skip
+    rows.sort(
+        key=lambda r: (
+            not r.overdue,
+            r.remaining_seconds if r.overdue else PRIORITY_RANK[r.priority],
+            r.age_seconds * -1,
+        )
+    )
+    return DashboardQueue(tenant_id=tenant_id, now=now, overdue=sum(1 for r in rows if r.overdue), rows=rows)
 
 
 @router.get("/tools", response_model=DashboardTools)

@@ -55,6 +55,10 @@ def invalid_state(message: str) -> ApiError:
     return ApiError(409, "INVALID_STATE", message)
 
 
+def forbidden(message: str) -> ApiError:
+    return ApiError(403, "FORBIDDEN", message)
+
+
 def rate_limited(retry_after_s: int) -> ApiError:
     return ApiError(
         429,
@@ -127,4 +131,4 @@ def install_error_handlers(app: FastAPI) -> None:
 
 def error_responses_doc() -> dict[int | str, dict[str, Any]]:
     """OpenAPI description of the error format, for routes that want to document it."""
-    return {code: {"model": ErrorEnvelope} for code in (404, 409, 422, 429, 503)}
+    return {code: {"model": ErrorEnvelope} for code in (403, 404, 409, 422, 429, 503)}

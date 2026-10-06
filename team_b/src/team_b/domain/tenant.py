@@ -31,6 +31,9 @@ class IdentityConfig(FrozenModel):
     max_attempts: int = Field(default=2, ge=1)
 
 
+DEFAULT_SLA_MINUTES: dict[str, int] = {"urgent": 15, "high": 60, "normal": 240, "low": 1440}  # time to a first look
+
+
 class EscalationConfig(FrozenModel):
     max_tool_failures: int = Field(default=2, ge=1)
     max_clarifications: int = Field(default=2, ge=1)
@@ -41,10 +44,22 @@ class EscalationConfig(FrozenModel):
     next_steps: dict[str, dict[str, str]] = Field(default_factory=dict)  # reason -> {en, ar} suggested next step
     # Rules whose deny is final: the customer is told no and no case is opened. Any other deny is handed to a person.
     final_deny_rules: tuple[str, ...] = ()
+    sla_minutes: dict[str, int] = Field(
+        default_factory=dict
+    )  # priority -> minutes a case may wait; replaces the default
+
+    def sla_for(self, priority: str) -> int:
+        """Minutes a case of this priority may wait before it is overdue."""
+        return self.sla_minutes.get(priority, DEFAULT_SLA_MINUTES[priority])
 
     @model_validator(mode="after")
     def _overrides_are_valid(self) -> Self:
         reasons = {r.value for r in EscalationReason}
+        for priority, minutes in self.sla_minutes.items():
+            if priority not in PRIORITIES:
+                raise ValueError(f"escalation.sla_minutes: {priority!r} must be one of {list(PRIORITIES)}")
+            if minutes < 1:
+                raise ValueError(f"escalation.sla_minutes.{priority}: {minutes} must be at least 1 minute")
         for reason, priority in self.priorities.items():
             if reason not in reasons:
                 raise ValueError(
@@ -108,6 +123,7 @@ class TenantConfig(FrozenModel):
     permissions: PermissionsConfig = Field(default_factory=PermissionsConfig)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
+    managers: tuple[str, ...] = ()  # names that may reassign cases, until logins give people roles
 
     @field_validator("order_id_pattern")
     @classmethod

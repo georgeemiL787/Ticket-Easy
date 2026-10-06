@@ -22,7 +22,7 @@ from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import DecisionTrace, TraceStep
+from team_b.domain.trace import DecisionTrace, ProposalRecord, TraceStep
 from team_b.domain.understanding import Language, Locale, NLUResult
 
 
@@ -153,6 +153,12 @@ async def finish(ctx: TurnContext) -> AgentReply:
         escalation_reason=step.escalation if step.decision is Decision.HANDOFF else None,
         handoff_case_id=(ctx.handoff_case_id or session.handoff_case_id) if step.decision is Decision.HANDOFF else None,
         tool_calls=tuple(ctx.tool_calls),
+        policy=tuple(ctx.policy),
+        proposals=tuple(
+            ProposalRecord(proposal_id=a.proposal_id, tool=a.tool, state=a.state.value)
+            for a in session.actions
+            if a.proposal_id in ctx.proposal_ids
+        ),
         errors=tuple(ctx.errors),
         steps=tuple(ctx.steps),
         latency_ms=(time.perf_counter() - ctx.started) * 1000,

@@ -68,6 +68,11 @@ team_b/
                  None when nothing is known, drop() on TOOL_NOT_PUBLISHED; Deps.registry, Container.registry) · gates (check_tool: disabled, human_only, not_allowed
                  ("*" allows all names), risk_too_high -> handoff unsupported with the reason; configured_capabilities) · actions.handle: gate, identity, then
                  capability_missing / dependency_unavailable (checked after identity), then the details
+                 actions.ActionCoordinator (COORDINATOR; propose(ctx, intent_spec) -> ActionProposal with arguments from slots.py, a facts copy and
+                 idempotency_key = sha256(tenant|conversation|proposal_id); execute(ctx, proposal, actor): refuses unless APPROVED and execution_authorized(),
+                 claims EXECUTED before the one call, sends key + policy_request_id + approval_id + actor, stores the result, never retries; an executed/confirmed
+                 proposal returns its stored result; BACKEND_UNAVAILABLE = clear failure, any other UpstreamError = write_may_have_applied; TurnContext.policy and
+                 .proposal_ids feed the trace) - SAFETY-CRITICAL, needs a second reviewer
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);

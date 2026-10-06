@@ -14,7 +14,7 @@ from team_b.contracts.evidence import Passage, RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import ToolCallRecord, TraceStep
+from team_b.domain.trace import PolicyRecord, ToolCallRecord, TraceStep
 from team_b.domain.understanding import Locale, NLUResult
 from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
 
@@ -68,6 +68,8 @@ class TurnContext:
     handoff_case_id: str | None = None
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)
+    policy: list[PolicyRecord] = field(default_factory=list)  # every rule-checker answer used this turn
+    proposal_ids: list[str] = field(default_factory=list)  # action proposals created or moved this turn
     versions: dict[str, str] = field(default_factory=dict)  # prompt versions used this turn
     errors: list[str] = field(default_factory=list)
 

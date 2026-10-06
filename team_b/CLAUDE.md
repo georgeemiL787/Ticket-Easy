@@ -131,7 +131,9 @@ team_b/
   web/inbox/   the support inbox (index.html, inbox.js, style.css): /inbox; inbox.js exports pure helpers for node tests; no innerHTML
   web/dashboard                                                                            (planned)
   eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)
-dashboard/   (repo root, next to team_b/; Phase 4 React app)                               (planned)
+dashboard/   (repo root, next to team_b/) React + Vite + TypeScript + Recharts app: types generated from contracts/schemas/Dashboard*.schema.json
+             (npm run types; the build fails on stale types), EN/AR with RTL, filters in the URL; `npm run build` -> team_b/web/dashboard (gitignored),
+             served at /dashboard with SPA fallback by api/app.py (mount_dashboard_app). See dashboard/README.md
 ```
 
 Safety-critical code (change only with tests): domain/actions.py (state machine, execution_authorized) and the two invariants in domain/trace.py. ActionProposal.state and HandoffCase.status are read-only fields; they change only through transition().

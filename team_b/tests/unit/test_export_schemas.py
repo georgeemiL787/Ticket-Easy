@@ -9,6 +9,7 @@ NAMES = (
     "HandoffPackage",
     "HandoffCase",
     "AgentReply",
+    "DashboardTenants",
     "DashboardOverview",
     "DashboardTimeseries",
     "DashboardConversationPage",

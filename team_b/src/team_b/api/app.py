@@ -4,9 +4,10 @@ import asyncio
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from team_b.api import chat, dashboard, inbox, traces
@@ -23,6 +24,7 @@ log = get_logger(__name__)
 
 CHAT_DIR = PROJECT_ROOT / "web" / "chat"
 INBOX_DIR = PROJECT_ROOT / "web" / "inbox"
+DASHBOARD_DIR = PROJECT_ROOT / "web" / "dashboard"  # the built dashboard app (npm run build in dashboard/)
 
 
 def mount_chat_page(app: FastAPI) -> None:
@@ -47,6 +49,22 @@ def mount_inbox_page(app: FastAPI) -> None:
         return FileResponse(INBOX_DIR / "index.html", media_type="text/html")
 
     app.mount("/inbox/static", StaticFiles(directory=INBOX_DIR), name="inbox-static")
+
+
+def mount_dashboard_app(app: FastAPI, directory: Path = DASHBOARD_DIR) -> None:
+    """The manager dashboard app at /dashboard. A path under it that is not a file serves index.html, so the app's
+    own routes (/dashboard/conversations, ...) can be opened or reloaded. Without a build it says how to make one."""
+
+    @app.get("/dashboard", include_in_schema=False)
+    @app.get("/dashboard/{path:path}", include_in_schema=False)
+    def dashboard_page(path: str = "") -> Response:  # sync: it reads files, so FastAPI runs it in a worker thread
+        root = directory.resolve()
+        wanted = (root / path).resolve()
+        if path and wanted.is_file() and root in wanted.parents:
+            return FileResponse(wanted)
+        if (root / "index.html").is_file():
+            return FileResponse(root / "index.html", media_type="text/html")
+        return PlainTextResponse("The dashboard is not built yet: run `npm ci && npm run build` in dashboard/.", 503)
 
 
 def create_app(*, settings: Settings | None = None, container: Container | None = None) -> FastAPI:
@@ -78,6 +96,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(dashboard.router)
     mount_chat_page(app)
     mount_inbox_page(app)
+    mount_dashboard_app(app)
 
     @app.middleware("http")
     async def request_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

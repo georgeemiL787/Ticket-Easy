@@ -37,6 +37,16 @@ router = APIRouter(prefix="/v1/dashboard", tags=["dashboard"])
 # ---- response models (exported as Dashboard*.schema.json) ----
 
 
+class DashboardTenant(BaseModel):
+    tenant_id: str
+    display_name: str
+    default_locale: str
+
+
+class DashboardTenants(BaseModel):
+    tenants: list[DashboardTenant]
+
+
 class DashboardKpi(BaseModel):
     value: float | None
     previous: float | None
@@ -176,6 +186,21 @@ def service(built_: Container) -> m.MetricsService:
 
 async def count_cases(built_: Container, tenant_id: str, status: CaseStatus) -> int:
     return len(await built_.cases.list(tenant_id, status=status))
+
+
+# ---- tenants (for the business picker) ----
+
+
+@router.get("/tenants", response_model=DashboardTenants)
+async def get_tenants(request: Request) -> DashboardTenants:
+    """The businesses this service knows, for the dashboard's business picker."""
+    registry = request.app.state.container.tenants
+    return DashboardTenants(
+        tenants=[
+            DashboardTenant(tenant_id=t.tenant_id, display_name=t.display_name, default_locale=t.default_locale.value)
+            for t in registry
+        ]
+    )
 
 
 # ---- overview ----

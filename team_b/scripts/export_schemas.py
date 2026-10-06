@@ -20,6 +20,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     HandoffPackage,
     HandoffCase,
     AgentReply,
+    dashboard.DashboardTenants,
     dashboard.DashboardOverview,
     dashboard.DashboardTimeseries,
     dashboard.DashboardConversationPage,

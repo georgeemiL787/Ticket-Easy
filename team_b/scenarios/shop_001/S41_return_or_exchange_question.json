@@ -1,9 +1,8 @@
 {
   "id": "S41",
   "title": "Return or exchange: the agent asks which one, then continues with the answer",
-  "status": "pending",
+  "status": "active",
   "owner": "A",
-  "pending_reason": "Phase 2 (identity check, rule checker) for the rest of the flow; the question itself works since P1.4c",
   "setup": {
     "today": "2026-09-28"
   },

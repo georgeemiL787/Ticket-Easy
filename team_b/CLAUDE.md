@@ -84,6 +84,8 @@ team_b/
                  multi (assign_order_ids: with two or more order numbers in one message each request gets the number nearest before its keyword, a request without
                  one keeps the previous request's) -> session.queue_slots[intent] applied when the queued intent runs; queue stage: runs queued requests after a completed
                  one up to Deps.max_queued_runs (TEAM_B_QUEUE_MAX_RUNS, 3); a CONFIRM stops the chain; a new request while a confirmation is pending cancels it and clears the queue
+                 stages.handler: a clear request (want-marker, 3+ words) with no intent and no details is REFUSED with out_of_scope (offers a person); stages.merge:
+                 a different request after an answered lookup/question replaces it and drops its request slots (order_id, reason, ...), nothing is dropped while awaiting an answer/yes
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
@@ -126,14 +128,14 @@ team_b/
   prompts/nlu_v1.md, rewrite_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S04, S05, S06, S09, S11-S16, S18-S24, S27-S32, S38, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S04-S07, S09, S11-S16, S18-S24, S27-S32, S35-S38, S40-S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir
   tests/unit/  contracts/  domain/  adapters/  api/  test_config.py  test_container.py  ...
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
                    conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_standins.py runs them on the stand-ins
-  tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
+  tests/integration/  test_failure_matrix.py (one case per failure row: safety screen, rule checker, reads, writes, unpublished tools, frustration, out of scope, identity, ownership), scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
                       test_a_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
                       success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-brain self-tests),
                       test_a_leak_scan.py (no order data in any scenario reply before verification)

@@ -279,15 +279,46 @@ async def disambiguate(ctx: TurnContext) -> str:
     return f"asked: {pair[0]} or {pair[1]}"
 
 
+REQUEST_SLOTS = ("order_id", "reason", "new_address", "description", "item", "amount")
+
+
+def _drop_finished_lookup(ctx: TurnContext, wanted: list[str]) -> None:
+    """A different request after an answered lookup or question replaces it, and does not inherit its order number.
+
+    "Where is NS-20877?" answered, then "I want a refund": the refund is not about NS-20877 unless the customer says so.
+    Nothing is dropped while the agent is waiting for an answer or a yes, or when the same request comes again."""
+    session = ctx.session
+    active = session.active_intent
+    if active is None or not wanted or active in wanted or session.awaiting or session.pending_action_id:
+        return
+    if active in ctx.tenant.intents and ctx.tenant.intents[active].kind in ("lookup", "knowledge"):
+        session.active_intent = None
+        session.clarifications = 0
+        for slot in REQUEST_SLOTS:
+            session.slots.pop(slot, None)
+
+
+def _out_of_scope(ctx: TurnContext) -> bool:
+    """A clear request (it says "please", "I want", "عايز"...) for something this shop agent does not do."""
+    reading = ctx.understanding
+    if reading is None or reading.intents or reading.affirmation or reading.wants_human or reading.entities:
+        return False
+    normalized = normalize(ctx.text)
+    if len(normalized.split()) < 3:
+        return False
+    return any(find_spans(normalized, normalize(term)) for term in default_lexicon().want_markers.all())
+
+
 async def merge(ctx: TurnContext) -> str:
     """Details go into slots; new intents start or queue. A short answer to a question is not a new intent."""
     understanding, session = ctx.understanding, ctx.session
     if understanding is None:
         return "no reading to merge"
+    wanted = [i.name for i in understanding.intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
+    _drop_finished_lookup(ctx, wanted)
     for key, value in understanding.entities.items():
         if key in SLOT_KEYS:
             session.slots[key] = value
-    wanted = [i.name for i in understanding.intents if _kind(ctx, i.name) not in ("smalltalk", "handoff")]
     answering_a_question = bool(
         session.awaiting
         and (session.awaiting.startswith("slot:") or session.awaiting in ("order_choice", "intent_choice"))
@@ -510,6 +541,9 @@ async def ask_for_details(ctx: TurnContext, planned: PlannedIntent, *, force_ide
 
 async def handler(ctx: TurnContext) -> str:
     if ctx.plan is None:
+        if _out_of_scope(ctx):
+            ctx.step = Step(Decision.REFUSE, reason="a request this agent does not handle", reply_key="out_of_scope")
+            return "out of scope: refused, a person offered"
         if _count_clarification(ctx, "detail"):
             ctx.step = _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the request is still unclear after asking")
             return "no intent: giving up after repeated clarifications"

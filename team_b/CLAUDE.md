@@ -56,7 +56,7 @@ team_b/
                  rejects any new number/date/month/id/currency/link/citation/time word and any dropped one -> the template is sent;
                  policy passages are appended after the rewrite, never sent to the model; trace step 'rewrite' + versions.rewrite_prompt)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
-                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 58 keys, same keys everywhere; keys: ask_<slot>,
+                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 60 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
                  identity (ensure_verified: verify_tool with order id + phone, attempts counted, wrong phone dropped, identity_failed handoff at max_attempts,
@@ -73,6 +73,14 @@ team_b/
                  claims EXECUTED before the one call, sends key + policy_request_id + approval_id + actor, stores the result, never retries; an executed/confirmed
                  proposal returns its stored result; BACKEND_UNAVAILABLE = clear failure, any other UpstreamError = write_may_have_applied; TurnContext.policy and
                  .proposal_ids feed the trace) - SAFETY-CRITICAL, needs a second reviewer
+                 actions.handle / on_confirmation (the full gate order: identity -> details -> order read + ownership -> permission gate -> risk screen
+                 answered this turn -> check_policy (check_action, one retry) -> allow: confirm_action_<capability> (CONFIRM, pending_action_id) | require_human:
+                 proposal AWAITING_HUMAN + handoff approval_required | deny: refuse (rules in tenant escalation.final_deny_rules) or handoff policy_denied, both with
+                 the rule's own message (template policy_refusal) and citations; yes: order re-read, arguments compared, check_action again, execute once,
+                 verify_result (VERIFIED -> action_done | FAILED -> action_failed, session.write_failures, handoff at max_tool_failures | UNCERTAIN ->
+                 handoff unverified_result, proposal stays EXECUTED); the request ends (active_intent cleared) on done, refusal, no or topic change)
+                 freetext (reason after because/لان/3shan or a clause after the request, new address "to 5 Nile Corniche", the whole answer to a question that
+                 was asked; used by stages.merge) · slots: a const argument is a default that a same-named stated detail replaces (voucher amount)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
@@ -115,7 +123,7 @@ team_b/
   prompts/nlu_v1.md, rewrite_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S09, S12, S15, S28, S29, S32, S38, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S04, S05, S06, S09, S12-S16, S18-S24, S28-S32, S38, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir

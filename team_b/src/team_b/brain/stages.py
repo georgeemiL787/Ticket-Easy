@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import replace
 
-from team_b.brain import actions
+from team_b.brain import actions, freetext
 from team_b.brain.choices import (
     MAX_ORDER_CHOICES,
     conflicting_pair,
@@ -173,6 +173,7 @@ async def pending_confirmation(ctx: TurnContext) -> str:
             ActionState.CANCELLED, at=ctx.now, note="no" if answer == "no" else "the customer changed topic"
         )
         session.pending_action_id, session.awaiting = None, None
+        session.active_intent = None  # the request is over: it must not come back on a later message
         if answer == "no":
             ctx.step = Step(Decision.ANSWER, reason="the customer declined", reply_key="action_cancelled")
             return f"no: {proposal.tool} cancelled"
@@ -297,6 +298,21 @@ async def merge(ctx: TurnContext) -> str:
             session.clarifications = 0  # clarifications are counted per intent
         elif name != session.active_intent and name not in session.intent_queue:
             session.intent_queue.append(name)
+    needed = {
+        slot
+        for name in dict.fromkeys([*wanted, *([session.active_intent] if session.active_intent else [])])
+        if name in ctx.tenant.intents
+        for slot in ctx.tenant.intents[name].required_slots
+    }
+    session.slots.update(
+        freetext.capture(
+            ctx.text,
+            needed,
+            session.awaiting,
+            other_intent=any(name != session.active_intent for name in wanted),
+            entities=understanding.entities,
+        )
+    )
     if answering_a_question:
         return "details only: answers the question that was asked"
     return f"active={session.active_intent or 'none'} queued={','.join(session.intent_queue) or 'none'}"

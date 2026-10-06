@@ -52,6 +52,7 @@ FLAGGED = [
     ("this is a scaaaam!!!", "fraud_suspected"),
     ("7asaseyaaaa shedeeda", "medical_safety"),
     ("ana msh 3aref, it's a fraud 3ala el card", "fraud_suspected"),
+    ("I demand compensation and a voucher", "compensation_demand"),  # the demand is outside the voucher phrase
     ("I want ta3weed, el order wasal 3ala el 7ala el 3ayeba", "compensation_demand"),
 ]
 
@@ -68,6 +69,9 @@ CLEAN = [
     "thanks!",
     # words that merely contain a risky word
     "Thank you, courtesy of the store",
+    "I want a compensation voucher of 300 EGP",  # the shop's own voucher is not a demand
+    "My order is late, can I get the late delivery voucher?",
+    "عايز كوبون تعويض عن التأخير",
     "I love the burnt orange shirt",
     "The app crashed when I paid",
     # Egyptian Arabic

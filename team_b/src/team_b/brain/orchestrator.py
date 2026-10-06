@@ -32,6 +32,7 @@ from team_b.ports import (
     Clock,
     EvidenceProvider,
     NotFoundError,
+    PolicyGate,
     SessionConflictError,
     SessionStore,
     TraceStore,
@@ -85,6 +86,7 @@ class Orchestrator:
         rewriter: Rewriter | None = None,
         events: Publisher | None = None,
         registry: CapabilityRegistry | None = None,
+        policy: PolicyGate | None = None,
     ) -> None:
         self._tenants = tenants
         self._events = events
@@ -101,6 +103,7 @@ class Orchestrator:
             capabilities=capabilities,
             rewriter=rewriter,
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
+            policy=policy,
         )
 
     async def handle_turn(

@@ -20,6 +20,7 @@ from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.evidence import Passage
+from team_b.contracts.tools import ToolSpec
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.tenant import IntentSpec
 
@@ -58,14 +59,29 @@ async def answer(ctx: TurnContext, intent_spec: IntentSpec) -> Step:
     tools = await _tools(ctx)
     if tools is None:
         return _handoff(EscalationReason.DEPENDENCY_UNAVAILABLE, "the shop's tool list is not available")
-    tool = tools.get(intent_spec.lookup_tool or "")
+    if (step := await load_own_order(ctx, intent_spec, tools)) is not None:
+        return step
+    ctx.session.tool_failures = 0  # the read worked
+    passages = await _policy_quote(ctx, intent_spec)
+    return _status_reply(ctx, ctx.session.facts, passages)
+
+
+async def load_own_order(ctx: TurnContext, intent_spec: IntentSpec, tools: dict[str, ToolSpec]) -> Step | None:
+    """Read the order the customer means and make sure it is theirs. None: ctx.session.facts now holds its facts.
+
+    Otherwise a Step: a handoff (tool missing or blocked, not their order) or an honest "could not look that up".
+    Facts are replaced, never merged, so facts of an earlier order can never leak into this one. An intent without a
+    lookup tool has no order to read, and its facts are empty."""
+    session = ctx.session
+    if not intent_spec.lookup_tool:
+        session.facts = {}
+        return None
+    tool = tools.get(intent_spec.lookup_tool)
     if tool is None:
         return _handoff(EscalationReason.CAPABILITY_MISSING, f"the shop does not publish {intent_spec.lookup_tool}")
-
     if not (gate := gates.check_tool(ctx.tenant, tool)).allowed:
         return _handoff(EscalationReason.UNSUPPORTED, f"permission gate: {gate.reason}: {gate.detail}")
 
-    session = ctx.session
     arguments = resolve_arguments(intent_spec, tool, session, {}).arguments
     outcome = await shopcalls.call_read(ctx, tool.name, arguments)
     if not outcome.ok:
@@ -74,15 +90,12 @@ async def answer(ctx: TurnContext, intent_spec: IntentSpec) -> Step:
         return shopcalls.failed_read(ctx, f"reading the order ({outcome.error_code})")
     if not shopcalls.output_complete(tool, outcome.data):
         return shopcalls.failed_read(ctx, "reading the order (the answer was incomplete)")
-    session.tool_failures = 0
 
     order = outcome.data
     if order.get("customer_id") != session.identity.customer_id:
         return _not_theirs(ctx, "the order belongs to another customer")
-
     session.facts = derive_order_facts(order, ctx.deps.clock.today())
-    passages = await _policy_quote(ctx, intent_spec)
-    return _status_reply(ctx, session.facts, passages)
+    return None
 
 
 def _not_theirs(ctx: TurnContext, why: str) -> Step:

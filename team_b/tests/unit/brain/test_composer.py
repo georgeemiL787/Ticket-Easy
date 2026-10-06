@@ -74,7 +74,7 @@ def test_every_locale_has_exactly_the_same_keys() -> None:
 
 
 def test_the_key_count_is_the_one_in_the_report() -> None:
-    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 58, "ar": 58, "arabizi": 58}
+    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 60, "ar": 60, "arabizi": 60}
 
 
 @pytest.mark.parametrize("locale", list(Locale))
@@ -99,7 +99,8 @@ def test_scripts_match_the_locale() -> None:
     for key in FILES[Locale.EN]:
         assert not ARABIC.search(FILES[Locale.EN][key]), key
         assert not ARABIC.search(FILES[Locale.ARABIZI][key]), key
-        assert ARABIC.search(FILES[Locale.AR][key]), key
+        if FILES[Locale.AR][key] != "{message}":  # a pure placeholder (the rule's own message) has no script
+            assert ARABIC.search(FILES[Locale.AR][key]), key
 
 
 def test_the_arabizi_texts_use_the_digit_letters_people_type() -> None:

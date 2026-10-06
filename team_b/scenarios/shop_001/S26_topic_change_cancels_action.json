@@ -3,7 +3,7 @@
   "title": "A topic change during a pending confirmation cancels the action",
   "status": "pending",
   "owner": "A",
-  "pending_reason": "P1.4b slots + action gate flow (identity, ownership, policy check, confirmation); needs the rule checker stand-in",
+  "pending_reason": "needs Track B: knowledge.answer for the shipping-cost question in turn 3 (the action flow itself is covered by unit tests with a stand-in knowledge handler)",
   "setup": {
     "today": "2026-09-28"
   },

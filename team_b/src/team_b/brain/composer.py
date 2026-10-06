@@ -40,6 +40,7 @@ PLACEHOLDERS: Mapping[str, frozenset[str]] = {
     "confirm_action_create_ticket": frozenset({"order_id"}),
     "confirm_action_default": frozenset({"action"}),
     "action_done": frozenset({"reference"}),
+    "policy_refusal": frozenset({"message"}),
 }
 
 

@@ -34,6 +34,8 @@ class EscalationConfig(FrozenModel):
     min_intent_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     escalate_on_deny: bool = True  # a no from the rule checker always goes to a human
     escalate_on_high_frustration: bool = True
+    # Rules whose deny is final: the customer is told no and no case is opened. Any other deny is handed to a person.
+    final_deny_rules: tuple[str, ...] = ()
 
 
 class PermissionsConfig(FrozenModel):

@@ -4,13 +4,14 @@ Keyword and phrase matching over fixtures/<tenant>/risk.json, per category and p
 Text and terms are normalized (spelling variants, diacritics, digits) and matched as whole words or phrases; an
 Arabic term also matches with the attached article or small words (al-, wa-, bi-, li-, lil-). A second pass
 collapses stretched letters ("scaaam") so a customer cannot slip past by lengthening a word.
+A category may list exempt phrases (the shop's own "compensation voucher"): a keyword inside one is ignored.
 flagged is true when any matched category is mandatory. No AI is involved.
 If the risk file cannot be read the screen raises UpstreamError (the brain then blocks actions): never "clear".
 """
 
 import json
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -34,8 +35,13 @@ def _term_regex(term: str) -> re.Pattern[str]:
     return re.compile(rf"(?<!\w){prefix}{re.escape(term)}(?!\w)")
 
 
-def _found(text: str, term: str) -> bool:
-    return _term_regex(term).search(text) is not None
+def _spans(text: str, term: str) -> list[tuple[int, int]]:
+    return [m.span() for m in _term_regex(term).finditer(text)]
+
+
+def _found(text: str, term: str, exempt: Sequence[tuple[int, int]] = ()) -> bool:
+    """Does `term` occur outside the exempt phrases (a match that lies inside one of them does not count)?"""
+    return any(not any(s >= a and e <= b for a, b in exempt) for s, e in _spans(text, term))
 
 
 def _collapse(text: str) -> str:
@@ -47,6 +53,7 @@ class _Category:
         self.name = name
         self.mandatory = spec.get("mandatory_escalation", True) is not False
         # (original term, normalized term, normalized term with stretched letters collapsed)
+        self.exempt = [normalize(e) for e in spec.get("exempt", []) if normalize(e)]
         self.terms = [
             (term, normalize(term), _collapse(normalize(term)))
             for style in STYLES
@@ -73,7 +80,13 @@ class SafetyScreenStandin:
         matched: list[str] = []
         mandatory = False
         for category in self._categories(tenant_id):
-            hits = [term for term, norm, short in category.terms if _found(text, norm) or _found(collapsed, short)]
+            skip = [span for phrase in category.exempt for span in _spans(text, phrase)]
+            skip_short = [span for phrase in category.exempt for span in _spans(collapsed, _collapse(phrase))]
+            hits = [
+                term
+                for term, norm, short in category.terms
+                if _found(text, norm, skip) or _found(collapsed, short, skip_short)
+            ]
             if hits:
                 categories.append(category.name)
                 matched.extend(hits)

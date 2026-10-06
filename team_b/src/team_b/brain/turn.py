@@ -16,7 +16,7 @@ from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
 from team_b.domain.trace import PolicyRecord, ToolCallRecord, TraceStep
 from team_b.domain.understanding import Locale, NLUResult
-from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
+from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, PolicyGate, SessionStore, TraceStore
 
 # after one of these the next queued intent may run
 COMPLETED = frozenset({Decision.ANSWER, Decision.EXECUTE, Decision.REFUSE})
@@ -99,3 +99,4 @@ class Deps:
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
+    policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs

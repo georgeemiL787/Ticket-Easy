@@ -175,7 +175,7 @@ async def test_an_ordinal_picks_the_order(c: Container, answer: str, order: str)
     reply = await say(o, answer)
     session = await session_of(c)
     assert session.slots["order_id"] == order and session.order_choices == []
-    assert "not built yet" in reply.text or reply.awaiting == "detail"  # nothing else is missing: the flow goes on
+    assert reply.awaiting != "order_choice"  # the choice is made: the request goes on to the checks
 
 
 async def test_the_customer_can_type_the_order_number_instead(c: Container) -> None:

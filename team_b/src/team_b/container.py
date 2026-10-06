@@ -120,6 +120,7 @@ def build_container(settings: Settings) -> Container:
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
             events=container.events,
             registry=registry,
+            policy=container.policy,
         ),
     )
 

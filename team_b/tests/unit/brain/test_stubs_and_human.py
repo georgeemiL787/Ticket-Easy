@@ -80,8 +80,8 @@ async def test_the_stubs_return_what_the_pipeline_needs(c: Container) -> None:
     session.identity = SessionIdentity(verified=True, customer_id="C-100", method="test")
     assert await identity.ensure_verified(ctx) is None
     reading = NLUResult(language=Language.EN, language_confidence=0.9, affirmation="yes")
-    confirmed = await actions.on_confirmation(ctx, reading)
-    assert confirmed.decision is Decision.CLARIFY and "not built yet" in confirmed.reason  # never executes
+    confirmed = await actions.on_confirmation(ctx, reading)  # nothing is waiting for a yes: nothing happens
+    assert confirmed.decision is Decision.CLARIFY and "no action is waiting" in confirmed.reason
 
 
 async def test_requests_are_routed_through_the_track_modules(c: Container, monkeypatch: pytest.MonkeyPatch) -> None:

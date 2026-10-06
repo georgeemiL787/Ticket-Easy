@@ -18,7 +18,15 @@
     "max_clarifications": 2,
     "min_intent_confidence": 0.55,
     "escalate_on_deny": true,
-    "escalate_on_high_frustration": true
+    "escalate_on_high_frustration": true,
+    "final_deny_rules": [
+      "R-RETURN-EXCLUDED",
+      "R-RETURN-UNUSED",
+      "R-EXCHANGE-14D",
+      "R-REFUND-STATUS",
+      "R-ADDRESS-BEFORE-SHIP",
+      "R-VOUCHER-LATE-3D"
+    ]
   },
   "permissions": {
     "allowed_tools": [
@@ -233,7 +241,8 @@
         "subject": "const:Customer complaint",
         "description": "slot:description",
         "order_id": "slot:order_id"
-      }
+      },
+      "lookup_tool": "get_order"
     },
     "human_request": {
       "kind": "handoff",

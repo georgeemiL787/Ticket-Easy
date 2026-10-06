@@ -290,11 +290,12 @@ async def test_no_cancels_the_pending_action(c: Container) -> None:
     assert session is not None and (session.pending_action_id, session.awaiting) == (None, None)
 
 
-async def test_yes_never_executes_from_here(c: Container) -> None:
+async def test_yes_without_a_shop_and_rule_checker_executes_nothing(c: Container) -> None:
+    """This pipeline has no shop and no rule checker: the yes cannot be checked, so it is blocked and handed off."""
     o, _ = await pending(c)
     reply = await say(o, "yes")
-    assert reply.decision is Decision.CLARIFY and await action_state(c) is ActionState.AWAITING_CONFIRMATION
-    assert "not built yet" in (await last_trace(c)).decision_reason
+    assert reply.decision is Decision.HANDOFF and await action_state(c) is ActionState.BLOCKED
+    assert (await last_trace(c)).tool_calls == ()
 
 
 async def test_a_topic_change_cancels_the_action_and_the_new_message_goes_on(c: Container) -> None:

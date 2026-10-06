@@ -39,6 +39,8 @@ const en = {
   "common.up": "up",
   "common.down": "down",
   "common.noPrevious": "no earlier data",
+  "common.other": "Other",
+  "common.table": "Show the numbers",
   "common.json": "Raw JSON",
   "common.hideJson": "Hide JSON",
 

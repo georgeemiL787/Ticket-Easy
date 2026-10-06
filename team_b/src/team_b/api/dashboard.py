@@ -106,6 +106,17 @@ class DashboardConversation(BaseModel):
     case: HandoffCase | None
 
 
+class DashboardPassage(BaseModel):
+    """A policy passage exactly as stored, for the evidence a decision stood on."""
+
+    citation: str
+    document_id: str
+    version: str
+    section: str
+    language: str
+    text: str
+
+
 class DashboardRuleCount(BaseModel):
     rule: str  # "<action>:<reason_code>"
     decision: str
@@ -424,6 +435,23 @@ async def get_conversation(request: Request, conversation_id: CONVERSATION, tena
         traces=traces,
         case=cases[-1] if cases else None,
     )
+
+
+@router.get("/passage", response_model=DashboardPassage)
+async def get_passage(
+    request: Request, tenant_id: TENANT, citation: Annotated[str, Query(min_length=1, max_length=200)]
+) -> DashboardPassage:
+    """The words of one policy passage, by the citation a decision recorded (the old return policy is not served)."""
+    b = built(request, tenant_id)
+    if b.evidence is None:
+        raise not_found("no policy store is configured")
+    passage = await b.evidence.get_passage(tenant_id, citation)
+    if passage is None:
+        raise not_found("passage not found")
+    return DashboardPassage(
+        citation=passage.citation, document_id=passage.document_id, version=passage.version,
+        section=passage.section, language=passage.language, text=passage.text,
+    )  # fmt: skip
 
 
 # ---- escalations, tools, knowledge gaps ----

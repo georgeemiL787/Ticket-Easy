@@ -323,3 +323,16 @@ async def test_seeded_staff_work_shows_in_the_case_times_and_the_gaps(seeded: An
     assert sum(p["count"] for p in reply) > 0 and all(p["p50"] is None or p["p50"] > 0 for p in reply)
     gaps = (await http.get("/v1/dashboard/knowledge-gaps", params=LATE)).json()
     assert gaps["questions_without_answer"] > 0 and gaps["groups"][0]["count"] >= 2
+
+
+async def test_a_passage_is_served_by_its_citation(small: Any) -> None:
+    _, http = small
+    found = await http.get("/v1/dashboard/passage", params={"tenant_id": T, "citation": "return_policy@v2#s2"})
+    body = found.json()
+    assert found.status_code == 200 and body["citation"] == "return_policy@v2#s2" and "14" in body["text"]
+    old = await http.get("/v1/dashboard/passage", params={"tenant_id": T, "citation": "return_policy@v1#s2"})
+    assert old.status_code == 404  # superseded passages are never served
+    assert (
+        await http.get("/v1/dashboard/passage", params={"tenant_id": T, "citation": "nope@v1#s9"})
+    ).status_code == 404
+    assert (await http.get("/v1/dashboard/passage", params={"tenant_id": T})).status_code == 422

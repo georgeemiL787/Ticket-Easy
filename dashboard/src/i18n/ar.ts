@@ -41,6 +41,8 @@ const ar: Record<TextKey, string> = {
   "common.up": "زيادة",
   "common.down": "نقص",
   "common.noPrevious": "مفيش بيانات قبل كده",
+  "common.other": "أخرى",
+  "common.table": "عرض الأرقام",
   "common.json": "JSON الخام",
   "common.hideJson": "إخفاء JSON",
 

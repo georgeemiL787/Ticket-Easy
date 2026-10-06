@@ -81,7 +81,7 @@ async def test_container_inject_and_evidence_plug_use_the_same_search(container:
     found = await container.evidence.search_knowledge(T, "emta a2dar araga3 el montag?", request_id="r")
     assert found.passages[0].passage_id == "return_policy@v2#s2"
     with pytest.raises(ValueError, match="no failure switches"):
-        inject(container, "rule_checker", {"switch": "fail_next"})
+        inject(container, "safety_screen", {"switch": "fail_next"})
 
 
 def test_normalize_unifies_arabic_forms_digits_and_punctuation() -> None:

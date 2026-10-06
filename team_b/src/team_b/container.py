@@ -56,6 +56,7 @@ class Container:
     cases: CaseStore
     shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
+    rule_checker: RuleCheckerStandin | None = None  # the rule checker behind `policy`, same purpose
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
@@ -76,12 +77,13 @@ def build_container(settings: Settings) -> Container:
     sessions, traces, cases = build_stores(settings, clock)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
     policy_search = PolicySearchStandin(settings.fixtures_dir)
+    rule_checker = RuleCheckerStandin(settings.fixtures_dir)
     container = Container(
         settings=settings,
         clock=clock,
         tenants=tenants,
         evidence=StandinEvidenceProvider(policy_search, SafetyScreenStandin()),
-        policy=RuleCheckerStandin(),
+        policy=rule_checker,
         capabilities=shop,
         llm=build_llm(settings),
         sessions=sessions,
@@ -89,6 +91,7 @@ def build_container(settings: Settings) -> Container:
         cases=cases,
         shop=shop,
         policy_search=policy_search,
+        rule_checker=rule_checker,
     )
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
@@ -152,4 +155,9 @@ def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:
     if plug == "policy_search" and container.policy_search is not None:
         container.policy_search.inject(spec)
         return
-    raise ValueError(f"no failure switches for plug {plug!r} (only shop and policy_search have them so far)")
+    if plug == "rule_checker" and container.rule_checker is not None:
+        container.rule_checker.inject(spec)
+        return
+    raise ValueError(
+        f"no failure switches for plug {plug!r} (only shop, policy_search and rule_checker have them so far)"
+    )

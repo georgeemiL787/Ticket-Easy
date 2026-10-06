@@ -164,3 +164,15 @@ def test_the_container_picks_the_store_from_settings(tmp_path: Path) -> None:
     assert isinstance(sqlite.cases, SqliteCaseStore)
     memory = build_container(Settings(store="memory"))
     assert not isinstance(memory.sessions, SqliteSessionStore)
+
+
+async def test_several_objects_opening_a_new_database_at_once_do_not_collide(tmp_path: Path) -> None:
+    """The stores, the users and the alerts each open the same file: the first requests may all run the migrations."""
+    import asyncio
+
+    path = tmp_path / "shared.sqlite3"
+    objects = [SqliteDatabase(path) for _ in range(6)]
+    versions = await asyncio.gather(*(db.schema_version() for db in objects))
+    assert set(versions) == {len(migration_files())}
+    with sqlite3.connect(path) as db:
+        assert db.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (len(migration_files()),)

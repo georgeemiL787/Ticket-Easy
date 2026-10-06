@@ -4,6 +4,7 @@ import type { DashboardEscalations } from "../api/types/DashboardEscalations";
 import type { DashboardQueue } from "../api/types/DashboardQueue";
 import type { DashboardTimeseries } from "../api/types/DashboardTimeseries";
 import { useApi } from "../api/useApi";
+import { useAuth } from "../auth";
 import { Async, ErrorState } from "../components/Async";
 import { CasePanel } from "../components/CasePanel";
 import { ChartCard, RowsTable, StackedBars } from "../components/Charts";
@@ -38,7 +39,9 @@ function ReasonsOverTime() {
 export default function Escalations() {
   const { t } = useI18n();
   const filters = useFilters();
-  const [name, setName] = useState(() => rememberedName(NAME_KEY));
+  const user = useAuth()?.me.user ?? null; // signed in: the service knows who acts, whatever is typed
+  const [typedName, setName] = useState(() => rememberedName(NAME_KEY));
+  const name = user ? user.display_name : typedName;
   const [selected, setSelected] = useState<string | null>(null);
   const [assignee, setAssignee] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
@@ -65,19 +68,25 @@ export default function Escalations() {
   return (
     <>
       <h1>{t("esc.title")}</h1>
-      <label className="name-field">
-        <span>{t("esc.manager")}</span>
-        <input
-          type="text"
-          maxLength={80}
-          value={name}
-          dir="auto"
-          onChange={(e) => {
-            setName(e.target.value);
-            rememberName(NAME_KEY, e.target.value.trim());
-          }}
-        />
-      </label>
+      {user ? (
+        <p className="muted">
+          {user.display_name} ({user.role})
+        </p>
+      ) : (
+        <label className="name-field">
+          <span>{t("esc.manager")}</span>
+          <input
+            type="text"
+            maxLength={80}
+            value={typedName}
+            dir="auto"
+            onChange={(e) => {
+              setName(e.target.value);
+              rememberName(NAME_KEY, e.target.value.trim());
+            }}
+          />
+        </label>
+      )}
 
       <h2>{t("esc.queue")}</h2>
       {problem ? <ErrorState message={problem} /> : null}

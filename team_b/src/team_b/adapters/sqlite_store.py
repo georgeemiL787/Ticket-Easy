@@ -30,6 +30,7 @@ from team_b.domain.trace import DecisionTrace
 from team_b.ports import AlreadyExistsError, Clock, NotFoundError, SessionConflictError
 
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
+SETUP_ATTEMPTS, SETUP_WAIT_S = 100, 0.05  # about five seconds of waiting for another opener of a new file
 _MIGRATION_FILE = re.compile(r"^(\d{3})_.+\.sql$")
 
 
@@ -42,18 +43,43 @@ def migration_files(directory: Path = MIGRATIONS_DIR) -> list[tuple[int, Path]]:
     return found
 
 
+def sql_statements(script: str) -> list[str]:
+    """The statements of a migration file, one by one (comments and blank lines dropped)."""
+    found, buffer = [], ""
+    for line in script.splitlines(keepends=True):
+        buffer += line
+        if sqlite3.complete_statement(buffer):
+            if (statement := buffer.strip()) and not all(
+                part.lstrip().startswith("--") or not part.strip() for part in statement.splitlines()
+            ):
+                found.append(statement)
+            buffer = ""
+    return found
+
+
 async def apply_migrations(db: aiosqlite.Connection, directory: Path = MIGRATIONS_DIR) -> int:
-    """Apply the migrations the database has not seen yet; returns the schema version afterwards."""
-    await db.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)")
-    row = await (await db.execute("SELECT MAX(version) FROM schema_version")).fetchone()
-    current = int(row[0]) if row is not None and row[0] is not None else 0
-    for version, path in migration_files(directory):
-        if version <= current:
-            continue
-        await db.executescript(
-            f"BEGIN;\n{path.read_text(encoding='utf-8')}\nINSERT INTO schema_version VALUES ({version});\nCOMMIT;"
-        )
-        current = version
+    """Apply the migrations the database has not seen yet; returns the schema version afterwards.
+
+    Several objects (the stores, the users, the alerts) may open a new file at the same moment. BEGIN IMMEDIATE lets
+    one of them in; the others wait, then find the work done. All pending migrations land in one transaction."""
+    files = migration_files(directory)
+    await db.execute("BEGIN IMMEDIATE")
+    try:
+        await db.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL)")
+        row = await (await db.execute("SELECT MAX(version) FROM schema_version")).fetchone()
+        current = int(row[0]) if row is not None and row[0] is not None else 0
+        for version, path in files:
+            if version <= current:
+                continue
+            for statement in sql_statements(path.read_text(encoding="utf-8")):
+                await db.execute(statement)
+            await db.execute("INSERT INTO schema_version VALUES (?)", (version,))
+            current = version
+        await db.execute("COMMIT")
+    except BaseException:
+        with suppress(sqlite3.Error):
+            await db.execute("ROLLBACK")
+        raise
     return current
 
 
@@ -141,8 +167,17 @@ class SqliteDatabase:
                 return
             self.path.parent.mkdir(parents=True, exist_ok=True)
             async with self._open() as db:
-                await db.execute("PRAGMA journal_mode = WAL")
-                await apply_migrations(db)
+                # Another object may be setting up the same new file right now (the stores, users and alerts each open
+                # it). Switching to WAL and migrating then answer "locked" at once, so try again for a few seconds.
+                for attempt in range(SETUP_ATTEMPTS):
+                    try:
+                        await db.execute("PRAGMA journal_mode = WAL")
+                        await apply_migrations(db)
+                        break
+                    except sqlite3.OperationalError as exc:
+                        if "locked" not in str(exc) and "busy" not in str(exc) or attempt == SETUP_ATTEMPTS - 1:
+                            raise
+                        await asyncio.sleep(SETUP_WAIT_S)
             self._ready = True
 
     async def schema_version(self) -> int:

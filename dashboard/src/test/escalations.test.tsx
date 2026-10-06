@@ -155,6 +155,27 @@ describe("the escalations page", () => {
     await waitFor(() => expect(within(panel).queryByRole("button", { name: "Approve" })).not.toBeInTheDocument());
   });
 
+  it("when signed in, the signed-in person acts and there is no name to type", async () => {
+    let state = fullCase();
+    const calls = install({
+      ...base,
+      "GET /v1/auth/me": () => respond({ auth_required: true, user: { user_id: "u1", email: "m@x.eg", display_name: "Mona", role: "manager", tenants: [T] }, csrf_token: "tok" }),
+      "GET /v1/dashboard/queue": () => respond(queue([row("k1")])),
+      "GET /v1/handoff/cases/k1": () => respond(state),
+      "POST /v1/handoff/cases/k1/claim": () => {
+        state = fullCase({ status: "claimed", claimed_by: "Mona" });
+        return respond(state);
+      },
+    });
+    app("/escalations");
+    expect((await screen.findAllByText("Mona (manager)")).length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Your name (manager)")).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByText("Needs a person's approval", { selector: "button" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Claim" }));
+    await waitFor(() => expect(calls.find((c) => c.path.endsWith("/claim"))?.body).toEqual({ agent: "Mona" }));
+    expect(await screen.findByRole("button", { name: "Approve" })).toBeInTheDocument(); // the buttons follow the signed-in person
+  });
+
   it("a refused action shows the service's message in the panel", async () => {
     install({
       ...base,

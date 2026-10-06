@@ -116,6 +116,7 @@ team_b/
                        app, client (async HTTP client with lifespan), tenants_dir
   tests/unit/  contracts/  domain/  adapters/  api/  test_config.py  test_container.py  ...
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
+                   conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_standins.py runs them on the stand-ins
   tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
   tests/fakes.py      FakeLLM (scripted responses)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite

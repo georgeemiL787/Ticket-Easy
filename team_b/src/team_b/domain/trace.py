@@ -18,6 +18,8 @@ from team_b.domain.session import SessionIdentity
 from team_b.domain.understanding import Frustration, IntentCandidate, Language, NluMethod
 
 TraceKind = Literal["customer_turn", "human_action"]
+TRACE_SCHEMA_VERSION = "1.0"
+REQUIRED_VERSIONS = ("schema", "tenant_config_hash", "lexicon_hash")  # every stored trace names these
 
 
 class EvidenceRef(FrozenModel):
@@ -135,3 +137,22 @@ class DecisionTrace(FrozenModel):
                 + (" without an approval id" if entry.decision == "require_human" else "")
             )
         return self
+
+
+def record_problems(trace: DecisionTrace) -> list[str]:
+    """What is missing from a trace that is about to be stored (or was stored); empty when the record is complete.
+
+    The model validators above reject traces that are wrong. This lists what a complete record must also have:
+    a measured duration on every step that ran, and the versions that produced it (schema, tenant configuration
+    hash, word-list hash, and the prompt id of every AI prompt the turn used)."""
+    problems = [
+        f"step {s.stage} ran but has no duration_ms"
+        for s in trace.steps
+        if s.status != "skipped" and s.duration_ms <= 0
+    ]
+    problems += [f"versions lacks {key}" for key in REQUIRED_VERSIONS if not trace.versions.get(key)]
+    if trace.nlu_method == "llm" and not trace.versions.get("prompt"):
+        problems.append("versions lacks prompt (the NLU prompt id)")
+    if any(s.stage == "rewrite" for s in trace.steps) and not trace.versions.get("rewrite_prompt"):
+        problems.append("versions lacks rewrite_prompt")
+    return problems

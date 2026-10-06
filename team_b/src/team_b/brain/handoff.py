@@ -33,8 +33,10 @@ from team_b.domain.handoff import (
 from team_b.domain.tenant import TenantConfig
 from team_b.domain.trace import DecisionTrace, PolicyRecord
 from team_b.domain.understanding import Language
+from team_b.observability import get_logger
 
 _T = TypeVar("_T")
+log = get_logger(__name__)
 MAX_QUOTES = 5
 MAX_SIMILAR = 3
 
@@ -366,6 +368,7 @@ async def open_case(
         outcome = await add_ai_summary(ctx.deps.llm, package)
         package = outcome.package
         ctx.versions["handoff_summary"] = f"{outcome.status}: {outcome.detail}"
+        ctx.versions["handoff_summary_prompt"] = package.prompt_version or "handoff_summary_v1"
     case = HandoffCase(
         case_id=f"case-{uuid.uuid4().hex[:12]}",
         tenant_id=session.tenant_id,
@@ -380,4 +383,8 @@ async def open_case(
     session.handoff_case_id = case.case_id
     session.last_escalation = reason
     session.handoff_notice_sent = False
+    log.info(
+        "handoff_created", case_id=case.case_id, reason=reason.value, priority=case.package.priority,
+        summary_source=case.package.summary_source,
+    )  # fmt: skip
     return case.case_id

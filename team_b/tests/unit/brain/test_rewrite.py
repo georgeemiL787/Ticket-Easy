@@ -225,7 +225,7 @@ async def test_a_used_rewrite_reaches_the_customer_and_is_recorded(c: Container)
     trace = await trace_of(c)
     assert reply.text == "Hi there! How can I help you today?" == trace.response_text
     step = next(s for s in trace.steps if s.stage == "rewrite")
-    assert (step.status, step.detail) == ("used", "reworded") and trace.versions == {"rewrite_prompt": "rewrite_v1"}
+    assert (step.status, step.detail) == ("used", "reworded") and trace.versions["rewrite_prompt"] == "rewrite_v1"
 
 
 async def test_a_rejected_rewrite_sends_the_template_and_says_so(c: Container) -> None:

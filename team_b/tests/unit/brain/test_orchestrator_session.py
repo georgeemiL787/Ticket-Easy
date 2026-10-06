@@ -107,7 +107,7 @@ async def test_the_trace_records_how_the_message_was_understood(c: Container) ->
     assert trace.language is Language.EN and trace.nlu_method == "rules"
     assert [i.name for i in trace.intents] == ["refund_request"]
     assert trace.entities == {"order_id": "NS-20512", "phone": "[phone]", "amount": "300"}  # the phone is hidden
-    assert trace.frustration == "low" and trace.versions == {}
+    assert trace.frustration == "low" and "prompt" not in trace.versions
 
 
 async def test_an_ai_assisted_turn_records_the_method_and_the_prompt_version(c: Container) -> None:
@@ -120,7 +120,7 @@ async def test_an_ai_assisted_turn_records_the_method_and_the_prompt_version(c: 
     )
     await custom.handle_turn(T, C, "I want my money back")
     (trace,) = await c.traces.for_conversation(T, C)
-    assert trace.nlu_method == "llm" and trace.versions == {"prompt": "nlu_v1"}
+    assert trace.nlu_method == "llm" and trace.versions["prompt"] == "nlu_v1"
     assert [i.name for i in trace.intents] == ["refund_request"]
 
 

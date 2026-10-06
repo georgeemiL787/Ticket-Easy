@@ -4,6 +4,7 @@ Failures are collected as plain sentences ("S07 turn 2 expect.decision: expected
 scenario says what went wrong without a debugger. The write-safety check at the end runs for every active scenario.
 """
 
+import json
 import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -11,10 +12,11 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from team_b.brain.handoff import incomplete
+from team_b.brain.redaction import sensitive_kinds
 from team_b.container import Container, build_container, inject
 from team_b.domain.handoff import HandoffCase
 from team_b.domain.reply import AgentReply
-from team_b.domain.trace import DecisionTrace
+from team_b.domain.trace import DecisionTrace, record_problems
 from tests.integration.scenario_format import Expect, Final, Inject, Scenario
 from tests.support import make_settings
 
@@ -183,6 +185,25 @@ async def check_trace_invariants(
     return problems
 
 
+def trace_texts(trace: DecisionTrace) -> list[str]:
+    """Every free-text field of a trace (ids, scores and timings are not scanned)."""
+    texts = [trace.customer_message, trace.response_text, trace.decision_reason, *trace.errors]
+    texts += [*trace.entities.values(), *(s.detail for s in trace.steps), *trace.versions.values()]
+    texts += [json.dumps(call.arguments, ensure_ascii=False) for call in trace.tool_calls]
+    return texts
+
+
+async def check_record_and_privacy(container: Container, tenant_id: str, conversation_id: str) -> list[str]:
+    """Always on: every stored trace is a complete record (durations, versions) and shows no personal value."""
+    problems = []
+    for trace in await container.traces.for_conversation(tenant_id, conversation_id):
+        problems += [f"trace {trace.trace_id} is incomplete: {p}" for p in record_problems(trace)]
+        kinds = set().union(*(sensitive_kinds(text) for text in trace_texts(trace)))
+        if kinds:
+            problems.append(f"PRIVACY: trace {trace.trace_id} holds a personal value ({', '.join(sorted(kinds))})")
+    return problems
+
+
 async def case_of(container: Container, tenant_id: str, conversation_id: str) -> HandoffCase | None:
     cases = [c for c in await container.cases.list(tenant_id) if c.conversation_id == conversation_id]
     return cases[-1] if cases else None
@@ -220,6 +241,8 @@ async def check_final(
         compare("case_priority", final.case_priority, case.package.priority if case else None)
     if final.case_has_pending_approval is not None:
         compare("case_has_pending_approval", final.case_has_pending_approval, bool(case and case.pending_approval))
+    found = await check_record_and_privacy(container, tenant_id, conversation_id)
+    problems += [f"{sid} {p}" for p in found]
     if case is not None:  # every case any scenario opens must carry a complete briefing
         problems += [f"{sid} briefing is missing: {m}" for m in incomplete(case)]
     if final.trace_invariants:

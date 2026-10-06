@@ -15,15 +15,19 @@ from typing import Any
 
 from team_b.brain import stages
 from team_b.brain.composer import default_composer
-from team_b.brain.redaction import redact
+from team_b.brain.redaction import redact, redact_mapping, redact_value
 from team_b.brain.rewrite import REWRITABLE
 from team_b.brain.turn import Deps, StageFn, Step, TurnContext, locale_of
+from team_b.brain.versions import base_versions
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import DecisionTrace, TraceStep
+from team_b.domain.trace import DecisionTrace, TraceStep, record_problems
 from team_b.domain.understanding import Language, Locale, NLUResult
+from team_b.observability import get_logger, turn_context
+
+log = get_logger(__name__)
 
 
 @dataclass(frozen=True)
@@ -59,7 +63,7 @@ async def run_stage(ctx: TurnContext, stage: Stage) -> None:
         skip = stage.skip_when_decided and decided
     if skip:
         why = "already decided" if decided else "nothing to do"
-        ctx.steps.append(TraceStep(stage=stage.name, status="skipped", detail=why))
+        ctx.steps.append(TraceStep(stage=stage.name, status="skipped", duration_ms=0.0, detail=why))
         return
     detail = await stage.run(ctx)
     ctx.steps.append(
@@ -74,8 +78,10 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
     text = composer.t(locale, step.reply_key, **step.values)
     rewriter = ctx.deps.rewriter
     if rewriter is not None and step.decision in REWRITABLE and not step.silent:
+        started = time.perf_counter()
         result = await rewriter.reword(text, locale, {k: str(v) for k, v in step.values.items()})
-        ctx.steps.append(TraceStep(stage="rewrite", status=result.status, detail=result.detail))
+        elapsed = (time.perf_counter() - started) * 1000
+        ctx.steps.append(TraceStep(stage="rewrite", status=result.status, duration_ms=elapsed, detail=result.detail))
         ctx.versions["rewrite_prompt"] = getattr(rewriter, "prompt_version", "unknown")
         text = result.text
     if step.passages:
@@ -97,7 +103,7 @@ def understanding_fields(result: NLUResult | None) -> dict[str, Any]:
     return {
         "language": result.language,
         "intents": result.intents,
-        "entities": {key: redact(value) for key, value in result.entities.items()},
+        "entities": {key: str(redact_value(key, value)) for key, value in result.entities.items()},
         "nlu_method": result.method,
         "frustration": result.frustration,
         "versions": {"prompt": result.prompt_version} if result.prompt_version else {},
@@ -112,6 +118,26 @@ async def _trim(ctx: TurnContext) -> None:
         folded = session.history[:excess]
         session.history_summary = await ctx.deps.summarizer.summarize(session, folded, ctx.tenant)
         del session.history[:excess]
+
+
+def log_turn_events(ctx: TurnContext, trace: DecisionTrace) -> None:
+    """One log line per policy check, tool call and the end of the turn (ids and codes only, no message text)."""
+    for entry in trace.policy:
+        log.info(
+            "policy_check", action=entry.action, decision=entry.decision, reason_code=entry.reason_code,
+            policy_request_id=entry.request_id,
+        )  # fmt: skip
+    for call in trace.tool_calls:
+        log.info(
+            "tool_call", tool=call.tool, operation_kind=call.operation_kind, status=call.status,
+            error_code=call.error_code, audit_id=call.audit_id, latency_ms=round(call.latency_ms, 1),
+        )  # fmt: skip
+    log.info(
+        "turn_complete", decision=trace.decision.value,
+        escalation_reason=trace.escalation_reason.value if trace.escalation_reason else None,
+        intents=[i.name for i in trace.intents], latency_ms=round(trace.latency_ms, 1), error_count=len(trace.errors),
+        handoff_case_id=trace.handoff_case_id,
+    )  # fmt: skip
 
 
 async def finish(ctx: TurnContext) -> AgentReply:
@@ -134,7 +160,8 @@ async def finish(ctx: TurnContext) -> AgentReply:
 
     citations = tuple(dict.fromkeys(c for s in (*ctx.earlier, step) for c in s.citations))
     fields = understanding_fields(ctx.understanding)
-    fields["versions"] = {**fields.get("versions", {}), **ctx.versions}
+    fields["versions"] = {**base_versions(ctx.tenant), **fields.get("versions", {}), **ctx.versions}
+    calls = tuple(call.model_copy(update={"arguments": redact_mapping(call.arguments)}) for call in ctx.tool_calls)
     trace = DecisionTrace(
         trace_id=ctx.trace_id,
         request_id=ctx.request_id,
@@ -150,18 +177,22 @@ async def finish(ctx: TurnContext) -> AgentReply:
         evidence_empty_reason=ctx.evidence_empty_reason,
         knowledge_answer=any(s.knowledge for s in (*ctx.earlier, step)),
         decision=step.decision,
-        decision_reason=step.reason,
-        response_text=text,
+        decision_reason=redact(step.reason),
+        response_text=redact(text),  # the customer gets `text`; the stored record hides personal values
         response_citations=citations,
         escalation_reason=step.escalation if step.decision is Decision.HANDOFF else None,
         handoff_case_id=(ctx.handoff_case_id or session.handoff_case_id) if step.decision is Decision.HANDOFF else None,
-        tool_calls=tuple(ctx.tool_calls),
-        errors=tuple(ctx.errors),
+        tool_calls=calls,
+        errors=tuple(redact(e) for e in ctx.errors),
         steps=tuple(ctx.steps),
         latency_ms=(time.perf_counter() - ctx.started) * 1000,
     )
+    problems = record_problems(trace)
+    if problems:  # a bug in the brain, never the customer's doing: fail loudly rather than store a thin record
+        raise ValueError(f"incomplete trace {trace.trace_id}: {'; '.join(problems)}")
     await ctx.deps.sessions.save(session)
     await ctx.deps.traces.add(trace)
+    log_turn_events(ctx, trace)
     return AgentReply(
         request_id=ctx.request_id,
         tenant_id=ctx.tenant.tenant_id,
@@ -226,6 +257,13 @@ async def run_turn(
     """Handle one customer message start to finish, one message at a time per conversation."""
     async with deps.sessions.lock(tenant.tenant_id, conversation_id):
         ctx = await _load(deps, tenant, conversation_id, text, request_id, channel)
-        for stage in STAGES:
-            await run_stage(ctx, stage)
-        return await finish(ctx)
+        with turn_context(
+            tenant_id=tenant.tenant_id,
+            conversation_id=conversation_id,
+            request_id=ctx.request_id,
+            trace_id=ctx.trace_id,
+        ):
+            log.info("turn_start", turn_index=ctx.session.turn_index, channel=channel, message_chars=len(text))
+            for stage in STAGES:
+                await run_stage(ctx, stage)
+            return await finish(ctx)

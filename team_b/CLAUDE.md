@@ -76,6 +76,12 @@ team_b/
                  order_id/order_ids/phone/amount; yes/no only if the whole message is one; wants_human; frustration low/medium/high)
                  text (normalize, contains_term, find_spans), lexicon (Lexicon, default_lexicon: data/lexicon/default.json), language
                  (detect_language -> (Language|None, confidence); LOCALE_FOR/locale_for: the one en/ar/mixed->ar/arabizi table)
+                 versions (base_versions: schema, tenant_config_hash, lexicon_hash on every trace; prompt ids from the NLU, rewrite and summary);
+                 trace rules: model validators (handoff has a reason, writes are authorized, policy answers are cited) + record_problems()
+                 (every step that ran has duration_ms, versions complete) enforced in pipeline.finish; redaction hides phone/email/card/otp/address
+                 in entities, tool arguments, customer_message, response_text, decision_reason, errors before storing (the customer still gets the
+                 real text); log events turn_start, turn_complete, policy_check, tool_call, handoff_created, dependency_error, all with the 4 ids
+                 (observability.turn_context); the scenario runner scans every stored trace for personal values and incomplete records
                  summarizer (Template + LLM history summaries, LLM text rejected on invented facts);
                  add_ai_summary (handoff summary from prompts/handoff_summary_v1.md: input = the structured package only, output
                  summary_en/summary_customer_language/suggested_next_step, check_grounded against the package else the template stays;

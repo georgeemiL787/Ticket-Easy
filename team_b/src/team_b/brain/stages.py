@@ -125,6 +125,7 @@ async def risk_screen(ctx: TurnContext) -> str:
         except (UpstreamError, NotImplementedError) as exc:
             ctx.risk_unavailable = True
             ctx.errors.append(f"safety screen unavailable: {type(exc).__name__}")
+            log.warning("dependency_error", service="safety_screen", error=type(exc).__name__)
     if assessment is not None:
         ctx.risk = assessment
         flags += [c for c in assessment.categories if c not in flags]
@@ -378,6 +379,7 @@ async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
         return {t.name: t for t in await ctx.deps.capabilities.list_tools(ctx.tenant.tenant_id)}
     except UpstreamError:
         ctx.errors.append("the shop tool list is unavailable")
+        log.warning("dependency_error", service="shop_tools", code="tool_list")
         return None
 
 
@@ -397,6 +399,7 @@ async def _list_orders(ctx: TurnContext) -> list[dict[str, str]] | None:
         result = await capabilities.call_tool(ctx.tenant.tenant_id, request)
     except UpstreamError as exc:
         ctx.errors.append(f"order list unavailable: {exc.code}")
+        log.warning("dependency_error", service="shop_tools", code=exc.code)
         return None
     ctx.tool_calls.append(
         ToolCallRecord(

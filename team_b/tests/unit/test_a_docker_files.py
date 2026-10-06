@@ -69,3 +69,26 @@ async def test_seed_demo_fills_the_database_once(
     assert "nothing seeded" in capsys.readouterr().out
     assert await seed_demo(3, 2, force=True) == 0
     assert "seeded 3 conversations" in capsys.readouterr().out
+
+
+async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_show(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The compose demo pins the clock: the history must end there, and the Alerts page needs a resolved outage."""
+    from datetime import UTC, date, datetime
+
+    from team_b.__main__ import seed_demo
+    from team_b.config import Settings
+    from team_b.container import build_container
+
+    monkeypatch.setenv("TEAM_B_DB_PATH", str(tmp_path / "demo.sqlite3"))
+    monkeypatch.setenv("TEAM_B_FIXED_TODAY", "2026-09-28")
+    assert await seed_demo(40, 6, force=False) == 0
+    container = build_container(Settings.from_env().model_copy(update={"store": "sqlite"}))  # the clock the service has
+    assert container.alerts is not None
+    alerts = await container.alerts.list("shop_001")
+    assert any(a.rule == "service_down" and a.resolved_at is not None for a in alerts)
+    end = datetime(2026, 9, 28, 12, tzinfo=UTC)
+    facts = await container.traces.facts("shop_001", end.replace(year=2026, month=9, day=20), end.replace(hour=23))
+    assert len(facts.turns) >= 40  # inside the window the dashboard looks at (it ends at the service's "now")
+    assert date(2026, 9, 28) == container.clock.today()

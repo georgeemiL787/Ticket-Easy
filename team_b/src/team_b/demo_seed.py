@@ -111,7 +111,9 @@ async def _handle_case(container: Container, clock: DriftClock, rng: random.Rand
     return False
 
 
-async def seed(container: Container, clock: DriftClock, *, conversations: int, days: int, seed: int = 1) -> SeedReport:
+async def seed(
+    container: Container, clock: DriftClock, *, conversations: int, days: int, seed: int = 1, prefix: str = "seed"
+) -> SeedReport:
     """Run `conversations` synthetic conversations spread over the `days` that start at the clock's current moment."""
     rng = random.Random(seed)
     report = SeedReport()
@@ -121,7 +123,7 @@ async def seed(container: Container, clock: DriftClock, *, conversations: int, d
     for number, start in enumerate(starts):
         clock.jump_to(start)
         kind = rng.choices(names, weights)[0]
-        conversation = f"seed-{number:04d}"
+        conversation = f"{prefix}-{number:04d}"
         report.kinds[kind] = report.kinds.get(kind, 0) + 1
         if kind == "outage":
             assert container.policy_search is not None

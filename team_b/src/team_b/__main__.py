@@ -11,7 +11,8 @@ from team_b import eval_conversations as convo
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.config import Settings
-from team_b.container import build_llm
+from team_b.container import Container, build_llm
+from team_b.demo_seed import DriftClock
 from team_b.domain.tenant import TenantRegistry
 from team_b.judge import Judge, agreement, pick_spotcheck, write_spotcheck
 from team_b.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
@@ -74,24 +75,57 @@ async def eval_conversations(directory: Path, use_llm: bool, out: Path, save: bo
 
 
 async def seed_demo(conversations: int, days: int, force: bool) -> int:
-    """Fill the SQLite database with synthetic conversations for the dashboard, unless it already has some."""
+    """Fill the SQLite database with synthetic conversations for the dashboard, unless it already has some.
+
+    The timeline ends at the service's own "now" (the fixed demo day if TEAM_B_FIXED_TODAY is set, else today), so the
+    dashboard's windows contain it. Two days from the end a short outage of the policy search is played with the
+    alert engine watching: the Alerts page then shows a resolved "service down"; what holds at the end stays open."""
     import logging
+    from datetime import UTC, datetime, time, timedelta
 
     from team_b.container import build_container
-    from team_b.demo_seed import TENANT, clock_for, seed
+    from team_b.demo_seed import TENANT, DriftClock, seed
     from team_b.observability import configure_logging
 
     settings = Settings.from_env().model_copy(update={"store": "sqlite"})
     configure_logging(json_logs=False, level=logging.WARNING)
-    clock = clock_for(days)
+    end = datetime.combine(settings.fixed_today, time(12, 0), tzinfo=UTC) if settings.fixed_today else datetime.now(UTC)
+    clock = DriftClock(end - timedelta(days=days))
     container = build_container(settings, clock=clock)
     if not force and await container.traces.query(TENANT, limit=1):
         print(f"{settings.db_path} already has conversations: nothing seeded (use --force to add more)")
         return 0
-    report = await seed(container, clock, conversations=conversations, days=days)
-    print(f"seeded {report.conversations} conversations ({report.turns} turns), {report.cases} cases")
+    earlier = int(conversations * 0.85)
+    first = await seed(container, clock, conversations=earlier, days=max(1, days - 2), prefix="seed")
+    await outage_incident(container, clock)
+    second = await seed(container, clock, conversations=conversations - earlier, days=2, seed=2, prefix="late")
+    if container.alert_engine is not None:
+        await container.alert_engine.evaluate(TENANT)
+        opened = [a.rule for a in await container.alerts.list(TENANT, open_only=True)] if container.alerts else []
+        print("open alerts:", ", ".join(opened) or "none")
+    print(f"seeded {first.conversations + second.conversations} conversations, {first.cases + second.cases} cases")
     print(f"database: {settings.db_path}")
     return 0
+
+
+async def outage_incident(container: "Container", clock: "DriftClock") -> None:
+    """The policy search is down for a few minutes while customers ask questions, then it recovers."""
+    from team_b.demo_seed import TENANT
+
+    assert container.policy_search is not None and container.orchestrator is not None
+    container.policy_search.fail_next("search_knowledge", 1000)
+    for i in range(6):
+        await container.orchestrator.handle_turn(TENANT, f"incident-{i}", "What is your return policy?")
+        clock.advance(seconds=20)
+    if container.alert_engine is not None:
+        await container.alert_engine.evaluate(TENANT)  # service down opens
+    container.policy_search.reset()
+    clock.advance(minutes=10)
+    for i in range(3):
+        await container.orchestrator.handle_turn(TENANT, f"recovered-{i}", "What is your return policy?")
+        clock.advance(seconds=30)
+    if container.alert_engine is not None:
+        await container.alert_engine.evaluate(TENANT)  # and resolves
 
 
 def main(argv: Sequence[str] | None = None) -> int:

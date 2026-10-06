@@ -171,3 +171,26 @@ async def test_listing_needs_a_known_tenant_and_a_valid_status(
     assert (await http.get("/v1/dashboard/alerts")).status_code == 422
     assert (await http.get("/v1/dashboard/alerts", params={"tenant_id": "nope"})).status_code == 404
     assert (await http.get("/v1/dashboard/alerts", params={"tenant_id": T, "status": "weird"})).status_code == 422
+
+
+DASHBOARD_ALERT_FIELDS = {
+    "alert_id",
+    "rule",
+    "severity",
+    "opened_at",
+    "resolved_at",
+    "acknowledged_by",
+}  # dashboard/src/pages/Alerts.tsx
+
+
+async def test_the_alert_json_has_every_field_the_dashboard_page_reads(
+    run: tuple[httpx.AsyncClient, Container, StepClock],
+) -> None:
+    http, container, clock = run
+    assert container.policy_search is not None and container.alert_engine is not None
+    container.policy_search.fail_next("search_knowledge", times=100)
+    await seeded_traffic(container, clock, 6, seed=8, tag="dash")
+    await container.alert_engine.evaluate(T)
+    body = await alerts(http)
+    assert set(body) >= {"alerts", "open_count"}  # the page accepts a list or an object with "alerts"
+    assert DASHBOARD_ALERT_FIELDS <= set(body["alerts"][0])

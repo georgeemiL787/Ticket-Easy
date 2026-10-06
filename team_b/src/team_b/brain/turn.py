@@ -7,6 +7,7 @@ from datetime import datetime
 
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
+from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import Passage, RiskAssessment
@@ -95,3 +96,4 @@ class Deps:
     handlers: Mapping[str, Handler]  # by intent kind
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
+    registry: CapabilityRegistry | None = None  # the cached list of published shop tools

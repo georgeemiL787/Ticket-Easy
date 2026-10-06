@@ -253,8 +253,11 @@ async def test_a_failed_list_result_falls_back_to_asking_the_number(c: Container
 class ManyOrders:
     """A shop that lists five orders, to check the limit of three."""
 
+    def __init__(self, tools: list[Any]) -> None:
+        self._tools = tools
+
     async def list_tools(self, tenant_id: str) -> list[Any]:
-        return []
+        return self._tools
 
     async def call_tool(self, tenant_id: str, request: ToolCallRequest) -> ToolResult:
         orders = [
@@ -264,7 +267,7 @@ class ManyOrders:
 
 
 async def test_at_most_three_orders_are_offered_newest_first(c: Container) -> None:
-    o = orch(c, capabilities=ManyOrders())
+    o = orch(c, capabilities=ManyOrders(await c.capabilities.list_tools(T)))
     await say(o, "Hello")
     session = await session_of(c)
     session.identity = SessionIdentity(verified=True, customer_id="C-100", method="test")

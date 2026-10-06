@@ -149,3 +149,7 @@
 {"id": "arabizi-055", "text": "3ayez flousi 3000 geneh", "language": "arabizi", "intents": ["refund_request"], "entities": {"amount": "3000"}, "wants_human": false}
 {"id": "arabizi-056", "text": "3ayez araga3 w a3mel refund", "language": "arabizi", "intents": ["return_request", "refund_request"], "entities": {}, "wants_human": false}
 {"id": "arabizi-057", "text": "mesh 3ayez a8ayar el 3enwan", "language": "arabizi", "intents": [], "entities": {}, "wants_human": false}
+{"id": "en-del-001", "text": "Please delete my account and all my data", "language": "en", "intents": ["delete_account"], "entities": {}, "wants_human": false}
+{"id": "en-del-002", "text": "I want to close my account", "language": "en", "intents": ["delete_account"], "entities": {}, "wants_human": false}
+{"id": "ar-del-001", "text": "عايز امسح حسابي", "language": "ar", "intents": ["delete_account"], "entities": {}, "wants_human": false}
+{"id": "arabizi-del-001", "text": "3ayez emsa7 7esaby", "language": "arabizi", "intents": ["delete_account"], "entities": {}, "wants_human": false}

@@ -21,6 +21,7 @@ from team_b.adapters.standins.shop import StandinShop
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
+from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.config import Settings
@@ -58,6 +59,7 @@ class Container:
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
     rule_checker: RuleCheckerStandin | None = None  # the rule checker behind `policy`, same purpose
     safety_screen: SafetyScreenStandin | None = None  # the safety screen behind `evidence`, same purpose
+    registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
@@ -96,6 +98,7 @@ def build_container(settings: Settings) -> Container:
         rule_checker=rule_checker,
         safety_screen=safety_screen,
     )
+    registry = CapabilityRegistry(container.capabilities, clock, settings.capability_ttl_s)
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
     )
@@ -103,6 +106,7 @@ def build_container(settings: Settings) -> Container:
     return replace(
         container,
         nlu=nlu,
+        registry=registry,
         orchestrator=Orchestrator(
             clock=clock,
             tenants=tenants,
@@ -115,6 +119,7 @@ def build_container(settings: Settings) -> Container:
             capabilities=container.capabilities,
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
             events=container.events,
+            registry=registry,
         ),
     )
 

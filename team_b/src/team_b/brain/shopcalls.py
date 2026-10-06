@@ -79,6 +79,8 @@ async def call_read(ctx: TurnContext, tool: str, arguments: dict[str, Any]) -> R
             if result.status == "success":
                 return outcome
         ctx.errors.append(f"{tool} failed: {outcome.error_code}")
+        if outcome.error_code == "TOOL_NOT_PUBLISHED" and ctx.deps.registry is not None:
+            ctx.deps.registry.drop(ctx.tenant.tenant_id)  # the remembered tool list is out of date
         if not retryable:
             break
     return outcome

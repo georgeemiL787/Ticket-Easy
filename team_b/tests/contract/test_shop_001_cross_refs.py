@@ -74,7 +74,9 @@ def test_intent_tools_exist_and_are_allowed(tenant: TenantConfig, tools: list[To
     for name, spec in tenant.intents.items():
         for tool in (spec.lookup_tool, spec.action_tool):
             if tool:
-                assert tool in known and tool in tenant.permissions.allowed_tools, f"{name}: {tool}"
+                # a person-only tool is mapped on purpose: the permission gate hands such a request to a human
+                allowed = tool in tenant.permissions.allowed_tools or (tool in known and known[tool].human_only)
+                assert tool in known and allowed, f"{name}: {tool}"
         if spec.lookup_tool:
             assert known[spec.lookup_tool].operation_kind == "read", name
         if spec.action_tool:
@@ -96,7 +98,7 @@ def test_argument_maps_fit_the_tool_inputs(tenant: TenantConfig, tools: list[Too
         assert set(inputs["required"]) <= set(spec.argument_map), f"{name}: a required input has no source"
         for argument, source in spec.argument_map.items():
             kind, _, value = source.partition(":")
-            assert kind in {"slot", "fact", "const"} and value, f"{name}.{argument}: {source}"
+            assert kind in {"slot", "fact", "const", "identity"} and value, f"{name}.{argument}: {source}"
             if kind == "slot":
                 assert value in spec.required_slots, f"{name}.{argument}: slot {value} is never asked for"
             if kind == "fact":

@@ -245,6 +245,25 @@
       ],
       "required_slots": [],
       "argument_map": {}
+    },
+    "delete_account": {
+      "kind": "action",
+      "description": "The customer wants their account and personal data deleted. Only a person may do this.",
+      "examples": [
+        "Please delete my account and all my data",
+        "عايز امسح حسابي",
+        "3ayez emsa7 7esaby"
+      ],
+      "required_slots": [],
+      "action_tool": "delete_customer",
+      "argument_map": {
+        "customer_id": "identity:customer_id"
+      },
+      "labels": {
+        "en": "delete your account",
+        "ar": "مسح الحساب",
+        "arabizi": "mas7 el account"
+      }
     }
   },
   "conflicting_intents": [

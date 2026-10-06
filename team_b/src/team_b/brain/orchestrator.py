@@ -17,6 +17,7 @@ from typing import Any, Protocol
 from team_b.brain import actions, knowledge, lookup
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
+from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
@@ -83,6 +84,7 @@ class Orchestrator:
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
         events: Publisher | None = None,
+        registry: CapabilityRegistry | None = None,
     ) -> None:
         self._tenants = tenants
         self._events = events
@@ -98,6 +100,7 @@ class Orchestrator:
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
             capabilities=capabilities,
             rewriter=rewriter,
+            registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
         )
 
     async def handle_turn(

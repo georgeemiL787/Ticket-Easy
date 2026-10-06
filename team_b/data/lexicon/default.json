@@ -143,6 +143,23 @@
         "refund للاوردر", "refund ده", "اعمل refund", "عايز refund", "الـ refund", "رد الـ refund"
       ]
     },
+    "delete_account": {
+      "en": [
+        "delete my account", "delete the account", "delete account", "delete my data", "delete all my data",
+        "close my account", "remove my account", "erase my data", "erase my account"
+      ],
+      "ar": [
+        "امسح حسابي", "احذف حسابي", "مسح الحساب", "حذف حسابي", "احذف بياناتي", "امسح بياناتي", "عايز احذف الحساب",
+        "عايز امسح الحساب", "حذف الحساب"
+      ],
+      "arabizi": [
+        "emsa7 7esaby", "emsah hesaby", "emsa7 el account", "e7zef 7esaby", "ehzef el account", "delete el account",
+        "mse7 7esaby", "mas7 el account"
+      ],
+      "mixed": [
+        "delete حسابي", "احذف الـ account", "امسح الـ account"
+      ]
+    },
     "cancel_order": {
       "en": [
         "cancel", "cancel my order", "cancel it", "cancel the order", "call off", "cancellation"

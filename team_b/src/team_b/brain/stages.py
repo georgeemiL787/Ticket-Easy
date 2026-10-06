@@ -372,6 +372,11 @@ def _give_up(ctx: TurnContext, reason: EscalationReason, why: str) -> Step:
 
 async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
     """The shop's published tools by name, or None when they cannot be listed (then the safe assumptions apply)."""
+    if ctx.deps.registry is not None:
+        catalog = await ctx.deps.registry.catalog(ctx.tenant.tenant_id)
+        if catalog is None:
+            ctx.errors.append("the shop tool list is unavailable")
+        return catalog.tools if catalog is not None else None
     if ctx.deps.capabilities is None:
         return None
     try:
@@ -411,6 +416,8 @@ async def _list_orders(ctx: TurnContext) -> list[dict[str, str]] | None:
         )
     )
     if result.status != "success":
+        if result.error_code == "TOOL_NOT_PUBLISHED" and ctx.deps.registry is not None:
+            ctx.deps.registry.drop(ctx.tenant.tenant_id)
         ctx.errors.append(f"order list failed: {result.error_code}")
         return None
     orders = [o for o in result.data.get("orders", []) if o.get("order_status") != "cancelled"]

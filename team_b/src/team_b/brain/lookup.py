@@ -14,7 +14,7 @@ the failure is counted, and at max_tool_failures the conversation goes to a pers
 from datetime import date
 from typing import Any
 
-from team_b.brain import identity, knowledge, shopcalls
+from team_b.brain import gates, identity, knowledge, shopcalls
 from team_b.brain.composer import default_composer
 from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
@@ -61,6 +61,9 @@ async def answer(ctx: TurnContext, intent_spec: IntentSpec) -> Step:
     tool = tools.get(intent_spec.lookup_tool or "")
     if tool is None:
         return _handoff(EscalationReason.CAPABILITY_MISSING, f"the shop does not publish {intent_spec.lookup_tool}")
+
+    if not (gate := gates.check_tool(ctx.tenant, tool)).allowed:
+        return _handoff(EscalationReason.UNSUPPORTED, f"permission gate: {gate.reason}: {gate.detail}")
 
     session = ctx.session
     arguments = resolve_arguments(intent_spec, tool, session, {}).arguments

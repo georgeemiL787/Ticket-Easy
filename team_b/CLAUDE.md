@@ -131,6 +131,9 @@ team_b/
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
                    conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_standins.py runs them on the stand-ins
   tests/integration/  scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
+                      test_a_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
+                      success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-brain self-tests),
+                      test_a_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial                                                                        (planned)

@@ -32,6 +32,7 @@ ENV_VARS: dict[str, str] = {
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
     "queue_max_runs": "TEAM_B_QUEUE_MAX_RUNS",
     "alert_webhook": "TEAM_B_ALERT_WEBHOOK",
+    "enable_test_admin": "TEAM_B_ENABLE_TEST_ADMIN",
     "alert_interval_s": "TEAM_B_ALERT_INTERVAL_S",
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
@@ -61,6 +62,7 @@ class Settings(BaseModel):
     llm_timeout_s: float = Field(default=20.0, gt=0)
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
+    enable_test_admin: bool = False  # 1: /v1/_test/* (chaos switches, audit report) exists. Never in production.
     alert_webhook: str | None = (
         None  # optional URL that receives every opened and resolved alert (JSON, no message text)
     )

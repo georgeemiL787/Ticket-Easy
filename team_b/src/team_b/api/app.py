@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from team_b.api import alerts as alerts_api
-from team_b.api import capabilities, chat, dashboard, inbox, traces
+from team_b.api import capabilities, chat, dashboard, inbox, testadmin, traces
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
 from team_b.brain.alerts import alert_loop
@@ -102,6 +102,9 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(traces.router)
     app.include_router(inbox.router)
     app.include_router(alerts_api.router)
+    chosen = container.settings if container is not None else (settings or Settings.from_env())
+    if chosen.enable_test_admin:  # test-only endpoints, off unless TEAM_B_ENABLE_TEST_ADMIN=1
+        testadmin.install(app)
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
     mount_chat_page(app)

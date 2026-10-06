@@ -204,7 +204,8 @@ async def test_handoff_opens_a_case_with_the_transcript_and_marks_the_session(c:
     assert case is not None and session is not None
     assert (case.status, case.package.priority, case.conversation_id) == (CaseStatus.OPEN, "normal", C)
     assert [m.role for m in case.package.transcript] == ["customer", "agent", "customer"]
-    assert case.package.details["phone"] == "[phone]" and case.package.details["order_id"] == "NS-20877"
+    assert "phone" not in case.package.details and case.package.details["order_id"] == "NS-20877"
+    assert case.package.customer.phone_masked == "010****5601"
     assert case.package.customer.orders == ("NS-20877",)
     assert (session.status, session.handoff_case_id, session.awaiting) == ("handed_off", case.case_id, "human")
     assert session.last_escalation is EscalationReason.CUSTOMER_REQUEST

@@ -3,6 +3,23 @@
     "AttemptedAction": {
       "additionalProperties": false,
       "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "audit_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Audit Id"
+        },
         "error": {
           "anyOf": [
             {
@@ -14,6 +31,26 @@
           ],
           "default": null,
           "title": "Error"
+        },
+        "execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Id"
+        },
+        "history": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "History",
+          "type": "array"
         },
         "proposal_id": {
           "title": "Proposal Id",
@@ -50,6 +87,18 @@
           ],
           "default": null,
           "title": "Customer Id"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Method"
         },
         "orders": {
           "default": [],
@@ -101,26 +150,45 @@
       "title": "EscalationReason",
       "type": "string"
     },
-    "Message": {
+    "FailureRecord": {
       "additionalProperties": false,
+      "description": "A tool or system failure seen in this conversation.",
       "properties": {
-        "at": {
-          "format": "date-time",
-          "title": "At",
-          "type": "string"
-        },
-        "role": {
-          "enum": [
-            "customer",
-            "agent",
-            "human_agent",
-            "system"
+        "audit_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
           ],
-          "title": "Role",
+          "default": null,
+          "title": "Audit Id"
+        },
+        "error_code": {
+          "title": "Error Code",
           "type": "string"
         },
-        "text": {
-          "title": "Text",
+        "execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Id"
+        },
+        "message": {
+          "default": "",
+          "title": "Message",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
           "type": "string"
         },
         "trace_id": {
@@ -137,11 +205,56 @@
         }
       },
       "required": [
-        "role",
-        "text",
-        "at"
+        "source",
+        "error_code"
       ],
-      "title": "Message",
+      "title": "FailureRecord",
+      "type": "object"
+    },
+    "Language": {
+      "description": "Language style of the customer message.",
+      "enum": [
+        "en",
+        "ar",
+        "mixed",
+        "arabizi"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "PendingApproval": {
+      "additionalProperties": false,
+      "description": "An action that waits for a human to approve it.",
+      "properties": {
+        "arguments": {
+          "additionalProperties": true,
+          "title": "Arguments",
+          "type": "object"
+        },
+        "capability": {
+          "title": "Capability",
+          "type": "string"
+        },
+        "proposal_id": {
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "tool": {
+          "title": "Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "tool",
+        "capability"
+      ],
+      "title": "PendingApproval",
       "type": "object"
     },
     "PolicyQuote": {
@@ -205,6 +318,69 @@
       ],
       "title": "PolicyRecord",
       "type": "object"
+    },
+    "SimilarTicket": {
+      "additionalProperties": false,
+      "description": "A past ticket that looks like this one, so staff can see how it was solved.",
+      "properties": {
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        },
+        "resolution": {
+          "title": "Resolution",
+          "type": "string"
+        },
+        "ticket_id": {
+          "title": "Ticket Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ticket_id",
+        "category",
+        "resolution",
+        "citation"
+      ],
+      "title": "SimilarTicket",
+      "type": "object"
+    },
+    "TranscriptLine": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "customer",
+            "agent"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "turn_index": {
+          "title": "Turn Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "role",
+        "text",
+        "trace_id",
+        "turn_index"
+      ],
+      "title": "TranscriptLine",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -245,6 +421,11 @@
     "customer": {
       "$ref": "#/$defs/CustomerSnapshot"
     },
+    "detail": {
+      "default": "",
+      "title": "Detail",
+      "type": "string"
+    },
     "details": {
       "additionalProperties": {
         "type": "string"
@@ -255,15 +436,45 @@
     "failures": {
       "default": [],
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/FailureRecord"
       },
       "title": "Failures",
       "type": "array"
+    },
+    "intents": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Intents",
+      "type": "array"
+    },
+    "language": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Language"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "order_facts": {
       "additionalProperties": true,
       "title": "Order Facts",
       "type": "object"
+    },
+    "pending_approval": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PendingApproval"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "policy_quotes": {
       "default": [],
@@ -302,6 +513,14 @@
       "title": "Safety Flags",
       "type": "array"
     },
+    "similar_tickets": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/SimilarTicket"
+      },
+      "title": "Similar Tickets",
+      "type": "array"
+    },
     "suggested_next_step": {
       "title": "Suggested Next Step",
       "type": "string"
@@ -310,10 +529,27 @@
       "title": "Summary",
       "type": "string"
     },
+    "summary_source": {
+      "default": "template",
+      "enum": [
+        "template",
+        "ai"
+      ],
+      "title": "Summary Source",
+      "type": "string"
+    },
+    "trace_ids": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Trace Ids",
+      "type": "array"
+    },
     "transcript": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/Message"
+        "$ref": "#/$defs/TranscriptLine"
       },
       "title": "Transcript",
       "type": "array"

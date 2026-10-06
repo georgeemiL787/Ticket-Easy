@@ -1,17 +1,9 @@
 """The conversation as it can be rebuilt from stored traces (what handoff shows a human)."""
 
 from collections.abc import Sequence
-from typing import Literal
 
-from team_b.domain.base import FrozenModel
+from team_b.domain.handoff import TranscriptLine
 from team_b.domain.trace import DecisionTrace
-
-
-class TranscriptLine(FrozenModel):
-    role: Literal["customer", "agent"]
-    text: str  # redacted: phones, emails, cards and codes are hidden
-    trace_id: str
-    turn_index: int
 
 
 def transcript_from_traces(traces: Sequence[DecisionTrace]) -> list[TranscriptLine]:

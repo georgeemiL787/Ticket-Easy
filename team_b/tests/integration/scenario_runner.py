@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+from team_b.brain.handoff import incomplete
 from team_b.container import Container, build_container, inject
 from team_b.domain.handoff import HandoffCase
 from team_b.domain.reply import AgentReply
@@ -219,6 +220,8 @@ async def check_final(
         compare("case_priority", final.case_priority, case.package.priority if case else None)
     if final.case_has_pending_approval is not None:
         compare("case_has_pending_approval", final.case_has_pending_approval, bool(case and case.pending_approval))
+    if case is not None:  # every case any scenario opens must carry a complete briefing
+        problems += [f"{sid} briefing is missing: {m}" for m in incomplete(case)]
     if final.trace_invariants:
         found = await check_trace_invariants(container, tenant_id, conversation_id, replies)
         problems += [f"{sid} final.trace_invariants: {p}" for p in found]

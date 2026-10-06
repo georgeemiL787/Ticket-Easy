@@ -174,7 +174,7 @@ async def quote_for(ctx: TurnContext, query: str) -> list[Passage]:
     return list(passages)
 
 
-async def quote_citations(ctx: TurnContext, citations: tuple[str, ...]) -> list[Passage]:
+async def quote_citations(ctx: TurnContext, citations: tuple[str, ...], *, record: bool = True) -> list[Passage]:
     """The passages behind citations already given (a rule's policy sentence, a handoff briefing), word for word.
 
     A citation the policy store no longer holds (or one that is superseded) is left out, never replaced by a guess."""
@@ -190,5 +190,6 @@ async def quote_citations(ctx: TurnContext, citations: tuple[str, ...]) -> list[
             continue
         if passage is not None:
             found.append(passage)
-    _record(ctx, tuple(found))
+    if record:
+        _record(ctx, tuple(found))
     return found

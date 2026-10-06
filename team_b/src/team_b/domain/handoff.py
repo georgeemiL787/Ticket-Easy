@@ -9,8 +9,8 @@ from pydantic import Field
 
 from team_b.domain.base import FrozenModel, MutableModel
 from team_b.domain.decision import EscalationReason
-from team_b.domain.session import Message
 from team_b.domain.trace import PolicyRecord
+from team_b.domain.understanding import Language
 
 Priority = Literal["urgent", "high", "normal", "low"]
 
@@ -38,7 +38,8 @@ class IllegalCaseTransitionError(ValueError):
 class CustomerSnapshot(FrozenModel):
     verified: bool = False
     customer_id: str | None = None
-    phone_masked: str | None = None  # only the last digits are shown to staff
+    method: str | None = None  # how they were verified
+    phone_masked: str | None = None  # only the last digits are shown to staff, like 010****5678
     orders: tuple[str, ...] = ()
 
 
@@ -54,6 +55,37 @@ class AttemptedAction(FrozenModel):
     tool: str
     state: str  # how far it got
     error: str | None = None
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    history: tuple[str, ...] = ()  # "proposed -> awaiting_confirmation (note)", oldest first
+    audit_id: str | None = None
+    execution_id: str | None = None  # the shop's reference for what was done
+
+
+class FailureRecord(FrozenModel):
+    """A tool or system failure seen in this conversation."""
+
+    source: str  # the tool or service
+    error_code: str
+    message: str = ""
+    audit_id: str | None = None
+    execution_id: str | None = None
+    trace_id: str | None = None
+
+
+class TranscriptLine(FrozenModel):
+    role: Literal["customer", "agent"]
+    text: str  # redacted: phones, emails, cards and codes are hidden
+    trace_id: str
+    turn_index: int
+
+
+class SimilarTicket(FrozenModel):
+    """A past ticket that looks like this one, so staff can see how it was solved."""
+
+    ticket_id: str
+    category: str
+    resolution: str
+    citation: str
 
 
 class PendingApproval(FrozenModel):
@@ -70,18 +102,25 @@ class HandoffPackage(FrozenModel):
     """Everything a human needs, built from recorded facts so the customer never has to repeat anything."""
 
     summary: str
+    summary_source: Literal["template", "ai"] = "template"
     reason: EscalationReason
+    detail: str = ""  # the specific cause, e.g. which rule or system
     priority: Priority
     suggested_next_step: str
+    language: Language | None = None
+    intents: tuple[str, ...] = ()
     customer: CustomerSnapshot = Field(default_factory=CustomerSnapshot)
-    details: dict[str, str] = Field(default_factory=dict)  # details collected from the customer
+    details: dict[str, str] = Field(default_factory=dict)  # details collected from the customer (not the phone)
     order_facts: dict[str, Any] = Field(default_factory=dict)
     safety_flags: tuple[str, ...] = ()
     policy_quotes: tuple[PolicyQuote, ...] = ()
     rule_answers: tuple[PolicyRecord, ...] = ()
     attempted_actions: tuple[AttemptedAction, ...] = ()
-    failures: tuple[str, ...] = ()
-    transcript: tuple[Message, ...] = ()
+    failures: tuple[FailureRecord, ...] = ()
+    pending_approval: PendingApproval | None = None
+    transcript: tuple[TranscriptLine, ...] = ()
+    trace_ids: tuple[str, ...] = ()
+    similar_tickets: tuple[SimilarTicket, ...] = ()
     ai_summary: str | None = None  # shown labelled as AI-written
     ai_suggestion: str | None = None  # shown labelled "suggestion, not approved"
 

@@ -60,8 +60,10 @@ team_b/
                  handoff dependency_unavailable; quote_for, quote_citations via get_passage; trace.knowledge_answer needs evidence + citations)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
                  {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 59 keys, same keys everywhere; keys: ask_<slot>,
-                 confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
-                 and open_case, the real briefing comes later)
+                 confirm_action_<capability>, status_<status>, handoff_<reason>)
+                 handoff (DEFAULT_PRIORITY + NEXT_STEP en/ar per reason, tenant escalation.priorities/next_steps override; open_case builds
+                 the HandoffPackage from session + traces + get_passage quotes + past tickets; mask_phone; incomplete(case) = briefing
+                 completeness check, run by the scenario runner on every case)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);

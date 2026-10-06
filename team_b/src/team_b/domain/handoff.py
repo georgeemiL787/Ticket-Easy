@@ -35,6 +35,10 @@ class IllegalCaseTransitionError(ValueError):
     """The requested move is not in ALLOWED_CASE_TRANSITIONS."""
 
 
+class CaseOwnershipError(IllegalCaseTransitionError):
+    """Only the person who claimed a case may work on it."""
+
+
 class CustomerSnapshot(FrozenModel):
     verified: bool = False
     customer_id: str | None = None
@@ -158,6 +162,13 @@ class HandoffCase(MutableModel):
         elif to is CaseStatus.OPEN:
             self.__dict__["claimed_by"] = None
         self.updated_at = at
+
+    def require_claimer(self, agent: str) -> None:
+        """Raise unless the case is claimed by `agent` (replying, deciding, resolving and returning need this)."""
+        if self.status is not CaseStatus.CLAIMED:
+            raise IllegalCaseTransitionError(f"the case is {self.status.value}: claim it first")
+        if self.claimed_by != agent:
+            raise CaseOwnershipError(f"the case is claimed by {self.claimed_by}")
 
     def add_event(self, *, actor: str, kind: str, at: datetime, note: str = "") -> None:
         """Record something that is not a status change (a reply, an approval, a rejection)."""

@@ -181,10 +181,11 @@ async def test_claim_and_release(c: Container) -> None:
 
 async def test_a_reply_is_recorded_and_reaches_the_customer_live(c: Container) -> None:
     o, case_id = await handed_off(c)
+    await o.claim(case_id, "agent-1")
     queue = c.events.subscribe(T, C)
     await o.human_reply(case_id, "agent-1", "Hello, I am here.")
     case = await c.cases.get(T, case_id)
-    assert case is not None and case.status is CaseStatus.CLAIMED  # replying claims an open case
+    assert case is not None and case.status is CaseStatus.CLAIMED
     assert [(e.actor, e.kind, e.note) for e in case.events if e.kind == "reply"] == [
         ("agent-1", "reply", "Hello, I am here.")
     ]
@@ -204,6 +205,7 @@ async def test_the_chat_goes_back_to_the_agent_after_return_to_agent(c: Containe
 
 async def test_resolve_closes_the_case(c: Container) -> None:
     o, case_id = await handed_off(c)
+    await o.claim(case_id, "agent-1")
     await o.resolve(case_id, "agent-1", "done")
     assert await status_of(c, case_id) is CaseStatus.RESOLVED
 
@@ -222,6 +224,44 @@ async def test_human_decide_waits_for_track_a(c: Container) -> None:
     o, case_id = await handed_off(c)
     with pytest.raises(NotImplementedError, match="Track A"):
         await o.human_decide(case_id, "agent-1", True)
+
+
+async def test_only_the_person_who_claimed_the_case_may_work_on_it(c: Container) -> None:
+    from team_b.domain.handoff import CaseOwnershipError, IllegalCaseTransitionError
+
+    o, case_id = await handed_off(c)
+    for unclaimed in (
+        o.human_reply(case_id, "agent-1", "hi"), o.resolve(case_id, "agent-1"), o.release(case_id, "agent-1"),
+    ):  # fmt: skip
+        with pytest.raises(IllegalCaseTransitionError, match="claim it first"):
+            await unclaimed
+    await o.claim(case_id, "agent-1")
+    with pytest.raises(IllegalCaseTransitionError):
+        await o.claim(case_id, "agent-2")  # already taken
+    for other in (
+        o.human_reply(case_id, "agent-2", "hi"), o.resolve(case_id, "agent-2"), o.release(case_id, "agent-2"),
+        o.return_to_agent(case_id, "agent-2"),
+    ):  # fmt: skip
+        with pytest.raises(CaseOwnershipError, match="claimed by agent-1"):
+            await other
+    assert await status_of(c, case_id) is CaseStatus.CLAIMED
+
+
+async def test_returning_the_chat_reactivates_the_session_with_its_memory(c: Container) -> None:
+    o = orch(c)
+    await o.handle_turn(T, C, "Where is my order NS-20877? my phone is 01012345601")
+    reply = await o.handle_turn(T, C, "I want to talk to a human")
+    case_id = reply.handoff_case_id or ""
+    before = await c.sessions.load(T, C)
+    assert before is not None and before.status == "handed_off"
+    await o.claim(case_id, "agent-1")
+    await o.return_to_agent(case_id, "agent-1")
+    after = await c.sessions.load(T, C)
+    assert after is not None and (after.status, after.handoff_case_id, after.awaiting) == ("active", None, None)
+    assert (after.slots, after.identity, after.facts, after.intents_seen) == (
+        before.slots, before.identity, before.facts, before.intents_seen,
+    )  # fmt: skip
+    assert after.history == before.history and after.history_summary == before.history_summary
 
 
 # ---- the alert model ----

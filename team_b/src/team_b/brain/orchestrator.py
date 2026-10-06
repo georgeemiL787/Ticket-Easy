@@ -144,6 +144,18 @@ class Orchestrator:
                 return found
         raise NotFoundError(f"case {case_id} does not exist")
 
+    async def _reopen_conversation(self, case: HandoffCase) -> None:
+        """The case is over: the assistant owns the conversation again, its memory (slots, identity) intact."""
+        deps = self._deps
+        async with deps.sessions.lock(case.tenant_id, case.conversation_id):
+            session = await deps.sessions.load(case.tenant_id, case.conversation_id)
+            if session is None or session.handoff_case_id != case.case_id:
+                return  # gone, or already linked to a newer case
+            session.status, session.handoff_case_id, session.handoff_notice_sent = "active", None, False
+            session.awaiting = None
+            session.updated_at = self._clock.now()
+            await deps.sessions.save(session)
+
     async def claim(self, case_id: str, agent: str) -> None:
         """The agent takes the case: from now on they own the conversation."""
         case = await self._case(case_id)
@@ -153,14 +165,14 @@ class Orchestrator:
     async def release(self, case_id: str, agent: str) -> None:
         """The agent gives the case back to the queue."""
         case = await self._case(case_id)
+        case.require_claimer(agent)
         case.transition(CaseStatus.OPEN, actor=agent, at=self._clock.now())
         await self._deps.cases.save(case)
 
     async def human_reply(self, case_id: str, agent: str, text: str) -> None:
         """The agent writes to the customer: recorded on the case and delivered live through the outbox."""
         case = await self._case(case_id)
-        if case.status is CaseStatus.OPEN:
-            case.transition(CaseStatus.CLAIMED, actor=agent, at=self._clock.now())
+        case.require_claimer(agent)
         case.add_event(actor=agent, kind="reply", at=self._clock.now(), note=text)
         await self._deps.cases.save(case)
         await self.push_to_customer(case.tenant_id, case.conversation_id, text)
@@ -172,11 +184,15 @@ class Orchestrator:
     async def return_to_agent(self, case_id: str, agent: str, note: str | None = None) -> None:
         """The agent hands the conversation back to the assistant."""
         case = await self._case(case_id)
+        case.require_claimer(agent)
         case.transition(CaseStatus.RETURNED_TO_AGENT, actor=agent, at=self._clock.now(), note=note or "")
         await self._deps.cases.save(case)
+        await self._reopen_conversation(case)
 
     async def resolve(self, case_id: str, agent: str, note: str | None = None) -> None:
         """The agent closes the case."""
         case = await self._case(case_id)
+        case.require_claimer(agent)
         case.transition(CaseStatus.RESOLVED, actor=agent, at=self._clock.now(), note=note or "")
         await self._deps.cases.save(case)
+        await self._reopen_conversation(case)

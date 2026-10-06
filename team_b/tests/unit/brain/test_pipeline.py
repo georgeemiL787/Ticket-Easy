@@ -297,9 +297,10 @@ async def test_yes_never_executes_from_here(c: Container) -> None:
 
 async def test_a_topic_change_cancels_the_action_and_the_new_message_goes_on(c: Container) -> None:
     o, _ = await pending(c)
+    o = orch(c, evidence=c.evidence)  # same stores, with the policy search
     reply = await say(o, "actually, how much does shipping cost?")
     assert await action_state(c) is ActionState.CANCELLED
-    assert reply.decision is Decision.CLARIFY  # the placeholder for the knowledge handler
+    assert reply.decision is Decision.ANSWER and reply.citations  # the new question is answered from the policies
     assert "topic change" in next(s.detail for s in (await last_trace(c)).steps if s.stage == "pending_confirmation")
 
 
@@ -404,10 +405,10 @@ async def test_small_talk_is_answered_from_templates(c: Container, text: str, ke
     assert (reply.decision, reply.text, reply.awaiting) == (Decision.ANSWER, expected, None)
 
 
-async def test_a_knowledge_request_gets_the_placeholder_for_now(c: Container) -> None:
-    reply = await say(orch(c), "What is your return policy?")
-    assert (reply.decision, reply.awaiting) == (Decision.CLARIFY, "detail")
-    assert "not built yet" in (await last_trace(c)).decision_reason
+async def test_a_knowledge_request_without_a_policy_search_is_handed_off(c: Container) -> None:
+    reply = await say(orch(c), "What is your return policy?")  # FakeEvidence has no policy search
+    assert (reply.decision, reply.awaiting) == (Decision.HANDOFF, "human")
+    assert (await last_trace(c)).escalation_reason is EscalationReason.DEPENDENCY_UNAVAILABLE
 
 
 async def test_no_intent_asks_for_detail(c: Container) -> None:

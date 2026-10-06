@@ -52,6 +52,8 @@ class PolicySearchStandin:
     # Calibrated on the sample questions: the weakest correct hit scores 5.27, unrelated questions stay at or below 5.0.
     MIN_SCORE = 5.1  # below this the question is treated as not covered by the policies
     MIN_TICKET_SCORE = 4.0
+    # A long question matched on one word only ("offer" in "Do you offer gift wrapping?") counts as not covered.
+    LONG_QUERY_WORDS, LONG_QUERY_MIN_MATCHES = 4, 2
     SHORT_QUERY_WORDS, SHORT_QUERY_MIN_SCORE = 2, 2.0  # one or two words can only ever match a little
 
     def __init__(self, fixtures_dir: Path) -> None:
@@ -128,7 +130,7 @@ class PolicySearchStandin:
     def _enough(self, hit: Hit) -> bool:
         """Strong score, or a short question whose every word is covered by the passage."""
         if hit.score >= self.MIN_SCORE:
-            return True
+            return hit.words < self.LONG_QUERY_WORDS or len(hit.matched) >= self.LONG_QUERY_MIN_MATCHES
         return hit.words <= self.SHORT_QUERY_WORDS and hit.coverage >= 1.0 and hit.score >= self.SHORT_QUERY_MIN_SCORE
 
     def _maybe_fail(self, operation: str) -> None:

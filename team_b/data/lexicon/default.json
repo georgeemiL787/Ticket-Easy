@@ -47,19 +47,19 @@
         "how long", "how much is shipping", "shipping cost", "shipping fee", "shipping fees", "delivery time",
         "delivery fee", "delivery fees", "delivery cost", "cash on delivery", "payment methods", "payment options",
         "exchange policy", "do you ship", "outside egypt", "gift wrap", "gift wrapping", "loyalty points",
-        "working hours", "opening hours", "customer service hours"
+        "working hours", "opening hours", "customer service hours", "warranty", "guarantee"
       ],
       "ar": [
         "سياسة", "سياسه الاسترجاع", "سياسة الاسترجاع", "سياسة الاستبدال", "سياسة الشحن", "مدة الاسترجاع",
         "مده الاسترجاع", "كام يوم", "بعد كام يوم", "الشحن بكام", "مصاريف الشحن", "مصروفات الشحن", "تكلفة الشحن",
         "تكلفه الشحن", "مدة التوصيل", "مواعيد التوصيل", "الدفع عند الاستلام", "طرق الدفع", "تغليف هدايا", "تغليف هديه",
-        "نقاط الولاء", "بتشحنوا", "تشحنوا", "مواعيد العمل", "مواعيد الشغل"
+        "نقاط الولاء", "بتشحنوا", "تشحنوا", "مواعيد العمل", "مواعيد الشغل", "ضمان", "الضمان"
       ],
       "arabizi": [
         "policy", "siyasa", "siyasit el estrga3", "siyaset el estrga3", "kam yom", "ba3d kam yom", "el shahn bekam",
         "shahn bekam", "masrouf el shahn", "masarif el shahn", "ta2leef el shahn", "el dafa3 3and el estlam",
         "dafa3 3and el estlam", "toro2 el dafa3", "ta8leef hadaya", "ne2at el wala2", "mawa3id el 3amal", "bteshnou",
-        "beteshnu"
+        "beteshnu", "damaan", "el damaan", "daman", "el daman"
       ],
       "mixed": [
         "الـ policy", "سياسة الـ return", "سياسة الـ refund", "مدة الـ delivery", "الـ shipping cost",

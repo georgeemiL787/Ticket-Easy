@@ -1,8 +1,9 @@
 """DecisionTrace: the record of why the brain did what it did, for one message or one human action.
 
-Two invariants are checked on every trace (safety-critical):
+Three invariants are checked on every trace (safety-critical):
 1. A handoff always has an escalation reason.
-2. Every tool call that is not a read is backed, in the same trace, by a policy entry that allowed it
+2. A policy answer carries retrieved evidence and the citations it quoted (never an answer from nowhere).
+3. Every tool call that is not a read is backed, in the same trace, by a policy entry that allowed it
    (or by require_human plus an approval id on the call). A write without that cannot even be recorded.
 """
 
@@ -84,6 +85,7 @@ class DecisionTrace(FrozenModel):
     risk_categories: tuple[str, ...] = ()
     evidence: tuple[EvidenceRef, ...] = ()
     evidence_empty_reason: str | None = None
+    knowledge_answer: bool = False  # the reply answers a policy question
     proposals: tuple[ProposalRecord, ...] = ()
     permission: PermissionRecord | None = None
     policy: tuple[PolicyRecord, ...] = ()
@@ -103,6 +105,16 @@ class DecisionTrace(FrozenModel):
     def _handoff_has_reason(self) -> Self:
         if self.decision is Decision.HANDOFF and self.escalation_reason is None:
             raise ValueError("a handoff must have an escalation_reason")
+        return self
+
+    @model_validator(mode="after")
+    def _knowledge_answer_is_cited(self) -> Self:
+        if (
+            self.knowledge_answer
+            and self.decision is Decision.ANSWER
+            and not (self.evidence and self.response_citations)
+        ):
+            raise ValueError("a policy answer needs retrieved evidence and a non-empty response_citations")
         return self
 
     @model_validator(mode="after")

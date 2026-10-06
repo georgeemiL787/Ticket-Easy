@@ -55,8 +55,11 @@ team_b/
                  rewrite (LLMRewriter, TEAM_B_LLM_REWRITE=1: the model may reword ANSWER/CLARIFY/VERIFY_IDENTITY replies only; composer.check_grounded
                  rejects any new number/date/month/id/currency/link/citation/time word and any dropped one -> the template is sent;
                  policy passages are appended after the rewrite, never sent to the model; trace step 'rewrite' + versions.rewrite_prompt)
+                 knowledge (answer: policy search with message + knowledge_query, one normalized retry for mixed/arabizi, 60 s cache per (tenant, query),
+                 top passage(s) quoted verbatim; empty -> ask_rephrase once then handoff no_evidence; search down (one retry) ->
+                 handoff dependency_unavailable; quote_for, quote_citations via get_passage; trace.knowledge_answer needs evidence + citations)
                  composer (ResponseComposer.t/t_first/passage_block/policy_message; render(key, locale); PLACEHOLDERS = key -> its
-                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 58 keys, same keys everywhere; keys: ask_<slot>,
+                 {placeholders}; texts in data/locales/<locale>/{core,actions,knowledge,handoff}.json, 59 keys, same keys everywhere; keys: ask_<slot>,
                  confirm_action_<capability>, status_<status>, handoff_<reason>), handoff (stub: ESCALATION_DEFAULTS
                  and open_case, the real briefing comes later)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
@@ -95,7 +98,7 @@ team_b/
   prompts/nlu_v1.md, rewrite_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
-  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S08, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
+  scenarios/shop_001/  scripted test conversations, one JSON file each (S00, S01, S02, S08, S10, S17, S25, S34, S40, S43 active; the rest pending until the brain exists; S41 and S42 cover disambiguation)
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
   tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir

@@ -72,8 +72,9 @@ async def test_the_stubs_return_what_the_pipeline_needs(c: Container) -> None:
         deps=o._deps, tenant=c.tenants.get(T), session=session, text="x", now=NOW, request_id="r", trace_id="t"
     )
     ctx.plan = PlannedIntent("policy_question", "knowledge")
-    step = await knowledge.answer(ctx)
-    assert isinstance(step, Step) and step.decision is Decision.CLARIFY and "not built yet" in step.reason
+    step = await knowledge.answer(ctx)  # FakeEvidence has no policy search: fail closed
+    assert isinstance(step, Step) and step.decision is Decision.HANDOFF
+    assert step.escalation is EscalationReason.DEPENDENCY_UNAVAILABLE
     assert await knowledge.quote_for(ctx, "return policy") == []
     assert await identity.ensure_verified(ctx) is None
     reading = NLUResult(language=Language.EN, language_confidence=0.9, affirmation="yes")

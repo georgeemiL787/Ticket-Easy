@@ -497,6 +497,11 @@
       "title": "Kind",
       "type": "string"
     },
+    "knowledge_answer": {
+      "default": false,
+      "title": "Knowledge Answer",
+      "type": "boolean"
+    },
     "language": {
       "anyOf": [
         {

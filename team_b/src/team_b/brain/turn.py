@@ -13,7 +13,7 @@ from team_b.contracts.evidence import Passage, RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
-from team_b.domain.trace import ToolCallRecord, TraceStep
+from team_b.domain.trace import EvidenceRef, ToolCallRecord, TraceStep
 from team_b.domain.understanding import Locale, NLUResult
 from team_b.ports import CapabilityClient, CaseStore, Clock, EvidenceProvider, SessionStore, TraceStore
 
@@ -35,6 +35,7 @@ class Step:
     awaiting: str | None = None  # what the agent waits for next: slot:<name>, confirmation, detail, human
     silent: bool = False  # say nothing (a customer message that only goes to the human who owns the chat)
     passages: tuple[Passage, ...] = ()  # policy passages quoted verbatim after the reply; never sent to the AI model
+    knowledge: bool = False  # a policy answer: the trace must then show the evidence it came from
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:
@@ -69,6 +70,8 @@ class TurnContext:
     tool_calls: list[ToolCallRecord] = field(default_factory=list)
     versions: dict[str, str] = field(default_factory=dict)  # prompt versions used this turn
     errors: list[str] = field(default_factory=list)
+    evidence: list[EvidenceRef] = field(default_factory=list)  # policy passages retrieved this turn
+    evidence_empty_reason: str | None = None
 
 
 def locale_of(ctx: TurnContext) -> Locale:

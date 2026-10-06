@@ -1,9 +1,8 @@
 {
   "id": "S25",
   "title": "A return question never cites the superseded return_policy v1",
-  "status": "pending",
+  "status": "active",
   "owner": "B",
-  "pending_reason": "P1.4a turn pipeline + knowledge handler (needs P1.3b understanding, P1.5a templates)",
   "setup": {
     "today": "2026-09-28"
   },

@@ -46,7 +46,7 @@ EN = [
     ("Hello", ["greeting"]),
     ("thanks, bye", ["greeting"]),
     ("Please book me a flight to Dubai", []),
-    ("Do you offer a five year warranty on electronics?", []),
+    ("Do you offer a five year warranty on electronics?", ["policy_question"]),
 ]
 AR = [
     ("الاوردر بتاعي وصل فين؟", ["order_status"]),

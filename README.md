@@ -6,6 +6,32 @@ Ticket-Easy is an AI agent for Egyptian businesses that answers customers in the
 
 ---
 
+## Run the demo
+
+You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) running. Nothing else: no Python, no Node.
+
+```bash
+make demo
+```
+
+The first start takes a few minutes (it builds the service and the dashboard). When it is ready it prints three links:
+
+| Link | What you see |
+|---|---|
+| <http://localhost:8010/chat?tenant_id=shop_001> | the customer chat. Try: `Where is my order NS-20877?` then the phone `01012345601`; `What is your return policy?`; or `I want a refund for order NS-20934` then `01098765405` (a large refund needs a person) |
+| <http://localhost:8010/inbox> | where the support team takes over: claim the case from the chat above, read the briefing, approve or reject the refund |
+| <http://localhost:8010/dashboard> | the manager dashboard, already filled with example conversations from the last two weeks, with the alerts page |
+
+The demo shop is "Nile Style". It speaks English, Egyptian Arabic and Arabizi (Arabic written in Latin letters, like `3ayez araga3 el order`).
+This version answers by rules and needs no internet. For the version where an AI model also helps to understand messages, run
+`make demo-full` instead (it downloads a model of about 5 GB the first time and needs a computer with 8 GB of free memory).
+
+Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
+delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.
+The inbox and the dashboard have no sign-in yet (it comes with the accounts step), so only run the demo on your own computer.
+
+---
+
 ## The problem
 
 Every business in Egypt gets the same messages, all day, on WhatsApp, Instagram and web chat: *where is my order, why did my bill change, can I move my booking, I want a refund.*

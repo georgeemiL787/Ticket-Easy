@@ -31,6 +31,9 @@ ENV_VARS: dict[str, str] = {
     "fixed_today": "TEAM_B_FIXED_TODAY",
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
     "queue_max_runs": "TEAM_B_QUEUE_MAX_RUNS",
+    "alert_webhook": "TEAM_B_ALERT_WEBHOOK",
+    "enable_test_admin": "TEAM_B_ENABLE_TEST_ADMIN",
+    "alert_interval_s": "TEAM_B_ALERT_INTERVAL_S",
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
     "llm_rewrite": "TEAM_B_LLM_REWRITE",
@@ -59,6 +62,11 @@ class Settings(BaseModel):
     llm_timeout_s: float = Field(default=20.0, gt=0)
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
+    enable_test_admin: bool = False  # 1: /v1/_test/* (chaos switches, audit report) exists. Never in production.
+    alert_webhook: str | None = (
+        None  # optional URL that receives every opened and resolved alert (JSON, no message text)
+    )
+    alert_interval_s: float = Field(default=60.0, gt=0)  # how often the alert engine looks
     queue_max_runs: int = Field(default=3, ge=0)  # queued requests answered in one turn (chained in one reply)
     log_json: bool = True
     llm_rewrite: bool = False  # let the AI model reword replies (checked: it may not add any fact); needs TEAM_B_LLM

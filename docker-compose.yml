@@ -1,0 +1,72 @@
+# Ticket-Easy demo. Two profiles (use `make demo` or `make demo-full`, see the README):
+#   light  the service with the stand-in shop and policies, and a SQLite volume. Replies come from the rules.   (no AI model)
+#   full   the same plus Ollama running qwen3:8b: the AI model helps understand messages (TEAM_B_LLM=ollama).
+# Only one profile runs at a time (both use port 8010).
+
+x-team-b: &team-b
+  build:
+    context: .
+    dockerfile: team_b/Dockerfile
+  image: ticket-easy-team-b
+  ports:
+    - "${TEAM_B_PORT:-8010}:8010"
+  volumes:
+    - team_b_data:/data
+  restart: unless-stopped
+  environment: &team-b-env
+    TEAM_B_MODE: standin
+    TEAM_B_STORE: sqlite
+    TEAM_B_DB_PATH: /data/team_b.sqlite3
+    TEAM_B_FIXED_TODAY: ${TEAM_B_FIXED_TODAY:-2026-09-28}   # the demo orders are dated against this day
+    TEAM_B_LOG_JSON: ${TEAM_B_LOG_JSON:-true}
+    TEAM_B_RATE_LIMIT_PER_MIN: ${TEAM_B_RATE_LIMIT_PER_MIN:-20}
+    TEAM_B_RETENTION_DAYS: ${TEAM_B_RETENTION_DAYS:-90}
+    TEAM_B_CAPABILITY_TTL_S: ${TEAM_B_CAPABILITY_TTL_S:-60}
+    TEAM_B_QUEUE_MAX_RUNS: ${TEAM_B_QUEUE_MAX_RUNS:-3}
+    TEAM_B_ALERT_INTERVAL_S: ${TEAM_B_ALERT_INTERVAL_S:-60}
+    TEAM_B_ALERT_WEBHOOK: ${TEAM_B_ALERT_WEBHOOK:-}
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=2).status == 200 else 1)"]
+    interval: 10s
+    timeout: 3s
+    retries: 5
+    start_period: 15s
+
+services:
+  team-b:
+    <<: *team-b
+    profiles: ["light"]
+
+  team-b-full:
+    <<: *team-b
+    profiles: ["full"]
+    environment:
+      <<: *team-b-env
+      TEAM_B_LLM: ollama
+      OLLAMA_URL: http://ollama:11434
+      TEAM_B_OLLAMA_MODEL: ${TEAM_B_OLLAMA_MODEL:-qwen3:8b}
+      TEAM_B_LLM_TIMEOUT_S: ${TEAM_B_LLM_TIMEOUT_S:-60}
+      TEAM_B_LLM_REWRITE: ${TEAM_B_LLM_REWRITE:-0}
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["full"]
+    volumes:
+      - ollama_models:/root/.ollama
+    # start the server, make sure the model is there (downloaded once, about 5 GB), then keep serving
+    entrypoint: ["/bin/sh", "-c", "ollama serve & pid=$$!; until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull $${TEAM_B_OLLAMA_MODEL:-qwen3:8b}; touch /tmp/model-ready; wait $$pid"]
+    environment:
+      TEAM_B_OLLAMA_MODEL: ${TEAM_B_OLLAMA_MODEL:-qwen3:8b}
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/model-ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 180   # up to 30 minutes for the first download
+      start_period: 20s
+
+volumes:
+  team_b_data:
+  ollama_models:

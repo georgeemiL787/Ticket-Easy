@@ -139,8 +139,15 @@ def resolve_arguments(
                 needs_identity = True
         else:
             # A constant is a default: if the customer stated the same detail (a voucher amount) that is used instead,
-            # and the rule checker then judges the amount they asked for.
-            value = session.slots.get(argument) or name
+            # and the rule checker then judges the amount they asked for. A stated value that is not usable (not a
+            # number, or zero or less) is ignored and the default stands.
+            value = name
+            stated = session.slots.get(argument)
+            if stated is not None and str(stated).strip():
+                trial = _coerce(stated, properties.get(argument, {})) if properties else stated
+                positive = not (isinstance(trial, (int, float)) and not isinstance(trial, bool) and trial <= 0)
+                if trial is not _NOT_A_VALUE and positive:
+                    value = stated
         if value is None or (isinstance(value, str) and not value.strip()):
             if kind == "slot" and (argument in required or name in intent.required_slots):
                 missing.append(name)

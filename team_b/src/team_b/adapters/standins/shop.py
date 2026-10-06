@@ -166,6 +166,19 @@ class StandinShop:
     def publish(self, tool: str) -> None:
         self._unpublished.discard(tool)
 
+    def heal(self) -> None:
+        """Clear every failure switch but keep the data, the audit log and the idempotency memory (a recovered shop)."""
+        self._fail.clear()
+        self._uncertain.clear()
+        self._no_audit.clear()
+        self._unpublished.clear()
+
+    def break_everything(self, code: str = "BACKEND_UNAVAILABLE", times: int = 1_000_000) -> None:
+        """Every tool of every loaded tenant fails with `code` until heal() (a shop outage, for chaos tests)."""
+        for tenant in self._tenants.values():
+            for name in tenant.tools:
+                self.fail_next(name, code, times)
+
     def reset(self) -> None:
         """Clear every switch and reload the data, audit log and idempotency memory of every tenant."""
         self._fail.clear()

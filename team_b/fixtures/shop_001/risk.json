@@ -73,7 +73,10 @@
         "شكوى رسمية",
         "بلاغ",
         "هبلغ",
-        "تنظيم الاتصالات"
+        "تنظيم الاتصالات",
+        "هرفع case",
+        "هعمل case",
+        "هبلغ البوليس"
       ],
       "arabizi": [
         "ma7ami",
@@ -86,7 +89,13 @@
         "mahkama",
         "ma7kama",
         "hablagh",
-        "balagh"
+        "balagh",
+        "ma7amy",
+        "m7amy",
+        "mo7amy",
+        "ma7amee",
+        "mohamy",
+        "ma7ameh"
       ]
     },
     "medical_safety": {

@@ -92,6 +92,9 @@ async def load_own_order(ctx: TurnContext, intent_spec: IntentSpec, tools: dict[
         return shopcalls.failed_read(ctx, "reading the order (the answer was incomplete)")
 
     order = outcome.data
+    asked = arguments.get("order_id")
+    if asked is not None and order.get("order_id") != asked:  # the shop answered about another order: not trusted
+        return shopcalls.failed_read(ctx, "reading the order (the answer was for a different order)")
     if order.get("customer_id") != session.identity.customer_id:
         return _not_theirs(ctx, "the order belongs to another customer")
     session.facts = derive_order_facts(order, ctx.deps.clock.today())

@@ -162,6 +162,8 @@ team_b/
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
   scenarios/shop_001/  scripted test conversations, one JSON file each (run `make scenarios` to see which are active and which are pending)
+  Dockerfile (build from the repo root: node stage builds dashboard/, python:3.12-slim stage, non-root, health check); repo root: docker-compose.yml (profiles light/full, ollama
+               qwen3:8b), Makefile (demo, demo-full, down, logs, reset), .env.example (every TEAM_B_* variable; a test keeps it complete), `python -m team_b seed-demo`
   loadtest/    demo.py (the conversation mix), run.py (50 customers in-process or --url, --chaos PLUG:SECONDS@START, p50/p95 per endpoint and stage, checker verdict),
                checker.py (audit log + traces: no unauthorized/duplicate writes, failures as the table says), check.py, locustfile.py, README.md; make loadtest / make chaos
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)

@@ -1,0 +1,15 @@
+.git
+**/__pycache__
+**/*.pyc
+**/node_modules
+**/.venv
+**/var
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+team_b/tests
+team_b/loadtest/out
+team_b/web/dashboard
+team_a
+team_c
+Docs

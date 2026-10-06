@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, date, datetime, time, timedelta
 
 from team_b.domain.decision import Decision, EscalationReason
+from team_b.domain.facts import Facts, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -86,6 +87,9 @@ class InMemoryTraceStore:
         self._by_id: dict[tuple[str, str], DecisionTrace] = {}
         self._order: list[DecisionTrace] = []  # insertion order
         self._stored_at: dict[tuple[str, str], datetime] = {}
+        self._turn_facts: list[TurnFact] = []  # the same rows the SQLite store keeps in turn_facts and the like
+        self._tool_facts: list[ToolCallFact] = []
+        self._policy_facts: list[PolicyFact] = []
 
     async def add(self, trace: DecisionTrace) -> None:
         key = (trace.tenant_id, trace.trace_id)
@@ -93,7 +97,23 @@ class InMemoryTraceStore:
             raise AlreadyExistsError(f"trace {trace.trace_id} already stored")
         self._by_id[key] = trace
         self._order.append(trace)
-        self._stored_at[key] = self._clock.now()
+        now = self._clock.now()
+        self._stored_at[key] = now
+        turn, calls, policy = facts_from_trace(trace, now)
+        if turn is not None:
+            self._turn_facts.append(turn)
+        self._tool_facts += calls
+        self._policy_facts += policy
+
+    async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
+        def within(row: TurnFact | ToolCallFact | PolicyFact) -> bool:
+            return row.tenant_id == tenant_id and start <= row.created_at < end
+
+        return Facts(
+            turns=tuple(r for r in self._turn_facts if within(r)),
+            tool_calls=tuple(r for r in self._tool_facts if within(r)),
+            policy=tuple(r for r in self._policy_facts if within(r)),
+        )
 
     async def get(self, tenant_id: str, trace_id: str) -> DecisionTrace | None:
         return self._by_id.get((tenant_id, trace_id))

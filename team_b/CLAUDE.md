@@ -82,6 +82,8 @@ team_b/
                  in entities, tool arguments, customer_message, response_text, decision_reason, errors before storing (the customer still gets the
                  real text); log events turn_start, turn_complete, policy_check, tool_call, handoff_created, dependency_error, all with the 4 ids
                  (observability.turn_context); the scenario runner scans every stored trace for personal values and incomplete records
+                 metrics (MetricsService: one function per metric of docs/metrics.md over TraceStore.facts() = turn_facts/tool_call_facts/policy_facts
+                 written with each trace (migration 002, domain/facts.py) + cases; buckets hour/day/week/month, nearest-rank p50/p95, MetricFilters);
                  summarizer (Template + LLM history summaries, LLM text rejected on invented facts);
                  add_ai_summary (handoff summary from prompts/handoff_summary_v1.md: input = the structured package only, output
                  summary_en/summary_customer_language/suggested_next_step, check_grounded against the package else the template stays;

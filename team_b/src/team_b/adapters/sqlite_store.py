@@ -9,6 +9,7 @@ Behaviour matches the in-memory stores (copies, conflicts, duplicate ids), so th
 """
 
 import asyncio
+import json
 import re
 import sqlite3
 from collections import defaultdict
@@ -21,6 +22,7 @@ from typing import Any
 import aiosqlite
 
 from team_b.domain.decision import Decision, EscalationReason
+from team_b.domain.facts import Facts, PolicyFact, ToolCallFact, TurnFact, facts_from_trace
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -67,6 +69,45 @@ async def _delete_unless_kept(
     key_column = "conversation_id" if table == "sessions" else "trace_id"
     await db.executemany(f"DELETE FROM {table} WHERE tenant_id = ? AND {key_column} = ?", doomed)
     return len(doomed)
+
+
+async def _insert_facts(
+    db: aiosqlite.Connection, turn: TurnFact | None, calls: list[ToolCallFact], policy: list[PolicyFact]
+) -> None:
+    if turn is not None:
+        await db.execute(
+            "INSERT INTO turn_facts (trace_id, tenant_id, conversation_id, created_at, decision, escalation_reason, "
+            "language, intent, latency_ms, evidence_empty, evidence_count, nlu_method, tool_errors, "
+            "dependency_errors, stage_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                turn.trace_id, turn.tenant_id, turn.conversation_id, _iso(turn.created_at), turn.decision,
+                turn.escalation_reason, turn.language, turn.intent, turn.latency_ms, int(turn.evidence_empty),
+                turn.evidence_count, turn.nlu_method, turn.tool_errors, json.dumps(turn.dependency_errors),
+                json.dumps(turn.stage_ms),
+            ),
+        )  # fmt: skip
+    await db.executemany(
+        "INSERT INTO tool_call_facts (trace_id, tenant_id, created_at, tool, operation_kind, status, error_code, "
+        "latency_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+            (
+                c.trace_id,
+                c.tenant_id,
+                _iso(c.created_at),
+                c.tool,
+                c.operation_kind,
+                c.status,
+                c.error_code,
+                c.latency_ms,
+            )
+            for c in calls
+        ],
+    )
+    await db.executemany(
+        "INSERT INTO policy_facts (trace_id, tenant_id, created_at, action, decision, reason_code) "
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        [(p.trace_id, p.tenant_id, _iso(p.created_at), p.action, p.decision, p.reason_code) for p in policy],
+    )
 
 
 class SqliteDatabase:
@@ -183,8 +224,12 @@ class SqliteTraceStore:
         self._clock = clock
 
     async def add(self, trace: DecisionTrace) -> None:
-        try:
-            async with self._db.connect() as db:
+        """Store the trace and its summary rows in one transaction: either all of them are there, or none."""
+        now = self._clock.now()
+        turn, calls, policy = facts_from_trace(trace, now)
+        async with self._db.connect() as db:
+            await db.execute("BEGIN")
+            try:
                 await db.execute(
                     "INSERT INTO traces (trace_id, tenant_id, conversation_id, turn_index, kind, decision, "
                     "escalation_reason, language, latency_ms, created_at, trace_json) "
@@ -199,12 +244,51 @@ class SqliteTraceStore:
                         trace.escalation_reason.value if trace.escalation_reason else None,
                         trace.language.value if trace.language else None,
                         trace.latency_ms,
-                        _iso(self._clock.now()),
+                        _iso(now),
                         trace.model_dump_json(),
                     ),
                 )
-        except sqlite3.IntegrityError:
-            raise AlreadyExistsError(f"trace {trace.trace_id} already stored") from None
+                await _insert_facts(db, turn, calls, policy)
+                await db.execute("COMMIT")
+            except sqlite3.IntegrityError:
+                await db.execute("ROLLBACK")
+                raise AlreadyExistsError(f"trace {trace.trace_id} already stored") from None
+            except BaseException:
+                await db.execute("ROLLBACK")
+                raise
+
+    async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
+        window = (tenant_id, _iso(start), _iso(end))
+        where = "WHERE tenant_id = ? AND created_at >= ? AND created_at < ? ORDER BY created_at, rowid"
+        async with self._db.connect() as db:
+            turns = await (await db.execute(f"SELECT * FROM turn_facts {where}", window)).fetchall()
+            calls = await (await db.execute(f"SELECT * FROM tool_call_facts {where}", window)).fetchall()
+            policy = await (await db.execute(f"SELECT * FROM policy_facts {where}", window)).fetchall()
+        return Facts(
+            turns=tuple(
+                TurnFact(
+                    trace_id=r[0], tenant_id=r[1], conversation_id=r[2], created_at=datetime.fromisoformat(r[3]),
+                    decision=r[4], escalation_reason=r[5], language=r[6], intent=r[7], latency_ms=r[8],
+                    evidence_empty=bool(r[9]), evidence_count=r[10], nlu_method=r[11], tool_errors=r[12],
+                    dependency_errors=tuple(json.loads(r[13])), stage_ms=json.loads(r[14]),
+                )
+                for r in turns
+            ),
+            tool_calls=tuple(
+                ToolCallFact(
+                    trace_id=r[0], tenant_id=r[1], created_at=datetime.fromisoformat(r[2]), tool=r[3],
+                    operation_kind=r[4], status=r[5], error_code=r[6], latency_ms=r[7],
+                )
+                for r in calls
+            ),
+            policy=tuple(
+                PolicyFact(
+                    trace_id=r[0], tenant_id=r[1], created_at=datetime.fromisoformat(r[2]), action=r[3],
+                    decision=r[4], reason_code=r[5],
+                )
+                for r in policy
+            ),
+        )  # fmt: skip
 
     async def get(self, tenant_id: str, trace_id: str) -> DecisionTrace | None:
         rows = await self._fetch("WHERE tenant_id = ? AND trace_id = ?", (tenant_id, trace_id))

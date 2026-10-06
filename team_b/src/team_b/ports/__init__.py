@@ -14,6 +14,7 @@ from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from team_b.domain.decision import Decision, EscalationReason
+from team_b.domain.facts import Facts
 from team_b.domain.handoff import CaseStatus, HandoffCase
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
@@ -135,6 +136,10 @@ class TraceStore(Protocol):
 
     async def purge_older_than(self, cutoff: datetime, *, keep: Collection[tuple[str, str]] = ()) -> int:
         """Delete traces stored before cutoff, except those of the (tenant, conversation) pairs in keep."""
+        ...
+
+    async def facts(self, tenant_id: str, start: datetime, end: datetime) -> Facts:
+        """The summary rows written with the traces stored in [start, end), oldest first. They outlive purged traces."""
         ...
 
     async def query(

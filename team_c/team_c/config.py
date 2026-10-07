@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     suggestion_count: int = 3
     suggestion_max: int = 5
     capability_index_chars: int = 16000
+    dev_fast_track: bool = False
 
     @property
     def groq_api_keys(self):

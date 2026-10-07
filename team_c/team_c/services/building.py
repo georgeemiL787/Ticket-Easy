@@ -68,6 +68,10 @@ class Building:
         with self.store.connect(write=True) as c:
             c.execute("INSERT INTO enforcement_configs(id,proposal_id,version,connector_id,content,sha256,submitted_by,submitted_at) VALUES(?,?,?,?,?,?,?,?)",
                       (eid, pid, row["version"], submission.connector_id, dump(dict(connector=connector, enforcement=submission.enforcement)), sha, self.settings.dev_reviewer_id, now()))
+            # DEV_FAST_TRACK: auto-review enforcement on submission (no separate review step).
+            if self.settings.dev_fast_track:
+                c.execute("UPDATE enforcement_configs SET reviewed_by=?,reviewed_at=?,review_note=? WHERE id=? AND reviewed_at IS NULL",
+                          (self.settings.dev_reviewer_id, now(), "Auto-reviewed (DEV_FAST_TRACK)", eid))
         return self.enforcement(eid)
 
     def review_enforcement(self, eid, submission):
@@ -106,6 +110,16 @@ class Building:
         if fields["blockers"]:
             raise AppError("artifact_not_approved", "Grounding reports blockers: " + "; ".join(fields["blockers"]))
         config = self.current_enforcement(pid, row["version"])
+        # DEV_FAST_TRACK: auto-create and auto-review enforcement if none exists.
+        if not config and self.settings.dev_fast_track and view["requirements"]:
+            enforcement_data = {r["id"]: {"mechanism": "delegated_user_credential"} for r in view["requirements"]}
+            sha = digest(dict(connector=connector, enforcement=enforcement_data))
+            eid = uid()
+            with self.store.connect(write=True) as c:
+                c.execute("INSERT INTO enforcement_configs(id,proposal_id,version,connector_id,content,sha256,submitted_by,submitted_at,reviewed_by,reviewed_at,review_note) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                          (eid, pid, row["version"], submission.connector_id, dump(dict(connector=connector, enforcement=enforcement_data)), sha,
+                           self.settings.dev_reviewer_id, now(), self.settings.dev_reviewer_id, now(), "Auto-generated and reviewed (DEV_FAST_TRACK)"))
+            config = self.current_enforcement(pid, row["version"])
         if config and config["content"]["connector"] != connector:
             raise AppError("enforcement_connector", "The reviewed enforcement was configured for a different connector or connector context; submit it again for review", 409)
         if config and config["status"] != "approved":

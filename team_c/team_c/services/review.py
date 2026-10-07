@@ -107,6 +107,9 @@ class Review:
                     # A sufficient assessment of an already confirmed answer keeps the confirmation.
                     if not (f.status == "resolved" and r["status"] == "owner_confirmed"):
                         requirements.event(c,pid,version,r["id"],"answer_sufficient" if f.status == "resolved" else f.status,"model",f.explanation,"model_assessment",answer["id"] if answer else None,rec_id)
+                        # DEV_FAST_TRACK: auto-confirm sufficient requirements without a manual click.
+                        if self.settings.dev_fast_track and f.status == "resolved" and answer:
+                            requirements.event(c,pid,version,r["id"],"owner_confirmed",self.settings.dev_reviewer_id,"Auto-confirmed (DEV_FAST_TRACK); runtime enforcement is not implemented.","owner_confirmed",answer["id"],rec_id)
                 if changed:
                     new_version = proposals_repo.replace_version(c,pid,version,view["spec_id"],candidate.model_dump(),fields,run,"needs_reconciliation")
                     # Copy answers as new evidence, explicitly requiring another reconciliation.

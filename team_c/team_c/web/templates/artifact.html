@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% set c = a.content %}
+{% set live = publications|selectattr("status", "equalto", "published")|list %}
+{% block crumbs %}{{ m.crumbs([(business.name, "/businesses/" ~ c.proposal.business_id), (c.name, "/proposals/" ~ c.proposal.id), ("Artifact v" ~ c.proposal.version, None)]) }}{% endblock %}
+{% block steps %}{{ m.steps("publish" if live or not publication_problems else "build") }}{% endblock %}
+{% block content %}
+<h1>{{ c.name }}</h1>
+<p>{{ c.purpose }}</p>
+<p class="small">Built from proposal v{{ c.proposal.version }} · Runtime-ready: no · Activated: no</p>
+
+{% if c.execution_blockers %}{{ m.next("fix access enforcement", "This artifact cannot run until every access requirement has a reviewed enforcement mechanism. Go back to the proposal.") }}
+{% elif live %}{{ m.next("published for testing", "Sandbox MCP clients can call this tool now. Disable it below at any time.") }}
+{% elif publication_problems %}{{ m.next("run sandbox tests", "Run the tests listed under Publish until every check passes.") }}
+{% else %}{{ m.next("publish to the test-only MCP server", "All checks pass. Add a note and press Publish to sandbox MCP.") }}{% endif %}
+{% for b in c.execution_blockers %}<p class="notice">Execution blocked: {{ b }}</p>{% endfor %}
+
+<article>
+<h2>Run a sandbox test</h2>
+<p class="small muted">Runs against the sandbox connector as the chosen test identity. The identity is never a tool argument.</p>
+{% include "identity_setup.html" %}
+{% if not connectors.get(c.connector.id, []) %}<p class="notice">Add a test identity before running this artifact.{% if not identity_setup.managed %} This connector's identities are managed in its external configuration.{% endif %}</p>{% endif %}
+<form method="post" action="/actions/sandbox_run">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
+<label>Test identity<select name="identity">{% for i in connectors.get(c.connector.id, []) %}<option>{{ i }}</option>{% endfor %}</select></label>
+{% for name, prop in (c.input_schema.properties or {}).items() %}{% set kind = field_kind(prop) %}{% set req = name in (c.input_schema.required or []) %}
+<label>{{ prop.title or name }}{% if not req %} <span class="muted small">(optional)</span>{% endif %}{% if prop.description %} <span class="muted small">{{ prop.description }}</span>{% endif %}
+{% if prop.enum or kind == 'boolean' %}<select name="a:{{ name }}" {% if req %}required{% endif %}><option value="">Choose…</option>{% for v in (prop.enum or ['true', 'false']) %}<option>{{ v }}</option>{% endfor %}</select>
+{% elif kind in ('integer', 'number') %}<input type="number" name="a:{{ name }}" step="{{ 'any' if kind == 'number' else 1 }}" {% if req %}required{% endif %}>
+{% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value" {% if req %}required{% endif %}></textarea>
+{% else %}<input name="a:{{ name }}" {% if prop.maxLength %}maxlength="{{ prop.maxLength }}"{% endif %} {% if req %}required{% endif %}>{% endif %}</label>
+{% else %}<p class="muted small">This tool takes no inputs.</p>{% endfor %}
+<button {% if c.execution_blockers or not connectors.get(c.connector.id, []) %}disabled{% endif %}>Run sandbox test</button></form>
+</article>
+
+<article>
+<h2>Test results</h2>
+{% if a.readiness %}<p>Compiler readiness: {{ a.readiness.score }}%. Sandbox evidence and explicit publication remain separate gates.</p>{% endif %}
+{% if a.policy_tests %}<h3>Generated policy tests</h3><p>{{ 'Passed' if a.policy_tests.passed else 'Failed' }} · {{ a.policy_tests.cases|length }} guard scenarios</p><p class="small">{{ a.policy_tests.limitations|join(' ') }}</p><details><summary>Positive and negative cases</summary><ul>{% for case in a.policy_tests.cases %}<li>{{ case.name|replace('_',' ') }}: {{ 'passed' if case.passed else 'failed' }}</li>{% endfor %}</ul></details>{% endif %}
+{% for t in a.tests %}<details><summary>{{ m.badge(t.verdict, "test") }} {{ t.name }}{% if t.scenario and t.scenario != 'general' %} <span class="muted small">({{ t.scenario|replace('_', ' ') }}{% if t.record_owner %} on {{ t.record_owner }}'s record{% endif %})</span>{% endif %}{% if t.failure_report %} <span class="muted small">{{ t.failure_report.classification }}; repairable: {{ 'yes' if t.failure_report.repairable else 'no' }}</span>{% endif %}</summary><pre>{{ (t.failure_report or t.expectation)|tojson(indent=2) }}</pre></details>{% else %}<p class="muted">No recorded sandbox tests yet.</p>{% endfor %}
+<details><summary>Recent runs ({{ a.executions|length }})</summary>
+{% for e in a.executions|reverse %}<details><summary>{{ m.badge(e.status, "execution") }} {{ e.identity }} · {{ e.created_at[:19]|replace('T', ' ') }}{% if e.report %} · {{ e.report.message }}{% endif %}</summary><pre>{{ e.report|tojson(indent=2) }}</pre></details>{% else %}<p class="muted">No executions yet.</p>{% endfor %}
+</details>
+</article>
+
+<article>
+<h2>Publish (TEST-ONLY sandbox MCP)</h2>
+<p class="small muted">Publishing exposes this exact artifact to local sandbox MCP clients. It is separate from approval and never production (production activation: no, production-ready: no). Disabling blocks later calls but cannot undo writes already completed or in flight.</p>
+{% if publication_problems %}<p>Cannot publish yet:</p><ul>{% for pr in publication_problems %}<li>{{ pr }}</li>{% endfor %}</ul>{% endif %}
+<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="TEST-ONLY sandbox publication"></label><button {% if publication_problems %}disabled{% endif %}>Publish to sandbox MCP</button></form>
+{% for pub in publications %}
+<details {% if pub.status == 'published' %}open{% endif %}><summary>{{ m.badge(pub.effective_status, "publication") }} tool <code>{{ pub.tool_name }}</code>{% if pub.problem %} <span class="muted small">({{ pub.problem.code }})</span>{% endif %}</summary>
+<p class="small">Published {{ pub.published_at }} by {{ pub.publisher }} · Note: {{ pub.note }}{% if pub.disabled_at %} · Disabled {{ pub.disabled_at }} by {{ pub.disabled_by }}: {{ pub.disable_note }}{% endif %}</p>
+<p class="small">Evidence (this artifact only): success {{ pub.evidence.success_tests|join(', ') }}; access denial {{ pub.evidence.access_denial_tests|join(', ') or 'n/a' }}</p>
+{% if pub.status == 'published' %}<form method="post" action="/actions/disable_publication">{{ m.csrf_field() }}<input type="hidden" name="publication_id" value="{{ pub.id }}"><label>Reason for disabling<input name="note" required></label><button>Disable publication</button></form>{% endif %}
+<details class="tech"><summary>Technical details</summary><p class="small">Artifact SHA-256 {{ pub.artifact_sha256[:12] }} | Proposal v{{ pub.version }} | Approval {{ pub.decision_id }} | Enforcement {{ pub.enforcement_config_id }} | Environment {{ pub.environment }}</p></details>
+</details>
+{% endfor %}
+</article>
+
+<details><summary>Access requirements and enforcement</summary>
+<article>
+{% if c.enforcement_config %}<p class="small">Enforcement configuration {{ c.enforcement_config.id[:8] }}: submitted by {{ c.enforcement_config.submitted_by }}, reviewed by {{ c.enforcement_config.reviewed_by }} at {{ c.enforcement_config.reviewed_at }}. A later configuration invalidates this artifact.</p>{% endif %}
+{% for r in c.access_requirements %}<p class="small"><strong>{{ r.id }}</strong>: {{ r.text }}<br>Owner-confirmed: {{ r.owner_confirmed_answer }}<br>Enforcement: {{ r.enforcement.status }}{% if r.enforcement.mechanism %} ({{ r.enforcement.mechanism }}) {{ r.enforcement.detail }}{% else %} {{ r.enforcement.reason }}{% endif %}</p>{% endfor %}
+</article>
+</details>
+
+<details class="tech"><summary>Technical details</summary>
+<p class="small">Approval decision {{ c.proposal.decision_id }} | Spec SHA-256 {{ c.source.spec_sha256[:12] }} | Artifact SHA-256 {{ a.sha256[:12] }} | Permitted uses: {{ c.activation.permitted_uses|join(', ') }}</p>
+{% for s in c.steps %}<h3>{{ s.id }} | {{ s.method }} {{ s.path }} ({{ s.effect }})</h3><ul class="small">{% for prm in s.parameters %}<li>{{ prm.location }} {{ prm.name }} &larr; {{ prm.source.kind }} {{ prm.source.reference }}</li>{% endfor %}{% for f in (s.body.fields if s.body else []) %}<li>body {{ f.name }} &larr; {{ f.source.kind }} {{ f.source.reference }}</li>{% endfor %}</ul><p class="small">Success responses: {{ s.responses|list|join(', ') }}</p>{% endfor %}
+<h3>Outputs</h3><ul class="small">{% for o in c.outputs %}<li>{{ o.name }} = {{ o.step_id }} {{ o.response_status }} {{ o.pointer or '(whole response)' }}</li>{% endfor %}</ul>
+<p class="small">Limits: {{ c.limits|tojson }}</p>
+<p class="small">Failure behavior: {{ c.failure_behavior.on_step_failure }} {{ c.failure_behavior.write_timeout }} {{ c.failure_behavior.retries }}</p>
+<details><summary>Artifact JSON</summary><pre>{{ c|tojson(indent=2) }}</pre></details>
+</details>
+{% endblock %}

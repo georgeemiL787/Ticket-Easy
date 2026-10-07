@@ -6,28 +6,37 @@ the first failure, and the report says truthfully whether each write was applied
 """
 import json
 import time
-from pathlib import Path
-from urllib.parse import quote, urlencode, urlparse
+from urllib.parse import quote, unquote, urlencode, urlparse
 import httpx
 from jsonschema.exceptions import ValidationError
-from openapi_schema_validator import OAS30Validator, oas30_format_checker
+from openapi_schema_validator import OAS30Validator, OAS30WriteValidator, oas30_format_checker
 from .config import AppError
-from .storage import digest
+from .connectors import load_connectors, confirmed_destination
+from .contracts import Artifact, CompiledStep, ExecutionReport
+from .persistence.util import digest
 
 MISSING = object()
+
+
+def checked_path(path):
+    """Reject traversal even if a proxy/router decodes percent escapes again."""
+    decoded = path
+    for _ in range(8):
+        if "\\" in decoded or any(ord(c) < 32 or ord(c) == 127 for c in decoded):
+            raise ValueError("ambiguous path")
+        if any(part in (".", "..") for part in decoded.split("/")):
+            raise ValueError("dot segment")
+        next_path = unquote(decoded)
+        if next_path == decoded:
+            return decoded
+        decoded = next_path
+    raise ValueError("excessively encoded path")
 
 
 class StepFailure(Exception):
     def __init__(self, outcome, detail, write_state="not_applied"):
         self.outcome, self.detail, self.write_state = outcome, detail, write_state
         super().__init__(detail)
-
-
-def load_connectors(settings):
-    path = Path(settings.connectors_file) if settings.connectors_file else None
-    if not path or not path.is_file():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8")).get("connectors", {})
 
 
 def origin(url):
@@ -37,11 +46,11 @@ def origin(url):
     return f"{parsed.scheme}://{parsed.hostname.lower()}:{parsed.port or (443 if parsed.scheme == 'https' else 80)}", parsed.path.rstrip("/")
 
 
-def destination(connector, artifact, settings):
+def destination(connector, artifact: Artifact, settings):
     base = connector["base_url"].rstrip("/")
     host, _ = origin(base)
     allowed = {h.strip().lower() for h in settings.sandbox_hosts.split(",") if h.strip()}
-    if host.split("://", 1)[1] not in allowed:
+    if host.split("://", 1)[1] not in allowed and not confirmed_destination(settings, connector, artifact):
         raise AppError("destination_not_allowed", f"{host} is not listed in SANDBOX_HOSTS", 403)
     if not connector.get("sandbox"):
         raise AppError("not_sandbox", "Only connectors explicitly marked sandbox may execute in this milestone", 403)
@@ -50,8 +59,10 @@ def destination(connector, artifact, settings):
     return base
 
 
-def credentials(identity, artifact):
+def credentials(identity, artifact: Artifact):
     """Pre-flight: the trusted execution context must hold a usable end-user credential."""
+    from .compiler.policies import authorize
+    authorize(artifact.get("access_policy"), identity)
     auth = artifact["connector"]["auth"]
     mechanisms = {a["enforcement"].get("mechanism") for a in artifact["access_requirements"]}
     if identity is None:
@@ -64,6 +75,10 @@ def credentials(identity, artifact):
     context = identity.get("context") or {}
     if any(isinstance(context.get(f), bool) or not isinstance(context.get(f), (str, int)) or context.get(f) == "" for f in needed):
         raise AppError("context_incomplete", "The trusted execution context lacks a value required by an access check: " + ", ".join(needed))
+    context_values = dict(context, business_id=artifact["proposal"]["business_id"])
+    for key, schema in artifact.get("compiler", {}).get("context_schemas", {}).items():
+        if key not in context_values or list(OAS30Validator(schema).iter_errors(context_values[key])):
+            raise AppError("context_incomplete", "Trusted context is missing or incompatible: " + key)
 
 
 def validate_arguments(schema, arguments):
@@ -97,11 +112,11 @@ def scalar(value):
 
 
 class Run:
-    def __init__(self, artifact, arguments, identity, base, transport):
+    def __init__(self, artifact: Artifact, arguments, identity, base, transport):
         self.artifact, self.arguments, self.identity, self.base = artifact, arguments, identity, base
         self.origin, self.base_path = origin(base)
         self.limits = artifact["limits"]
-        self.context = dict(business_id=artifact["proposal"]["business_id"])
+        self.context = dict(identity.get("context") or {}, business_id=artifact["proposal"]["business_id"])
         self.identity_context = identity.get("context") or {}
         self.results, self.trace = {}, []
         self.client = httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.limits["timeout_seconds"])
@@ -113,6 +128,8 @@ class Run:
         if kind == "business_configuration":
             return json.loads(self.artifact["configuration"][source["reference"]])
         if kind == "trusted_application_context":
+            if source["reference"] not in self.context:
+                raise StepFailure("invalid_binding", "Required trusted context is missing")
             return self.context[source["reference"]]
         earlier = self.results[source["step_id"]]
         if earlier["status"] != int(source["response_status"]):
@@ -123,13 +140,22 @@ class Run:
             raise StepFailure("invalid_binding", f"{source['step_id']} response lacks the bound field {source.get('reference')}")
 
     def url(self, path, query=()):
-        url = self.base + path + ("?" + urlencode(list(query)) if query else "")
-        target_origin, target_path = origin(url.split("?", 1)[0])
-        if target_origin != self.origin or not target_path.startswith(self.base_path):
-            raise StepFailure("invalid_request", "The request left the configured destination")
-        return url
+        try:
+            if not path.startswith("/") or "?" in path or "#" in path:
+                raise ValueError("operation path must be absolute and contain no query or fragment")
+            base_path = checked_path(self.base_path).rstrip("/")
+            checked_path(path)
+            # Inspect the same normalized URL the HTTP client will send, not the raw concatenation.
+            target = httpx.URL(self.base + path)
+            target_origin, _ = origin(str(target))
+            target_path = checked_path(target.path)
+            if target_origin != self.origin or not (target_path == base_path or target_path.startswith(base_path + "/")):
+                raise ValueError("destination boundary")
+            return str(target) + ("?" + urlencode(list(query)) if query else "")
+        except (ValueError, httpx.InvalidURL, AppError):
+            raise StepFailure("invalid_request", "The request path is unsafe or leaves the configured destination") from None
 
-    def request(self, step):
+    def request(self, step: CompiledStep):
         path, query = step["path"], []
         for p in step["parameters"]:
             v = self.value(p["source"])
@@ -140,22 +166,53 @@ class Run:
                 if text in ("", ".", ".."):
                     raise StepFailure("invalid_request", f"Path parameter {p['name']} would change the path structure")
                 path = path.replace("{" + p["name"] + "}", quote(text, safe=""))
-            else:
+            elif p["location"] == "query":
                 query.extend((p["name"], scalar(x)) for x in (v if isinstance(v, list) else [v]))
         content = None
-        if step["body"]:
-            if step["body"]["whole"]:
-                body = self.value(step["body"]["whole"]["source"])
+        spec = step["body"]
+        if spec:
+            if spec["whole"]:
+                body = self.value(spec["whole"]["source"])
             else:
+                values = {f["name"]: self.value(f["source"]) for f in spec["fields"]}
+                body = {k: v for k, v in values.items() if v is not MISSING} or MISSING
+            # Bodies without "required" (format /1 artifacts) always sent one; they keep that behavior.
+            if body is MISSING and not spec.get("required", True):
+                return self.url(path, query), None
+            if body is MISSING:
                 body = {}
-                for f in step["body"]["fields"]:
-                    v = self.value(f["source"])
-                    if v is not MISSING:
-                        body[f["name"]] = v
+            if spec.get("schema") is not None:
+                errors = sorted({e.validator for e in OAS30WriteValidator(spec["schema"], format_checker=oas30_format_checker).iter_errors(body)})
+                if errors:
+                    raise StepFailure("invalid_request", "The assembled request body does not match the declared request schema (violates " + ", ".join(errors) + "); it was not sent")
             content = json.dumps(body, ensure_ascii=False).encode()
             if len(content) > self.limits["max_request_bytes"]:
                 raise StepFailure("invalid_request", "Request body exceeds the artifact limit")
         return self.url(path, query), content
+
+    def transport_headers(self, step, auth_headers):
+        headers = dict(auth_headers)
+        cookies = []
+        for p in step["parameters"]:
+            if p["location"] not in ("header", "cookie"):
+                continue
+            value = self.value(p["source"])
+            if value is MISSING:
+                continue
+            text = scalar(value)
+            if any(ord(c) < 32 or ord(c) == 127 for c in text) or any(ord(c) < 33 or ord(c) > 126 or c in ":;=" for c in p["name"]):
+                raise StepFailure("invalid_request", "Invalid transport context")
+            if p["location"] == "header" and not text.isascii():
+                raise StepFailure("invalid_request", "Header context requires an ASCII value")
+            if p["location"] == "cookie":
+                cookies.append(p["name"] + "=" + quote(text, safe=""))
+            else:
+                if p["name"].lower() in {k.lower() for k in headers}:
+                    raise StepFailure("invalid_request", "Transport context cannot override connector headers")
+                headers[p["name"]] = text
+        if cookies:
+            headers["Cookie"] = "; ".join(cookies)
+        return headers
 
     def send(self, method, url, content=None, form=None, write=False, headers=None):
         headers = {"Accept": "application/json", **(headers or {})}
@@ -198,14 +255,14 @@ class Run:
             raise StepFailure("connector_auth_failed", f"The connector could not obtain a bearer token (HTTP {status})")
         return {"Authorization": "Bearer " + token["access_token"]}
 
-    def step(self, step, headers):
+    def step(self, step: CompiledStep, headers):
         write = step["effect"] == "write"
         entry = dict(step_id=step["id"], method=step["method"], path=step["path"], effect=step["effect"])
         self.trace.append(entry)
         started = time.monotonic()
         try:
             url, content = self.request(step)
-            status, ctype, data = self.send(step["method"], url, content, write=write, headers=headers)
+            status, ctype, data = self.send(step["method"], url, content, write=write, headers=self.transport_headers(step, headers))
             entry.update(http_status=status, response_bytes=len(data))
             if not 200 <= status < 300:
                 # An HTTP rejection is observed; absence of side effects is not. A server error may follow a committed change.
@@ -234,7 +291,8 @@ class Run:
                         found = None
                     expected = self.identity_context.get(check["context_field"])
                     # comparison "equals": string/integer values compared by canonical text; anything else fails closed.
-                    if isinstance(found, bool) or not isinstance(found, (str, int)) or str(found) != str(expected):
+                    from .compiler.security_tests import scope_matches
+                    if not scope_matches(found, expected):
                         raise StepFailure("blocked_by_access_check", f"{req['id']}: {check['pointer']} does not equal trusted context field {check['context_field']}", applied)
         except StepFailure as failure:
             entry.update(outcome=failure.outcome, detail=failure.detail, write_state=failure.write_state if write else None)
@@ -255,7 +313,10 @@ class Run:
                     raise StepFailure("invalid_response", f"Output {o['name']} is missing from {o['step_id']}'s response")
         return result
 
-    def execute(self):
+    def execute(self) -> tuple[ExecutionReport, dict | None]:
+        if self.artifact.get("access_policy"):
+            credentials(self.identity, self.artifact)
+            validate_arguments(self.artifact["input_schema"], self.arguments)
         failure, outputs, failed_step = None, None, None
         with self.client:
             try:

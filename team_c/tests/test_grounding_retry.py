@@ -10,8 +10,8 @@ from team_c.providers import Providers
 from team_c.service import Service
 from team_c.storage import Store, now, uid
 from conftest import answer_reconcile, setup_proposal
-from test_openapi_primary import inventory, op, proposal
-from test_tool_requests import ask, desk, lookup_only, triage  # noqa: F401 (fixture)
+from helpers.openapi import inventory, op, proposal
+from helpers.tool_requests import ask, lookup_only, triage
 
 
 def test_step_bindings_are_limited_to_their_own_operation_inputs(tmp_path):

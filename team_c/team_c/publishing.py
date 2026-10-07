@@ -4,6 +4,9 @@ Publication is a separate decision from approve-to-build. It exposes one exact a
 test clients; it never activates anything in production.
 """
 import re
+from jsonschema import Draft202012Validator
+from jsonschema.exceptions import SchemaError
+from .config import AppError
 
 ENVIRONMENT = "sandbox"
 STATUSES = ["succeeded", "failed", "rejected", "partial", "outcome_unknown", "error"]
@@ -56,7 +59,7 @@ def evidence(content, tests, executions):
     own = [t for t in passed if t.get("scenario") == "own_record"]
     controls = {identity(t) for t in own}
     owned = {(identity(t), t.get("selector_sha256")) for t in own}
-    record_scope = sorted(r["id"] for r in content["access_requirements"] if r["kind"] == "record_scope")
+    record_scope = sorted(r["id"] for r in content["access_requirements"] if r["kind"] == "record_scope" and not (content.get("access_policy") and r["enforcement"].get("unrestricted")))
     accepted, notes = [], []
     for t in passed:
         if t.get("scenario") != "cross_user":
@@ -89,24 +92,31 @@ def evidence(content, tests, executions):
 
 
 def json_schema(schema):
-    """OpenAPI 3.0 schema -> JSON Schema for MCP clients (nullable becomes a null type)."""
+    """Convert normalized OpenAPI schemas without widening enum or bound constraints.
+
+    Only schema positions are traversed; defaults, examples and enum values are data.
+    Works on legacy artifact schemas too, without changing the stored artifact/hash.
+    """
     if isinstance(schema, list):
         return [json_schema(s) for s in schema]
     if not isinstance(schema, dict):
         return schema
     out = {}
     for k, v in schema.items():
-        if k == "properties" and isinstance(v, dict):
+        if k in ("properties", "patternProperties", "$defs", "definitions", "dependentSchemas") and isinstance(v, dict):
             out[k] = {name: json_schema(s) for name, s in v.items()}
-        elif k in ("items", "additionalProperties", "not", "anyOf", "oneOf", "allOf"):
+        elif k in ("items", "additionalProperties", "not", "anyOf", "oneOf", "allOf", "prefixItems",
+                   "contains", "propertyNames", "if", "then", "else", "unevaluatedProperties", "unevaluatedItems"):
             out[k] = json_schema(v)
         else:
             out[k] = v
-    if out.pop("nullable", False):
-        if isinstance(out.get("type"), str):
-            out["type"] = [out["type"], "null"]
-        if "enum" in out and None not in out["enum"]:
-            out["enum"] = out["enum"] + [None]
+    for exclusive, inclusive in (("exclusiveMinimum", "minimum"), ("exclusiveMaximum", "maximum")):
+        if isinstance(out.get(exclusive), bool):
+            enabled = out.pop(exclusive)
+            if enabled and inclusive in out:
+                out[exclusive] = out.pop(inclusive)
+    if out.pop("nullable", False) and isinstance(out.get("type"), str):
+        out["type"] = [out["type"], "null"]
     return out
 
 
@@ -115,8 +125,22 @@ def result_schema(content):
     return {"type": "object", "required": ["status", "output", "error", "execution_id", "artifact"],
             "properties": {"status": {"enum": STATUSES}, "output": {"anyOf": [json_schema(content["output_schema"]), {"type": "null"}]},
                            "error": {"anyOf": [{"type": "object"}, {"type": "null"}]}, "message": nullable("string"),
-                           "execution_id": nullable("string"), "writes": {"type": "array"}, "tool": {"type": "string"},
-                           "publication_id": {"type": "string"}, "artifact": {"type": "object"}, "production_ready": {"const": False}}}
+                           "execution_id": nullable("string"), "writes": {"type": "array"}, "tool": nullable("string"),
+                           "publication_id": nullable("string"), "artifact": nullable("object"), "production_ready": {"const": False}}}
+
+
+def tool_schemas(content):
+    """Validate both wire schemas before publication, listing or execution is allowed."""
+    schemas = dict(input_schema=json_schema(content["input_schema"]), output_schema=result_schema(content))
+    for name, schema in schemas.items():
+        try:
+            Draft202012Validator.check_schema(schema)
+        except SchemaError as exc:
+            path = "/".join(str(p) for p in exc.absolute_path)
+            raise AppError("invalid_mcp_schema", f"{name} is not valid JSON Schema 2020-12 at /{path}", 409) from None
+        if not isinstance(schema, dict) or schema.get("type") != "object":
+            raise AppError("invalid_mcp_schema", f"{name} must have an object root", 409)
+    return schemas
 
 
 def tool(pub, content):
@@ -125,8 +149,7 @@ def tool(pub, content):
                    + (f'Writes: {", ".join(writes)}. ' if writes else "Read-only. ")
                    + f'TEST-ONLY sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. '
                    "The caller identity is fixed by the server; arguments cannot select a user or credential.")
-    return dict(name=pub["tool_name"], title=content["name"], description=description, input_schema=json_schema(content["input_schema"]),
-                output_schema=result_schema(content), annotations=dict(read_only_hint=not writes),
+    return dict(name=pub["tool_name"], title=content["name"], description=description, **tool_schemas(content), annotations=dict(read_only_hint=not writes),
                 meta={"team_c": dict(publication_id=pub["id"], artifact_id=pub["artifact_id"], artifact_sha256=pub["artifact_sha256"],
                                      proposal_id=pub["proposal_id"], proposal_version=pub["version"], environment=pub["environment"],
                                      production_ready=False, activated=False)})

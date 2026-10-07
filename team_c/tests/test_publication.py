@@ -11,53 +11,18 @@ from mcp.shared.tool_name_validation import TOOL_NAME_REGEX
 from team_c import publishing
 from team_c.config import AppError
 from team_c.mcp_server import result
-from team_c.models import GenerationOutput, PublicationDisableSubmission
-from test_second_domain import DeskSubstitute, KEY, LABEL, arguments, current, desk_proposal, generated, make_desk, review_and_build, sandbox_test
-
-OWNER = dict(status="succeeded", outputs_present=["ticket"])
-DENIED = dict(status="failed", failure_step="s1", failure_outcome="blocked_by_access_check")
-
-
-class RevisingDesk(DeskSubstitute):
-    """AUTHORED TEST SUBSTITUTE that also answers owner revisions with the intended wiring."""
-    def call(self, kind, payload, output_model, run):
-        if kind.startswith("revision"):
-            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
-            return GenerationOutput(proposals=[desk_proposal(payload["inventory"], self.names, suffix=" (revised)")], capability_gaps=[])
-        return super().call(kind, payload, output_model, run)
+from team_c.models import PublicationDisableSubmission
+from helpers.desk import KEY, LABEL, arguments, generated, make_desk, review_and_build, sandbox_test
+from helpers.publication import DENIED, OWNER, RevisingDesk, publish, revise, scenario_test, with_evidence
 
 
 @pytest.fixture
 def desk(tmp_path, monkeypatch):
-    monkeypatch.setattr("test_second_domain.DeskSubstitute", RevisingDesk)
+    monkeypatch.setattr("helpers.desk.DeskSubstitute", RevisingDesk)
     d = make_desk(tmp_path, "base")
     d.service = d.app.state.service
     yield d
     d.client.__exit__(None, None, None)
-
-
-def publish(d, aid):
-    return d.client.post(f"/api/v1/artifacts/{aid}/publications", json=dict(note=LABEL + "sandbox publication"))
-
-
-def scenario_test(d, aid, name, expect, who, scenario, record_owner=None, **args):
-    r = d.client.post(f"/api/v1/artifacts/{aid}/sandbox-tests", json=dict(name=name, identity=who, arguments=args or arguments(d, who), expect=expect,
-                                                                         scenario=scenario, record_owner=record_owner))
-    assert r.status_code == 200, r.text
-    return r.json()
-
-
-def with_evidence(d, aid):
-    """Explicit record-scope scenario: both identities use their own records; bob is refused on alice's record."""
-    assert scenario_test(d, aid, "owner_files_request", OWNER, "alice", "own_record")["verdict"] == "passed"
-    assert scenario_test(d, aid, "bob_files_own_request", OWNER, "bob", "own_record")["verdict"] == "passed"
-    assert scenario_test(d, aid, "cross_user_request", DENIED, "bob", "cross_user", "alice", **arguments(d, "alice"))["verdict"] == "passed"
-
-
-def revise(d, pid):
-    p = current(d, pid)
-    r = d.client.post(f"/api/v1/proposals/{pid}/revisions", json=dict(expected_revision=p["review_revision"], instruction="TEST-ONLY revision"))
-    assert r.status_code == 200, r.text
 
 
 def test_publication_requires_this_artifacts_own_evidence_and_records_references(desk):
@@ -195,7 +160,8 @@ def test_scenarios_are_validated_before_anything_runs(desk):
 
 def test_nullable_and_names():
     converted = publishing.json_schema({"type": "object", "properties": {"t": {"type": "string", "nullable": True, "maxLength": 3}, "e": {"enum": ["a"], "type": "string", "nullable": True}}})
-    assert converted["properties"] == {"t": {"type": ["string", "null"], "maxLength": 3}, "e": {"enum": ["a", None], "type": ["string", "null"]}}
+    # nullable permits the type null, but an explicit enum still constrains its allowed values.
+    assert converted["properties"] == {"t": {"type": ["string", "null"], "maxLength": 3}, "e": {"enum": ["a"], "type": ["string", "null"]}}
     content = dict(name="Élan: Booking / Update!!", proposal=dict(version=3))
     a, b = publishing.tool_name("0e68d01a-1c26-4d82-b09c-aad99d67be21", content), publishing.tool_name("0e68d01a-1c26-4d82-b09c-aad99d67be22", content)
     assert a == "lan_booking_update_v3_0e68d01a1c264d82b09caad99d67be21" and TOOL_NAME_REGEX.match(a) and a != b

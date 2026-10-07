@@ -1,0 +1,23 @@
+{% if identity_setup.managed %}
+<details {% if not connectors.get(c.connector.id, []) %}open{% endif %}><summary>Add or replace a test identity</summary>
+<p class="small">Use an existing test account for this API. Credentials and trusted context are stored locally in the app database and are never included in generated tools or sent to the model.</p>
+<form method="post" action="/actions/save_test_identity" autocomplete="off">{{ m.csrf_field() }}
+<input type="hidden" name="artifact_id" value="{{ a.id }}">
+<label>Test identity name<input name="identity_name" placeholder="test-customer" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required></label>
+<label>Actual account type<select name="scope" required><option value="">Choose the account type</option><option value="end_user">End user</option><option value="admin">Administrator</option><option value="service">Service account</option><option value="public">Public</option><option value="guest">Guest</option></select></label>
+{% if identity_setup.auth and identity_setup.auth.type == 'http_bearer' %}
+<label>Access token<input type="password" name="token" autocomplete="new-password" required></label>
+{% elif identity_setup.auth and identity_setup.auth.type == 'oauth2_password' %}
+<p class="small">The specification declares a password login at <code>{{ identity_setup.auth.token_path }}</code>. Use an account supported by that login endpoint.</p>
+<label>Username<input name="username" autocomplete="off" required></label>
+<label>Password<input type="password" name="password" autocomplete="new-password" required></label>
+{% endif %}
+{% for name in identity_setup.context_fields %}{% set prop = identity_setup.context_schemas.get(name, {'type':'string'}) %}{% set kind = field_kind(prop) %}
+<label>Trusted {{ name }}{% if kind == 'boolean' %}<select name="a:{{ name }}"><option value="">Leave unset</option><option value="true">true</option><option value="false">false</option></select>
+{% elif kind in ['integer','number'] %}<input type="number" name="a:{{ name }}" step="{{ 'any' if kind == 'number' else 1 }}">
+{% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value"></textarea>
+{% else %}<input type="password" name="a:{{ name }}" autocomplete="new-password">{% endif %}</label>
+{% endfor %}
+<p class="small">Saving an existing identity name replaces its credentials and context. It does not run the tool.</p>
+<button>Save test identity</button></form></details>
+{% endif %}

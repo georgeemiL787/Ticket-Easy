@@ -1,6 +1,6 @@
 # Local Python/FastAPI discovery (legacy)
 
-> **Retired from the active flow.** OpenAPI upload/URL fetch is the discovery source ([OPENAPI_SUBSET.md](OPENAPI_SUBSET.md)). The local-project and code-analysis endpoints and forms return `410 code_discovery_retired`. Existing code inventories remain viewable read-only (inventory, evidence records); generating or analyzing from them returns `409 legacy_code_inventory`. The implementation (`team_c/code_discovery.py`) is kept until a separate cleanup. The setup and verification notes below describe how those legacy records were produced.
+> **Retired from the active flow.** OpenAPI upload/URL fetch is the discovery source ([OPENAPI_SUBSET.md](OPENAPI_SUBSET.md)). The local-project and code-analysis endpoints and forms return `410 code_discovery_retired`. Existing code inventories remain viewable read-only (inventory, evidence records); generating or analyzing from them returns `409 legacy_code_inventory`. The implementation (`team_c/legacy/code_discovery.py`; `team_c/code_discovery.py` only re-exports it) is kept until a separate cleanup. The setup and verification notes below describe how those legacy records were produced.
 
 Local projects and OpenAPI uploads produce the same capability inventory and use the existing proposal, clarification, version and decision workflow. Approval remains permission to build. Target code is never imported, executed, installed, cloned or modified.
 

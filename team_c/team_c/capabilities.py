@@ -1,6 +1,7 @@
 """Compact operation index and deterministic checks for owner tool requests and capability suggestions."""
 import json
 import re
+import unicodedata
 from .config import AppError
 
 BLOCKING = {"absent_operation", "unsupported_operation", "restricted_operation"}
@@ -98,16 +99,21 @@ def check_triage(t, index, existing):
 
 
 def title_key(text):
-    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    # Preserve letters and numbers in every script, including Arabic combining marks.
+    return " ".join("".join(c if c.isalnum() or unicodedata.category(c).startswith("M") else " " for c in normalized).split())
 
 
 def screen(output, index, existing, prior, count):
-    """Keep grounded, non-duplicate suggestions; the category follows the cited evidence, not the model's label."""
+    """Keep grounded, non-duplicate suggestions; the category follows the cited evidence, not the model's label.
+
+    A suggestion names operations, not executable behavior, so sharing operations with an existing tool only
+    relates them (one endpoint can serve several tools). It is recognized as that tool only when the name
+    matches as well; among suggestions, only a repeated title is a duplicate."""
     states = {e["id"]: e["status"] for e in index}
     tools = {x["proposal_id"]: x for x in existing}
-    active = {frozenset(x["operation_ids"]): x["proposal_id"] for x in existing if x["state"] != "rejected"}
-    seen_titles = {title_key(p["title"]) for p in prior}
-    seen_sets = {(frozenset(p["operation_ids"]), p["category"]) for p in prior if p["operation_ids"]}
+    active = [x for x in existing if x["state"] != "rejected"]
+    seen_titles = {key for p in prior if (key := title_key(p["title"]))}
     kept, withheld, recognized = [], [], []
     for s in output.suggestions:
         d = s.model_dump()
@@ -135,19 +141,54 @@ def screen(output, index, existing, prior, count):
             d["category_adjusted_from"] = s.category
         d["category"] = category
         key = frozenset(d["operation_ids"])
-        if category != "blocked_by_missing_api" and key in active:
-            recognized.append(dict(title=d["title"], proposal_id=active[key], name=tools[active[key]]["name"])); continue
-        if title_key(d["title"]) in seen_titles or (key and (key, category) in seen_sets):
+        sharing = [x for x in active if key and frozenset(x["operation_ids"]) == key] if category != "blocked_by_missing_api" else []
+        normalized_title = title_key(d["title"])
+        same = next((x for x in sharing if normalized_title and title_key(x["name"]) == normalized_title), None)
+        if same:
+            recognized.append(dict(title=d["title"], proposal_id=same["proposal_id"], name=same["name"])); continue
+        if normalized_title and normalized_title in seen_titles:
             hold("duplicates an earlier suggestion"); continue
         if len(kept) >= count:
             hold("over the requested number of suggestions"); continue
-        seen_titles.add(title_key(d["title"]))
-        if key:
-            seen_sets.add((key, category))
+        for x in sharing:
+            if x["proposal_id"] not in d["related_proposal_ids"]:
+                d["related_proposal_ids"].append(x["proposal_id"])
+        if sharing:
+            d["shares_operations_with"] = [dict(proposal_id=x["proposal_id"], name=x["name"]) for x in sharing]
+        if normalized_title:
+            seen_titles.add(normalized_title)
         kept.append(d)
     return kept, withheld, recognized
 
 
-def signature(content):
-    """Steps with their operations and binding kinds; equal signatures describe the same tool behavior."""
-    return [[s["operation_id"], sorted(f'{b["target"]}<-{b["kind"]}' for b in s["bindings"])] for s in content["steps"]]
+def behavior(content):
+    """The executable behavior of a proposal with its labels normalized; equal values describe the same tool.
+
+    Ordered steps with each binding's target and source; previous-step references by step position and
+    response status; configuration bindings by their value rather than their key; runtime arguments by
+    order of first use, so renaming an argument changes nothing but feeding one argument to two inputs
+    does; output mappings without their names. None when an unset or unreadable configuration value
+    leaves the behavior undetermined: such a tool is never treated as a duplicate.
+    """
+    position = {s["id"]: i for i, s in enumerate(content["steps"])}
+    values = {c["key"]: c.get("value_json") for c in content.get("configuration") or []}
+    arguments, steps = {}, []
+    for s in content["steps"]:
+        bindings = []
+        for b in sorted(s["bindings"], key=lambda b: b["target"]):
+            kind, source = b["kind"], b["reference"]
+            if kind == "business_configuration":
+                if values.get(source) is None:
+                    return None
+                try:
+                    source = json.dumps(json.loads(values[source]), sort_keys=True)
+                except ValueError:
+                    return None
+            elif kind == "runtime_argument":
+                source = arguments.setdefault(source, len(arguments))
+            elif kind == "previous_operation_output":
+                source = [position.get(b["step_id"], -1), b["response_status"], source]
+            bindings.append([b["target"], kind, source])
+        steps.append([s["operation_id"], bindings])
+    outputs = sorted([position.get(o["step_id"], -1), o["response_status"], o["pointer"]] for o in content["outputs"])
+    return [steps, outputs]

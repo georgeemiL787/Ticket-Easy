@@ -1,0 +1,14 @@
+<details {% if not connectors %}open{% endif %}>
+<summary>{{ 'Add another sandbox connector' if connectors else 'Set up the sandbox connector' }}</summary>
+<p>The API destination is prepared from the imported specification. Confirm or edit it below. Saving makes the connector available immediately; credentials are added when you run a test.</p>
+<form method="post" action="/actions/save_connector">{{ m.csrf_field() }}
+<input type="hidden" name="proposal_id" value="{{ p.proposal_id }}">
+<label>Sandbox API base URL<input type="url" name="base_url" value="{{ connector_draft.base_url }}" list="api-server-candidates" placeholder="http://localhost:8080" required></label>
+<datalist id="api-server-candidates">{% for url in connector_draft.candidates %}<option value="{{ url }}">{% endfor %}</datalist>
+{% if connector_draft.candidates|length > 1 %}<p class="small">The specification declares several servers. Choose the one that serves these operations in your test environment.</p>
+{% elif not connector_draft.candidates %}<p class="small">The specification does not provide a usable server address. Enter the API base URL for your test environment.</p>{% endif %}
+<details><summary>Trusted context fields</summary><p class="small">Field names needed by the accepted policy are filled in automatically. You can add names separated by commas. Enter actual values later for each test identity.</p>
+<label>Context field names<input name="context_fields" value="{{ connector_draft.context_fields|join(', ') }}" placeholder="user_id, tenant_id, cart_session"></label></details>
+<label><input type="checkbox" name="sandbox" value="1" required> This is a sandbox destination I want to use for tests.</label>
+<button>Save sandbox connector</button>
+</form></details>

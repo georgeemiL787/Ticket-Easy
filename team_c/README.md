@@ -23,6 +23,23 @@ Open <http://127.0.0.1:8000>. API documentation is at <http://127.0.0.1:8000/doc
 
 The default is **Ollama only**, requiring no OpenRouter key. Empty model configuration is an error when generation/reconciliation is requested, not a reason to serve canned proposals. If `.env` is absent, the app uses Ollama defaults and generates an ephemeral session secret; restarting loses browser sessions, not persisted work.
 
+### Commands
+
+Run from `D:\nti project\team_c`. `uv sync --locked` creates `.venv`; the commands below use its interpreter directly (`uv run ...` works too).
+
+```powershell
+uv sync --locked                                    # install
+.\.venv\Scripts\python.exe -m pytest -q             # tests (same as: uv run pytest -q)
+$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m uvicorn team_c.web:create_app --factory --host 127.0.0.1 --port 8010
+$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m team_c.mcp_server --business-id <business-id> --identity <identity>
+```
+
+`team_c.app:create_app` is the same factory as `team_c.web:create_app`; either works with `--factory`. Any free port works (the examples elsewhere use 8000). The MCP server reads `DATABASE_PATH`, `CONNECTORS_FILE` and `SANDBOX_HOSTS` from the settings unless `--database`, `--connectors` or `--sandbox-hosts` override them; see "Sandbox MCP publication".
+
+## Architecture
+
+`team_c/app.py` builds the application: the SQLite `Store`, the model `Providers`, the `Service` facade, middleware, error handlers and routers. JSON routes are in `team_c/api/`, browser pages and form actions in `team_c/web/` (templates in `team_c/web/templates/`), background AI jobs in `team_c/jobs.py`. `team_c/service.py` is a facade over the workflow services in `team_c/services/`; they use `team_c/persistence/` (store, migrations, repositories), `team_c/llm/` (prompts, schemas, providers, fallback) and the domain modules (`discovery.py`, `grounding.py`, `artifacts.py`, `executor.py`, …). The old modules `storage.py`, `providers.py` and `code_discovery.py` remain as compatibility imports. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map, dependency rules, migrations and compatibility notes.
+
 ## Discovery input
 
 OpenAPI is the discovery source: upload a JSON/YAML file, or fetch it from a running system (set `OPENAPI_FETCH_HOSTS`, for example `127.0.0.1:8001`). The URL may be the OpenAPI JSON/YAML itself or a Swagger UI / ReDoc page such as FastAPI's `/docs`; the page is followed to the OpenAPI URL it names (same allowlist, at most two GETs). See [the OpenAPI subset and per-operation contract](docs/OPENAPI_SUBSET.md). On the inventory page, select which eligible operations to send to the model.
@@ -43,8 +60,8 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 
 | Setting | Meaning |
 |---|---|
-| `LLM_PRIMARY` | `ollama` or `openrouter` |
-| `LLM_FALLBACK` | `none` (default), or the other provider |
+| `LLM_PRIMARY` | `ollama`, `openrouter` or `groq` |
+| `LLM_FALLBACK` | `none` (default), another provider, or a comma-separated list tried in order (for example `openrouter,ollama`) |
 | `OLLAMA_BASE_URL` | Default `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | Default `qwen3:8b`; override explicitly to use another model |
 | `OLLAMA_TIMEOUT` | Seconds for one whole model answer; default 240. On a laptop GPU that runs part of qwen3:8b on the CPU, suggestions take about 3 minutes, so raise it (for example 1800) |
@@ -54,7 +71,13 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 | `OPENROUTER_MODEL` | Exact model ID supporting structured outputs |
 | `OPENROUTER_BASE_URL` | Default `https://openrouter.ai/api/v1` |
 | `OPENROUTER_TIMEOUT` | Seconds; default 120 |
-| `OPENAPI_FETCH_HOSTS` | Comma-separated `host:port` allowlist for OpenAPI URL fetch; empty disables fetch |
+| `GROQ_API_KEY` | Secret; required only when Groq is selected |
+| `GROQ_API_KEY_2`, `GROQ_API_KEY_3` | Optional backup secrets, tried in that order before moving from Groq to the next provider |
+| `GROQ_MODEL` | Default `openai/gpt-oss-120b`; must support strict structured outputs (`openai/gpt-oss-20b` and `qwen/qwen3.8-27b` also do) |
+| `GROQ_BASE_URL` | Default `https://api.groq.com/openai/v1` |
+| `GROQ_TIMEOUT` | Seconds; default 120 |
+| `GROQ_REASONING_EFFORT` | Default `low`: sent as `reasoning_effort` with `include_reasoning=false`, so the model reasons briefly and returns only the answer. Leave empty for a model without reasoning controls. Reasoning shares the 8192-token output limit with the answer |
+| `OPENAPI_FETCH_HOSTS` | Comma-separated allowlist for OpenAPI URL fetch. `loopback:*` allows `localhost`, `127.x.x.x`, and `::1` on any port; remote hosts require explicit `host:port` entries. Empty disables fetch |
 | `OPENAPI_FETCH_TIMEOUT` | Seconds; default 15 |
 | `DATABASE_PATH` | Persistent SQLite file, relative to working directory or absolute |
 | `CONNECTORS_FILE` | JSON file of sandbox connectors and trusted execution identities (see below); empty disables building and running artifacts |
@@ -62,11 +85,15 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 | `DEV_REVIEWER_ID` | Server-derived development audit identity |
 | `SESSION_SECRET` | Local browser session signing secret |
 
-For OpenRouter primary with local fallback, explicitly set `LLM_PRIMARY=openrouter` and `LLM_FALLBACK=ollama`, and supply the OpenRouter key/model. Ollama primary with OpenRouter fallback is supported too. Selected providers must be configured; unused providers are ignored. Fallback happens once, only for timeout/connection errors, 429, or 5xx. Invalid output, refusals, bad bindings, and authentication/configuration failures are explicit failures with no fallback. There are no automatic repair/retry loops or cross-model replacement on invalid content.
+With all three Groq keys configured, the order is `GROQ_API_KEY` → `GROQ_API_KEY_2` → `GROQ_API_KEY_3` → OpenRouter → Ollama when `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`. All Groq keys use the same model. Only rate limits, timeout/connection failures and HTTP 5xx advance to the next key. Rate limits include HTTP 429 and Groq HTTP 413 with the explicit `rate_limit_exceeded` code (TPM allowance); ordinary HTTP 413 still stops. Other rejected requests, invalid output and cancellation stop immediately. Blank or duplicate keys are skipped. Each new call starts with the first key again; no key is permanently disabled after a failure or daily rate limit. Each credential attempt is recorded as its provider without storing the key.
+
+For OpenRouter primary with local fallback, explicitly set `LLM_PRIMARY=openrouter` and `LLM_FALLBACK=ollama`, and supply the OpenRouter key/model. The Ollama context budget (including its token-count call) is checked only when Ollama is actually attempted, so an offline Ollama fallback never blocks the OpenRouter primary. When the fallback is reached and the input does not fit, the run fails with `model_input_limit`. Ollama primary with OpenRouter fallback is supported too. For Groq first, then OpenRouter, then local Ollama, set `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`, and supply `GROQ_API_KEY` plus the OpenRouter key/model. Selected providers must be configured and distinct; unused providers are ignored. The chain moves to the next provider only for timeout/connection errors, the rate-limit responses described above, or 5xx. Invalid output, refusals, bad bindings, other rejected requests (4xx, including authentication), configuration failures and cancellation stop the chain with no further fallback. Every attempted provider is recorded on the run. There are no automatic repair/retry loops or cross-model replacement on invalid content.
 
 The UI shows the primary/fallback configuration; each run records actual provider/model attempts. A successful provider response is not the same as accepted generation: grounding can still fail the overall run.
 
 Proposal writing narrows what the model can emit: each step is decoded as one supplied operation, and its runtime, configuration and context bindings may only target that operation's own input keys, each at most once and at least as many as it has required inputs (previous-output bindings may target the input keys of any supplied operation). When grounding still rejects a proposal, the same request is sent once more with `grounding_feedback` (the rejected proposal and the check's errors); both runs stay on the request. Answer checking (reconciliation) does the same once when its revised proposal fails grounding. Before grounding, a declared configuration that no binding uses but whose key a runtime_argument binding now uses is treated as left over from rebinding that input: it is removed and its questions are unlinked (they stay required), recorded as diagnostic `stale_configuration_removed`. Grounding errors (at most 20, 300 characters each, secret-bearing lines redacted) are kept on the failed run and shown as "What the check found" under a failed request and on the live progress page of a failed action (for example Check answers).
+
+Answer checking is told to report a missing capability only when an owner answer requires an action no supplied operation performs, not for excluded or out-of-scope features or improvements nobody asked for. The model can still report one wrongly, so each missing capability on the current check has a "Not needed for this tool" button that requires a reason (`POST /api/v1/proposals/{id}/versions/{v}/gaps/{index}/dismiss`). The decision, reason and reviewer are stored in `gap_dismissals` and shown with the gap. When every answer is resolved, there are no validation blockers and every reported gap is dismissed, the check counts as successful and the version becomes ready for review. Gaps found during generation are validation blockers, so they still require an explicit revision. Dismissing never resolves an unresolved answer.
 
 ## Walkthrough: e-commerce
 
@@ -74,7 +101,7 @@ Proposal writing narrows what the model can emit: each step is decoded as one su
 2. Upload `examples/ecommerce.json`. Confirm two supported operations and the security/access warning.
 3. Select **Generate proposals with live model**. Open the returned proposal. If the model fails validation, inspect the recorded error; a failed result is never replaced by a demonstration proposal.
 4. Inspect the inputs: `order_id` and `summary` are future runtime arguments; `customer_id` comes from the earlier order response; `queue_id` is business configuration. Exact generated wording/grouping may vary. Reject or request revision for semantic mistakes, even when structural validation passes.
-5. Answer the queue question with **yes**. Save, then reconcile. It should remain insufficient: this does not identify a queue. Approval stays blocked. Review the actual finding rather than assuming every live model behaves perfectly.
+5. Answer the queue question with **yes**. Save, then reconcile. It should remain insufficient: this does not identify a queue. Approval stays blocked. Review the actual finding rather than assuming every live model behaves perfectly. When questions or access requirements exist, Check answers is disabled until at least one nonempty answer is saved; the API rejects empty checks before contacting a model. Partial saved answers may be assessed, but every required answer must be resolved before approval.
 6. Correct the answer: **Use the exact queue_id "support" for all tickets. This is business configuration, not an input to ask customers for.** Save and reconcile.
 7. Updating configuration is a material change: review the new version/diff. Its copied answer is evidence only. Reconcile that new version again. Approval is enabled only when the latest reconciliation resolves all questions and passes validation without blockers.
 8. Select **Approve to build**. Verify the precise state; there is no activation or publication control.
@@ -146,14 +173,14 @@ Example dependency, validated in both automated domain walkthroughs:
 | s2: service request | `body.message` | Future runtime argument `message` |
 | s2: service request | `body.team_id` | Owner-reconciled business setting `team_id` |
 
-The validator checks ordering, response code, pointer existence, requiredness and schema compatibility. It cannot infer that two different string identifiers mean the same thing: mapping `/reservation_id` to `body.room_id` can be type-compatible but semantically wrong and must be corrected in review.
+The validator checks ordering, response code, pointer existence, requiredness and schema compatibility. Object compatibility includes `additionalProperties`: omitted, `true` and `{}` allow any extra property. A source that allows extras is compatible only if the target allows the same extras and every target property the source does not declare. `patternProperties` is never compatible. It cannot infer that two different string identifiers mean the same thing: mapping `/reservation_id` to `body.room_id` can be type-compatible but semantically wrong and must be corrected in review.
 
 - `discovery.py`: offline OpenAPI extraction; original source bytes/schemas and diagnostics are persisted.
 - `models.py` / `grounding.py`: structured proposal/input-source contracts, required-input checks, conservative schema compatibility, dependency and field validation.
-- `providers.py`: untrusted-data prompt boundary, strict structured output, selectable providers, bounded calls and explicit fallback. No model execution tools.
-- `service.py`: transactions around reconciliation, revision and decisions. A changed answer invalidates reconciliation. Material content changes create a new version. Even copied answers need reassessment. Approval binds the exact content, answer, inventory and reconciliation snapshot.
-- `storage.py`: schema version 1, foreign keys, immutable content/history, WAL SQLite. Decision uniqueness/idempotency and expected revisions prevent duplicate/conflicting submissions.
-- `web.py` / `templates/page.html`: escaped server-rendered review forms, CSRF, same-origin checks, local identity, REST API.
+- `llm/` (re-exported by `providers.py`): untrusted-data prompt boundary (`prompts.py`), strict structured output (`schemas.py`), selectable providers (`ollama.py`, `openrouter.py`), bounded calls and explicit fallback (`router.py`). No model execution tools.
+- `services/` behind the `service.py` facade: transactions around reconciliation, revision and decisions (`services/review.py`). A changed answer invalidates reconciliation. Material content changes create a new version. Even copied answers need reassessment. Approval binds the exact content, answer, inventory and reconciliation snapshot.
+- `persistence/` (re-exported by `storage.py`): ordered migrations recorded in `schema_migrations`, foreign keys, immutable content/history, WAL SQLite. Decision uniqueness/idempotency and expected revisions prevent duplicate/conflicting submissions.
+- `app.py`, `api/`, `web/` (templates in `web/templates/`): escaped server-rendered review forms, CSRF (`web/forms.py`), same-origin checks (`app.py`), local identity, REST API (`api/`).
 
 Lifecycle: `needs_clarification` → `needs_reconciliation` → `ready_for_review` → `approved_to_build` / `rejected` / `changes_requested`. Reconciliation may return to clarification or create an unapproved replacement. Replaced versions are `superseded`, with their decisions retained. Runs are `running`, `succeeded`, `failed`, or `interrupted` once their owning process has exited.
 
@@ -165,7 +192,7 @@ Live check on a database copy: `$env:PYTHONPATH="."; $env:OLLAMA_CONTEXT="40960"
 
 ### Executable artifacts and sandbox runs
 
-An `approved_to_build` version can be compiled, without a model, into an immutable tool artifact (`artifacts.py`). The artifact holds: name, purpose, input and output schemas, the approved version and decision ID, the spec SHA-256 and operation source pointers, ordered steps with parameter locations and serialization, body mappings, declared success statuses, media types and schemas, output pointers, connector and authentication, access requirements with their enforcement, limits and failure behaviour. Content is deterministic and hashed, so rebuilding returns the same artifact. Anything the executor cannot perform exactly (header/cookie inputs, non-simple path styles, object parameters, unbound path placeholders, unsupported authentication) rejects the build with `artifact_unsupported`. Approval permits artifact creation and sandbox testing only. `runtime_ready` and `activated` stay false; sandbox publication is a separate decision (see "Sandbox MCP publication").
+An `approved_to_build` version can be compiled, without a model, into an immutable tool artifact (`artifacts.py`). The artifact holds: name, purpose, input and output schemas, the approved version and decision ID, the spec SHA-256 and operation source pointers, ordered steps with parameter locations and serialization, body mappings, declared success statuses, media types and schemas, output pointers, connector and authentication, access requirements with their enforcement, limits and failure behaviour. Content is deterministic and hashed, so rebuilding identical content returns the same artifact. Stored artifacts are never modified: a rebuild whose content hash differs (for example an older approval rebuilt after the format changed from `team_c.tool_artifact/1` to `/2`) creates a new artifact record, and `/1` artifacts still execute. Anything the executor cannot perform exactly (header/cookie inputs, non-simple path styles, object parameters, unbound path placeholders, unsupported authentication) rejects the build with `artifact_unsupported`. Approval permits artifact creation and sandbox testing only. `runtime_ready` and `activated` stay false; sandbox publication is a separate decision (see "Sandbox MCP publication").
 
 Each owner-confirmed access requirement needs an enforceable mechanism. Record-scope requirements are derived from path parameters, required query parameters, and inputs that carry an identifier from an earlier response. The operator submits the mechanisms (`POST /proposals/{id}/enforcement`). They are validated immediately, but usable only after review (`POST /enforcement/{id}/review`, which records the reviewer, time and note). The artifact records which reviewed configuration it was built from. Submitting a new configuration invalidates earlier artifacts (`enforcement_not_current`) until it is reviewed and the artifact rebuilt. The model never supplies or changes enforcement. Requirements without a reviewed mechanism are listed as `execution_blockers` and block every run.
 
@@ -189,7 +216,7 @@ Supported mechanisms, and nothing else:
 
 Use `"token": "..."` instead of `username`/`password` for HTTP bearer APIs.
 
-The executor (`executor.py`) validates arguments against the input schema before any request and rejects unknown arguments, so identity cannot be passed as an argument. Its host must be in `SANDBOX_HOSTS` and match the base URL recorded in the artifact. It obtains tokens from the spec's OAuth2 password `tokenUrl`, which must be a path on the connector origin, or uses a bearer token. Path values are percent-encoded and `.`/`..` are refused. Redirects are never followed. Requests and responses are bounded, and each response's status, media type and schema are checked. It stops at the first failure and never retries. Run statuses:
+The executor (`executor.py`) validates arguments against the input schema before any request and rejects unknown arguments, so identity cannot be passed as an argument. Its host must be in `SANDBOX_HOSTS` and match the base URL recorded in the artifact. It obtains tokens from the spec's OAuth2 password `tokenUrl`, which must be a path on the connector origin, or uses a bearer token. Path values are percent-encoded and `.`/`..` are refused. Each step's request body carries whether it is required and its complete request schema. An optional body is omitted when no value for it is supplied. A body that is sent (a required one, an optional one with any supplied value, or an explicitly supplied whole body such as `{}`) is first validated against the complete schema in write mode (required `readOnly` properties are not expected). An invalid body fails the step with `invalid_request` and is not sent. This catches, for example, an optional body whose fields are optional runtime arguments but which requires `title` once sent (discovery marks such inputs `required_when_body_sent`). Artifacts built before this keep their earlier behavior: they always send a body and skip that validation. Redirects are never followed. Requests and responses are bounded, and each response's status, media type and schema are checked. It stops at the first failure and never retries. Run statuses:
 
 - `succeeded`: every step and output completed.
 - `failed`: no write was sent, or the API rejected the write with a 4xx. A rejected write has `write_state: rejected_unverified`: the rejection was observed, but that nothing changed is not asserted without independent state verification.
@@ -200,7 +227,7 @@ Before a run, the server checks that the approval is still current, that the sto
 
 **Liveness of runs and executions.** Every model run and execution records the process that owns it. Each process holds an exclusive OS file lock (`<database>.owners/<owner>.lock`) for as long as it lives. When a Team C or MCP process starts, it marks a `running` row `interrupted` only if its owner's lock can be acquired (so the owner has exited) or the row has no owner (legacy data). Runs of other live processes are left alone. An interrupted execution reports that a write may or may not have been applied; nothing is retried. `tests/test_lifecycle.py` checks this with a real second process.
 
-API: `POST /proposals/{id}/enforcement`, `POST /enforcement/{id}/review` (`note`), `POST /proposals/{id}/artifacts` (`connector_id`), `GET /artifacts/{id}`, `POST /artifacts/{id}/sandbox-runs` (`identity`, `arguments`), `POST /artifacts/{id}/sandbox-tests` (`name`, `identity`, `arguments`, `expect`), `POST /sandbox-tests/{id}/repairs` (`verification`). The proposal page has the enforcement submit/review and build forms plus repair history. `/artifacts/{id}` shows steps, enforcement provenance, a sandbox-run form, test results and execution history.
+API: `POST /proposals/{id}/enforcement`, `POST /enforcement/{id}/review` (`note`), `POST /proposals/{id}/artifacts` (`connector_id`), `GET /artifacts/{id}`, `POST /artifacts/{id}/sandbox-runs` (`identity`, `arguments`), `POST /artifacts/{id}/sandbox-tests` (`name`, `identity`, `arguments`, `expect`), `POST /sandbox-tests/{id}/repairs` (`verification`). The proposal page has the enforcement submit/review and build forms plus repair history. `/artifacts/{id}` shows steps, enforcement provenance, a sandbox-run form (one field per tool input, built from the artifact's input schema: a list for enums and booleans, number fields, text fields, and a JSON box only for object or array inputs), test results and execution history.
 
 #### Sandbox tests and bounded repair
 
@@ -349,7 +376,7 @@ Detailed schemas are sent only for the operations chosen for generation. Model o
    - `existing_tool`: cites an existing proposal;
    - `unavailable`: names each absent operation (citing no id), unsupported operation or restricted operation.
 3. Invalid triage fails the request visibly. Examples are an invented or restricted operation, or an "absent" operation that exists.
-4. A generated proposal identical, step for step, to an existing active proposal is not stored; the request points to the existing tool instead.
+4. A generated proposal with the same executable behavior as an existing active proposal is not stored; the request points to the existing tool instead. Behavior means the ordered steps and operations, every binding's target and source (previous-step references by step position, response status and pointer), configuration values (not their keys), which inputs share one runtime argument, and the output mappings. Labels are normalized: renamed runtime arguments, configuration keys or outputs and reordered bindings or outputs still match. Sharing operations alone is not a duplicate, and a tool whose configuration value is not yet set is never treated as one.
 5. New proposals start in `needs_clarification` and go through the normal answers, reconciliation, approval, enforcement, build, test and publication flow. There is no other path.
 6. Each request stores its status (`processing`, `needs_clarification`, `proposed`, `existing_tool`, `unavailable`, `failed`), model runs, linked proposals, unresolved needs, coverage and outcome. The owner can answer and reprocess a request that is not yet proposed.
 
@@ -359,9 +386,9 @@ Detailed schemas are sent only for the operations chosen for generation. Model o
    - invented operations;
    - restricted operations used as steps (restricted operations stay restricted);
    - unexplained categories;
-   - duplicates of earlier suggestions (open, dismissed or accepted);
+   - duplicates of earlier suggestions (open, dismissed or accepted), meaning the same title; using the same operations as another suggestion is not a duplicate;
    - suggestions over the count.
-3. Suggestions whose operations equal an existing active tool are listed as already covered.
+3. A suggestion is a title and operations, not executable behavior, so one endpoint can serve several tools (payment status and delivery status from one order lookup). A suggestion with the same name and operations as an existing active tool is listed as already covered. One that only shares the operations is kept: that tool is added to its related tools (`shares_operations_with`), and the card asks the owner to check it does something different.
 4. The category comes from the evidence, not the model label: absent, unsupported or restricted means `blocked_by_missing_api`; missing information means `needs_clarification`; otherwise `feasible`.
 5. The owner decides on each suggestion:
    - Accept starts a normal tool request on the suggestion's operations. It is not build approval; blocked suggestions cannot be accepted, and `needs_clarification` ones need an answer.
@@ -416,3 +443,15 @@ The sandbox MCP server has these limits:
 - Returned outputs are whatever the reviewed output contract selects (for the repaired desk artifact, that includes the caller's own booking holder details).
 
 LLM interpretations and reconciliation are fallible. Deterministic validators verify references, schema relationships, versioning, and review preconditions; they cannot prove all natural-language claims. Owner review remains necessary. The small local model may reject/fail a run or propose an unnecessary gap; errors and rejected results are retained, not silently repaired. See `docs/VERIFICATION.md` for actual results and unverified checks.
+
+## Capability compiler
+
+The proposal page now offers semantic input evidence, structured access/input policies, risk and readiness. Accepted policies compile into trusted context bindings and access checks, with automatically generated security tests. See [the compiler guide](docs/CAPABILITY_COMPILER.md) for policy contracts, migration 6, artifact format /3, compatibility and verification limits.
+
+### Sandbox setup in the app
+
+Under **Build and test**, the app prepares a connector from the imported API's server URLs and the accepted policy's trusted context field names. Confirm or edit the sandbox base URL and click **Save sandbox connector**. No JSON file, environment change or restart is required. Multiple servers require a selection; uploaded specifications with only relative URLs require an explicit base URL. Preparing or saving a connector sends no request to the target API.
+
+After building, use **Add or replace a test identity** on the artifact page to enter the existing test account's credentials, actual account type and trusted context. Then run the sandbox test. Credentials are stored in the local SQLite database (including its backups), not in artifacts or model prompts. Connector setup does not approve a proposal, resolve protected input mappings or bypass an access policy.
+
+Migration 7 adds `sandbox_connectors`. The web app and MCP executor share these saved connectors. A confirmed destination is permitted only for its connector and business. Existing `CONNECTORS_FILE` entries retain precedence and still require `SANDBOX_HOSTS`; the app never edits that file.

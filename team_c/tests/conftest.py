@@ -106,3 +106,35 @@ def confirm_requirements(client,pid):
         assert response.status_code==200,response.text
         p=response.json()
     return p
+
+
+# Shared fixtures. The helpers import ROOT and requirement_findings from this module, so they are imported only after those are defined.
+from helpers.desk import make_desk  # noqa: E402
+from helpers.lifecycle import LifecycleSubstitute  # noqa: E402
+from helpers.openapi import op, target_spec  # noqa: E402
+from helpers.tool_requests import RequestDesk  # noqa: E402
+
+
+@pytest.fixture
+def desk(tmp_path, monkeypatch):
+    monkeypatch.setattr("helpers.desk.DeskSubstitute", RequestDesk)
+    d = make_desk(tmp_path, "base")
+    d.service = d.app.state.service
+    inv, n = d.spec["inventory"], d.n
+    d.lookup, d.create = op(inv, "GET", n["prefix"] + n["lookup"])["id"], op(inv, "POST", n["prefix"] + n["create"])["id"]
+    d.health = op(inv, "GET", "/health")["id"]
+    d.attach = next(o["id"] for o in inv["operations"] if not o["proposal_eligible"])
+    d.bid = d.service.spec(d.spec["id"])["business_id"]
+    yield d
+    d.client.__exit__(None, None, None)
+
+
+@pytest.fixture
+def lifecycle(tmp_path):
+    settings = Settings(_env_file=None, database_path=str(tmp_path / "lifecycle.db"), session_secret="test-secret", openrouter_api_key="")
+    app = create_app(settings, LifecycleSubstitute)
+    with TestClient(app) as client:
+        b = client.post("/api/v1/businesses", json=dict(name="Items (test)", description="Test business")).json()
+        spec = client.post(f'/api/v1/businesses/{b["id"]}/specifications', files={"file": ("openapi.json", json.dumps(target_spec()).encode())}).json()
+        scope = [op(spec["inventory"], m, "/api/v1/items/{id}")["id"] for m in ("GET", "PUT")]
+        yield app, client, settings, spec, scope

@@ -272,6 +272,11 @@ class SupersedeSubmission(StrictModel):
     reason: str = Field(min_length=1, max_length=2000)
 
 
+class GapDismissalSubmission(StrictModel):
+    expected_revision: int
+    reason: str = Field(min_length=1, max_length=2000)
+
+
 def canonical_content(content: ProposalContent) -> ProposalContent:
     """Binding/config order is not behavior. Step order is, and remains untouched."""
     content = content.model_copy(deep=True)

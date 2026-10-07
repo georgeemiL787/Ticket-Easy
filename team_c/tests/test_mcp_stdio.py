@@ -26,8 +26,8 @@ from fixtures.service_desk.app import VARIANTS
 from team_c import publishing
 from team_c.config import Settings
 from team_c.web import create_app
-from test_publication import RevisingDesk, publish, revise, with_evidence
-from test_second_domain import KEY, LABEL, arguments, current, generated, review_and_build
+from helpers.desk import KEY, LABEL, arguments, current, generated, review_and_build
+from helpers.publication import RevisingDesk, publish, revise, with_evidence
 
 
 def free_port():

@@ -4,11 +4,12 @@ Every approval here is a labeled TEST-ONLY decision. Expected outcomes come from
 (an owner looks up and updates their own item) and the API contract, not from the executor.
 """
 import json
+import re
 import uuid
 import httpx
 import pytest
 from fastapi.testclient import TestClient
-from test_review_lifecycle import LifecycleSubstitute, approve, answer_all, confirm_all, current, generate, lifecycle, post, supersede_q2  # noqa: F401
+from helpers.lifecycle import LifecycleSubstitute, approve, answer_all, confirm_all, current, generate, post, supersede_q2
 from team_c.artifacts import compile_steps
 from team_c.executor import Run
 from team_c.web import create_app
@@ -369,3 +370,104 @@ def test_ui_shows_artifacts_and_sandbox_controls(built):
     assert "Runtime-ready: no" in detail and "Run sandbox test" in detail and "response_field_matches_context" in detail
     assert "Access enforcement" in page and "approved" in page
     assert not any(s in detail for s in SECRETS)
+
+
+def test_sandbox_form_has_one_field_per_input(built):
+    _, client, _, _, _, a, target = built
+    page = client.get(f'/artifacts/{a["id"]}').text
+    assert 'name="a:item_id"' in page and 'name="a:title"' in page and "(optional)" in page and "Arguments as JSON" not in page
+    csrf = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+    form = dict(csrf=csrf, artifact_id=a["id"], identity="alice", **{"a:item_id": ITEM_A, "a:title": "Renamed via form", "a:description": ""})
+    assert client.post("/actions/sandbox_run", data=form, follow_redirects=False).status_code == 303
+    assert target.items[ITEM_A]["title"] == "Renamed via form" and target.items[ITEM_A]["description"] == "a"
+
+
+def test_legacy_enforcement_form_submits_validated_fields_for_review(sandbox):
+    _, client, _, _, pid, target = sandbox
+    p = approved(client, pid)
+    page = client.get(f"/proposals/{pid}").text
+    assert 'name="json"' not in page
+    assert 'Configure runtime enforcement' in page
+    csrf = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+    form = dict(csrf=csrf, proposal_id=pid, connector_id="items-sandbox")
+    for rid, config in enforcement(p).items():
+        form["mechanism:" + rid] = config["mechanism"]
+        form.update({rid + ":" + key: value for key, value in config.items() if key in ("step_id", "response_status", "pointer", "context_field")})
+    response = client.post("/actions/submit_enforcement", data=form, follow_redirects=False)
+    assert response.status_code == 303, response.text
+    saved = current(client, pid)["enforcement"]
+    assert saved["status"] == "awaiting_review"
+    assert saved["content"]["enforcement"] == enforcement(p)
+    assert target.requests == []
+    assert 'disabled>Build artifact' in client.get(f"/proposals/{pid}").text
+
+
+def test_missing_connector_has_explanation_instead_of_empty_build_form(sandbox):
+    _, client, settings, _, pid, _ = sandbox
+    approved(client, pid)
+    settings.connectors_file = ""
+    page = client.get(f"/proposals/{pid}").text
+    assert "No sandbox connector is configured for this business" in page
+    assert 'action="/actions/build_artifact"' not in page
+    assert 'action="/actions/submit_enforcement"' not in page
+    assert 'disabled>Build artifact' in page
+    assert 'action="/actions/save_connector"' in page and 'No configuration file or restart is needed' in page
+
+
+def test_legacy_enforcement_form_rejects_missing_choices(sandbox):
+    _, client, _, _, pid, _ = sandbox
+    approved(client, pid)
+    page = client.get(f"/proposals/{pid}").text
+    csrf = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+    response = client.post('/actions/submit_enforcement', data=dict(csrf=csrf, proposal_id=pid, connector_id='items-sandbox'))
+    assert response.status_code == 422
+    assert current(client, pid)["enforcement"] is None
+
+
+def test_protected_cookie_has_actionable_recovery_and_unaccepted_form_suggestion(sandbox):
+    app, client, settings, spec, pid, target = sandbox
+    # A synthetic imported API declares an optional session cookie on its write.
+    with app.state.store.connect(write=True) as conn:
+        inventory = json.loads(conn.execute("SELECT inventory FROM specifications WHERE id=?", (spec["id"],)).fetchone()[0])
+        content = current(client, pid)["content"]
+        step = content["steps"][-1]
+        op = next(o for o in inventory["operations"] if o["id"] == step["operation_id"])
+        field = dict(schema={"type": "string"}, required=False)
+        op["inputs"]["cookie.checkout_session"] = field
+        op["parameters"].append(dict(name="checkout_session", **{"in": "cookie"}, **field))
+        step["bindings"].append(dict(target="cookie.checkout_session", kind="runtime_argument", reference="session_cookie", step_id=None, response_status=None))
+        conn.execute("UPDATE specifications SET inventory=? WHERE id=?", (json.dumps(inventory), spec["id"]))
+        conn.execute("UPDATE versions SET content=? WHERE proposal_id=?", (json.dumps(content), pid))
+    before = approved(client, pid)
+    result = build(client, pid)
+    assert result.status_code == 422 and result.json()["code"] == "semantic_inputs_unresolved", result.text
+    assert "session_cookie" in result.json()["message"]
+    assert result.json()["details"]["recovery_url"] == f"/proposals/{pid}#structured-policy"
+    page = client.get(f"/proposals/{pid}").text
+    assert 'disabled>Build artifact' in page and '/actions/reopen_policy' in page
+    token = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+    response = client.post('/actions/reopen_policy', data=dict(csrf=token, proposal_id=pid, version=before["version"], revision=before["review_revision"]), follow_redirects=False)
+    assert response.status_code == 303
+    after = current(client, pid)
+    assert after["policy"] is None
+    assert after["interface_preview"]["blockers"]  # A suggested default is not an accepted decision.
+    suggestion = after["policy_suggestions"][0]
+    assert suggestion["target"] == "cookie.checkout_session" and suggestion["reference"] == "checkout_session"
+    assert suggestion["source"] == "trusted_application_context"
+    page = client.get(f"/proposals/{pid}").text
+    assert 'value="checkout_session"' in page and 'value="trusted_application_context" selected' in page
+    assert target.requests == []
+    policy = dict(principals=["resource_owner"], authentication="required", inputs=[suggestion],
+                  checks=[dict(requirement_id=r["id"], kind="ownership", resource="Test item", step_id="s1", response_status="200", resource_field="/owner_id", identity_source="user_id") for r in after["requirements"] if r["kind"] == "record_scope"],
+                  financial=False, irreversible=False, external_side_effects=False, idempotent=True)
+    assert post(client, pid, "policy", policy=policy).status_code == 200
+    assert not current(client, pid)["interface_preview"]["blockers"]
+    assert post(client, pid, "reconcile").status_code == 200
+    assert approve(client, pid, key="cookie-policy-approval").status_code == 200
+    write_connectors(settings, after["business_id"], context_fields=["user_id", "checkout_session"])
+    result = build(client, pid, enforce=False)
+    assert result.status_code == 200, result.text
+    artifact = result.json()["content"]
+    assert "session_cookie" not in artifact["input_schema"]["properties"]
+    cookie = next(p for p in artifact["steps"][-1]["parameters"] if p["location"] == "cookie")
+    assert cookie["source"] == dict(kind="trusted_application_context", reference="checkout_session")

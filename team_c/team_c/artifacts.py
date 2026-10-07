@@ -7,10 +7,13 @@ import re
 from types import SimpleNamespace
 from urllib.parse import urlparse
 from .config import AppError
+from .contracts import Artifact, CompiledStep, Grounding, Inventory, Operation
 from .grounding import response_field
-from .storage import digest
+from .persistence.util import digest
 
-FORMAT = "team_c.tool_artifact/1"
+# /2: every step body carries "required" and the complete request "schema". The executor keys on their presence,
+# not on this string: /1 bodies without them are always sent.
+FORMAT = "team_c.tool_artifact/2"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 LIMITS = dict(timeout_seconds=10.0, max_request_bytes=64 * 1024, max_response_bytes=256 * 1024, max_steps=8, follow_redirects=False, retries=0)
 FAILURE = dict(on_step_failure="Stop. Later steps, including dependent writes, are not attempted.",
@@ -46,7 +49,7 @@ def auth_for(op, missing):
     return None
 
 
-def compile_steps(content, ops, missing):
+def compile_steps(content, ops: dict[str, Operation], missing: list[str]) -> list[CompiledStep]:
     steps = []
     for s in content["steps"]:
         op = ops[s["operation_id"]]
@@ -68,6 +71,14 @@ def compile_steps(content, ops, missing):
                     missing.append(f'{s["id"]}: {b["target"]} uses unsupported serialization (type {kind}, style {style}, explode {explode})')
                     continue
                 parameters.append(dict(name=name, location=location, type=kind, style=style, explode=explode, source=source))
+            elif location in ("header", "cookie"):
+                # Transport fields are supported only from accepted trusted sources.
+                reserved = {"authorization", "proxy-authorization", "host", "cookie", "content-length", "transfer-encoding", "connection", "content-type"}
+                security_names = {str(v.get("name", "")).lower() for v in op.get("security_schemes", {}).values() if v.get("type") == "apiKey" and v.get("in") == location}
+                if source["kind"] not in ("trusted_application_context", "business_configuration") or kind not in ("string", "integer", "number", "boolean") or name.lower() in reserved | security_names:
+                    missing.append(f'{s["id"]}: {b["target"]} needs supported trusted transport context; credential/protocol headers are connector-managed')
+                    continue
+                parameters.append(dict(name=name, location=location, type=kind, style="simple" if location == "header" else "form", explode=False, source=source))
             elif location == "body" and name:
                 fields.append(dict(name=name, source=source))
             elif b["target"] == "body":
@@ -83,8 +94,11 @@ def compile_steps(content, ops, missing):
         if not responses:
             missing.append(f'{s["id"]}: {op["method"]} {op["path"]} declares no success response')
         body = None
-        if fields or whole or (op.get("request_body") or {}).get("required"):
-            body = dict(media_type="application/json", fields=fields, whole=whole)
+        request = op.get("request_body") or {}
+        if fields or whole or request.get("required"):
+            # The complete request schema travels with the step: an optional body's required properties apply whenever it is sent.
+            body = dict(media_type="application/json", fields=fields, whole=whole, required=bool(request.get("required")),
+                        schema=(request.get("content") or {}).get("application/json", {}).get("schema"))
         steps.append(dict(id=s["id"], operation_id=op["id"], method=op["method"], path=op["path"], source_pointer=op["source_pointer"],
                           effect="read" if op["method"] in SAFE_METHODS else "write", parameters=parameters, body=body, responses=responses))
     return steps
@@ -143,7 +157,7 @@ def enforcement_for(requirement, config, content, ops, auth, context_fields):
                        f"{config['context_field']}; otherwise no later step runs and no output is returned.")
 
 
-def validate_enforcement(configs, content, inventory, requirements, connector):
+def validate_enforcement(configs, content, inventory: Inventory, requirements, connector):
     """Resolved enforcement per requirement id; unknown requirements or invalid mechanisms are rejected."""
     unknown = set(configs) - {r["id"] for r in requirements}
     if unknown:
@@ -155,7 +169,9 @@ def validate_enforcement(configs, content, inventory, requirements, connector):
     return {r["id"]: enforcement_for(r, configs.get(r["id"]), content, ops, auth, context_fields) for r in requirements}
 
 
-def compile_artifact(content, derived, inventory, requirements, proposal, source, connector, enforcement):
+def compile_artifact(content, derived: Grounding, inventory: Inventory, requirements, proposal, source, connector, enforcement, policy=None) -> tuple[Artifact, str]:
+    from .compiler.compile import prepare, guards, manifest
+    content, derived, protected, context = prepare(content, inventory, policy, connector)
     ops = {o["id"]: o for o in inventory["operations"]}
     missing = []
     steps = compile_steps(content, ops, missing)
@@ -171,12 +187,15 @@ def compile_artifact(content, derived, inventory, requirements, proposal, source
     if missing:
         raise AppError("artifact_unsupported", "The approved proposal has execution semantics the executor cannot perform exactly", details={"missing": missing})
     auth = auths[0]
-    configs = validate_enforcement(enforcement["content"] if enforcement else {}, content, inventory, requirements, connector)
+    configs = validate_enforcement(enforcement["content"] if enforcement else {}, content, inventory, requirements, connector) if not policy else {}
     access = []
     for r in requirements:
         if r["status"] != "owner_confirmed":
             raise AppError("artifact_not_approved", f"Requirement {r['id']} is not owner-confirmed")
-        access.append(dict(id=r["id"], kind=r["kind"], text=r["text"], owner_confirmed_answer=r["answer"]["text"], enforcement=configs[r["id"]]))
+        access.append(dict(id=r["id"], kind=r["kind"], text=r["text"], owner_confirmed_answer=r["answer"]["text"], enforcement=configs.get(r["id"], dict(status="missing"))))
+    compiled_policy = None
+    if policy:
+        compiled_policy, access = guards(policy, content, inventory, requirements, connector, auth)
     runtime = derived["runtime_inputs"]
     configuration = {c["key"]: c["value_json"] for c in content["configuration"]}
     artifact = dict(
@@ -191,4 +210,13 @@ def compile_artifact(content, derived, inventory, requirements, proposal, source
         limits=LIMITS, failure_behavior=FAILURE, activation=ACTIVATION)
     blocked = [f'{a["id"]}: {a["enforcement"]["reason"]}' for a in access if a["enforcement"]["status"] != "configured"]
     artifact["execution_blockers"] = blocked
+    artifact["compiler"] = manifest(content, inventory, compiled_policy, protected, context)
+    artifact["access_policy"] = compiled_policy
+    if compiled_policy:
+        from .compiler.readiness import assess
+        artifact["format"] = "team_c.tool_artifact/3"
+        readiness = assess(content, inventory, compiled_policy, artifact)
+        if not readiness["build_ready"]:
+            raise AppError("capability_not_ready", "Resolve capability readiness before building", details={"blockers": [f["detail"] for f in readiness["factors"] if f["stage"] == "build" and not f["passed"]]})
+        artifact["readiness"] = readiness
     return artifact, digest(artifact)

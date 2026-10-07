@@ -1,0 +1,63 @@
+<article>
+<h2>Capability readiness</h2>
+<p>{{ p.readiness.score }}% of compiler checks satisfied. Every blocking check must pass; this score grants no permission to publish.</p>
+<ul>{% for factor in p.readiness.factors if not factor.passed %}<li>{{ factor.detail }}</li>{% endfor %}</ul>
+<h3>Proposed tool inputs</h3><p>{{ p.interface_preview.arguments|join(', ') or 'No caller arguments' }}</p>
+{% if p.interface_preview.blockers %}<p>Building remains blocked until trusted input decisions are resolved. Awaiting a safe source: {% for field in p.interface_preview.blocked_arguments %}{{ field|replace('_',' ') }}{% if not loop.last %}, {% endif %}{% endfor %}.</p><details><summary>Input mapping details</summary><pre>{{ p.interface_preview.blockers|tojson(indent=2) }}</pre></details>{% endif %}
+<details><summary>Trusted input bindings</summary><pre>{{ p.interface_preview.protected|tojson(indent=2) }}</pre></details>
+<details><summary>Input meanings and evidence</summary>
+<table><tr><th>Input</th><th>Meaning</th><th>Evidence state</th><th>Reason</th></tr>
+{% for item in p.capability.inputs %}<tr><td>{{ item.label }}</td><td>{{ item.category|replace('_',' ') }}</td><td>{{ item.state }}</td><td>{{ item.reason }}<details><summary>Source references</summary><pre>{{ item.sources|tojson(indent=2) }}</pre></details></td></tr>{% endfor %}</table>
+</details>
+<details><summary>Capability and API traceability</summary><pre>{{ p.capability.operations|tojson(indent=2) }}</pre></details>
+</article>
+<article>
+<h2 id="structured-policy">Structured access and input policy</h2>
+<p>Choose the intended access rules and trusted input sources. Accepting these decisions records owner intent. Building generates enforcement; sandbox tests verify its behavior.</p>
+{% if p.policy %}<p>Accepted by {{ p.policy.accepted_by }}. Changes require renewed review.</p><details><summary>Accepted policy</summary><pre>{{ p.policy.content|tojson(indent=2) }}</pre></details>{% endif %}
+{% if current and not open %}
+<p>This version is closed. Open a new policy review to change trusted input sources. Your operations and saved answers will be preserved; the new version requires policy acceptance and renewed approval.</p>
+<form method="post" action="/actions/reopen_policy">{{ m.hidden(p) }}<button>Review input sources in a new version</button></form>
+{% endif %}
+{% if open and current %}
+{% set policy = p.policy_form %}
+{% if p.policy_review_pending %}<p class="notice">Your operations and answers were copied into this version. Complete and accept the policy below before checking answers and approving again.</p>{% endif %}
+{% if p.policy_suggestions %}<p class="notice">Suggested trusted context mappings are prefilled below. They take effect only after you review and accept this policy. Context references are field names; enter session or credential values later on the test identity.</p>{% endif %}
+{% if p.policy_suggestions %}<ul>{% for suggestion in p.policy_suggestions %}<li><code>{{ suggestion.target }}</code> in {{ suggestion.step_id }}: trusted runtime context <code>{{ suggestion.reference }}</code>.</li>{% endfor %}</ul>{% endif %}
+<form method="post" action="/actions/accept_policy">{{ m.hidden(p) }}
+<fieldset><legend>Who may invoke this capability?</legend>
+{% for key,title in [('public','Public'),('end_user','Authenticated user'),('resource_owner','Resource owner'),('admin','Administrator'),('service','Service account'),('guest','Guest/session user')] %}
+<label><input type="checkbox" name="principals" value="{{ key }}" {% if key in policy.get('principals',[]) %}checked{% endif %}>{{ title }}</label>{% endfor %}
+</fieldset>
+<label>Authentication<select name="authentication">{% for key,title in [('declared','Use declared API authentication'),('required','Required'),('none','No authentication')] %}<option value="{{ key }}" {% if policy.get('authentication','declared') == key %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label>
+<div class="grid"><label>Trusted role context field<input name="role_source" value="{{ policy.get('role_source') or '' }}"></label><label>Allowed roles (comma separated)<input name="roles" value="{{ policy.get('roles',[])|join(', ') }}"></label></div>
+<div class="grid"><label>Trusted permission context field<input name="permission_source" value="{{ policy.get('permission_source') or '' }}"></label><label>Required permissions (comma separated)<input name="permissions" value="{{ policy.get('permissions',[])|join(', ') }}"></label></div>
+{% for r in p.requirements if r.kind == 'record_scope' %}
+{% set scope = policy.get('scopes',[])|selectattr('requirement_id','equalto',r.id)|first|default({}) %}
+<fieldset><legend>Resource access through {{ r.field.split('.',1)[-1]|replace('_',' ') }}</legend>
+<label>Which scope applies?<select name="scope:{{ r.id }}"><option value="">Unresolved</option><option value="checked" {% if scope.get('mode') == 'checked' %}selected{% endif %}>Compare resource with trusted identity</option><option value="unrestricted" {% if scope.get('mode') == 'unrestricted' %}selected{% endif %}>All records allowed for the selected principals</option></select></label>
+<label>Reason<input name="scope_reason:{{ r.id }}" value="{{ scope.get('reason','') }}"></label>
+<details><summary>Ownership, tenant or account comparison</summary><p>Choose a read before the protected action, its required response field, and a connector context field. Multiple checks all have to pass. A missing supported check blocks building.</p>
+{% for kind in ['ownership','tenant','account'] %}{% set check = policy.get('checks',[])|selectattr('requirement_id','equalto',r.id)|selectattr('kind','equalto',kind)|first|default({}) %}
+<fieldset><legend>{{ kind|capitalize }} check</legend>
+<label>Resource description<input name="check:{{ r.id }}:{{ kind }}:resource" value="{{ check.get('resource','') }}"></label>
+<label>Read operation<select name="check:{{ r.id }}:{{ kind }}:step_id"><option value="">No check selected</option>{% for step in p.content.steps if operations[step.operation_id].method in ['GET','HEAD','OPTIONS'] %}<option value="{{ step.id }}" {% if check.get('step_id') == step.id %}selected{% endif %}>{{ operations[step.operation_id].business_label }}</option>{% endfor %}</select></label>
+<label>Success response status<input name="check:{{ r.id }}:{{ kind }}:response_status" value="{{ check.get('response_status','') }}" placeholder="200"></label>
+<label>Resource field (JSON pointer)<input name="check:{{ r.id }}:{{ kind }}:resource_field" value="{{ check.get('resource_field','') }}"></label>
+<label>Trusted identity context field<input name="check:{{ r.id }}:{{ kind }}:identity_source" value="{{ check.get('identity_source','') }}"></label>
+</fieldset>{% endfor %}</details></fieldset>{% endfor %}
+<details {% if p.interface_preview.blockers %}open{% endif %}><summary>Input source decisions</summary>
+<p>Keep an established source, or explicitly map an input. Context references are field names, never credential values. Unsupported transformations remain blocked.</p>
+{% for item in p.capability.inputs %}{% set n = loop.index0 %}{% if item.input in operations[item.operation_id].inputs %}
+{% set decision = policy.get('inputs',[])|selectattr('step_id','equalto',item.step_id)|selectattr('target','equalto',item.input)|first|default({}) %}
+<fieldset><legend>How should {{ item.label }} participate in {{ operations[item.operation_id].business_label }}?</legend>
+<p class="small">{{ item.reason }} ({{ item.state }})</p>
+<label>Source<select name="input:{{ n }}:source">{% for key,title in [('', 'Keep established binding / unresolved'),('trusted_application_context','Trusted runtime context'),('runtime_argument','Explicit tool input'),('business_configuration','Business configuration'),('omit','Not required / server supplies it')] %}<option value="{{ key }}" {% if decision.get('source','') == key %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label>
+<label>Meaning<select name="input:{{ n }}:category">{% for category in ['business_input','identity_context','runtime_context','server_derived','resource_selector','configuration','sensitive_internal','unknown'] %}<option {% if decision.get('category',item.category) == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select></label>
+<label>Source reference<input name="input:{{ n }}:reference" value="{{ decision.get('reference','') }}"></label><label>Reason<input name="input:{{ n }}:reason" value="{{ decision.get('reason','') }}"></label>
+</fieldset>{% endif %}{% endfor %}</details>
+{% if p.capability.writes %}<fieldset><legend>Effects of this capability</legend>{% for key,title in [('financial','Has financial effects'),('irreversible','Has irreversible effects'),('external_side_effects','Affects external systems'),('idempotent','Repeated requests have the same effect')] %}<label>{{ title }}<select name="{{ key }}"><option value="">Unknown</option><option value="yes" {% if policy.get(key) == true %}selected{% endif %}>Yes</option><option value="no" {% if policy.get(key) == false %}selected{% endif %}>No</option></select></label>{% endfor %}</fieldset>{% endif %}
+<label>Supporting explanation (optional)<textarea name="explanation">{{ policy.get('explanation','') }}</textarea></label>
+<button>Accept structured policy</button>
+</form>{% endif %}
+</article>

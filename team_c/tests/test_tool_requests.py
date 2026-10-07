@@ -9,75 +9,13 @@ import re
 import pytest
 from team_c import capabilities
 from team_c.config import AppError
-from team_c.models import GenerationOutput, RequestTriageOutput, SuggestionOutput
+from team_c.models import RequestTriageOutput, SuggestionOutput
 from team_c.providers import constrain, strict_schema
 from team_c.web import create_app
 from fastapi.testclient import TestClient
-from test_openapi_primary import op
-from test_publication import RevisingDesk, publish, with_evidence
-from test_second_domain import LABEL, desk_proposal, make_desk, review_and_build, generated
-
-
-class RequestDesk(RevisingDesk):
-    """AUTHORED TEST SUBSTITUTE: scripted triage, suggestion and (optionally) generation outputs."""
-    def __init__(self, settings, store):
-        super().__init__(settings, store)
-        self.triage, self.ideas, self.generations, self.payloads = [], [], [], []
-
-    def call(self, kind, payload, output_model, run):
-        self.payloads.append((kind, payload))
-        if kind in ("request_triage", "suggestion") or (kind == "generation" and self.generations):
-            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
-            if kind == "request_triage":
-                return RequestTriageOutput.model_validate(self.triage.pop(0))
-            if kind == "suggestion":
-                return SuggestionOutput.model_validate(dict(suggestions=self.ideas.pop(0)))
-            return GenerationOutput.model_validate(self.generations.pop(0)(payload["inventory"], self.names))
-        return super().call(kind, payload, output_model, run)
-
-
-@pytest.fixture
-def desk(tmp_path, monkeypatch):
-    monkeypatch.setattr("test_second_domain.DeskSubstitute", RequestDesk)
-    d = make_desk(tmp_path, "base")
-    d.service = d.app.state.service
-    inv, n = d.spec["inventory"], d.n
-    d.lookup, d.create = op(inv, "GET", n["prefix"] + n["lookup"])["id"], op(inv, "POST", n["prefix"] + n["create"])["id"]
-    d.health = op(inv, "GET", "/health")["id"]
-    d.attach = next(o["id"] for o in inv["operations"] if not o["proposal_eligible"])
-    d.bid = d.service.spec(d.spec["id"])["business_id"]
-    yield d
-    d.client.__exit__(None, None, None)
-
-
-def triage(outcome, operation_ids=(), existing=(), questions=(), missing=()):
-    return dict(outcome=outcome, summary="TEST-ONLY triage summary", operation_ids=list(operation_ids), existing_proposal_ids=list(existing),
-                questions=list(questions), missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing])
-
-
-def idea(title, category, operation_ids=(), missing=(), related=()):
-    return dict(title=title, purpose=f"TEST-ONLY purpose: {title}", benefit="TEST-ONLY benefit", business_reason="TEST-ONLY reason for this service desk",
-                category=category, operation_ids=list(operation_ids), related_proposal_ids=list(related), relationship="TEST-ONLY relationship",
-                missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing])
-
-
-def lookup_only(inv, n):
-    """AUTHORED: a read-only lookup tool, used when an accepted suggestion names only the lookup operation."""
-    lookup = op(inv, "GET", n["prefix"] + n["lookup"])
-    return dict(proposals=[dict(name="Booking lookup", description="Find a booking by reference", business_purpose="Let customers check a booking",
-                                steps=[dict(id="s1", operation_id=lookup["id"], purpose="Find the booking",
-                                            bindings=[dict(target=f'query.{n["ref"]}', kind="runtime_argument", reference="booking_reference", step_id=None, response_status=None)])],
-                                configuration=[], outputs=[dict(name="booking", step_id="s1", response_status="200", pointer=f'/{n["lookup_env"]}/{n["record"]}')],
-                                questions=[], expected_reads=["Booking"], expected_writes=[], assumptions=[], limitations=[], risk="low", risk_rationale="Read only")],
-                capability_gaps=[])
-
-
-def ask(d, key, goal="TEST-ONLY: let a customer report a problem with their booking", **extra):
-    return d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal=goal, examples="TEST-ONLY: my shower is broken, booking ABC", idempotency_key=key, **extra))
-
-
-def proposal_count(d):
-    return len(d.service.store.all("SELECT id FROM proposals"))
+from helpers.desk import LABEL, desk_proposal, review_and_build, generated
+from helpers.publication import publish, with_evidence
+from helpers.tool_requests import RequestDesk, ask, idea, lookup_only, proposal_count, triage
 
 
 def test_supported_request_becomes_a_grounded_proposal_in_normal_review(desk):
@@ -176,6 +114,7 @@ def test_suggestions_are_grounded_and_decisions_touch_only_the_suggestion(desk):
     pub = publish(d, a["id"]).json()
     d.provider.ideas.append([
         idea("Report a booking problem", "feasible", [d.lookup, d.create]),
+        idea("Service request for a booking", "feasible", [d.create, d.lookup]),
         idea("Service status for staff", "feasible", [d.health]),
         idea("Booking lookup for customers", "needs_clarification", [d.lookup], [("missing_information", "Which booking fields may customers see?", [])]),
         idea("Photo attachments", "feasible", [d.attach]),
@@ -183,17 +122,21 @@ def test_suggestions_are_grounded_and_decisions_touch_only_the_suggestion(desk):
         idea("Invented refunds", "feasible", ["refund-operation"]),
         idea("Cancel a booking", "blocked_by_missing_api", missing=[("absent_operation", "Duplicate within the batch", [])]),
     ])
-    r = d.client.post(f"/api/v1/businesses/{d.bid}/suggestion-runs", json=dict(count=4))
+    r = d.client.post(f"/api/v1/businesses/{d.bid}/suggestion-runs", json=dict(count=5))
     assert r.status_code == 200, r.text
     batch = r.json()
     got = {s["content"]["title"]: s for s in batch["suggestions"]}
-    assert list(got) == ["Service status for staff", "Booking lookup for customers", "Photo attachments", "Cancel a booking"]
-    assert [s["category"] for s in got.values()] == ["feasible", "needs_clarification", "blocked_by_missing_api", "blocked_by_missing_api"]
+    assert list(got) == ["Report a booking problem", "Service status for staff", "Booking lookup for customers", "Photo attachments", "Cancel a booking"]
+    assert [s["category"] for s in got.values()] == ["feasible", "feasible", "needs_clarification", "blocked_by_missing_api", "blocked_by_missing_api"]
     assert got["Photo attachments"]["content"]["category_adjusted_from"] == "feasible"
     assert got["Photo attachments"]["content"]["missing"][0] == dict(kind="unsupported_operation", description=f"{d.attach} is not executable by Team C", operation_ids=[d.attach])
-    assert batch["recognized"] == [dict(title="Report a booking problem", proposal_id=pid, name="Service request for a booking")]
+    # Sharing the existing tool's operations relates a differently named suggestion to it; the same name and operations recognize it.
+    related = got["Report a booking problem"]["content"]
+    assert related["related_proposal_ids"] == [pid] and related["shares_operations_with"] == [dict(proposal_id=pid, name="Service request for a booking")]
+    assert "Uses the same operations as" in d.client.get(f"/businesses/{d.bid}").text
+    assert batch["recognized"] == [dict(title="Service request for a booking", proposal_id=pid, name="Service request for a booking")]
     assert {w["title"]: w["reason"] for w in batch["withheld"]} == {"Invented refunds": "cites an operation outside the reviewed index", "Cancel a booking": "duplicates an earlier suggestion"}
-    assert batch["coverage"]["considered_ids"] and batch["coverage"]["partial"] is False and batch["requested"] == 4
+    assert batch["coverage"]["considered_ids"] and batch["coverage"]["partial"] is False and batch["requested"] == 5
     decide = lambda s, **body: d.client.post(f'/api/v1/suggestions/{s["id"]}/decision', json=body)
     # Dismissal changes only the suggestion: the existing proposal, artifact and publication stay as they were.
     before = (d.client.get(f"/api/v1/proposals/{pid}").json()["state"], d.client.get(f'/api/v1/artifacts/{a["id"]}').json()["sha256"])
@@ -241,7 +184,11 @@ def test_restricted_operations_stay_restricted_and_budget_limits_are_reported(de
     assert [s["title"] for s in kept] == ["Blocked cleanup", "Read A"] and kept[0]["category"] == "blocked_by_missing_api"
     assert {w["title"]: w["reason"] for w in withheld} == {"Admin cleanup": "uses a restricted operation; restricted operations stay restricted",
                                                           "Mislabelled": "labelled needs_clarification without naming what is missing",
-                                                          "Read B": "duplicates an earlier suggestion"}
+                                                          "Read B": "over the requested number of suggestions"}
+    # Two differently named tools on the same endpoint are both kept; only a repeated title is a duplicate.
+    kept, withheld, _ = capabilities.screen(SuggestionOutput.model_validate(dict(suggestions=[
+        idea("Payment status", "feasible", ["read"]), idea("Delivery status", "feasible", ["read"]), idea("payment  STATUS", "feasible", ["read"])])), index, [], [], 5)
+    assert [s["title"] for s in kept] == ["Payment status", "Delivery status"] and [w["reason"] for w in withheld] == ["duplicates an earlier suggestion"]
     with pytest.raises(AppError, match="not an eligible operation"):
         capabilities.check_triage(RequestTriageOutput.model_validate(triage("feasible", ["admin"])), index, [])
     capabilities.check_triage(RequestTriageOutput.model_validate(triage("unavailable", missing=[("restricted_operation", "restricted", ["admin"])])), index, [])

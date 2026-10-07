@@ -20,7 +20,7 @@ from . import publishing
 from .config import AppError, Settings
 from .executor import load_connectors
 from .service import Service
-from .storage import Store
+from .persistence.db import Store
 
 log = logging.getLogger("team_c.mcp")
 

@@ -87,6 +87,20 @@ def test_forged_source_evidence_is_rejected(project):
     with pytest.raises(AppError,match="grounding"):validate_proposal(ProposalContent(**p),inv)
 
 
+def test_retired_implementation_lives_in_legacy_behind_a_compatible_shim(project,monkeypatch):
+    import team_c.code_discovery as shim
+    import team_c.legacy.code_discovery as legacy
+    public=[n for n in vars(legacy) if not n.startswith("_")]
+    assert {"index_project","discover_project","parse_source","validate_setting_values","validate_code_provenance"}<=set(public)
+    assert all(getattr(shim,n) is getattr(legacy,n) for n in public)
+    inv=inspect(project);p=ProposalContent(**proposal(inv))
+    assert inv["source_kind"]=="code" and validate_proposal(p,inv)
+    def refuse(op,inventory):raise ValueError("checked by the legacy module")
+    monkeypatch.setattr(legacy,"validate_code_provenance",refuse)
+    with pytest.raises(AppError) as e:validate_proposal(p,inv)
+    assert any("checked by the legacy module" in m for m in e.value.details["errors"])
+
+
 def test_no_target_execution_secrets_or_dependency_tree_reads(project):
     target,_=project
     marker=target/"EXECUTED"

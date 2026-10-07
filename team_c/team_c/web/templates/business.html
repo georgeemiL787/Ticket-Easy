@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% set pending = proposals|selectattr("state", "in", ["needs_clarification", "needs_reconciliation", "ready_for_review"])|list %}
+{% set approved = proposals|selectattr("state", "equalto", "approved_to_build")|list %}
+{% block crumbs %}{{ m.crumbs([(business.name, None)]) }}{% endblock %}
+{% block steps %}{{ m.steps("tools" if specs else "connect") }}{% endblock %}
+{% block content %}
+<h1>{{ business.name }}</h1>
+<p class="muted">{{ business.description }}</p>
+
+{% if not specs %}{{ m.next("connect your system", "Upload your system's OpenAPI file or fetch it by URL in step 1 below.") }}
+{% elif not proposals and not tool_requests %}{{ m.next("ask for a tool", "Describe a tool you want in step 2, or press Suggest additional tools for ideas.") }}
+{% elif pending %}{{ m.next(pending|length ~ " tool(s) waiting for your review", "Open them in step 3 (Your tools) and follow the instructions on each.") }}
+{% elif approved %}{{ m.next("build and test your approved tools", "Open an approved tool in step 3 to set up enforcement, build it and run sandbox tests.") }}
+{% else %}{{ m.next("request more tools", "Use step 2 to ask for another tool or for suggestions.") }}{% endif %}
+
+<h2 class="section-title">1. Connect your system</h2>
+<article>
+{% if specs %}
+<p>API descriptions connected to this business:</p>
+<ul>{% for s in specs %}<li><a href="/specifications/{{ s.id }}">{{ s.filename }}</a> <span class="muted small">added {{ s.created_at[:16]|replace('T', ' ') }} · view its operations</span></li>{% endfor %}</ul>
+{% endif %}
+<details {% if not specs %}open{% endif %}><summary>{{ 'Add another API description' if specs else 'Add your API description' }}</summary>
+<div class="grid">
+<div>
+<h3>Upload a file</h3>
+<p class="small muted">OpenAPI JSON or YAML (3.0.0–3.0.4 or 3.1.0–3.1.2, documented subset), up to 2 MiB and 50 operations. No business endpoint is contacted.</p>
+<form method="post" action="/actions/upload" enctype="multipart/form-data">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="file" name="file" accept=".json,.yaml,.yml" required><button>Discover capabilities</button></form>
+</div>
+<div>
+<h3>Fetch from a URL</h3>
+<p class="small muted">Paste the API's docs page (for example <code>/docs</code> or <code>/redoc</code>) or its OpenAPI JSON/YAML link. No redirects, credentials, cookies or proxies; no API operation is called.</p>
+{% if fetch_hosts %}<p class="small muted">Allowed hosts: {% for host in fetch_hosts %}{{ 'Local services (any port)' if host == 'loopback:*' else host }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+{% else %}<p class="notice small">Fetching is turned off. Add the API's <code>host:port</code> to <code>OPENAPI_FETCH_HOSTS</code> in <code>.env</code> (for example <code>OPENAPI_FETCH_HOSTS=127.0.0.1:8000</code>) and restart Team C.</p>{% endif %}
+<form method="post" action="/actions/fetch">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input name="url" type="url" required placeholder="http://{{ 'localhost:8080' if 'loopback:*' in fetch_hosts else (fetch_hosts[0] if fetch_hosts else '127.0.0.1:8000') }}/docs"><button {% if not fetch_hosts %}disabled{% endif %}>Fetch and discover</button></form>
+</div>
+</div>
+</details>
+</article>
+
+<h2 class="section-title" id="get-tools">2. Get tools</h2>
+{% if not specs %}<p class="muted">Connect your system first; tools are built only from operations your API actually offers.</p>{% else %}
+{% if saved == 'areas' and active_areas and active_areas.selected %}<p class="notice">Areas saved. Now describe a tool under Request a tool, or press Suggest additional tools; the AI will look only at the areas below.</p>{% endif %}
+{% if active_areas %}<p class="small muted">{% if active_areas.selected %}The AI looks at {{ active_areas.selected|length }} of {{ active_areas.areas|length }} business areas: {{ active_areas.areas|selectattr('id', 'in', active_areas.selected)|map(attribute='name')|join(', ') }} ({{ active_areas.in_scope }} operations){% else %}No business areas chosen: the AI looks at all {{ active_areas.in_scope }} operations{% endif %}, about {{ active_areas.fits }} per batch. <a href="/specifications/{{ active_areas.spec_id }}">Choose areas</a></p>{% endif %}
+<div class="grid">
+<article>
+<h3>Request a tool</h3>
+<p class="small muted">Describe what the tool should do. Team C checks your API and existing tools, then creates a proposal for review, asks questions, points to an existing tool, or tells you what the API lacks. Nothing is approved, built or published automatically, and the AI can miss gaps.</p>
+<form method="post" action="/actions/request_tool">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="hidden" name="request_key" value="{{ request_key }}">
+<label>What should the tool do?<textarea name="goal" required minlength="10" maxlength="2000" placeholder="For example: let a customer report a problem with their booking."></textarea></label>
+<label>Examples (optional)<textarea name="examples" maxlength="4000" placeholder="For example: booking ABC123, the shower does not drain."></textarea></label>
+<button>Request a tool</button></form>
+</article>
+<article>
+<h3>Suggest additional tools</h3>
+<p class="small muted">Team C compares your business, earlier requests and your API with the tools you already have, and suggests a few more. Accepting one starts a normal proposal review (not build approval); dismissing one changes nothing else. Restricted operations are never used.</p>
+<form method="post" action="/actions/suggest">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><label>How many suggestions?<input name="count" type="number" min="1" max="5" value="{{ suggestion_count }}"></label><button>Suggest additional tools</button></form>
+</article>
+</div>
+{% endif %}
+
+{% if tool_requests %}
+<article>
+<h3>Your requests</h3>
+{% for r in tool_requests %}
+<details {% if r.status in ['needs_clarification','failed'] %}open{% endif %}>
+<summary>{{ m.badge(r.status, "request") }} {{ r.goal[:100] }}{% if r.source == 'suggestion' %} <span class="muted small">(from a suggestion)</span>{% endif %}</summary>
+{% if r.outcome and r.outcome.summary %}<p>{{ r.outcome.summary }}</p>{% endif %}
+{% for p in r.proposals %}<p>Proposal: <a href="/proposals/{{ p.proposal_id }}">{{ p.name }}</a> v{{ p.version }} {{ m.badge(p.state) }} · built: {{ 'yes' if p.built else 'no' }} · published: {{ 'yes' if p.published else 'no' }}</p>{% endfor %}
+{% for p in r.existing_tools %}<p>Existing tool: <a href="/proposals/{{ p.proposal_id }}">{{ p.name }}</a> {{ m.badge(p.state) }}</p>{% endfor %}
+{% for u in r.unresolved %}<p class="notice small">{{ u.kind|replace('_',' ')|capitalize }}: {{ u.description }}{% if u.operation_ids %} <span class="muted">({{ u.operation_ids|join(', ') }})</span>{% endif %}</p>{% endfor %}
+{% if r.error %}<p class="notice">Failed: {{ r.error.message }}</p>{% if r.error.errors %}<p class="small">What the check found:</p><ul class="small">{% for e in r.error.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% endif %}
+{% for c in r.clarifications %}<p class="muted small">Your clarification: {{ c.text }}</p>{% endfor %}
+{% if r.coverage and r.coverage.partial %}{% set reviewed = r.coverage.considered + (r.coverage.previously_considered or 0) %}
+<p class="notice small">Considered {{ reviewed }} of {{ r.coverage.total_operations }} operations{% if r.coverage.area_scoped %} in your selected areas{% endif %}; {{ r.coverage.omitted_ids|length }} not reviewed yet.</p>
+{% if r.status == 'unavailable' and r.operation_scope is none and r.coverage.omitted_ids %}
+<form method="post" action="/actions/request_next_batch">{{ m.csrf_field() }}<input type="hidden" name="request_id" value="{{ r.id }}"><button class="secondary">Look in the next batch ({{ r.coverage.omitted_ids|length }} of {{ r.coverage.total_operations }} operations not reviewed yet)</button></form>
+{% endif %}{% endif %}
+{% if r.status in ['needs_clarification','unavailable','failed'] %}
+<form method="post" action="/actions/clarify_request">{{ m.csrf_field() }}<input type="hidden" name="request_id" value="{{ r.id }}"><label>Answer the questions or add detail{% if r.status == 'failed' %} (leave empty to retry unchanged){% endif %}<textarea name="text"></textarea></label><button>Send and process again</button></form>
+{% endif %}
+<details class="tech"><summary>Technical details</summary><p class="small">Created {{ r.created_at }} · {% for run in r.run_ids %}<a href="/runs/{{ run }}">model run {{ loop.index }}</a> {% endfor %}</p></details>
+</details>
+{% endfor %}
+</article>
+{% endif %}
+
+{% if suggested.suggestions or suggested.batches %}
+<article>
+<h3>Suggestions</h3>
+{% for b in suggested.batches[:1] %}{% set reviewed = b.coverage.considered + (b.coverage.previously_considered or 0) %}
+<p class="muted small">Last review {{ b.created_at[:16]|replace('T', ' ') }}: considered {{ reviewed }} of {{ b.coverage.total_operations }} operations{% if b.coverage.area_scoped %} in your selected areas{% endif %}{% if b.coverage.omitted_ids %}; {{ b.coverage.omitted_ids|length }} not reviewed yet{% endif %}.{% for x in b.recognized %} Already covered: "{{ x.title }}" by {{ x.name }}.{% endfor %}{% for x in b.withheld %} Withheld "{{ x.title }}": {{ x.reason }}.{% endfor %}</p>
+{% if b.coverage.omitted_ids %}<form method="post" action="/actions/suggest">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="hidden" name="next_batch" value="1"><input type="hidden" name="count" value="{{ b.requested }}"><button class="secondary">Suggest from the next batch ({{ b.coverage.omitted_ids|length }} operations left)</button></form>
+{% elif b.coverage.previously_considered %}<p class="small">All {{ b.coverage.total_operations }} operations have been reviewed. Suggest additional tools starts again from the beginning.</p>{% endif %}
+{% endfor %}
+{% for s in suggested.suggestions|reverse %}{% set c = s.content %}
+<details {% if s.status == 'open' %}open{% endif %}>
+<summary>{{ m.badge(s.category, "category") }} {{ c.title }} {{ m.badge(s.status, "suggestion") }}{% if c.revised_by_owner %} <span class="muted small">(revised by you)</span>{% endif %}</summary>
+<p>{{ c.purpose }}</p>
+<p class="small"><strong>Benefit:</strong> {{ c.benefit }}<br><strong>Why for this business:</strong> {{ c.business_reason }}<br><strong>Relationship to existing tools:</strong> {{ c.relationship }}{% for x in c.shares_operations_with or [] %}<br>Uses the same operations as "{{ x.name }}"; check that it does something different.{% endfor %}</p>
+{% for mi in c.missing %}<p class="notice small">{{ mi.kind|replace('_',' ')|capitalize }}: {{ mi.description }}</p>{% endfor %}
+{% if c.category_adjusted_from %}<p class="muted small">The AI labelled this {{ c.category_adjusted_from|replace('_',' ') }}; the category shown follows the evidence.</p>{% endif %}
+{% if s.status == 'open' %}
+<form method="post" action="/actions/decide_suggestion">{{ m.csrf_field() }}<input type="hidden" name="suggestion_id" value="{{ s.id }}">
+{% if s.category == 'needs_clarification' %}<label>Missing information (required to accept)<textarea name="clarification"></textarea></label>{% endif %}
+<label>Note (optional)<input name="note"></label>
+<button name="decision" value="accept" {% if s.category == 'blocked_by_missing_api' %}disabled{% endif %}>Accept: start proposal review</button><button class="secondary" name="decision" value="dismiss">Dismiss</button></form>
+<details><summary>Revise this suggestion</summary><form method="post" action="/actions/decide_suggestion">{{ m.csrf_field() }}<input type="hidden" name="suggestion_id" value="{{ s.id }}"><label>Title<input name="title" value="{{ c.title }}" maxlength="120"></label><label>Purpose<textarea name="purpose" maxlength="2000">{{ c.purpose }}</textarea></label><button class="secondary" name="decision" value="revise">Save revised suggestion</button></form></details>
+{% endif %}
+<details class="tech"><summary>Technical details</summary><p class="small">Supporting operations: {{ c.operation_ids|join(', ') or 'none' }}</p></details>
+</details>
+{% endfor %}
+</article>
+{% endif %}
+
+<h2 class="section-title">3. Your tools</h2>
+<article>
+{% if proposals %}
+<table><tr><th>Tool</th><th>Status</th><th>Built / published</th><th>What to do</th></tr>
+{% for p in proposals %}{% set t = tools.get(p.proposal_id, {}) %}
+<tr><td><a href="/proposals/{{ p.proposal_id }}">{{ p.content.name }}</a> <span class="muted small">v{{ p.version }}</span><br><span class="muted small">{{ p.content.business_purpose }}</span></td>
+<td>{{ m.badge(p.state) }}</td>
+<td class="small">{{ 'built' if t.built else 'not built' }} · {{ 'published' if t.published else 'not published' }}</td>
+<td class="small">{{ {"needs_clarification": "Answer its questions", "needs_reconciliation": "Check the answers", "ready_for_review": "Confirm access and decide", "rejected": "Closed", "changes_requested": "Create a new version", "superseded": "See newer version"}.get(p.state, "Test and publish" if t.built else "Set up enforcement and build") }}</td></tr>
+{% endfor %}</table>
+{% else %}<p class="muted">No tools yet. Proposals appear here when a request or suggestion produces one.</p>{% endif %}
+</article>
+
+<details class="tech"><summary>History of AI runs ({{ runs|length }})</summary>
+{% for r in runs %}<p class="small"><a href="/runs/{{ r.id }}">{{ r.kind|replace('_', ' ') }}</a> {{ m.badge(r.status, "run") }} {{ r.created_at[:19]|replace('T', ' ') }}</p>{% else %}<p class="muted small">No runs yet.</p>{% endfor %}
+</details>
+{% endblock %}

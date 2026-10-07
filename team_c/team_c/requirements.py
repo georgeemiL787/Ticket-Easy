@@ -5,7 +5,7 @@ a nonempty answer or a model finding never resolves one alone: resolution needs 
 reconciliation to assess the latest answer as sufficient AND an explicit owner confirmation.
 """
 import json
-from .storage import digest, dump, now
+from .persistence.util import digest, dump, now
 
 RUNTIME_NOTE = "Approval to build is not activation. Runtime authorization is not implemented or verified by any test."
 TEXT = {

@@ -11,8 +11,9 @@ from team_c import areas, capabilities
 from team_c.discovery import discover
 from team_c.models import AreaAssignmentOutput, AreaNamingOutput
 from team_c.providers import input_fits, model_messages
-from test_second_domain import make_desk, desk_proposal
-from test_tool_requests import RequestDesk, idea, triage, op
+from helpers.desk import make_desk, desk_proposal
+from helpers.openapi import op
+from helpers.tool_requests import RequestDesk, idea, triage
 
 
 def named(name, audience="customer"):
@@ -38,7 +39,7 @@ class AreaDesk(RequestDesk):
 
 @pytest.fixture
 def desk(tmp_path, monkeypatch):
-    monkeypatch.setattr("test_second_domain.DeskSubstitute", AreaDesk)
+    monkeypatch.setattr("helpers.desk.DeskSubstitute", AreaDesk)
     d = make_desk(tmp_path, "base")
     d.service = d.app.state.service
     inv, n = d.spec["inventory"], d.n

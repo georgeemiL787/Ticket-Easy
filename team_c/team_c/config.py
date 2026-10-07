@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     openrouter_model: str = ""
     openrouter_api_key: str = ""
     openrouter_timeout: float = 120
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_api_key: str = ""
+    groq_api_key_2: str = ""
+    groq_api_key_3: str = ""
+    groq_timeout: float = 120
+    groq_reasoning_effort: str = "low"
     max_upload_bytes: int = 2 * 1024 * 1024
     max_operations: int = 50
     max_model_chars: int = 100_000
@@ -36,6 +43,21 @@ class Settings(BaseSettings):
     suggestion_count: int = 3
     suggestion_max: int = 5
     capability_index_chars: int = 16000
+
+    @property
+    def groq_api_keys(self):
+        """Configured credentials in priority order; blanks and duplicate keys are skipped."""
+        return list(dict.fromkeys(key.strip() for key in (self.groq_api_key, self.groq_api_key_2, self.groq_api_key_3) if key.strip()))
+
+    @property
+    def model_secrets(self):
+        return (self.openrouter_api_key, *self.groq_api_keys, self.session_secret)
+
+    @property
+    def llm_chain(self):
+        """LLM_PRIMARY, then LLM_FALLBACK: none, one provider, or a comma-separated list tried in order."""
+        fallback = [p.strip() for p in self.llm_fallback.split(",")]
+        return [self.llm_primary] + ([] if fallback == ["none"] else fallback)
 
 
 class AppError(Exception):

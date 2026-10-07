@@ -1,0 +1,289 @@
+"""Groq provider and the ordered multi-step provider chain (LLM_FALLBACK as a comma-separated list).
+
+MOCKED: every provider answers through an httpx MockTransport; all data lives in per-test databases.
+"""
+import json
+import httpx
+import pytest
+from team_c.config import AppError, Settings
+from team_c.llm.groq import GROQ_MAX_TOKENS
+from team_c.llm.schemas import output_schema
+from team_c.models import GenerationOutput
+from team_c.providers import LIVE, Providers
+from team_c.storage import Store, now, uid
+
+CONTENT = json.dumps(dict(proposals=[], capability_gaps=[]))
+HOSTS = {"api.groq.com": "groq", "openrouter.ai": "openrouter", "127.0.0.1": "ollama"}
+
+
+def settings(tmp_path, **kwargs):
+    values = dict(database_path=str(tmp_path / "g.db"), llm_primary="groq", llm_fallback="openrouter,ollama",
+                  groq_api_key="test-groq-key", openrouter_model="test/model", openrouter_api_key="test-key")
+    return Settings(_env_file=None, **{**values, **kwargs})
+
+
+def call(tmp_path, answers, job=None, **kwargs):
+    """answers maps provider name to handler(request, body); returns (result, error, sent, attempts, store, run)."""
+    s = settings(tmp_path, **kwargs)
+    store = Store(s.database_path)
+    bid = uid()
+    with store.connect(write=True) as c:
+        c.execute("INSERT INTO businesses VALUES(?,?,?,?)", (bid, "B", "B", now()))
+    sent = []
+    def handler(request):
+        provider = HOSTS[request.url.host]
+        sent.append(provider)
+        return answers[provider](request, json.loads(request.content))
+    run = store.start_run(bid, "generation", {})
+    LIVE.job = job
+    try:
+        result, error = Providers(s, store, httpx.MockTransport(handler)).call("generation", {}, GenerationOutput, run), None
+    except AppError as exc:
+        result, error = None, exc
+    finally:
+        LIVE.job = None
+    attempts = [(r["provider"], r["status"], json.loads(r["error"])["code"] if r["error"] else None)
+                for r in store.all("SELECT provider,status,error FROM attempts WHERE run_id=? ORDER BY id", (run,))]
+    return result, error, sent, attempts, store, run
+
+
+def chat_ok(request, body):
+    return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": CONTENT}}], "usage": {"prompt_tokens": 50, "completion_tokens": 9}})
+
+
+def ollama_ok(request, body):
+    return httpx.Response(200, content=json.dumps({"message": {"content": CONTENT}, "done": True, "done_reason": "stop"}).encode())
+
+
+def status(code):
+    return lambda request, body: httpx.Response(code)
+
+
+def untouched(request, body):
+    pytest.fail("must not contact this provider")
+
+
+def test_groq_request_shape_and_usage(tmp_path):
+    seen = []
+    def groq(request, body):
+        seen.append((str(request.url), request.headers["authorization"], body))
+        return chat_ok(request, body)
+    result, error, sent, attempts, store, run = call(tmp_path, dict(groq=groq, openrouter=untouched, ollama=untouched))
+    assert error is None and result.proposals == []
+    url, auth, body = seen[0]
+    assert url == "https://api.groq.com/openai/v1/chat/completions" and auth == "Bearer test-groq-key"
+    schema, _ = output_schema("generation", {}, GenerationOutput)
+    assert body["response_format"] == {"type": "json_schema", "json_schema": {"name": "team_c", "strict": True, "schema": schema}}
+    assert body["model"] == "openai/gpt-oss-120b" and body["temperature"] == 0 and body["max_tokens"] == GROQ_MAX_TOKENS and body["stream"] is False
+    assert body["reasoning_effort"] == "low" and body["include_reasoning"] is False and "provider" not in body
+    assert [m["role"] for m in body["messages"]] == ["system", "user"]
+    usage = [json.loads(r["payload"]) for r in store.all("SELECT payload FROM diagnostics WHERE run_id=? AND stage='model_response'", (run,))]
+    assert usage[0]["provider"] == "groq" and usage[0]["usage"] == {"prompt_tokens": 50, "completion_tokens": 9}
+    assert "test-groq-key" not in json.dumps(store.all("SELECT * FROM diagnostics")) + json.dumps(store.all("SELECT * FROM attempts"))
+
+
+def test_empty_reasoning_effort_omits_reasoning_parameters(tmp_path):
+    bodies = []
+    def groq(request, body):
+        bodies.append(body)
+        return chat_ok(request, body)
+    call(tmp_path, dict(groq=groq), groq_reasoning_effort="", groq_model="other/model", llm_fallback="none")
+    assert bodies[0]["model"] == "other/model" and "reasoning_effort" not in bodies[0] and "include_reasoning" not in bodies[0]
+
+
+def test_missing_groq_key_is_a_configuration_error_before_any_request(tmp_path):
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=untouched, openrouter=untouched, ollama=untouched), groq_api_key="")
+    assert error.code == "model_configuration" and error.status == 503 and error.message == "Missing Groq API key"
+    assert sent == [] and attempts == []
+
+
+def test_three_step_chain_falls_through_service_failures_in_order(tmp_path):
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=status(429), openrouter=status(503), ollama=ollama_ok))
+    assert error is None and result.proposals == []
+    assert sent == ["groq", "openrouter", "ollama"]
+    assert attempts == [("groq", "failed", "provider_service_failure"), ("openrouter", "failed", "provider_service_failure"), ("ollama", "succeeded", None)]
+
+
+def test_every_attempt_is_listed_when_the_whole_chain_fails(tmp_path):
+    def offline(request, body):
+        raise httpx.ConnectError("offline", request=request)
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=status(500), openrouter=status(429), ollama=offline))
+    assert error.code == "providers_failed" and [a["provider"] for a in error.details["attempts"]] == ["groq", "openrouter", "ollama"]
+    assert {a["code"] for a in error.details["attempts"]} == {"provider_service_failure"}
+    assert [a[:2] for a in attempts] == [("groq", "failed"), ("openrouter", "failed"), ("ollama", "failed")]
+
+
+def test_groq_success_never_touches_the_fallbacks(tmp_path):
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=chat_ok, openrouter=untouched, ollama=untouched))
+    assert error is None and sent == ["groq"] and attempts == [("groq", "succeeded", None)]
+
+
+@pytest.mark.parametrize("answer,code", [
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "not json"}}]}), "invalid_model_output"),
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "length", "message": {"content": CONTENT}}]}), "invalid_model_output"),
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": CONTENT, "refusal": "no"}}]}), "invalid_model_output"),
+    (status(400), "provider_request_failure"),
+    (status(401), "provider_request_failure"),
+    (status(413), "provider_request_failure"),
+])
+def test_groq_invalid_output_or_rejected_request_stops_the_chain(tmp_path, answer, code):
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=answer, openrouter=untouched, ollama=untouched))
+    assert error.code == code and sent == ["groq"] and attempts == [("groq", "failed", code)]
+
+
+def test_cancelled_job_stops_before_the_groq_request_and_any_fallback(tmp_path):
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=untouched, openrouter=untouched, ollama=untouched), job=dict(steps=[], cancelled=True))
+    assert error.code == "cancelled" and error.status == 409
+    assert sent == [] and attempts == [("groq", "failed", "cancelled")]
+
+
+@pytest.mark.parametrize("fallback,chain", [
+    ("none", ["groq"]),
+    ("openrouter", ["groq", "openrouter"]),
+    ("openrouter,ollama", ["groq", "openrouter", "ollama"]),
+    (" openrouter , ollama ", ["groq", "openrouter", "ollama"]),
+])
+def test_fallback_list_parsing(tmp_path, fallback, chain):
+    s = settings(tmp_path, llm_fallback=fallback)
+    assert s.llm_chain == chain
+    assert Providers(s, Store(s.database_path)).configured_chain() == chain
+
+
+@pytest.mark.parametrize("fallback", ["openrouter,openrouter", "openrouter,groq", "none,ollama", "openrouter,,ollama", "openrouter,unknown"])
+def test_duplicate_or_unsupported_providers_are_rejected(tmp_path, fallback):
+    s = settings(tmp_path, llm_fallback=fallback)
+    with pytest.raises(AppError) as error:
+        Providers(s, Store(s.database_path)).configured_chain()
+    assert error.value.code == "model_configuration" and error.value.status == 503
+
+
+BACKUP_KEYS = dict(groq_api_key_2="test-groq-second", groq_api_key_3="test-groq-third")
+KEYS = ["test-groq-key", *BACKUP_KEYS.values()]
+
+
+@pytest.mark.parametrize("failure", [429, 500, 502, 503, 504, "timeout", "unreachable"])
+@pytest.mark.parametrize("successful_slot", [1, 2, 3])
+def test_keys_rotate_only_until_one_succeeds(tmp_path, failure, successful_slot):
+    seen = []
+    def groq(request, body):
+        seen.append(request.headers["authorization"].removeprefix("Bearer "))
+        if len(seen) == successful_slot:
+            return chat_ok(request, body)
+        if failure == "timeout":
+            raise httpx.ReadTimeout("TEST-ONLY timeout", request=request)
+        if failure == "unreachable":
+            raise httpx.ConnectError("TEST-ONLY offline", request=request)
+        return httpx.Response(failure)
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=groq, openrouter=untouched, ollama=untouched), **BACKUP_KEYS)
+    assert error is None and result.proposals == []
+    assert seen == KEYS[:successful_slot] and sent == ["groq"] * successful_slot
+    assert [a[1] for a in attempts] == ["failed"] * (successful_slot - 1) + ["succeeded"]
+
+
+@pytest.mark.parametrize("last_provider", ["openrouter", "ollama", "none"])
+def test_all_groq_keys_precede_openrouter_and_local(tmp_path, last_provider):
+    seen = []
+    def groq(request, body):
+        seen.append(request.headers["authorization"].removeprefix("Bearer "))
+        return httpx.Response(429)
+    answers = dict(groq=groq, openrouter=chat_ok if last_provider == "openrouter" else status(503),
+                   ollama=ollama_ok if last_provider == "ollama" else status(503))
+    result, error, sent, attempts, *_ = call(tmp_path, answers, **BACKUP_KEYS)
+    expected = ["groq"] * 3 + ["openrouter"] + ([] if last_provider == "openrouter" else ["ollama"])
+    assert seen == KEYS and sent == expected
+    assert [a[0] for a in attempts] == expected
+    if last_provider == "none":
+        assert error.code == "providers_failed"
+        assert [a["provider"] for a in error.details["attempts"]] == expected
+    else:
+        assert error is None and result.proposals == []
+
+
+@pytest.mark.parametrize("answer,code", [
+    (status(400), "provider_request_failure"),
+    (status(401), "provider_request_failure"),
+    (status(403), "provider_request_failure"),
+    (status(413), "provider_request_failure"),
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "not json"}}]}), "invalid_model_output"),
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "length", "message": {"content": CONTENT}}]}), "invalid_model_output"),
+    (lambda r, b: httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": CONTENT, "refusal": "no"}}]}), "invalid_model_output"),
+])
+def test_nonservice_failures_stop_without_trying_another_key(tmp_path, answer, code):
+    seen = []
+    def groq(request, body):
+        seen.append(request.headers["authorization"])
+        return httpx.Response(429) if len(seen) == 1 else answer(request, body)
+    _, error, sent, attempts, *_ = call(tmp_path, dict(groq=groq, openrouter=untouched, ollama=untouched), **BACKUP_KEYS)
+    assert error.code == code and sent == ["groq", "groq"]
+    assert attempts[-1] == ("groq", "failed", code)
+
+
+def test_cancelling_during_rotation_stops_remaining_keys_and_providers(tmp_path):
+    job = dict(steps=[])
+    def groq(request, body):
+        if request.headers["authorization"] == "Bearer " + KEYS[1]:
+            job["cancelled"] = True
+        return httpx.Response(429)
+    _, error, sent, attempts, *_ = call(tmp_path, dict(groq=groq, openrouter=untouched, ollama=untouched), job=job, **BACKUP_KEYS)
+    assert error.code == "cancelled" and sent == ["groq", "groq"]
+    assert attempts[-1] == ("groq", "failed", "cancelled")
+    assert all(step["finished"] is not None for step in job["steps"])
+
+
+def test_previously_rate_limited_key_is_retried_on_next_call(tmp_path):
+    s = settings(tmp_path, **BACKUP_KEYS)
+    store = Store(s.database_path)
+    bid = uid()
+    with store.connect(write=True) as c:
+        c.execute("INSERT INTO businesses VALUES(?,?,?,?)", (bid, "B", "B", now()))
+    seen = []
+    def handler(request):
+        seen.append(request.headers["authorization"].removeprefix("Bearer "))
+        # The first call exhausts every Groq key; a later call finds the quota available again.
+        return httpx.Response(429) if len(seen) <= 3 else chat_ok(request, {})
+    s.llm_fallback = "none"
+    providers = Providers(s, store, httpx.MockTransport(handler))
+    with pytest.raises(AppError, match="All selected provider attempts failed"):
+        providers.call("generation", {}, GenerationOutput, store.start_run(bid, "generation", {}))
+    result = providers.call("generation", {}, GenerationOutput, store.start_run(bid, "generation", {}))
+    assert result.proposals == [] and seen == KEYS + KEYS[:1]
+    assert s.groq_api_keys == KEYS
+
+
+def test_blank_and_duplicate_keys_are_skipped(tmp_path):
+    seen = []
+    def groq(request, body):
+        seen.append(request.headers["authorization"])
+        return httpx.Response(429)
+    _, error, sent, *_ = call(tmp_path, dict(groq=groq), llm_fallback="none", groq_api_key_2="  ", groq_api_key_3=" test-groq-key ")
+    assert error.code == "providers_failed" and sent == ["groq"] and len(seen) == 1
+
+
+def test_all_keys_are_redacted_from_response_diagnostics(tmp_path):
+    def groq(request, body):
+        content = json.dumps(dict(proposals=[dict(steps=[dict(id=key) for key in KEYS])]))
+        return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": content}}]})
+    _, error, _, _, store, _ = call(tmp_path, dict(groq=groq), **BACKUP_KEYS)
+    assert error.code == "invalid_model_output"
+    recorded = json.dumps(store.all("SELECT * FROM diagnostics") + store.all("SELECT * FROM attempts"))
+    assert all(key not in recorded for key in KEYS)
+    assert "[redacted]" in recorded
+
+
+def test_groq_413_with_explicit_rate_limit_code_rotates_all_keys_then_falls_back(tmp_path):
+    seen = []
+    def groq(request, body):
+        seen.append(request.headers["authorization"].removeprefix("Bearer "))
+        return httpx.Response(413, json={"error": {"type": "tokens", "code": "rate_limit_exceeded",
+                                                  "message": "Request exceeds tokens per minute allowance"}})
+    result, error, sent, attempts, *_ = call(tmp_path, dict(groq=groq, openrouter=chat_ok, ollama=untouched), **BACKUP_KEYS)
+    assert result.proposals == [] and error is None
+    assert seen == KEYS and sent == ["groq"] * 3 + ["openrouter"]
+    assert all(a[2] == "provider_service_failure" for a in attempts[:3])
+
+
+@pytest.mark.parametrize("body", [None, [], {"error": "rate_limit_exceeded"}, {"error": {"code": "payload_too_large"}},
+                                 {"error": {"message": "rate_limit_exceeded"}}])
+def test_ordinary_413_does_not_become_a_rate_limit_from_ambiguous_text(tmp_path, body):
+    _, error, sent, *_ = call(tmp_path, dict(groq=lambda r, b: httpx.Response(413, json=body), openrouter=untouched), **BACKUP_KEYS)
+    assert error.code == "provider_request_failure" and sent == ["groq"]

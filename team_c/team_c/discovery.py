@@ -6,6 +6,7 @@ import uuid
 from urllib.parse import urlparse
 import yaml
 from openapi_spec_validator import OpenAPIV30SpecValidator, OpenAPIV31SpecValidator
+from .contracts import Inventory
 
 PARSER_VERSION = "2"
 METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
@@ -240,7 +241,7 @@ def subdocument(document, route, method, refs):
     return sub
 
 
-def discover(raw: bytes, filename: str, business_id: str, max_operations=50):
+def discover(raw: bytes, filename: str, business_id: str, max_operations=50) -> tuple[dict | None, Inventory]:
     diagnostics = []
     operations = []
     document = None
@@ -448,6 +449,8 @@ def extract(document, normalizer, family, route, item, method, op, ref, schemes,
                         scope.sources[f"inputs/body.{name}"] = scope.sources.get(f"inputs/body/properties/{esc(name)}")
                         if schema is not None and not schema.get("readOnly"):
                             inputs["body." + name] = dict(schema=schema, required=bool(request.get("required") and name in body.get("required", [])), description=schema.get("description", ""))
+                            if not request.get("required") and name in body.get("required", []):
+                                inputs["body." + name]["required_when_body_sent"] = True
                 elif body is not None:
                     inputs["body"] = dict(schema=body, required=bool(request.get("required", False)), description=request.get("description", ""))
 

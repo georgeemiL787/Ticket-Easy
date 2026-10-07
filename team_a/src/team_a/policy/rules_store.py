@@ -1,7 +1,8 @@
 """JSON-file rule store with the review workflow: proposed -> approved | rejected.
 
-Nothing but an explicit approve() call makes a rule active. Uploading a document or running the
-extractor only ever adds `proposed` rules.
+Nothing but an explicit approve() call makes a rule active, and approve() refuses a rule that
+would break a guardrail case. Uploading a document or running the extractor only ever adds
+`proposed` rules.
 """
 
 import json
@@ -74,6 +75,20 @@ class RuleStore:
         raise RuleNotFound(rule_id)
 
     def approve(self, rule_id: str, reviewer: str) -> Rule:
+        """Approve a rule, unless doing so would break a guardrail case (GuardrailRegression)."""
+        from team_a.policy.guardrails import GuardrailRegression, failures_if_approved  # avoids an import cycle
+
+        rules = self.all()
+        if rule_id not in {r.rule_id for r in rules}:
+            raise RuleNotFound(rule_id)
+        trial = [
+            r.model_copy(update={"approval_status": "approved", "approved_by": reviewer})
+            if r.rule_id == rule_id else r
+            for r in rules
+        ]
+        failures = failures_if_approved(self, rule_id, trial)
+        if failures:
+            raise GuardrailRegression(rule_id, failures)
         return self._replace(
             rule_id,
             approval_status="approved",

@@ -433,7 +433,680 @@
         "en": "Damaged items qualify for free return shipping when reported within 48 hours of delivery."
       },
       "approval_status": "proposed",
-      "effective_date": "2026-09-01"
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-C248ED",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s2",
+        "quote": "يحق للعميل استرجاع المنتج خلال 14 يومًا من تاريخ الاستلام. بعد مرور 14 يومًا من تاريخ الاستلام لا يمكن قبول طلب الاسترجاع ولا رد المبلغ، ويمكن للعميل التواصل مع خدمة العملاء لبحث حالته."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "يمكنك إرجاع المنتج خلال 14 يومًا من تاريخ الاستلام. بعد 14 يومًا، لن يُقبل طلب الإرجاع.",
+        "en": "You can return the item within 14 days of delivery. After 14 days, return requests are not accepted."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-C6F05E",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s3",
+        "quote": "يجب أن يكون المنتج غير مستخدم وبحالته الأصلية، مع وجود التيكيت والعبوة الأصلية وفاتورة الشراء أو رقم الطلب."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "==",
+          "value": "unused",
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "يمكنك إرجاع المنتج فقط إذا كان غير مستخدم وفي حالته الأصلية مع التيكيت والعبوة الأصلية وفاتورة الشراء أو رقم الطلب.",
+        "en": "You can return the product only if it is unused and in its original condition, with the tag, original packaging, and purchase invoice or order number."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-5D8306",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s4",
+        "quote": "لا يمكن استرجاع الفئات التالية: الملابس الداخلية وملابس السباحة، العطور ومستحضرات التجميل بعد فتحها، بطاقات الهدايا، والمنتجات المشتراة ضمن التصفية النهائية المكتوب عليها \"لا يرد ولا يستبدل\"."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "product_category",
+          "op": "in",
+          "value": [
+            "underwear",
+            "swimwear"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "deny",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "لا يمكن إرجاع هذا المنتج وفقًا لسياسة الإرجاع.",
+        "en": "This item cannot be returned according to our return policy."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-7117B1",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s4",
+        "quote": "لا يمكن استرجاع الفئات التالية: الملابس الداخلية وملابس السباحة، العطور ومستحضرات التجميل بعد فتحها، بطاقات الهدايا، والمنتجات المشتراة ضمن التصفية النهائية المكتوب عليها \"لا يرد ولا يستبدل\"."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "product_category",
+          "op": "in",
+          "value": [
+            "gift_card"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "deny",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "لا يمكن إرجاع هذا المنتج وفقًا لسياسة الإرجاع.",
+        "en": "This item cannot be returned according to our return policy."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-796DEB",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s4",
+        "quote": "لا يمكن استرجاع الفئات التالية: الملابس الداخلية وملابس السباحة، العطور ومستحضرات التجميل بعد فتحها، بطاقات الهدايا، والمنتجات المشتراة ضمن التصفية النهائية المكتوب عليها \"لا يرد ولا يستبدل\"."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "is_clearance",
+          "op": "==",
+          "value": true,
+          "from": "facts"
+        }
+      ],
+      "effect": "deny",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "لا يمكن إرجاع هذا المنتج وفقًا لسياسة الإرجاع.",
+        "en": "This item cannot be returned according to our return policy."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-F0ED2D",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s4",
+        "quote": "لا يمكن استرجاع الفئات التالية: الملابس الداخلية وملابس السباحة، العطور ومستحضرات التجميل بعد فتحها، بطاقات الهدايا، والمنتجات المشتراة ضمن التصفية النهائية المكتوب عليها \"لا يرد ولا يستبدل\"."
+      },
+      "scope": "return_policy",
+      "action": "create_exchange",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "is_clearance",
+          "op": "==",
+          "value": true,
+          "from": "facts"
+        }
+      ],
+      "effect": "deny",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "لا يمكن استبدال هذا المنتج لأنه من منتجات التصفية النهائية.",
+        "en": "This item cannot be exchanged as it is a final clearance item."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-B1B9F5",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s5",
+        "quote": "يمكن استبدال المنتج بمقاس أو لون آخر خلال 14 يومًا من الاستلام بنفس شروط الاسترجاع، وبشرط توفر المقاس أو اللون المطلوب."
+      },
+      "scope": "return_policy",
+      "action": "create_exchange",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "يمكنك استبدال المنتج بمقاس أو لون آخر خلال 14 يومًا من الاستلام، بشرط توفر المقاس أو اللون المطلوب.",
+        "en": "You can exchange the product for a different size or color within 14 days of receipt, subject to availability of the desired size or color."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-663B66",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s6",
+        "quote": "إذا وصل المنتج تالفًا أو به عيب صناعة يجب إبلاغنا خلال 48 ساعة من الاستلام مع إرسال صور واضحة للمنتج والعيب. في هذه الحالة يكون شحن الاسترجاع مجانيًا، ويختار العميل بين استبدال المنتج أو استرداد المبلغ كاملًا."
+      },
+      "scope": "return_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "in",
+          "value": [
+            "damaged_on_arrival",
+            "defective"
+          ],
+          "from": "facts"
+        },
+        {
+          "field": "hours_since_delivery",
+          "op": "<=",
+          "value": 48,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "إذا كان المنتج تالفًا أو معيبًا وأبلغت خلال 48 ساعة مع صور واضحة، يمكنك إرجاع المنتج مجانًا واختيار الاستبدال أو استرداد المبلغ الكامل.",
+        "en": "If the product is damaged or defective and you report it within 48 hours with clear photos, you can return it for free and choose a replacement or full refund."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-D188C7",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s6",
+        "quote": "إذا وصل المنتج تالفًا أو به عيب صناعة يجب إبلاغنا خلال 48 ساعة من الاستلام مع إرسال صور واضحة للمنتج والعيب. في هذه الحالة يكون شحن الاسترجاع مجانيًا، ويختار العميل بين استبدال المنتج أو استرداد المبلغ كاملًا."
+      },
+      "scope": "return_policy",
+      "action": "create_exchange",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "in",
+          "value": [
+            "damaged_on_arrival",
+            "defective"
+          ],
+          "from": "facts"
+        },
+        {
+          "field": "hours_since_delivery",
+          "op": "<=",
+          "value": 48,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "إذا كان المنتج تالفًا أو معيبًا وأبلغت خلال 48 ساعة مع صور واضحة، يمكنك استبدال المنتج مجانًا.",
+        "en": "If the product is damaged or defective and you report it within 48 hours with clear photos, you can exchange it for free."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-RETURN-POLICY-9AAEAA",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "return_policy",
+        "version": "v2",
+        "citation": "return_policy@v2#s6",
+        "quote": "إذا وصل المنتج تالفًا أو به عيب صناعة يجب إبلاغنا خلال 48 ساعة من الاستلام مع إرسال صور واضحة للمنتج والعيب. في هذه الحالة يكون شحن الاسترجاع مجانيًا، ويختار العميل بين استبدال المنتج أو استرداد المبلغ كاملًا."
+      },
+      "scope": "return_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "in",
+          "value": [
+            "damaged_on_arrival",
+            "defective"
+          ],
+          "from": "facts"
+        },
+        {
+          "field": "hours_since_delivery",
+          "op": "<=",
+          "value": 48,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "إذا كان المنتج تالفًا أو معيبًا وأبلغت خلال 48 ساعة مع صور واضحة، يمكنك استرداد المبلغ الكامل مجانًا.",
+        "en": "If the product is damaged or defective and you report it within 48 hours with clear photos, you can receive a full refund for free."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-REFUND-POLICY-42A9B1",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s1",
+        "quote": "لا يتم رد المبلغ لأي طلب مر على استلامه أكثر من 14 يومًا."
+      },
+      "scope": "refund_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_delivery",
+          "op": "<=",
+          "value": 14,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "سيتم رد المبلغ فقط إذا مرت أقل من أو تساوي 14 يومًا منذ استلام الطلب.",
+        "en": "Refund will be issued only if 14 days or fewer have passed since delivery."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-REFUND-POLICY-446B21",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s3",
+        "quote": "طلبات رد المبالغ التي تزيد عن 3000 جنيه تحتاج إلى مراجعة وموافقة من فريق خدمة العملاء قبل التنفيذ، ولا يتم تنفيذها تلقائيًا."
+      },
+      "scope": "refund_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": ">",
+          "value": 3000,
+          "from": "arguments"
+        }
+      ],
+      "effect": "require_human",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "إذا كان مبلغ الاسترداد أكثر من 3000 جنيه، سيتطلب موافقة فريق خدمة العملاء قبل التنفيذ.",
+        "en": "If the refund amount exceeds 3000 EGP, it requires approval from the customer service team before processing."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-REFUND-POLICY-3495C2",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s4",
+        "quote": "مصاريف الشحن الأصلية لا ترد إلا إذا كان المنتج تالفًا أو معيبًا أو تم إرسال منتج خاطئ."
+      },
+      "scope": "refund_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "item_condition",
+          "op": "in",
+          "value": [
+            "damaged_on_arrival",
+            "defective"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "لا يمكن استرداد مصاريف الشحن الأصلية إلا إذا كان المنتج تالفًا أو معيبًا.",
+        "en": "Original shipping costs cannot be refunded unless the product is damaged or defective."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-REFUND-POLICY-B0A3E9",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "refund_policy",
+        "version": "v1",
+        "citation": "refund_policy@v1#s5",
+        "quote": "يمكن رد المبلغ فقط للطلبات التي تم استلامها أو إرجاعها أو إلغاؤها قبل الشحن."
+      },
+      "scope": "refund_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "delivered",
+            "returned",
+            "cancelled"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "يمكن استرداد المبلغ فقط للطلبات التي تم تسليمها أو إرجاعها أو إلغاؤها قبل الشحن.",
+        "en": "Refunds are only possible for orders that have been delivered, returned, or cancelled before shipping."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-SHIPPING-POLICY-17AE70",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s5",
+        "quote": "The delivery address can be changed only while the order status is pending or processing."
+      },
+      "scope": "shipping_policy",
+      "action": "update_delivery_address",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "pending",
+            "processing"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "يمكنك تغيير عنوان التوصيل فقط إذا كان طلبك لا يزال قيد الانتظار أو تحت المعالجة.",
+        "en": "You can change the delivery address only if your order is still pending or processing."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-SHIPPING-POLICY-12C481",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s6",
+        "quote": "If an order arrives more than 3 business days after the latest estimated delivery date, the customer receives a EGP 100 voucher for the next order."
+      },
+      "scope": "shipping_policy",
+      "action": "apply_voucher",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_late",
+          "op": ">",
+          "value": 3,
+          "from": "facts"
+        },
+        {
+          "field": "amount",
+          "op": "==",
+          "value": 100,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "إذا وصل طلبك بعد أكثر من 3 أيام عمل من التاريخ المتوقع للتسليم، ستحصل على قسيمة بقيمة 100 جنيه مصري للطلب التالي. طلبات التعويض عن مبلغ أكبر من ذلك تُراجعها فريق خدمة العملاء ولا يوافق عليها المساعد.",
+        "en": "If your order arrives more than 3 business days after the latest estimated delivery date, you will receive an EGP 100 voucher for your next order. Requests for compensation above this amount are reviewed by the customer care team and are not approved by the assistant."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-SHIPPING-POLICY-E49A02",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s7",
+        "quote": "After two failed attempts the order is returned to the warehouse and prepaid amounts are refunded minus the shipping fee."
+      },
+      "scope": "shipping_policy",
+      "action": "create_refund",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "==",
+          "value": "returned",
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "إذا تم إرجاع الطلب بعد محاولات التوصيل الفاشلة، فأنت مؤهل لاسترداد المبلغ المدفوع مسبقًا ناقص رسوم الشحن.",
+        "en": "If the order was returned after failed delivery attempts, you are eligible for a refund of the prepaid amount minus the shipping fee."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-SHIPPING-POLICY-D6FEF1",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s7",
+        "quote": "After two failed attempts the order is returned to the warehouse and prepaid amounts are refunded minus the shipping fee."
+      },
+      "scope": "shipping_policy",
+      "action": "create_return",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "==",
+          "value": "returned",
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "user_message": {
+        "ar": "إذا تم إرجاع الطلب بعد محاولات التوصيل الفاشلة، فقد تم معالجة إرجاع الطلب.",
+        "en": "If the order was returned after failed delivery attempts, a return has been processed."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-SHIPPING-POLICY-C748CA",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "shipping_policy",
+        "version": "v1",
+        "citation": "shipping_policy@v1#s8",
+        "quote": "An order can be cancelled free of charge before it is shipped."
+      },
+      "scope": "shipping_policy",
+      "action": "cancel_order",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "order_status",
+          "op": "in",
+          "value": [
+            "pending",
+            "processing"
+          ],
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "user_message": {
+        "ar": "يمكنك إلغاء طلبك مجانًا طالما لم يتم شحنه بعد؛ بعد الشحن، يرجى التواصل مع فريق خدمة العملاء أو رفض الطرد عند التسليم.",
+        "en": "You can cancel your order for free as long as it hasn't been shipped yet; after shipping, please contact customer care or refuse the parcel at delivery."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
+    },
+    {
+      "rule_id": "P-FAQ-657448",
+      "tenant_id": "shop_001",
+      "source": {
+        "document_id": "faq",
+        "version": "v1",
+        "citation": "faq@v1#q07",
+        "quote": "vouchers cannot be used on clearance items."
+      },
+      "scope": "faq",
+      "action": "apply_voucher",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "is_clearance",
+          "op": "==",
+          "value": true,
+          "from": "facts"
+        }
+      ],
+      "effect": "deny",
+      "else_effect": "allow",
+      "user_message": {
+        "ar": "لا يمكنك استخدام الكوبون على منتجات التصفية.",
+        "en": "You cannot use a voucher on clearance items."
+      },
+      "approval_status": "proposed",
+      "effective_date": "2026-09-01",
+      "approved_by": null,
+      "approved_at": null
     }
   ]
 }

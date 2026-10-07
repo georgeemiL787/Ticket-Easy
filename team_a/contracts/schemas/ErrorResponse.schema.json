@@ -5,6 +5,7 @@
         "code": {
           "enum": [
             "INVALID_REQUEST",
+            "UNAUTHORIZED",
             "TENANT_NOT_FOUND",
             "NOT_FOUND",
             "INDEX_NOT_BUILT",

@@ -8,6 +8,7 @@ The result feeds check_action (MANDATORY_RISK) and Team B's escalation trigger.
 
 import json
 import logging
+import re
 from functools import lru_cache
 
 from team_a import llm
@@ -29,18 +30,47 @@ Allowed categories (use only when clearly present, else return an empty list):
 Ordinary complaints, late orders, returns and refunds within policy are NOT risk categories."""
 
 
+# Matching runs on a canonical form applied identically to the reviewed terms and the message,
+# so every listed term still matches itself; it only absorbs spelling variation, never guesses.
+_PUNCT = re.compile(r"[^\w\s]|_")
+_LATIN_REPEATS = re.compile(r"([a-z])\1+")  # ta3weeeed -> ta3wed (applied to terms too)
+# Arabic doubles are usually part of the word (تسمم, اللي) and collapsing them would shrink
+# تسمم to تسم, a substring of تسمح; only 3+ runs are chat elongation (احتيااال, نصصصب).
+_ARABIC_ELONGATION = re.compile(r"([ء-ي])\1{2,}")
+_ARABIZI_DIGITS = str.maketrans({"7": "h", "5": "kh", "4": "sh", "8": "gh", "9": "q"})
+_EGYPTIAN_NEGATION = re.compile(r"^ما(\w{2,}ش)$")  # ماعملتوش -> معملتوش
+
+
+def _canonical_token(token: str) -> str:
+    if re.search(r"[a-z]", token):
+        token = token.translate(_ARABIZI_DIGITS)
+    token = _ARABIC_ELONGATION.sub(r"\1", _LATIN_REPEATS.sub(r"\1", token))
+    return _EGYPTIAN_NEGATION.sub(r"م\1", token)
+
+
+def risk_canonical(text: str) -> str:
+    """normalize(), then: punctuation -> space, Arabizi 7/5/4/8/9 -> h/kh/sh/gh/q,
+    repeated Latin letters and 3+ Arabic runs collapsed (ta3weeeed, احتيااال), and the ما...ش
+    negation folded to م...ش."""
+    tokens = _PUNCT.sub(" ", normalize(text)).split()
+    return " ".join(_canonical_token(t) for t in tokens)
+
+
 @lru_cache(maxsize=1)
-def _keywords() -> dict[str, list[str]]:
+def _keywords() -> dict[str, list[tuple[str, str]]]:
     raw = json.loads((settings.data_dir / "risk" / "keywords.json").read_text(encoding="utf-8"))
-    return {cat: [normalize(t) for t in terms] for cat, terms in raw["categories"].items()}
+    return {
+        cat: [(risk_canonical(t), normalize(t)) for t in terms]
+        for cat, terms in raw["categories"].items()
+    }
 
 
 def keyword_scan(message: str) -> tuple[set[str], list[str]]:
-    text = normalize(message)
+    text = risk_canonical(message)
     categories, matched = set(), []
     for category, terms in _keywords().items():
-        for term in terms:
-            if term in text:
+        for canonical, term in terms:
+            if canonical in text:
                 categories.add(category)
                 matched.append(term)
     return categories, matched

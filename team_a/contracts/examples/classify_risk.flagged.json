@@ -21,7 +21,8 @@
       "mandatory_escalation": true,
       "method": "keywords",
       "matched_terms": [
-        "معملتهاش"
+        "معملتهاش",
+        "ماعملتهاش"
       ],
       "llm_rationale": null
     }

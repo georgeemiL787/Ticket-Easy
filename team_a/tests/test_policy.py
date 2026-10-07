@@ -6,8 +6,9 @@ from pydantic import ValidationError
 from team_a.evaluation import eval_guardrails
 from team_a.policy.check import check_action
 from team_a.policy.explain import explain_rule
+from team_a.policy.guardrails import GuardrailRegression
 from team_a.policy.rules_store import RuleStore
-from team_a.schemas import CheckActionRequest, Rule
+from team_a.schemas import CheckActionRequest, Condition, Rule
 
 AS_OF = date(2026, 9, 28)
 
@@ -41,19 +42,54 @@ def test_guardrail_benchmark_passes_with_zero_unsafe_actions():
 
 def test_unapproved_rules_have_no_effect(rule_store):
     rules = rule_store.all()
+    # Scoped by applies_if to a category no guardrail case uses, so approving it breaks none of them.
+    cosmetics = Condition.model_validate({"field": "product_category", "op": "==", "value": "cosmetics"})
     draft = rules[0].model_copy(update={
-        "rule_id": "P-DRAFT-BLOCK-ALL", "action": "create_ticket", "conditions": [],
-        "effect": "deny", "approval_status": "proposed", "approved_by": None, "approved_at": None,
+        "rule_id": "P-DRAFT-BLOCK-COSMETICS", "action": "create_return", "applies_if": [cosmetics],
+        "conditions": [], "effect": "deny",
+        "approval_status": "proposed", "approved_by": None, "approved_at": None,
     })
     rule_store.add_proposed([draft])
     req = CheckActionRequest.model_validate({
         "request_id": "r", "tenant_id": "shop_001", "as_of": AS_OF,
-        "tool": {"name": "create_ticket", "operation_kind": "create", "risk": "low"},
+        "tool": {"name": "create_return", "operation_kind": "create", "risk": "medium"},
+        "facts": {"order_status": "delivered", "delivered_at": "2026-09-25", "product_category": "cosmetics",
+                  "is_clearance": False, "item_condition": "unused"},
         "identity": {"verified": True},
     })
     assert check_action(req, rule_store).decision == "allow"
-    rule_store.approve("P-DRAFT-BLOCK-ALL", reviewer="tester")
+    rule_store.approve("P-DRAFT-BLOCK-COSMETICS", reviewer="tester")
     assert check_action(req, rule_store).decision == "deny"
+
+
+DEFECTIVE = {"field": "item_condition", "op": "in", "value": ["damaged_on_arrival", "defective"]}
+WITHIN_48H = {"field": "hours_since_delivery", "op": "<=", "value": 48}
+
+
+def _defect_rule(rule_store, rule_id, **fields):
+    base = rule_store.get("R-RETURN-14D").model_dump()
+    return Rule.model_validate({**base, "rule_id": rule_id, "approval_status": "proposed",
+                                "approved_by": None, "approved_at": None, **fields})
+
+
+def test_approval_refuses_rule_that_breaks_guardrails(rule_store):
+    # What live extraction produced: the defect case in `conditions` denies every ordinary return.
+    rule_store.add_proposed([_defect_rule(rule_store, "P-DEFECT-UNSCOPED", conditions=[DEFECTIVE, WITHIN_48H])])
+    with pytest.raises(GuardrailRegression) as exc:
+        rule_store.approve("P-DEFECT-UNSCOPED", reviewer="tester")
+    assert "G01" in str(exc.value)
+    assert rule_store.get("P-DEFECT-UNSCOPED").approval_status == "proposed"
+
+
+def test_same_rule_scoped_with_applies_if_is_approved(rule_store):
+    rule_store.add_proposed([_defect_rule(rule_store, "P-DEFECT-SCOPED", applies_if=[DEFECTIVE],
+                                          conditions=[WITHIN_48H])])
+    assert rule_store.approve("P-DEFECT-SCOPED", reviewer="tester").approval_status == "approved"
+
+
+def test_guardrail_that_only_checks_a_rule_is_inactive_does_not_block_its_approval(rule_store):
+    # G11 asserts R-DEFECT-48H is not evaluated while proposed; approving it must still be possible.
+    assert rule_store.approve("R-DEFECT-48H", reviewer="tester").approval_status == "approved"
 
 
 def test_edit_sends_rule_back_to_review(rule_store):

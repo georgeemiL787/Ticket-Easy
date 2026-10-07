@@ -35,12 +35,23 @@ enforceable condition on one of the allowed actions.
 Each rule object:
 {{
   "action": one of {sorted(vocab["actions"])},
-  "conditions": [{{"field": <fact name>, "op": one of ["<=","<",">=",">","==","!=","in","not_in"], "value": <value>, "from": "facts" or "arguments"}}],
-  "effect": "allow" | "deny" | "require_human"      (outcome when ALL conditions hold),
-  "else_effect": "allow" | "deny" | "require_human" (outcome otherwise),
+  "applies_if": [<condition>, ...]   (when the rule takes part at all; empty = every request for the action),
+  "conditions": [<condition>, ...],
+  "effect": "allow" | "deny" | "require_human"      (outcome when the rule applies and ALL conditions hold),
+  "else_effect": "allow" | "deny" | "require_human" (outcome when it applies and they do not),
   "quote": exact sentence copied from the passage that states the rule,
   "user_message": {{"ar": "<Egyptian-friendly Arabic sentence>", "en": "<English sentence>"}}
 }}
+
+A <condition> is {{"field": <name>, "op": one of ["<=","<",">=",">","==","!=","in","not_in"], "value": <value>, "from": "facts" or "arguments"}}.
+
+applies_if vs conditions: if the text describes a special case ("if the item arrived damaged...",
+"for delivered orders..."), that situation goes in applies_if and the limit goes in conditions.
+Example: "damaged items must be reported within 48 hours" ->
+  applies_if: item_condition in ["damaged_on_arrival","defective"]; conditions: hours_since_delivery <= 48.
+Putting the special case in conditions with else_effect "deny" would wrongly deny every ordinary request.
+Each rule must govern the action itself: a sentence about fees, vouchers at checkout or other side
+details is not a rule on create_refund or apply_voucher.
 
 Allowed facts (from="facts"): {json.dumps(vocab["facts"], ensure_ascii=False)}
 Allowed arguments (from="arguments"): {json.dumps(vocab["arguments"], ensure_ascii=False)}
@@ -52,7 +63,7 @@ def _validate_candidate(raw: dict, passage: dict, effective_date: str) -> Rule |
     vocab = vocabulary()
     if raw.get("action") not in vocab["actions"]:
         return None
-    for cond in raw.get("conditions", []):
+    for cond in [*raw.get("applies_if", []), *raw.get("conditions", [])]:
         source = cond.get("from", "facts")
         allowed = vocab["facts"] if source == "facts" else vocab["arguments"]
         if cond.get("field") not in allowed:
@@ -61,9 +72,10 @@ def _validate_candidate(raw: dict, passage: dict, effective_date: str) -> Rule |
     if not quote or normalize(quote) not in normalize(passage["text"]):
         log.info("Dropped candidate with ungrounded quote: %r", quote[:80])
         return None
-    digest = hashlib.sha1(
-        json.dumps([passage["citation"], raw["action"], raw.get("conditions")], sort_keys=True).encode()
-    ).hexdigest()[:6].upper()
+    identity = [passage["citation"], raw["action"], raw.get("conditions")]
+    if raw.get("applies_if"):  # only when present, so IDs of rules without it stay stable across runs
+        identity.append(raw["applies_if"])
+    digest = hashlib.sha1(json.dumps(identity, sort_keys=True).encode()).hexdigest()[:6].upper()
     try:
         return Rule.model_validate({
             "rule_id": f"P-{passage['document_id'].upper().replace('_', '-')}-{digest}",
@@ -76,6 +88,7 @@ def _validate_candidate(raw: dict, passage: dict, effective_date: str) -> Rule |
             },
             "scope": passage["document_id"],
             "action": raw["action"],
+            "applies_if": raw.get("applies_if", []),
             "conditions": raw.get("conditions", []),
             "effect": raw.get("effect"),
             "else_effect": raw.get("else_effect", "deny"),

@@ -32,9 +32,9 @@ COSINE_WEIGHT = 0.65
 PASSAGE_COS_MARGIN = 0.08
 
 
-def _bm25_norm(scores: np.ndarray) -> np.ndarray:
+def _bm25_norm(scores: np.ndarray, min_bm25: float) -> np.ndarray:
     # Saturating map to [0, 1) so the hybrid score stays comparable across queries.
-    return scores / (scores + settings.min_bm25)
+    return scores / (scores + min_bm25)
 
 
 def _cosines(query: str, vectors: np.ndarray | None, embedder: Embedder | None) -> np.ndarray | None:
@@ -63,12 +63,12 @@ def _rank(
         if cos.max() < min_cosine and bm25.max() < min_bm25:
             return []
         keep = (cos >= min_cosine - PASSAGE_COS_MARGIN) | (bm25 > 0)
-        score = COSINE_WEIGHT * cos + (1 - COSINE_WEIGHT) * _bm25_norm(bm25)
+        score = COSINE_WEIGHT * cos + (1 - COSINE_WEIGHT) * _bm25_norm(bm25, min_bm25)
     else:
         if bm25.max() < min_bm25:
             return []
         keep = bm25 > 0
-        score = _bm25_norm(bm25)
+        score = _bm25_norm(bm25, min_bm25)
     ranked = sorted(
         ((int(i), float(s)) for i, s, ok in zip(idx, score, keep) if ok),
         key=lambda pair: pair[1],

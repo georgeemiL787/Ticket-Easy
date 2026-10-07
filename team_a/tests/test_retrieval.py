@@ -22,6 +22,12 @@ def test_return_window_question_cites_current_policy(keyword_index, query):
     assert "return_policy@v2#s2" in [p.citation for p in result.passages]
 
 
+
+def test_english_query_reaches_arabic_unknown_payment_section(keyword_index):
+    # Q38: English "payment"/"card" must expand to the Arabic wording (دفع, بطاقته) of refund_policy s6.
+    citations = [p.citation for p in search(keyword_index, "There is a payment on my card I did not make").passages]
+    assert "refund_policy@v1#s6" in citations
+
 def test_superseded_version_is_excluded_by_default(keyword_index):
     citations = [p.citation for p in search(keyword_index, "مدة الاسترجاع 30 يومًا", top_k=20).passages]
     assert citations and not any("@v1#" in c and c.startswith("return_policy") for c in citations)

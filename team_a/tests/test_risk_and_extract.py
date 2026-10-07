@@ -25,7 +25,28 @@ def test_keyword_layer_flags_mandatory_escalation(message, category):
     assert category in result.categories and result.mandatory_escalation
 
 
-@pytest.mark.parametrize("message", ["fein el order bta3y?", "ممكن أرجع المنتج؟", "fe ta8lef hedeya?"])
+@pytest.mark.parametrize("message,category", [
+    ("في عملية دفع على كارتي ماعملتوش", "fraud_suspected"),     # ما...ش negation; only معملتوش is listed
+    ("الفلوس اتخصمت وأنا مادفعتش", "fraud_suspected"),           # only مدفعتش is listed
+    ("ده نصصصب واحتيااال", "fraud_suspected"),                   # chat elongation
+    ("mesh ana ely 3amalt el 3amaleya di", "fraud_suspected"),   # ely vs listed elly
+    ("7ad dakhal 3ala 7esaby", "identity_concern"),              # mixed 7 / kh spelling
+    ("3ayez ta3weeeed", "compensation_demand"),                  # Arabizi elongation
+])
+def test_spelling_variants_missed_by_exact_matching_are_flagged(message, category):
+    assert category in classify(message).categories
+
+
+def test_every_listed_term_still_matches_itself():
+    for category, terms in risk._keywords().items():
+        for _, term in terms:
+            assert category in risk.keyword_scan(term)[0], term
+
+
+@pytest.mark.parametrize("message", [
+    "fein el order bta3y?", "ممكن أرجع المنتج؟", "fe ta8lef hedeya?",
+    "ممكن تسمحلي ارجع المنتج؟",  # تسمم must not shrink to تسم, a substring of تسمح
+])
 def test_ordinary_requests_are_not_flagged(message):
     assert not classify(message).mandatory_escalation
 
@@ -85,6 +106,21 @@ def test_grounded_candidate_becomes_proposed_rule(return_window_passage):
 ])
 def test_ungrounded_or_invalid_candidates_are_dropped(return_window_passage, bad):
     assert _validate_candidate(candidate(**bad), return_window_passage, "2026-09-01") is None
+
+
+def test_applies_if_is_kept_and_checked_against_vocabulary(return_window_passage):
+    scope = [{"field": "order_status", "op": "in", "value": ["delivered"], "from": "facts"}]
+    rule = _validate_candidate(candidate(applies_if=scope), return_window_passage, "2026-09-01")
+    assert [c.field for c in rule.applies_if] == ["order_status"]
+    unknown = [{"field": "customer_mood", "op": "==", "value": "happy"}]
+    assert _validate_candidate(candidate(applies_if=unknown), return_window_passage, "2026-09-01") is None
+
+
+def test_rule_id_without_applies_if_is_unchanged(return_window_passage):
+    # IDs already in the review queue must not change, or re-running extraction would duplicate them.
+    without = _validate_candidate(candidate(), return_window_passage, "2026-09-01").rule_id
+    empty = _validate_candidate(candidate(applies_if=[]), return_window_passage, "2026-09-01").rule_id
+    assert without == empty
 
 
 def test_only_free_models_are_used(monkeypatch):

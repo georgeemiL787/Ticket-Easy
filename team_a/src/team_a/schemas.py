@@ -4,7 +4,7 @@ Frozen in week 1. Any breaking change bumps SCHEMA_VERSION and is announced to T
 """
 
 from datetime import date, datetime, timezone
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -14,6 +14,7 @@ TENANT_PATTERN = r"^[a-z0-9_]{1,64}$"
 
 ErrorCode = Literal[
     "INVALID_REQUEST",
+    "UNAUTHORIZED",
     "TENANT_NOT_FOUND",
     "NOT_FOUND",
     "INDEX_NOT_BUILT",
@@ -285,3 +286,119 @@ class RuleExplanation(BaseModel):
     else_effect: Effect
     source: RuleSource
     user_message: LocalizedText
+
+
+# ------------------------------------------------------- resolved escalations
+# Precedents from cases a human resolved. Advisory only: shown to a human reviewer, never read by
+# check_action, never a reason to execute an action. Mandatory-risk cases and personal data are
+# refused at write time (team_a.knowledge.resolutions.is_safe_to_persist).
+
+# Team B's escalation reason taxonomy (project plan, Member 5).
+EscalationReason = Literal[
+    "policy_deny", "require_human", "mandatory_category", "low_confidence", "customer_request", "repeated_failure",
+]
+SLUG_PATTERN = r"^[a-z][a-z0-9_]{0,39}$"
+Slug = Annotated[str, Field(pattern=SLUG_PATTERN)]
+
+
+class RedactionCheck(BaseModel):
+    """Known personal data from the HandoffPackage's customer/CRM snapshot and transcript.
+
+    Used only to verify none of it appears in the fields being stored; never persisted or logged.
+    """
+
+    customer_names: list[str] = Field(default_factory=list, max_length=10)
+    phones: list[str] = Field(default_factory=list, max_length=10)
+    emails: list[str] = Field(default_factory=list, max_length=10)
+    addresses: list[str] = Field(default_factory=list, max_length=10)
+    order_ids: list[str] = Field(default_factory=list, max_length=50)
+    transcript_messages: list[str] = Field(default_factory=list, max_length=200)
+
+
+class ResolvedEscalationRequest(RequestEnvelope):
+    """Sent once when a case moves to `resolved`. Text fields must already be redacted."""
+
+    category: str = Field(pattern=SLUG_PATTERN, description="Kind of situation, e.g. refund_exception")
+    redacted_summary: str = Field(min_length=10, max_length=600)
+    resolution: str = Field(min_length=5, max_length=600, description="What the human decided / did")
+    cited_rule_id: Optional[str] = Field(default=None, pattern=r"^[A-Z][A-Z0-9-]{2,63}$")
+    tags: list[Slug] = Field(default_factory=list, max_length=10)
+    escalation_reason: EscalationReason
+    risk_categories: list[RiskCategory] = Field(
+        description="classify_risk categories of the original case. Required (may be empty) so it is never "
+                    "silently omitted; any entry blocks storage."
+    )
+    redaction_check: Optional[RedactionCheck] = None
+
+
+class ResolvedEscalation(BaseModel):
+    """The only shape that is persisted. No conversation id, customer id or transcript."""
+
+    case_id: str = Field(pattern=r"^PREC-[0-9A-F]{10}$")
+    tenant_id: str = Field(pattern=TENANT_PATTERN)
+    category: str = Field(pattern=SLUG_PATTERN)
+    redacted_summary: str
+    resolution: str
+    cited_rule_id: Optional[str] = None
+    tags: list[Slug] = Field(default_factory=list)
+    escalation_reason: EscalationReason
+    created_at: date
+
+
+class ResolutionWriteResult(BaseModel):
+    schema_version: str = SCHEMA_VERSION
+    request_id: str
+    tenant_id: str
+    stored: bool
+    case_id: Optional[str] = None
+    rejected_reasons: list[str] = Field(
+        default_factory=list,
+        description="Why the case was not stored: 'mandatory_risk:<category>' or 'personal_data:<kind>'",
+    )
+
+    @model_validator(mode="after")
+    def _stored_xor_rejected(self):
+        if self.stored == bool(self.rejected_reasons) or self.stored != bool(self.case_id):
+            raise ValueError("a stored result has a case_id and no rejected_reasons, and vice versa")
+        return self
+
+
+class SearchResolutionsRequest(RequestEnvelope):
+    query: str = Field(min_length=1, max_length=2000, description="Redacted description of the open case")
+    risk_categories: list[RiskCategory] = Field(
+        description="classify_risk categories of the open case. Required (may be empty); any entry means no "
+                    "precedent is offered, because mandatory-risk cases must reach a human fresh."
+    )
+    top_k: int = Field(default=3, ge=1, le=10)
+
+
+class Precedent(ResolvedEscalation):
+    score: float
+    citation: str
+
+
+ResolutionEmptyReason = Literal["below_threshold", "no_documents", "mandatory_risk"]
+
+
+class ResolutionSearchResult(BaseModel):
+    schema_version: str = SCHEMA_VERSION
+    request_id: str
+    tenant_id: str
+    query: str
+    precedents: list[Precedent]
+    similar_count: int = Field(description="len(precedents): 'N similar cases were resolved this way'")
+    empty_reason: Optional[ResolutionEmptyReason] = None
+    retrieval_mode: Literal["hybrid", "keyword_only"] = "hybrid"
+    advisory: Literal[True] = Field(
+        default=True,
+        description="Always true. Precedents inform a human reviewer; they never authorize or execute an "
+                    "action, and check_action does not read them.",
+    )
+
+    @model_validator(mode="after")
+    def _empty_reason_iff_no_precedents(self):
+        if bool(self.precedents) == (self.empty_reason is not None):
+            raise ValueError("empty_reason is required exactly when precedents is empty")
+        if self.similar_count != len(self.precedents):
+            raise ValueError("similar_count must equal len(precedents)")
+        return self

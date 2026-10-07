@@ -7,7 +7,7 @@
   python -m team_a check path/to/check_action_request.json
   python -m team_a rules list|approve|reject|edit|extract ...
   python -m team_a explain R-RETURN-14D --tenant shop_001
-  python -m team_a eval-retrieval [--sweep]
+  python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
   python -m team_a eval-guardrails
   python -m team_a export-schemas
 """
@@ -91,7 +91,12 @@ def cmd_rules(args) -> None:
                 continue
             print(f"{r.approval_status:9} {r.rule_id:28} {r.action:24} {r.source.citation}")
     elif args.rules_cmd == "approve":
-        _print(store.approve(args.rule_id, args.reviewer))
+        from team_a.policy.guardrails import GuardrailRegression
+
+        try:
+            _print(store.approve(args.rule_id, args.reviewer))
+        except GuardrailRegression as exc:
+            sys.exit(f"Not approved. {exc}")
     elif args.rules_cmd == "reject":
         _print(store.reject(args.rule_id, args.reviewer))
     elif args.rules_cmd == "edit":
@@ -109,7 +114,7 @@ def cmd_rules(args) -> None:
 def cmd_eval_retrieval(args) -> None:
     from team_a.evaluation import eval_retrieval
 
-    eval_retrieval(args.tenant, sweep=args.sweep)
+    eval_retrieval(args.tenant, split=args.split, sweep=args.sweep)
 
 
 def cmd_eval_guardrails(args) -> None:
@@ -126,7 +131,9 @@ def cmd_export_schemas(_args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     models = [s.SearchKnowledgeRequest, s.RetrievalResult, s.SearchPastTicketsRequest, s.PastTicketResult,
               s.Passage, s.Rule, s.CheckActionRequest, s.PolicyDecision, s.ClassifyRiskRequest,
-              s.RiskAssessment, s.RuleExplanation, s.ErrorResponse]
+              s.RiskAssessment, s.RuleExplanation, s.ErrorResponse,
+              s.ResolvedEscalationRequest, s.ResolvedEscalation, s.ResolutionWriteResult,
+              s.SearchResolutionsRequest, s.ResolutionSearchResult]
     for model in models:
         path = out / f"{model.__name__}.schema.json"
         path.write_text(json.dumps(model.model_json_schema(by_alias=True), ensure_ascii=False, indent=2) + "\n",
@@ -174,6 +181,7 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(func=cmd_rules)
 
     p = sub.add_parser("eval-retrieval"); tenant(p); p.add_argument("--sweep", action="store_true")
+    p.add_argument("--split", choices=("dev", "test"), default="dev")
     p.set_defaults(func=cmd_eval_retrieval)
 
     p = sub.add_parser("eval-guardrails"); tenant(p)

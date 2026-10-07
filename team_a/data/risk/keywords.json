@@ -1,5 +1,5 @@
 {
-  "description": "Mandatory-escalation triggers. Matching is on normalized text (see team_a.text.normalize), substring-based. The LLM may add categories but can never remove a keyword hit.",
+  "description": "Mandatory-escalation triggers. Matching is substring-based on a canonical form of both term and message (see team_a.policy.risk.risk_canonical): normalized, punctuation removed, Arabizi 7/5/4/8/9 mapped to letters, elongation collapsed, and the ma...sh negation folded, so list one spelling per phrasing, not every variant. The LLM may add categories but can never remove a keyword hit.",
   "categories": {
     "fraud_suspected": [
       "احتيال", "نصب", "نصاب", "سرقة", "اتسرقت", "اتسرق", "عملية مش انا", "مش انا اللي", "معملتش العملية", "معملتهاش", "ماعملتهاش", "معملتوش", "معملتش الدفع", "مدفعتش", "خصم من غير", "اتخصم من غير", "بطاقتي اتسرقت",

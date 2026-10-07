@@ -25,7 +25,28 @@ def test_keyword_layer_flags_mandatory_escalation(message, category):
     assert category in result.categories and result.mandatory_escalation
 
 
-@pytest.mark.parametrize("message", ["fein el order bta3y?", "ممكن أرجع المنتج؟", "fe ta8lef hedeya?"])
+@pytest.mark.parametrize("message,category", [
+    ("في عملية دفع على كارتي ماعملتوش", "fraud_suspected"),     # ما...ش negation; only معملتوش is listed
+    ("الفلوس اتخصمت وأنا مادفعتش", "fraud_suspected"),           # only مدفعتش is listed
+    ("ده نصصصب واحتيااال", "fraud_suspected"),                   # chat elongation
+    ("mesh ana ely 3amalt el 3amaleya di", "fraud_suspected"),   # ely vs listed elly
+    ("7ad dakhal 3ala 7esaby", "identity_concern"),              # mixed 7 / kh spelling
+    ("3ayez ta3weeeed", "compensation_demand"),                  # Arabizi elongation
+])
+def test_spelling_variants_missed_by_exact_matching_are_flagged(message, category):
+    assert category in classify(message).categories
+
+
+def test_every_listed_term_still_matches_itself():
+    for category, terms in risk._keywords().items():
+        for _, term in terms:
+            assert category in risk.keyword_scan(term)[0], term
+
+
+@pytest.mark.parametrize("message", [
+    "fein el order bta3y?", "ممكن أرجع المنتج؟", "fe ta8lef hedeya?",
+    "ممكن تسمحلي ارجع المنتج؟",  # تسمم must not shrink to تسم, a substring of تسمح
+])
 def test_ordinary_requests_are_not_flagged(message):
     assert not classify(message).mandatory_escalation
 

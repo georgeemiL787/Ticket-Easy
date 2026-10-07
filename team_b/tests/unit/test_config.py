@@ -111,3 +111,18 @@ def test_settings_are_frozen_and_ignore_the_process_environment_when_given_a_map
     assert Settings.from_env().mode == "live"  # no mapping: the real environment is read
     with pytest.raises(ValidationError):
         Settings.from_env({}).mode = "live"  # type: ignore[misc]
+
+
+def test_the_generic_openai_provider_needs_a_url_and_a_model_and_hides_its_key() -> None:
+    with pytest.raises(SettingsError, match="TEAM_B_LLM_BASE_URL"):
+        Settings.from_env({"TEAM_B_LLM": "openai"})
+    s = Settings.from_env(
+        {
+            "TEAM_B_LLM": "openai",
+            "TEAM_B_LLM_BASE_URL": "https://example.test/v1",
+            "TEAM_B_LLM_MODEL": "m",
+            "TEAM_B_LLM_API_KEY": "very-secret-key",
+        }
+    )
+    assert s.llm == "openai" and s.llm_api_key is not None
+    assert "very-secret-key" not in repr(s) and "very-secret-key" not in str(s.model_dump())

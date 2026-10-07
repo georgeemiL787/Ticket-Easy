@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]  # the team_b/ folder
 
 Mode = Literal["standin", "live"]
 StoreKind = Literal["memory", "sqlite"]
-LlmKind = Literal["none", "ollama", "openrouter"]
+LlmKind = Literal["none", "ollama", "openrouter", "openai"]
 
 # Settings field -> environment variable.
 ENV_VARS: dict[str, str] = {
@@ -26,6 +26,8 @@ ENV_VARS: dict[str, str] = {
     "ollama_url": "OLLAMA_URL",
     "ollama_model": "TEAM_B_OLLAMA_MODEL",
     "openrouter_api_key": "OPENROUTER_API_KEY",
+    "llm_base_url": "TEAM_B_LLM_BASE_URL",
+    "llm_api_key": "TEAM_B_LLM_API_KEY",
     "llm_model": "TEAM_B_LLM_MODEL",
     "llm_timeout_s": "TEAM_B_LLM_TIMEOUT_S",
     "fixed_today": "TEAM_B_FIXED_TODAY",
@@ -63,6 +65,8 @@ class Settings(BaseModel):
     ollama_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "qwen3:8b"
     openrouter_api_key: SecretStr | None = None
+    llm_base_url: str | None = None  # TEAM_B_LLM=openai: any server speaking the OpenAI chat format (Groq, Gemini, ...)
+    llm_api_key: SecretStr | None = None  # its key (never put in a file that is committed)
     llm_model: str | None = None  # overrides the default model of the chosen provider
     llm_timeout_s: float = Field(default=20.0, gt=0)
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
@@ -87,6 +91,10 @@ class Settings(BaseModel):
     def _openrouter_needs_a_key(self) -> Self:
         if self.llm == "openrouter" and self.openrouter_api_key is None:
             raise ValueError("TEAM_B_LLM=openrouter needs OPENROUTER_API_KEY")
+        if self.llm == "openai" and (not self.llm_base_url or not self.llm_model):
+            raise ValueError(
+                "TEAM_B_LLM=openai needs TEAM_B_LLM_BASE_URL and TEAM_B_LLM_MODEL (and usually TEAM_B_LLM_API_KEY)"
+            )
         return self
 
     @classmethod

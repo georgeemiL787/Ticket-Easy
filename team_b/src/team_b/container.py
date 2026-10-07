@@ -164,7 +164,8 @@ OPENROUTER_DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 
 
 def build_llm(settings: Settings) -> LLMClient | None:
-    """The AI model TEAM_B_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no key."""
+    """The AI model TEAM_B_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no key.
+    `openai` is any OpenAI-format server named by TEAM_B_LLM_BASE_URL and TEAM_B_LLM_MODEL."""
     if settings.llm == "ollama":
         return OpenAICompatibleLLM(
             base_url=settings.ollama_url.rstrip("/") + "/v1",
@@ -177,6 +178,14 @@ def build_llm(settings: Settings) -> LLMClient | None:
             base_url=OPENROUTER_URL,
             model=settings.llm_model or OPENROUTER_DEFAULT_MODEL,
             api_key=key,
+            timeout_s=settings.llm_timeout_s,
+        )
+    if settings.llm == "openai":
+        assert settings.llm_base_url is not None and settings.llm_model is not None  # checked by Settings
+        return OpenAICompatibleLLM(
+            base_url=settings.llm_base_url,
+            model=settings.llm_model,
+            api_key=settings.llm_api_key.get_secret_value() if settings.llm_api_key else None,
             timeout_s=settings.llm_timeout_s,
         )
     return None

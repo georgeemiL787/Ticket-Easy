@@ -118,7 +118,7 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 ## Known limitations
 
 - The held-out test set is small: 37 questions, 9 of them unanswerable. One question moves recall by about 3.6 points and the no-answer numbers by about 11, so treat these as rough. Unanswerable shop questions that the corpus doesn't cover, such as instalment plans (valU), are the weakest area. When pilot questions are added, put them in dev and test with the same stratification, re-sweep on dev only, and score test once.
-- Q38 ("a payment on my card I did not make") misses its passage. `classify_risk` still flags it as fraud, so it escalates anyway.
+- Cross-lingual BM25 relies on the reviewed synonym list in `data/synonyms/arabizi.json`, and Arabic tokens get no suffix stemming. Q38 ("a payment on my card I did not make") missed its passage until "payment" → `دفع` and "card" → `بطاقته` were added. Expect similar gaps for English or Arabizi wording the list doesn't cover yet.
 - The keyword risk layer only catches phrasings it knows. The eval caught one missing phrasing ("معملتهاش") during development, so grow the list from real transcripts.
 - Rule extraction has not been run against a live model yet, because it needs an `OPENROUTER_API_KEY`. The validation around it is covered by tests.
 - The review endpoints are protected only by one shared `X-Admin-Key` (PoC, single tenant). There are no per-user accounts or roles, and the `reviewer` field is self-reported. Replace this with real auth before any real deployment.

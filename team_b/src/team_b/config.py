@@ -26,6 +26,8 @@ ENV_VARS: dict[str, str] = {
     "ollama_url": "OLLAMA_URL",
     "ollama_model": "TEAM_B_OLLAMA_MODEL",
     "openrouter_api_key": "OPENROUTER_API_KEY",
+    "team_a_url": "TEAM_B_TEAM_A_URL",
+    "team_a_timeout_s": "TEAM_B_TEAM_A_TIMEOUT_S",
     "llm_base_url": "TEAM_B_LLM_BASE_URL",
     "llm_api_key": "TEAM_B_LLM_API_KEY",
     "llm_model": "TEAM_B_LLM_MODEL",
@@ -55,7 +57,9 @@ class SettingsError(ValueError):
 class Settings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    mode: Mode = "standin"  # standin: Team B own fake services. live: the real Team A / Team C (Phase 6)
+    mode: Mode = "standin"  # standin: Team B own fake services. live: the real Team A (policy search, safety, rules)
+    team_a_url: str = "http://127.0.0.1:8001"  # TEAM_B_MODE=live: where Team A's service listens
+    team_a_timeout_s: float = Field(default=10.0, gt=0)
     config_dir: Path = PROJECT_ROOT / "config" / "tenants"
     data_dir: Path = PROJECT_ROOT / "data"
     fixtures_dir: Path = PROJECT_ROOT / "fixtures"

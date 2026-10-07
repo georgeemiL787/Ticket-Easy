@@ -20,6 +20,7 @@ from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
+from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
 from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
 from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
@@ -77,12 +78,6 @@ class Container:
 
 
 def build_container(settings: Settings, *, clock: Clock | None = None) -> Container:
-    if settings.mode == "live":
-        raise ContainerError(
-            "TEAM_B_MODE=live is not available until Phase 6 (real Team A and Team C services). "
-            "Use TEAM_B_MODE=standin."
-        )
-
     if settings.llm_rewrite and settings.llm == "none":
         raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
 
@@ -90,15 +85,24 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
-    policy_search = PolicySearchStandin(settings.fixtures_dir)
-    rule_checker = RuleCheckerStandin(settings.fixtures_dir)
-    safety_screen = SafetyScreenStandin(settings.fixtures_dir)
+    live = settings.mode == "live"  # Team A is real; the shop stays a stand-in until Team C's tools are connected
+    policy_search = None if live else PolicySearchStandin(settings.fixtures_dir)
+    rule_checker = None if live else RuleCheckerStandin(settings.fixtures_dir)
+    safety_screen = None if live else SafetyScreenStandin(settings.fixtures_dir)
+    evidence: EvidenceProvider
+    policy: PolicyGate
+    if live:
+        team_a = TeamAClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s)
+        evidence, policy = HttpEvidenceProvider(team_a), HttpPolicyGate(team_a)
+    else:
+        assert policy_search is not None and rule_checker is not None and safety_screen is not None
+        evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
     container = Container(
         settings=settings,
         clock=clock,
         tenants=tenants,
-        evidence=StandinEvidenceProvider(policy_search, safety_screen),
-        policy=rule_checker,
+        evidence=evidence,
+        policy=policy,
         capabilities=shop,
         llm=build_llm(settings),
         sessions=sessions,

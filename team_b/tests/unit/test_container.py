@@ -11,10 +11,13 @@ from team_b.adapters.memory_store import (
     InMemoryTraceStore,
     SystemClock,
 )
+from team_b.adapters.standins.evidence import StandinEvidenceProvider
+from team_b.adapters.standins.shop import StandinShop
+from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import RuleBasedNLU
 from team_b.config import Settings
-from team_b.container import Container, ContainerError, build_container
+from team_b.container import Container, build_container
 from team_b.contracts.policy import CheckActionRequest
 from team_b.domain.tenant import TenantConfigError
 from team_b.ports import (
@@ -55,9 +58,16 @@ def test_without_a_fixed_date_the_real_clock_is_used(tenants_dir: Path) -> None:
     assert isinstance(built.clock, SystemClock)
 
 
-def test_live_mode_is_not_available_yet(tenants_dir: Path) -> None:
-    with pytest.raises(ContainerError, match="Phase 6"):
-        build_container(Settings(mode="live", config_dir=tenants_dir))
+def test_live_mode_plugs_in_the_real_team_a_and_keeps_the_shop_standin(tenants_dir: Path) -> None:
+    built = build_container(Settings(mode="live", team_a_url="http://team-a.test:8001", config_dir=tenants_dir))
+    assert isinstance(built.evidence, HttpEvidenceProvider) and isinstance(built.policy, HttpPolicyGate)
+    assert isinstance(built.capabilities, StandinShop)  # Team C's tools are not connected yet
+    assert built.policy_search is None and built.rule_checker is None and built.safety_screen is None
+
+
+def test_standin_mode_uses_the_standin_services(tenants_dir: Path) -> None:
+    built = build_container(Settings(config_dir=tenants_dir))
+    assert isinstance(built.evidence, StandinEvidenceProvider) and built.rule_checker is built.policy
 
 
 def test_no_llm_means_rules_only(tenants_dir: Path) -> None:

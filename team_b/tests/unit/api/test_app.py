@@ -161,8 +161,8 @@ async def test_the_app_builds_its_own_container_at_startup(settings: Settings) -
 
 
 async def test_startup_fails_loudly_when_the_configuration_cannot_be_built(tenants_dir: Path) -> None:
-    app = create_app(settings=Settings(mode="live", config_dir=tenants_dir))
-    with pytest.raises(ContainerError, match="Phase 6"):
+    app = create_app(settings=Settings(llm_rewrite=True, config_dir=tenants_dir))
+    with pytest.raises(ContainerError, match="needs an AI model"):
         async with app.router.lifespan_context(app):
             pass
 

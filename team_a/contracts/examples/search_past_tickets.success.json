@@ -22,7 +22,7 @@
           "customer_message": "3ayez a8ayar el 3onwan bs el order et4a7an",
           "resolution": "لم يتم تغيير العنوان لأن الطلب تم شحنه، ونصحنا العميل برفض الاستلام وعمل طلب جديد.",
           "created_at": "2026-08-07",
-          "score": 0.7335,
+          "score": 0.7333,
           "citation": "ticket:T-1005"
         },
         {
@@ -40,7 +40,7 @@
           "customer_message": "3ayez al8y el order",
           "resolution": "الطلب كان قيد المراجعة، تم إلغاؤه بدون مصاريف.",
           "created_at": "2026-08-13",
-          "score": 0.3876,
+          "score": 0.3874,
           "citation": "ticket:T-1010"
         }
       ],

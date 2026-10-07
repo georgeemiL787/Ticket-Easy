@@ -1,0 +1,29 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/knowledge/resolutions/search",
+    "body": {
+      "request_id": "req-0024",
+      "tenant_id": "shop_001",
+      "query": "What is the price of bitcoin?",
+      "risk_categories": []
+    },
+    "headers": {
+      "X-Admin-Key": "<ADMIN_API_KEY>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0024",
+      "tenant_id": "shop_001",
+      "query": "What is the price of bitcoin?",
+      "precedents": [],
+      "similar_count": 0,
+      "empty_reason": "below_threshold",
+      "retrieval_mode": "hybrid",
+      "advisory": true
+    }
+  }
+}

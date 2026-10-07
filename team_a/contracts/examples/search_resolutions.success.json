@@ -1,0 +1,79 @@
+{
+  "request": {
+    "method": "POST",
+    "path": "/v1/knowledge/resolutions/search",
+    "body": {
+      "request_id": "req-0023",
+      "tenant_id": "shop_001",
+      "query": "customer wants a refund 16 days after delivery, item unused",
+      "risk_categories": []
+    },
+    "headers": {
+      "X-Admin-Key": "<ADMIN_API_KEY>"
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "schema_version": "1.0",
+      "request_id": "req-0023",
+      "tenant_id": "shop_001",
+      "query": "customer wants a refund 16 days after delivery, item unused",
+      "precedents": [
+        {
+          "case_id": "PREC-244565961B",
+          "tenant_id": "shop_001",
+          "category": "refund_exception",
+          "redacted_summary": "Refund requested on day 16 after delivery for an unused, unopened item; outside the 14-day refund window.",
+          "resolution": "Supervisor approved a one-off exception; refund issued to the original payment method.",
+          "cited_rule_id": "R-REFUND-14D",
+          "tags": [
+            "refund",
+            "outside_window",
+            "exception"
+          ],
+          "escalation_reason": "policy_deny",
+          "created_at": "2026-09-10",
+          "score": 0.7845,
+          "citation": "resolution:PREC-244565961B"
+        },
+        {
+          "case_id": "PREC-55EA5FA362",
+          "tenant_id": "shop_001",
+          "category": "refund_exception",
+          "redacted_summary": "Refund requested on day 17 after delivery for an unused jacket; outside the 14-day window.",
+          "resolution": "Supervisor declined the exception and offered a voucher for the same value instead.",
+          "cited_rule_id": "R-REFUND-14D",
+          "tags": [
+            "refund",
+            "outside_window"
+          ],
+          "escalation_reason": "policy_deny",
+          "created_at": "2026-10-07",
+          "score": 0.687,
+          "citation": "resolution:PREC-55EA5FA362"
+        },
+        {
+          "case_id": "PREC-E0FDD663E4",
+          "tenant_id": "shop_001",
+          "category": "exchange_unavailable",
+          "redacted_summary": "طلب استبدال مقاس خلال مدة الـ 14 يوم لكن المقاس المطلوب غير متوفر في المخزن.",
+          "resolution": "تم عرض استرجاع المبلغ بدل الاستبدال ووافق العميل، وتم فتح طلب استرجاع عادي.",
+          "cited_rule_id": "R-EXCHANGE-14D",
+          "tags": [
+            "exchange",
+            "out_of_stock"
+          ],
+          "escalation_reason": "customer_request",
+          "created_at": "2026-09-20",
+          "score": 0.6016,
+          "citation": "resolution:PREC-E0FDD663E4"
+        }
+      ],
+      "similar_count": 3,
+      "empty_reason": null,
+      "retrieval_mode": "hybrid",
+      "advisory": true
+    }
+  }
+}

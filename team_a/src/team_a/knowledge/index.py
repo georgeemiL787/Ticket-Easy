@@ -3,12 +3,14 @@
 Layout under var/index/<tenant_id>/:
   passages.jsonl, passages.npy   policy/FAQ passages and their unit-length embeddings
   tickets.jsonl,  tickets.npy    past tickets and their embeddings
+  resolutions.jsonl, resolutions.npy   redacted precedents from human-resolved escalations
   meta.json                      model, counts, corpus hash (for reproducibility checks)
 The .npy files are absent when the index was built with --no-embeddings (keyword-only mode).
 """
 
 import hashlib
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,10 +19,12 @@ import numpy as np
 
 from team_a.config import settings
 from team_a.knowledge.bm25 import BM25
-from team_a.knowledge.embeddings import Embedder
+from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
 from team_a.knowledge.parsers import Section, parse
+from team_a.schemas import ResolvedEscalation
 from team_a.text import detect_language, tokenize
 
+log = logging.getLogger(__name__)
 MAX_PASSAGE_CHARS = 1500
 
 
@@ -103,12 +107,54 @@ def load_tickets(tenant_id: str) -> list[dict]:
     return tickets
 
 
+def load_resolutions(tenant_id: str) -> list[dict]:
+    path = settings.resolutions_file(tenant_id)
+    if not path.exists():
+        return []
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    for r in rows:
+        ResolvedEscalation.model_validate(r)
+        if r["tenant_id"] != tenant_id:
+            raise ValueError(f"Resolution {r.get('case_id')} belongs to another tenant")
+    return rows
+
+
 def passage_embed_text(r: dict) -> str:
     return f"{r['section']}\n{r['text']}"
 
 
 def ticket_embed_text(t: dict) -> str:
     return f"{t['customer_message']}\n{t['resolution']}"
+
+
+def resolution_embed_text(r: dict) -> str:
+    return f"{r['category'].replace('_', ' ')}\n{r['redacted_summary']}\n{r['resolution']}"
+
+
+def index_resolutions(tenant_id: str, embedder: Embedder | None, strict: bool = True) -> int:
+    """(Re)build only the resolutions part of the index. Called by build_index and after each write.
+
+    With strict=False an embedding failure leaves resolutions keyword-only (vectors removed) instead
+    of failing the write, so stored records and vectors can never get out of step.
+    """
+    rows = load_resolutions(tenant_id)
+    out = settings.tenant_index_dir(tenant_id)
+    out.mkdir(parents=True, exist_ok=True)
+    _write_jsonl(out / "resolutions.jsonl", rows)
+    (out / "resolutions.npy").unlink(missing_ok=True)
+    if embedder is not None and rows:
+        try:
+            np.save(out / "resolutions.npy", embedder.embed([resolution_embed_text(r) for r in rows]))
+        except EmbeddingUnavailable:
+            if strict:
+                raise
+            log.warning("Resolutions indexed keyword-only: embeddings unavailable")
+    meta_path = out / "meta.json"
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        meta["resolutions"] = len(rows)
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    return len(rows)
 
 
 def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
@@ -125,6 +171,7 @@ def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
         np.save(out / "passages.npy", embedder.embed([passage_embed_text(r) for r in records]))
         if tickets:
             np.save(out / "tickets.npy", embedder.embed([ticket_embed_text(t) for t in tickets]))
+    resolutions = index_resolutions(tenant_id, embedder)
 
     meta = {
         "tenant_id": tenant_id,
@@ -133,6 +180,7 @@ def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
         "passages": len(records),
         "current_passages": sum(r["current"] for r in records),
         "tickets": len(tickets),
+        "resolutions": resolutions,
         "source_hashes": hashes,
     }
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -159,6 +207,9 @@ class TenantIndex:
     tickets: list[dict]
     ticket_vectors: np.ndarray | None
     ticket_bm25: BM25
+    resolutions: list[dict]
+    resolution_vectors: np.ndarray | None
+    resolution_bm25: BM25
     by_citation: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
@@ -172,6 +223,9 @@ class TenantIndex:
         tickets = _read_jsonl(root / "tickets.jsonl")
         pv = np.load(root / "passages.npy") if (root / "passages.npy").exists() else None
         tv = np.load(root / "tickets.npy") if (root / "tickets.npy").exists() else None
+        # An index built before resolutions existed simply has none.
+        resolutions = _read_jsonl(root / "resolutions.jsonl") if (root / "resolutions.jsonl").exists() else []
+        rv = np.load(root / "resolutions.npy") if (root / "resolutions.npy").exists() else None
         return cls(
             tenant_id=tenant_id,
             meta=json.loads((root / "meta.json").read_text(encoding="utf-8")),
@@ -181,5 +235,8 @@ class TenantIndex:
             tickets=tickets,
             ticket_vectors=tv,
             ticket_bm25=BM25([tokenize(ticket_embed_text(t)) for t in tickets]),
+            resolutions=resolutions,
+            resolution_vectors=rv,
+            resolution_bm25=BM25([tokenize(resolution_embed_text(r)) for r in resolutions]),
             by_citation={p["citation"]: p for p in passages},
         )

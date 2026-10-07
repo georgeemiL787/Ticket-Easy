@@ -70,6 +70,12 @@ def test_errors_use_stable_codes():
     ("post", "/v1/policy/rules/R-DEFECT-48H/reject", {"tenant_id": "shop_001", "reviewer": "x"}),
     ("patch", "/v1/policy/rules/R-DEFECT-48H", {"tenant_id": "shop_001", "changes": {}}),
     ("post", "/v1/admin/reload", None),
+    ("post", "/v1/knowledge/resolutions", {
+        "request_id": "r", "tenant_id": "shop_001", "category": "refund_exception",
+        "redacted_summary": "Refund requested on day 16.", "resolution": "Declined.",
+        "escalation_reason": "policy_deny", "risk_categories": []}),
+    ("post", "/v1/knowledge/resolutions/search",
+     {"request_id": "r", "tenant_id": "shop_001", "query": "refund", "risk_categories": []}),
 ])
 def test_admin_endpoints_reject_missing_or_wrong_key(headers, method, path, body):
     resp = client.request(method, path, json=body, headers=headers)

@@ -12,6 +12,7 @@ load_dotenv(ROOT / ".env")
 class Settings:
     data_dir: Path = ROOT / "data"
     index_dir: Path = ROOT / "var" / "index"
+    resolutions_dir: Path = ROOT / "data" / "resolutions"  # separate so tests can redirect writes
     ollama_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     embed_model: str = os.getenv("EMBED_MODEL", "bge-m3")
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
@@ -34,6 +35,9 @@ class Settings:
 
     def tickets_file(self, tenant_id: str) -> Path:
         return self.data_dir / "tickets" / f"{tenant_id}.jsonl"
+
+    def resolutions_file(self, tenant_id: str) -> Path:
+        return self.resolutions_dir / f"{tenant_id}.jsonl"
 
     def tenant_index_dir(self, tenant_id: str) -> Path:
         return self.index_dir / tenant_id

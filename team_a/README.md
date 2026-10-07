@@ -53,12 +53,31 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `explain_rule` | `GET /v1/policy/rules/{rule_id}/explain?tenant_id=` | `RuleExplanation` | none |
 | review (admin) | `GET /v1/policy/rules`, `POST .../{id}/approve`, `POST .../{id}/reject`, `PATCH .../{id}` | `Rule` | `X-Admin-Key` |
 | after re-ingest | `POST /v1/admin/reload` | clears the cached index | `X-Admin-Key` |
+| store a precedent (Team B, on `resolved`) | `POST /v1/knowledge/resolutions` | `ResolutionWriteResult` (`stored: false` + reasons when refused) | `X-Admin-Key` |
+| precedents for a human reviewer | `POST /v1/knowledge/resolutions/search` | `ResolutionSearchResult` (advisory only) | `X-Admin-Key` |
 
 Endpoints marked `X-Admin-Key` require that header to equal `ADMIN_API_KEY` from `.env`. If `ADMIN_API_KEY` is unset, they reject every request.
 
 Errors always return `{"error": {"code", "message", "request_id"}}` with one of: `INVALID_REQUEST` (422), `UNAUTHORIZED` (401), `TENANT_NOT_FOUND` / `NOT_FOUND` (404), `INDEX_NOT_BUILT` (503).
 
 Schemas are in [contracts/schemas/](contracts/schemas/), and real recorded success, empty and failure examples for every endpoint are in [contracts/examples/](contracts/examples/).
+
+## Precedents from resolved escalations
+
+When a human resolves an escalated case, Team B can store a redacted record of the decision. A similar case later gets "N similar cases were resolved this way" in the review queue. These records live in a separate corpus, `data/resolutions/<tenant>.jsonl`. It is indexed like past tickets and code is in [knowledge/resolutions.py](src/team_a/knowledge/resolutions.py). Three rules apply:
+
+1. **Mandatory-risk cases are never stored.** A write is refused if `risk_categories` (required) has any entry, if `escalation_reason` is `mandatory_category`, or if the text being stored triggers the risk keywords. Search also returns nothing when the open case has any risk category.
+2. **No personal data is stored.** Only the category, the redacted summary, the resolution, the cited rule and tags are kept. `is_safe_to_persist()` *refuses* text that still contains an email, phone, order or reference id, payment details, an address, a name or transcript text; it never scrubs. Its reasons name the kind of data, never the value.
+3. **Precedents are advisory.** Search results carry `advisory: true`. `check_action` never reads them, so a precedent cannot authorize or execute anything.
+
+**Integration note for Team B** (the handoff code is not in this repo yet; built against the `HandoffPackage` in the project plan). When a case moves to `resolved`, send:
+- `category`, a `redacted_summary` and the `resolution`, written without customer details (for example "refund requested on day 16", not names, order numbers or quotes).
+- `cited_rule_id` from the package, if any.
+- `escalation_reason` from your taxonomy.
+- `risk_categories`: the case's `classify_risk` result. Send `[]` only if it really was empty.
+- Optionally, `redaction_check` with the package's customer name, phones, emails, addresses, order ids and transcript messages. These are only compared against the text and then dropped, so a name the pattern checks can't recognise is still caught.
+
+Treat `stored: false` as a normal outcome, not an error. Use a stable `request_id` per case, because retries are idempotent. In the inbox, call search with the open case's summary and its `risk_categories`, and show precedents as context only.
 
 ## How `check_action` decides
 
@@ -98,7 +117,7 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | Retrieval recall@5, dev sweep (27 answerable) | 92.6% (ar 8/9, Arabizi 9/9, en 8/9) |
 | No-answer precision / recall, dev sweep (6 unanswerable) | 100% / 50.0% |
 | Guardrail cases | **44/44**, 0 blocked actions executed |
-| Unit tests | 46 passed |
+| Unit tests | 136 passed |
 
 Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic; the held-out test numbers are the honest estimate. Both splits are stratified by language and answerability.
 
@@ -111,6 +130,7 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 - `data/corpus/shop_001/`: the fictional brand "Nile Style". It holds a return policy in Markdown (v2 current, v1 superseded), a shipping policy PDF in English, a refund policy DOCX in Arabic, and an FAQ XLSX in both languages.
 - `data/tickets/shop_001.jsonl`: 20 past tickets with no personal data.
 - `data/rules/shop_001.json`: 12 approved rules. Also 21 `proposed` rules, unapproved: `R-DEFECT-48H`, which shows an unapproved rule has no effect, and 20 from the 2026-10-07 extraction run.
+- `data/resolutions/shop_001.jsonl`: 7 seed precedents (redacted, no mandatory-risk cases), each citing an approved rule.
 - `data/synonyms/arabizi.json`: reviewed query expansions for Arabizi and dialect words.
 - `data/risk/keywords.json`: escalation keywords in Arabic, English and Arabizi.
 - `data/benchmark/`: 70 retrieval questions split into dev and held-out test, and the 44 guardrail cases.
@@ -122,4 +142,7 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 - The keyword risk layer now handles spelling variation: punctuation, letter elongation, Arabizi digit/letter swaps, and the ما…ش negation (`ماعملتوش` matches the listed `معملتوش`). It still misses new vocabulary, such as "someone changed the phone number on my account" (past ticket T-1019), and dropped Arabizi vowels (`m3maltahash`). Keep growing the list from real transcripts. Matching is also by substring, so "court shoes" escalates as legal. That fails safe, but it is noisy.
 - Rule extraction was run on `google/gemma-4-31b-it:free` on 2026-10-07. It fully recovered 7 of the 12 approved rules and partly recovered 4. 8 of its 20 proposals would wrongly deny valid requests if approved, mostly because extraction cannot express `applies_if` (the condition that limits when a rule applies), so a narrow exception becomes a gate on every request. Extraction can now emit `applies_if`, and approval (CLI or API) now reruns the guardrail cases and refuses any rule that breaks one; it refused all 8. The gate only catches what the guardrail cases cover. For example, `P-SHIPPING-POLICY-12C481` (`amount == 100` where the approved rule says `<= 100`) can still be approved, so human review still matters.
 - The review endpoints are protected only by one shared `X-Admin-Key` (PoC, single tenant). There are no per-user accounts or roles, and the `reviewer` field is self-reported. Replace this with real auth before any real deployment.
+- Precedent redaction checks are pattern-based. They catch structured personal data (emails, phones, order ids, cards, addresses, titled names, speaker labels, quotes), plus any exact values Team B passes in `redaction_check`. A bare first name without a title, sent without `redaction_check`, can get through, so the summary must still be written redacted. The checks lean toward refusing: summaries that say "compensation" or "fraud", or contain a 5-digit amount, are not stored.
+- Precedent safety at search time relies on the caller sending the open case's `risk_categories`. The keyword re-scan of the query is only a backstop: while recording the contract examples, "payment on the card they did not make" got past the keywords alone.
+- Precedents are keyword-only when Ollama is down at write time; vectors are dropped, not left out of step. With very few stored precedents, keyword-only search finds nothing: the BM25 cutoff assumes a larger corpus. Writes append to a JSONL file with no locking, which is fine for a single-instance PoC only.
 - OCR, contradictory-document detection and reranking are out of scope (stretch items).

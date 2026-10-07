@@ -15,7 +15,8 @@ from pydantic import BaseModel, Field
 
 from team_a import config
 from team_a.knowledge.embeddings import OllamaEmbedder
-from team_a.knowledge.index import IndexNotBuilt, TenantIndex, TenantNotFound
+from team_a.knowledge.index import IndexNotBuilt, TenantIndex, TenantNotFound, load_manifest
+from team_a.knowledge.resolutions import add_resolution, search_resolutions
 from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
 from team_a.policy.check import check_action
 from team_a.policy.explain import explain_rule
@@ -31,12 +32,16 @@ from team_a.schemas import (
     Passage,
     PastTicketResult,
     PolicyDecision,
+    ResolutionSearchResult,
+    ResolutionWriteResult,
+    ResolvedEscalationRequest,
     RetrievalResult,
     RiskAssessment,
     Rule,
     RuleExplanation,
     SearchKnowledgeRequest,
     SearchPastTicketsRequest,
+    SearchResolutionsRequest,
 )
 
 app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0")
@@ -122,6 +127,26 @@ def get_passage_endpoint(
 def search_past_tickets_endpoint(req: SearchPastTicketsRequest) -> PastTicketResult:
     index = load_index(req.tenant_id, req.request_id)
     return search_past_tickets(req, index, _embedder())
+
+
+@app.post("/v1/knowledge/resolutions", response_model=ResolutionWriteResult, dependencies=[Depends(require_admin)])
+def add_resolution_endpoint(req: ResolvedEscalationRequest) -> ResolutionWriteResult:
+    """Store a redacted precedent once a case is resolved. Unsafe cases return stored=false with reasons."""
+    try:
+        load_manifest(req.tenant_id)
+    except TenantNotFound as exc:
+        raise ServiceError(404, "TENANT_NOT_FOUND", str(exc), req.request_id)
+    result = add_resolution(req, _embedder())
+    if result.stored:
+        _index.cache_clear()
+    return result
+
+
+@app.post("/v1/knowledge/resolutions/search", response_model=ResolutionSearchResult,
+          dependencies=[Depends(require_admin)])
+def search_resolutions_endpoint(req: SearchResolutionsRequest) -> ResolutionSearchResult:
+    """Advisory precedents for a human reviewer. Never consulted by check_action."""
+    return search_resolutions(req, load_index(req.tenant_id, req.request_id), _embedder())
 
 
 @app.post("/v1/admin/reload", dependencies=[Depends(require_admin)])

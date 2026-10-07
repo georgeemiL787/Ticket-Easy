@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "Precedent": {
+      "properties": {
+        "case_id": {
+          "pattern": "^PREC-[0-9A-F]{10}$",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "pattern": "^[a-z0-9_]{1,64}$",
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "category": {
+          "pattern": "^[a-z][a-z0-9_]{0,39}$",
+          "title": "Category",
+          "type": "string"
+        },
+        "redacted_summary": {
+          "title": "Redacted Summary",
+          "type": "string"
+        },
+        "resolution": {
+          "title": "Resolution",
+          "type": "string"
+        },
+        "cited_rule_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cited Rule Id"
+        },
+        "tags": {
+          "items": {
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "escalation_reason": {
+          "enum": [
+            "policy_deny",
+            "require_human",
+            "mandatory_category",
+            "low_confidence",
+            "customer_request",
+            "repeated_failure"
+          ],
+          "title": "Escalation Reason",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date",
+          "title": "Created At",
+          "type": "string"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "citation": {
+          "title": "Citation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "tenant_id",
+        "category",
+        "redacted_summary",
+        "resolution",
+        "escalation_reason",
+        "created_at",
+        "score",
+        "citation"
+      ],
+      "title": "Precedent",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "query": {
+      "title": "Query",
+      "type": "string"
+    },
+    "precedents": {
+      "items": {
+        "$ref": "#/$defs/Precedent"
+      },
+      "title": "Precedents",
+      "type": "array"
+    },
+    "similar_count": {
+      "description": "len(precedents): 'N similar cases were resolved this way'",
+      "title": "Similar Count",
+      "type": "integer"
+    },
+    "empty_reason": {
+      "anyOf": [
+        {
+          "enum": [
+            "below_threshold",
+            "no_documents",
+            "mandatory_risk"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Empty Reason"
+    },
+    "retrieval_mode": {
+      "default": "hybrid",
+      "enum": [
+        "hybrid",
+        "keyword_only"
+      ],
+      "title": "Retrieval Mode",
+      "type": "string"
+    },
+    "advisory": {
+      "const": true,
+      "default": true,
+      "description": "Always true. Precedents inform a human reviewer; they never authorize or execute an action, and check_action does not read them.",
+      "title": "Advisory",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "query",
+    "precedents",
+    "similar_count"
+  ],
+  "title": "ResolutionSearchResult",
+  "type": "object"
+}

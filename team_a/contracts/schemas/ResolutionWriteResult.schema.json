@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "stored": {
+      "title": "Stored",
+      "type": "boolean"
+    },
+    "case_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Case Id"
+    },
+    "rejected_reasons": {
+      "description": "Why the case was not stored: 'mandatory_risk:<category>' or 'personal_data:<kind>'",
+      "items": {
+        "type": "string"
+      },
+      "title": "Rejected Reasons",
+      "type": "array"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "stored"
+  ],
+  "title": "ResolutionWriteResult",
+  "type": "object"
+}

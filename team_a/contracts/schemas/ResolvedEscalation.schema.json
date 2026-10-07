@@ -1,0 +1,76 @@
+{
+  "description": "The only shape that is persisted. No conversation id, customer id or transcript.",
+  "properties": {
+    "case_id": {
+      "pattern": "^PREC-[0-9A-F]{10}$",
+      "title": "Case Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "category": {
+      "pattern": "^[a-z][a-z0-9_]{0,39}$",
+      "title": "Category",
+      "type": "string"
+    },
+    "redacted_summary": {
+      "title": "Redacted Summary",
+      "type": "string"
+    },
+    "resolution": {
+      "title": "Resolution",
+      "type": "string"
+    },
+    "cited_rule_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cited Rule Id"
+    },
+    "tags": {
+      "items": {
+        "pattern": "^[a-z][a-z0-9_]{0,39}$",
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "escalation_reason": {
+      "enum": [
+        "policy_deny",
+        "require_human",
+        "mandatory_category",
+        "low_confidence",
+        "customer_request",
+        "repeated_failure"
+      ],
+      "title": "Escalation Reason",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date",
+      "title": "Created At",
+      "type": "string"
+    }
+  },
+  "required": [
+    "case_id",
+    "tenant_id",
+    "category",
+    "redacted_summary",
+    "resolution",
+    "escalation_reason",
+    "created_at"
+  ],
+  "title": "ResolvedEscalation",
+  "type": "object"
+}

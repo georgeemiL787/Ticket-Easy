@@ -131,7 +131,9 @@ def cmd_export_schemas(_args) -> None:
     out.mkdir(parents=True, exist_ok=True)
     models = [s.SearchKnowledgeRequest, s.RetrievalResult, s.SearchPastTicketsRequest, s.PastTicketResult,
               s.Passage, s.Rule, s.CheckActionRequest, s.PolicyDecision, s.ClassifyRiskRequest,
-              s.RiskAssessment, s.RuleExplanation, s.ErrorResponse]
+              s.RiskAssessment, s.RuleExplanation, s.ErrorResponse,
+              s.ResolvedEscalationRequest, s.ResolvedEscalation, s.ResolutionWriteResult,
+              s.SearchResolutionsRequest, s.ResolutionSearchResult]
     for model in models:
         path = out / f"{model.__name__}.schema.json"
         path.write_text(json.dumps(model.model_json_schema(by_alias=True), ensure_ascii=False, indent=2) + "\n",

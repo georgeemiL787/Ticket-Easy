@@ -1,0 +1,176 @@
+{
+  "$defs": {
+    "RedactionCheck": {
+      "description": "Known personal data from the HandoffPackage's customer/CRM snapshot and transcript.\n\nUsed only to verify none of it appears in the fields being stored; never persisted or logged.",
+      "properties": {
+        "customer_names": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Customer Names",
+          "type": "array"
+        },
+        "phones": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Phones",
+          "type": "array"
+        },
+        "emails": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Emails",
+          "type": "array"
+        },
+        "addresses": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Addresses",
+          "type": "array"
+        },
+        "order_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Order Ids",
+          "type": "array"
+        },
+        "transcript_messages": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 200,
+          "title": "Transcript Messages",
+          "type": "array"
+        }
+      },
+      "title": "RedactionCheck",
+      "type": "object"
+    }
+  },
+  "description": "Sent once when a case moves to `resolved`. Text fields must already be redacted.",
+  "properties": {
+    "request_id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "conversation_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversation Id"
+    },
+    "category": {
+      "description": "Kind of situation, e.g. refund_exception",
+      "pattern": "^[a-z][a-z0-9_]{0,39}$",
+      "title": "Category",
+      "type": "string"
+    },
+    "redacted_summary": {
+      "maxLength": 600,
+      "minLength": 10,
+      "title": "Redacted Summary",
+      "type": "string"
+    },
+    "resolution": {
+      "description": "What the human decided / did",
+      "maxLength": 600,
+      "minLength": 5,
+      "title": "Resolution",
+      "type": "string"
+    },
+    "cited_rule_id": {
+      "anyOf": [
+        {
+          "pattern": "^[A-Z][A-Z0-9-]{2,63}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Cited Rule Id"
+    },
+    "tags": {
+      "items": {
+        "pattern": "^[a-z][a-z0-9_]{0,39}$",
+        "type": "string"
+      },
+      "maxItems": 10,
+      "title": "Tags",
+      "type": "array"
+    },
+    "escalation_reason": {
+      "enum": [
+        "policy_deny",
+        "require_human",
+        "mandatory_category",
+        "low_confidence",
+        "customer_request",
+        "repeated_failure"
+      ],
+      "title": "Escalation Reason",
+      "type": "string"
+    },
+    "risk_categories": {
+      "description": "classify_risk categories of the original case. Required (may be empty) so it is never silently omitted; any entry blocks storage.",
+      "items": {
+        "enum": [
+          "fraud_suspected",
+          "legal_regulatory",
+          "medical_safety",
+          "compensation_demand",
+          "identity_concern"
+        ],
+        "type": "string"
+      },
+      "title": "Risk Categories",
+      "type": "array"
+    },
+    "redaction_check": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RedactionCheck"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "category",
+    "redacted_summary",
+    "resolution",
+    "escalation_reason",
+    "risk_categories"
+  ],
+  "title": "ResolvedEscalationRequest",
+  "type": "object"
+}

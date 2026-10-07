@@ -10,7 +10,6 @@ Guardrails: every case must produce the expected decision; blocked actions must 
 
 import json
 from collections import defaultdict
-from datetime import date
 
 import numpy as np
 
@@ -18,10 +17,9 @@ from team_a.config import settings
 from team_a.knowledge.embeddings import OllamaEmbedder
 from team_a.knowledge.index import TenantIndex
 from team_a.knowledge.retrieval import search_knowledge
-from team_a.policy.check import check_action
-from team_a.policy.risk import keyword_scan
+from team_a.policy.guardrails import load_cases, run_cases
 from team_a.policy.rules_store import RuleStore
-from team_a.schemas import CheckActionRequest, SearchKnowledgeRequest
+from team_a.schemas import SearchKnowledgeRequest
 
 
 class CachedEmbedder:
@@ -135,38 +133,8 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
 
 
 def eval_guardrails(tenant_id: str) -> bool:
-    cases = _load_jsonl(settings.data_dir / "benchmark" / f"guardrails_{tenant_id}.jsonl")
-    store = RuleStore(tenant_id)
-    failures, unsafe = [], []
-    for case in cases:
-        risk_categories = sorted(keyword_scan(case.get("message", ""))[0])
-        req = CheckActionRequest.model_validate({
-            "request_id": case["id"],
-            "tenant_id": tenant_id,
-            "as_of": case.get("as_of", date.today().isoformat()),
-            "risk_categories": risk_categories,
-            **case["request"],
-        })
-        decision = check_action(req, store)
-        expect = case["expect"]
-        problems = []
-        if decision.decision != expect["decision"]:
-            problems.append(f"decision {decision.decision} != {expect['decision']}")
-            if decision.decision == "allow":
-                unsafe.append(case["id"])
-        if "reason_code" in expect and decision.reason_code != expect["reason_code"]:
-            problems.append(f"reason {decision.reason_code} != {expect['reason_code']}")
-        evaluated = [o.rule_id for o in decision.rule_outcomes]
-        if "rule_id" in expect and expect["rule_id"] not in evaluated:
-            problems.append(f"rule {expect['rule_id']} not evaluated")
-        if "absent_rule_id" in expect and expect["absent_rule_id"] in evaluated:
-            problems.append(f"inactive rule {expect['absent_rule_id']} was evaluated")
-        if decision.decision == "deny" and decision.reason_code.startswith("RULE") and not decision.citations:
-            problems.append("deny without citation")
-        if "mandatory_escalation" in expect and bool(risk_categories) != expect["mandatory_escalation"]:
-            problems.append(f"risk {risk_categories} escalation != {expect['mandatory_escalation']}")
-        if problems:
-            failures.append((case["id"], case["title"], problems))
+    cases = load_cases(tenant_id)
+    failures, unsafe = run_cases(RuleStore(tenant_id), cases)
 
     print(f"Guardrail cases: {len(cases) - len(failures)}/{len(cases)} passed")
     print(f"Blocked actions that executed (must be 0): {len(unsafe)} {unsafe}")

@@ -91,7 +91,12 @@ def cmd_rules(args) -> None:
                 continue
             print(f"{r.approval_status:9} {r.rule_id:28} {r.action:24} {r.source.citation}")
     elif args.rules_cmd == "approve":
-        _print(store.approve(args.rule_id, args.reviewer))
+        from team_a.policy.guardrails import GuardrailRegression
+
+        try:
+            _print(store.approve(args.rule_id, args.reviewer))
+        except GuardrailRegression as exc:
+            sys.exit(f"Not approved. {exc}")
     elif args.rules_cmd == "reject":
         _print(store.reject(args.rule_id, args.reviewer))
     elif args.rules_cmd == "edit":

@@ -108,6 +108,21 @@ def test_ungrounded_or_invalid_candidates_are_dropped(return_window_passage, bad
     assert _validate_candidate(candidate(**bad), return_window_passage, "2026-09-01") is None
 
 
+def test_applies_if_is_kept_and_checked_against_vocabulary(return_window_passage):
+    scope = [{"field": "order_status", "op": "in", "value": ["delivered"], "from": "facts"}]
+    rule = _validate_candidate(candidate(applies_if=scope), return_window_passage, "2026-09-01")
+    assert [c.field for c in rule.applies_if] == ["order_status"]
+    unknown = [{"field": "customer_mood", "op": "==", "value": "happy"}]
+    assert _validate_candidate(candidate(applies_if=unknown), return_window_passage, "2026-09-01") is None
+
+
+def test_rule_id_without_applies_if_is_unchanged(return_window_passage):
+    # IDs already in the review queue must not change, or re-running extraction would duplicate them.
+    without = _validate_candidate(candidate(), return_window_passage, "2026-09-01").rule_id
+    empty = _validate_candidate(candidate(applies_if=[]), return_window_passage, "2026-09-01").rule_id
+    assert without == empty
+
+
 def test_only_free_models_are_used(monkeypatch):
     from team_a import config
     import dataclasses

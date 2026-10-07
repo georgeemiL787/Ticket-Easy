@@ -36,7 +36,7 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `python -m team_a explain R-REFUND-14D` | Explain a rule |
 | `python -m team_a rules list [--status proposed]` | Review queue |
 | `python -m team_a rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
-| `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed` |
+| `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
 | `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
 | `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
 | `python -m team_a export-schemas` | Write JSON Schemas to `contracts/schemas/` |
@@ -110,7 +110,7 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 
 - `data/corpus/shop_001/`: the fictional brand "Nile Style". It holds a return policy in Markdown (v2 current, v1 superseded), a shipping policy PDF in English, a refund policy DOCX in Arabic, and an FAQ XLSX in both languages.
 - `data/tickets/shop_001.jsonl`: 20 past tickets with no personal data.
-- `data/rules/shop_001.json`: 12 approved rules, plus 1 `proposed` rule (`R-DEFECT-48H`) that shows an unapproved rule has no effect.
+- `data/rules/shop_001.json`: 12 approved rules. Also 21 `proposed` rules, unapproved: `R-DEFECT-48H`, which shows an unapproved rule has no effect, and 20 from the 2026-10-07 extraction run.
 - `data/synonyms/arabizi.json`: reviewed query expansions for Arabizi and dialect words.
 - `data/risk/keywords.json`: escalation keywords in Arabic, English and Arabizi.
 - `data/benchmark/`: 70 retrieval questions split into dev and held-out test, and the 44 guardrail cases.
@@ -120,6 +120,6 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 - The held-out test set is small: 37 questions, 9 of them unanswerable. One question moves recall by about 3.6 points and the no-answer numbers by about 11, so treat these as rough. Unanswerable shop questions that the corpus doesn't cover, such as instalment plans (valU), are the weakest area. When pilot questions are added, put them in dev and test with the same stratification, re-sweep on dev only, and score test once.
 - Cross-lingual BM25 relies on the reviewed synonym list in `data/synonyms/arabizi.json`, and Arabic tokens get no suffix stemming. Q38 ("a payment on my card I did not make") missed its passage until "payment" → `دفع` and "card" → `بطاقته` were added. Expect similar gaps for English or Arabizi wording the list doesn't cover yet.
 - The keyword risk layer now handles spelling variation: punctuation, letter elongation, Arabizi digit/letter swaps, and the ما…ش negation (`ماعملتوش` matches the listed `معملتوش`). It still misses new vocabulary, such as "someone changed the phone number on my account" (past ticket T-1019), and dropped Arabizi vowels (`m3maltahash`). Keep growing the list from real transcripts. Matching is also by substring, so "court shoes" escalates as legal. That fails safe, but it is noisy.
-- Rule extraction has not been run against a live model yet, because it needs an `OPENROUTER_API_KEY`. The validation around it is covered by tests.
+- Rule extraction was run on `google/gemma-4-31b-it:free` on 2026-10-07. It fully recovered 7 of the 12 approved rules and partly recovered 4. 8 of its 20 proposals would wrongly deny valid requests if approved, mostly because extraction cannot express `applies_if` (the condition that limits when a rule applies), so a narrow exception becomes a gate on every request. Extraction can now emit `applies_if`, and approval (CLI or API) now reruns the guardrail cases and refuses any rule that breaks one; it refused all 8. The gate only catches what the guardrail cases cover. For example, `P-SHIPPING-POLICY-12C481` (`amount == 100` where the approved rule says `<= 100`) can still be approved, so human review still matters.
 - The review endpoints are protected only by one shared `X-Admin-Key` (PoC, single tenant). There are no per-user accounts or roles, and the `reviewer` field is self-reported. Replace this with real auth before any real deployment.
 - OCR, contradictory-document detection and reranking are out of scope (stretch items).

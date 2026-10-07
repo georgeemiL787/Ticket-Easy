@@ -19,6 +19,7 @@ from team_a.knowledge.index import IndexNotBuilt, TenantIndex, TenantNotFound
 from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
 from team_a.policy.check import check_action
 from team_a.policy.explain import explain_rule
+from team_a.policy.guardrails import GuardrailRegression
 from team_a.policy.risk import classify_risk
 from team_a.policy.rules_store import RuleNotFound, RuleStore
 from team_a.schemas import (
@@ -174,6 +175,8 @@ def approve_rule(rule_id: str, req: ReviewRequest) -> Rule:
         return _store(req.tenant_id).approve(rule_id, req.reviewer)
     except RuleNotFound:
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}'")
+    except GuardrailRegression as exc:
+        raise ServiceError(422, "INVALID_REQUEST", str(exc))
 
 
 @app.post("/v1/policy/rules/{rule_id}/reject", response_model=Rule, dependencies=[Depends(require_admin)])

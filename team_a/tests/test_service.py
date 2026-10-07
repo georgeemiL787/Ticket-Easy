@@ -47,7 +47,10 @@ def test_explain_and_list_rules():
     proposed = client.get(
         "/v1/policy/rules", params={"tenant_id": "shop_001", "status": "proposed"}, headers=ADMIN
     ).json()
-    assert [r["rule_id"] for r in proposed] == ["R-DEFECT-48H"]
+    # The live queue also holds whatever `rules extract` proposed; only check the seed entry and status filter.
+    assert "R-DEFECT-48H" in [r["rule_id"] for r in proposed]
+    assert all(r["approval_status"] == "proposed" for r in proposed)
+
 
 def test_errors_use_stable_codes():
     bad = client.post("/v1/policy/check-action", json={**REFUND_DAY_20, "tenant_id": "../etc"})
@@ -85,6 +88,20 @@ def test_admin_endpoint_accepts_valid_key(monkeypatch, rule_store):
         "/v1/policy/rules/R-DEFECT-48H/approve", json={"tenant_id": "shop_001", "reviewer": "ops"}, headers=ADMIN
     )
     assert resp.status_code == 200 and resp.json()["approval_status"] == "approved"
+
+
+def test_approve_endpoint_refuses_rule_that_breaks_guardrails(monkeypatch, rule_store):
+    monkeypatch.setattr(service, "_store", lambda _tenant: rule_store)
+    block_all = rule_store.get("R-RETURN-14D").model_copy(update={
+        "rule_id": "P-BLOCK-RETURNS", "conditions": [], "effect": "deny",
+        "approval_status": "proposed", "approved_by": None, "approved_at": None,
+    })
+    rule_store.add_proposed([block_all])
+    resp = client.post(
+        "/v1/policy/rules/P-BLOCK-RETURNS/approve", json={"tenant_id": "shop_001", "reviewer": "ops"}, headers=ADMIN
+    )
+    assert resp.status_code == 422 and "guardrail" in resp.json()["error"]["message"]
+    assert rule_store.get("P-BLOCK-RETURNS").approval_status == "proposed"
 
 
 def test_agent_endpoints_need_no_admin_key():

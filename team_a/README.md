@@ -43,18 +43,20 @@ uvicorn team_a.service:app --app-dir src --port 8001
 
 ## HTTP API (for Team C's MCP adapter)
 
-| MCP capability | Endpoint | Returns |
-|---|---|---|
-| `search_knowledge` | `POST /v1/knowledge/search` | `RetrievalResult` |
-| `get_passage` | `GET /v1/knowledge/passages?tenant_id=&citation=` | `Passage` |
-| `search_past_tickets` | `POST /v1/knowledge/past-tickets/search` | `PastTicketResult` |
-| `check_action` | `POST /v1/policy/check-action` | `PolicyDecision` |
-| `classify_risk` | `POST /v1/policy/classify-risk` | `RiskAssessment` |
-| `explain_rule` | `GET /v1/policy/rules/{rule_id}/explain?tenant_id=` | `RuleExplanation` |
-| review (admin) | `GET /v1/policy/rules`, `POST .../{id}/approve`, `POST .../{id}/reject`, `PATCH .../{id}` | `Rule` |
-| after re-ingest | `POST /v1/admin/reload` | clears the cached index |
+| MCP capability | Endpoint | Returns | Auth |
+|---|---|---|---|
+| `search_knowledge` | `POST /v1/knowledge/search` | `RetrievalResult` | none |
+| `get_passage` | `GET /v1/knowledge/passages?tenant_id=&citation=` | `Passage` | none |
+| `search_past_tickets` | `POST /v1/knowledge/past-tickets/search` | `PastTicketResult` | none |
+| `check_action` | `POST /v1/policy/check-action` | `PolicyDecision` | none |
+| `classify_risk` | `POST /v1/policy/classify-risk` | `RiskAssessment` | none |
+| `explain_rule` | `GET /v1/policy/rules/{rule_id}/explain?tenant_id=` | `RuleExplanation` | none |
+| review (admin) | `GET /v1/policy/rules`, `POST .../{id}/approve`, `POST .../{id}/reject`, `PATCH .../{id}` | `Rule` | `X-Admin-Key` |
+| after re-ingest | `POST /v1/admin/reload` | clears the cached index | `X-Admin-Key` |
 
-Errors always return `{"error": {"code", "message", "request_id"}}` with one of: `INVALID_REQUEST` (422), `TENANT_NOT_FOUND` / `NOT_FOUND` (404), `INDEX_NOT_BUILT` (503).
+Endpoints marked `X-Admin-Key` require that header to equal `ADMIN_API_KEY` from `.env`. If `ADMIN_API_KEY` is unset, they reject every request.
+
+Errors always return `{"error": {"code", "message", "request_id"}}` with one of: `INVALID_REQUEST` (422), `UNAUTHORIZED` (401), `TENANT_NOT_FOUND` / `NOT_FOUND` (404), `INDEX_NOT_BUILT` (503).
 
 Schemas are in [contracts/schemas/](contracts/schemas/), and real recorded success, empty and failure examples for every endpoint are in [contracts/examples/](contracts/examples/).
 
@@ -115,5 +117,5 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 - Q38 ("a payment on my card I did not make") misses its passage. `classify_risk` still flags it as fraud, so it escalates anyway.
 - The keyword risk layer only catches phrasings it knows. The eval caught one missing phrasing ("معملتهاش") during development, so grow the list from real transcripts.
 - Rule extraction has not been run against a live model yet, because it needs an `OPENROUTER_API_KEY`. The validation around it is covered by tests.
-- The review endpoints have no authentication (PoC, single tenant). Put them behind an admin role before any real deployment.
+- The review endpoints are protected only by one shared `X-Admin-Key` (PoC, single tenant). There are no per-user accounts or roles, and the `reviewer` field is self-reported. Replace this with real auth before any real deployment.
 - OCR, contradictory-document detection and reranking are out of scope (stretch items).

@@ -14,6 +14,7 @@ TENANT_PATTERN = r"^[a-z0-9_]{1,64}$"
 
 ErrorCode = Literal[
     "INVALID_REQUEST",
+    "UNAUTHORIZED",
     "TENANT_NOT_FOUND",
     "NOT_FOUND",
     "INDEX_NOT_BUILT",

@@ -4,14 +4,16 @@ Run: uvicorn team_a.service:app --port 8001   (from team_a/ with src on PYTHONPA
 Every error returns ErrorResponse with a stable code.
 """
 
+import hmac
 from datetime import date
 from functools import lru_cache
 
-from fastapi import FastAPI, Query, Request
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from team_a import config
 from team_a.knowledge.embeddings import OllamaEmbedder
 from team_a.knowledge.index import IndexNotBuilt, TenantIndex, TenantNotFound
 from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
@@ -84,6 +86,13 @@ def _store(tenant_id: str) -> RuleStore:
     return RuleStore(tenant_id)
 
 
+def require_admin(x_admin_key: str | None = Header(default=None)) -> None:
+    """Gate admin/review endpoints on the X-Admin-Key header. Fails closed if ADMIN_API_KEY is unset."""
+    expected = config.settings.admin_api_key
+    if not expected or not x_admin_key or not hmac.compare_digest(x_admin_key, expected):
+        raise ServiceError(401, "UNAUTHORIZED", "Missing or invalid X-Admin-Key")
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -114,7 +123,7 @@ def search_past_tickets_endpoint(req: SearchPastTicketsRequest) -> PastTicketRes
     return search_past_tickets(req, index, _embedder())
 
 
-@app.post("/v1/admin/reload")
+@app.post("/v1/admin/reload", dependencies=[Depends(require_admin)])
 def reload_indexes() -> dict:
     """Drop cached indexes after re-running ingestion."""
     _index.cache_clear()
@@ -143,7 +152,7 @@ def explain_rule_endpoint(
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}' for tenant '{tenant_id}'")
 
 
-@app.get("/v1/policy/rules", response_model=list[Rule])
+@app.get("/v1/policy/rules", response_model=list[Rule], dependencies=[Depends(require_admin)])
 def list_rules(tenant_id: str = Query(pattern=TENANT_PATTERN), status: str | None = None) -> list[Rule]:
     rules = _store(tenant_id).all()
     return [r for r in rules if status is None or r.approval_status == status]
@@ -159,7 +168,7 @@ class EditRequest(BaseModel):
     changes: dict
 
 
-@app.post("/v1/policy/rules/{rule_id}/approve", response_model=Rule)
+@app.post("/v1/policy/rules/{rule_id}/approve", response_model=Rule, dependencies=[Depends(require_admin)])
 def approve_rule(rule_id: str, req: ReviewRequest) -> Rule:
     try:
         return _store(req.tenant_id).approve(rule_id, req.reviewer)
@@ -167,7 +176,7 @@ def approve_rule(rule_id: str, req: ReviewRequest) -> Rule:
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}'")
 
 
-@app.post("/v1/policy/rules/{rule_id}/reject", response_model=Rule)
+@app.post("/v1/policy/rules/{rule_id}/reject", response_model=Rule, dependencies=[Depends(require_admin)])
 def reject_rule(rule_id: str, req: ReviewRequest) -> Rule:
     try:
         return _store(req.tenant_id).reject(rule_id, req.reviewer)
@@ -175,7 +184,7 @@ def reject_rule(rule_id: str, req: ReviewRequest) -> Rule:
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}'")
 
 
-@app.patch("/v1/policy/rules/{rule_id}", response_model=Rule)
+@app.patch("/v1/policy/rules/{rule_id}", response_model=Rule, dependencies=[Depends(require_admin)])
 def edit_rule(rule_id: str, req: EditRequest) -> Rule:
     try:
         return _store(req.tenant_id).edit(rule_id, req.changes)

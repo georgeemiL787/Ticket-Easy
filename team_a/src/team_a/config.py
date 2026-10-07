@@ -24,6 +24,7 @@ class Settings:
     )
     min_cosine: float = float(os.getenv("MIN_COSINE", "0.52"))
     min_bm25: float = float(os.getenv("MIN_BM25", "2.5"))
+    admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
 
     def corpus_dir(self, tenant_id: str) -> Path:
         return self.data_dir / "corpus" / tenant_id

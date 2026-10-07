@@ -22,7 +22,7 @@ class Settings:
             if m.strip()
         ]
     )
-    min_cosine: float = float(os.getenv("MIN_COSINE", "0.52"))
+    min_cosine: float = float(os.getenv("MIN_COSINE", "0.58"))
     min_bm25: float = float(os.getenv("MIN_BM25", "2.5"))
     admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
 

@@ -37,7 +37,7 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `python -m team_a rules list [--status proposed]` | Review queue |
 | `python -m team_a rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
 | `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed` |
-| `python -m team_a eval-retrieval [--sweep]` | 50-question benchmark (+ threshold sweep) |
+| `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
 | `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
 | `python -m team_a export-schemas` | Write JSON Schemas to `contracts/schemas/` |
 
@@ -93,10 +93,14 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 
 | Benchmark | Result |
 |---|---|
-| Retrieval recall@5 (45 answerable questions) | **97.8%** (ar 14/14, Arabizi 15/15, en 15/16) |
-| No-answer precision / recall (5 unanswerable) | **100% / 100%** |
+| Retrieval recall@5, **held-out test** (28 answerable) | **89.3%** (ar 7/9, Arabizi 10/10, en 8/9) |
+| No-answer precision / recall, **held-out test** (9 unanswerable) | **87.5% / 77.8%** |
+| Retrieval recall@5, dev sweep (27 answerable) | 92.6% (ar 8/9, Arabizi 9/9, en 8/9) |
+| No-answer precision / recall, dev sweep (6 unanswerable) | 100% / 50.0% |
 | Guardrail cases | **44/44**, 0 blocked actions executed |
 | Unit tests | 46 passed |
+
+Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic; the held-out test numbers are the honest estimate. Both splits are stratified by language and answerability.
 
 **Demo 1:** the same return-window question asked in English, Egyptian Arabic and Arabizi cites `return_policy@v2#s2`. It ranks first in Arabic and Arabizi, and second in English, behind `refund_policy@v1#s1`, which states the same 14-day limit.
 
@@ -109,11 +113,11 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 - `data/rules/shop_001.json`: 12 approved rules, plus 1 `proposed` rule (`R-DEFECT-48H`) that shows an unapproved rule has no effect.
 - `data/synonyms/arabizi.json`: reviewed query expansions for Arabizi and dialect words.
 - `data/risk/keywords.json`: escalation keywords in Arabic, English and Arabizi.
-- `data/benchmark/`: the 50 retrieval questions (16 in Arabizi) and the 44 guardrail cases.
+- `data/benchmark/`: 70 retrieval questions split into dev and held-out test, and the 44 guardrail cases.
 
 ## Known limitations
 
-- The thresholds (`MIN_COSINE=0.52`, `MIN_BM25=2.5`) were tuned on the same 50 questions they are scored on, so real traffic will score lower. Add questions from pilot conversations and re-run `--sweep`.
+- The held-out test set is small: 37 questions, 9 of them unanswerable. One question moves recall by about 3.6 points and the no-answer numbers by about 11, so treat these as rough. Unanswerable shop questions that the corpus doesn't cover, such as instalment plans (valU), are the weakest area. When pilot questions are added, put them in dev and test with the same stratification, re-sweep on dev only, and score test once.
 - Q38 ("a payment on my card I did not make") misses its passage. `classify_risk` still flags it as fraud, so it escalates anyway.
 - The keyword risk layer only catches phrasings it knows. The eval caught one missing phrasing ("معملتهاش") during development, so grow the list from real transcripts.
 - Rule extraction has not been run against a live model yet, because it needs an `OPENROUTER_API_KEY`. The validation around it is covered by tests.

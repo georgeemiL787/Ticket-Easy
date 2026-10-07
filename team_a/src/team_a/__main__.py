@@ -7,7 +7,7 @@
   python -m team_a check path/to/check_action_request.json
   python -m team_a rules list|approve|reject|edit|extract ...
   python -m team_a explain R-RETURN-14D --tenant shop_001
-  python -m team_a eval-retrieval [--sweep]
+  python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
   python -m team_a eval-guardrails
   python -m team_a export-schemas
 """
@@ -109,7 +109,7 @@ def cmd_rules(args) -> None:
 def cmd_eval_retrieval(args) -> None:
     from team_a.evaluation import eval_retrieval
 
-    eval_retrieval(args.tenant, sweep=args.sweep)
+    eval_retrieval(args.tenant, split=args.split, sweep=args.sweep)
 
 
 def cmd_eval_guardrails(args) -> None:
@@ -174,6 +174,7 @@ def main(argv: list[str] | None = None) -> None:
     p.set_defaults(func=cmd_rules)
 
     p = sub.add_parser("eval-retrieval"); tenant(p); p.add_argument("--sweep", action="store_true")
+    p.add_argument("--split", choices=("dev", "test"), default="dev")
     p.set_defaults(func=cmd_eval_retrieval)
 
     p = sub.add_parser("eval-guardrails"); tenant(p)

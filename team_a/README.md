@@ -20,7 +20,7 @@ copy .env.example .env          # add OPENROUTER_API_KEY (free) if you want rule
 $env:PYTHONPATH = "src"
 python scripts\make_seed_docs.py          # regenerates the PDF/DOCX/XLSX seed documents
 python -m team_a ingest --tenant shop_001 # builds var/index/shop_001 (add --no-embeddings to skip Ollama)
-python -m pytest                          # 46 tests, no Ollama or API key needed
+python -m pytest                          # 136 tests, no Ollama or API key needed
 uvicorn team_a.service:app --app-dir src --port 8001
 ```
 
@@ -64,20 +64,19 @@ Schemas are in [contracts/schemas/](contracts/schemas/), and real recorded succe
 
 ## Precedents from resolved escalations
 
-When a human resolves an escalated case, Team B can store a redacted record of the decision. A similar case later gets "N similar cases were resolved this way" in the review queue. These records live in a separate corpus, `data/resolutions/<tenant>.jsonl`. It is indexed like past tickets and code is in [knowledge/resolutions.py](src/team_a/knowledge/resolutions.py). Three rules apply:
+Redacted records of how humans resolved escalated cases, so a reviewer handling a similar case sees "N similar cases were resolved this way". They live in a separate corpus, `data/resolutions/<tenant>.jsonl`; code is in [knowledge/resolutions.py](src/team_a/knowledge/resolutions.py).
 
-1. **Mandatory-risk cases are never stored.** A write is refused if `risk_categories` (required) has any entry, if `escalation_reason` is `mandatory_category`, or if the text being stored triggers the risk keywords. Search also returns nothing when the open case has any risk category.
-2. **No personal data is stored.** Only the category, the redacted summary, the resolution, the cited rule and tags are kept. `is_safe_to_persist()` *refuses* text that still contains an email, phone, order or reference id, payment details, an address, a name or transcript text; it never scrubs. Its reasons name the kind of data, never the value.
-3. **Precedents are advisory.** Search results carry `advisory: true`. `check_action` never reads them, so a precedent cannot authorize or execute anything.
+1. **Mandatory-risk cases are never stored or offered.** A write is refused if `risk_categories` (required) has any entry, if `escalation_reason` is `mandatory_category`, or if the stored text triggers the risk keywords. Search also requires `risk_categories` and returns nothing for such a case.
+2. **No personal data is stored.** Only category, redacted summary, resolution, cited rule and tags are kept. `is_safe_to_persist()` refuses (never scrubs) text with an email, phone, order or reference id, payment details, address, name or transcript text. Its reasons name the kind of data, never the value.
+3. **Precedents are advisory.** Results carry `advisory: true`. `check_action` never reads them, so a precedent cannot authorize or execute an action.
 
-**Integration note for Team B** (the handoff code is not in this repo yet; built against the `HandoffPackage` in the project plan). When a case moves to `resolved`, send:
-- `category`, a `redacted_summary` and the `resolution`, written without customer details (for example "refund requested on day 16", not names, order numbers or quotes).
-- `cited_rule_id` from the package, if any.
-- `escalation_reason` from your taxonomy.
-- `risk_categories`: the case's `classify_risk` result. Send `[]` only if it really was empty.
-- Optionally, `redaction_check` with the package's customer name, phones, emails, addresses, order ids and transcript messages. These are only compared against the text and then dropped, so a name the pattern checks can't recognise is still caught.
+**Team B integration.** The handoff code isn't in this repo yet; this is built against the project plan's `HandoffPackage`. When a case moves to `resolved`, POST:
+- `category`, `redacted_summary` and `resolution`, with no names, order numbers or quotes
+- `cited_rule_id` (if any) and `escalation_reason`
+- `risk_categories` from the case's `classify_risk`; send `[]` only if it really was empty
+- optionally `redaction_check`: the package's known names, phones, emails, addresses, order ids and messages. They're compared against the text, then discarded.
 
-Treat `stored: false` as a normal outcome, not an error. Use a stable `request_id` per case, because retries are idempotent. In the inbox, call search with the open case's summary and its `risk_categories`, and show precedents as context only.
+`stored: false` is a normal outcome, not an error. Retries are idempotent on `request_id`. In the inbox, search with the open case's summary and `risk_categories`, and show results as context only.
 
 ## How `check_action` decides
 
@@ -119,7 +118,7 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | Guardrail cases | **44/44**, 0 blocked actions executed |
 | Unit tests | 136 passed |
 
-Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic; the held-out test numbers are the honest estimate. Both splits are stratified by language and answerability.
+Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic. The held-out test numbers are the real estimate.
 
 **Demo 1:** the same return-window question asked in English, Egyptian Arabic and Arabizi cites `return_policy@v2#s2`. It ranks first in Arabic and Arabizi, and second in English, behind `refund_policy@v1#s1`, which states the same 14-day limit.
 
@@ -137,12 +136,13 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 
 ## Known limitations
 
-- The held-out test set is small: 37 questions, 9 of them unanswerable. One question moves recall by about 3.6 points and the no-answer numbers by about 11, so treat these as rough. Unanswerable shop questions that the corpus doesn't cover, such as instalment plans (valU), are the weakest area. When pilot questions are added, put them in dev and test with the same stratification, re-sweep on dev only, and score test once.
-- Cross-lingual BM25 relies on the reviewed synonym list in `data/synonyms/arabizi.json`, and Arabic tokens get no suffix stemming. Q38 ("a payment on my card I did not make") missed its passage until "payment" → `دفع` and "card" → `بطاقته` were added. Expect similar gaps for English or Arabizi wording the list doesn't cover yet.
-- The keyword risk layer now handles spelling variation: punctuation, letter elongation, Arabizi digit/letter swaps, and the ما…ش negation (`ماعملتوش` matches the listed `معملتوش`). It still misses new vocabulary, such as "someone changed the phone number on my account" (past ticket T-1019), and dropped Arabizi vowels (`m3maltahash`). Keep growing the list from real transcripts. Matching is also by substring, so "court shoes" escalates as legal. That fails safe, but it is noisy.
-- Rule extraction was run on `google/gemma-4-31b-it:free` on 2026-10-07. It fully recovered 7 of the 12 approved rules and partly recovered 4. 8 of its 20 proposals would wrongly deny valid requests if approved, mostly because extraction cannot express `applies_if` (the condition that limits when a rule applies), so a narrow exception becomes a gate on every request. Extraction can now emit `applies_if`, and approval (CLI or API) now reruns the guardrail cases and refuses any rule that breaks one; it refused all 8. The gate only catches what the guardrail cases cover. For example, `P-SHIPPING-POLICY-12C481` (`amount == 100` where the approved rule says `<= 100`) can still be approved, so human review still matters.
-- The review endpoints are protected only by one shared `X-Admin-Key` (PoC, single tenant). There are no per-user accounts or roles, and the `reviewer` field is self-reported. Replace this with real auth before any real deployment.
-- Precedent redaction checks are pattern-based. They catch structured personal data (emails, phones, order ids, cards, addresses, titled names, speaker labels, quotes), plus any exact values Team B passes in `redaction_check`. A bare first name without a title, sent without `redaction_check`, can get through, so the summary must still be written redacted. The checks lean toward refusing: summaries that say "compensation" or "fraud", or contain a 5-digit amount, are not stored.
-- Precedent safety at search time relies on the caller sending the open case's `risk_categories`. The keyword re-scan of the query is only a backstop: while recording the contract examples, "payment on the card they did not make" got past the keywords alone.
-- Precedents are keyword-only when Ollama is down at write time; vectors are dropped, not left out of step. With very few stored precedents, keyword-only search finds nothing: the BM25 cutoff assumes a larger corpus. Writes append to a JSONL file with no locking, which is fine for a single-instance PoC only.
-- OCR, contradictory-document detection and reranking are out of scope (stretch items).
+- The held-out test set is small (37 questions, 9 unanswerable; one question moves recall about 3.6 points), so treat retrieval numbers as rough. When adding questions, keep the stratified split, sweep on dev only and score test once.
+- Unanswerable shop questions the corpus doesn't cover, such as instalment plans, are the weakest retrieval area.
+- Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json`, and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
+- Risk keywords handle spelling variants, but miss new vocabulary (e.g. "someone changed the phone number on my account") and dropped Arabizi vowels. Substring matching over-flags ("court shoes" escalates as legal), which fails safe.
+- The `proposed` queue holds 20 LLM-extracted rules. The approval gate only catches rules that break a guardrail case, so review each one before approving.
+- Admin endpoints share one `X-Admin-Key`, with no per-user accounts, and `reviewer` is self-reported. Replace with real auth before any real deployment.
+- Precedent redaction is pattern-based: a bare first name can get through unless Team B sends `redaction_check`. It also over-refuses, e.g. summaries mentioning "compensation" or a 5-digit amount.
+- Precedent search is only as safe as the `risk_categories` the caller sends; the keyword re-scan of the query is a backstop that misses phrasings.
+- Precedent writes append to a JSONL file without locking, so run a single instance only. If Ollama is down at write time, precedents go keyword-only, which finds nothing until a handful exist.
+- OCR, contradictory-document detection and reranking are out of scope.

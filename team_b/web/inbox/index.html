@@ -4,11 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ticket-Easy inbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/ui/aurora.css">
   <link rel="stylesheet" href="/inbox/static/style.css">
 </head>
 <body>
-  <header class="top">
-    <h1>Inbox</h1>
+  <div class="aurora" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob glow"></i></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="page">
+  <header class="top nav-glass">
+    <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> Inbox</h1>
     <label>Your name <input id="agent" type="text" maxlength="80" placeholder="e.g. Sara" autocomplete="off"></label>
     <label>Business <input id="tenant" type="text" maxlength="64" value="shop_001" autocomplete="off"></label>
     <button type="button" id="signout" hidden>Sign out</button>
@@ -17,7 +25,7 @@
   <p id="error" class="error" role="alert" hidden></p>
 
   <div class="layout">
-    <section class="list-pane" aria-label="Cases">
+    <section class="list-pane glass" aria-label="Cases">
       <form class="filters" id="filters">
         <select id="f-status" aria-label="Status">
           <option value="">any status</option><option>open</option><option>claimed</option>
@@ -38,7 +46,7 @@
       <button type="button" id="more" hidden>Load more</button>
     </section>
 
-    <section class="case-pane" id="case-pane" aria-label="Case" hidden>
+    <section class="case-pane glass" id="case-pane" aria-label="Case" hidden>
       <div class="case-head">
         <h2 id="case-title"></h2>
         <div class="actions" id="actions"></div>
@@ -46,9 +54,10 @@
       <div id="case-body"></div>
       <form id="reply-form" class="reply" autocomplete="off" hidden>
         <textarea id="reply-text" dir="auto" maxlength="2000" rows="3" placeholder="Write to the customer" aria-label="Reply"></textarea>
-        <button type="submit">Send reply</button>
+        <button type="submit" class="primary">Send reply</button>
       </form>
     </section>
+  </div>
   </div>
   <script src="/inbox/static/inbox.js"></script>
 </body>

@@ -34,18 +34,18 @@ PASSAGE_COS_MARGIN = 0.08
 
 
 @lru_cache(maxsize=32)
-def _manifest_thresholds(tenant_id: str) -> tuple[float | None, float | None]:
+def _manifest_thresholds(tenant_id: str) -> tuple[float | None, float | None, float | None]:
     try:
         custom = load_manifest(tenant_id).get("retrieval_thresholds") or {}
     except (TenantNotFound, ValueError):
         custom = {}
-    return custom.get("min_cosine"), custom.get("min_bm25")
+    return custom.get("min_cosine"), custom.get("min_bm25"), custom.get("min_top_score")
 
 
 def tenant_thresholds(tenant_id: str) -> tuple[float, float]:
     """(min_cosine, min_bm25) for a tenant: `retrieval_thresholds` in its corpus manifest when set (chosen
     on that tenant's own dev split), otherwise the global MIN_COSINE / MIN_BM25."""
-    cos, bm25 = _manifest_thresholds(tenant_id)
+    cos, bm25, _ = _manifest_thresholds(tenant_id)
     return (settings.min_cosine if cos is None else float(cos), settings.min_bm25 if bm25 is None else float(bm25))
 
 
@@ -94,14 +94,22 @@ def _rank(
     return ranked
 
 
+def tenant_min_top_score(tenant_id: str) -> float:
+    """Confidence floor on the best passage's hybrid score (`min_top_score` in the manifest); 0 = none."""
+    top = _manifest_thresholds(tenant_id)[2]
+    return 0.0 if top is None else float(top)
+
+
 def search_knowledge(
     req: SearchKnowledgeRequest,
     index: TenantIndex,
     embedder: Embedder | None,
     min_cosine: float | None = None,
     min_bm25: float | None = None,
+    min_top_score: float | None = None,
 ) -> RetrievalResult:
     default_cosine, default_bm25 = tenant_thresholds(req.tenant_id)
+    min_top_score = tenant_min_top_score(req.tenant_id) if min_top_score is None else min_top_score
     min_cosine = default_cosine if min_cosine is None else min_cosine
     min_bm25 = default_bm25 if min_bm25 is None else min_bm25
 
@@ -133,6 +141,9 @@ def search_knowledge(
         ))
         if len(passages) == req.top_k:
             break
+    # Confidence check: a best match this weak is a coincidental word overlap, not evidence.
+    if passages and passages[0].score < min_top_score:
+        passages = []
 
     empty_reason = None
     if not passages:

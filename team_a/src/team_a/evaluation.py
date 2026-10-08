@@ -16,7 +16,7 @@ import numpy as np
 from team_a.config import settings
 from team_a.knowledge.embeddings import OllamaEmbedder
 from team_a.knowledge.index import TenantIndex
-from team_a.knowledge.retrieval import search_knowledge, tenant_thresholds
+from team_a.knowledge.retrieval import search_knowledge, tenant_min_top_score, tenant_thresholds
 from team_a.policy.guardrails import load_cases, run_cases
 from team_a.policy.rules_store import RuleStore
 from team_a.schemas import SearchKnowledgeRequest
@@ -38,14 +38,15 @@ def _load_jsonl(path) -> list[dict]:
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 
-def run_retrieval(cases, index, embedder, min_cosine, min_bm25, top_k=5) -> dict:
+def run_retrieval(cases, index, embedder, min_cosine, min_bm25, top_k=5, min_top_score=None) -> dict:
     per_style = defaultdict(lambda: [0, 0])
     empty_returned = empty_correct = unanswerable = 0
     misses = []
     for case in cases:
         req = SearchKnowledgeRequest(request_id=case["id"], tenant_id=index.tenant_id,
                                      query=case["question"], top_k=top_k)
-        result = search_knowledge(req, index, embedder, min_cosine=min_cosine, min_bm25=min_bm25)
+        result = search_knowledge(req, index, embedder, min_cosine=min_cosine, min_bm25=min_bm25,
+                                  min_top_score=min_top_score)
         got = [p.citation for p in result.passages]
         expected = case["expected"]
         if not got:
@@ -76,6 +77,19 @@ def run_retrieval(cases, index, embedder, min_cosine, min_bm25, top_k=5) -> dict
 SPLITS = ("dev", "test")
 SWEEP_COSINE = (0.44, 0.46, 0.48, 0.50, 0.52, 0.54, 0.56, 0.58, 0.60)
 SWEEP_BM25 = (1.5, 2.0, 2.5, 3.0, 4.0, 5.0)
+SWEEP_TOP = (0.0, 0.40, 0.44, 0.48, 0.50, 0.52, 0.54, 0.56, 0.58, 0.60)
+
+
+def pick_top_score(rows) -> float:
+    """1-D version of pick_thresholds: most dev questions correct, plateau centre, then stricter."""
+    scores = {t: r["correct"] for t, r in rows}
+    tied = [t for t in SWEEP_TOP if scores[t] == max(scores.values())]
+
+    def neighbours(t):
+        i = SWEEP_TOP.index(t)
+        return sum(0 <= j < len(SWEEP_TOP) and SWEEP_TOP[j] in tied for j in (i - 1, i + 1))
+
+    return max(tied, key=lambda t: (neighbours(t), t))
 
 
 def pick_thresholds(rows) -> tuple[float, float]:
@@ -121,10 +135,20 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
         best_cos, best_bm25 = pick_thresholds(rows)
         print(f"\nBest on dev (most questions correct, plateau centre, then stricter): "
               f"MIN_COSINE={best_cos} MIN_BM25={best_bm25}")
+        print(f"\nConfidence floor on the top passage's score, at MIN_COSINE={best_cos} MIN_BM25={best_bm25}:")
+        print(f"{'min_top':>8} {'correct':>8} {'recall@5':>9} {'na_prec':>8} {'na_rec':>7}")
+        top_rows = []
+        for top in SWEEP_TOP:
+            r = run_retrieval(cases, index, embedder, best_cos, best_bm25, min_top_score=top)
+            top_rows.append((top, r))
+            print(f"{top:>8} {r['correct']:>5}/{len(cases):<2} {r['recall_at_k']:>9.2f} "
+                  f"{r['no_answer_precision']:>8.2f} {r['no_answer_recall']:>7.2f}")
+        print(f"Best floor on dev: min_top_score={pick_top_score(top_rows)}")
 
     min_cosine, min_bm25 = tenant_thresholds(tenant_id)
-    r = run_retrieval(cases, index, embedder, min_cosine, min_bm25)
-    print(f"\nThresholds: MIN_COSINE={min_cosine} MIN_BM25={min_bm25}")
+    min_top = tenant_min_top_score(tenant_id)
+    r = run_retrieval(cases, index, embedder, min_cosine, min_bm25, min_top_score=min_top)
+    print(f"\nThresholds: MIN_COSINE={min_cosine} MIN_BM25={min_bm25}" + (f" min_top_score={min_top}" if min_top else ""))
     print(f"recall@5            {r['recall_at_k']:.2%}  per style: {r['per_style']}")
     print(f"no-answer precision {r['no_answer_precision']:.2%}")
     print(f"no-answer recall    {r['no_answer_recall']:.2%}")

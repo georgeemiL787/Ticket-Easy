@@ -29,6 +29,27 @@ def test_explicit_thresholds_still_win(built_db):
     assert repository.search_knowledge(req, None, built_db).passages
 
 
+def test_confidence_floor_is_off_unless_configured(built_db, monkeypatch):
+    from team_a.db import repository
+    from team_a.knowledge.retrieval import tenant_min_top_score
+
+    assert tenant_min_top_score("shop_001") == 0.0 and tenant_min_top_score("noon_eg") == 0.0
+    req = SearchKnowledgeRequest(request_id="t", tenant_id="noon_eg", query="EMI refund to the same credit card")
+    normal = repository.search_knowledge(req, None, built_db)
+    assert normal.passages
+    floored = repository.search_knowledge(req, None, built_db, min_top_score=normal.passages[0].score + 0.01)
+    assert floored.passages == [] and floored.empty_reason == "below_threshold"  # the existing empty contract
+    monkeypatch.setattr(retrieval, "_manifest_thresholds", lambda _t: (None, None, 0.99))
+    assert repository.search_knowledge(req, None, built_db).passages == []  # manifest value applies
+
+
+def test_top_score_picker_prefers_a_plateau_over_a_spike():
+    from team_a.evaluation import SWEEP_TOP, pick_top_score
+
+    correct = dict(zip(SWEEP_TOP, [5, 5, 6, 6, 6, 5, 5, 5, 5, 5]))
+    assert pick_top_score([(t, {"correct": c}) for t, c in correct.items()]) == 0.48
+
+
 def test_tenant_synonyms_apply_only_to_that_tenant():
     query = "دافع بالتقسيط"
     assert "emi" in normalize(expand_query(query, "noon_eg"))

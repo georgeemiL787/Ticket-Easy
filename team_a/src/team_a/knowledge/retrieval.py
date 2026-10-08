@@ -10,12 +10,13 @@ Two stages:
 
 import hashlib
 import logging
+from functools import lru_cache
 
 import numpy as np
 
 from team_a.config import settings
 from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
-from team_a.knowledge.index import TenantIndex
+from team_a.knowledge.index import TenantIndex, TenantNotFound, load_manifest
 from team_a.schemas import (
     Passage,
     PastTicket,
@@ -30,6 +31,22 @@ log = logging.getLogger(__name__)
 
 COSINE_WEIGHT = 0.65
 PASSAGE_COS_MARGIN = 0.08
+
+
+@lru_cache(maxsize=32)
+def _manifest_thresholds(tenant_id: str) -> tuple[float | None, float | None]:
+    try:
+        custom = load_manifest(tenant_id).get("retrieval_thresholds") or {}
+    except (TenantNotFound, ValueError):
+        custom = {}
+    return custom.get("min_cosine"), custom.get("min_bm25")
+
+
+def tenant_thresholds(tenant_id: str) -> tuple[float, float]:
+    """(min_cosine, min_bm25) for a tenant: `retrieval_thresholds` in its corpus manifest when set (chosen
+    on that tenant's own dev split), otherwise the global MIN_COSINE / MIN_BM25."""
+    cos, bm25 = _manifest_thresholds(tenant_id)
+    return (settings.min_cosine if cos is None else float(cos), settings.min_bm25 if bm25 is None else float(bm25))
 
 
 def _bm25_norm(scores: np.ndarray, min_bm25: float) -> np.ndarray:
@@ -84,14 +101,15 @@ def search_knowledge(
     min_cosine: float | None = None,
     min_bm25: float | None = None,
 ) -> RetrievalResult:
-    min_cosine = settings.min_cosine if min_cosine is None else min_cosine
-    min_bm25 = settings.min_bm25 if min_bm25 is None else min_bm25
+    default_cosine, default_bm25 = tenant_thresholds(req.tenant_id)
+    min_cosine = default_cosine if min_cosine is None else min_cosine
+    min_bm25 = default_bm25 if min_bm25 is None else min_bm25
 
     candidates = [
         i for i, p in enumerate(index.passages)
         if p["tenant_id"] == req.tenant_id and (p["current"] or req.include_superseded)
     ]
-    expanded = expand_query(req.query)
+    expanded = expand_query(req.query, req.tenant_id)
     bm25 = index.passage_bm25.scores(tokenize(expanded))
     cos = _cosines(expanded, index.passage_vectors, embedder)
     ranked = _rank(candidates, bm25, cos, min_cosine, min_bm25)
@@ -149,10 +167,10 @@ def search_past_tickets(
     req: SearchPastTicketsRequest, index: TenantIndex, embedder: Embedder | None
 ) -> PastTicketResult:
     candidates = [i for i, t in enumerate(index.tickets) if t["tenant_id"] == req.tenant_id]
-    expanded = expand_query(req.query)
+    expanded = expand_query(req.query, req.tenant_id)
     bm25 = index.ticket_bm25.scores(tokenize(expanded))
     cos = _cosines(expanded, index.ticket_vectors, embedder)
-    ranked = _rank(candidates, bm25, cos, settings.min_cosine, settings.min_bm25)
+    ranked = _rank(candidates, bm25, cos, *tenant_thresholds(req.tenant_id))
 
     tickets, seen = [], set()
     for i, score in ranked:

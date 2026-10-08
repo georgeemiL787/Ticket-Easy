@@ -16,7 +16,7 @@ import numpy as np
 from team_a.config import settings
 from team_a.knowledge.embeddings import OllamaEmbedder
 from team_a.knowledge.index import TenantIndex
-from team_a.knowledge.retrieval import search_knowledge
+from team_a.knowledge.retrieval import search_knowledge, tenant_thresholds
 from team_a.policy.guardrails import load_cases, run_cases
 from team_a.policy.rules_store import RuleStore
 from team_a.schemas import SearchKnowledgeRequest
@@ -122,8 +122,9 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
         print(f"\nBest on dev (most questions correct, plateau centre, then stricter): "
               f"MIN_COSINE={best_cos} MIN_BM25={best_bm25}")
 
-    r = run_retrieval(cases, index, embedder, settings.min_cosine, settings.min_bm25)
-    print(f"\nThresholds: MIN_COSINE={settings.min_cosine} MIN_BM25={settings.min_bm25}")
+    min_cosine, min_bm25 = tenant_thresholds(tenant_id)
+    r = run_retrieval(cases, index, embedder, min_cosine, min_bm25)
+    print(f"\nThresholds: MIN_COSINE={min_cosine} MIN_BM25={min_bm25}")
     print(f"recall@5            {r['recall_at_k']:.2%}  per style: {r['per_style']}")
     print(f"no-answer precision {r['no_answer_precision']:.2%}")
     print(f"no-answer recall    {r['no_answer_recall']:.2%}")

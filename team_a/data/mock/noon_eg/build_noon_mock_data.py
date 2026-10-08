@@ -59,6 +59,10 @@ CAT_SECTION = {
     "baby": "Noon section: Baby Products",
     "grocery": "Noon section: Grocery",
     "pet_supplies": "Noon section: Pet Supplies",
+    "automotive": "Noon section: Automotive",
+    "tools": "Noon section: Tools and Home Improvement",
+    "books": "Noon section: Books",
+    "stationery": "Noon section: Stationery and Office Supplies",
 }
 WINDOW_SEC = "Noon section: return eligibility and window"
 MINUTES_CATS = {"electronics", "beauty_health", "home_kitchen", "sports", "toys",
@@ -117,6 +121,17 @@ def decide_return(section, cat, sub, cond, tag, warranty, days, verified):
         elif cat == "pet_supplies":
             if sub == "perishable":
                 return excl()
+            if cond != "sealed":  # unused, in original packaging
+                return bad()
+        elif cat == "automotive":
+            if cond in {"opened", "used"}:  # a manufacturing defect is the exception
+                return bad()
+        elif cat in {"tools", "stationery"}:
+            if cond in {"used", "damaged"}:
+                return bad()
+        elif cat == "books":
+            if cond in {"used", "torn", "damaged"}:
+                return bad()
         elif cond != "sealed":
             return bad()
         return "allow", "WITHIN_POLICY", [cs, WINDOW_SEC]
@@ -226,7 +241,7 @@ def make_order(oid, cust, section, status, days, items, payment, shipping=0):
             "total_egp": sub + shipping + cod}
 
 
-for row in D:
+def add_create_return(row):
     cust, section, cat, sub, name, price, days, cond, tag, warranty, pay, exp, lang, msg, purpose = row
     oid = next_order()
     it = make_item(oid, 1, name, cat, sub, price, cond, tag, warranty)
@@ -250,6 +265,10 @@ for row in D:
         "expected": {"decision": dec, "reason_code": reason, "policy_sections": secs},
         "days_since_delivery": days, "test_purpose": purpose,
     })
+
+
+for row in D:
+    add_create_return(row)
 
 # cancel-before-delivery: not covered by the return policy page -> no evidence
 oid = next_order()
@@ -381,6 +400,100 @@ PQ = [
      ["15 days from receipt, only for products with the hassle-free returns tag"]),
 ]
 for lang, msg, dec, secs, pts in PQ:
+    scenarios.append({
+        "scenario_id": next_scn(), "type": "policy_question", "language": lang, "customer_id": None,
+        "customer_message": msg,
+        "expected": {"decision": dec, "policy_sections": secs, "answer_points": pts},
+        "test_purpose": "Grounded answer with citation" if dec == "answer" else "Unanswerable: must return explicit no-evidence"})
+
+# ------------------------------------------- coverage extension (appended: earlier ids stay stable)
+# Categories and boundaries the first set does not reach: automotive, tools, books, stationery, sports,
+# pet condition, more exclusions, and Minutes edge cases. Same evaluator check as above.
+D2 = [
+    ("C-1001", "noon", "automotive", "car_accessory", "Car phone holder", 320, 6, "sealed", True, False, "credit_card", "allow", "en",
+     "The car phone holder doesn't fit my dashboard. It's still sealed, can I return it?", "Sealed automotive item inside the window"),
+    ("C-1002", "noon", "automotive", "dash_cam", "Dash cam 1080p", 1650, 3, "opened", True, False, "cash_on_delivery", "deny", "arabizi",
+     "fata7t el dash cam w mesh 3agbany, 3ayez arga3ha.", "Opened automotive item without a defect"),
+    ("C-1003", "noon", "automotive", "tyre_inflator", "Portable tyre inflator", 990, 8, "defective", True, False, "credit_card", "allow", "ar",
+     "منفاخ الكاوتش مش شغال خالص من أول يوم، عايزة أرجعه.", "Automotive manufacturing defect: return request allowed"),
+    ("C-1004", "noon", "tools", "power_tool", "Cordless drill", 2100, 5, "used", True, False, "cash_on_delivery", "deny", "mixed",
+     "استخدمت الـ drill مرة واحدة بس ومش عاجبني، ينفع أرجعه؟", "Used tools are not accepted"),
+    ("C-1005", "noon", "tools", "hand_tool", "Screwdriver set 32 pcs", 380, 2, "sealed", True, False, "credit_card", "allow", "en",
+     "I ordered the wrong screwdriver set. It's unopened, can I send it back?", "Tools in original condition are returnable"),
+    ("C-1006", "noon", "books", "novel", "Arabic novel (paperback)", 220, 4, "damaged", True, False, "cash_on_delivery", "deny", "ar",
+     "الرواية وقعت مني واتقطع الغلاف، ينفع أرجعها؟", "Damaged books are not accepted"),
+    ("C-1007", "noon", "books", "textbook", "English grammar textbook", 450, 10, "sealed", True, False, "cash_on_delivery", "allow", "arabizi",
+     "el ketab lessa fel nylon, momken arga3o?", "Unused book in original condition"),
+    ("C-1008", "noon", "stationery", "notebooks", "A5 notebook pack (5)", 175, 3, "sealed", True, False, "credit_card", "allow", "en",
+     "Can I return a pack of notebooks I haven't opened?", "Stationery in original condition"),
+    ("C-1009", "noon", "sports", "fitness", "Adjustable dumbbells 20kg", 2400, 6, "used", True, False, "credit_card", "deny", "arabizi",
+     "et3amalt beha kam mara bas te2ila 3alaya, arga3ha?", "Used sports equipment is not accepted"),
+    ("C-1010", "noon", "pet_supplies", "litter_box", "Cat litter box", 340, 4, "opened", True, False, "cash_on_delivery", "deny", "ar",
+     "فتحت كرتونة صندوق الرمل بتاع القطة، ينفع أرجعه؟", "Pet supplies must be unused and in original packaging"),
+    ("C-1004", "noon", "beauty_health", "vitamins", "Vitamin D3 capsules", 290, 3, "sealed", True, False, "cash_on_delivery", "deny", "mixed",
+     "طلبت vitamins بالغلط وهي لسه مقفولة، أرجعها؟", "Vitamins are excluded even if sealed"),
+    ("C-1005", "noon", "baby", "feeding", "Baby feeding bottles set", 410, 2, "sealed", True, False, "credit_card", "deny", "en",
+     "The feeding bottles are still sealed. Can I return them?", "Feeding accessories are excluded baby products"),
+    ("C-1006", "noon", "home_kitchen", "large_appliance", "Front-load washing machine", 16500, 4, "sealed", True, False, "credit_card", "deny", "ar",
+     "الغسالة لسه في الكرتونة ومتركبتش، ينفع أرجعها؟", "Large home appliances are not eligible"),
+    ("C-1007", "noon", "toys", "building_toy", "Building blocks set 300 pcs", 650, 5, "missing_parts", True, False, "cash_on_delivery", "deny", "arabizi",
+     "el lego na2es menha 7etat, momken arga3ha?", "Toys with missing parts are not accepted"),
+    ("C-1001", "minutes", "electronics", "accessory", "Wireless earbuds case", 199, 14, "sealed", True, False, "credit_card", "allow", "en",
+     "I got this from noon Minutes exactly 14 days ago and it's sealed. Can I still return it?", "Minutes boundary: day 14 is still inside the window"),
+    ("C-1002", "minutes", "toys", "puzzle", "1000-piece puzzle", 260, 3, "opened", True, False, "cash_on_delivery", "deny", "arabizi",
+     "fata7t el puzzle men Minutes w 3ayez arga3o.", "Minutes requires sealed, unopened products"),
+    ("C-1003", "minutes", "home_kitchen", "small_appliance", "Hand mixer", 540, 5, "sealed", False, False, "credit_card", "deny", "ar",
+     "الخلاط من نون مينتس لسه مقفول، أرجعه إزاي؟", "Minutes item without the Returnable tag"),
+    ("C-1008", "minutes", "beauty_health", "skincare", "Sunscreen SPF50", 310, 20, "sealed", True, False, "credit_card", "deny", "en",
+     "Can I return a sealed sunscreen I got from Minutes 20 days ago?", "Minutes window is 14 days"),
+    ("C-1009", "noon", "fashion", "footwear", "Running shoes", 1850, 9, "sealed", True, False, "credit_card", "allow", "arabizi",
+     "el shoes lessa fel 3elba bel tags, 3ayza arga3hom.", "Footwear in original packaging with tags"),
+    ("C-1010", "noon", "electronics", "smartwatch", "Smartwatch", 3200, 1, "opened", False, False, "cash_on_delivery", "deny", "ar",
+     "الساعة مفيهاش علامة الإرجاع ومفتوحة، أرجعها؟", "No return tag decides before the condition"),
+]
+for row in D2:
+    add_create_return(row)
+
+add_return("C-1010", "noon", "Air fryer", "home_kitchen", "small_appliance", 2300, 12, "cash_on_delivery", "returned",
+           {"status": "refunded", "requested_at": ago(10), "received_at": ago(7), "qc_result": "passed",
+            "refund_amount_egp": 2300, "refund_destination": "noon_wallet", "refund_initiated_at": ago(6),
+            "refund_completed_at": ago(6)},
+           "الريفند نزل في محفظة نون، ينفع أحوله على حسابي في البنك؟", "ar",
+           {"decision": "answer", "policy_sections": ["Refunds: cash payments"],
+            "answer_points": ["A cash refund is credited to noon credits",
+                              "Above 50 it can be transferred to a bank account (the page states SAR/AED 50)"]},
+           "Cash refund to bank transfer")
+
+add_return("C-1008", "minutes", "Electric toothbrush", "beauty_health", "personal_care_device", 890, 6, "credit_card",
+           "return_in_progress",
+           {"status": "rejected_in_hub", "requested_at": ago(5), "received_at": ago(3), "qc_result": "failed_seal_broken",
+            "refund_amount_egp": 0, "refund_destination": None, "delivery_attempts_failed": 1,
+            "hub_hold_started_at": ago(1), "hub_hold_business_days": 3},
+           "noon Minutes rejected my return and the courier missed me. Will you try to deliver it again?", "en",
+           {"decision": "answer", "policy_sections": ["Noon Minutes: rejected items and redelivery"],
+            "answer_points": ["Minutes makes 1 delivery attempt, then holds the item 3 business days",
+                              "Ask customer care within 3 business days for a final attempt; otherwise it is disposed of"]},
+           "Minutes rejected-item redelivery")
+
+add_return("C-1005", "noon", "Desk lamp", "home_kitchen", "home_decor", 560, 26, "bnpl_tabby", "returned",
+           {"status": "refund_approved", "requested_at": ago(25), "received_at": ago(24), "qc_result": "passed",
+            "refund_amount_egp": 560, "refund_destination": "bnpl_provider", "refund_initiated_at": ago(23)},
+           "el refund bta3 Tabby ba2alo 23 yom w lessa ma nezelsh.", "arabizi",
+           {"decision": "answer", "policy_sections": ["Refunds: buy now pay later (Tabby, Tamara)",
+                                                       "Refunds: tracking status and escalation"],
+            "answer_points": ["BNPL refunds take 14 to 21 days, so 23 days is overdue",
+                              "Approved and past the time frame: contact the bank / BNPL provider"]},
+           "BNPL refund overdue")
+
+PQ2 = [
+    ("en", "What is noon Egypt's customer service phone number?", "answer",
+     ["Contact and support"], ["16358"]),
+    ("arabizi", "el vitamins momken arga3ha law lessa ma2foola?", "answer",
+     ["Noon section: Beauty and Health"], ["No: vitamins and dietary supplements are not eligible for return"]),
+    ("ar", "التوصيل لأسوان بياخد كام يوم؟", "no_evidence", [], []),
+    ("en", "Can I exchange my shoes for a different size instead of returning them?", "no_evidence", [], []),
+]
+for lang, msg, dec, secs, pts in PQ2:
     scenarios.append({
         "scenario_id": next_scn(), "type": "policy_question", "language": lang, "customer_id": None,
         "customer_message": msg,

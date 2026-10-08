@@ -64,14 +64,14 @@ def test_every_policy_section_resolves_to_exactly_one_passage(built_db):
         assert all(title == section and pid.startswith("noon_return_policy@v1#") for title, pid, section in stored)
     distinct = _rows(built_db, "SELECT section_title, count(DISTINCT passage_id) FROM eval_scenario_sections "
                                "WHERE tenant_id = 'noon_eg' GROUP BY section_title")
-    assert len(distinct) == 21 and all(n == 1 for _, n in distinct)
+    assert len(distinct) == 28 and all(n == 1 for _, n in distinct)
 
 
 CREATE_RETURN = [s for s in _scenarios() if s["type"] == "create_return"]
 
 
-def test_there_are_25_create_return_scenarios():
-    assert len(CREATE_RETURN) == 25
+def test_there_are_45_create_return_scenarios():
+    assert len(CREATE_RETURN) == 45
 
 
 @pytest.mark.parametrize("scenario", CREATE_RETURN, ids=[s["scenario_id"] for s in CREATE_RETURN])

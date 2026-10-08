@@ -110,6 +110,51 @@
       "refund_amount_egp": 1250,
       "refund_destination": "original_card",
       "refund_initiated_at": "2026-09-22"
+    },
+    {
+      "return_id": "RET-5008",
+      "tenant_id": "noon_eg",
+      "order_id": "ORD-30054",
+      "customer_id": "C-1010",
+      "payment_method": "cash_on_delivery",
+      "status": "refunded",
+      "requested_at": "2026-09-28",
+      "received_at": "2026-10-01",
+      "qc_result": "passed",
+      "refund_amount_egp": 2300,
+      "refund_destination": "noon_wallet",
+      "refund_initiated_at": "2026-10-02",
+      "refund_completed_at": "2026-10-02"
+    },
+    {
+      "return_id": "RET-5009",
+      "tenant_id": "noon_eg",
+      "order_id": "ORD-30055",
+      "customer_id": "C-1008",
+      "payment_method": "credit_card",
+      "status": "rejected_in_hub",
+      "requested_at": "2026-10-03",
+      "received_at": "2026-10-05",
+      "qc_result": "failed_seal_broken",
+      "refund_amount_egp": 0,
+      "refund_destination": null,
+      "delivery_attempts_failed": 1,
+      "hub_hold_started_at": "2026-10-07",
+      "hub_hold_business_days": 3
+    },
+    {
+      "return_id": "RET-5010",
+      "tenant_id": "noon_eg",
+      "order_id": "ORD-30056",
+      "customer_id": "C-1005",
+      "payment_method": "bnpl_tabby",
+      "status": "refund_approved",
+      "requested_at": "2026-09-13",
+      "received_at": "2026-09-14",
+      "qc_result": "passed",
+      "refund_amount_egp": 560,
+      "refund_destination": "bnpl_provider",
+      "refund_initiated_at": "2026-09-15"
     }
   ]
 }

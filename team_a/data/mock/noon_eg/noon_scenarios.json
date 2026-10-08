@@ -1276,6 +1276,914 @@
         ]
       },
       "test_purpose": "Grounded answer with citation"
+    },
+    {
+      "scenario_id": "NS-41",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1001",
+      "order_id": "ORD-30034",
+      "customer_message": "The car phone holder doesn't fit my dashboard. It's still sealed, can I return it?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-02",
+          "expected_delivery_date": "2026-10-02",
+          "product_category": "automotive",
+          "product_subcategory": "car_accessory",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30034",
+          "item_id": "ORD-30034-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Automotive",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 6,
+      "test_purpose": "Sealed automotive item inside the window"
+    },
+    {
+      "scenario_id": "NS-42",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1002",
+      "order_id": "ORD-30035",
+      "customer_message": "fata7t el dash cam w mesh 3agbany, 3ayez arga3ha.",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-05",
+          "expected_delivery_date": "2026-10-05",
+          "product_category": "automotive",
+          "product_subcategory": "dash_cam",
+          "is_clearance": false,
+          "item_condition": "opened",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30035",
+          "item_id": "ORD-30035-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Automotive"
+        ]
+      },
+      "days_since_delivery": 3,
+      "test_purpose": "Opened automotive item without a defect"
+    },
+    {
+      "scenario_id": "NS-43",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1003",
+      "order_id": "ORD-30036",
+      "customer_message": "منفاخ الكاوتش مش شغال خالص من أول يوم، عايزة أرجعه.",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-09-30",
+          "expected_delivery_date": "2026-09-30",
+          "product_category": "automotive",
+          "product_subcategory": "tyre_inflator",
+          "is_clearance": false,
+          "item_condition": "defective",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30036",
+          "item_id": "ORD-30036-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Automotive",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 8,
+      "test_purpose": "Automotive manufacturing defect: return request allowed"
+    },
+    {
+      "scenario_id": "NS-44",
+      "type": "create_return",
+      "language": "mixed",
+      "customer_id": "C-1004",
+      "order_id": "ORD-30037",
+      "customer_message": "استخدمت الـ drill مرة واحدة بس ومش عاجبني، ينفع أرجعه؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-03",
+          "expected_delivery_date": "2026-10-03",
+          "product_category": "tools",
+          "product_subcategory": "power_tool",
+          "is_clearance": false,
+          "item_condition": "used",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30037",
+          "item_id": "ORD-30037-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Tools and Home Improvement"
+        ]
+      },
+      "days_since_delivery": 5,
+      "test_purpose": "Used tools are not accepted"
+    },
+    {
+      "scenario_id": "NS-45",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1005",
+      "order_id": "ORD-30038",
+      "customer_message": "I ordered the wrong screwdriver set. It's unopened, can I send it back?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-06",
+          "expected_delivery_date": "2026-10-06",
+          "product_category": "tools",
+          "product_subcategory": "hand_tool",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30038",
+          "item_id": "ORD-30038-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Tools and Home Improvement",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 2,
+      "test_purpose": "Tools in original condition are returnable"
+    },
+    {
+      "scenario_id": "NS-46",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1006",
+      "order_id": "ORD-30039",
+      "customer_message": "الرواية وقعت مني واتقطع الغلاف، ينفع أرجعها؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-04",
+          "expected_delivery_date": "2026-10-04",
+          "product_category": "books",
+          "product_subcategory": "novel",
+          "is_clearance": false,
+          "item_condition": "damaged",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30039",
+          "item_id": "ORD-30039-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Books"
+        ]
+      },
+      "days_since_delivery": 4,
+      "test_purpose": "Damaged books are not accepted"
+    },
+    {
+      "scenario_id": "NS-47",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1007",
+      "order_id": "ORD-30040",
+      "customer_message": "el ketab lessa fel nylon, momken arga3o?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-09-28",
+          "expected_delivery_date": "2026-09-28",
+          "product_category": "books",
+          "product_subcategory": "textbook",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30040",
+          "item_id": "ORD-30040-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Books",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 10,
+      "test_purpose": "Unused book in original condition"
+    },
+    {
+      "scenario_id": "NS-48",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1008",
+      "order_id": "ORD-30041",
+      "customer_message": "Can I return a pack of notebooks I haven't opened?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-05",
+          "expected_delivery_date": "2026-10-05",
+          "product_category": "stationery",
+          "product_subcategory": "notebooks",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30041",
+          "item_id": "ORD-30041-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Stationery and Office Supplies",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 3,
+      "test_purpose": "Stationery in original condition"
+    },
+    {
+      "scenario_id": "NS-49",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1009",
+      "order_id": "ORD-30042",
+      "customer_message": "et3amalt beha kam mara bas te2ila 3alaya, arga3ha?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-02",
+          "expected_delivery_date": "2026-10-02",
+          "product_category": "sports",
+          "product_subcategory": "fitness",
+          "is_clearance": false,
+          "item_condition": "used",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30042",
+          "item_id": "ORD-30042-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Sports and Outdoors"
+        ]
+      },
+      "days_since_delivery": 6,
+      "test_purpose": "Used sports equipment is not accepted"
+    },
+    {
+      "scenario_id": "NS-50",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1010",
+      "order_id": "ORD-30043",
+      "customer_message": "فتحت كرتونة صندوق الرمل بتاع القطة، ينفع أرجعه؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-04",
+          "expected_delivery_date": "2026-10-04",
+          "product_category": "pet_supplies",
+          "product_subcategory": "litter_box",
+          "is_clearance": false,
+          "item_condition": "opened",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30043",
+          "item_id": "ORD-30043-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Pet Supplies"
+        ]
+      },
+      "days_since_delivery": 4,
+      "test_purpose": "Pet supplies must be unused and in original packaging"
+    },
+    {
+      "scenario_id": "NS-51",
+      "type": "create_return",
+      "language": "mixed",
+      "customer_id": "C-1004",
+      "order_id": "ORD-30044",
+      "customer_message": "طلبت vitamins بالغلط وهي لسه مقفولة، أرجعها؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-05",
+          "expected_delivery_date": "2026-10-05",
+          "product_category": "beauty_health",
+          "product_subcategory": "vitamins",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30044",
+          "item_id": "ORD-30044-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CATEGORY_EXCLUDED",
+        "policy_sections": [
+          "Noon section: Beauty and Health"
+        ]
+      },
+      "days_since_delivery": 3,
+      "test_purpose": "Vitamins are excluded even if sealed"
+    },
+    {
+      "scenario_id": "NS-52",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1005",
+      "order_id": "ORD-30045",
+      "customer_message": "The feeding bottles are still sealed. Can I return them?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-06",
+          "expected_delivery_date": "2026-10-06",
+          "product_category": "baby",
+          "product_subcategory": "feeding",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30045",
+          "item_id": "ORD-30045-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CATEGORY_EXCLUDED",
+        "policy_sections": [
+          "Noon section: Baby Products"
+        ]
+      },
+      "days_since_delivery": 2,
+      "test_purpose": "Feeding accessories are excluded baby products"
+    },
+    {
+      "scenario_id": "NS-53",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1006",
+      "order_id": "ORD-30046",
+      "customer_message": "الغسالة لسه في الكرتونة ومتركبتش، ينفع أرجعها؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-04",
+          "expected_delivery_date": "2026-10-04",
+          "product_category": "home_kitchen",
+          "product_subcategory": "large_appliance",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30046",
+          "item_id": "ORD-30046-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CATEGORY_EXCLUDED",
+        "policy_sections": [
+          "Noon section: Home and Kitchen"
+        ]
+      },
+      "days_since_delivery": 4,
+      "test_purpose": "Large home appliances are not eligible"
+    },
+    {
+      "scenario_id": "NS-54",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1007",
+      "order_id": "ORD-30047",
+      "customer_message": "el lego na2es menha 7etat, momken arga3ha?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-03",
+          "expected_delivery_date": "2026-10-03",
+          "product_category": "toys",
+          "product_subcategory": "building_toy",
+          "is_clearance": false,
+          "item_condition": "missing_parts",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30047",
+          "item_id": "ORD-30047-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon section: Toys and Games"
+        ]
+      },
+      "days_since_delivery": 5,
+      "test_purpose": "Toys with missing parts are not accepted"
+    },
+    {
+      "scenario_id": "NS-55",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1001",
+      "order_id": "ORD-30048",
+      "customer_message": "I got this from noon Minutes exactly 14 days ago and it's sealed. Can I still return it?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-09-24",
+          "expected_delivery_date": "2026-09-24",
+          "product_category": "electronics",
+          "product_subcategory": "accessory",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "minutes",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30048",
+          "item_id": "ORD-30048-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon Minutes: return conditions",
+          "Noon Minutes: return window"
+        ]
+      },
+      "days_since_delivery": 14,
+      "test_purpose": "Minutes boundary: day 14 is still inside the window"
+    },
+    {
+      "scenario_id": "NS-56",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1002",
+      "order_id": "ORD-30049",
+      "customer_message": "fata7t el puzzle men Minutes w 3ayez arga3o.",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-05",
+          "expected_delivery_date": "2026-10-05",
+          "product_category": "toys",
+          "product_subcategory": "puzzle",
+          "is_clearance": false,
+          "item_condition": "opened",
+          "order_section": "minutes",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30049",
+          "item_id": "ORD-30049-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "CONDITION_NOT_MET",
+        "policy_sections": [
+          "Noon Minutes: return conditions"
+        ]
+      },
+      "days_since_delivery": 3,
+      "test_purpose": "Minutes requires sealed, unopened products"
+    },
+    {
+      "scenario_id": "NS-57",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1003",
+      "order_id": "ORD-30050",
+      "customer_message": "الخلاط من نون مينتس لسه مقفول، أرجعه إزاي؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-03",
+          "expected_delivery_date": "2026-10-03",
+          "product_category": "home_kitchen",
+          "product_subcategory": "small_appliance",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "minutes",
+          "return_eligible_tag": false,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30050",
+          "item_id": "ORD-30050-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "NO_RETURN_TAG",
+        "policy_sections": [
+          "Noon Minutes: eligible categories"
+        ]
+      },
+      "days_since_delivery": 5,
+      "test_purpose": "Minutes item without the Returnable tag"
+    },
+    {
+      "scenario_id": "NS-58",
+      "type": "create_return",
+      "language": "en",
+      "customer_id": "C-1008",
+      "order_id": "ORD-30051",
+      "customer_message": "Can I return a sealed sunscreen I got from Minutes 20 days ago?",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-09-18",
+          "expected_delivery_date": "2026-09-18",
+          "product_category": "beauty_health",
+          "product_subcategory": "skincare",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "minutes",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30051",
+          "item_id": "ORD-30051-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "OUTSIDE_WINDOW",
+        "policy_sections": [
+          "Noon Minutes: return window"
+        ]
+      },
+      "days_since_delivery": 20,
+      "test_purpose": "Minutes window is 14 days"
+    },
+    {
+      "scenario_id": "NS-59",
+      "type": "create_return",
+      "language": "arabizi",
+      "customer_id": "C-1009",
+      "order_id": "ORD-30052",
+      "customer_message": "el shoes lessa fel 3elba bel tags, 3ayza arga3hom.",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-09-29",
+          "expected_delivery_date": "2026-09-29",
+          "product_category": "fashion",
+          "product_subcategory": "footwear",
+          "is_clearance": false,
+          "item_condition": "sealed",
+          "order_section": "noon",
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "payment_method": "credit_card"
+        },
+        "arguments": {
+          "order_id": "ORD-30052",
+          "item_id": "ORD-30052-I1"
+        }
+      },
+      "expected": {
+        "decision": "allow",
+        "reason_code": "WITHIN_POLICY",
+        "policy_sections": [
+          "Noon section: Fashion",
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 9,
+      "test_purpose": "Footwear in original packaging with tags"
+    },
+    {
+      "scenario_id": "NS-60",
+      "type": "create_return",
+      "language": "ar",
+      "customer_id": "C-1010",
+      "order_id": "ORD-30053",
+      "customer_message": "الساعة مفيهاش علامة الإرجاع ومفتوحة، أرجعها؟",
+      "check_action_input": {
+        "tenant_id": "noon_eg",
+        "tool": "create_return",
+        "customer_verified": true,
+        "facts": {
+          "order_status": "delivered",
+          "delivered_at": "2026-10-07",
+          "expected_delivery_date": "2026-10-07",
+          "product_category": "electronics",
+          "product_subcategory": "smartwatch",
+          "is_clearance": false,
+          "item_condition": "opened",
+          "order_section": "noon",
+          "return_eligible_tag": false,
+          "warranty_tag": false,
+          "payment_method": "cash_on_delivery"
+        },
+        "arguments": {
+          "order_id": "ORD-30053",
+          "item_id": "ORD-30053-I1"
+        }
+      },
+      "expected": {
+        "decision": "deny",
+        "reason_code": "NO_RETURN_TAG",
+        "policy_sections": [
+          "Noon section: return eligibility and window"
+        ]
+      },
+      "days_since_delivery": 1,
+      "test_purpose": "No return tag decides before the condition"
+    },
+    {
+      "scenario_id": "NS-61",
+      "type": "refund_status",
+      "language": "ar",
+      "customer_id": "C-1010",
+      "order_id": "ORD-30054",
+      "return_id": "RET-5008",
+      "customer_message": "الريفند نزل في محفظة نون، ينفع أحوله على حسابي في البنك؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "Refunds: cash payments"
+        ],
+        "answer_points": [
+          "A cash refund is credited to noon credits",
+          "Above 50 it can be transferred to a bank account (the page states SAR/AED 50)"
+        ]
+      },
+      "test_purpose": "Cash refund to bank transfer"
+    },
+    {
+      "scenario_id": "NS-62",
+      "type": "refund_status",
+      "language": "en",
+      "customer_id": "C-1008",
+      "order_id": "ORD-30055",
+      "return_id": "RET-5009",
+      "customer_message": "noon Minutes rejected my return and the courier missed me. Will you try to deliver it again?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "Noon Minutes: rejected items and redelivery"
+        ],
+        "answer_points": [
+          "Minutes makes 1 delivery attempt, then holds the item 3 business days",
+          "Ask customer care within 3 business days for a final attempt; otherwise it is disposed of"
+        ]
+      },
+      "test_purpose": "Minutes rejected-item redelivery"
+    },
+    {
+      "scenario_id": "NS-63",
+      "type": "refund_status",
+      "language": "arabizi",
+      "customer_id": "C-1005",
+      "order_id": "ORD-30056",
+      "return_id": "RET-5010",
+      "customer_message": "el refund bta3 Tabby ba2alo 23 yom w lessa ma nezelsh.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "Refunds: buy now pay later (Tabby, Tamara)",
+          "Refunds: tracking status and escalation"
+        ],
+        "answer_points": [
+          "BNPL refunds take 14 to 21 days, so 23 days is overdue",
+          "Approved and past the time frame: contact the bank / BNPL provider"
+        ]
+      },
+      "test_purpose": "BNPL refund overdue"
+    },
+    {
+      "scenario_id": "NS-64",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": null,
+      "customer_message": "What is noon Egypt's customer service phone number?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "Contact and support"
+        ],
+        "answer_points": [
+          "16358"
+        ]
+      },
+      "test_purpose": "Grounded answer with citation"
+    },
+    {
+      "scenario_id": "NS-65",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": null,
+      "customer_message": "el vitamins momken arga3ha law lessa ma2foola?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "Noon section: Beauty and Health"
+        ],
+        "answer_points": [
+          "No: vitamins and dietary supplements are not eligible for return"
+        ]
+      },
+      "test_purpose": "Grounded answer with citation"
+    },
+    {
+      "scenario_id": "NS-66",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": null,
+      "customer_message": "التوصيل لأسوان بياخد كام يوم؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": [],
+        "answer_points": []
+      },
+      "test_purpose": "Unanswerable: must return explicit no-evidence"
+    },
+    {
+      "scenario_id": "NS-67",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": null,
+      "customer_message": "Can I exchange my shoes for a different size instead of returning them?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": [],
+        "answer_points": []
+      },
+      "test_purpose": "Unanswerable: must return explicit no-evidence"
     }
   ]
 }

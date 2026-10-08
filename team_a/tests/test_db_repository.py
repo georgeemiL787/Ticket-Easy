@@ -125,9 +125,14 @@ def test_noon_search_keeps_the_explicit_empty_contract(built_db):
     assert isinstance(result, RetrievalResult)
     assert result.passages == [] and result.empty_reason == "below_threshold"
     assert result.retrieval_mode == "keyword_only"
-    tickets = repo.search_past_tickets(SearchPastTicketsRequest(request_id="t", tenant_id="noon_eg", query="refund"),
+    tickets = repo.search_past_tickets(SearchPastTicketsRequest(request_id="t", tenant_id="noon_eg",
+                                                                query="What is the price of bitcoin today?"),
                                        None, db_path=built_db)
-    assert tickets.tickets == [] and tickets.empty_reason == "no_documents"
+    assert tickets.tickets == [] and tickets.empty_reason == "below_threshold"
+    found = repo.search_past_tickets(SearchPastTicketsRequest(request_id="t", tenant_id="noon_eg",
+                                                              query="Tabby refund still not received"),
+                                     None, db_path=built_db)
+    assert found.tickets and found.tickets[0].ticket_id == "NT-2010"
 
 
 # ------------------------------------------------------------------ HTTP (read-only, admin only)

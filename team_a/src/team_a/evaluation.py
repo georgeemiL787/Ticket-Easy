@@ -132,6 +132,71 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
     return r
 
 
+SMOKE_TYPES = ("policy_question", "refund_status")
+
+
+def eval_scenarios(tenant_id: str, db_path=None) -> dict:
+    """Smoke-test retrieval on a tenant's scenarios from the SQLite data layer (no threshold tuning).
+
+    Covers every policy_question and refund_status scenario, plus any other scenario labelled
+    no_evidence (e.g. a cancellation the policy does not cover). Answerable: share of expected sections
+    in the top 5. no_evidence: the result must be explicitly empty.
+    """
+    from team_a.db import connect, repository
+
+    conn = connect(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT scenario_id, type, language, customer_message, expected_decision FROM eval_scenarios "
+            f"WHERE tenant_id = ? AND (type IN ({','.join('?' * len(SMOKE_TYPES))}) "
+            "OR expected_decision = 'no_evidence') ORDER BY scenario_id", (tenant_id, *SMOKE_TYPES)).fetchall()
+        expected = {}
+        for sid, pid in conn.execute("SELECT scenario_id, passage_id FROM eval_scenario_sections "
+                                     "WHERE tenant_id = ? ORDER BY scenario_id, passage_id", (tenant_id,)):
+            expected.setdefault(sid, []).append(pid)
+    finally:
+        conn.close()
+
+    embedder = CachedEmbedder(OllamaEmbedder())
+    found = total = all_found = answerable = empty_ok = unanswerable = 0
+    misses, modes = [], set()
+    for r in rows:
+        req = SearchKnowledgeRequest(request_id=r["scenario_id"], tenant_id=tenant_id,
+                                     query=r["customer_message"], top_k=5)
+        result = repository.search_knowledge(req, embedder, db_path)
+        modes.add(result.retrieval_mode)
+        got = [p.citation for p in result.passages]
+        want = expected.get(r["scenario_id"], [])
+        if r["expected_decision"] == "no_evidence":
+            unanswerable += 1
+            ok = not got and result.empty_reason is not None
+            empty_ok += ok
+            status = "ok   empty" if ok else "MISS should be empty"
+        else:
+            answerable += 1
+            hit = [c for c in want if c in got]
+            found, total = found + len(hit), total + len(want)
+            all_found += len(hit) == len(want)
+            status = f"{'ok  ' if len(hit) == len(want) else 'MISS'} {len(hit)}/{len(want)}"
+        line = (r["scenario_id"], r["type"], r["language"], status, r["customer_message"], want, got)
+        print(f"{line[0]} {line[1]:15} {line[2]:8} {status:20} expected={want} got={got}")
+        if status.startswith("MISS"):
+            misses.append(line)
+
+    summary = {
+        "retrieval_mode": sorted(modes),
+        "section_recall_at_5": found / total if total else 0.0,
+        "scenarios_all_sections_found": f"{all_found}/{answerable}",
+        "no_evidence_correct": f"{empty_ok}/{unanswerable}",
+        "misses": [m[0] for m in misses],
+    }
+    print(f"\nRetrieval mode: {', '.join(summary['retrieval_mode'])}")
+    print(f"Expected-section recall@5 {summary['section_recall_at_5']:.2%} ({found}/{total} sections)")
+    print(f"Scenarios with every expected section in top 5: {summary['scenarios_all_sections_found']}")
+    print(f"No-evidence scenarios returned explicitly empty: {summary['no_evidence_correct']}")
+    return summary
+
+
 def eval_guardrails(tenant_id: str) -> bool:
     cases = load_cases(tenant_id)
     failures, unsafe = run_cases(RuleStore(tenant_id), cases)

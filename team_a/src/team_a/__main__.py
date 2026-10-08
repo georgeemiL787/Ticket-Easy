@@ -9,6 +9,7 @@
   python -m team_a explain R-RETURN-14D --tenant shop_001
   python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
   python -m team_a eval-guardrails
+  python -m team_a eval-scenarios [--tenant noon_eg]              (needs: db build)
   python -m team_a export-schemas
   python -m team_a db build [--tenant X] [--reset] [--no-embeddings] | db stats | db query "<sql>"
 """
@@ -118,6 +119,12 @@ def cmd_eval_retrieval(args) -> None:
     eval_retrieval(args.tenant, split=args.split, sweep=args.sweep)
 
 
+def cmd_eval_scenarios(args) -> None:
+    from team_a.evaluation import eval_scenarios
+
+    eval_scenarios(args.tenant)
+
+
 def cmd_eval_guardrails(args) -> None:
     from team_a.evaluation import eval_guardrails
 
@@ -215,6 +222,10 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("eval-retrieval"); tenant(p); p.add_argument("--sweep", action="store_true")
     p.add_argument("--split", choices=("dev", "test"), default="dev")
     p.set_defaults(func=cmd_eval_retrieval)
+
+    p = sub.add_parser("eval-scenarios", help="retrieval smoke test on a tenant's scenarios (from the db)")
+    p.add_argument("--tenant", default="noon_eg")
+    p.set_defaults(func=cmd_eval_scenarios)
 
     p = sub.add_parser("eval-guardrails"); tenant(p)
     p.set_defaults(func=cmd_eval_guardrails)

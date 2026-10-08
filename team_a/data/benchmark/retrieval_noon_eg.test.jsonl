@@ -1,0 +1,52 @@
+{"id": "NQ002", "style": "en", "question": "What does the 'Enjoy hassle-free returns' tag mean?", "expected": ["noon_return_policy@v1#s2"]}
+{"id": "NQ004", "style": "en", "question": "Can I return a laptop if I already opened the box?", "expected": ["noon_return_policy@v1#s4"]}
+{"id": "NQ006", "style": "en", "question": "Can I return a perfume after I've tried it?", "expected": ["noon_return_policy@v1#s5"]}
+{"id": "NQ008", "style": "en", "question": "Is furniture returnable on noon?", "expected": ["noon_return_policy@v1#s7"]}
+{"id": "NQ010", "style": "en", "question": "My son played with the toy once, can it still be returned?", "expected": ["noon_return_policy@v1#s9"]}
+{"id": "NQ012", "style": "en", "question": "Can I return groceries?", "expected": ["noon_return_policy@v1#s11", "noon_return_policy@v1#s19"]}
+{"id": "NQ014", "style": "en", "question": "Are used power tools accepted for return?", "expected": ["noon_return_policy@v1#s13"]}
+{"id": "NQ016", "style": "en", "question": "Can I return an unused pet carrier in its original box?", "expected": ["noon_return_policy@v1#s15"]}
+{"id": "NQ018", "style": "en", "question": "What happens if noon rejects my returned item?", "expected": ["noon_return_policy@v1#s17", "noon_return_policy@v1#s23"]}
+{"id": "NQ020", "style": "en", "question": "Which categories can be returned in noon Minutes?", "expected": ["noon_return_policy@v1#s19"]}
+{"id": "NQ022", "style": "en", "question": "How long do I have to return a defective item bought from Minutes?", "expected": ["noon_return_policy@v1#s21"]}
+{"id": "NQ024", "style": "en", "question": "Where does my refund go if I paid with a gift card?", "expected": ["noon_return_policy@v1#s24"]}
+{"id": "NQ026", "style": "en", "question": "Can I move my cash refund from noon credits to my bank account?", "expected": ["noon_return_policy@v1#s26"]}
+{"id": "NQ028", "style": "en", "question": "Can an order paid with credit card instalments be refunded to my wallet?", "expected": ["noon_return_policy@v1#s28"]}
+{"id": "NQ030", "style": "en", "question": "Can I change my refund method after the refund is issued?", "expected": ["noon_return_policy@v1#s29"]}
+{"id": "NQ032", "style": "en", "question": "What is noon Egypt's support email?", "expected": ["noon_return_policy@v1#s31"]}
+{"id": "NQ034", "style": "ar", "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟", "expected": ["noon_return_policy@v1#s2"]}
+{"id": "NQ036", "style": "ar", "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟", "expected": ["noon_return_policy@v1#s4"]}
+{"id": "NQ038", "style": "ar", "question": "ينفع أرجع هدوم غسلتها؟", "expected": ["noon_return_policy@v1#s6"]}
+{"id": "NQ040", "style": "ar", "question": "أزياء التنكر بتترجع ولا لأ؟", "expected": ["noon_return_policy@v1#s9"]}
+{"id": "NQ042", "style": "ar", "question": "المنتجات الغذائية بترجع؟", "expected": ["noon_return_policy@v1#s11", "noon_return_policy@v1#s19"]}
+{"id": "NQ044", "style": "ar", "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟", "expected": ["noon_return_policy@v1#s15"]}
+{"id": "NQ046", "style": "ar", "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟", "expected": ["noon_return_policy@v1#s18", "noon_return_policy@v1#s23"]}
+{"id": "NQ048", "style": "ar", "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟", "expected": ["noon_return_policy@v1#s20"]}
+{"id": "NQ050", "style": "ar", "question": "الفلوس بترجع فين لو دفعت بالفيزا؟", "expected": ["noon_return_policy@v1#s24", "noon_return_policy@v1#s25"]}
+{"id": "NQ052", "style": "ar", "question": "استرجاع فلوس تابي بياخد قد إيه؟", "expected": ["noon_return_policy@v1#s27"]}
+{"id": "NQ054", "style": "ar", "question": "ليه الاسترداد جالي على دفعات؟", "expected": ["noon_return_policy@v1#s29"]}
+{"id": "NQ056", "style": "ar", "question": "إزاي أتواصل مع خدمة عملاء نون؟", "expected": ["noon_return_policy@v1#s31"]}
+{"id": "NQ058", "style": "arabizi", "question": "el return yeb2a accepted emta? lama a2adem el talab?", "expected": ["noon_return_policy@v1#s2", "noon_return_policy@v1#s20"]}
+{"id": "NQ060", "style": "arabizi", "question": "el mobile fatahto w el seal et4al, momken arga3o?", "expected": ["noon_return_policy@v1#s4", "noon_return_policy@v1#s20"]}
+{"id": "NQ062", "style": "arabizi", "question": "momken arga3 el sharabat?", "expected": ["noon_return_policy@v1#s6"]}
+{"id": "NQ064", "style": "arabizi", "question": "el bedsheets etfata7et, momken a3mel return?", "expected": ["noon_return_policy@v1#s7"]}
+{"id": "NQ066", "style": "arabizi", "question": "3arabeyet el baby lessa fel carton, arga3ha?", "expected": ["noon_return_policy@v1#s10"]}
+{"id": "NQ068", "style": "arabizi", "question": "el ketab mafto7 bas msh mesta3mal, arga3o?", "expected": ["noon_return_policy@v1#s14"]}
+{"id": "NQ070", "style": "arabizi", "question": "el return et-rafad, el 7aga hate2'ad fel hub ad eh?", "expected": ["noon_return_policy@v1#s17", "noon_return_policy@v1#s23"]}
+{"id": "NQ072", "style": "arabizi", "question": "el 7aga men Minutes fiha garantee, a3mel eh?", "expected": ["noon_return_policy@v1#s20"]}
+{"id": "NQ074", "style": "arabizi", "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?", "expected": ["noon_return_policy@v1#s23", "noon_return_policy@v1#s18"]}
+{"id": "NQ076", "style": "arabizi", "question": "el refund el cash ynfa3 yetla3 3ala el bank?", "expected": ["noon_return_policy@v1#s26", "noon_return_policy@v1#s24"]}
+{"id": "NQ078", "style": "arabizi", "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?", "expected": ["noon_return_policy@v1#s28"]}
+{"id": "NQ080", "style": "arabizi", "question": "el refund status mesh approved wala declined, a3mel eh?", "expected": ["noon_return_policy@v1#s30"]}
+{"id": "NQ083", "style": "en", "question": "Will noon refund the difference if the price drops after I buy?", "expected": []}
+{"id": "NQ085", "style": "en", "question": "How do I become a seller on noon?", "expected": []}
+{"id": "NQ087", "style": "en", "question": "Does noon offer gift wrapping?", "expected": []}
+{"id": "NQ089", "style": "en", "question": "How do I reset my noon account password?", "expected": []}
+{"id": "NQ091", "style": "ar", "question": "التوصيل للصعيد بياخد كام يوم؟", "expected": []}
+{"id": "NQ093", "style": "ar", "question": "نون بيشحن لبره مصر؟", "expected": []}
+{"id": "NQ095", "style": "ar", "question": "فيه فروع لنون أقدر أستلم منها؟", "expected": []}
+{"id": "NQ097", "style": "ar", "question": "إمتى عروض الجمعة البيضاء؟", "expected": []}
+{"id": "NQ099", "style": "arabizi", "question": "el order bta3y et2akhar, feen el tracking?", "expected": []}
+{"id": "NQ101", "style": "arabizi", "question": "momken adfa3 b instapay?", "expected": []}
+{"id": "NQ103", "style": "arabizi", "question": "el delivery fel weekend shaghal?", "expected": []}
+{"id": "NQ105", "style": "arabizi", "question": "el mandoob mabyrodsh 3al telephone, a3mel eh?", "expected": []}

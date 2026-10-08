@@ -1,0 +1,65 @@
+{"id": "NQ001", "style": "en", "question": "Does the return policy apply to products sold by third-party sellers on noon?", "expected": ["noon_return_policy@v1#s1"]}
+{"id": "NQ003", "style": "en", "question": "How long does it take for a returned item to reach noon?", "expected": ["noon_return_policy@v1#s3", "noon_return_policy@v1#s22"]}
+{"id": "NQ005", "style": "en", "question": "Who decides whether a defective electronic product is repaired or refunded?", "expected": ["noon_return_policy@v1#s4"]}
+{"id": "NQ007", "style": "en", "question": "Can swimwear be returned?", "expected": ["noon_return_policy@v1#s6"]}
+{"id": "NQ009", "style": "en", "question": "What are the conditions for returning sports and outdoor equipment?", "expected": ["noon_return_policy@v1#s8"]}
+{"id": "NQ011", "style": "en", "question": "Can I return a baby bath product that is still sealed?", "expected": ["noon_return_policy@v1#s10"]}
+{"id": "NQ013", "style": "en", "question": "Can I return car accessories that I opened?", "expected": ["noon_return_policy@v1#s12"]}
+{"id": "NQ015", "style": "en", "question": "Can I return a book with a torn page?", "expected": ["noon_return_policy@v1#s14"]}
+{"id": "NQ017", "style": "en", "question": "What is the return rule for office supplies?", "expected": ["noon_return_policy@v1#s16"]}
+{"id": "NQ019", "style": "en", "question": "If I miss both redelivery attempts, will noon contact me?", "expected": ["noon_return_policy@v1#s18"]}
+{"id": "NQ021", "style": "en", "question": "My Minutes product has a warranty tag, can noon take it back?", "expected": ["noon_return_policy@v1#s20"]}
+{"id": "NQ023", "style": "en", "question": "How many delivery attempts does Minutes make for a declined return?", "expected": ["noon_return_policy@v1#s23"]}
+{"id": "NQ025", "style": "en", "question": "Why did my card refund show up as noon credits first?", "expected": ["noon_return_policy@v1#s25"]}
+{"id": "NQ027", "style": "en", "question": "How long do Tamara refunds take?", "expected": ["noon_return_policy@v1#s27"]}
+{"id": "NQ029", "style": "en", "question": "Is the shipping fee refunded when I return an item?", "expected": ["noon_return_policy@v1#s29"]}
+{"id": "NQ031", "style": "en", "question": "Where can I check my refund status?", "expected": ["noon_return_policy@v1#s30"]}
+{"id": "NQ033", "style": "ar", "question": "سياسة الإرجاع دي بتنطبق على المنتجات اللي بيبيعها بائعين تانيين على نون؟", "expected": ["noon_return_policy@v1#s1"]}
+{"id": "NQ035", "style": "ar", "question": "بعد ما المرتجع يوصل المخزن بياخد كام يوم عشان يتراجع؟", "expected": ["noon_return_policy@v1#s3", "noon_return_policy@v1#s22"]}
+{"id": "NQ037", "style": "ar", "question": "المكملات الغذائية والفيتامينات ينفع ترجع؟", "expected": ["noon_return_policy@v1#s5"]}
+{"id": "NQ039", "style": "ar", "question": "ركبت الدولاب ومش عاجبني، ينفع أرجعه؟", "expected": ["noon_return_policy@v1#s7"]}
+{"id": "NQ041", "style": "ar", "question": "الحفاضات ينفع ترجع؟", "expected": ["noon_return_policy@v1#s10"]}
+{"id": "NQ043", "style": "ar", "question": "عدة الشغل لازم ترجع بالكتالوج والإكسسوارات؟", "expected": ["noon_return_policy@v1#s13", "noon_return_policy@v1#s16"]}
+{"id": "NQ045", "style": "ar", "question": "لو المرتجع اترفض، نون هيحاول يوصلهولي كام مرة؟", "expected": ["noon_return_policy@v1#s17", "noon_return_policy@v1#s23"]}
+{"id": "NQ047", "style": "ar", "question": "هل منتجات الأكل من نون مينتس بترجع؟", "expected": ["noon_return_policy@v1#s19", "noon_return_policy@v1#s11"]}
+{"id": "NQ049", "style": "ar", "question": "مدة الإرجاع في نون مينتس كام يوم؟", "expected": ["noon_return_policy@v1#s21"]}
+{"id": "NQ051", "style": "ar", "question": "استرداد الكارت بيوصل بعد قد إيه؟", "expected": ["noon_return_policy@v1#s25", "noon_return_policy@v1#s3", "noon_return_policy@v1#s22"]}
+{"id": "NQ053", "style": "ar", "question": "لو دافع بالتقسيط على البطاقة، البنك ممكن ياخد رسوم على الاسترجاع؟", "expected": ["noon_return_policy@v1#s28"]}
+{"id": "NQ055", "style": "ar", "question": "الاسترداد مكتوب عليه Approved ومعداش الفلوس، أكلم مين؟", "expected": ["noon_return_policy@v1#s30"]}
+{"id": "NQ057", "style": "arabizi", "question": "kam yom 3andi a3mel return lel 7aga men noon?", "expected": ["noon_return_policy@v1#s2", "noon_return_policy@v1#s21"]}
+{"id": "NQ059", "style": "arabizi", "question": "el refund byakhod ad eh lel credit card ba3d ma el return yewsal?", "expected": ["noon_return_policy@v1#s3", "noon_return_policy@v1#s22", "noon_return_policy@v1#s25"]}
+{"id": "NQ061", "style": "arabizi", "question": "el makeup lw fata7to momken arga3o?", "expected": ["noon_return_policy@v1#s5"]}
+{"id": "NQ063", "style": "arabizi", "question": "el gazma lazem terga3 fel 3elba bta3etha?", "expected": ["noon_return_policy@v1#s6"]}
+{"id": "NQ065", "style": "arabizi", "question": "el treadmill mesta3mal mara wa7da, arga3o?", "expected": ["noon_return_policy@v1#s8"]}
+{"id": "NQ067", "style": "arabizi", "question": "kit el 3arabeya fih 3eib sena3a, arga3o ezay?", "expected": ["noon_return_policy@v1#s12"]}
+{"id": "NQ069", "style": "arabizi", "question": "el adawat el maktabeya lw mesta3mala momken teraga3?", "expected": ["noon_return_policy@v1#s16", "noon_return_policy@v1#s13"]}
+{"id": "NQ071", "style": "arabizi", "question": "noon Minutes betraga3 el electronics?", "expected": ["noon_return_policy@v1#s19"]}
+{"id": "NQ073", "style": "arabizi", "question": "Minutes return window kam yom?", "expected": ["noon_return_policy@v1#s21"]}
+{"id": "NQ075", "style": "arabizi", "question": "law dafa3t cash 3and el estelam, el refund byroo7 feen?", "expected": ["noon_return_policy@v1#s24", "noon_return_policy@v1#s26"]}
+{"id": "NQ077", "style": "arabizi", "question": "el refund bta3 tabby byakhod kam yom?", "expected": ["noon_return_policy@v1#s27"]}
+{"id": "NQ079", "style": "arabizi", "question": "masaref el COD btetrad?", "expected": ["noon_return_policy@v1#s29"]}
+{"id": "NQ081", "style": "arabizi", "question": "rakam customer service bta3 noon kam?", "expected": ["noon_return_policy@v1#s31"]}
+{"id": "NQ082", "style": "en", "question": "Can I cancel my order before it ships?", "expected": []}
+{"id": "NQ084", "style": "en", "question": "How much does delivery cost to Alexandria?", "expected": []}
+{"id": "NQ086", "style": "en", "question": "Can I change my delivery address after placing the order?", "expected": []}
+{"id": "NQ088", "style": "en", "question": "What is the interest rate on valU installments?", "expected": []}
+{"id": "NQ090", "style": "ar", "question": "إزاي أستخدم كوبون خصم؟", "expected": []}
+{"id": "NQ092", "style": "ar", "question": "ممكن ألغي الأوردر بعد ما اتشحن؟", "expected": []}
+{"id": "NQ094", "style": "ar", "question": "إزاي أغير رقم موبايلي في الحساب؟", "expected": []}
+{"id": "NQ096", "style": "ar", "question": "هل فيه خصم للطلبات الكبيرة للشركات؟", "expected": []}
+{"id": "NQ098", "style": "arabizi", "question": "3ayez a8ayar el size bta3 el t-shirt, momken exchange?", "expected": []}
+{"id": "NQ100", "style": "arabizi", "question": "fe promo code lel order el gdid?", "expected": []}
+{"id": "NQ102", "style": "arabizi", "question": "noon One subscription b kam?", "expected": []}
+{"id": "NQ104", "style": "arabizi", "question": "momken a3mel order men gher account?", "expected": []}
+{"id": "NQ106", "style": "en", "question": "How long does delivery take to Cairo?", "expected": []}
+{"id": "NQ108", "style": "en", "question": "Is cash on delivery available for orders above 10,000 EGP?", "expected": []}
+{"id": "NQ110", "style": "en", "question": "How do I add a new delivery address to my account?", "expected": []}
+{"id": "NQ112", "style": "en", "question": "Does noon sell refurbished phones?", "expected": []}
+{"id": "NQ114", "style": "ar", "question": "الطلب بيوصل في نفس اليوم في القاهرة؟", "expected": []}
+{"id": "NQ116", "style": "ar", "question": "إزاي أضيف عنوان جديد للتوصيل؟", "expected": []}
+{"id": "NQ118", "style": "ar", "question": "إزاي أكتب تقييم للمنتج؟", "expected": []}
+{"id": "NQ120", "style": "ar", "question": "فيه شحن مجاني فوق مبلغ معين؟", "expected": []}
+{"id": "NQ122", "style": "arabizi", "question": "el order momken yewsal el nharda?", "expected": []}
+{"id": "NQ124", "style": "arabizi", "question": "momken a8ayar el phone number bta3 el account?", "expected": []}
+{"id": "NQ126", "style": "arabizi", "question": "ezay a3mel review lel product?", "expected": []}
+{"id": "NQ128", "style": "arabizi", "question": "momken atlob men noon w ana barra masr?", "expected": []}

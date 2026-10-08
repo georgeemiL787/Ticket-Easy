@@ -5,6 +5,8 @@ Every error returns ErrorResponse with a stable code.
 """
 
 import hmac
+import threading
+from contextlib import asynccontextmanager
 from datetime import date
 from functools import lru_cache
 
@@ -44,7 +46,15 @@ from team_a.schemas import (
     SearchResolutionsRequest,
 )
 
-app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0")
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    # Load the embedding model in the background so the first search doesn't pay Ollama's cold start
+    # (~13 s for bge-m3). A failure here only means the first search loads it instead.
+    threading.Thread(target=lambda: _embedder().warm_up(), daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0", lifespan=_lifespan)
 
 
 class ServiceError(Exception):
@@ -154,6 +164,63 @@ def reload_indexes() -> dict:
     """Drop cached indexes after re-running ingestion."""
     _index.cache_clear()
     return {"status": "reloaded"}
+
+
+# --------------------------------------------------------- data layer (read-only)
+# Structured lookups over the SQLite data layer. They return customer data, so all need X-Admin-Key.
+# There are no write endpoints: the database is rebuilt from data/ with `python -m team_a db build`.
+
+def _data(lookup, tenant_id: str, *args, what: str, **kwargs):
+    from team_a.db import DatabaseNotBuilt
+
+    try:
+        found = lookup(tenant_id, *args, **kwargs)
+    except TenantNotFound as exc:
+        raise ServiceError(404, "TENANT_NOT_FOUND", str(exc))
+    except DatabaseNotBuilt as exc:
+        raise ServiceError(503, "INDEX_NOT_BUILT", str(exc))
+    if found is None:
+        raise ServiceError(404, "NOT_FOUND", f"No {what} for tenant '{tenant_id}'")
+    return found
+
+
+@app.get("/v1/data/customers/{customer_id}", dependencies=[Depends(require_admin)])
+def get_customer_endpoint(customer_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    return _data(repository.get_customer, tenant_id, customer_id, what=f"customer '{customer_id}'")
+
+
+@app.get("/v1/data/customers/{customer_id}/orders", dependencies=[Depends(require_admin)])
+def list_customer_orders_endpoint(customer_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    customer = _data(repository.get_customer, tenant_id, customer_id, what=f"customer '{customer_id}'")
+    return {"customer_id": customer["customer_id"],
+            "orders": repository.list_orders_for_customer(tenant_id, customer_id)}
+
+
+@app.get("/v1/data/orders/{order_id}", dependencies=[Depends(require_admin)])
+def get_order_endpoint(order_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    return _data(repository.get_order, tenant_id, order_id, what=f"order '{order_id}'")
+
+
+@app.get("/v1/data/orders/{order_id}/items/{item_id}/facts", dependencies=[Depends(require_admin)])
+def get_check_action_facts_endpoint(order_id: str, item_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN),
+                                    as_of: date | None = None, include_derived: bool = False) -> dict:
+    from team_a.db import repository
+
+    return _data(repository.build_check_action_facts, tenant_id, order_id, item_id, as_of=as_of,
+                 include_derived=include_derived, what=f"item '{item_id}' on order '{order_id}'")
+
+
+@app.get("/v1/data/returns/{return_id}", dependencies=[Depends(require_admin)])
+def get_return_endpoint(return_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    return _data(repository.get_return, tenant_id, return_id, what=f"return '{return_id}'")
 
 
 # ------------------------------------------------------------------- policy

@@ -74,9 +74,7 @@ def detect_language(text: str) -> str:
     return "mixed"
 
 
-@lru_cache(maxsize=1)
-def _arabizi_map() -> dict[str, list[str]]:
-    path: Path = settings.data_dir / "synonyms" / "arabizi.json"
+def _load_map(path: Path) -> dict[str, list[str]]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     mapping: dict[str, list[str]] = {}
     for entry in raw["entries"]:
@@ -86,16 +84,30 @@ def _arabizi_map() -> dict[str, list[str]]:
     return mapping
 
 
-def expand_query(query: str) -> str:
+@lru_cache(maxsize=1)
+def _arabizi_map() -> dict[str, list[str]]:
+    return _load_map(settings.data_dir / "synonyms" / "arabizi.json")
+
+
+@lru_cache(maxsize=32)
+def _tenant_map(tenant_id: str) -> dict[str, list[str]]:
+    """Optional tenant-specific expansions in data/synonyms/<tenant_id>.json (e.g. Arabic -> the English
+    wording of an English-only corpus). Applied on top of the shared list, only for that tenant."""
+    path = settings.data_dir / "synonyms" / f"{tenant_id}.json"
+    return _load_map(path) if path.exists() else {}
+
+
+def expand_query(query: str, tenant_id: str | None = None) -> str:
     """Append Arabic/English equivalents of Arabizi words found in the query.
 
     Embeddings handle Arabic<->English well but not Arabizi, and BM25 needs exact
     tokens, so the expanded text is what both retrievers see.
     """
-    mapping = _arabizi_map()
+    maps = [_arabizi_map()] + ([_tenant_map(tenant_id)] if tenant_id else [])
     extra: list[str] = []
     for token in _TOKEN.findall(normalize(query)):
-        extra.extend(mapping.get(token) or mapping.get(_light_stem(token), []))
+        for mapping in maps:
+            extra.extend(mapping.get(token) or mapping.get(_light_stem(token), []))
     if not extra:
         return query
     return f"{query} {' '.join(dict.fromkeys(extra))}"

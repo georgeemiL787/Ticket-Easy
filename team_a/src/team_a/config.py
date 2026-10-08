@@ -16,6 +16,7 @@ class Settings:
     db_path: Path = ROOT / "var" / "db" / "team_a.sqlite"
     ollama_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     embed_model: str = os.getenv("EMBED_MODEL", "bge-m3")
+    ollama_keep_alive: str = os.getenv("OLLAMA_KEEP_ALIVE", "30m")  # how long Ollama keeps the model loaded
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     openrouter_models: list[str] = field(
         default_factory=lambda: [

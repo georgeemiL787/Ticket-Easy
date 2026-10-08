@@ -5,6 +5,8 @@ Every error returns ErrorResponse with a stable code.
 """
 
 import hmac
+import threading
+from contextlib import asynccontextmanager
 from datetime import date
 from functools import lru_cache
 
@@ -44,7 +46,15 @@ from team_a.schemas import (
     SearchResolutionsRequest,
 )
 
-app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0")
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    # Load the embedding model in the background so the first search doesn't pay Ollama's cold start
+    # (~13 s for bge-m3). A failure here only means the first search loads it instead.
+    threading.Thread(target=lambda: _embedder().warm_up(), daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0", lifespan=_lifespan)
 
 
 class ServiceError(Exception):

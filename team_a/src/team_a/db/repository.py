@@ -160,11 +160,13 @@ def _vectors(conn, table: str, key: str, tenant_id: str, model: str | None, ids:
 def load_index(tenant_id: str, embed_model: str | None = None, db_path: Path | None = None) -> TenantIndex:
     """The tenant's knowledge as a TenantIndex built from the database (cached until the file changes)."""
     path = Path(db_path or settings.db_path)
-    conn = _open(tenant_id, path)
-    try:
+    if path.exists():  # cache hit without opening a connection; a rebuild changes the mtime
         key = (str(path.resolve()), path.stat().st_mtime_ns, tenant_id, embed_model)
         if key in _index_cache:
             return _index_cache[key]
+    conn = _open(tenant_id, path)
+    try:
+        key = (str(path.resolve()), path.stat().st_mtime_ns, tenant_id, embed_model)
         passages, passage_tokens = [], []
         for r in conn.execute("SELECT * FROM policy_passages WHERE tenant_id = ? ORDER BY ordinal", (tenant_id,)):
             passages.append({

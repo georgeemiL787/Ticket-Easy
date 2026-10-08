@@ -20,7 +20,7 @@ copy .env.example .env          # add OPENROUTER_API_KEY (free) if you want rule
 $env:PYTHONPATH = "src"
 python scripts\make_seed_docs.py          # regenerates the PDF/DOCX/XLSX seed documents
 python -m team_a ingest --tenant shop_001 # builds var/index/shop_001 (add --no-embeddings to skip Ollama)
-python -m pytest                          # 220 tests, no Ollama or API key needed
+python -m pytest                          # 260 tests, no Ollama or API key needed
 uvicorn team_a.service:app --app-dir src --port 8001
 ```
 
@@ -119,9 +119,20 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | Retrieval recall@5, dev sweep (27 answerable) | 92.6% (ar 8/9, Arabizi 9/9, en 8/9) |
 | No-answer precision / recall, dev sweep (6 unanswerable) | 100% / 50.0% |
 | Guardrail cases | **44/44**, 0 blocked actions executed |
-| Unit tests | 220 passed |
+| Unit tests | 260 passed |
 
 Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic. The held-out test numbers are the real estimate.
+
+**noon_eg** (English policy, questions in Arabic/Arabizi/English; 105 questions, dev 53 / test 52, written before tuning). It has its own thresholds (`retrieval_thresholds` in its manifest: 0.60 / 4.0, from the dev sweep) and its own synonyms (`data/synonyms/noon_eg.json`, Arabic/Arabizi → the page's English wording, tuned on dev only):
+
+| noon_eg, held-out test (scored once) | before | after |
+|---|---|---|
+| Recall@5 (40 answerable) | 75.0% | **97.5%** (ar 12/12, Arabizi 11/12, en 16/16) |
+| No-answer precision / recall (12 unanswerable) | 35.7% / 41.7% | **87.5% / 58.3%** |
+
+No-answer recall is the weak spot: off-topic questions that share words with the page (delivery, order, phone) still return passages. `eval-scenarios` (noon's own customer scenarios, not used for tuning): expected-section recall@5 78%, 3/4 no-evidence cases empty.
+
+**Latency** (warm, through the API, bge-m3 half on GPU): a search is ~110 ms, of which ~95 ms is the query embedding; a repeated query is ~12 ms (embeddings are cached per text); structured lookups ~1-3 ms. The service loads the model at start-up and asks Ollama to keep it loaded for `OLLAMA_KEEP_ALIVE` (default 30m), so the first query after idle no longer pays the ~13 s load. Keeping it loaded holds ~1.3 GB of memory; lower the value on a small machine.
 
 **Demo 1:** the same return-window question asked in English, Egyptian Arabic and Arabizi cites `return_policy@v2#s2`. It ranks first in Arabic and Arabizi, and second in English, behind `refund_policy@v1#s1`, which states the same 14-day limit.
 
@@ -136,6 +147,7 @@ One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant'
 - **Repository** ([db/repository.py](src/team_a/db/repository.py)), all tenant-scoped: `get_customer`, `list_orders_for_customer`, `get_order` (with items), `get_return`, `build_check_action_facts`, `search_knowledge`, `get_passage`, `search_past_tickets`. Search uses the same retrieval code, thresholds and result contracts as the file index.
 - **Tenant isolation:** `tenant_id` leads every primary key and foreign key, so a row cannot reference another tenant's row.
 - **Source of truth stays in files.** `rules_mirror` and `resolutions_mirror` are read-only copies for joins and reporting (writes are rejected); resolutions are re-checked by `is_safe_to_persist` on import. `check_action` never reads the database.
+- **Per-tenant retrieval:** a tenant may set `retrieval_thresholds` in its manifest and add `data/synonyms/<tenant>.json`; tenants without them use the global values (shop_001 is unchanged).
 - **as_of:** dates are ISO text. Day counts are computed as of a date you pass; for mock tenants the default is the data's own `as_of` (`noon_eg` 2026-10-08, `shop_001` 2026-09-28), never the wall clock.
 
 ## Data (all fictional)
@@ -153,7 +165,7 @@ One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant'
 
 - The held-out test set is small (37 questions, 9 unanswerable; one question moves recall about 3.6 points), so treat retrieval numbers as rough. When adding questions, keep the stratified split, sweep on dev only and score test once.
 - Unanswerable shop questions the corpus doesn't cover, such as instalment plans, are the weakest retrieval area.
-- Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json`, and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
+- Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json` (and, for noon_eg, Arabic/Arabizi to English in `noon_eg.json`), and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
 - Risk keywords handle spelling variants, but miss new vocabulary (e.g. "someone changed the phone number on my account") and dropped Arabizi vowels. Substring matching over-flags ("court shoes" escalates as legal), which fails safe.
 - The `proposed` queue holds 20 LLM-extracted rules. The approval gate only catches rules that break a guardrail case, so review each one before approving.
 - Admin endpoints share one `X-Admin-Key`, with no per-user accounts, and `reviewer` is self-reported. Replace with real auth before any real deployment.

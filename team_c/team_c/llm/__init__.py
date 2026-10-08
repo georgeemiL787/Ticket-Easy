@@ -1,1 +1,1 @@
-"""Model calls: prompts, output schemas, Ollama budgets, one class per provider and the fallback router."""
+"""Model calls: prompts, output schemas, Ollama budgets, Groq, OpenRouter, local Ollama, and the fallback router."""

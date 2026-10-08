@@ -14,17 +14,20 @@ class Settings(BaseSettings):
     ollama_timeout: float = 240
     ollama_context: int = 32768
     ollama_think: bool = False
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_model: str = ""
-    openrouter_api_key: str = ""
-    openrouter_timeout: float = 120
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_model: str = "openai/gpt-oss-120b"
     groq_api_key: str = ""
     groq_api_key_2: str = ""
     groq_api_key_3: str = ""
+    groq_api_key_4: str = ""
     groq_timeout: float = 120
     groq_reasoning_effort: str = "low"
+    groq_input_tokens: int = 8000
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
+    openrouter_api_key: str = ""
+    openrouter_timeout: float = 120
+    openrouter_input_tokens: int = 24000
     max_upload_bytes: int = 2 * 1024 * 1024
     max_operations: int = 50
     max_model_chars: int = 100_000
@@ -48,11 +51,11 @@ class Settings(BaseSettings):
     @property
     def groq_api_keys(self):
         """Configured credentials in priority order; blanks and duplicate keys are skipped."""
-        return list(dict.fromkeys(key.strip() for key in (self.groq_api_key, self.groq_api_key_2, self.groq_api_key_3) if key.strip()))
+        return list(dict.fromkeys(key.strip() for key in (self.groq_api_key, self.groq_api_key_2, self.groq_api_key_3, self.groq_api_key_4) if key.strip()))
 
     @property
     def model_secrets(self):
-        return (self.openrouter_api_key, *self.groq_api_keys, self.session_secret)
+        return (*self.groq_api_keys, self.openrouter_api_key, self.session_secret)
 
     @property
     def llm_chain(self):

@@ -89,7 +89,7 @@ class Service:
     def fail_run(self, run, exc): return self.runs.fail_run(run, exc)
     def tidy(self, run, content): return self.runs.tidy(run, content)
     def checked_run(self, business_id, kind, payload, output_model, check): return self.runs.checked_run(business_id, kind, payload, output_model, check)
-    def fitted_index(self, kind, build, inventory, include_ids=None, exclude_ids=()): return self.runs.fitted_index(kind, build, inventory, include_ids, exclude_ids)
+    def fitted_index(self, kind, build, inventory, include_ids=None, exclude_ids=(), goal=""): return self.runs.fitted_index(kind, build, inventory, include_ids, exclude_ids, goal)
 
     def generate(self, spec_id, operation_ids=None, request=None): return self.generation.generate(spec_id, operation_ids, request)
     def generation_attempt(self, spec, scope, payload, request): return self.generation.generation_attempt(spec, scope, payload, request)
@@ -136,6 +136,7 @@ class Service:
     def publication_view(self, row): return self.publishing.publication_view(row)
     def publications(self, business_id=None, artifact_id=None): return self.publishing.publications(business_id, artifact_id)
     def publication_problems(self, aid): return self.publishing.publication_problems(aid)
+    def artifact_guidance(self, aid): return self.publishing.artifact_guidance(aid)
     def publish(self, aid, submission): return self.publishing.publish(aid, submission)
     def disable_publication(self, pub_id, submission): return self.publishing.disable_publication(pub_id, submission)
     def check_publication(self, pub): return self.publishing.check_publication(pub)

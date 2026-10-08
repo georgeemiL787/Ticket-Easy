@@ -21,6 +21,75 @@ def tool_name(artifact_id, content):
 RECORD_REFUSALS = ("record_scope_enforced", "target_record_denial")
 
 
+def next_steps(content, tests, executions, identities, policy_tests, published):
+    """The remaining steps for this exact artifact, in the order they must be done.
+
+    Publication blocks on several independent requirements, and a user who only sees the
+    requirement is left guessing what to do next. Each step states what it proves and, while it is
+    outstanding, the concrete action that satisfies it.
+    """
+    passed = [t for t in tests if t["verdict"] == "passed"]
+    success = [t for t in passed if t["expectation"]["status"] == "succeeded"]
+    own = [t for t in passed if t.get("scenario") == "own_record"]
+    accepted = [t for t in passed if t.get("scenario") == "cross_user" and not refusal(
+        (next((e for e in executions if e["id"] == t["execution_id"]), {}) or {}).get("report"),
+        True) is None]
+    record_scope = [r["id"] for r in content.get("access_requirements", [])
+                    if r["kind"] == "record_scope" and not r["enforcement"].get("unrestricted")]
+    steps = []
+
+    def step(key, done, title, why, action):
+        steps.append(dict(key=key, done=done, title=title, why=why, action="" if done else action))
+
+    step("identity", bool(identities), "Add a test identity",
+         "The executor runs as a registered account, never as a caller-supplied value.",
+         "Enter an existing test account under Add or replace a test identity." if not identities else "")
+    step("success", bool(success), "Run one sandbox test that expects success",
+         "This is the only evidence that the tool works end to end against the real API.",
+         "Fill the tool arguments with values that belong to the test account and run it."
+         if not success else "")
+    if record_scope:
+        step("own_record", bool(own), "Run a test where the identity uses its own record",
+             "It shows this credential works and may reach its own data.",
+             "Add a sandbox test with scenario 'own_record' using the identity's own record.")
+        step("cross_user", bool(accepted), "Run a cross-owner test that must be refused",
+             "It is the only proof that one customer cannot read another customer's record.",
+             "Add a second identity, let it pass its own own_record test, then add a 'cross_user' "
+             "test naming that identity as record_owner and passing the first identity's record. "
+             "The run must end refused.")
+    step("guards", bool(policy_tests and policy_tests.get("passed")), "Pass the generated guard scenarios",
+         "They check the compiled policy itself, before any sandbox run.",
+         "" if policy_tests and policy_tests.get("passed") else "Run the generated policy tests.")
+    step("publish", bool(published), "Publish to the TEST-ONLY sandbox MCP",
+         "Publishing exposes this exact artifact to local test clients.",
+         "Choose Publish to sandbox MCP once every step above is done.")
+    return steps
+
+
+def unrunnable(content, identities):
+    """Why this artifact can never produce a passing sandbox run, from its own content alone.
+
+    An artifact compiled before a specification corrected its declared authentication, or one whose
+    accepted principals the declared login cannot issue tokens for, is a dead end. Saying so at the
+    artifact page is clearer than an endless 'cannot publish yet'.
+    """
+    auth = (content.get("connector") or {}).get("auth") or {}
+    principals = ((content.get("access_policy") or {}).get("principals")) or []
+    if not auth:
+        return None
+    if "admin" in principals and auth.get("type") == "oauth2_password" and "/admin/" in auth.get("token_path", ""):
+        return None
+    if auth.get("type") == "oauth2_password" and "/admin/" in auth.get("token_path", "") and "admin" not in principals:
+        return ("This artifact authenticates through " + auth["token_path"] + ", which issues tokens only for "
+                "administrator accounts, but its accepted policy allows only " + ", ".join(principals) +
+                ". It was built from a specification snapshot that declared the wrong login. Rebuild it after "
+                "the API declares a login for these operations.")
+    if not identities:
+        return ("This artifact authenticates through " + auth.get("token_path", "the declared login") +
+                ". Add a test identity for an account that endpoint accepts.")
+    return None
+
+
 def refusal(report, caller_controls_own_record):
     """How a failed run was refused. Authentication failure, general access denial and record-scope
     enforcement stay distinct; a 403/404 only counts as a record denial when the same caller is shown to

@@ -33,6 +33,17 @@ class Publication:
     def publications(self, business_id=None, artifact_id=None):
         return [self.publication_view(r) for r in publications_repo.listing(self.store, business_id, artifact_id)]
 
+    def artifact_guidance(self, aid):
+        """Ordered, actionable next steps for this artifact, plus any reason it can never run."""
+        a = self.building.artifact(aid)
+        c = a["content"]
+        connector = load_connectors(self.settings).get(c["connector"]["id"]) or {}
+        identities = sorted(connector.get("identities") or {})
+        published = any(p["status"] == "published" for p in self.publications(artifact_id=aid))
+        steps = publishing.next_steps(c, a["tests"], a["executions"], identities, a.get("policy_tests"), published)
+        return dict(steps=steps, remaining=[s for s in steps if not s["done"]],
+                    unrunnable=publishing.unrunnable(c, identities))
+
     def publication_problems(self, aid):
         """Everything that would block publishing this exact artifact now (empty when it may be published)."""
         a = self.building.artifact(aid)

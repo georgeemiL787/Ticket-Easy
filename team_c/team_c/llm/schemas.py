@@ -44,13 +44,57 @@ def groq_schema(schema):
         bindings = step["properties"]["bindings"].get("items", {}).get("anyOf", [])
         if not bindings or "properties" not in bindings[0]:
             continue
-        for index, binding in enumerate(bindings):
-            if binding.get("$ref") == "#/$defs/PreviousOutputBinding":
-                previous = copy.deepcopy(definitions["PreviousOutputBinding"])
-                bindings[index] = previous
-            # Even identical target enums count as extra discriminator candidates.
-            # Keep kind as the sole discriminator; the original schema checks targets.
-            bindings[index]["properties"]["target"] = {"type": "string"}
+        # Every step now uses the same binding shapes. Reuse definitions instead
+        # of repeating four complete objects for every available operation.
+        # Target enums are checked by the original schema; kind is the sole
+        # discriminator in these shared Groq definitions.
+        step["properties"]["bindings"]["items"]["anyOf"] = [
+            {"$ref": "#/$defs/" + name} for name in ("RuntimeBinding", "ConfigurationBinding", "ContextBinding", "PreviousOutputBinding")]
+    for name in ("RuntimeBinding", "ConfigurationBinding", "ContextBinding", "PreviousOutputBinding"):
+        if name in definitions and "properties" in definitions[name]:
+            definitions[name]["properties"]["target"] = {"type": "string"}
+    return compact_schema(schema)
+
+
+def compact_schema(schema):
+    """Remove annotations and unreachable definitions, never validation constraints."""
+    schema_maps = {"properties", "patternProperties", "$defs", "definitions", "dependentSchemas"}
+    child_schemas = {"items", "contains", "additionalProperties", "unevaluatedProperties", "propertyNames", "not", "if", "then", "else"}
+    schema_lists = {"anyOf", "oneOf", "allOf", "prefixItems"}
+    def clean(node):
+        if not isinstance(node, dict):
+            return node
+        result = {}
+        for key, value in node.items():
+            if key in {"title", "description", "examples", "$comment"}:
+                continue
+            if key in schema_maps:
+                value = {name: clean(child) for name, child in value.items()}
+            elif key in child_schemas:
+                value = clean(value)
+            elif key in schema_lists:
+                value = [clean(child) for child in value]
+            result[key] = value
+        return result
+    schema = clean(schema)
+    definitions, used = schema.get("$defs", {}), set()
+    def references(node):
+        if isinstance(node, dict):
+            ref = node.get("$ref", "")
+            if isinstance(ref, str) and ref.startswith("#/$defs/"):
+                name = ref.split("/")[2]
+                if name not in used:
+                    used.add(name)
+                    references(definitions.get(name, {}))
+            for key, value in node.items():
+                if key != "$defs":
+                    references(value)
+        elif isinstance(node, list):
+            for child in node:
+                references(child)
+    references(schema)
+    if "$defs" in schema:
+        schema["$defs"] = {name: value for name, value in definitions.items() if name in used}
     return schema
 
 
@@ -94,11 +138,32 @@ def drop_echoes(data, echoes):
         proposals.append(data["revised_proposal"])
     for proposal in proposals:
         steps = {s.get("id"): s.get("operation_id") for s in proposal.get("steps", [])}
-        items = [("operation_id", o) for o in proposal.get("outputs", [])]
-        items += [("source_operation_id", b) for s in proposal.get("steps", []) for b in s.get("bindings", []) if b.get("kind") == "previous_operation_output"]
-        for echo, item in items:
-            if echo in echoes and item.pop(echo, None) != steps.get(item.get("step_id")):
-                raise ValueError("A response pointer was chosen for a different operation than its referenced step")
+        # A step may repeat an operation, so only an operation claimed by exactly one step names it.
+        owners = {}
+        for step_id, operation in steps.items():
+            owners.setdefault(operation, []).append(step_id)
+        items = [("operation_id", o, None) for o in proposal.get("outputs", [])]
+        items += [("source_operation_id", b, s.get("id"))
+                  for s in proposal.get("steps", []) for b in s.get("bindings", [])
+                  if b.get("kind") == "previous_operation_output"]
+        for echo, item, owner in items:
+            if echo not in echoes:
+                continue
+            operation = item.pop(echo, None)
+            if operation == steps.get(item.get("step_id")):
+                continue
+            # A step cannot source a value from itself, yet a strict output schema cannot express
+            # step order, so a provider that flattens the correlated choices has no signal for it and
+            # cites the step that owns the binding. That citation carries no information, so take the
+            # step the echo already names when exactly one step runs that operation; grounding still
+            # rejects cycles, forward references and pointers missing from the resolved step.
+            # Citing a different real step stays a contradiction between two assertions and is rejected.
+            cited = item.get("step_id")
+            claimed = owners.get(operation, [])
+            if owner is not None and cited == owner and len(claimed) == 1:
+                item["step_id"] = claimed[0]
+                continue
+            raise ValueError("A response pointer was chosen for a different operation than its referenced step")
     return data
 
 

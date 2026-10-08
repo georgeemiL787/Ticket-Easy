@@ -148,6 +148,11 @@ class Building:
             raise AppError("artifact_integrity", "Stored artifact content does not match its hash", 409)
         row["executions"] = [dict(e, report=json.loads(e["report"]) if e["report"] else None) for e in self.store.all("SELECT * FROM executions WHERE artifact_id=? ORDER BY created_at", (aid,))]
         row["tests"] = [dict(t, expectation=json.loads(t["expectation"]), failure_report=json.loads(t["failure_report"]) if t["failure_report"] else None) for t in self.store.all("SELECT * FROM sandbox_tests WHERE artifact_id=? ORDER BY created_at", (aid,))]
+        # Evidence rules keep every run for audit but only the latest run of each named test counts,
+        # so mark which rows publication would actually use (the last row of a name, as evidence() reads them).
+        latest = {t["name"]: t["id"] for t in row["tests"]}
+        for t in row["tests"]:
+            t["current"] = latest[t["name"]] == t["id"]
         tests = self.store.all("SELECT report FROM policy_test_runs WHERE artifact_id=? AND artifact_sha256=? ORDER BY created_at DESC LIMIT 1", (aid, row["sha256"]))
         row["policy_tests"] = json.loads(tests[0]["report"]) if tests else None
         if row["content"].get("access_policy"):

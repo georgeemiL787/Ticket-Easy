@@ -16,6 +16,7 @@
 {% elif p.state == 'needs_clarification' %}{{ m.next("answer the questions", "Fill in every question and access requirement below, press Save answers, then press Check answers.") }}
 {% elif p.state == 'needs_reconciliation' %}{{ m.next("check your answers", "Press Check answers so Team C can verify that each answer is specific enough.") }}
 {% elif p.state == 'ready_for_review' and not p.lifecycle.requirements_confirmed %}{{ m.next("confirm the access requirements", "Press Confirm for each accepted access requirement below, then make your decision.") }}
+{% elif p.state == 'ready_for_review' and not p.policy and p.requirements %}{{ m.next("accept the structured access policy, then decide", "Deciding closes this version: a policy accepted afterwards needs a new version and a renewed approval. Accepting it now compiles your access rules into runtime enforcement and generates the guard tests, while your answers stay as they are.") }}<p><a href="#structured-policy">Review and accept the policy</a></p>
 {% elif p.state == 'ready_for_review' %}{{ m.next("make your decision", "Approve to build, reject, or request changes in the Owner decision section.") }}
 {% elif p.state == 'approved_to_build' and not connectors %}{{ m.next("configure a sandbox connector", "A connector supplies the API destination and trusted test identities. Configure one for this business before building.") }}
 {% elif p.state == 'approved_to_build' and p.policy %}{{ m.next("build from the accepted policy", "Choose the sandbox connector below. Building compiles the accepted access policy into runtime enforcement and runs generated security tests.") }}
@@ -34,6 +35,18 @@
 <div><h3>Changes it can make</h3><ul>{% for x in p.capability.writes %}<li>{{ x }}</li>{% else %}<li>No writes proposed.</li>{% endfor %}</ul></div>
 </div>
 <p>Evidence-based risk: <strong>{{ p.risk.level }}</strong> ({{ p.risk.state }})</p><p class="small">Unresolved factors: {{ p.risk.unresolved|join(", ") or "none" }}.</p>
+{% if p.quality %}
+<h3>Proposal quality</h3>
+{% if not p.quality.assessed %}<p class="notice">This proposal was generated before quality rating existed, so only the checks the application can make for itself were applied.</p>{% endif %}
+{% if p.quality.criteria %}<p>Model's own rating: <strong>{{ p.quality.score }}/5</strong> — {{ p.quality.verdict }}</p>
+<table><tr><th>Criterion</th><th>Score</th><th>Reason</th></tr>
+{% for c in p.quality.criteria %}<tr><td>{{ c.criterion|replace('_',' ') }}</td><td>{{ c.score }}/5</td><td class="small">{{ c.reason }}</td></tr>{% endfor %}
+</table>{% endif %}
+{% if p.quality.findings %}<p>Findings:</p><ul>{% for f in p.quality.findings %}<li>{{ 'Blocking' if f.severity == 'blocker' else 'Note' }}: <strong>{{ f.summary }}</strong>{% if f.detail %} <span class="small">{{ f.detail }}</span>{% endif %}</li>{% endfor %}</ul>
+{% else %}<p class="small">No quality findings.</p>{% endif %}
+{% if p.quality.ready %}<p class="small">Nothing blocking. You still decide whether to approve.</p>
+{% else %}<p class="notice">Approval is blocked until these are resolved. Ask for a revision.</p>{% endif %}
+{% endif %}
 {% if p.content.assumptions or p.content.limitations %}<details><summary>Assumptions and limitations</summary><ul>{% for x in p.content.assumptions + p.content.limitations %}<li>{{ x }}</li>{% endfor %}</ul></details>{% endif %}
 <details {% if p.state == 'ready_for_review' %}open{% endif %}><summary>Steps and where each input comes from</summary>
 {% for s in p.content.steps %}<h3>{{ s.id }} · {{ s.purpose }}</h3><p class="small"><code>{{ operations[s.operation_id].method }} {{ operations[s.operation_id].path }}</code> · Technically supported: {{ p.operation_states.get(s.operation_id,{}).get('technically_supported') }} · Eligible for proposals: {{ p.operation_states.get(s.operation_id,{}).get('proposal_eligible') }}</p>

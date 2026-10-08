@@ -2,15 +2,52 @@
 import json
 import re
 import unicodedata
+from collections import Counter
 from .config import AppError
 
 BLOCKING = {"absent_operation", "unsupported_operation", "restricted_operation"}
+
+# A retrieval round shows the model one budget-sized slice of the catalog. Absence is only a claim
+# about the API once the searchable catalog has actually been searched, so a request keeps asking for
+# further slices until it runs out of operations. This cap is a runaway guard for catalogs so large
+# that exhausting them would cost more than the answer is worth; while it binds, the coverage says
+# partial_search=true and the owner is told "not found in the searched subset", never "unsupported".
+RETRIEVAL_ROUNDS_CAP = 10
 
 
 def status(op):
     if op.get("proposal_eligible", op.get("supported", False)):
         return "eligible"
     return "restricted" if op.get("exposure", {}).get("classification") == "restricted" else "unsupported"
+
+
+def relevance(goal):
+    """Score how well one index entry serves the owner's request, from the request's own words.
+
+    The goal is the only evidence of what the owner wants, so operations are ranked by how much of
+    it they can plausibly serve. This is a ranking heuristic, not a claim about the API: it never
+    decides eligibility, and it never drops an operation the budget can hold.
+    """
+    # Suggestions rank against the owner's recent goals, which arrive as a list.
+    text = " ".join(goal) if isinstance(goal, (list, tuple)) else (goal or "")
+    words = [w for w in re.split(r"[^a-z0-9]+", text.lower()) if len(w) > 2]
+    if not words:
+        return lambda entry: 0
+    counts = Counter(words)
+    # A word the owner repeats is a stronger signal than one mentioned once.
+    weight = {w: 1 + 0.5 * (n - 1) for w, n in counts.items()}
+    # Longer words carry more meaning than short ones like "get" or "show".
+    weight = {w: v * (1 + min(len(w), 12) / 12) for w, v in weight.items()}
+
+    def score(entry):
+        text = " ".join(str(entry.get(k) or "") for k in ("path", "summary")).lower()
+        hits = sum(weight[w] for w in weight if w in text)
+        # A path segment match is stronger than a word appearing in a description.
+        segments = [s for s in re.split(r"[^a-z0-9]+", entry.get("path", "").lower()) if s]
+        hits += sum(weight[w] * 2 for w in weight if w in segments)
+        return hits
+
+    return score
 
 
 def reason(op):
@@ -40,17 +77,27 @@ def entry(op):
                 status=status(op), auth=op.get("declared_auth", {}).get("status"), inputs=sorted(op.get("inputs", {}))[:16], returns=returns)
 
 
-def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=()):
+def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=(), goal=""):
     """Eligible operations first, then restricted and unsupported ones, until the character budget is spent
     (always at least one, so batches make progress).
 
     include_ids limits the index to the owner's selected business areas (None: every operation);
     exclude_ids are operations an earlier batch already considered.
+
+    goal ranks operations by relevance to the request before the budget is spent. Filling the index in
+    inventory order and truncating silently discards whatever sorts last, so a request for orders on a
+    large API was told the orders endpoints did not exist. Relevance only reorders; it never drops an
+    eligible operation that the budget can hold.
     """
     order = {"eligible": 0, "restricted": 1, "unsupported": 2}
     scoped = [o for o in inventory["operations"] if include_ids is None or o["id"] in include_ids]
     excluded = set(exclude_ids) & {o["id"] for o in scoped}
-    entries = sorted((entry(o) for o in scoped if o["id"] not in excluded), key=lambda e: order[e["status"]])
+    entries = [entry(o) for o in scoped if o["id"] not in excluded]
+    if goal:
+        wanted = relevance(goal)
+        entries.sort(key=lambda e: (order[e["status"]], -wanted(e)))
+    else:
+        entries.sort(key=lambda e: order[e["status"]])
     index, used = [], 0
     for e in entries:
         size = len(json.dumps(e, ensure_ascii=False))
@@ -59,9 +106,17 @@ def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=()):
         index.append(e)
         used += size
     omitted = [e["id"] for e in entries[len(index):]]
+    # searched_operations/partial_search are cumulative over every earlier batch: excluded operations
+    # were searched, they are simply not in this round's slice. partial is the same question asked of
+    # the whole catalog (is anything still unsearched?) rather than of this one slice, so a request
+    # that has now searched everything does not keep reporting "partial" just because one slice is
+    # smaller than the catalog.
+    searched = len(scoped) - len(omitted)
     coverage = dict(total_operations=len(scoped), considered=len(index), considered_ids=[e["id"] for e in index],
-                    omitted_ids=omitted, previously_considered=len(excluded), partial=len(index) < len(scoped),
-                    area_scoped=include_ids is not None, budget_chars=budget_chars, used_chars=used)
+                    omitted_ids=omitted, previously_considered=len(excluded), partial=bool(omitted),
+                    searched_operations=searched, partial_search=bool(omitted),
+                    area_scoped=include_ids is not None, budget_chars=budget_chars, used_chars=used,
+                    goal_ranked=bool(goal))
     return index, coverage
 
 

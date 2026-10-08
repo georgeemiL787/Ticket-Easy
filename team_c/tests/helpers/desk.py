@@ -3,7 +3,7 @@ import json
 from types import SimpleNamespace
 import httpx
 from fastapi.testclient import TestClient
-from conftest import requirement_findings
+from conftest import refreshed_review, requirement_findings
 from fixtures.service_desk.app import create_app as create_fixture
 from helpers.openapi import op
 from team_c.config import Settings
@@ -58,7 +58,7 @@ class DeskSubstitute:
         findings = [dict(question_id=q["id"], status="resolved" if answers.get(q["id"], {}).get("text", "").startswith("TEST-ONLY") else "insufficient",
                          explanation="Test substitute assessment", answer_revision_ids=[answers[q["id"]]["id"]] if q["id"] in answers else [])
                     for q in payload["proposal"]["content"]["questions"]]
-        return ReconciliationOutput(findings=findings + requirement_findings(payload), revised_proposal=None, capability_gaps=[])
+        return ReconciliationOutput(findings=findings + requirement_findings(payload), revised_proposal=None, capability_gaps=[], self_review=refreshed_review())
 
 
 def fixture_transport(target):
@@ -79,7 +79,7 @@ def make_desk(tmp_path, variant, defect=None):
     booking = {name: backend.post("/_harness/bookings", json=dict(account_id=a["id"]), headers=h).json() for name, a in people.items()}
     ctx = n["holder_id"]
     holder = lambda a: a["number"] if n["holder_int"] else a["id"]
-    settings = Settings(_env_file=None, database_path=str(tmp_path / f"desk-{variant}.db"), session_secret="test-secret", openrouter_api_key="",
+    settings = Settings(_env_file=None, database_path=str(tmp_path / f"desk-{variant}.db"), session_secret="test-secret",
                         connectors_file=str(tmp_path / "connectors.json"), sandbox_hosts="desk.test:80")
     app = create_app(settings, DeskSubstitute)
     app.state.service.providers.names, app.state.service.providers.defect = n, defect

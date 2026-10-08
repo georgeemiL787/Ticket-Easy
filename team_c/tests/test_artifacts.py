@@ -8,6 +8,7 @@ import re
 import uuid
 import httpx
 import pytest
+from pathlib import Path
 from fastapi.testclient import TestClient
 from helpers.lifecycle import LifecycleSubstitute, approve, answer_all, confirm_all, current, generate, post, supersede_q2
 from team_c.artifacts import compile_steps
@@ -304,6 +305,44 @@ def test_enforcement_needs_review_and_a_change_invalidates_built_artifacts(built
     assert rebuilt["id"] != a["id"] and len(rebuilt["content"]["execution_blockers"]) == 1
     assert run(client, rebuilt["id"], item_id=ITEM_A, title="x").json()["code"] == "access_enforcement_missing"
     assert target.requests == []
+
+
+def test_normal_flow_never_reviews_enforcement_on_the_owners_behalf(sandbox):
+    """DEV_FAST_TRACK is off by default: nothing on the normal path reviews enforcement for the owner."""
+    _, client, settings, _, pid, target = sandbox
+    p = approved(client, pid)
+    assert settings.dev_fast_track is False
+    # A fresh checkout is manual too: the shipped example config keeps the shortcut off.
+    example = (Path(__file__).resolve().parents[1] / ".env.example").read_text(encoding="utf-8")
+    assert "DEV_FAST_TRACK=false" in example
+    # With no configuration at all the build neither invents one nor reviews one; it compiles with
+    # every requirement explicitly unenforced, so execution stays refused.
+    made = build(client, pid, enforce=False)
+    assert made.status_code == 200, made.text
+    assert current(client, pid)["enforcement"] is None
+    assert {r["enforcement"]["status"] for r in made.json()["content"]["access_requirements"]} == {"missing"}
+    # A configuration submitted the normal way stays unreviewed...
+    caller_only = {r["id"]: dict(mechanism="delegated_user_credential") for r in p["requirements"] if r["kind"] == "caller_access"}
+    e = submit(client, pid, caller_only).json()
+    assert e["status"] == "awaiting_review" and e["reviewed_at"] is None
+    # ...and the build refuses rather than reviewing it for the owner.
+    assert client.post(f"/api/v1/proposals/{pid}/artifacts", json=dict(connector_id="items-sandbox")).json()["code"] == "enforcement_unreviewed"
+    assert current(client, pid)["enforcement"]["reviewed_at"] is None
+
+
+def test_dev_fast_track_is_an_explicitly_labelled_development_shortcut(sandbox):
+    _, client, settings, _, pid, target = sandbox
+    p = approved(client, pid)
+    assert settings.dev_fast_track is False
+    manual = submit(client, pid, enforcement(p)).json()
+    assert manual["status"] == "awaiting_review"
+    # Only switching the development flag on produces an automatic review, and that review is
+    # unmistakably marked so it can never be read as an owner's decision.
+    settings.dev_fast_track = True
+    caller_only = {r["id"]: dict(mechanism="delegated_user_credential") for r in p["requirements"] if r["kind"] == "caller_access"}
+    fast = submit(client, pid, caller_only).json()
+    assert fast["id"] != manual["id"] and fast["status"] == "approved"
+    assert "DEV_FAST_TRACK" in (fast["review_note"] or "")
 
 
 def test_identity_without_the_checked_context_field_is_refused(built):

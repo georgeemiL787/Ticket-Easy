@@ -21,7 +21,7 @@ uv run uvicorn team_c.web:create_app --factory --host 127.0.0.1 --port 8000
 
 Open <http://127.0.0.1:8000>. API documentation is at <http://127.0.0.1:8000/docs>. Use one server process/worker. Stop with Ctrl+C. Data stays in `data/team_c.sqlite3`; restart with the same command/path.
 
-The default is **Ollama only**, requiring no OpenRouter key. Empty model configuration is an error when generation/reconciliation is requested, not a reason to serve canned proposals. If `.env` is absent, the app uses Ollama defaults and generates an ephemeral session secret; restarting loses browser sessions, not persisted work.
+The default is **Ollama only**, requiring no cloud API key. Empty model configuration is an error when generation/reconciliation is requested, not a reason to serve canned proposals. If `.env` is absent, the app uses Ollama defaults and generates an ephemeral session secret; restarting loses browser sessions, not persisted work.
 
 ### Commands
 
@@ -60,23 +60,24 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 
 | Setting | Meaning |
 |---|---|
-| `LLM_PRIMARY` | `ollama`, `openrouter` or `groq` |
-| `LLM_FALLBACK` | `none` (default), another provider, or a comma-separated list tried in order (for example `openrouter,ollama`) |
+| `LLM_PRIMARY` | `ollama`, `groq` or `openrouter` |
+| `LLM_FALLBACK` | `none` (default), one other provider, or a comma-separated list tried in order (for example `openrouter,ollama`) |
 | `OLLAMA_BASE_URL` | Default `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | Default `qwen3:8b`; override explicitly to use another model |
 | `OLLAMA_TIMEOUT` | Seconds for one whole model answer; default 240. On a laptop GPU that runs part of qwen3:8b on the CPU, suggestions take about 3 minutes, so raise it (for example 1800) |
 | `OLLAMA_CONTEXT` | Sent as `options.num_ctx` (tokens); default 32768. Requests are rejected unless an input-token upper bound (UTF-8 bytes of the chat text plus the template wrapper; the `format` schema is a decoding grammar, not prompt text) plus 8192 reserved output tokens (`num_predict`, including any thinking) plus a 512-token margin fits. That bound overestimates about fourfold, so when it fails Team C first asks Ollama for the real count (a one-token `/api/chat` call with the same messages and `num_ctx`; stored as `measured_input_tokens`) and accepts if that count plus the reserve and margin fits. A prompt longer than `num_ctx` is cut by Ollama and reported near `num_ctx`, so it is still rejected. Batch sizing keeps using the byte bound. The bound and Ollama's `prompt_eval_count`/`eval_count` are stored as run diagnostics |
 | `OLLAMA_THINK` | Default false: turns Qwen3 reasoning on for every call. Request triage, suggestions, area naming, proposal writing, revision and answer checking (reconciliation) always reason; area assignment and automated repair do not. Reasoning shares the `num_predict` output budget with the answer, so proposal writing, revision and answer checking reserve 16384 output tokens instead of 8192. Reasoning text is streamed to the live progress page while an action runs, held only in server memory, cleared when the action succeeds and never stored in the database |
-| `OPENROUTER_API_KEY` | Secret; required only when OpenRouter is selected |
-| `OPENROUTER_MODEL` | Exact model ID supporting structured outputs |
-| `OPENROUTER_BASE_URL` | Default `https://openrouter.ai/api/v1` |
-| `OPENROUTER_TIMEOUT` | Seconds; default 120 |
 | `GROQ_API_KEY` | Secret; required only when Groq is selected |
-| `GROQ_API_KEY_2`, `GROQ_API_KEY_3` | Optional backup secrets, tried in that order before moving from Groq to the next provider |
+| `GROQ_API_KEY_2`, `GROQ_API_KEY_3`, `GROQ_API_KEY_4` | Optional backup secrets, tried in that order before moving from Groq to the next provider |
 | `GROQ_MODEL` | Default `openai/gpt-oss-120b`; must support strict structured outputs (`openai/gpt-oss-20b` and `qwen/qwen3.8-27b` also do) |
 | `GROQ_BASE_URL` | Default `https://api.groq.com/openai/v1` |
 | `GROQ_TIMEOUT` | Seconds; default 120 |
 | `GROQ_REASONING_EFFORT` | Default `low`: sent as `reasoning_effort` with `include_reasoning=false`, so the model reasons briefly and returns only the answer. Leave empty for a model without reasoning controls. Reasoning shares the 8192-token output limit with the answer |
+| `OPENROUTER_API_KEY` | Secret; required only when OpenRouter is selected |
+| `OPENROUTER_MODEL` | Default `nvidia/nemotron-3-super-120b-a12b:free`; must support strict structured outputs |
+| `OPENROUTER_BASE_URL` | Default `https://openrouter.ai/api/v1` |
+| `OPENROUTER_TIMEOUT` | Seconds; default 120 |
+| `GROQ_INPUT_TOKENS`, `OPENROUTER_INPUT_TOKENS` | Input tokens the provider accepts in one request (default 8000 / 24000). Batches are sized against the primary provider's ceiling, so a request that cannot fit is refused instead of spending credentials on HTTP 413. A provider's own output and context limits are unchanged |
 | `OPENAPI_FETCH_HOSTS` | Comma-separated allowlist for OpenAPI URL fetch. `loopback:*` allows `localhost`, `127.x.x.x`, and `::1` on any port; remote hosts require explicit `host:port` entries. Empty disables fetch |
 | `OPENAPI_FETCH_TIMEOUT` | Seconds; default 15 |
 | `DATABASE_PATH` | Persistent SQLite file, relative to working directory or absolute |
@@ -85,9 +86,12 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 | `DEV_REVIEWER_ID` | Server-derived development audit identity |
 | `SESSION_SECRET` | Local browser session signing secret |
 
-With all three Groq keys configured, the order is `GROQ_API_KEY` → `GROQ_API_KEY_2` → `GROQ_API_KEY_3` → OpenRouter → Ollama when `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`. All Groq keys use the same model. Only rate limits, timeout/connection failures and HTTP 5xx advance to the next key. Rate limits include HTTP 429 and Groq HTTP 413 with the explicit `rate_limit_exceeded` code (TPM allowance); ordinary HTTP 413 still stops. Other rejected requests, invalid output and cancellation stop immediately. Blank or duplicate keys are skipped. Each new call starts with the first key again; no key is permanently disabled after a failure or daily rate limit. Each credential attempt is recorded as its provider without storing the key.
+The usual cloud-then-local order is `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`. With all four Groq keys configured, Groq credentials are tried first (`GROQ_API_KEY` → `GROQ_API_KEY_2` → `GROQ_API_KEY_3` → `GROQ_API_KEY_4`), then OpenRouter, then the local Ollama model. All Groq keys use the same Groq model. Only rate limits, timeout/connection failures and HTTP 5xx advance to the next key or provider. Rate limits include HTTP 429 and Groq HTTP 413 with the explicit `rate_limit_exceeded` code (TPM allowance); ordinary HTTP 413 still stops. Other rejected requests, invalid output and cancellation stop immediately. Blank or duplicate Groq keys are skipped. Each new call starts with the first Groq key again; no key is permanently disabled after a failure or daily rate limit. Each credential attempt is recorded as its provider without storing the key.
 
-For OpenRouter primary with local fallback, explicitly set `LLM_PRIMARY=openrouter` and `LLM_FALLBACK=ollama`, and supply the OpenRouter key/model. The Ollama context budget (including its token-count call) is checked only when Ollama is actually attempted, so an offline Ollama fallback never blocks the OpenRouter primary. When the fallback is reached and the input does not fit, the run fails with `model_input_limit`. Ollama primary with OpenRouter fallback is supported too. For Groq first, then OpenRouter, then local Ollama, set `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`, and supply `GROQ_API_KEY` plus the OpenRouter key/model. Selected providers must be configured and distinct; unused providers are ignored. The chain moves to the next provider only for timeout/connection errors, the rate-limit responses described above, or 5xx. Invalid output, refusals, bad bindings, other rejected requests (4xx, including authentication), configuration failures and cancellation stop the chain with no further fallback. Every attempted provider is recorded on the run. There are no automatic repair/retry loops or cross-model replacement on invalid content.
+All configured Groq keys are tried before OpenRouter and Ollama on service failures. The Ollama context budget (including its token-count call) is checked only when Ollama is actually attempted, so an offline local fallback never blocks a successful Groq or OpenRouter request. If the fallback input does not fit, the run fails with `model_input_limit`. Selected providers must be configured and distinct; unused providers are ignored. Invalid output, refusals, bad bindings, rejected requests, configuration failures and cancellation stop the chain. Every attempted provider is recorded on the run. There are no automatic repair/retry loops or cross-model replacement on invalid content.
+
+“Check answers” uses a dedicated reconciliation prompt and compact JSON without dropping answers or API evidence. Groq schemas share binding definitions and omit annotations and unused definitions; the original full schema still validates every response. A token-limit HTTP 413 reports requested and allowed token counts when supplied by Groq. Rotating keys cannot make an oversized request fit an identical token allowance.
+
 
 The UI shows the primary/fallback configuration; each run records actual provider/model attempts. A successful provider response is not the same as accepted generation: grounding can still fail the overall run.
 
@@ -146,13 +150,13 @@ uv run python -m scripts.live_smoke --provider ollama --example room-booking
 # Running target system; the item scope fits OLLAMA_CONTEXT=40960 (all 13 eligible operations do not):
 $env:OPENAPI_FETCH_HOSTS="127.0.0.1:8001"; $env:OLLAMA_CONTEXT="40960"
 uv run python -m scripts.live_smoke --url http://127.0.0.1:8001/api/v1/openapi.json --business-file examples/target-items-business.txt --path-prefix /api/v1/items --database data/openapi-live.sqlite3
-# Requires your configured OpenRouter key/model:
-uv run python -m scripts.live_smoke --provider openrouter --example ecommerce
+# Requires your configured Groq key/model:
+uv run python -m scripts.live_smoke --provider groq --example ecommerce
 ```
 
 These commands perform real inference, print outcomes/run IDs, and exit nonzero on failure. They do not claim reconciliation or approval coverage; use the manual workflow above for that. Inspect their saved records by starting the app with `DATABASE_PATH=data/live-smoke.sqlite3` if desired. Never run two app processes on the same database while testing restart behavior.
 
-To test real fallback without making a paid primary request, run a separate local HTTP stub that returns 503, configure it as the OpenRouter base URL with nonsecret test credentials/model, explicitly enable Ollama fallback, and generate. This is **simulated primary failure plus live Ollama inference**, not a live OpenRouter test. Do not point failure tests at business endpoints.
+To test real fallback without making a paid primary request, run a separate local HTTP stub that returns 503, configure it as the Groq base URL with nonsecret test credentials/model, explicitly enable Ollama fallback, and generate. This is **simulated primary failure plus live Ollama inference**, not a live Groq test. Do not point failure tests at business endpoints.
 
 ## Core architecture and invariants
 
@@ -162,7 +166,7 @@ The implemented checkpoints can be checked independently:
 2. Live provider/grounded proposals: run one smoke command above, then inspect its mappings; `uv run pytest -q tests/test_grounding.py` checks deterministic rejection rules.
 3. Clarification/decisions/persistence: `uv run pytest -q tests/test_review.py tests/test_reconciliation_safety.py tests/test_canonical_reconciliation.py`.
 4. Review interface/restart: follow the walkthrough, stop the server, restart with the same database, and reopen the proposal.
-5. Second provider/fallback/edge cases: `uv run pytest -q tests/test_providers.py`; these provider tests use mock HTTP transports. OpenRouter live verification requires configured credentials and a structured-output-capable model.
+5. Second provider/fallback/edge cases: `uv run pytest -q tests/test_providers.py`; these provider tests use mock HTTP transports. Groq live verification requires configured credentials and a structured-output-capable model.
 
 Example dependency, validated in both automated domain walkthroughs:
 
@@ -177,7 +181,7 @@ The validator checks ordering, response code, pointer existence, requiredness an
 
 - `discovery.py`: offline OpenAPI extraction; original source bytes/schemas and diagnostics are persisted.
 - `models.py` / `grounding.py`: structured proposal/input-source contracts, required-input checks, conservative schema compatibility, dependency and field validation.
-- `llm/` (re-exported by `providers.py`): untrusted-data prompt boundary (`prompts.py`), strict structured output (`schemas.py`), selectable providers (`ollama.py`, `openrouter.py`), bounded calls and explicit fallback (`router.py`). No model execution tools.
+- `llm/` (re-exported by `providers.py`): untrusted-data prompt boundary (`prompts.py`), strict structured output (`schemas.py`), selectable providers (`ollama.py`, `groq.py`, `openrouter.py`), bounded calls and explicit fallback (`router.py`). No model execution tools.
 - `services/` behind the `service.py` facade: transactions around reconciliation, revision and decisions (`services/review.py`). A changed answer invalidates reconciliation. Material content changes create a new version. Even copied answers need reassessment. Approval binds the exact content, answer, inventory and reconciliation snapshot.
 - `persistence/` (re-exported by `storage.py`): ordered migrations recorded in `schema_migrations`, foreign keys, immutable content/history, WAL SQLite. Decision uniqueness/idempotency and expected revisions prevent duplicate/conflicting submissions.
 - `app.py`, `api/`, `web/` (templates in `web/templates/`): escaped server-rendered review forms, CSRF (`web/forms.py`), same-origin checks (`app.py`), local identity, REST API (`api/`).

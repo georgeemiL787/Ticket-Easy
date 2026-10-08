@@ -11,7 +11,7 @@ from team_c.service import Service
 
 def main():
     parser=argparse.ArgumentParser()
-    parser.add_argument("--provider",choices=["ollama","openrouter"],default="ollama")
+    parser.add_argument("--provider",choices=["ollama","groq"],default="ollama")
     parser.add_argument("--example",choices=["ecommerce","room-booking","nilestay"],default="ecommerce")
     parser.add_argument("--url",help="Fetch this OpenAPI URL (host must be in OPENAPI_FETCH_HOSTS) instead of an example file")
     parser.add_argument("--business-file",help="Business description text file (required with --url)")

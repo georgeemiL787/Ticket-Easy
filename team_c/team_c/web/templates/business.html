@@ -71,7 +71,10 @@
 {% for u in r.unresolved %}<p class="notice small">{{ u.kind|replace('_',' ')|capitalize }}: {{ u.description }}{% if u.operation_ids %} <span class="muted">({{ u.operation_ids|join(', ') }})</span>{% endif %}</p>{% endfor %}
 {% if r.error %}<p class="notice">Failed: {{ r.error.message }}</p>{% if r.error.errors %}<p class="small">What the check found:</p><ul class="small">{% for e in r.error.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}{% endif %}
 {% for c in r.clarifications %}<p class="muted small">Your clarification: {{ c.text }}</p>{% endfor %}
-{% if r.coverage and r.coverage.partial %}{% set reviewed = r.coverage.considered + (r.coverage.previously_considered or 0) %}
+{% if r.outcome and r.outcome.search %}
+<p class="muted small">Capability search: {{ r.outcome.search.searched_operations }} of {{ r.outcome.search.total_operations }} operations searched across {{ r.outcome.search.retrieval_rounds }} retrieval round(s).{% if r.outcome.search.partial_search %} Not every operation was searched, so "not found" here means "not found in the searched subset", not "unsupported by the API".{% endif %}</p>
+{% endif %}
+{% if r.coverage and r.coverage.partial %}{% set reviewed = r.coverage.searched_operations or (r.coverage.considered + (r.coverage.previously_considered or 0)) %}
 <p class="notice small">Considered {{ reviewed }} of {{ r.coverage.total_operations }} operations{% if r.coverage.area_scoped %} in your selected areas{% endif %}; {{ r.coverage.omitted_ids|length }} not reviewed yet.</p>
 {% if r.status == 'unavailable' and r.operation_scope is none and r.coverage.omitted_ids %}
 <form method="post" action="/actions/request_next_batch">{{ m.csrf_field() }}<input type="hidden" name="request_id" value="{{ r.id }}"><button class="secondary">Look in the next batch ({{ r.coverage.omitted_ids|length }} of {{ r.coverage.total_operations }} operations not reviewed yet)</button></form>

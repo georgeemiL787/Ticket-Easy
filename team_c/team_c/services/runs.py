@@ -49,12 +49,22 @@ class Runs:
         self.store.finish_run(run, dict(items=len(result)))
         return run, result
 
-    def fitted_index(self, kind, build, inventory, include_ids=None, exclude_ids=()):
-        """Operation index whose complete model input passes the provider size checks, shrinking the budget when needed."""
+    def fitted_index(self, kind, build, inventory, include_ids=None, exclude_ids=(), goal=""):
+        """Operation index whose complete model input passes the provider size checks, shrinking the budget when needed.
+
+        The owner's goal ranks the index, so the operations the request needs are not the ones a
+        character budget happens to cut off.
+        """
         budget = self.settings.capability_index_chars
         while True:
-            index, coverage = capabilities.operation_index(inventory, budget, include_ids, exclude_ids)
+            index, coverage = capabilities.operation_index(inventory, budget, include_ids, exclude_ids, goal)
             payload = build(index, coverage)
-            if len(index) <= 1 or input_fits(self.settings, kind, payload):
+            if input_fits(self.settings, kind, payload):
                 return index, coverage, payload
+            if len(index) <= 1:
+                # Shrinking no longer helps: the fixed prompt alone exceeds the primary's allowance.
+                # Send a request holding one operation so the chain can try a provider with more
+                # room, instead of reporting that the capability is absent.
+                raise AppError("model_input_limit", "The fixed prompt for this step exceeds the primary provider's input allowance; "
+                              "reduce the business description or raise the primary provider's *_INPUT_TOKENS")
             budget = int(budget * 0.8)

@@ -77,13 +77,17 @@ Model calls (`llm/`):
 | `llm/schemas.py` | Strict structured-output schemas and pointer constraints |
 | `llm/budget.py` | Ollama context and output-token budgets |
 | `llm/types.py` | `AttemptInfo`, `ProviderResponse` |
-| `llm/base.py`, `ollama.py`, `openrouter.py`, `groq.py` | One class per provider |
-| `llm/openai_compat.py` | Strict `json_schema` response format and the chat-completions call/answer checks shared by OpenRouter and Groq |
-| `llm/router.py` | `Providers`: provider chain `LLM_PRIMARY` then `LLM_FALLBACK` (`none`, one provider or an ordered comma-separated list such as `openrouter,ollama`; `Settings.llm_chain`), records an attempt and diagnostics for every provider tried, moves to the next provider only on `provider_service_failure`. The Ollama budget is checked inside the Ollama provider, so only when Ollama is attempted |
+| `llm/base.py`, `ollama.py`, `groq.py`, `openrouter.py` | One class per provider |
+| `llm/openai_compat.py` | Strict `json_schema` response format and the chat-completions call/answer checks used by Groq and OpenRouter |
+| `llm/router.py` | `Providers`: provider chain `LLM_PRIMARY` then `LLM_FALLBACK` (`none`, one provider, or a comma-separated list; `Settings.llm_chain`). Example: Groq, then OpenRouter, then Ollama. Records an attempt and diagnostics for every provider tried, moves to the next provider only on `provider_service_failure`. The Ollama budget is checked inside the Ollama provider, so only when Ollama is attempted |
 
-Before moving to the next provider, the router expands Groq into one attempt per distinct nonblank key (`GROQ_API_KEY`, `GROQ_API_KEY_2`, `GROQ_API_KEY_3`). Only service failures advance the chain. Each call rebuilds this order with no persistent failure state; keys can recover when their rate limits reset. Credential selection is local to each provider instance, so concurrent calls do not mutate shared settings. Diagnostics redact all configured model keys.
+Before moving to the next provider, the router expands Groq into one attempt per distinct nonblank key (`GROQ_API_KEY`, `GROQ_API_KEY_2`, `GROQ_API_KEY_3`, `GROQ_API_KEY_4`). Only service failures advance the chain. Each call rebuilds this order with no persistent failure state; keys can recover when their rate limits reset. Credential selection is local to each provider instance, so concurrent calls do not mutate shared settings. Diagnostics redact all configured model keys.
 
 Groq strict structured output cannot disambiguate the correlated operation/status/pointer unions used by proposal generation. `llm/schemas.groq_schema` creates a separate wire schema that merges those response enums and uses binding kind as the sole binding discriminator. The router checks Groq answers against the original full JSON Schema before removing operation echoes or parsing proposals; grounding checks still run afterward. Invalid output never triggers credential or provider fallback. Groq HTTP 413 is retryable only when the structured error code is `rate_limit_exceeded`; other 413 responses remain request failures.
+
+No strict output schema can express "an earlier step". A provider that flattens those correlated choices therefore has no signal for step order and answers a `previous_operation_output` binding with its own step id, which carries no information. `schemas.drop_echoes` resolves exactly that case from the operation the answer already echoed, and only when one step runs that operation; citing a different real step, an unknown operation or a repeated one stays a rejected response. `grounding.validate_proposal` still rejects cycles, forward references and pointers missing from the resolved step.
+
+Batch sizing consults the **primary** provider's input ceiling, not only Ollama's. `llm/budget.cloud_budget` bounds a cloud request by its configured allowance (`GROQ_INPUT_TOKENS`, `OPENROUTER_INPUT_TOKENS`), estimated at `CLOUD_CHARS_PER_TOKEN` characters per token because a cloud tokenizer is not callable offline. `input_fits` returns false when the primary's own allowance cannot hold the request, so an unfittable batch is refused instead of consuming every credential on HTTP 413. Output limits and the model's context window remain the provider's responsibility. A provider without a configured ceiling is not bounded here, which preserves the existing fallback behavior.
 
 Persistence (`persistence/`):
 
@@ -170,3 +174,5 @@ For anyone upgrading an existing checkout or database:
 ## Capability compiler layers
 
 `compiler/` owns semantic evidence, structured policy contracts, input-boundary compilation, readiness and generated guard tests. `services/capability.py` persists owner decisions independently of model output; `persistence/repositories/policies.py` verifies accepted policy hashes. Approval snapshots include the policy hash. The executor enforces trusted principals/context and ordered ownership/tenant checks. See [CAPABILITY_COMPILER.md](CAPABILITY_COMPILER.md) for migration and compatibility details.
+
+Groq wire schemas reuse binding definitions and remove annotations/unreachable definitions. The original schema remains the validation authority. Reconciliation uses a shorter task-specific system prompt; proposal content, complete answer evidence and API constraints are retained.

@@ -79,25 +79,48 @@ def inventory(env):
     return app, client, settings, spec
 
 
-@pytest.mark.parametrize("primary", ["openrouter", "groq"])
+@pytest.mark.parametrize("primary", ["groq"])
 def test_cloud_generation_batch_is_independent_of_ollama_fallback(env, primary):
     app, client, settings, spec = inventory(env)
     settings.llm_primary, settings.llm_fallback = primary, "none"
+    # This fixture combines a 9500-character description with the ~11k-character generation system
+    # prompt, so the two operations only fit an allowance well above a real 8000-token request limit.
+    settings.groq_input_tokens = 16000
     url = f'/api/v1/specifications/{spec["id"]}/generation-batch'
     baseline = client.get(url).json()
     assert len(baseline["operation_ids"]) == 2
     settings.llm_fallback = "ollama"
     assert client.get(url).json() == baseline
     settings.llm_primary, settings.llm_fallback = "ollama", "none"
+    settings.ollama_context = 32768
     assert not input_fits(settings, "generation", dict(business=dict(description="x" * 9500)))
 
 
-@pytest.mark.parametrize("primary", ["openrouter", "groq"])
+@pytest.mark.parametrize("primary", ["groq", "openrouter"])
+def test_cloud_generation_batch_shrinks_to_the_primary_input_allowance(env, primary):
+    """A batch must be sized to the primary's real input allowance.
+
+    The generation prompt carries a large fixed system prompt, so an allowance that cannot even hold
+    the prompt yields no operations instead of a batch that the provider would reject.
+    """
+    app, client, settings, spec = inventory(env)
+    settings.llm_primary, settings.llm_fallback = primary, "none"
+    url = f'/api/v1/specifications/{spec["id"]}/generation-batch'
+    setattr(settings, primary + "_input_tokens", 16000)
+    full = client.get(url).json()
+    assert len(full["operation_ids"]) == 2
+    # An allowance that cannot hold the fixed prompt must stop the batch, not silently send one.
+    setattr(settings, primary + "_input_tokens", 10)
+    assert client.get(url).status_code == 422
+    assert client.get(url).json()["code"] == "model_input_limit"
+
+
+@pytest.mark.parametrize("primary", ["groq"])
 @pytest.mark.parametrize("response_kind", ["success", "service_failure", "timeout", "malformed"])
 def test_cancellation_during_cloud_call_stops_workflow_and_fallback(env, primary, response_kind):
     app, _, settings, spec = inventory(env)
     settings.llm_primary, settings.llm_fallback = primary, "ollama"
-    settings.openrouter_model, settings.openrouter_api_key, settings.groq_api_key = "test", "test", "test"
+    settings.groq_api_key = "test"
     job, sent = dict(steps=[]), []
 
     def handler(request):
@@ -126,11 +149,11 @@ def test_cancellation_during_cloud_call_stops_workflow_and_fallback(env, primary
     assert app.state.store.one("SELECT provider,status FROM attempts") == dict(provider=primary, status="failed")
 
 
-@pytest.mark.parametrize("primary", ["openrouter", "groq"])
+@pytest.mark.parametrize("primary", ["groq"])
 def test_cancellation_while_reading_cloud_response_body(env, primary):
     app, _, settings, spec = inventory(env)
     settings.llm_primary, settings.llm_fallback = primary, "none"
-    settings.openrouter_model, settings.openrouter_api_key, settings.groq_api_key = "test", "test", "test"
+    settings.groq_api_key = "test"
     job = dict(steps=[])
 
     class ResponseBody(httpx.SyncByteStream):

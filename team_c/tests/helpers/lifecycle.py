@@ -1,7 +1,7 @@
 """Review lifecycle on the target-shaped inventory: the deterministic TEST SUBSTITUTE and TEST-ONLY review helpers."""
 import json
-from conftest import requirement_findings
-from team_c.models import GenerationOutput, ReconciliationOutput
+from conftest import refreshed_review, requirement_findings
+from team_c.models import CRITERIA, GenerationOutput, ReconciliationOutput
 
 ANSWER = "TEST-ONLY (not a business decision): only the authenticated owner of an item may read or update it."
 OWNER_ID_QUESTION = "What is the exact business setting for the owner_id?"
@@ -14,7 +14,11 @@ def live_shaped(read, update, questions=True):
                        dict(id="s2", operation_id=update["id"], purpose="Update the item", bindings=[runtime("path.id", "item_id"), runtime("body.title", "title"), runtime("body.description", "description")])],
                 configuration=[], outputs=[dict(name="item", step_id="s1", response_status="200", pointer="/description"), dict(name="updated_item", step_id="s2", response_status="200", pointer="/title")],
                 questions=[dict(id="q1", text="How will ownership be verified before accessing private records?", configuration_key=None), dict(id="q2", text=OWNER_ID_QUESTION, configuration_key=None)] if questions else [],
-                expected_reads=["Item"], expected_writes=["Item title/description"], assumptions=[], limitations=["Runtime authorization unverified"], risk="medium", risk_rationale="Updates records")
+                expected_reads=["Item"], expected_writes=["Item title/description"], assumptions=[], limitations=["Runtime authorization unverified"], risk="medium", risk_rationale="Updates records",
+                # Generated before the owner has answered: caller access and record scope are unresolved,
+                # so the rating is honestly "revise" until reconciliation re-rates it.
+                self_review=dict(criteria=[dict(criterion=c, score=2, reason="Rated before the owner answered the access questions") for c in CRITERIA],
+                                 verdict="revise", summary="Who may use this tool and which records they may reach is unresolved."))
 
 
 class LifecycleSubstitute:
@@ -37,16 +41,20 @@ class LifecycleSubstitute:
             status = "contradictory" if "both" in text else "resolved" if text.startswith("TEST-ONLY") else "insufficient"
             findings.append(dict(question_id=q["id"], status=status, explanation="Test substitute assessment", answer_revision_ids=[a["id"]] if a else []))
         findings += requirement_findings(payload)
+        resolved = all(f["status"] == "resolved" for f in findings)
         revised = json.loads(json.dumps(content))
         if self.mode == "invent_operation":
             revised["steps"][0]["operation_id"] = "made-up-operation"
         elif self.mode == "invent_field":
             revised["steps"][1]["bindings"].append(dict(target="body.owner_id", kind="runtime_argument", reference="owner_id", step_id=None, response_status=None))
-        elif all(f["status"] == "resolved" for f in findings) and not any(x.startswith("Owner answered") for x in content["assumptions"]):
+        elif resolved and not any(x.startswith("Owner answered") for x in content["assumptions"]):
             revised["assumptions"].append("Owner answered: only an item's owner may read or update it (TEST-ONLY)")
         else:
             revised = None
-        return ReconciliationOutput(findings=findings, revised_proposal=revised, capability_gaps=[])
+        return ReconciliationOutput(findings=findings, revised_proposal=revised, capability_gaps=[],
+                                    self_review=refreshed_review("proceed" if resolved else "revise",
+                                                                 "Every access and design question is answered." if resolved
+                                                                 else "The owner's answers do not yet establish who may use this tool."))
 
 
 def generate(client, spec, scope):

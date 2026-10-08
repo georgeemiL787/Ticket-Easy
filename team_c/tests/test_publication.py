@@ -68,6 +68,40 @@ def test_a_failing_rerun_withdraws_the_evidence(desk):
     assert d.service.published_tools(pub["business_id"], "alice") == []
 
 
+def test_an_older_failed_run_stays_visible_while_a_newer_passing_run_becomes_the_evidence(desk):
+    d = desk
+    a = review_and_build(d, generated(d))
+    assert sandbox_test(d, a["id"], "owner_files_request", dict(status="rejected"))["verdict"] == "failed"
+    with_evidence(d, a["id"])
+    named = [t for t in d.service.artifact(a["id"])["tests"] if t["name"] == "owner_files_request"]
+    assert [t["verdict"] for t in named] == ["failed", "passed"]     # history is kept, never deleted
+    assert [t["current"] for t in named] == [False, True]            # only the latest run is evidence
+    page = d.client.get(f"/artifacts/{a['id']}").text
+    assert page.count("owner_files_request") >= 2 and "Superseded runs (history only)" in page
+    assert "a superseded failure no longer blocks publication" in page
+    pub = publish(d, a["id"])
+    assert pub.status_code == 200, pub.text
+    evidence = pub.json()["evidence"]
+    tests = {t["id"]: t for t in d.service.artifact(a["id"])["tests"]}
+    assert "owner_files_request" in evidence["success_tests"]
+    assert set(evidence["test_ids"]) == {i for i, t in tests.items() if t["current"] and t["verdict"] == "passed"}
+
+
+def test_test_only_publication_is_stated_separately_from_production_activation(desk):
+    d = desk
+    a = review_and_build(d, generated(d))
+    page = d.client.get(f"/artifacts/{a['id']}").text
+    assert "separate from production activation, which this product does not implement" in page
+    activation = d.client.get(f"/api/v1/artifacts/{a['id']}").json()["content"]["activation"]
+    assert activation["runtime_ready"] is False and activation["activated"] is False
+    assert activation["permitted_uses"] == ["artifact_creation", "sandbox_testing"]
+    with_evidence(d, a["id"])
+    pub = publish(d, a["id"]).json()
+    assert pub["environment"] == "sandbox"
+    assert pub["production_activation"] is False and pub["production_ready"] is False
+    assert d.service.published_tools(pub["business_id"], "alice")[0]["meta"]["team_c"]["production_ready"] is False
+
+
 def test_invocation_returns_permitted_output_and_keeps_the_audit_sanitized(desk):
     d = desk
     a = review_and_build(d, generated(d))

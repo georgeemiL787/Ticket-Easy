@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import pytest
 from team_c.config import Settings
-from team_c.models import GenerationOutput, ReconciliationOutput
+from team_c.models import CRITERIA, GenerationOutput, ReconciliationOutput
 from team_c.web import create_app
 from fastapi.testclient import TestClient
 
@@ -52,7 +52,14 @@ class DeterministicModelSubstitute:
         if status=="resolved" and v["content"]["configuration"][0]["value_json"] is None:
             revised=json.loads(json.dumps(v["content"]))
             revised["configuration"][0]["value_json"]='"support"'
-        return ReconciliationOutput(findings=[dict(question_id="q1",status=status,explanation="Explicit queue required; evaluated answer against the design",answer_revision_ids=[a["id"]] if a else [])]+requirement_findings(payload),revised_proposal=revised,capability_gaps=[])
+        return ReconciliationOutput(findings=[dict(question_id="q1",status=status,explanation="Explicit queue required; evaluated answer against the design",answer_revision_ids=[a["id"]] if a else [])]+requirement_findings(payload),revised_proposal=revised,capability_gaps=[],self_review=refreshed_review("proceed" if status=="resolved" else "revise"))
+
+
+def refreshed_review(verdict="proceed", summary="The owner's answers resolved the concerns this proposal was rated on."):
+    """A reconciliation-time rating: the CURRENT verdict, replacing the generation-time one."""
+    score = 4 if verdict == "proceed" else 2
+    return dict(criteria=[dict(criterion=c, score=score, reason="Assessed against the reconciled answers") for c in CRITERIA],
+                verdict=verdict, summary=summary)
 
 
 TEST_REQUIREMENT_ANSWER="TEST-ONLY (not a business decision): only the authenticated record owner may use these operations."
@@ -71,7 +78,7 @@ def requirement_findings(payload):
 
 @pytest.fixture
 def env(tmp_path):
-    settings=Settings(_env_file=None,database_path=str(tmp_path/"test.db"),session_secret="test-secret",openrouter_api_key="")
+    settings=Settings(_env_file=None,database_path=str(tmp_path/"test.db"),session_secret="test-secret")
     app=create_app(settings,DeterministicModelSubstitute)
     with TestClient(app) as client:
         yield app,client,settings
@@ -131,7 +138,7 @@ def desk(tmp_path, monkeypatch):
 
 @pytest.fixture
 def lifecycle(tmp_path):
-    settings = Settings(_env_file=None, database_path=str(tmp_path / "lifecycle.db"), session_secret="test-secret", openrouter_api_key="")
+    settings = Settings(_env_file=None, database_path=str(tmp_path / "lifecycle.db"), session_secret="test-secret")
     app = create_app(settings, LifecycleSubstitute)
     with TestClient(app) as client:
         b = client.post("/api/v1/businesses", json=dict(name="Items (test)", description="Test business")).json()

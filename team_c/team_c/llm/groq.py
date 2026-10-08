@@ -1,3 +1,4 @@
+import re
 from ..config import AppError
 from ..progress import check_cancelled, live_step
 from .base import Provider
@@ -6,7 +7,7 @@ from .openai_compat import chat_completion, json_schema_format
 from .schemas import groq_schema
 from .types import ProviderResponse
 
-# Reasoning tokens count toward max_tokens: room for a whole proposal answer (OpenRouter's 6000) plus low-effort reasoning.
+# Reasoning tokens count toward max_tokens: reserve room for the proposal and low-effort reasoning.
 GROQ_MAX_TOKENS = 8192
 
 
@@ -46,3 +47,18 @@ class GroqProvider(Provider):
         step = live_step(base_kind(kind), self.name, False, retry=False, fixing=fixing)
         content, value = chat_completion(self, body, self.api_key, step)
         return ProviderResponse(content, value.get("usage") or {})
+
+    def service_error(self, response):
+        error = super().service_error(response)
+        if response.status_code == 413:
+            try:
+                data = response.json().get("error", {})
+                message = data.get("message", "")
+                limit = re.search(r"\bLimit\s+([\d,]+)", message)
+                requested = re.search(r"\bRequested\s+([\d,]+)", message)
+                if data.get("code") == "rate_limit_exceeded" and limit and requested:
+                    counts = dict(limit_tokens=int(limit[1].replace(",", "")), requested_tokens=int(requested[1].replace(",", "")))
+                    error = AppError("provider_service_failure", f"groq request exceeds token allowance: {counts['requested_tokens']} requested, {counts['limit_tokens']} allowed (HTTP 413)", 502, counts)
+            except (ValueError, AttributeError, TypeError):
+                pass
+        return error

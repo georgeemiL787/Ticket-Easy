@@ -161,7 +161,7 @@ class Discovery:
             raise AppError("code_analysis_blocked","Code analysis requires at least one supported code operation")
         business=self.store.one("SELECT * FROM businesses WHERE id=?",(spec["business_id"],))
         self.providers.configured_chain() if hasattr(self.providers,"configured_chain") else None
-        provider_config={k:getattr(self.settings,k) for k in ("llm_primary","llm_fallback","ollama_model","ollama_base_url","ollama_think","ollama_context","openrouter_model","openrouter_base_url")}
+        provider_config={k:getattr(self.settings,k) for k in ("llm_primary","llm_fallback","ollama_model","ollama_base_url","ollama_think","ollama_context","groq_model","groq_base_url","groq_reasoning_effort")}
         key=digest(dict(kind="code_analysis",source=spec["checksum"],business=business["description"],prompt=CODE_SYSTEM,schema=CodeAnalysisOutput.model_json_schema(),provider_config=provider_config))
         cached=self.store.all("SELECT spec_id FROM discovery_cache WHERE cache_key=?",(key,))
         if cached: return dict(self.spec(cached[0]["spec_id"]),cache_hit=True)

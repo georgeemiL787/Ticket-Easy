@@ -6,6 +6,19 @@ from team_c.config import AppError
 from team_c.models import ReconciliationOutput
 
 
+def test_compact_check_prompt_preserves_all_answers_and_grounding_evidence():
+    from team_c.llm.prompts import SYSTEM, RECONCILIATION_SYSTEM, model_messages
+    payload = dict(proposal=dict(content=dict(questions=[dict(id="q1", text="Which setting?")]),
+                                 answers={"q1": dict(id=7, text="explicit correction")}),
+                   earlier_answers=[dict(id=3, question_id="q1", text="earlier contradictory value")],
+                   grounding_feedback=dict(errors=["A binding is invalid"]))
+    data, messages = model_messages("reconciliation", payload)
+    assert json.loads(data) == payload
+    assert messages[0]["content"] == RECONCILIATION_SYSTEM
+    assert len(RECONCILIATION_SYSTEM) < len(SYSTEM) / 2
+    assert "latest nonempty answer" in RECONCILIATION_SYSTEM and "UNTRUSTED_DATA" in messages[1]["content"]
+
+
 @pytest.mark.parametrize("answer", [None, "", "   ", "cleared"])
 def test_no_saved_nonempty_answers_blocks_reconciliation_before_any_model_call(env, answer):
     app, client, _ = env

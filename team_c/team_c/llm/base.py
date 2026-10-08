@@ -30,6 +30,9 @@ class Provider:
     def is_service_failure(self, response):
         return response.status_code == 429 or response.status_code >= 500
 
+    def service_error(self, response):
+        return AppError("provider_service_failure", f"{self.name} returned HTTP {response.status_code}", 502)
+
     def post(self, url, body, headers, read):
         """POST and read successful responses; only classified service failures are eligible for fallback."""
         try:
@@ -37,7 +40,7 @@ class Provider:
                 with client.stream("POST", url, json=body, headers=headers) as response:
                     check_cancelled()
                     if self.is_service_failure(response):
-                        raise AppError("provider_service_failure", f"{self.name} returned HTTP {response.status_code}", 502)
+                        raise self.service_error(response)
                     if response.status_code >= 300:
                         raise AppError("provider_request_failure", f"{self.name} rejected the request (HTTP {response.status_code}); check credentials/model/structured-output support", 502)
                     return read(response)

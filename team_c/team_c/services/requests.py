@@ -50,15 +50,22 @@ class Requests:
         business = self.store.one("SELECT * FROM businesses WHERE id=?", (r["business_id"],))
         request = dict(id=rid, goal=r["goal"], examples=r["examples"], clarifications=[x["text"] for x in r["clarifications"]])
         existing = self.proposals.existing_tools(r["business_id"])
-        build = lambda index, coverage: dict(business=business, owner_request={k: request[k] for k in ("goal", "examples", "clarifications")},
-                                             operation_index=dict(operations=index, coverage=capabilities.model_coverage(coverage)), existing_tools=existing)
-        index, coverage, payload = self.runs.fitted_index("request_triage", build, spec["inventory"], self.discovery.area_scope(spec["id"]), exclude_ids)
-        coverage["all_considered_ids"] = list(dict.fromkeys(list(exclude_ids) + coverage["considered_ids"]))
         runs, unresolved, fields = list(r["run_ids"]), [], dict(proposal_ids=[], existing_proposal_ids=[], error=None)
+        scope, triage, considered, rounds, coverage, grounded = None, None, list(exclude_ids), 0, None, []
         try:
-            if r["operation_scope"] is not None:
-                scope, fields["outcome"] = r["operation_scope"], dict(summary="Accepted suggestion; its supporting operations were used without a separate triage.")
-            else:
+            while True:
+                rounds += 1
+                build = lambda index, coverage: dict(business=business, owner_request={k: request[k] for k in ("goal", "examples", "clarifications")},
+                                                     operation_index=dict(operations=index, coverage=capabilities.model_coverage(dict(coverage, retrieval_rounds=rounds))),
+                                                     existing_tools=existing)
+                index, coverage, payload = self.runs.fitted_index("request_triage", build, spec["inventory"],
+                                                                  self.discovery.area_scope(spec["id"]), considered, r["goal"])
+                considered = list(dict.fromkeys(considered + coverage["considered_ids"]))
+                coverage["all_considered_ids"] = considered
+                coverage["retrieval_rounds"] = rounds
+                if r["operation_scope"] is not None and rounds == 1:
+                    scope, fields["outcome"] = r["operation_scope"], dict(summary="Accepted suggestion; its supporting operations were used without a separate triage.")
+                    break
                 run, triage = self.runs.model_run(r["business_id"], "request_triage", payload, RequestTriageOutput)
                 runs.append(run)
                 try:
@@ -67,9 +74,23 @@ class Requests:
                     self.runs.fail_run(run, exc)
                     raise
                 self.store.finish_run(run, triage.model_dump())
-                unresolved = [dict(m.model_dump(), source="triage") for m in triage.missing] + [dict(kind="question", description=q, operation_ids=[], source="triage") for q in triage.questions]
-                fields["outcome"] = dict(summary=triage.summary, triage=triage.outcome)
+                # A claim that the capability is absent is only as good as the catalog the model saw.
+                # While operations remain unsearched, retrieve the next slice and ask again; absence
+                # becomes a verdict about the API only when the searchable catalog is exhausted.
+                if triage.outcome != "unavailable" or not any(m.kind == "absent_operation" for m in triage.missing):
+                    break
+                if not coverage["omitted_ids"] or rounds >= capabilities.RETRIEVAL_ROUNDS_CAP:
+                    break
+                # The next slice will not show this one's operations again, so keep what this slice
+                # proved: a restricted or unsupported operation stays part of the verdict instead of
+                # being replaced by the later slice's narrower view.
+                grounded += [dict(m.model_dump(), source="triage") for m in triage.missing
+                             if m.kind in ("restricted_operation", "unsupported_operation")]
+            if triage is not None:
+                found = [dict(m.model_dump(), source="triage") for m in triage.missing] + [dict(kind="question", description=q, operation_ids=[], source="triage") for q in triage.questions]
+                fields["outcome"] = dict(summary=triage.summary, triage=triage.outcome, search=self.search_summary(coverage))
                 if triage.outcome != "feasible":
+                    unresolved = grounded + found
                     status = dict(existing_tool="existing_tool", needs_clarification="needs_clarification", unavailable="unavailable")[triage.outcome]
                     return self.save_request(rid, status, runs, unresolved, coverage, dict(fields, existing_proposal_ids=triage.existing_proposal_ids))
                 scope = triage.operation_ids
@@ -79,6 +100,10 @@ class Requests:
             status = "proposed" if result["proposal_ids"] else "existing_tool" if result["duplicates"] and not result["capability_gaps"] else "unavailable"
             return self.save_request(rid, status, runs, unresolved, coverage, dict(fields, proposal_ids=result["proposal_ids"], existing_proposal_ids=result["duplicates"]))
         except AppError as exc:
+            if coverage is None:
+                # The index itself could not be built, so nothing was ever searched; report the
+                # sizing problem instead of recording a verdict no search supports.
+                raise
             for run in exc.details.get("earlier_run_ids", []) + [exc.details.get("run_id")]:
                 if run and run not in runs:
                     runs.append(run)
@@ -87,7 +112,15 @@ class Requests:
                 error["errors"] = check_errors(exc.details["errors"], self.settings.model_secrets)
             return self.save_request(rid, "failed", runs, unresolved, coverage, dict(fields, error=error))
         except Exception:
+            if coverage is None:
+                raise
             return self.save_request(rid, "failed", runs, unresolved, coverage, dict(fields, error=dict(code="internal_error", message="Unexpected processing failure; retry the request")))
+
+    @staticmethod
+    def search_summary(coverage):
+        """The retrieval audit trail: how much of the catalog a verdict about "absent" actually covered."""
+        return dict(total_operations=coverage["total_operations"], searched_operations=coverage["searched_operations"],
+                    retrieval_rounds=coverage["retrieval_rounds"], partial_search=coverage["partial_search"])
 
     def save_request(self, rid, status, runs, unresolved, coverage, fields):
         with self.store.connect(write=True) as c:
@@ -152,7 +185,7 @@ class Requests:
                 exclude = previous.get("all_considered_ids", previous.get("considered_ids", []))
         build = lambda index, coverage: dict(business=business, owner_goals=goals, max_suggestions=count, operation_index=dict(operations=index, coverage=capabilities.model_coverage(coverage)),
                                              existing_tools=existing, earlier_suggestions=[dict(title=p["title"], category=p["category"], status=p["status"], operation_ids=p["operation_ids"]) for p in prior])
-        index, coverage, payload = self.runs.fitted_index("suggestion", build, spec["inventory"], self.discovery.area_scope(spec["id"]), exclude)
+        index, coverage, payload = self.runs.fitted_index("suggestion", build, spec["inventory"], self.discovery.area_scope(spec["id"]), exclude, goals)
         if not index:
             raise AppError("no_next_batch", "Every operation in the selected areas has already been reviewed; press Suggest additional tools to start again", 409)
         coverage["all_considered_ids"] = list(dict.fromkeys(list(exclude) + coverage["considered_ids"]))

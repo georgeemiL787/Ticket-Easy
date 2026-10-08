@@ -61,6 +61,29 @@ def test_policy_is_version_bound_and_generated_tests_do_not_grant_publication(li
     assert error.value.code == "policy_integrity"
 
 
+def test_policy_test_runs_from_another_hash_never_satisfy_this_artifact(lifecycle, tmp_path):
+    """Evidence is bound to the artifact hash: a report for any other build is not this build's proof."""
+    app, client, _, pid, policy = reviewed(lifecycle, tmp_path)
+    assert post(client, pid, "policy", policy=policy).status_code == 200
+    assert post(client, pid, "reconcile").status_code == 200
+    assert approve(client, pid).status_code == 200
+    a = client.post(f"/api/v1/proposals/{pid}/artifacts", json=dict(connector_id="items-sandbox")).json()
+    assert a["policy_tests"]["passed"] and a["policy_tests"]["artifact_sha256"] == a["sha256"]
+    page = f'/api/v1/artifacts/{a["id"]}'
+    insert = "INSERT INTO policy_test_runs(id,artifact_id,artifact_sha256,report,created_at) VALUES(?,?,?,?,?)"
+
+    def record(run_id, sha, passed, when):
+        with app.state.store.connect(write=True) as c:
+            c.execute(insert, (run_id, a["id"], sha, json.dumps(dict(a["policy_tests"], passed=passed, artifact_sha256=sha)), when))
+
+    record("from-an-earlier-build", "0" * 64, False, "2999-01-01T00:00:00")   # newer, but another hash
+    assert client.get(page).json()["policy_tests"]["passed"] is True
+    record("latest-for-this-hash", a["sha256"], False, "2999-01-02T00:00:00")  # latest run of this build
+    assert client.get(page).json()["policy_tests"]["passed"] is False
+    problems = client.post(page + "/publications", json=dict(note="TEST-ONLY")).json()["details"]["problems"]
+    assert any("policy security tests must pass for this artifact hash" in p for p in problems)
+
+
 def test_open_review_page_has_structured_choices_and_rejects_unknown_scope(lifecycle, tmp_path):
     _, client, _, pid, policy = reviewed(lifecycle, tmp_path)
     page = client.get(f"/proposals/{pid}")

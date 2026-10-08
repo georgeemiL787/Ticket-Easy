@@ -77,6 +77,10 @@ class Review:
                 if f.status == "resolved" and answer["text"].strip().lower() in {"whatever", "idk", "don't know", "n/a", "?"}:
                     f.status, f.explanation = "insufficient", "Please provide an explicit answer to the design question."
             candidate = self.runs.tidy(run, canonical_content(result.revised_proposal or old))
+            # A revised proposal that omits the rating does not thereby drop it: the rating is not
+            # content the answers changed, so keep the one this version already carries.
+            if candidate.self_review is None:
+                candidate.self_review = old.self_review
             if {q.id for q in candidate.questions} != question_ids:
                 raise AppError("invalid_reconciliation", "Reconciliation cannot remove or add questions; supersede a question or use an explicit revision request")
             fields = validate_proposal(candidate,spec["inventory"],scope)
@@ -164,6 +168,19 @@ class Review:
                 fields = validate_proposal(ProposalContent.model_validate(snapshot["content"]),json.loads(spec["inventory"]),json.loads(row["derived"]).get("generation_scope"))
                 if fields["blockers"]:
                     raise AppError("approval_blocked","Unresolved configuration remains")
+                # A proposal that duplicates an existing tool, or that the model itself rated
+                # below usable, must be revised rather than approved. The rating used is the one
+                # produced by the reconciliation above, not the generation-time rating those
+                # answers have since overtaken.
+                from ..quality import assess as assess_quality, existing_tools
+                business_id = c.execute("SELECT business_id FROM proposals WHERE id=?", (pid,)).fetchone()["business_id"]
+                quality = assess_quality(snapshot["content"], json.loads(spec["inventory"]),
+                                         existing_tools(self.proposals.current_contents(business_id)), pid,
+                                         current_review=json.loads(rec["result"]).get("self_review"))
+                if quality["blockers"]:
+                    raise AppError("approval_blocked", "This proposal is not worth approving yet: "
+                                  + "; ".join(f["summary"] for f in quality["blockers"]),
+                                  details={"quality": quality})
             reqs = requirements.current(c,pid,version,requirements.ensure(c,pid,version),answers,row["reconciliation_id"])
             pending = [r["id"] for r in reqs if r["status"] != "owner_confirmed"]
             if submission.action == "approve_to_build" and pending:

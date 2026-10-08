@@ -15,14 +15,14 @@ CONTENT = json.dumps(dict(proposals=[], capability_gaps=[]))
 
 def call(tmp_path, primary, fallback, job):
     settings = Settings(_env_file=None, database_path=str(tmp_path / "c.db"), llm_primary=primary, llm_fallback=fallback,
-                        openrouter_model="test/model", openrouter_api_key="test-key")
+                        groq_model="test/model", groq_api_key="test-key")
     store = Store(settings.database_path)
     bid = uid()
     with store.connect(write=True) as c:
         c.execute("INSERT INTO businesses VALUES(?,?,?,?)", (bid, "B", "B", now()))
     sent = []
     def handler(request):
-        provider = "ollama" if request.url.host == "127.0.0.1" else "openrouter"
+        provider = "ollama" if request.url.host == "127.0.0.1" else "groq"
         sent.append(provider)
         job["cancelled"] = True  # the owner stops the action while the model is answering
         if provider == "ollama":
@@ -39,13 +39,13 @@ def call(tmp_path, primary, fallback, job):
     return error.value, sent, attempts
 
 
-def test_cancelling_while_ollama_streams_does_not_try_the_openrouter_fallback(tmp_path):
-    error, sent, attempts = call(tmp_path, "ollama", "openrouter", dict(steps=[]))
+def test_cancelling_while_ollama_streams_does_not_try_the_groq_fallback(tmp_path):
+    error, sent, attempts = call(tmp_path, "ollama", "groq", dict(steps=[]))
     assert error.code == "cancelled" and error.status == 409
     assert sent == ["ollama"] and attempts == [("ollama", "failed", "cancelled")]
 
 
-def test_cancelled_job_stops_an_openrouter_primary_before_any_request_or_fallback(tmp_path):
-    error, sent, attempts = call(tmp_path, "openrouter", "ollama", dict(steps=[], cancelled=True))
+def test_cancelled_job_stops_an_groq_primary_before_any_request_or_fallback(tmp_path):
+    error, sent, attempts = call(tmp_path, "groq", "ollama", dict(steps=[], cancelled=True))
     assert error.code == "cancelled" and error.status == 409
-    assert sent == [] and attempts == [("openrouter", "failed", "cancelled")]
+    assert sent == [] and attempts == [("groq", "failed", "cancelled")]

@@ -12,7 +12,7 @@ from .prompts import model_messages
 from .schemas import drop_echoes, output_schema
 from .types import AttemptInfo
 
-PROVIDERS = {p.name: p for p in (OllamaProvider, OpenRouterProvider, GroqProvider)}
+PROVIDERS = {p.name: p for p in (OllamaProvider, GroqProvider, OpenRouterProvider)}
 
 
 class Providers:
@@ -28,7 +28,7 @@ class Providers:
         s = self.settings
         chain = s.llm_chain
         if any(p not in PROVIDERS for p in chain) or len(set(chain)) != len(chain):
-            raise AppError("model_configuration", "Select distinct supported providers; fallback may be none or a comma-separated list", 503)
+            raise AppError("model_configuration", "Select distinct supported providers (groq, openrouter, ollama); fallback may be none or a comma-separated list", 503)
         for p in chain:
             PROVIDERS[p].check_configuration(s)
         return chain

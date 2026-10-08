@@ -110,8 +110,13 @@ class Proposals:
         row["policy_suggestions"] = suggestions
         row["policy_review_pending"] = bool(row["derived"].get("policy_review_required") and not policy)
         row["capability"] = capability(row["content"], inventory)
-        row["readiness"] = assess(row["content"], inventory, policy)
+        artifact, guards = self.build_evidence(pid, version, row["policy"], row["enforcement"])
+        row["readiness"] = assess(row["content"], inventory, policy, artifact, guards)
         row["risk"] = risks(row["content"], inventory, policy)
+        from ..quality import assess as assess_quality, existing_tools
+        row["quality"] = assess_quality(row["content"], inventory,
+                                        existing_tools(self.current_contents(proposal["business_id"])), pid,
+                                        current_review=current["result"].get("self_review") if current else None)
         from ..compiler.policies import resolve_inputs, runtime_exposure_allowed
         from ..compiler.semantics import input_semantics
         effective, protected, unresolved = resolve_inputs(row["content"], inventory, policy)
@@ -137,6 +142,25 @@ class Proposals:
         if view.get("policy"):
             snapshot["policy_sha256"] = view["policy"]["sha256"]
         return snapshot
+
+    def build_evidence(self, pid, version, policy, enforcement):
+        """The guard evidence for this version, or (None, None) when it no longer describes it.
+
+        Readiness reports current state, so an artifact built under a policy or enforcement
+        configuration that has since changed is not evidence for the proposal as it stands now.
+        """
+        rows = self.store.all("SELECT * FROM artifacts WHERE proposal_id=? AND version=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (pid, version))
+        if not rows:
+            return None, None
+        row = rows[0]
+        content = json.loads(row["content"])
+        if (content.get("access_policy") or {}).get("sha256") != (policy or {}).get("sha256"):
+            return None, None
+        if ((content.get("enforcement_config") or {}).get("id") or None) != ((enforcement or {}).get("id") or None):
+            return None, None
+        runs = self.store.all("SELECT report FROM policy_test_runs WHERE artifact_id=? AND artifact_sha256=? ORDER BY created_at DESC, rowid DESC LIMIT 1",
+                              (row["id"], row["sha256"]))
+        return content, (json.loads(runs[0]["report"]) if runs else None)
 
     @staticmethod
     def check_current(c, pid, version, revision, allow_closed=False):

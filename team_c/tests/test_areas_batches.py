@@ -13,7 +13,7 @@ from team_c.models import AreaAssignmentOutput, AreaNamingOutput
 from team_c.providers import input_fits, model_messages
 from helpers.desk import make_desk, desk_proposal
 from helpers.openapi import op
-from helpers.tool_requests import RequestDesk, idea, triage
+from helpers.tool_requests import RequestDesk, ask, idea, lookup_only, triage
 
 
 def named(name, audience="customer"):
@@ -141,26 +141,71 @@ def test_selected_areas_limit_what_the_model_sees(desk):
     assert sent["coverage"]["area_scoped"] is True
 
 
-def test_request_next_batch_reviews_only_operations_not_yet_considered(desk):
+def test_capability_outside_the_first_slice_is_found_by_expanding_retrieval(desk):
     d = desk
-    d.service.settings.capability_index_chars = 250
-    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this batch", ())]))
-    first = d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal="TEST-ONLY: show the service status", idempotency_key="batch-key-1")).json()
-    assert first["status"] == "unavailable" and first["coverage"]["omitted_ids"]
+    inv, goal = d.spec["inventory"], "TEST-ONLY: health health reference"
+    ranked = capabilities.operation_index(inv, 10 ** 9, None, (), goal)[1]["considered_ids"]
+    # The capability the owner asks for (the lookup) is deliberately ranked outside the first slice.
+    assert ranked[:2] == [d.health, d.lookup]
+    sizes = {o["id"]: len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]}
+    d.service.settings.capability_index_chars = sizes[d.health] + sizes[d.lookup] - 1
+    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+    d.provider.triage.append(triage("feasible", [d.lookup]))
+    d.provider.generations.append(lookup_only)
+    req = ask(d, "expand-1", goal=goal).json()
+    assert req["status"] == "proposed" and req["outcome"]["triage"] == "feasible"
+    assert req["outcome"]["search"]["retrieval_rounds"] == 2
+    # The second slice — the one the first slice cut off — is what the proposal was built from.
+    assert set(req["coverage"]["all_considered_ids"]) == {d.health, d.lookup}
+    slices = [{o["id"] for o in payload["operation_index"]["operations"]} for kind, payload in d.provider.payloads if kind == "request_triage"]
+    assert slices[:2] == [{d.health}, {d.lookup}]
+
+
+def test_absent_capability_searches_the_whole_catalog_before_declaring_absence(desk):
+    d = desk
+    inv, goal = d.spec["inventory"], "TEST-ONLY: show the service status"
+    sizes = [len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]]
+    d.service.settings.capability_index_chars = max(sizes) + 1      # one operation per retrieval round
+    # Every scripted round claims absence, so retrieval has to keep fetching slices until nothing is
+    # left unsearched: one slice is a statement about the slice, not about the API.
+    for _ in range(8):
+        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+    first = d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests",
+                          json=dict(goal=goal, idempotency_key="batch-key-1")).json()
+    cov, search = first["coverage"], first["outcome"]["search"]
+    assert first["status"] == "unavailable"
+    assert cov["retrieval_rounds"] == 4 and cov["searched_operations"] == cov["total_operations"] == 4
+    assert cov["partial_search"] is False and not cov["omitted_ids"]
+    assert set(cov["all_considered_ids"]) == {d.lookup, d.create, d.health, d.attach}
+    assert search == dict(total_operations=4, searched_operations=4, retrieval_rounds=4, partial_search=False)
+    assert len(first["run_ids"]) == 4                       # every round stays auditable
     page = d.client.get(f"/businesses/{d.bid}").text
-    assert "Look in the next batch" in page and "not reviewed yet" in page
-    seen_first = {o["id"] for o in d.provider.payloads[-1][1]["operation_index"]["operations"]}
-    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: still missing", ())]))
-    second = d.client.post(f'/api/v1/tool-requests/{first["id"]}/next-batch').json()
-    seen_second = {o["id"] for o in d.provider.payloads[-1][1]["operation_index"]["operations"]}
-    assert seen_second and not seen_first & seen_second
-    assert second["coverage"]["previously_considered"] == len(seen_first) and set(second["coverage"]["all_considered_ids"]) == seen_first | seen_second
-    while second["coverage"]["omitted_ids"]:
-        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: still missing", ())]))
-        second = d.client.post(f'/api/v1/tool-requests/{first["id"]}/next-batch').json()
-    assert set(second["coverage"]["all_considered_ids"]) == {d.lookup, d.create, d.health, d.attach}
+    assert "4 of 4 operations searched across 4 retrieval round(s)" in page
+    assert "not found in the searched subset" not in page and "Look in the next batch" not in page
     done = d.client.post(f'/api/v1/tool-requests/{first["id"]}/next-batch')
     assert done.status_code == 409 and done.json()["code"] == "no_next_batch"
+
+
+def test_retrieval_cap_reports_a_partial_search_rather_than_an_api_verdict(desk, monkeypatch):
+    d = desk
+    inv, goal = d.spec["inventory"], "TEST-ONLY: show the service status"
+    sizes = [len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]]
+    d.service.settings.capability_index_chars = max(sizes) + 1
+    monkeypatch.setattr(capabilities, "RETRIEVAL_ROUNDS_CAP", 1)
+    for _ in range(8):
+        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+    first = d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests",
+                          json=dict(goal=goal, idempotency_key="batch-key-2")).json()
+    cov = first["coverage"]
+    assert first["status"] == "unavailable" and cov["retrieval_rounds"] == 1
+    assert cov["partial_search"] is True and cov["searched_operations"] < cov["total_operations"] == 4
+    page = d.client.get(f"/businesses/{d.bid}").text
+    assert "not found in the searched subset" in page and "Look in the next batch" in page
+    # The owner can still search what the cap left out; the cap never becomes the verdict.
+    while cov["omitted_ids"]:
+        cov = d.client.post(f'/api/v1/tool-requests/{first["id"]}/next-batch').json()["coverage"]
+    assert set(cov["all_considered_ids"]) == {d.lookup, d.create, d.health, d.attach}
+    assert cov["partial_search"] is False and cov["searched_operations"] == 4
 
 
 def test_suggest_next_batch_continues_where_the_last_run_stopped(desk):
@@ -188,7 +233,10 @@ def test_suggest_next_batch_continues_where_the_last_run_stopped(desk):
 def test_generation_next_batch_fits_the_model_and_skips_used_operations(desk):
     d = desk
     first = d.client.get(f"/api/v1/specifications/{d.sid}/generation-batch").json()
-    assert set(first["operation_ids"]) == {d.lookup, d.create, d.health} and first["used"] == 0
+    # The batch is whatever the provider's input allowance admits, and the shared system prompt is
+    # part of that request, so its size moves whenever the prompt grows. Assert the batch covers the
+    # inventory rather than a fixed count, and that every chosen operation really fits.
+    assert first["operation_ids"] and set(first["operation_ids"]) <= {d.lookup, d.create, d.health} and first["used"] == 0
     business = d.service.store.one("SELECT * FROM businesses WHERE id=?", (d.bid,))
     fits = lambda ids: input_fits(d.service.settings, "generation", dict(business=business, inventory=d.service.scoped(d.spec["inventory"], ids), contract_version="1"))
     assert fits(first["operation_ids"])
@@ -212,7 +260,9 @@ def test_inventory_page_shows_areas_reasons_and_unticked_batches(desk):
     advanced = page.split('id="advanced"')[1]
     assert 'name="operation_ids"' in advanced and " checked>" not in advanced and "Select the next batch that fits" in advanced
     picked = d.client.get(f"/specifications/{d.sid}?batch=next").text.split('id="advanced"')[1]
-    assert len(re.findall(r'name="operation_ids" value="[^"]+" checked', picked)) == 3
+    ticked = set(re.findall(r'name="operation_ids" value="([^"]+)" checked', picked))
+    # The pre-ticked box must be exactly the batch that fits the provider allowance.
+    assert ticked == set(d.service.next_generation_batch(d.sid)["operation_ids"]) and ticked
     csrf = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
     view = d.service.areas(d.sid)
     area = area_of(view, d.lookup)

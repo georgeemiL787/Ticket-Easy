@@ -67,6 +67,22 @@ class Output(StrictModel):
     pointer: str
 
 
+CRITERIA = ("business_value", "api_fidelity", "input_minimality", "output_usefulness", "redundancy", "security_posture")
+
+
+class QualityCriterion(StrictModel):
+    criterion: Literal["business_value", "api_fidelity", "input_minimality", "output_usefulness", "redundancy", "security_posture"]
+    score: int = Field(ge=1, le=5, description="1 unusable, 5 strong. Be strict; a low score means revise, not ship")
+    reason: str = Field(min_length=1, description="One sentence naming the evidence for this score")
+
+
+class SelfReview(StrictModel):
+    criteria: list[QualityCriterion] = Field(min_length=len(CRITERIA), max_length=len(CRITERIA),
+                                            description="Exactly one entry per criterion: " + ", ".join(CRITERIA))
+    verdict: Literal["proceed", "revise"] = Field(description="proceed only when every criterion scores 3 or better and redundancy is not a duplicate")
+    summary: str = Field(min_length=1, description="One sentence: the single strongest reason to revise, or why it is ready")
+
+
 class ProposalContent(StrictModel):
     name: str = Field(min_length=1)
     description: str = Field(min_length=1)
@@ -81,6 +97,7 @@ class ProposalContent(StrictModel):
     limitations: list[str]
     risk: Literal["low", "medium", "high", "unknown"]
     risk_rationale: str = Field(min_length=1)
+    self_review: SelfReview | None = Field(default=None, description="The model's own rating of this proposal before it is reviewed")
 
 
 class CapabilityGap(StrictModel):
@@ -169,6 +186,7 @@ class ReconciliationOutput(StrictModel):
     findings: list[Finding]
     revised_proposal: ProposalContent | None = None
     capability_gaps: list[CapabilityGap]
+    self_review: SelfReview = Field(description="Re-rate the proposal now that the answers and access requirements are known. This replaces the generation-time rating as the current verdict; a review written before the owner answered cannot describe the current proposal.")
 
 
 class AnswerSubmission(StrictModel):

@@ -4,13 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ticket-Easy chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/ui/aurora.css">
   <link rel="stylesheet" href="/chat/static/style.css">
 </head>
 <body>
-  <main class="chat" id="chat">
+  <div class="aurora" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob glow"></i></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <main class="chat glass page" id="chat">
     <header class="chat-header">
-      <h1 id="title">Chat</h1>
-      <label class="dev-toggle" title="Show how the agent decided">
+      <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> <span id="title">Chat</span></h1>
+      <label class="dev-toggle chip" title="Show how the agent decided">
         <input type="checkbox" id="dev-toggle"> developer
       </label>
     </header>
@@ -19,9 +26,9 @@
     <p class="status" id="status" role="status" hidden></p>
 
     <form class="composer" id="composer" autocomplete="off">
-      <input id="input" name="text" type="text" dir="auto" maxlength="2000"
+      <input id="input" class="field" name="text" type="text" dir="auto" maxlength="2000"
              placeholder="Type a message" aria-label="Message" required>
-      <button type="submit" id="send">Send</button>
+      <button type="submit" id="send" class="btn-glow">Send</button>
     </form>
   </main>
   <script src="/chat/static/chat.js"></script>

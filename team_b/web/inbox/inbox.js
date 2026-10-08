@@ -229,9 +229,9 @@ if (typeof document !== "undefined") {
         el("p", { class: "muted", dir: "auto", text: c.pending_approval.reason }))) : null,
       block("Customer", facts({
         verified: customer.verified ? "yes (" + (customer.method || "checked") + ")" : "no",
-        customer_id: customer.customer_id || "—", phone: customer.phone_masked || "—",
-        orders: (customer.orders || []).join(", ") || "—", language: pkg.language || "—",
-        intents: (pkg.intents || []).join(", ") || "—" })),
+        customer_id: customer.customer_id || "-", phone: customer.phone_masked || "-",
+        orders: (customer.orders || []).join(", ") || "-", language: pkg.language || "-",
+        intents: (pkg.intents || []).join(", ") || "-" })),
       block("Details the customer gave", facts(pkg.details)),
       block("Order facts", facts(pkg.order_facts)),
       pkg.safety_flags && pkg.safety_flags.length ? block("Safety flags", el("p", { text: pkg.safety_flags.join(", ") })) : null,
@@ -240,17 +240,17 @@ if (typeof document !== "undefined") {
       block("Rule checker answers", list(pkg.rule_answers, (r) =>
         r.action + ": " + r.decision + " (" + r.reason_code + ")" + (r.citations.length ? " · " + r.citations.join(", ") : ""))),
       block("Actions tried", list(pkg.attempted_actions, (a) => el("span", {},
-        a.tool + " — " + a.state + (a.error ? " (" + a.error + ")" : ""),
+        a.tool + " - " + a.state + (a.error ? " (" + a.error + ")" : ""),
         a.history.length ? el("div", { class: "muted", text: a.history.join("  |  ") }) : null,
         a.audit_id || a.execution_id ? el("div", { class: "muted", text: [a.audit_id && "audit " + a.audit_id, a.execution_id && "ref " + a.execution_id].filter(Boolean).join(" · ") }) : null))),
-      block("Failures", list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " — " + f.message : "") +
+      block("Failures", list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " - " + f.message : "") +
         (f.audit_id ? " · audit " + f.audit_id : ""))),
       pkg.similar_tickets && pkg.similar_tickets.length ? block("Similar past tickets",
         list(pkg.similar_tickets, (t) => t.category + ": " + t.resolution)) : null,
       block("Conversation", el("div", { class: "transcript" }, (pkg.transcript || []).map((l) =>
         el("div", { class: "line " + l.role, dir: "auto", text: l.text })))),
       block("History", list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
-        (e.note ? " — " + e.note : ""))),
+        (e.note ? " - " + e.note : ""))),
     ];
     $("case-body").replaceChildren(...body.filter(Boolean));
   }

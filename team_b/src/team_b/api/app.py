@@ -27,6 +27,7 @@ log = get_logger(__name__)
 
 CHAT_DIR = PROJECT_ROOT / "web" / "chat"
 INBOX_DIR = PROJECT_ROOT / "web" / "inbox"
+SHARED_UI_DIR = PROJECT_ROOT / "web" / "shared"  # the aurora look shared by the chat and the inbox
 DASHBOARD_DIR = PROJECT_ROOT / "web" / "dashboard"  # the built dashboard app (npm run build in dashboard/)
 
 
@@ -40,6 +41,12 @@ def mount_chat_page(app: FastAPI) -> None:
         return FileResponse(CHAT_DIR / "index.html", media_type="text/html")
 
     app.mount("/chat/static", StaticFiles(directory=CHAT_DIR), name="chat-static")
+
+
+def mount_shared_ui(app: FastAPI) -> None:
+    """The look shared by the chat and the inbox pages: /ui/aurora.css."""
+    if SHARED_UI_DIR.is_dir():
+        app.mount("/ui", StaticFiles(directory=SHARED_UI_DIR), name="shared-ui")
 
 
 def mount_inbox_page(app: FastAPI) -> None:
@@ -110,6 +117,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
     mount_chat_page(app)
+    mount_shared_ui(app)
     mount_inbox_page(app)
     mount_dashboard_app(app)
 

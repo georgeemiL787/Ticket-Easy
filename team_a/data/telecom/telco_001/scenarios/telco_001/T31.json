@@ -1,0 +1,37 @@
+{
+  "id": "T31",
+  "title": "Arabizi: Seif can't take Salefny again while one is outstanding",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": "TC-D015",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "salefny msh rad ya tshta8al leh",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "01512340015 5091",
+      "expect": {
+        "decision": "refuse",
+        "awaiting": null,
+        "locale": "arabizi",
+        "citations_include": [
+          "prepaid_recharge_policy@v3#s5"
+        ],
+        "text_contains": "10"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "T07",
+  "title": "Arabizi greeting then a FAQ question",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "ahlan",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "salefny b kam?",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi",
+        "citations_include": [
+          "prepaid_recharge_policy@v3#s5"
+        ],
+        "text_contains": "5"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

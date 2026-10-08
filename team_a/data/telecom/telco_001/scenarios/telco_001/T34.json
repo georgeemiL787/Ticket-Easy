@@ -1,0 +1,36 @@
+{
+  "id": "T34",
+  "title": "English: Rana's device is locked for two unpaid installments; agent explains, no unlock",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D014",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "My iPhone is locked, unlock it now",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01212340014 - 7719",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en",
+        "citations_include": [
+          "contract_policy@v1#s3"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

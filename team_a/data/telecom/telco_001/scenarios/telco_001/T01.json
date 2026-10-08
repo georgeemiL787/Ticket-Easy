@@ -1,0 +1,30 @@
+{
+  "id": "T01",
+  "title": "English: why a 10 EGP card gives 9.10 credit and costs 13 (policy answer, no identity needed)",
+  "status": "pending",
+  "language": "en",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "I bought a 10 pound card and only got 9.10, why??",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en",
+        "citations_include": [
+          "prepaid_recharge_policy@v3#s3"
+        ],
+        "text_contains": "13"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "trace_invariants": true
+  }
+}

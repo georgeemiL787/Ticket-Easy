@@ -1,0 +1,27 @@
+{
+  "id": "T53",
+  "title": "Mixed: angry repeat complaint is escalated with a full summary",
+  "status": "pending",
+  "language": "mixed",
+  "customer": "TC-D007",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "دي تالت مرة اشتكي من النت ومحدش عمل حاجة!! worst service",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "ar",
+        "escalation": "high_frustration"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "high_frustration",
+    "trace_invariants": true
+  }
+}

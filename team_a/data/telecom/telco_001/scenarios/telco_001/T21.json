@@ -1,0 +1,36 @@
+{
+  "id": "T21",
+  "title": "Egyptian Arabic: Omar's bundle is not refundable (3 days, 42% used)",
+  "status": "pending",
+  "language": "ar",
+  "customer": "TC-D004",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "عايز ألغي باقة الـ 200 ورجعولي فلوسها",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01512340004 - 6603",
+      "expect": {
+        "decision": "refuse",
+        "awaiting": null,
+        "locale": "ar",
+        "citations_include": [
+          "refund_policy@v3#s1"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

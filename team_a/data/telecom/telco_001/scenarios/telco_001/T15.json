@@ -1,0 +1,38 @@
+{
+  "id": "T15",
+  "title": "English: Laila asks about slow internet; a visit is already booked",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D008",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "My internet is super slow again",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "landline 0342234008, last four 4107",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en",
+        "text_contains": "13:00-17:00",
+        "tools_called": [
+          "verify_customer",
+          "get_appointment"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

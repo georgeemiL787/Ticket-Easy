@@ -1,0 +1,451 @@
+{
+  "tenant_id": "telco_001",
+  "display_name": "Masr Connect",
+  "display_name_ar": "مصر كونكت",
+  "domain": "telecom",
+  "default_locale": "ar",
+  "history_max_turns": 12,
+  "managers": [
+    "manager"
+  ],
+  "line_id_pattern": "01[0125]\\d{8}",
+  "landline_pattern": "0\\d{1,2}\\d{7,8}",
+  "identity": {
+    "verify_tool": "verify_customer",
+    "required_slots": [
+      "msisdn",
+      "nid_last4"
+    ],
+    "max_attempts": 2
+  },
+  "escalation": {
+    "max_tool_failures": 2,
+    "max_clarifications": 2,
+    "min_intent_confidence": 0.55,
+    "escalate_on_deny": false,
+    "escalate_on_high_frustration": true,
+    "sla_minutes": {
+      "urgent": 15,
+      "high": 60,
+      "normal": 240
+    },
+    "final_deny_rules": [
+      "R-BUNDLE-REFUND-24H",
+      "R-BUNDLE-REFUND-USAGE",
+      "R-PORT-OUT-60D",
+      "R-SALEFNY-ONE",
+      "R-SIM-SWAP-STORE",
+      "R-LINE-CANCEL-STORE"
+    ]
+  },
+  "permissions": {
+    "allowed_tools": [
+      "verify_customer",
+      "get_line",
+      "list_line_bundles",
+      "list_transactions",
+      "get_invoice",
+      "get_usage_summary",
+      "check_outage",
+      "get_appointment",
+      "get_puk",
+      "subscribe_bundle",
+      "refund_bundle",
+      "refund_charge",
+      "unsubscribe_vas",
+      "refund_vas",
+      "open_bill_dispute",
+      "suspend_line",
+      "activate_roaming",
+      "change_plan",
+      "grant_salefny",
+      "issue_port_out",
+      "create_complaint",
+      "schedule_technician"
+    ],
+    "max_risk": "high",
+    "confirm_operation_kinds": [
+      "create",
+      "update",
+      "delete"
+    ]
+  },
+  "intents": {
+    "policy_question": {
+      "kind": "knowledge",
+      "description": "A question about plans, recharge, bills, roaming, SIM, porting or complaints that needs no account data.",
+      "examples": [
+        "How does Salefny work?",
+        "الضرايب على الشحن كام؟",
+        "el roaming byesht8al ezay?"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "greeting": {
+      "kind": "smalltalk",
+      "description": "A greeting or thanks with no request.",
+      "examples": [
+        "hi",
+        "السلام عليكم",
+        "ahlan",
+        "hi، ممكن مساعدة؟"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "balance_inquiry": {
+      "kind": "lookup",
+      "description": "Balance, remaining bundle quota, line status.",
+      "examples": [
+        "How much balance do I have?",
+        "عايز اعرف رصيدي كام",
+        "3ayez a3raf rasedy kam",
+        "عايز اعرف ال balance بتاعي"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_line"
+    },
+    "bill_inquiry": {
+      "kind": "lookup",
+      "description": "What is on my bill and why.",
+      "examples": [
+        "Why is my bill {amount} EGP this month?",
+        "الفاتورة جاية {amount} جنيه ليه الشهر ده",
+        "el fatora gaya {amount} gneh leh el shahr da",
+        "الـ bill جاية {amount} ليه؟"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_invoice",
+      "knowledge_query": "bill dispute"
+    },
+    "line_suspended": {
+      "kind": "lookup",
+      "description": "Why the line can't call or is blocked.",
+      "examples": [
+        "My line is suspended, I can't call anyone",
+        "الخط واقف ومش عارف اتصل",
+        "el 5at wa2ef w msh 3aref attesel",
+        "الخط suspended من امبارح"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "knowledge_query": "credit limit suspension"
+    },
+    "internet_down": {
+      "kind": "lookup",
+      "description": "Home internet down or slow.",
+      "examples": [
+        "My home internet has been down since yesterday",
+        "النت في البيت فاصل من امبارح",
+        "el net fel beet fasel men embare7",
+        "الـ home internet فاصل من امبارح",
+        "My internet speed is terrible, I'm paying for 70 Mbps",
+        "النت بطيء جدًا وانا دافع 70 ميجا"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "check_outage",
+      "knowledge_query": "home internet faults"
+    },
+    "bundle_subscribe": {
+      "kind": "action",
+      "description": "Subscribe to a bundle.",
+      "examples": [
+        "I want to subscribe to {bundle}",
+        "عايز اشترك في باقة {bundle}",
+        "3ayez ashtrek fe ba2et {bundle}",
+        "عايز اعمل subscribe في {bundle}"
+      ],
+      "required_slots": [
+        "bundle_id"
+      ],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "subscribe_bundle",
+      "knowledge_query": "subscribe bundle",
+      "labels": {
+        "en": "subscribe to the bundle",
+        "ar": "الاشتراك في الباقة",
+        "arabizi": "el eshterak fel ba2a"
+      }
+    },
+    "bundle_refund": {
+      "kind": "action",
+      "description": "Refund a bundle subscribed by mistake.",
+      "examples": [
+        "I subscribed to {bundle} by mistake, refund please",
+        "اشتركت في {bundle} بالغلط رجعولي فلوسي",
+        "eshtarakt fe {bundle} bel 8alat raga3oly felousy",
+        "عملت subscribe بالغلط في {bundle}، عايز refund"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "list_line_bundles",
+      "action_tool": "refund_bundle",
+      "knowledge_query": "bundle refund",
+      "labels": {
+        "en": "refund the bundle",
+        "ar": "استرداد قيمة الباقة",
+        "arabizi": "estrdad el ba2a"
+      }
+    },
+    "wrong_deduction": {
+      "kind": "action",
+      "description": "Money deducted wrongly or twice.",
+      "examples": [
+        "{amount} EGP disappeared from my balance today",
+        "اتخصم مني {amount} جنيه النهارده من غير سبب",
+        "et5asam meny {amount} gneh el naharda men 8eer sabab",
+        "في deduction غريب {amount} جنيه"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "list_transactions",
+      "action_tool": "refund_charge",
+      "knowledge_query": "wrong deduction refund",
+      "labels": {
+        "en": "refund the charge",
+        "ar": "رد المبلغ",
+        "arabizi": "rad el mablagh"
+      }
+    },
+    "vas_unsubscribe": {
+      "kind": "action",
+      "description": "Stop a content service and refund it.",
+      "examples": [
+        "Something called games club keeps charging me",
+        "فيه خدمة اسمها نادي الألعاب بتسحب رصيد",
+        "fe khedma bteshab rased kol yom",
+        "فيه service بتسحب رصيد كل يوم"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "list_transactions",
+      "action_tool": "unsubscribe_vas",
+      "knowledge_query": "value-added services refund",
+      "labels": {
+        "en": "stop the service",
+        "ar": "إلغاء الخدمة",
+        "arabizi": "elgha2 el khedma"
+      }
+    },
+    "bill_dispute": {
+      "kind": "action",
+      "description": "Dispute a charge on a postpaid bill.",
+      "examples": [
+        "There's a {amount} EGP charge on my bill I don't recognise",
+        "فيه {amount} جنيه على الفاتورة معرفهمش",
+        "fe {amount} gneh 3al fatora ma3rafhomsh",
+        "في charge {amount} جنيه مش فاهمه"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_invoice",
+      "action_tool": "open_bill_dispute",
+      "knowledge_query": "bill dispute",
+      "labels": {
+        "en": "open a dispute",
+        "ar": "فتح اعتراض",
+        "arabizi": "fat7 e3terad"
+      }
+    },
+    "lost_or_stolen": {
+      "kind": "action",
+      "description": "Phone or SIM lost or stolen; suspend the line.",
+      "examples": [
+        "My phone was stolen, please stop my line",
+        "الموبايل اتسرق وقفولي الخط",
+        "el mobile etsara2 wa2afooly el 5at",
+        "الموبايل اتسرق، please اعملوا block للخط"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "suspend_line",
+      "knowledge_query": "lost stolen phone",
+      "labels": {
+        "en": "suspend the line",
+        "ar": "إيقاف الخط",
+        "arabizi": "ee2af el 5at"
+      }
+    },
+    "roaming_activation": {
+      "kind": "action",
+      "description": "Turn roaming on before travel.",
+      "examples": [
+        "I'm travelling to {country} tomorrow, how do I activate roaming?",
+        "مسافر {country} بكره، افعل التجوال ازاي؟",
+        "msafer {country} bokra, afa3al el roaming ezay?",
+        "مسافر {country}، عايز activate للـ roaming"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "activate_roaming",
+      "knowledge_query": "roaming activation",
+      "labels": {
+        "en": "turn on roaming",
+        "ar": "تفعيل التجوال",
+        "arabizi": "taf3eel el roaming"
+      }
+    },
+    "plan_change": {
+      "kind": "action",
+      "description": "Upgrade or downgrade the plan.",
+      "examples": [
+        "I want to upgrade my plan",
+        "عايز ارقي الباقة",
+        "3ayez ara2y el ba2a",
+        "عايز اعمل upgrade للـ plan"
+      ],
+      "required_slots": [
+        "plan_id"
+      ],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "change_plan",
+      "knowledge_query": "change plan",
+      "labels": {
+        "en": "change the plan",
+        "ar": "تغيير النظام",
+        "arabizi": "ta8yeer el nezam"
+      }
+    },
+    "puk_request": {
+      "kind": "lookup",
+      "description": "PUK code for a locked SIM.",
+      "examples": [
+        "My SIM is asking for PUK",
+        "الشريحة بتطلب PUK",
+        "el shee7a bt6lob PUK",
+        "الـ SIM locked وعايزة PUK"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_puk",
+      "knowledge_query": "puk code"
+    },
+    "salefny": {
+      "kind": "action",
+      "description": "Emergency credit.",
+      "examples": [
+        "Salefny is not working for me",
+        "سلفني مش راضية تشتغل",
+        "salefny msh rad ya tshta8al",
+        "الـ salefny مش شغالة"
+      ],
+      "required_slots": [
+        "amount"
+      ],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "grant_salefny",
+      "knowledge_query": "salefny emergency credit",
+      "labels": {
+        "en": "take Salefny",
+        "ar": "سلفني",
+        "arabizi": "salefny"
+      }
+    },
+    "port_out": {
+      "kind": "action",
+      "description": "Move the number to another network.",
+      "examples": [
+        "I want to move my number to another network",
+        "عايز انقل رقمي لشبكة تانية",
+        "3ayez a2el ra2my le shabaka tanya",
+        "عايز اعمل port للرقم لشبكة تانية"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "lookup_tool": "get_line",
+      "action_tool": "issue_port_out",
+      "knowledge_query": "port out",
+      "labels": {
+        "en": "port out",
+        "ar": "نقل الرقم",
+        "arabizi": "na2l el ra2am"
+      }
+    },
+    "sim_swap_request": {
+      "kind": "refuse",
+      "description": "SIM replacement or swap requested in chat (store only).",
+      "examples": [
+        "Send me a new SIM for my number",
+        "عايز شريحة جديدة لنفس الرقم تتبعتلي",
+        "3ayez shee7a gdeda le nafs el ra2am",
+        "عايز SIM swap من غير ما أروح الفرع"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "knowledge_query": "sim replacement"
+    },
+    "cancel_line": {
+      "kind": "refuse",
+      "description": "Cancel the line (store only).",
+      "examples": [
+        "Cancel my line please",
+        "الغولي الخط",
+        "alghooly el 5at",
+        "عايز اعمل cancel للخط"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "knowledge_query": "cancel line"
+    },
+    "call_log_request": {
+      "kind": "refuse",
+      "description": "Detailed call records (store only).",
+      "examples": [
+        "Send me the list of numbers I called last week",
+        "ابعتلي الأرقام اللي كلمتها الأسبوع اللي فات",
+        "eb3atly el ar2am elly kalemtha el osboo3 elly fat",
+        "عايز الـ call log بتاعي"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "knowledge_query": "call records"
+    },
+    "third_party_request": {
+      "kind": "refuse",
+      "description": "Account details of someone else's line.",
+      "examples": [
+        "What's my husband's line balance? number {msisdn}",
+        "عايز اعرف رصيد خط جوزي {msisdn}",
+        "3ayza a3raf rased 5at gozy {msisdn}",
+        "عايزة اعرف الـ balance بتاع جوزي"
+      ],
+      "required_slots": [],
+      "argument_map": {},
+      "knowledge_query": "third parties"
+    },
+    "fraud_report": {
+      "kind": "handoff",
+      "description": "Scam, fraud or unauthorised SIM swap.",
+      "examples": [
+        "Someone called me pretending to be Masr Connect and asked for my code",
+        "حد كلمني وقال إنه من مصر كونكت وطلب الكود",
+        "7ad kalemny w 2al eno men masr connect w 6alab el kod",
+        "حد عمل SIM swap لرقمي من غير علمي"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "human_request": {
+      "kind": "handoff",
+      "description": "Asks for a person or a manager.",
+      "examples": [
+        "This is the third time I complain and nothing happened!",
+        "دي تالت مرة اشتكي ومحدش عمل حاجة!",
+        "di talet marra ashtekey w ma7adesh 3amal 7aga!",
+        "دي third time اشتكي!!"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    }
+  }
+}

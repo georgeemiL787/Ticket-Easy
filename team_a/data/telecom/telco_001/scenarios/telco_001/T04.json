@@ -1,0 +1,29 @@
+{
+  "id": "T04",
+  "title": "Mixed: do unused Control units carry over (only if renewed within 28 days)",
+  "status": "pending",
+  "language": "mixed",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "لو وحدات الـ control ما خلصتش الشهر ده بتترحل للشهر الجاي؟",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "ar",
+        "citations_include": [
+          "bundles_policy@v4#s3"
+        ],
+        "text_contains": "28"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

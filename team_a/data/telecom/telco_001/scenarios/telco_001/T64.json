@@ -1,0 +1,25 @@
+{
+  "id": "T64",
+  "title": "Egyptian Arabic: ambiguous 'it stopped' asks which service",
+  "status": "pending",
+  "language": "ar",
+  "customer": "TC-D007",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "هو وقف تاني",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "detail",
+        "locale": "ar"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

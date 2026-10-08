@@ -1,0 +1,37 @@
+{
+  "id": "T13",
+  "title": "Arabizi: Hana's line is suspended because two bills are unpaid",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": "TC-D006",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "el 5at wa2ef leh?? msh 3arfa attesel",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "01112340006 - 5537",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi",
+        "citations_include": [
+          "postpaid_billing_policy@v2#s3"
+        ],
+        "text_contains": "456"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

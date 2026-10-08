@@ -1,0 +1,49 @@
+{
+  "id": "T22",
+  "title": "Arabic: Ahmed's duplicated Mix 75 charge refunded (75 EGP, within agent limit)",
+  "status": "pending",
+  "language": "ar",
+  "customer": "TC-D009",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "اتخصم مني تمن باقة الميكس مرتين امبارح بالليل",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01112340009 والرقم 3378",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "ar",
+        "text_contains": "75",
+        "citations_include": [
+          "refund_policy@v3#s2"
+        ]
+      }
+    },
+    {
+      "say": "تمام اعمل كده",
+      "expect": {
+        "decision": "execute",
+        "awaiting": null,
+        "locale": "ar",
+        "text_contains": "RF-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "refund_charge"
+    ],
+    "audit_count": 1,
+    "trace_invariants": true
+  }
+}

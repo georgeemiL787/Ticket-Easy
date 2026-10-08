@@ -1,0 +1,38 @@
+{
+  "id": "T14",
+  "title": "Egyptian Arabic: Youssef's home internet is down because of a known outage",
+  "status": "pending",
+  "language": "ar",
+  "customer": "TC-D007",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "النت في البيت فاصل من امبارح الصبح",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "الأرضي 0502234007 وآخر 4 أرقام 8812",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "ar",
+        "text_contains": "OUT-D007",
+        "tools_called": [
+          "verify_customer",
+          "check_outage"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "T30",
+  "title": "Arabizi: Tarek can't port out yet (needs 4 months of ownership, line is 40 days old)",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": "TC-D011",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "3ayez a2el ra2my le shabaka tanya",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "arabizi"
+      }
+    },
+    {
+      "say": "01512340011 - 1172",
+      "expect": {
+        "decision": "refuse",
+        "awaiting": null,
+        "locale": "arabizi",
+        "citations_include": [
+          "porting_policy@v2#s2"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

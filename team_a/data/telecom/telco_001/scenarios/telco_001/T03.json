@@ -1,0 +1,28 @@
+{
+  "id": "T03",
+  "title": "Arabizi: roaming activation question for a prepaid line",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "msafer el sa3odeya bokra, afa3al el roaming ezay 3al kart?",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "arabizi",
+        "citations_include": [
+          "roaming_policy@v2#s1"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

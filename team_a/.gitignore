@@ -15,3 +15,6 @@ __pycache__/
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+
+# Telecom source database (214 MB, regenerate with: python data/telecom/telco_001/scripts/generate.py)
+data/telecom/telco_001/telecom.db

@@ -8,7 +8,21 @@
     "update_delivery_address": "change the delivery address of an order",
     "cancel_order": "cancel an order",
     "apply_voucher": "issue a compensation voucher to the customer",
-    "create_ticket": "open a support ticket"
+    "create_ticket": "open a support ticket",
+    "subscribe_bundle": "telecom: subscribe a line to a bundle",
+    "refund_bundle": "telecom: refund a bundle bought by mistake",
+    "refund_charge": "telecom: refund a wrong or duplicated charge",
+    "refund_vas": "telecom: refund a content service added without consent",
+    "open_bill_dispute": "telecom: open a dispute on a postpaid bill",
+    "grant_outage_compensation": "telecom: compensate a customer for a network outage",
+    "grant_salefny": "telecom: lend emergency credit (Salefny)",
+    "transfer_balance": "telecom: transfer prepaid balance to another line",
+    "change_plan": "telecom: change a line's plan",
+    "activate_roaming": "telecom: turn roaming on for a line",
+    "issue_port_out": "telecom: issue a number-portability (port-out) code",
+    "get_puk": "telecom: give the customer their SIM PUK code",
+    "sim_swap": "telecom: replace a SIM card (store-only)",
+    "cancel_line": "telecom: cancel a line (store-only)"
   },
   "facts": {
     "order_status": {"type": "enum", "values": ["pending", "processing", "shipped", "delivered", "returned", "cancelled", "return_in_progress"]},
@@ -25,9 +39,24 @@
     "product_subcategory": {"type": "string", "examples": ["smartphone", "apparel", "underwear", "hair_care", "vitamins", "furniture", "large_appliance", "bedding", "home_decor", "diapers", "feeding", "costume", "perishable"]},
     "return_eligible_tag": {"type": "boolean", "note": "the offer carries the hassle-free returns / Returnable tag"},
     "warranty_tag": {"type": "boolean", "note": "warranty-tagged items go to the seller or manufacturer service center"},
-    "payment_method": {"type": "enum", "values": ["card", "wallet", "instapay", "cod", "credit_card", "cash_on_delivery", "bnpl_tabby", "credit_card_emi"], "note": "values are each tenant's own; not normalized across tenants"}
+    "payment_method": {"type": "enum", "values": ["card", "wallet", "instapay", "cod", "credit_card", "cash_on_delivery", "bnpl_tabby", "credit_card_emi"], "note": "values are each tenant's own; not normalized across tenants"},
+    "line_type": {"type": "enum", "values": ["prepaid", "control", "postpaid", "home_internet"]},
+    "identity_verified": {"type": "boolean", "note": "telecom: line number (or landline) plus last 4 digits of the national ID"},
+    "hours_since_subscription": {"type": "number", "derived_from": "line_bundles.subscribed_at"},
+    "quota_used_percent": {"type": "number", "derived_from": "data_mb_used / data_mb_total * 100"},
+    "line_age_days": {"type": "integer", "derived_from": "lines.activated_at"},
+    "days_since_invoice": {"type": "integer", "derived_from": "invoices.issued_at"},
+    "unpaid_invoices": {"type": "integer", "note": "1 if the latest past-due invoice is not fully paid, else 0"},
+    "paid_invoices": {"type": "integer", "note": "invoices with status paid or paid_late"},
+    "prepaid_balance": {"type": "number", "unit": "EGP"},
+    "prepaid_balance_minus_price": {"type": "number", "unit": "EGP", "note": "prepaid balance minus the bundle price"},
+    "charge_confirmed_wrong": {"type": "boolean", "note": "transactions.is_duplicate = 1 or a confirmed system error"},
+    "salefny_outstanding": {"type": "number", "unit": "EGP"},
+    "outage_hours": {"type": "number"},
+    "plan_changes_this_cycle": {"type": "integer"}
   },
   "arguments": {
-    "amount": {"type": "number", "unit": "EGP", "used_by": ["create_refund", "apply_voucher"]}
+    "amount": {"type": "number", "unit": "EGP", "used_by": ["apply_voucher", "create_refund", "grant_salefny", "open_bill_dispute", "refund_bundle", "refund_charge", "refund_vas", "transfer_balance"]},
+    "refund_days": {"type": "integer", "used_by": ["refund_vas"], "note": "days of content-service charges being refunded"}
   }
 }

@@ -1,0 +1,2719 @@
+{
+  "tenant_id": "telco_001",
+  "documents": [
+    {
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "refund_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "sim_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "porting_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "contract_policy",
+      "version": "v1",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "en+ar"
+    },
+    {
+      "document_id": "faq",
+      "version": "v1",
+      "effective_date": "2026-10-01",
+      "current": true,
+      "language": "mixed"
+    }
+  ],
+  "passages": [
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s1",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "1. Scope",
+      "language": "en",
+      "text": "This policy applies to all prepaid (Kart) and Control mobile lines on the Masr Connect network inside Egypt.",
+      "keywords": [
+        "prepaid",
+        "recharge scope",
+        "كارت",
+        "خط كارت",
+        "شحن"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s1.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "1. نطاق السياسة",
+      "language": "ar",
+      "text": "تنطبق هذه السياسة على جميع خطوط الكارت وخطوط الكنترول على شبكة مصر كونكت داخل جمهورية مصر العربية.",
+      "keywords": [
+        "prepaid",
+        "recharge scope",
+        "كارت",
+        "خط كارت",
+        "شحن"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s2",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "2. Recharge channels",
+      "language": "en",
+      "text": "Customers can recharge with scratch cards, the Masr Connect app, USSD, Fawry outlets, bank ATMs, InstaPay, e-wallets and Masr Connect stores. Every recharge is confirmed by a free SMS.",
+      "keywords": [
+        "how to recharge",
+        "recharge channels",
+        "fawry",
+        "instapay",
+        "اشحن ازاي",
+        "فوري",
+        "ashan ezay"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s2.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "2. قنوات الشحن",
+      "language": "ar",
+      "text": "يمكن للعميل الشحن بكروت الشحن أو تطبيق مصر كونكت أو أكواد USSD أو منافذ فوري أو ماكينات الصراف الآلي أو إنستاباي أو المحافظ الإلكترونية أو فروع مصر كونكت. يتم تأكيد كل عملية شحن برسالة نصية مجانية.",
+      "keywords": [
+        "how to recharge",
+        "recharge channels",
+        "fawry",
+        "instapay",
+        "اشحن ازاي",
+        "فوري",
+        "ashan ezay"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s3",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "3. Taxes and card prices",
+      "language": "en",
+      "text": "Recharge cards are sold above their face value because of government taxes, and the credit added is less than the face value. Since December 2024 a 10 EGP card sells for 13 EGP and adds 9.10 EGP of credit (91% of its face value); a 20 EGP card sells for 26 EGP and adds 18.20 EGP. Digital recharges add the same 91% of the recharged value. The confirmation SMS always shows every deduction.",
+      "keywords": [
+        "tax",
+        "why less credit",
+        "card price 13",
+        "ضرايب",
+        "الرصيد ناقص",
+        "كارت 10 بكام",
+        "shahant 10 gali 9"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.dostor.org/4886029",
+        "https://www.tra.gov.eg/en/the-national-telecommunication-regulatory-authority-obligates-mobile-operators-to-notify-users-of-any-deductions-from-charged-credit-per-each-re-charge"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s3.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "3. الضرائب وأسعار الكروت",
+      "language": "ar",
+      "text": "تُباع كروت الشحن بسعر أعلى من قيمتها بسبب الضرائب الحكومية، والرصيد المضاف أقل من قيمة الكارت. منذ ديسمبر 2024 يُباع كارت الـ 10 جنيه بـ 13 جنيه ويضيف 9.10 جنيه رصيد (91% من قيمته)، وكارت الـ 20 جنيه يُباع بـ 26 جنيه ويضيف 18.20 جنيه. الشحن الإلكتروني يضيف نفس نسبة 91% من القيمة المشحونة. توضح رسالة التأكيد كل الخصومات دائمًا.",
+      "keywords": [
+        "tax",
+        "why less credit",
+        "card price 13",
+        "ضرايب",
+        "الرصيد ناقص",
+        "كارت 10 بكام",
+        "shahant 10 gali 9"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.dostor.org/4886029",
+        "https://www.tra.gov.eg/en/the-national-telecommunication-regulatory-authority-obligates-mobile-operators-to-notify-users-of-any-deductions-from-charged-credit-per-each-re-charge"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s4",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "4. Line validity",
+      "language": "en",
+      "text": "A prepaid line stays fully active while it has paid activity. After 90 days with no recharge and no paid use, the line can only receive calls for 5 days, then it is suspended for 10 days, and on day 105 it is terminated and the number may be given to someone else. Any recharge before termination restores the line. Credit left on a terminated line is lost.",
+      "keywords": [
+        "line validity",
+        "line stopped",
+        "number expired",
+        "الخط اتقفل",
+        "الخط بيستقبل بس",
+        "el 5at et2afal"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s4.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "4. صلاحية الخط",
+      "language": "ar",
+      "text": "يظل الخط المدفوع مقدمًا نشطًا بالكامل طالما عليه استخدام مدفوع. بعد 90 يومًا بدون شحن أو استخدام مدفوع يستقبل الخط المكالمات فقط لمدة 5 أيام، ثم يتم إيقافه 10 أيام، وفي اليوم 105 يتم إلغاؤه ويجوز تخصيص الرقم لعميل آخر. أي شحن قبل الإلغاء يعيد الخط للعمل. الرصيد المتبقي على الخط الملغي يضيع.",
+      "keywords": [
+        "line validity",
+        "line stopped",
+        "number expired",
+        "الخط اتقفل",
+        "الخط بيستقبل بس",
+        "el 5at et2afal"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s5",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "5. Emergency credit (Salefny)",
+      "language": "en",
+      "text": "When balance is below 5 EGP, customers can borrow 5, 10, 20, 30 or 50 EGP. A service fee is deducted from the borrowed amount when it is received: 1.50 EGP on 5, 3 on 10, 6 on 20, 9 on 30 and 12.50 on 50. The full borrowed amount is taken back automatically from the next recharge. Only one Salefny can be outstanding at a time.",
+      "keywords": [
+        "salefny",
+        "emergency credit",
+        "borrow credit",
+        "سلفني",
+        "سلفة",
+        "3ayez salefny"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.eand.com.eg/portal/pages/services/out_of_credit_en.html",
+        "https://web.vodafone.com.eg/en/shokran-services"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s5.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "5. رصيد الطوارئ (سلفني)",
+      "language": "ar",
+      "text": "عندما يقل الرصيد عن 5 جنيه يمكن للعميل اقتراض 5 أو 10 أو 20 أو 30 أو 50 جنيه. تُخصم رسوم الخدمة من المبلغ عند استلامه: 1.50 جنيه على الـ 5، و3 على الـ 10، و6 على الـ 20، و9 على الـ 30، و12.50 على الـ 50. يُخصم المبلغ المقترض كاملًا تلقائيًا من الشحنة التالية. لا يمكن أن يكون على العميل أكثر من سلفة واحدة في نفس الوقت.",
+      "keywords": [
+        "salefny",
+        "emergency credit",
+        "borrow credit",
+        "سلفني",
+        "سلفة",
+        "3ayez salefny"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.eand.com.eg/portal/pages/services/out_of_credit_en.html",
+        "https://web.vodafone.com.eg/en/shokran-services"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s6",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "6. Balance transfer",
+      "language": "en",
+      "text": "Prepaid customers can send between 1 and 50 EGP of credit per transfer to another Masr Connect line. A fee of 2% of the amount (at least 0.20 EGP) is charged to the sender. Transfers are final once confirmed and cannot be reversed by customer service.",
+      "keywords": [
+        "transfer balance",
+        "send credit",
+        "حول رصيد",
+        "تحويل رصيد",
+        "a7awel rased"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/shokran-services",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "prepaid_recharge_policy@v3#s6.ar",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "section": "6. تحويل الرصيد",
+      "language": "ar",
+      "text": "يمكن لعملاء الكارت تحويل رصيد من 1 إلى 50 جنيه في المرة إلى خط مصر كونكت آخر. تُخصم رسوم 2% من المبلغ (بحد أدنى 20 قرشًا) من المُحوِّل. التحويل نهائي بعد التأكيد ولا يمكن لخدمة العملاء إلغاؤه.",
+      "keywords": [
+        "transfer balance",
+        "send credit",
+        "حول رصيد",
+        "تحويل رصيد",
+        "a7awel rased"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/shokran-services",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s1",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "1. Billing cycle",
+      "language": "en",
+      "text": "Each postpaid account has a monthly bill issued on its bill day (1, 8, 15 or 22). Customers get a detailed monthly bill with prices and usage, and can ask for a free electronic bill by e-mail or in the app.",
+      "keywords": [
+        "bill date",
+        "billing cycle",
+        "e-bill",
+        "الفاتورة بتنزل امتى",
+        "el fatora btnzl emta"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s1.ar",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "1. دورة الفاتورة",
+      "language": "ar",
+      "text": "لكل حساب خط شهري فاتورة شهرية تصدر في يوم الفاتورة الخاص به (1 أو 8 أو 15 أو 22). يحصل العميل على فاتورة شهرية مفصلة بالأسعار والاستهلاك، ويمكنه طلب فاتورة إلكترونية مجانية على البريد الإلكتروني أو التطبيق.",
+      "keywords": [
+        "bill date",
+        "billing cycle",
+        "e-bill",
+        "الفاتورة بتنزل امتى",
+        "el fatora btnzl emta"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s2",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "2. Due date and late fee",
+      "language": "en",
+      "text": "Bills are due 15 days after the bill day. If a bill is not fully paid by then, a 25 EGP late fee is added to the next bill. Partial payments lower the amount owed but do not stop the late fee.",
+      "keywords": [
+        "late fee",
+        "due date",
+        "غرامة تأخير",
+        "ميعاد الدفع",
+        "8arama"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s2.ar",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "2. موعد السداد وغرامة التأخير",
+      "language": "ar",
+      "text": "تستحق الفاتورة خلال 15 يومًا من يوم الفاتورة. إذا لم تُسدد بالكامل حتى هذا الموعد تُضاف غرامة تأخير 25 جنيه على الفاتورة التالية. السداد الجزئي يقلل المبلغ المستحق لكنه لا يمنع الغرامة.",
+      "keywords": [
+        "late fee",
+        "due date",
+        "غرامة تأخير",
+        "ميعاد الدفع",
+        "8arama"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s3",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "3. Credit limit and suspension",
+      "language": "en",
+      "text": "Each postpaid line has a credit limit; the customer gets a free SMS at 90%, and outgoing services stop at 100% until a payment is made. A line is never cut off for late payment without at least one week's notice by SMS. If a bill stays unpaid 30 days after its due date the line is suspended, and after 90 days the account is closed and the debt sent for collection.",
+      "keywords": [
+        "credit limit",
+        "line suspended",
+        "barred",
+        "الخط واقف",
+        "حد الائتمان",
+        "el 5at wa2ef"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s3.ar",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "3. حد الائتمان وإيقاف الخدمة",
+      "language": "ar",
+      "text": "لكل خط شهري حد ائتماني؛ يتلقى العميل رسالة مجانية عند 90%، وتتوقف الخدمات الصادرة عند 100% حتى السداد. لا يتم قطع الخدمة بسبب التأخير في السداد إلا بعد إخطار برسالة نصية قبلها بأسبوع على الأقل. إذا ظلت الفاتورة غير مسددة 30 يومًا بعد موعد الاستحقاق يتم إيقاف الخط، وبعد 90 يومًا يُغلق الحساب وتُحال المديونية للتحصيل.",
+      "keywords": [
+        "credit limit",
+        "line suspended",
+        "barred",
+        "الخط واقف",
+        "حد الائتمان",
+        "el 5at wa2ef"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s4",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "4. Bill disputes",
+      "language": "en",
+      "text": "A customer may dispute any charge within 60 days of the bill date. While a dispute is open, the disputed amount does not count toward suspension. Customer service opens disputes; the billing team decides adjustments, and adjustments above 500 EGP need a supervisor.",
+      "keywords": [
+        "dispute bill",
+        "wrong bill",
+        "bill too high",
+        "الفاتورة غلط",
+        "الفاتورة عالية",
+        "el fatora 3alya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s4.ar",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "4. الاعتراض على الفاتورة",
+      "language": "ar",
+      "text": "يحق للعميل الاعتراض على أي مبلغ خلال 60 يومًا من تاريخ الفاتورة. أثناء فتح الاعتراض لا يُحتسب المبلغ المعترض عليه ضمن أسباب الإيقاف. خدمة العملاء تفتح الاعتراض، وفريق الفواتير يقرر التسوية، والتسويات فوق 500 جنيه تحتاج موافقة مشرف.",
+      "keywords": [
+        "dispute bill",
+        "wrong bill",
+        "bill too high",
+        "الفاتورة غلط",
+        "الفاتورة عالية",
+        "el fatora 3alya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s5",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "5. Payment channels",
+      "language": "en",
+      "text": "Bills can be paid in the app, by InstaPay, bank card, Fawry, e-wallet, direct debit or in any store. Payments through outside outlets can take up to 4 working hours to show. A free SMS confirms every payment.",
+      "keywords": [
+        "pay bill",
+        "payment not showing",
+        "ادفع الفاتورة",
+        "دفعت ومش ظاهر",
+        "dafa3t w msh zaher"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "postpaid_billing_policy@v2#s5.ar",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "section": "5. قنوات السداد",
+      "language": "ar",
+      "text": "يمكن سداد الفواتير من التطبيق أو إنستاباي أو البطاقة البنكية أو فوري أو المحفظة أو الخصم المباشر أو أي فرع. المدفوعات من المنافذ الخارجية قد تستغرق حتى 4 ساعات عمل لتظهر. تؤكد رسالة مجانية كل عملية سداد.",
+      "keywords": [
+        "pay bill",
+        "payment not showing",
+        "ادفع الفاتورة",
+        "دفعت ومش ظاهر",
+        "dafa3t w msh zaher"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s1",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "1. Consent and subscribing",
+      "language": "en",
+      "text": "No bundle or service is ever added without the customer's prior consent. Customers can subscribe from the app, USSD, stores or customer service, and can check any bundle's details with a free code before subscribing. The price is taken from balance (prepaid) or added to the bill (postpaid) at once.",
+      "keywords": [
+        "subscribe bundle",
+        "consent",
+        "اشترك في باقة",
+        "ashtrek fe ba2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s1.ar",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "1. الموافقة والاشتراك",
+      "language": "ar",
+      "text": "لا تتم إضافة أي باقة أو خدمة أبدًا بدون موافقة العميل المسبقة. يمكن الاشتراك من التطبيق أو أكواد USSD أو الفروع أو خدمة العملاء، ويمكن معرفة تفاصيل أي باقة بكود مجاني قبل الاشتراك. يُخصم السعر من الرصيد (للكارت) أو يُضاف على الفاتورة (للخط الشهري) فورًا.",
+      "keywords": [
+        "subscribe bundle",
+        "consent",
+        "اشترك في باقة",
+        "ashtrek fe ba2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s2",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "2. Usage alerts and renewal",
+      "language": "en",
+      "text": "Customers get free SMS alerts at 50%, 80% and 100% of a bundle. Internet bundles renew automatically every 30 days and Control plans every 28 days when there is enough balance. Auto-renewal can be switched off at any time and stops from the next renewal.",
+      "keywords": [
+        "auto renew",
+        "renewal",
+        "usage alert",
+        "التجديد التلقائي",
+        "الغي التجديد",
+        "el tagdeed"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq",
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s2.ar",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "2. تنبيهات الاستهلاك والتجديد",
+      "language": "ar",
+      "text": "يحصل العميل على رسائل تنبيه مجانية عند استهلاك 50% و80% و100% من الباقة. تتجدد باقات الإنترنت تلقائيًا كل 30 يومًا وأنظمة الكنترول كل 28 يومًا إذا كان الرصيد كافيًا. يمكن إلغاء التجديد التلقائي في أي وقت ويتوقف من موعد التجديد التالي.",
+      "keywords": [
+        "auto renew",
+        "renewal",
+        "usage alert",
+        "التجديد التلقائي",
+        "الغي التجديد",
+        "el tagdeed"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq",
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s3",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "3. Carry-over",
+      "language": "en",
+      "text": "Unused units of a Control plan carry over only if the plan is renewed before its 28 days end. If there is not enough balance at renewal, the remaining units expire and usage is charged at the normal rate until the plan is renewed.",
+      "keywords": [
+        "carry over",
+        "unused units",
+        "ترحيل",
+        "الوحدات اللي فاضلة",
+        "el we7dat el fadla"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s3.ar",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "3. ترحيل الرصيد المتبقي",
+      "language": "ar",
+      "text": "تُرحَّل الوحدات غير المستخدمة في نظام الكنترول فقط إذا تم تجديده قبل انتهاء الـ 28 يومًا. إذا لم يكن الرصيد كافيًا وقت التجديد تنتهي الوحدات المتبقية ويُحاسب الاستخدام بالسعر العادي حتى التجديد.",
+      "keywords": [
+        "carry over",
+        "unused units",
+        "ترحيل",
+        "الوحدات اللي فاضلة",
+        "el we7dat el fadla"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s4",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "4. Changing bundles and plans",
+      "language": "en",
+      "text": "When switching to another internet bundle before the renewal date, the remaining megabytes of the old bundle stay usable. Postpaid plan changes are allowed once per billing cycle and take effect from the next bill.",
+      "keywords": [
+        "change plan",
+        "upgrade",
+        "downgrade",
+        "اغير الباقة",
+        "a8ayar el ba2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s4.ar",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "4. تغيير الباقة والنظام",
+      "language": "ar",
+      "text": "عند التحويل لباقة إنترنت أخرى قبل موعد التجديد تظل الميجابايتس المتبقية من الباقة القديمة متاحة للاستخدام. تغيير نظام الخط الشهري مسموح مرة واحدة في كل دورة فاتورة ويسري من الفاتورة التالية.",
+      "keywords": [
+        "change plan",
+        "upgrade",
+        "downgrade",
+        "اغير الباقة",
+        "a8ayar el ba2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s5",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "5. When a bundle runs out",
+      "language": "en",
+      "text": "When an internet bundle is used up before its renewal date, usage is charged pay-as-you-go until the customer renews early or buys an extra-GB add-on. Reselling, commercial tethering and SIM-box traffic are prohibited and may lead to suspension.",
+      "keywords": [
+        "bundle finished",
+        "extra gb",
+        "الباقة خلصت",
+        "el ba2a 5elset"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "bundles_policy@v4#s5.ar",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "section": "5. عند انتهاء الباقة",
+      "language": "ar",
+      "text": "عند انتهاء باقة الإنترنت قبل موعد تجديدها يُحاسب الاستخدام بسعر الاستخدام العادي حتى يجدد العميل مبكرًا أو يشتري إضافة جيجا. إعادة البيع والمشاركة التجارية وأجهزة السيم بوكس ممنوعة وقد تؤدي لإيقاف الخط.",
+      "keywords": [
+        "bundle finished",
+        "extra gb",
+        "الباقة خلصت",
+        "el ba2a 5elset"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s1",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "1. Bundle refund",
+      "language": "en",
+      "text": "A bundle subscribed by mistake is refunded in full if it is cancelled within 24 hours and less than 5% of it was used. After that, bundle fees are not refundable.",
+      "keywords": [
+        "bundle refund",
+        "subscribed by mistake",
+        "رجعولي فلوس الباقة",
+        "اشتركت غلط",
+        "eshtarakt 8alat"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "refund_policy@v3#s1.ar",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "1. استرداد قيمة الباقة",
+      "language": "ar",
+      "text": "تُسترد قيمة الباقة المشترك فيها بالخطأ بالكامل إذا تم إلغاؤها خلال 24 ساعة وكان المستخدم منها أقل من 5%. بعد ذلك لا تُسترد رسوم الباقة.",
+      "keywords": [
+        "bundle refund",
+        "subscribed by mistake",
+        "رجعولي فلوس الباقة",
+        "اشتركت غلط",
+        "eshtarakt 8alat"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "refund_policy@v3#s2",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "2. Wrong or double deduction",
+      "language": "en",
+      "text": "If system records confirm a charge was wrong or duplicated, the full amount is returned as balance (prepaid) or as a bill credit (postpaid) within 48 hours. Customer service can approve such refunds up to 200 EGP per case; above that a supervisor must approve. Customers who are not satisfied can escalate to NTRA, which also orders refunds after validated complaints.",
+      "keywords": [
+        "double charge",
+        "wrong deduction",
+        "money taken",
+        "اتخصم مني فلوس",
+        "خصم غلط",
+        "et5asam meni"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/?p=10448"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s2.ar",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "2. الخصم الخاطئ أو المكرر",
+      "language": "ar",
+      "text": "إذا أكدت سجلات النظام أن الخصم خاطئ أو مكرر يُعاد المبلغ كاملًا كرصيد (للكارت) أو كخصم على الفاتورة (للخط الشهري) خلال 48 ساعة. يمكن لخدمة العملاء الموافقة حتى 200 جنيه للحالة، وما يزيد يحتاج موافقة مشرف. ويمكن للعميل غير الراضي التصعيد لجهاز تنظيم الاتصالات الذي يأمر أيضًا برد المبالغ بعد التحقق من الشكوى.",
+      "keywords": [
+        "double charge",
+        "wrong deduction",
+        "money taken",
+        "اتخصم مني فلوس",
+        "خصم غلط",
+        "et5asam meni"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/?p=10448"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s3",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "3. Services added without consent",
+      "language": "en",
+      "text": "No service may be added without prior consent. Charges for a content service (tones, news, games) the customer did not knowingly agree to are refunded for up to the last 30 days, and the service is stopped at once.",
+      "keywords": [
+        "vas",
+        "service i did not subscribe",
+        "خدمة مش مشترك فيها",
+        "khedma msh moshtarek"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s3.ar",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "3. خدمات أضيفت بدون موافقة",
+      "language": "ar",
+      "text": "لا يجوز إضافة أي خدمة بدون موافقة مسبقة. رسوم خدمات المحتوى (النغمات، الأخبار، الألعاب) التي لم يوافق عليها العميل بعلمه تُسترد عن آخر 30 يومًا بحد أقصى، وتُلغى الخدمة فورًا.",
+      "keywords": [
+        "vas",
+        "service i did not subscribe",
+        "خدمة مش مشترك فيها",
+        "khedma msh moshtarek"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s4",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "4. Outage compensation",
+      "language": "en",
+      "text": "When a confirmed network outage affects a customer's area for more than 24 continuous hours, mobile customers get 1 GB free per full day of outage and home internet customers get a pro-rata credit of their monthly fee, added automatically within 7 days of the outage closing.",
+      "keywords": [
+        "compensation",
+        "outage refund",
+        "تعويض",
+        "النت كان واقع",
+        "el net kan wa2e3"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "refund_policy@v3#s4.ar",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "4. التعويض عن الأعطال",
+      "language": "ar",
+      "text": "عند حدوث عطل مؤكد يؤثر على منطقة العميل لأكثر من 24 ساعة متصلة، يحصل عملاء المحمول على 1 جيجا مجانًا عن كل يوم عطل كامل، ويحصل عملاء الإنترنت المنزلي على خصم نسبي من الاشتراك الشهري، ويُضاف تلقائيًا خلال 7 أيام من إغلاق العطل.",
+      "keywords": [
+        "compensation",
+        "outage refund",
+        "تعويض",
+        "النت كان واقع",
+        "el net kan wa2e3"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "refund_policy@v3#s5",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "5. Cash refunds",
+      "language": "en",
+      "text": "Prepaid balance is not refunded in cash. Cash or card refunds are only for postpaid overpayments and device payments, go back to the original payment method, and take up to 14 working days. When an e-wallet is closed, its remaining balance is refunded.",
+      "keywords": [
+        "cash refund",
+        "money back to card",
+        "فلوسي كاش",
+        "refund 3al visa"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "refund_policy@v3#s5.ar",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "section": "5. الاسترداد النقدي",
+      "language": "ar",
+      "text": "لا يُسترد رصيد الكارت نقدًا. الاسترداد النقدي أو على البطاقة متاح فقط للمبالغ المدفوعة زيادة في الخطوط الشهرية ومدفوعات الأجهزة، ويتم على وسيلة الدفع الأصلية خلال 14 يوم عمل. عند إغلاق المحفظة الإلكترونية يُرد رصيدها المتبقي.",
+      "keywords": [
+        "cash refund",
+        "money back to card",
+        "فلوسي كاش",
+        "refund 3al visa"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s1",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "1. Registration and line limits",
+      "language": "en",
+      "text": "Every line is registered in person to the owner's original, valid national ID (a passport plus valid residency for foreigners); the store keeps a colour copy and the customer signs the contract and gets a copy. One national ID can hold up to 10 voice lines and 5 data lines with Masr Connect; a passport up to 5 and 5. A foreigner's line is disconnected one month after the residency expires unless a new residency is shown. A new line costs 81.23 EGP including taxes.",
+      "keywords": [
+        "register line",
+        "how many lines",
+        "national id",
+        "كام خط على البطاقة",
+        "kam 5at 3al beta2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/mobile-sim-cards-sales-regulations-for-individuals/",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s1.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "1. التسجيل وحد الخطوط",
+      "language": "ar",
+      "text": "يُسجَّل كل خط شخصيًا ببطاقة الرقم القومي الأصلية السارية لصاحبه (أو جواز سفر وإقامة سارية لغير المصريين)، ويحتفظ الفرع بصورة ملونة ويوقع العميل العقد ويستلم نسخة منه. يمكن تسجيل حتى 10 خطوط صوت و5 خطوط بيانات على الرقم القومي الواحد مع مصر كونكت، وحتى 5 و5 على جواز السفر. يُفصل خط الأجنبي بعد شهر من انتهاء الإقامة ما لم يقدم إقامة جديدة. سعر الخط الجديد 81.23 جنيه شامل الضرائب.",
+      "keywords": [
+        "register line",
+        "how many lines",
+        "national id",
+        "كام خط على البطاقة",
+        "kam 5at 3al beta2a"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/mobile-sim-cards-sales-regulations-for-individuals/",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s2",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "2. SIM replacement (SIM swap)",
+      "language": "en",
+      "text": "A replacement SIM is issued only in a store, to the registered owner in person with the original national ID or passport. The ID must match the line's records, and the owner fills in and signs a SIM swap form. The fee is 5 EGP. SIM replacement is never done through chat or phone.",
+      "keywords": [
+        "sim swap",
+        "replace sim",
+        "lost sim",
+        "بدل فاقد",
+        "الخط ضاع",
+        "badal fa2ed"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/mobile-sim-cards-sales-regulations-for-individuals/",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s2.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "2. بدل فاقد / استبدال الشريحة",
+      "language": "ar",
+      "text": "تُصدر الشريحة البديلة في الفرع فقط لصاحب الخط المسجل شخصيًا ببطاقته الأصلية أو جواز سفره، ويجب أن تطابق البطاقة بيانات الخط، ويملأ صاحب الخط ويوقع نموذج طلب الاستبدال. الرسوم 5 جنيه. لا يتم استبدال الشريحة أبدًا عن طريق المحادثة أو التليفون.",
+      "keywords": [
+        "sim swap",
+        "replace sim",
+        "lost sim",
+        "بدل فاقد",
+        "الخط ضاع",
+        "badal fa2ed"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/mobile-sim-cards-sales-regulations-for-individuals/",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s3",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "3. Lost or stolen phone",
+      "language": "en",
+      "text": "If a phone or SIM is lost or stolen, the customer should ask to suspend the line right away. Customer service may suspend the line after identity verification. Using the number again needs a SIM replacement in a store.",
+      "keywords": [
+        "stolen phone",
+        "suspend line",
+        "اتسرق",
+        "وقف الخط",
+        "el mobile et sara2"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "sim_policy@v2#s3.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "3. فقد أو سرقة الموبايل",
+      "language": "ar",
+      "text": "في حالة فقد أو سرقة الموبايل أو الشريحة يجب طلب إيقاف الخط فورًا. يمكن لخدمة العملاء إيقاف الخط بعد التحقق من الهوية، واستخدام الرقم مرة أخرى يتطلب استبدال الشريحة في أحد الفروع.",
+      "keywords": [
+        "stolen phone",
+        "suspend line",
+        "اتسرق",
+        "وقف الخط",
+        "el mobile et sara2"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "sim_policy@v2#s4",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "4. eSIM",
+      "language": "en",
+      "text": "Existing customers with a supported phone can switch to eSIM in the Masr Connect app by uploading a photo of their national ID and answering a security question, then scanning the QR code. New customers get an eSIM only in a store. Compatibility can be checked in the app or any store.",
+      "keywords": [
+        "esim",
+        "e-sim",
+        "شريحة الكترونية",
+        "esim 3ala iphone"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://meatechwatch.com/2024/12/06/orange-egypt-launches-esim-service-for-enhanced-mobile-connectivity/"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s4.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "4. الشريحة الإلكترونية",
+      "language": "ar",
+      "text": "يمكن للعملاء الحاليين أصحاب الأجهزة المدعومة التحويل للشريحة الإلكترونية من تطبيق مصر كونكت برفع صورة بطاقة الرقم القومي والإجابة على سؤال أمان ثم مسح رمز QR. العملاء الجدد يحصلون على الشريحة الإلكترونية من الفرع فقط. يمكن التأكد من دعم الجهاز من التطبيق أو أي فرع.",
+      "keywords": [
+        "esim",
+        "e-sim",
+        "شريحة الكترونية",
+        "esim 3ala iphone"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://meatechwatch.com/2024/12/06/orange-egypt-launches-esim-service-for-enhanced-mobile-connectivity/"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s5",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "5. Ownership transfer",
+      "language": "en",
+      "text": "A line can be transferred to a new owner in a store with the valid IDs of both the old and the new owner. The fee is 25 EGP.",
+      "keywords": [
+        "transfer ownership",
+        "نقل ملكية",
+        "na2l melkeya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s5.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "5. نقل ملكية الخط",
+      "language": "ar",
+      "text": "يمكن نقل ملكية الخط لمالك جديد في الفرع بحضور بطاقتي المالك القديم والجديد ساريتين. الرسوم 25 جنيه.",
+      "keywords": [
+        "transfer ownership",
+        "نقل ملكية",
+        "na2l melkeya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "sim_policy@v2#s6",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "6. PUK code",
+      "language": "en",
+      "text": "The PUK code is given only to the verified line owner. Ten wrong PUK entries block the SIM for good, and a replacement SIM is then needed.",
+      "keywords": [
+        "puk",
+        "sim locked",
+        "الشريحة اتقفلت",
+        "kod puk"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "sim_policy@v2#s6.ar",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "section": "6. كود PUK",
+      "language": "ar",
+      "text": "يُعطى كود PUK لصاحب الخط فقط بعد التحقق منه. إدخال كود PUK خطأ عشر مرات يقفل الشريحة نهائيًا ويلزم استبدالها.",
+      "keywords": [
+        "puk",
+        "sim locked",
+        "الشريحة اتقفلت",
+        "kod puk"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "porting_policy@v2#s1",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "1. Moving to Masr Connect",
+      "language": "en",
+      "text": "Customers of any Egyptian operator can move their number to Masr Connect in a store, with documents proving they own the line and a valid ID. Porting is free and completes within 24 hours; the old line keeps working until the switch.",
+      "keywords": [
+        "port in",
+        "move my number",
+        "انقل رقمي",
+        "a2el ra2my"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/ntra-imposes-a-fine-of-20650-000-pounds-on-mobile-operators-for-violating-mobile-number-portability-service-regulations/",
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "porting_policy@v2#s1.ar",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "1. النقل إلى مصر كونكت",
+      "language": "ar",
+      "text": "يمكن لعملاء أي شبكة مصرية نقل أرقامهم إلى مصر كونكت من الفرع بمستندات تثبت ملكية الخط وبطاقة سارية. النقل مجاني ويتم خلال 24 ساعة، ويظل الخط القديم شغالًا حتى التحويل.",
+      "keywords": [
+        "port in",
+        "move my number",
+        "انقل رقمي",
+        "a2el ra2my"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/ntra-imposes-a-fine-of-20650-000-pounds-on-mobile-operators-for-violating-mobile-number-portability-service-regulations/",
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "porting_policy@v2#s2",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "2. Moving away from Masr Connect",
+      "language": "en",
+      "text": "A customer can move their number to another operator if they have owned the line for at least 4 months and the latest bill is paid. Masr Connect cannot refuse a valid request and answers it within 24 hours. Remaining prepaid balance and bundles are lost when the number leaves.",
+      "keywords": [
+        "port out",
+        "leave network",
+        "انقل رقمي لشبكة تانية",
+        "a2el le shabaka tanya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/ntra-imposes-a-fine-of-20650-000-pounds-on-mobile-operators-for-violating-mobile-number-portability-service-regulations/"
+      ]
+    },
+    {
+      "passage_id": "porting_policy@v2#s2.ar",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "2. النقل من مصر كونكت",
+      "language": "ar",
+      "text": "يحق للعميل نقل رقمه لشبكة أخرى إذا مر على ملكيته للخط 4 أشهر على الأقل وكانت آخر فاتورة مسددة. لا يحق لمصر كونكت رفض الطلب الصحيح وترد عليه خلال 24 ساعة. يضيع الرصيد المتبقي والباقات عند خروج الرقم.",
+      "keywords": [
+        "port out",
+        "leave network",
+        "انقل رقمي لشبكة تانية",
+        "a2el le shabaka tanya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/ntra-imposes-a-fine-of-20650-000-pounds-on-mobile-operators-for-violating-mobile-number-portability-service-regulations/"
+      ]
+    },
+    {
+      "passage_id": "porting_policy@v2#s3",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "3. Home internet portability",
+      "language": "en",
+      "text": "Home internet can be moved to another provider free of charge within 72 hours: the old provider cancels within 24 hours and gives a cancellation number, and the new one activates within 48 hours. The customer must first pay the latest bill, any remaining router installments, and any early-exit fee on long-term packages.",
+      "keywords": [
+        "move home internet provider",
+        "نقل النت لشركة تانية"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/new-rules-to-facilitate-fixed-internet-portability-service-to-take-place-within-72-hours/"
+      ]
+    },
+    {
+      "passage_id": "porting_policy@v2#s3.ar",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "section": "3. نقل الإنترنت المنزلي",
+      "language": "ar",
+      "text": "يمكن نقل الإنترنت المنزلي لمقدم خدمة آخر مجانًا خلال 72 ساعة: يلغي المقدم القديم الخدمة خلال 24 ساعة ويعطي رقم إلغاء، ويفعّلها المقدم الجديد خلال 48 ساعة. يجب على العميل أولًا سداد آخر فاتورة وأي أقساط متبقية للراوتر وأي رسوم إنهاء للباقات طويلة المدة.",
+      "keywords": [
+        "move home internet provider",
+        "نقل النت لشركة تانية"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/new-rules-to-facilitate-fixed-internet-portability-service-to-take-place-within-72-hours/"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s1",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "1. Activation",
+      "language": "en",
+      "text": "Prepaid and Control lines can turn roaming on for free at any time and should keep enough balance for use abroad. Postpaid roaming is free to activate once the line has paid 4 bills, or earlier with a 750 EGP roaming deposit.",
+      "keywords": [
+        "roaming activation",
+        "travel abroad",
+        "تفعيل التجوال",
+        "msafer",
+        "roaming"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s1.ar",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "1. التفعيل",
+      "language": "ar",
+      "text": "يمكن لخطوط الكارت والكنترول تفعيل التجوال مجانًا في أي وقت مع الاحتفاظ برصيد كافٍ للاستخدام بالخارج. التجوال على الخط الشهري يُفعَّل مجانًا بعد سداد 4 فواتير، أو قبل ذلك بتأمين تجوال 750 جنيه.",
+      "keywords": [
+        "roaming activation",
+        "travel abroad",
+        "تفعيل التجوال",
+        "msafer",
+        "roaming"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s2",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "2. Roaming bundles and rates",
+      "language": "en",
+      "text": "Roaming bundles are available per destination (Gulf, Europe, world) for 7 or 30 days. On arrival the customer gets a free SMS with the rates of the visited network; use outside a bundle is charged at those rates.",
+      "keywords": [
+        "roaming bundle",
+        "saudi",
+        "باقة تجوال",
+        "ba2et roaming"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s2.ar",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "2. باقات وأسعار التجوال",
+      "language": "ar",
+      "text": "تتوفر باقات تجوال حسب الوجهة (الخليج وأوروبا والعالم) لمدة 7 أو 30 يومًا. عند الوصول يتلقى العميل رسالة مجانية بأسعار الشبكة الزائرة، والاستخدام خارج الباقة يُحاسب بهذه الأسعار.",
+      "keywords": [
+        "roaming bundle",
+        "saudi",
+        "باقة تجوال",
+        "ba2et roaming"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s3",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "3. Limit for new postpaid lines",
+      "language": "en",
+      "text": "Until a postpaid line has paid 4 bills (and has no deposit or registered card), roaming and international use is capped at 250 EGP per bill. Roaming charges can take up to 72 hours to appear.",
+      "keywords": [
+        "roaming limit",
+        "roaming stopped",
+        "فاتورة التجوال",
+        "el roaming wa2ef"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "roaming_policy@v2#s3.ar",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "section": "3. حد الخطوط الشهرية الجديدة",
+      "language": "ar",
+      "text": "حتى يسدد الخط الشهري 4 فواتير (ولم يدفع تأمينًا أو يسجل بطاقة)، يكون حد التجوال والمكالمات الدولية 250 جنيه في الفاتورة. قد تستغرق رسوم التجوال حتى 72 ساعة لتظهر.",
+      "keywords": [
+        "roaming limit",
+        "roaming stopped",
+        "فاتورة التجوال",
+        "el roaming wa2ef"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://web.vodafone.com.eg/en/roamingmanagement"
+      ]
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s1",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "1. Installation",
+      "language": "en",
+      "text": "New home internet lines are installed within 7 working days of signing where the landline is ready, with a technician visit in a 4-hour window. The router is provided on loan or on installments as stated in the contract.",
+      "keywords": [
+        "installation",
+        "technician",
+        "router",
+        "تركيب النت",
+        "فني",
+        "tarkeeb el net"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s1.ar",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "1. التركيب",
+      "language": "ar",
+      "text": "يتم تركيب خطوط الإنترنت المنزلي الجديدة خلال 7 أيام عمل من التعاقد إذا كان الخط الأرضي جاهزًا، مع زيارة فني في نطاق 4 ساعات. يُسلم الراوتر على سبيل الأمانة أو بالتقسيط حسب العقد.",
+      "keywords": [
+        "installation",
+        "technician",
+        "router",
+        "تركيب النت",
+        "فني",
+        "tarkeeb el net"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s2",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "2. Quota, speed and early renewal",
+      "language": "en",
+      "text": "Each home plan has a monthly quota and a maximum speed. When the quota runs out before the renewal date, speed drops sharply until the customer renews early or buys an add-on. Renewing early starts a new 30-day cycle from that day; renewing by phone needs the landline bill to be paid first.",
+      "keywords": [
+        "quota finished",
+        "slow internet",
+        "early renewal",
+        "الباقة خلصت",
+        "تجديد مبكر",
+        "el net ba6ee2"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://mobilemasr.com/en/blogs/renewing-your-we-home-internet-package-before-the-due-date"
+      ]
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s2.ar",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "2. الباقة والسرعة والتجديد المبكر",
+      "language": "ar",
+      "text": "لكل باقة إنترنت منزلي سعة شهرية وسرعة قصوى. عند انتهاء السعة قبل موعد التجديد تنخفض السرعة بشدة حتى يجدد العميل مبكرًا أو يشتري إضافة. التجديد المبكر يبدأ دورة جديدة مدتها 30 يومًا من يوم التجديد، والتجديد بالتليفون يتطلب سداد فاتورة الأرضي أولًا.",
+      "keywords": [
+        "quota finished",
+        "slow internet",
+        "early renewal",
+        "الباقة خلصت",
+        "تجديد مبكر",
+        "el net ba6ee2"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://mobilemasr.com/en/blogs/renewing-your-we-home-internet-package-before-the-due-date"
+      ]
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s3",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "3. Faults",
+      "language": "en",
+      "text": "Faults are checked remotely first; a technician visit, if needed, is booked within 48 hours. A speed below 50% of the plan speed for 3 days in a row counts as a fault. Faults caused by the customer's inside wiring or devices may cost a 75 EGP visit fee.",
+      "keywords": [
+        "internet down",
+        "fault",
+        "النت فاصل",
+        "el net fasel"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s3.ar",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "3. الأعطال",
+      "language": "ar",
+      "text": "يتم فحص الأعطال عن بُعد أولًا، وإذا لزم الأمر تُحدد زيارة فني خلال 48 ساعة. السرعة الأقل من 50% من سرعة الباقة لمدة 3 أيام متتالية تُعتبر عطلًا. الأعطال الناتجة عن التوصيلات الداخلية أو أجهزة العميل قد تُحتسب عليها رسوم زيارة 75 جنيه.",
+      "keywords": [
+        "internet down",
+        "fault",
+        "النت فاصل",
+        "el net fasel"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s4",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "4. Relocation",
+      "language": "en",
+      "text": "Home internet can be moved to a new address covered by the network for a 100 EGP fee, within 10 working days.",
+      "keywords": [
+        "move internet",
+        "new address",
+        "نقل النت",
+        "na2l el net"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "home_internet_policy@v3#s4.ar",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "section": "4. نقل الخدمة",
+      "language": "ar",
+      "text": "يمكن نقل الإنترنت المنزلي لعنوان جديد مغطى بالشبكة برسوم 100 جنيه خلال 10 أيام عمل.",
+      "keywords": [
+        "move internet",
+        "new address",
+        "نقل النت",
+        "na2l el net"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s1",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "1. Contract term",
+      "language": "en",
+      "text": "Plans sold with a device or a discount have a minimum term of 12 or 24 months as stated in the contract, of which the customer gets a certified copy. Plans without a device have no minimum term.",
+      "keywords": [
+        "contract",
+        "minimum term",
+        "مدة العقد"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "contract_policy@v1#s1.ar",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "1. مدة التعاقد",
+      "language": "ar",
+      "text": "الأنظمة المباعة مع جهاز أو خصم لها مدة تعاقد دنيا 12 أو 24 شهرًا كما في العقد، ويحصل العميل على نسخة معتمدة منه. الأنظمة بدون جهاز ليس لها مدة دنيا.",
+      "keywords": [
+        "contract",
+        "minimum term",
+        "مدة العقد"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "contract_policy@v1#s2",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "2. Early termination",
+      "language": "en",
+      "text": "Ending a contract early means paying the remaining device installments plus 20% of the remaining monthly fees. Cancellation is done in a store by the line owner.",
+      "keywords": [
+        "cancel contract",
+        "early termination",
+        "الغي العقد",
+        "alghy el 3a2d"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s2.ar",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "2. الإنهاء المبكر",
+      "language": "ar",
+      "text": "إنهاء التعاقد مبكرًا يتطلب سداد أقساط الجهاز المتبقية و20% من الاشتراكات الشهرية المتبقية. يتم الإلغاء في الفرع بواسطة صاحب الخط.",
+      "keywords": [
+        "cancel contract",
+        "early termination",
+        "الغي العقد",
+        "alghy el 3a2d"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s3",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "3. Device installments",
+      "language": "en",
+      "text": "Device installments are billed monthly on the postpaid bill. A missed installment adds a 2% late charge, and after two missed installments the device may be locked remotely until payment.",
+      "keywords": [
+        "installment",
+        "device payment",
+        "قسط الموبايل",
+        "2est el mobile"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s3.ar",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "3. أقساط الأجهزة",
+      "language": "ar",
+      "text": "تُضاف أقساط الأجهزة شهريًا على فاتورة الخط الشهري. القسط المتأخر تُضاف عليه رسوم 2%، وبعد تأخر قسطين يجوز قفل الجهاز عن بُعد حتى السداد.",
+      "keywords": [
+        "installment",
+        "device payment",
+        "قسط الموبايل",
+        "2est el mobile"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s4",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "4. Line cancellation",
+      "language": "en",
+      "text": "The owner cancels a prepaid line in a store at any time, and a postpaid line after paying all open bills. Chat agents can explain the steps but cannot cancel a line.",
+      "keywords": [
+        "cancel line",
+        "close my number",
+        "الغي الخط",
+        "alghy el 5at"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "contract_policy@v1#s4.ar",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "section": "4. إلغاء الخط",
+      "language": "ar",
+      "text": "يلغي صاحب الخط خط الكارت من الفرع في أي وقت، والخط الشهري بعد سداد كل الفواتير. يمكن لموظف المحادثة شرح الخطوات لكنه لا يستطيع إلغاء الخط.",
+      "keywords": [
+        "cancel line",
+        "close my number",
+        "الغي الخط",
+        "alghy el 5at"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "complaints_policy@v2#s1",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "1. Channels",
+      "language": "en",
+      "text": "Customer service is available 24 hours a day. Complaints can be raised by chat, the hotline, the app, e-mail or any store, and every complaint gets a reference starting with CMP-.",
+      "keywords": [
+        "complaint",
+        "hotline",
+        "اشتكي",
+        "shakwa"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "complaints_policy@v2#s1.ar",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "1. قنوات الشكوى",
+      "language": "ar",
+      "text": "خدمة العملاء متاحة 24 ساعة. يمكن تقديم الشكوى عن طريق المحادثة أو الخط الساخن أو التطبيق أو البريد الإلكتروني أو أي فرع، وكل شكوى تحصل على رقم مرجعي يبدأ بـ CMP-.",
+      "keywords": [
+        "complaint",
+        "hotline",
+        "اشتكي",
+        "shakwa"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "complaints_policy@v2#s2",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "2. Response times",
+      "language": "en",
+      "text": "Billing complaints are resolved within 3 working days, network complaints within 5, and others within 7. The customer gets an SMS at every status change.",
+      "keywords": [
+        "complaint time",
+        "how long",
+        "الشكوى هتاخد قد ايه"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "complaints_policy@v2#s2.ar",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "2. مدة الرد",
+      "language": "ar",
+      "text": "تُحل شكاوى الفواتير خلال 3 أيام عمل، وشكاوى الشبكة خلال 5، وباقي الشكاوى خلال 7. يتلقى العميل رسالة عند كل تغيير في حالة الشكوى.",
+      "keywords": [
+        "complaint time",
+        "how long",
+        "الشكوى هتاخد قد ايه"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "complaints_policy@v2#s3",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "3. Escalation to NTRA",
+      "language": "en",
+      "text": "If a complaint is not resolved or the customer is not satisfied, it goes to a senior team. The customer can also escalate to the National Telecom Regulatory Authority (NTRA) by calling 155, or through the My NTRA app, the NTRA website, e-mail or WhatsApp.",
+      "keywords": [
+        "escalate",
+        "ntra",
+        "regulator",
+        "155",
+        "جهاز تنظيم الاتصالات",
+        "a4ty lel gehaz"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/?p=10448",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "complaints_policy@v2#s3.ar",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "section": "3. التصعيد لجهاز تنظيم الاتصالات",
+      "language": "ar",
+      "text": "إذا لم تُحل الشكوى أو لم يكن العميل راضيًا تُحول لفريق متخصص. ويمكن للعميل أيضًا التصعيد للجهاز القومي لتنظيم الاتصالات بالاتصال على 155 أو عن طريق تطبيق My NTRA أو موقع الجهاز أو البريد الإلكتروني أو واتساب.",
+      "keywords": [
+        "escalate",
+        "ntra",
+        "regulator",
+        "155",
+        "جهاز تنظيم الاتصالات",
+        "a4ty lel gehaz"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.tra.gov.eg/en/?p=10448",
+        "https://te.eg/en/about-te/faq"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s1",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "1. Verification before account details",
+      "language": "en",
+      "text": "Customer data is protected. Before sharing any account information (balance, bills, usage, bundles) or making any change, the agent verifies the customer with the line number plus the last 4 digits of the owner's national ID. After two failed attempts, the chat goes to a human.",
+      "keywords": [
+        "verify identity",
+        "why do you need my id",
+        "ليه عايز الرقم القومي",
+        "leh 3ayez el ra2am el 2awmy"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s1.ar",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "1. التحقق قبل الإفصاح عن بيانات الحساب",
+      "language": "ar",
+      "text": "بيانات العملاء محمية. قبل الإفصاح عن أي بيانات خاصة بالحساب (الرصيد، الفواتير، الاستهلاك، الباقات) أو تنفيذ أي تغيير، يتحقق الموظف من العميل برقم الخط وآخر 4 أرقام من الرقم القومي لصاحب الخط. بعد محاولتين فاشلتين تُحول المحادثة لموظف.",
+      "keywords": [
+        "verify identity",
+        "why do you need my id",
+        "ليه عايز الرقم القومي",
+        "leh 3ayez el ra2am el 2awmy"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s2",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "2. Usage details and call records",
+      "language": "en",
+      "text": "Customers can see their usage totals in the app or website at any time. Detailed call and message records with numbers are only given to the line owner in a store, or by court order.",
+      "keywords": [
+        "call log",
+        "who called",
+        "سجل المكالمات",
+        "sigel el mokalmat"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s2.ar",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "2. تفاصيل الاستهلاك وسجل المكالمات",
+      "language": "ar",
+      "text": "يمكن للعميل معرفة إجمالي استهلاكه من التطبيق أو الموقع في أي وقت. سجل المكالمات والرسائل التفصيلي بالأرقام يُسلم لصاحب الخط في الفرع فقط أو بأمر قضائي.",
+      "keywords": [
+        "call log",
+        "who called",
+        "سجل المكالمات",
+        "sigel el mokalmat"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s3",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "3. Third parties",
+      "language": "en",
+      "text": "Account information is never shared with anyone but the registered owner, including family members, unless the owner is present and verified.",
+      "keywords": [
+        "someone else's line",
+        "my father's line",
+        "خط بابا",
+        "5at abouya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "privacy_policy@v2#s3.ar",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "3. الأطراف الأخرى",
+      "language": "ar",
+      "text": "لا يتم مشاركة بيانات الحساب مع أي شخص غير صاحب الخط المسجل، بما في ذلك أفراد الأسرة، إلا بحضور صاحب الخط والتحقق منه.",
+      "keywords": [
+        "someone else's line",
+        "my father's line",
+        "خط بابا",
+        "5at abouya"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": []
+    },
+    {
+      "passage_id": "privacy_policy@v2#s4",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "4. Marketing and service messages",
+      "language": "en",
+      "text": "Customers can stop promotional SMS and calls at any time. Free service messages about deductions, payments and bundle usage cannot be stopped, and customers are told whenever their registered data changes.",
+      "keywords": [
+        "stop sms",
+        "spam messages",
+        "وقف الرسايل",
+        "wa2af el rasayel"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    },
+    {
+      "passage_id": "privacy_policy@v2#s4.ar",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "section": "4. الرسائل التسويقية والخدمية",
+      "language": "ar",
+      "text": "يمكن للعميل إيقاف الرسائل والمكالمات الترويجية في أي وقت. الرسائل الخدمية المجانية الخاصة بالخصومات والمدفوعات واستهلاك الباقات لا يمكن إيقافها، ويتم إبلاغ العميل عند أي تغيير في بياناته المسجلة.",
+      "keywords": [
+        "stop sms",
+        "spam messages",
+        "وقف الرسايل",
+        "wa2af el rasayel"
+      ],
+      "superseded": false,
+      "effective_date": "2026-10-01",
+      "based_on": [
+        "https://www.telecomreviewafrica.com/articles/general-news/2219-egypt-s-ntra-issues-a-list-of-rights-for-mobile-internet-customers/"
+      ]
+    }
+  ],
+  "faq": [
+    {
+      "faq_id": "FAQ-001",
+      "question": {
+        "en": "How do I recharge my line?",
+        "ar": "اشحن الخط ازاي؟",
+        "arabizi": "ashan el 5at ezay?"
+      },
+      "answer": {
+        "en": "You can recharge with a scratch card, the app, USSD, Fawry, ATMs, InstaPay, e-wallets or any store. You'll get a free SMS confirming every recharge.",
+        "ar": "تقدر تشحن بكارت شحن أو من التطبيق أو كود USSD أو فوري أو ماكينة ATM أو إنستاباي أو المحفظة أو من أي فرع، وهتوصلك رسالة مجانية بتأكد كل شحنة."
+      },
+      "citation": "prepaid_recharge_policy@v3#s2"
+    },
+    {
+      "faq_id": "FAQ-002",
+      "question": {
+        "en": "My 10 EGP card only gave me 9.10. Why?",
+        "ar": "كارت الـ 10 جنيه شحنلي 9.10 بس ليه؟",
+        "arabizi": "kart el 10 gneh shahanly 9.10 bas leh?"
+      },
+      "answer": {
+        "en": "Government taxes are taken from every recharge. Since December 2024 a 10 EGP card sells for 13 EGP and adds 9.10 EGP of credit, which is 91% of its value. Your SMS shows every deduction.",
+        "ar": "الضرايب الحكومية بتتخصم من كل شحنة. من ديسمبر 2024 كارت الـ 10 جنيه بيتباع بـ 13 جنيه وبيضيف 9.10 جنيه رصيد، يعني 91% من قيمته، والرسالة بتوضح كل الخصومات."
+      },
+      "citation": "prepaid_recharge_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-003",
+      "question": {
+        "en": "Why does a 10 EGP card cost 13 EGP?",
+        "ar": "ليه كارت الـ 10 جنيه بـ 13؟",
+        "arabizi": "leh kart el 10 b 13?"
+      },
+      "answer": {
+        "en": "Cards are sold above their face value because of government taxes. A 20 EGP card, for example, costs 26 EGP and adds 18.20 EGP of credit.",
+        "ar": "الكروت بتتباع بأعلى من قيمتها بسبب الضرايب الحكومية. مثلًا كارت الـ 20 جنيه بـ 26 جنيه وبيضيف 18.20 جنيه رصيد."
+      },
+      "citation": "prepaid_recharge_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-004",
+      "question": {
+        "en": "Does my line expire if I don't use it?",
+        "ar": "الخط بيقفل لو مستخدمتوش؟",
+        "arabizi": "el 5at by2fel law mastakhdemtosh?"
+      },
+      "answer": {
+        "en": "After 90 days with no recharge or paid use, the line receives calls only for 5 days, is suspended for 10 days, and is cancelled on day 105. Any recharge before then keeps it.",
+        "ar": "بعد 90 يوم من غير شحن أو استخدام مدفوع، الخط بيستقبل بس 5 أيام، وبعدين بيتوقف 10 أيام، وفي اليوم 105 بيتلغي. أي شحنة قبل كده بتحافظ عليه."
+      },
+      "citation": "prepaid_recharge_policy@v3#s4"
+    },
+    {
+      "faq_id": "FAQ-005",
+      "question": {
+        "en": "My line stopped because I didn't use it. Can I get it back?",
+        "ar": "الخط اتقفل عشان مستخدمتوش، ينفع يرجع؟",
+        "arabizi": "el 5at et2afal 3ashan mastakhdemtosh, yenfa3 yerga3?"
+      },
+      "answer": {
+        "en": "If it hasn't reached day 105 yet, a recharge brings it back right away. After day 105 the number is cancelled and the remaining credit is lost.",
+        "ar": "لو لسه موصلش لليوم 105 أي شحنة بترجعه على طول. بعد اليوم 105 الرقم بيتلغي والرصيد اللي عليه بيضيع."
+      },
+      "citation": "prepaid_recharge_policy@v3#s4"
+    },
+    {
+      "faq_id": "FAQ-006",
+      "question": {
+        "en": "What is Salefny and how much does it cost?",
+        "ar": "يعني ايه سلفني وبكام؟",
+        "arabizi": "salefny ya3ny eh w bkam?"
+      },
+      "answer": {
+        "en": "When your balance is under 5 EGP you can borrow 5, 10, 20, 30 or 50 EGP. The fee is taken when you receive it (for example 3 EGP on 10, 6 on 20), and the full borrowed amount is repaid from your next recharge.",
+        "ar": "لما رصيدك يقل عن 5 جنيه تقدر تتسلف 5 أو 10 أو 20 أو 30 أو 50 جنيه. الرسوم بتتخصم وانت بتستلم (مثلًا 3 جنيه على الـ 10 و6 على الـ 20)، والمبلغ كله بيتسدد من الشحنة الجاية."
+      },
+      "citation": "prepaid_recharge_policy@v3#s5"
+    },
+    {
+      "faq_id": "FAQ-007",
+      "question": {
+        "en": "Why can't I take Salefny again?",
+        "ar": "ليه مش عارف آخد سلفني تاني؟",
+        "arabizi": "leh msh 3aref a5od salefny tany?"
+      },
+      "answer": {
+        "en": "Only one Salefny can be outstanding at a time, and your balance needs to be under 5 EGP. Once your next recharge repays it, you can borrow again.",
+        "ar": "مينفعش يكون عليك أكتر من سلفة في نفس الوقت، ولازم رصيدك يكون أقل من 5 جنيه. أول ما الشحنة الجاية تسدد السلفة تقدر تتسلف تاني."
+      },
+      "citation": "prepaid_recharge_policy@v3#s5"
+    },
+    {
+      "faq_id": "FAQ-008",
+      "question": {
+        "en": "How do I transfer credit to another number?",
+        "ar": "احول رصيد لرقم تاني ازاي؟",
+        "arabizi": "a7awel rased le ra2am tany ezay?"
+      },
+      "answer": {
+        "en": "You can send 1 to 50 EGP per transfer to another Masr Connect line. The fee is 2% of the amount, at least 0.20 EGP.",
+        "ar": "تقدر تحول من 1 لـ 50 جنيه في المرة لخط مصر كونكت تاني، والرسوم 2% من المبلغ وأقلها 20 قرش."
+      },
+      "citation": "prepaid_recharge_policy@v3#s6"
+    },
+    {
+      "faq_id": "FAQ-009",
+      "question": {
+        "en": "I transferred credit to the wrong number. Can you reverse it?",
+        "ar": "حولت رصيد لرقم غلط، ممكن ترجعوه؟",
+        "arabizi": "7awelt rased le ra2am 8alat, momken traga3oh?"
+      },
+      "answer": {
+        "en": "Sorry, balance transfers are final once confirmed and customer service can't reverse them.",
+        "ar": "للأسف تحويل الرصيد نهائي بعد التأكيد وخدمة العملاء مش بتقدر تلغيه."
+      },
+      "citation": "prepaid_recharge_policy@v3#s6"
+    },
+    {
+      "faq_id": "FAQ-010",
+      "question": {
+        "en": "I recharged but the balance didn't arrive.",
+        "ar": "شحنت والرصيد منزلش.",
+        "arabizi": "shahant w el rased manzelsh."
+      },
+      "answer": {
+        "en": "Recharges usually arrive within minutes; through outside outlets it can take up to 4 working hours. If it's longer, I can check the recharge with you.",
+        "ar": "الشحن عادة بيوصل في دقايق، ومن المنافذ الخارجية ممكن ياخد لحد 4 ساعات عمل. لو أكتر من كده أقدر أراجع الشحنة معاك."
+      },
+      "citation": "postpaid_billing_policy@v2#s5"
+    },
+    {
+      "faq_id": "FAQ-011",
+      "question": {
+        "en": "When is my bill issued?",
+        "ar": "الفاتورة بتنزل امتى؟",
+        "arabizi": "el fatora btenzel emta?"
+      },
+      "answer": {
+        "en": "On your account's bill day (the 1st, 8th, 15th or 22nd). It's detailed, and you can get it free by e-mail or in the app.",
+        "ar": "في يوم الفاتورة بتاع حسابك (1 أو 8 أو 15 أو 22 في الشهر)، وبتبقى مفصلة وتقدر تاخدها مجانًا على الإيميل أو التطبيق."
+      },
+      "citation": "postpaid_billing_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-012",
+      "question": {
+        "en": "When do I have to pay my bill?",
+        "ar": "لازم ادفع الفاتورة امتى؟",
+        "arabizi": "lazem adfa3 el fatora emta?"
+      },
+      "answer": {
+        "en": "Within 15 days of the bill day. After that a 25 EGP late fee is added to the next bill.",
+        "ar": "خلال 15 يوم من يوم الفاتورة، وبعدها بيتضاف 25 جنيه غرامة تأخير على الفاتورة الجاية."
+      },
+      "citation": "postpaid_billing_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-013",
+      "question": {
+        "en": "Why is there a 25 EGP late fee on my bill?",
+        "ar": "ليه فيه 25 جنيه غرامة على الفاتورة؟",
+        "arabizi": "leh fe 25 gneh 8arama 3al fatora?"
+      },
+      "answer": {
+        "en": "The previous bill wasn't fully paid by its due date. Partial payments don't stop the late fee.",
+        "ar": "الفاتورة اللي قبلها متدفعتش كاملة في ميعادها، والدفع الجزئي مش بيمنع الغرامة."
+      },
+      "citation": "postpaid_billing_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-014",
+      "question": {
+        "en": "My bill is higher than usual.",
+        "ar": "الفاتورة جاية عالية عن العادي.",
+        "arabizi": "el fatora gaya 3alya 3an el 3ady."
+      },
+      "answer": {
+        "en": "I can go through the charges with you after verifying the line. If a charge looks wrong you can dispute it within 60 days of the bill date.",
+        "ar": "أقدر أراجع معاك البنود بعد ما أتأكد من الخط. لو فيه بند غلط تقدر تعترض عليه خلال 60 يوم من تاريخ الفاتورة."
+      },
+      "citation": "postpaid_billing_policy@v2#s4"
+    },
+    {
+      "faq_id": "FAQ-015",
+      "question": {
+        "en": "Why are my outgoing calls blocked?",
+        "ar": "ليه مش عارف اتصل؟",
+        "arabizi": "leh msh 3aref attesel?"
+      },
+      "answer": {
+        "en": "On postpaid, outgoing services stop when usage reaches your credit limit, or the line is suspended 30 days after an unpaid due date, always with at least a week's SMS notice. A payment brings it back.",
+        "ar": "في الخط الشهري الخدمات الصادرة بتقف لما الاستهلاك يوصل للحد الائتماني، أو الخط بيتوقف بعد 30 يوم من ميعاد فاتورة متدفعتش، ودايمًا بعد رسالة تنبيه قبلها بأسبوع على الأقل. الدفع بيرجعه."
+      },
+      "citation": "postpaid_billing_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-016",
+      "question": {
+        "en": "I paid my bill but it still shows unpaid.",
+        "ar": "دفعت الفاتورة ولسه ظاهرة مش مدفوعة.",
+        "arabizi": "dafa3t el fatora w lessa zahra msh madfo3a."
+      },
+      "answer": {
+        "en": "Payments through Fawry or other outlets can take up to 4 working hours to appear. If it's been longer, send me the receipt reference and I'll check.",
+        "ar": "الدفع من فوري أو المنافذ التانية ممكن ياخد لحد 4 ساعات عمل عشان يظهر. لو عدى أكتر ابعتلي رقم الإيصال وأنا أراجع."
+      },
+      "citation": "postpaid_billing_policy@v2#s5"
+    },
+    {
+      "faq_id": "FAQ-017",
+      "question": {
+        "en": "How can I pay my bill?",
+        "ar": "ادفع الفاتورة منين؟",
+        "arabizi": "adfa3 el fatora mnen?"
+      },
+      "answer": {
+        "en": "Through the app, InstaPay, a bank card, Fawry, e-wallets, direct debit or any store.",
+        "ar": "من التطبيق أو إنستاباي أو الفيزا أو فوري أو المحفظة أو الخصم المباشر أو أي فرع."
+      },
+      "citation": "postpaid_billing_policy@v2#s5"
+    },
+    {
+      "faq_id": "FAQ-018",
+      "question": {
+        "en": "Can you remove a charge from my bill?",
+        "ar": "ممكن تشيلوا مبلغ من الفاتورة؟",
+        "arabizi": "momken tsheelo mablagh men el fatora?"
+      },
+      "answer": {
+        "en": "I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.",
+        "ar": "أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان."
+      },
+      "citation": "postpaid_billing_policy@v2#s4"
+    },
+    {
+      "faq_id": "FAQ-019",
+      "question": {
+        "en": "How do I subscribe to a bundle?",
+        "ar": "اشترك في باقة ازاي؟",
+        "arabizi": "ashtrek fe ba2a ezay?"
+      },
+      "answer": {
+        "en": "From the app, the bundle's code, any store, or I can do it here after verifying your line. Nothing is ever added without your OK.",
+        "ar": "من التطبيق أو كود الباقة أو أي فرع، أو أقدر أعملهولك هنا بعد ما أتأكد من الخط. مفيش حاجة بتتضاف أبدًا من غير موافقتك."
+      },
+      "citation": "bundles_policy@v4#s1"
+    },
+    {
+      "faq_id": "FAQ-020",
+      "question": {
+        "en": "How do I stop my bundle from renewing?",
+        "ar": "اوقف تجديد الباقة ازاي؟",
+        "arabizi": "aw2af tagdeed el ba2a ezay?"
+      },
+      "answer": {
+        "en": "You can switch off auto-renewal any time; it stops from the next renewal date, and you keep the current bundle until then.",
+        "ar": "تقدر تلغي التجديد التلقائي في أي وقت، وبيقف من ميعاد التجديد الجاي، والباقة الحالية بتفضل معاك لحد ساعتها."
+      },
+      "citation": "bundles_policy@v4#s2"
+    },
+    {
+      "faq_id": "FAQ-021",
+      "question": {
+        "en": "My bundle didn't renew.",
+        "ar": "الباقة متجددتش.",
+        "arabizi": "el ba2a matgaddedetsh."
+      },
+      "answer": {
+        "en": "Renewal needs enough balance on the renewal day. Recharge and renew, and you'll get SMS alerts at 50%, 80% and 100% of the bundle.",
+        "ar": "التجديد محتاج رصيد كفاية يوم التجديد. اشحن وجدد، وهتوصلك رسايل تنبيه عند 50% و80% و100% من الباقة."
+      },
+      "citation": "bundles_policy@v4#s2"
+    },
+    {
+      "faq_id": "FAQ-022",
+      "question": {
+        "en": "Do my unused Control units carry over?",
+        "ar": "وحدات الكنترول اللي متستخدمتش بتترحل؟",
+        "arabizi": "we7dat el control elly mat3amaletsh btetra7al?"
+      },
+      "answer": {
+        "en": "Yes, if the plan renews before its 28 days end. If there isn't enough balance at renewal, the remaining units expire.",
+        "ar": "أيوه، لو النظام اتجدد قبل ما الـ 28 يوم يخلصوا. لو مفيش رصيد كفاية وقت التجديد الوحدات اللي فاضلة بتنتهي."
+      },
+      "citation": "bundles_policy@v4#s3"
+    },
+    {
+      "faq_id": "FAQ-023",
+      "question": {
+        "en": "If I switch bundles, do I lose my remaining MBs?",
+        "ar": "لو غيرت الباقة الميجات اللي فاضلة تروح؟",
+        "arabizi": "law 8ayart el ba2a el megat el fadla trooh?"
+      },
+      "answer": {
+        "en": "No. If you switch before the renewal date, the remaining megabytes of the old bundle stay usable.",
+        "ar": "لا، لو غيرت قبل ميعاد التجديد الميجات اللي فاضلة من الباقة القديمة بتفضل تقدر تستخدمها."
+      },
+      "citation": "bundles_policy@v4#s4"
+    },
+    {
+      "faq_id": "FAQ-024",
+      "question": {
+        "en": "My bundle ran out before the renewal date. What now?",
+        "ar": "الباقة خلصت قبل ميعاد التجديد، اعمل ايه؟",
+        "arabizi": "el ba2a 5elset abl me3ad el tagdeed, a3mel eh?"
+      },
+      "answer": {
+        "en": "Usage is charged pay-as-you-go until you renew early or buy an extra-GB add-on.",
+        "ar": "الاستخدام بيتحاسب بالسعر العادي لحد ما تجدد بدري أو تشتري إضافة جيجا."
+      },
+      "citation": "bundles_policy@v4#s5"
+    },
+    {
+      "faq_id": "FAQ-025",
+      "question": {
+        "en": "How many times can I change my postpaid plan?",
+        "ar": "اقدر اغير نظام الخط الشهري كام مرة؟",
+        "arabizi": "a2dar a8ayar nezam el 5at el shahry kam marra?"
+      },
+      "answer": {
+        "en": "Once per billing cycle; the change starts from the next bill.",
+        "ar": "مرة واحدة في كل دورة فاتورة، والتغيير بيبدأ من الفاتورة الجاية."
+      },
+      "citation": "bundles_policy@v4#s4"
+    },
+    {
+      "faq_id": "FAQ-026",
+      "question": {
+        "en": "I subscribed to a bundle by mistake. Can I get my money back?",
+        "ar": "اشتركت في باقة بالغلط، ممكن فلوسي ترجع؟",
+        "arabizi": "eshtarakt fe ba2a bel 8alat, momken felousy terga3?"
+      },
+      "answer": {
+        "en": "Yes, if you cancel within 24 hours and used less than 5% of it. I can check that for you.",
+        "ar": "أيوه، لو لغيتها خلال 24 ساعة ومستخدمتش أكتر من 5% منها. أقدر أراجعلك ده."
+      },
+      "citation": "refund_policy@v3#s1"
+    },
+    {
+      "faq_id": "FAQ-027",
+      "question": {
+        "en": "Money was deducted from my balance for no reason.",
+        "ar": "اتخصم مني رصيد من غير سبب.",
+        "arabizi": "et5asam meny rased men 8eer sabab."
+      },
+      "answer": {
+        "en": "I'll check the deductions on your line. If a charge is confirmed wrong or duplicated, it's returned in full within 48 hours.",
+        "ar": "هراجع الخصومات على خطك، ولو اتأكدنا إن الخصم غلط أو متكرر بيرجع كامل خلال 48 ساعة."
+      },
+      "citation": "refund_policy@v3#s2"
+    },
+    {
+      "faq_id": "FAQ-028",
+      "question": {
+        "en": "I'm being charged for a service I never subscribed to.",
+        "ar": "بيتخصم مني على خدمة عمري ما اشتركت فيها.",
+        "arabizi": "byet5asam meny 3ala khedma 3omry ma eshtarakt feeha."
+      },
+      "answer": {
+        "en": "No service may be added without your consent. I'll stop it right away, and its charges are refunded for up to the last 30 days.",
+        "ar": "مفيش خدمة ينفع تتضاف من غير موافقتك. هلغيهالك فورًا، ورسومها بترجع عن آخر 30 يوم بحد أقصى."
+      },
+      "citation": "refund_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-029",
+      "question": {
+        "en": "Can I get my prepaid balance back in cash?",
+        "ar": "ممكن آخد الرصيد كاش؟",
+        "arabizi": "momken a5od el rased cash?"
+      },
+      "answer": {
+        "en": "No, prepaid balance isn't refunded in cash. Cash or card refunds are only for postpaid overpayments and device payments.",
+        "ar": "لا، رصيد الكارت مش بيترد كاش. الاسترداد الكاش أو على الفيزا بس لزيادة الدفع في الخط الشهري ومدفوعات الأجهزة."
+      },
+      "citation": "refund_policy@v3#s5"
+    },
+    {
+      "faq_id": "FAQ-030",
+      "question": {
+        "en": "How long does a card refund take?",
+        "ar": "الفلوس بترجع على الفيزا في قد ايه؟",
+        "arabizi": "el felous btrga3 3al visa fe ad eh?"
+      },
+      "answer": {
+        "en": "Up to 14 working days, to the original payment method.",
+        "ar": "لحد 14 يوم عمل، على نفس وسيلة الدفع."
+      },
+      "citation": "refund_policy@v3#s5"
+    },
+    {
+      "faq_id": "FAQ-031",
+      "question": {
+        "en": "The network was down for two days. Do I get compensation?",
+        "ar": "الشبكة كانت واقعة يومين، ليا تعويض؟",
+        "arabizi": "el shabaka kanet wa2a3a yomeen, leya ta3weed?"
+      },
+      "answer": {
+        "en": "For a confirmed outage over 24 hours, mobile customers get 1 GB free per full day, added automatically within 7 days of the outage closing.",
+        "ar": "لو العطل مؤكد وأكتر من 24 ساعة، عملاء الموبايل بياخدوا 1 جيجا مجانًا عن كل يوم كامل، بتنزل تلقائي خلال 7 أيام من قفل العطل."
+      },
+      "citation": "refund_policy@v3#s4"
+    },
+    {
+      "faq_id": "FAQ-032",
+      "question": {
+        "en": "I lost my SIM. Can you send me a new one?",
+        "ar": "الشريحة ضاعت، ممكن تبعتولي واحدة جديدة؟",
+        "arabizi": "el shee7a da3et, momken teb3atoly wa7da gdeda?"
+      },
+      "answer": {
+        "en": "A replacement SIM is only issued in a store, to the line owner with their original national ID, after signing a request form. The fee is 5 EGP. I can suspend the line now to protect it.",
+        "ar": "بدل الفاقد بيطلع من الفرع بس لصاحب الخط ببطاقته الأصلية بعد ما يمضي على نموذج الطلب، والرسوم 5 جنيه. أقدر أوقفلك الخط دلوقتي عشان محدش يستخدمه."
+      },
+      "citation": "sim_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-033",
+      "question": {
+        "en": "Can you do a SIM swap for me over chat?",
+        "ar": "ممكن تعملولي بدل فاقد على الشات؟",
+        "arabizi": "momken te3melooly badal fa2ed 3al chat?"
+      },
+      "answer": {
+        "en": "No, SIM replacement is never done through chat or phone, only in a store with the owner present and their original ID.",
+        "ar": "لا، بدل الفاقد مبيتعملش أبدًا من الشات أو التليفون، بس من الفرع وصاحب الخط موجود ببطاقته الأصلية."
+      },
+      "citation": "sim_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-034",
+      "question": {
+        "en": "My phone was stolen.",
+        "ar": "الموبايل اتسرق.",
+        "arabizi": "el mobile etsara2."
+      },
+      "answer": {
+        "en": "I'm sorry. I can suspend the line right away after verifying you; to use the number again you'll need a replacement SIM from a store.",
+        "ar": "آسف جدًا. أقدر أوقف الخط فورًا بعد التحقق منك، وعشان ترجع الرقم هتحتاج بدل فاقد من الفرع."
+      },
+      "citation": "sim_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-035",
+      "question": {
+        "en": "How many lines can I have on my ID?",
+        "ar": "اقدر اطلع كام خط على بطاقتي؟",
+        "arabizi": "a2dar a6la3 kam 5at 3ala beta2ty?"
+      },
+      "answer": {
+        "en": "Up to 10 voice lines and 5 data lines per national ID. On a passport it's 5 and 5, tied to a valid residency.",
+        "ar": "لحد 10 خطوط صوت و5 خطوط بيانات على الرقم القومي. وعلى الباسبور 5 و5 مع إقامة سارية."
+      },
+      "citation": "sim_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-036",
+      "question": {
+        "en": "How do I get an eSIM?",
+        "ar": "اعمل eSIM ازاي؟",
+        "arabizi": "a3mel esim ezay?"
+      },
+      "answer": {
+        "en": "If you're already a customer and your phone supports it, switch in the app by uploading a photo of your national ID and scanning the QR code. New customers get an eSIM in a store.",
+        "ar": "لو انت عميل بالفعل وموبايلك بيدعمها، حوّل من التطبيق برفع صورة البطاقة ومسح الـ QR. العملاء الجداد بياخدوها من الفرع."
+      },
+      "citation": "sim_policy@v2#s4"
+    },
+    {
+      "faq_id": "FAQ-037",
+      "question": {
+        "en": "How much is a new line?",
+        "ar": "الخط الجديد بكام؟",
+        "arabizi": "el 5at el gedeed b kam?"
+      },
+      "answer": {
+        "en": "81.23 EGP including taxes, in a store with your original national ID.",
+        "ar": "81.23 جنيه شامل الضرايب، من الفرع ببطاقتك الأصلية."
+      },
+      "citation": "sim_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-038",
+      "question": {
+        "en": "Can I move my line to my brother's name?",
+        "ar": "ينفع انقل الخط باسم أخويا؟",
+        "arabizi": "yenfa3 an2el el 5at b esm a5oya?"
+      },
+      "answer": {
+        "en": "Yes, in a store with both of your valid IDs. The fee is 25 EGP.",
+        "ar": "أيوه، من الفرع ومعاكم البطاقتين ساريين، والرسوم 25 جنيه."
+      },
+      "citation": "sim_policy@v2#s5"
+    },
+    {
+      "faq_id": "FAQ-039",
+      "question": {
+        "en": "My SIM asks for a PUK code.",
+        "ar": "الشريحة بتطلب كود PUK.",
+        "arabizi": "el shee7a bt6lob kod PUK."
+      },
+      "answer": {
+        "en": "I can give the PUK to the line owner after verifying identity. Be careful: 10 wrong tries block the SIM for good.",
+        "ar": "أقدر أديك كود الـ PUK بعد ما أتحقق إنك صاحب الخط. خلي بالك، 10 محاولات غلط بتقفل الشريحة نهائي."
+      },
+      "citation": "sim_policy@v2#s6"
+    },
+    {
+      "faq_id": "FAQ-040",
+      "question": {
+        "en": "How do I move my number to Masr Connect?",
+        "ar": "انقل رقمي لمصر كونكت ازاي؟",
+        "arabizi": "a2el ra2my le masr connect ezay?"
+      },
+      "answer": {
+        "en": "Visit any store with your ID and proof that you own the line. It's free and done within 24 hours; your old line works until the switch.",
+        "ar": "روح أي فرع ومعاك البطاقة وما يثبت ملكيتك للخط. النقل مجاني وبيخلص خلال 24 ساعة، وخطك القديم شغال لحد ساعتها."
+      },
+      "citation": "porting_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-041",
+      "question": {
+        "en": "Can I move my number to another network?",
+        "ar": "ينفع انقل رقمي لشبكة تانية؟",
+        "arabizi": "yenfa3 a2el ra2my le shabaka tanya?"
+      },
+      "answer": {
+        "en": "Yes, if you've owned the line for at least 4 months and your latest bill is paid. It's free, and your remaining balance and bundles are lost when the number leaves.",
+        "ar": "أيوه، لو بقالك 4 شهور على الأقل مالك الخط وآخر فاتورة مدفوعة. النقل مجاني، والرصيد والباقات اللي فاضلة بتضيع لما الرقم يخرج."
+      },
+      "citation": "porting_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-042",
+      "question": {
+        "en": "Can I move my home internet to another company?",
+        "ar": "ينفع انقل النت المنزلي لشركة تانية؟",
+        "arabizi": "yenfa3 an2el el net el manzely le shereka tanya?"
+      },
+      "answer": {
+        "en": "Yes, free, within 72 hours. Pay your latest bill and any remaining router installments first.",
+        "ar": "أيوه، مجانًا وخلال 72 ساعة. بس ادفع آخر فاتورة وأي أقساط باقية للراوتر الأول."
+      },
+      "citation": "porting_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-043",
+      "question": {
+        "en": "I'm travelling to Saudi Arabia. How do I use my line?",
+        "ar": "مسافر السعودية، استخدم الخط ازاي؟",
+        "arabizi": "msafer el sa3odeya, asta5dem el 5at ezay?"
+      },
+      "answer": {
+        "en": "Prepaid and Control lines can turn roaming on for free any time; just keep enough balance. Postpaid lines get it free after 4 paid bills, or earlier with a 750 EGP deposit. A Gulf roaming bundle is usually cheaper.",
+        "ar": "الكارت والكنترول تقدر تفعل التجوال مجانًا في أي وقت، بس خلي معاك رصيد كفاية. الخط الشهري بيتفعل مجانًا بعد 4 فواتير مدفوعة، أو قبلها بتأمين 750 جنيه. باقة تجوال الخليج غالبًا أوفر."
+      },
+      "citation": "roaming_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-044",
+      "question": {
+        "en": "My roaming stopped working.",
+        "ar": "التجوال وقف وانا مسافر.",
+        "arabizi": "el roaming wa2af w ana msafer."
+      },
+      "answer": {
+        "en": "New postpaid lines with fewer than 4 paid bills have a 250 EGP limit for roaming and international use per bill. A deposit or a roaming bundle lifts it.",
+        "ar": "الخطوط الشهرية الجديدة اللي أقل من 4 فواتير مدفوعة ليها حد 250 جنيه للتجوال والمكالمات الدولية في الفاتورة. التأمين أو باقة التجوال بيحلوا ده."
+      },
+      "citation": "roaming_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-045",
+      "question": {
+        "en": "Roaming charges appeared days after I came back.",
+        "ar": "رسوم التجوال ظهرت بعد ما رجعت بأيام.",
+        "arabizi": "rosoom el roaming zahret ba3d ma rge3t b ayam."
+      },
+      "answer": {
+        "en": "Roaming charges can take up to 72 hours to reach us from the foreign network. If any charge looks wrong, I can open a dispute.",
+        "ar": "رسوم التجوال ممكن تاخد لحد 72 ساعة توصلنا من الشبكة الأجنبية. لو فيه رسوم شكلها غلط أقدر أفتحلك اعتراض."
+      },
+      "citation": "roaming_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-046",
+      "question": {
+        "en": "When will the technician come to install my internet?",
+        "ar": "الفني هييجي يركب النت امتى؟",
+        "arabizi": "el fanny hayeegy yrakeb el net emta?"
+      },
+      "answer": {
+        "en": "Installation is within 7 working days of signing if the landline is ready, in a 4-hour visit window. I can check your appointment.",
+        "ar": "التركيب بيكون خلال 7 أيام عمل من التعاقد لو الخط الأرضي جاهز، والزيارة في نطاق 4 ساعات. أقدر أشوفلك ميعادك."
+      },
+      "citation": "home_internet_policy@v3#s1"
+    },
+    {
+      "faq_id": "FAQ-047",
+      "question": {
+        "en": "My home internet quota finished.",
+        "ar": "باقة النت المنزلي خلصت.",
+        "arabizi": "ba2et el net el manzely 5elset."
+      },
+      "answer": {
+        "en": "Speed drops sharply until you renew early or buy an add-on. Renewing early starts a new 30-day cycle from today.",
+        "ar": "السرعة بتقل جدًا لحد ما تجدد بدري أو تشتري إضافة. التجديد المبكر بيبدأ دورة جديدة 30 يوم من النهارده."
+      },
+      "citation": "home_internet_policy@v3#s2"
+    },
+    {
+      "faq_id": "FAQ-048",
+      "question": {
+        "en": "My internet speed is much lower than my plan.",
+        "ar": "سرعة النت أقل بكتير من الباقة.",
+        "arabizi": "sor3et el net a2al b keteer men el ba2a."
+      },
+      "answer": {
+        "en": "If the speed is below 50% of your plan speed for 3 days in a row, we treat it as a fault. I can open a fault report and run a remote check.",
+        "ar": "لو السرعة أقل من 50% من سرعة الباقة 3 أيام ورا بعض بنعتبرها عطل. أقدر أفتحلك بلاغ عطل وأعمل فحص عن بُعد."
+      },
+      "citation": "home_internet_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-049",
+      "question": {
+        "en": "My internet is completely down.",
+        "ar": "النت فاصل خالص.",
+        "arabizi": "el net fasel 5ales."
+      },
+      "answer": {
+        "en": "I'll check for an outage in your area first, then run a remote diagnosis. If a visit is needed, it's booked within 48 hours.",
+        "ar": "هشوف الأول لو فيه عطل في منطقتك، وبعدين أعمل فحص عن بُعد. لو محتاج زيارة بتتحدد خلال 48 ساعة."
+      },
+      "citation": "home_internet_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-050",
+      "question": {
+        "en": "Will I pay for the technician visit?",
+        "ar": "هدفع فلوس زيارة الفني؟",
+        "arabizi": "hadfa3 felous zeyaret el fanny?"
+      },
+      "answer": {
+        "en": "Only if the fault is in your inside wiring or devices; then the visit fee is 75 EGP.",
+        "ar": "بس لو العطل في التوصيلات الداخلية أو أجهزتك، وساعتها الزيارة بـ 75 جنيه."
+      },
+      "citation": "home_internet_policy@v3#s3"
+    },
+    {
+      "faq_id": "FAQ-051",
+      "question": {
+        "en": "I'm moving house. Can I take my internet with me?",
+        "ar": "هعزل، ينفع انقل النت معايا؟",
+        "arabizi": "ha3zel, yenfa3 an2el el net ma3aya?"
+      },
+      "answer": {
+        "en": "Yes, if the new address is covered. Relocation costs 100 EGP and takes up to 10 working days.",
+        "ar": "أيوه لو العنوان الجديد متغطي. النقل بـ 100 جنيه وبياخد لحد 10 أيام عمل."
+      },
+      "citation": "home_internet_policy@v3#s4"
+    },
+    {
+      "faq_id": "FAQ-052",
+      "question": {
+        "en": "How do I cancel my contract early?",
+        "ar": "الغي العقد قبل ميعاده ازاي؟",
+        "arabizi": "alghy el 3a2d abl me3ado ezay?"
+      },
+      "answer": {
+        "en": "In a store, by the line owner. You pay the remaining device installments plus 20% of the remaining monthly fees.",
+        "ar": "من الفرع وصاحب الخط موجود. بتدفع أقساط الجهاز الباقية و20% من الاشتراكات الشهرية الباقية."
+      },
+      "citation": "contract_policy@v1#s2"
+    },
+    {
+      "faq_id": "FAQ-053",
+      "question": {
+        "en": "I missed a device installment.",
+        "ar": "اتأخرت في قسط الموبايل.",
+        "arabizi": "et2a5art fe 2est el mobile."
+      },
+      "answer": {
+        "en": "A 2% late charge is added. After two missed installments the device can be locked until you pay.",
+        "ar": "بتتضاف رسوم 2% على القسط، وبعد قسطين متأخرين ممكن الجهاز يتقفل لحد ما تدفع."
+      },
+      "citation": "contract_policy@v1#s3"
+    },
+    {
+      "faq_id": "FAQ-054",
+      "question": {
+        "en": "Can you cancel my line here?",
+        "ar": "ممكن تلغولي الخط من هنا؟",
+        "arabizi": "momken tlghooly el 5at men hena?"
+      },
+      "answer": {
+        "en": "I can't cancel a line in chat, but here are the steps: the owner cancels it in a store, after paying any open bills for postpaid.",
+        "ar": "مقدرش ألغي الخط من الشات، بس الخطوات: صاحب الخط بيلغيه من الفرع، وبعد سداد الفواتير لو خط شهري."
+      },
+      "citation": "contract_policy@v1#s4"
+    },
+    {
+      "faq_id": "FAQ-055",
+      "question": {
+        "en": "I want to file a complaint.",
+        "ar": "عايز اعمل شكوى.",
+        "arabizi": "3ayez a3mel shakwa."
+      },
+      "answer": {
+        "en": "Sure, I can open it here and you'll get a reference starting with CMP-. Billing complaints are resolved within 3 working days, network within 5, others within 7.",
+        "ar": "تمام، أقدر أفتحهالك هنا وهتاخد رقم مرجعي بيبدأ بـ CMP-. شكاوى الفواتير بتتحل في 3 أيام عمل، والشبكة في 5، والباقي في 7."
+      },
+      "citation": "complaints_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-056",
+      "question": {
+        "en": "My complaint was not solved. What now?",
+        "ar": "الشكوى متحلتش، اعمل ايه؟",
+        "arabizi": "el shakwa matetlatsh, a3mel eh?"
+      },
+      "answer": {
+        "en": "I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
+        "ar": "هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب."
+      },
+      "citation": "complaints_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-057",
+      "question": {
+        "en": "Why do you need my national ID number?",
+        "ar": "ليه محتاجين الرقم القومي؟",
+        "arabizi": "leh me7tageen el ra2am el 2awmy?"
+      },
+      "answer": {
+        "en": "To protect your account, I need your line number and the last 4 digits of the owner's national ID before sharing any account details.",
+        "ar": "عشان نحمي حسابك، محتاج رقم الخط وآخر 4 أرقام من الرقم القومي لصاحب الخط قبل ما أقول أي بيانات."
+      },
+      "citation": "privacy_policy@v2#s1"
+    },
+    {
+      "faq_id": "FAQ-058",
+      "question": {
+        "en": "Can you send me my call log?",
+        "ar": "ممكن تبعتلي سجل المكالمات؟",
+        "arabizi": "momken teb3atly sigel el mokalmat?"
+      },
+      "answer": {
+        "en": "Detailed call records are only given to the line owner in a store. You can see your usage totals in the app, and I can share them here.",
+        "ar": "سجل المكالمات التفصيلي بيتسلم لصاحب الخط في الفرع بس. تقدر تشوف إجمالي استهلاكك على التطبيق، وأقدر أقولهولك هنا."
+      },
+      "citation": "privacy_policy@v2#s2"
+    },
+    {
+      "faq_id": "FAQ-059",
+      "question": {
+        "en": "I want to check my father's line balance.",
+        "ar": "عايز اعرف رصيد خط بابا.",
+        "arabizi": "3ayez a3raf rased 5at baba."
+      },
+      "answer": {
+        "en": "Sorry, I can only share account details with the registered owner after verification.",
+        "ar": "آسف، مقدرش أقول بيانات الحساب غير لصاحب الخط بعد التحقق منه."
+      },
+      "citation": "privacy_policy@v2#s3"
+    },
+    {
+      "faq_id": "FAQ-060",
+      "question": {
+        "en": "How do I stop promotional messages?",
+        "ar": "اوقف الرسايل الدعائية ازاي؟",
+        "arabizi": "aw2af el rasayel el de3aeya ezay?"
+      },
+      "answer": {
+        "en": "I can turn off promotional SMS and calls for you any time. Free service messages about deductions, payments and bundle usage can't be stopped.",
+        "ar": "أقدر أوقفلك الرسايل والمكالمات الدعائية في أي وقت. رسايل الخدمة المجانية عن الخصومات والمدفوعات واستهلاك الباقات مينفعش تتوقف."
+      },
+      "citation": "privacy_policy@v2#s4"
+    }
+  ]
+}

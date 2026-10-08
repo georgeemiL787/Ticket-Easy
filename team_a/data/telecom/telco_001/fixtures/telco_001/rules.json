@@ -1,0 +1,483 @@
+{
+  "tenant_id": "telco_001",
+  "description": "Same rule shape as shop_001: a rule yields `effect` when applies_if and all conditions hold, otherwise `else_effect`.",
+  "derived_facts": {
+    "hours_since_subscription": "now minus line_bundles.subscribed_at, in hours",
+    "quota_used_percent": "data_mb_used / data_mb_total * 100",
+    "line_age_days": "as_of minus lines.activated_at",
+    "days_since_invoice": "as_of minus invoices.issued_at",
+    "unpaid_invoices": "1 if the latest past-due invoice is not fully paid, else 0",
+    "paid_invoices": "count of invoices with status paid or paid_late",
+    "prepaid_balance": "lines.prepaid_balance",
+    "charge_confirmed_wrong": "transactions.is_duplicate = 1 or a confirmed system error",
+    "prepaid_balance_minus_price": "lines.prepaid_balance minus bundle price"
+  },
+  "rules": [
+    {
+      "rule_id": "R-BUNDLE-REFUND-24H",
+      "action": "refund_bundle",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "hours_since_subscription",
+          "op": "<=",
+          "value": 24,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "refund_policy@v3#s1",
+      "quote": "A bundle subscribed by mistake is refunded in full if it is cancelled within 24 hours",
+      "user_message": {
+        "ar": "للأسف استرداد الباقة متاح خلال 24 ساعة بس من الاشتراك والمدة دي عدت.",
+        "en": "Bundle refunds are only possible within 24 hours of subscribing, and that time has passed."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-BUNDLE-REFUND-USAGE",
+      "action": "refund_bundle",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "quota_used_percent",
+          "op": "<",
+          "value": 5,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "refund_policy@v3#s1",
+      "quote": "and less than 5% of it was used",
+      "user_message": {
+        "ar": "للأسف اتستخدم أكتر من 5% من الباقة فمش هقدر أرجع قيمتها.",
+        "en": "More than 5% of the bundle has been used, so it can't be refunded."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-REFUND-AGENT-CAP",
+      "action": "refund_charge",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": "<=",
+          "value": 200,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "citation": "refund_policy@v3#s2",
+      "quote": "Customer service can approve such refunds up to 200 EGP per case; above that a supervisor must approve.",
+      "user_message": {
+        "ar": "المبلغ أكبر من 200 جنيه فمحتاج موافقة مشرف، هحول الطلب له.",
+        "en": "The amount is over 200 EGP, so a supervisor needs to approve it. I'm passing it on."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-REFUND-CONFIRMED",
+      "action": "refund_charge",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "charge_confirmed_wrong",
+          "op": "==",
+          "value": true,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "refund_policy@v3#s2",
+      "quote": "If system records confirm a charge was wrong or duplicated, the full amount is returned",
+      "user_message": {
+        "ar": "مش لاقي في السجلات إن الخصم ده غلط أو متكرر، هحولك لزميل يراجعه.",
+        "en": "The records don't show this charge as wrong or duplicated; I'll pass it to a colleague to review."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-VAS-REFUND-30D",
+      "action": "refund_vas",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "refund_days",
+          "op": "<=",
+          "value": 30,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "refund_policy@v3#s3",
+      "quote": "are refunded for up to the last 30 days",
+      "user_message": {
+        "ar": "الاسترداد بيكون عن آخر 30 يوم بس.",
+        "en": "Refunds cover the last 30 days at most."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-DISPUTE-60D",
+      "action": "open_bill_dispute",
+      "scope": "billing",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "days_since_invoice",
+          "op": "<=",
+          "value": 60,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "postpaid_billing_policy@v2#s4",
+      "quote": "A customer may dispute any charge within 60 days of the bill date.",
+      "user_message": {
+        "ar": "الاعتراض متاح خلال 60 يوم من تاريخ الفاتورة والمدة دي عدت.",
+        "en": "Disputes must be raised within 60 days of the invoice date, and that has passed."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-ADJUST-SUPERVISOR",
+      "action": "open_bill_dispute",
+      "scope": "billing",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": "<=",
+          "value": 500,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "citation": "postpaid_billing_policy@v2#s4",
+      "quote": "adjustments above 500 EGP need a supervisor",
+      "user_message": {
+        "ar": "المبلغ أكبر من 500 جنيه فهحول الاعتراض لمشرف.",
+        "en": "The amount is over 500 EGP, so I'm passing the dispute to a supervisor."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-PORT-OUT-4M",
+      "action": "issue_port_out",
+      "scope": "porting",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "line_age_days",
+          "op": ">=",
+          "value": 120,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "porting_policy@v2#s2",
+      "quote": "if they have owned the line for at least 4 months",
+      "user_message": {
+        "ar": "نقل الرقم متاح بعد 4 شهور من ملكية الخط.",
+        "en": "Porting out is possible once you have owned the line for 4 months."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-PORT-OUT-UNPAID",
+      "action": "issue_port_out",
+      "scope": "porting",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "unpaid_invoices",
+          "op": "==",
+          "value": 0,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "porting_policy@v2#s2",
+      "quote": "and the latest bill is paid",
+      "user_message": {
+        "ar": "لازم تسدد آخر فاتورة الأول قبل نقل الرقم.",
+        "en": "The latest bill must be paid before porting out."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-SIM-SWAP-STORE",
+      "action": "sim_swap",
+      "scope": "sim",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [],
+      "effect": "deny",
+      "else_effect": "deny",
+      "citation": "sim_policy@v2#s2",
+      "quote": "SIM replacement is never done through chat or phone.",
+      "user_message": {
+        "ar": "بدل الفاقد بيتعمل في الفرع بس بالبطاقة الأصلية.",
+        "en": "A SIM replacement is only done in a store with the original national ID."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-LINE-CANCEL-STORE",
+      "action": "cancel_line",
+      "scope": "contracts",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [],
+      "effect": "deny",
+      "else_effect": "deny",
+      "citation": "contract_policy@v1#s4",
+      "quote": "Chat agents can explain the steps but cannot cancel a line.",
+      "user_message": {
+        "ar": "إلغاء الخط بيكون من الفرع بس.",
+        "en": "Lines are cancelled in a store only."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-SALEFNY-LOW-BALANCE",
+      "action": "grant_salefny",
+      "scope": "recharge",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "prepaid_balance",
+          "op": "<",
+          "value": 5,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "prepaid_recharge_policy@v3#s5",
+      "quote": "When balance is below 5 EGP, customers can borrow",
+      "user_message": {
+        "ar": "سلفني متاحة لما الرصيد يكون أقل من 5 جنيه.",
+        "en": "Salefny is available when your balance is under 5 EGP."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-SALEFNY-ONE",
+      "action": "grant_salefny",
+      "scope": "recharge",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "salefny_outstanding",
+          "op": "==",
+          "value": 0,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "prepaid_recharge_policy@v3#s5",
+      "quote": "Only one Salefny can be outstanding at a time.",
+      "user_message": {
+        "ar": "عليك سلفة لسه متسددتش، أول ما تشحن هتقدر تتسلف تاني.",
+        "en": "You still have an unpaid Salefny; once your next recharge repays it you can borrow again."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-ROAMING-POSTPAID-BILLS",
+      "action": "activate_roaming",
+      "scope": "roaming",
+      "status": "approved",
+      "applies_if": [
+        {
+          "field": "line_type",
+          "op": "==",
+          "value": "postpaid",
+          "from": "facts"
+        }
+      ],
+      "conditions": [
+        {
+          "field": "paid_invoices",
+          "op": ">=",
+          "value": 4,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "require_human",
+      "citation": "roaming_policy@v2#s1",
+      "quote": "Postpaid roaming is free to activate once the line has paid 4 bills, or earlier with a 750 EGP roaming deposit.",
+      "user_message": {
+        "ar": "خطك لسه مسددش 4 فواتير، فتفعيل التجوال محتاج تأمين 750 جنيه، هحولك لزميل يكمل معاك.",
+        "en": "Your line hasn't paid 4 bills yet, so roaming needs a 750 EGP deposit. I'll pass you to a colleague to arrange it."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-PLAN-CHANGE-ONCE",
+      "action": "change_plan",
+      "scope": "bundles",
+      "status": "approved",
+      "applies_if": [
+        {
+          "field": "line_type",
+          "op": "==",
+          "value": "postpaid",
+          "from": "facts"
+        }
+      ],
+      "conditions": [
+        {
+          "field": "plan_changes_this_cycle",
+          "op": "==",
+          "value": 0,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "bundles_policy@v4#s4",
+      "quote": "Postpaid plan changes are allowed once per billing cycle",
+      "user_message": {
+        "ar": "غيرت النظام مرة في الدورة دي بالفعل، تقدر تغيره تاني من الدورة الجاية.",
+        "en": "You already changed plan this cycle; you can change again next cycle."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-BUNDLE-BALANCE",
+      "action": "subscribe_bundle",
+      "scope": "bundles",
+      "status": "approved",
+      "applies_if": [
+        {
+          "field": "line_type",
+          "op": "in",
+          "value": [
+            "prepaid",
+            "control"
+          ],
+          "from": "facts"
+        }
+      ],
+      "conditions": [
+        {
+          "field": "prepaid_balance_minus_price",
+          "op": ">=",
+          "value": 0,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "bundles_policy@v4#s1",
+      "quote": "The price is taken from balance (prepaid)",
+      "user_message": {
+        "ar": "الرصيد مش كفاية للباقة دي.",
+        "en": "Your balance isn't enough for this bundle."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-OUTAGE-COMP-24H",
+      "action": "grant_outage_compensation",
+      "scope": "refunds",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "outage_hours",
+          "op": ">",
+          "value": 24,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "refund_policy@v3#s4",
+      "quote": "for more than 24 continuous hours",
+      "user_message": {
+        "ar": "التعويض بيكون للأعطال اللي أكتر من 24 ساعة متصلة.",
+        "en": "Compensation applies to outages longer than 24 continuous hours."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-TRANSFER-LIMIT",
+      "action": "transfer_balance",
+      "scope": "recharge",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "amount",
+          "op": "<=",
+          "value": 50,
+          "from": "arguments"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "prepaid_recharge_policy@v3#s6",
+      "quote": "between 1 and 50 EGP of credit per transfer",
+      "user_message": {
+        "ar": "التحويل من 1 لـ 50 جنيه في المرة.",
+        "en": "Transfers are 1 to 50 EGP each."
+      },
+      "effective_date": "2026-09-01"
+    },
+    {
+      "rule_id": "R-PUK-OWNER",
+      "action": "get_puk",
+      "scope": "sim",
+      "status": "approved",
+      "applies_if": [],
+      "conditions": [
+        {
+          "field": "identity_verified",
+          "op": "==",
+          "value": true,
+          "from": "facts"
+        }
+      ],
+      "effect": "allow",
+      "else_effect": "deny",
+      "citation": "sim_policy@v2#s6",
+      "quote": "The PUK code is given only to the verified line owner",
+      "user_message": {
+        "ar": "لازم أتأكد إنك صاحب الخط الأول.",
+        "en": "I need to verify you're the line owner first."
+      },
+      "effective_date": "2026-09-01"
+    }
+  ]
+}

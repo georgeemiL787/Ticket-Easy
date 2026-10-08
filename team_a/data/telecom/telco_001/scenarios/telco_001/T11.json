@@ -1,0 +1,43 @@
+{
+  "id": "T11",
+  "title": "Egyptian Arabic: wrong identity digits twice goes to a human",
+  "status": "pending",
+  "language": "ar",
+  "customer": "TC-D001",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "عايزة اعرف رصيدي",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01012340001 والرقم 1111",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01012340001 والرقم 2222",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "ar",
+        "escalation": "identity_failed"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "identity_failed",
+    "trace_invariants": true
+  }
+}

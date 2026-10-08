@@ -1,0 +1,28 @@
+{
+  "id": "T50",
+  "title": "English: SIM-swap fraud report goes to a human urgently",
+  "status": "pending",
+  "language": "en",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "Someone did a SIM swap on my number, my bank sent OTPs to them!",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "en",
+        "escalation": "mandatory_risk"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "mandatory_risk",
+    "case_priority": "urgent",
+    "trace_invariants": true
+  }
+}

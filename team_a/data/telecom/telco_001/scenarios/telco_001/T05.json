@@ -1,0 +1,27 @@
+{
+  "id": "T05",
+  "title": "English: question the policies don't cover is handed over, not invented",
+  "status": "pending",
+  "language": "en",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "Do you offer satellite phone service for ships?",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "en",
+        "escalation": "no_evidence"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "no_evidence",
+    "trace_invariants": true
+  }
+}

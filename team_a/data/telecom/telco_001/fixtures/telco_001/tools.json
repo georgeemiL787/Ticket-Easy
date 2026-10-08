@@ -1,0 +1,1032 @@
+{
+  "tenant_id": "telco_001",
+  "tools": [
+    {
+      "name": "verify_customer",
+      "capability": "verify_customer",
+      "title": "Verify customer",
+      "description": "Check that a line number (or home landline) and the last 4 national ID digits belong to the same owner.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": false,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "nid_last4": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "nid_last4"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          },
+          "customer_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "verified",
+          "customer_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_line",
+      "capability": "get_line",
+      "title": "Get line",
+      "description": "Line facts: plan, status and reason, balance, roaming, Salefny outstanding, activation date.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_line_bundles",
+      "capability": "list_line_bundles",
+      "title": "List bundles",
+      "description": "Active and recent bundles on a line with quota used and expiry.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "bundles": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "bundles"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "list_transactions",
+      "capability": "list_transactions",
+      "title": "List transactions",
+      "description": "Recharges, bundle purchases, VAS charges, transfers, refunds on a line for a date range.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "transactions"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_invoice",
+      "capability": "get_invoice",
+      "title": "Get invoice",
+      "description": "Latest (or a given) postpaid invoice with line items, due date and paid amount.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "invoice": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "invoice"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_usage_summary",
+      "capability": "get_usage_summary",
+      "title": "Usage summary",
+      "description": "Daily totals of data, minutes and SMS (never the numbers called).",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "days": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "usage": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "usage"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "check_outage",
+      "capability": "check_outage",
+      "title": "Check outage",
+      "description": "Open network outages in the customer's governorate and city.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": false,
+      "exposes_personal_data": false,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "governorate": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "governorate",
+          "city"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "outages": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "outages"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_appointment",
+      "capability": "get_appointment",
+      "title": "Get appointment",
+      "description": "Technician appointments for a home internet line.",
+      "operation_kind": "read",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "landline": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "landline"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "appointments": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "appointments"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_puk",
+      "capability": "get_puk",
+      "title": "Get PUK",
+      "description": "PUK code of the verified owner's SIM.",
+      "operation_kind": "read",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "puk": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "puk"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "subscribe_bundle",
+      "capability": "subscribe_bundle",
+      "title": "Subscribe bundle",
+      "description": "Subscribe a line to a bundle; price taken from balance or added to the bill.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "bundle_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "bundle_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "subscription_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subscription_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "refund_bundle",
+      "capability": "refund_bundle",
+      "title": "Refund bundle",
+      "description": "Cancel a bundle subscribed by mistake and return its price (24h, under 5% used).",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "subscription_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "subscription_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refund_id",
+          "amount",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "refund_charge",
+      "capability": "refund_charge",
+      "title": "Refund charge",
+      "description": "Return a charge confirmed as wrong or duplicated (agent limit 200 EGP).",
+      "operation_kind": "create",
+      "risk": "high",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "txn_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "msisdn",
+          "txn_id",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refund_id",
+          "amount",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "unsubscribe_vas",
+      "capability": "unsubscribe_vas",
+      "title": "Unsubscribe service",
+      "description": "Stop a value-added content service.",
+      "operation_kind": "update",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "vas_sub_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "vas_sub_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "refund_vas",
+      "capability": "refund_vas",
+      "title": "Refund service charges",
+      "description": "Refund value-added service charges for up to the last 30 days.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "vas_sub_id": {
+            "type": "string"
+          },
+          "refund_days": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "msisdn",
+          "vas_sub_id",
+          "refund_days"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refund_id",
+          "amount",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "open_bill_dispute",
+      "capability": "open_bill_dispute",
+      "title": "Open bill dispute",
+      "description": "Open a dispute on an invoice line item (adjustments over 500 EGP need a supervisor).",
+      "operation_kind": "create",
+      "risk": "high",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "invoice_id": {
+            "type": "string"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "msisdn",
+          "invoice_id",
+          "item_id",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "dispute_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dispute_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "suspend_line",
+      "capability": "suspend_line",
+      "title": "Suspend line",
+      "description": "Suspend a line after loss or theft.",
+      "operation_kind": "update",
+      "risk": "high",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reference",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "activate_roaming",
+      "capability": "activate_roaming",
+      "title": "Activate roaming",
+      "description": "Turn roaming on for a line.",
+      "operation_kind": "update",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "change_plan",
+      "capability": "change_plan",
+      "title": "Change plan",
+      "description": "Move a line to another plan (upgrade now, downgrade at renewal).",
+      "operation_kind": "update",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "plan_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "plan_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "effective_at": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "effective_at",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "grant_salefny",
+      "capability": "grant_salefny",
+      "title": "Salefny",
+      "description": "Lend 5, 10 or 20 EGP emergency credit.",
+      "operation_kind": "create",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "msisdn",
+          "amount"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "loan_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "loan_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "issue_port_out",
+      "capability": "issue_port_out",
+      "title": "Port-out code",
+      "description": "Issue a number-portability code for porting out.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "port_code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "port_code",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "create_complaint",
+      "capability": "create_complaint",
+      "title": "Create complaint",
+      "description": "Open a complaint and return its CMP- reference.",
+      "operation_kind": "create",
+      "risk": "low",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "category",
+          "summary"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "complaint_id": {
+            "type": "string"
+          },
+          "sla_due": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "complaint_id",
+          "sla_due"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "schedule_technician",
+      "capability": "schedule_technician",
+      "title": "Schedule technician",
+      "description": "Book a technician visit for a home internet fault.",
+      "operation_kind": "create",
+      "risk": "medium",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": false,
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "landline": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "landline",
+          "reason",
+          "date",
+          "window"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "appointment_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "appointment_id",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "sim_swap",
+      "capability": "sim_swap",
+      "title": "SIM replacement",
+      "description": "Issue a replacement SIM. Store only, owner in person.",
+      "operation_kind": "update",
+      "risk": "critical",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": true,
+      "enabled": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          },
+          "new_iccid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn",
+          "new_iccid"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "cancel_line",
+      "capability": "cancel_line",
+      "title": "Cancel line",
+      "description": "Terminate a line. Store only.",
+      "operation_kind": "delete",
+      "risk": "critical",
+      "requires_identity": true,
+      "exposes_personal_data": true,
+      "human_only": true,
+      "enabled": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "msisdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "msisdn"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

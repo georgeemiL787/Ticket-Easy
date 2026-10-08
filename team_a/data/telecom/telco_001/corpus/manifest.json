@@ -1,0 +1,83 @@
+{
+  "tenant_id": "telco_001",
+  "tenant_name": "Masr Connect (مصر كونكت): fictional Egyptian mobile and home-internet operator; rules follow real operators' and NTRA's public terms",
+  "documents": [
+    {
+      "file": "bundles_policy.md",
+      "document_id": "bundles_policy",
+      "version": "v4",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "complaints_policy.md",
+      "document_id": "complaints_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "contract_policy.md",
+      "document_id": "contract_policy",
+      "version": "v1",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "home_internet_policy.md",
+      "document_id": "home_internet_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "porting_policy.md",
+      "document_id": "porting_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "postpaid_billing_policy.md",
+      "document_id": "postpaid_billing_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "prepaid_recharge_policy.md",
+      "document_id": "prepaid_recharge_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "privacy_policy.md",
+      "document_id": "privacy_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "refund_policy.md",
+      "document_id": "refund_policy",
+      "version": "v3",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "roaming_policy.md",
+      "document_id": "roaming_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    },
+    {
+      "file": "sim_policy.md",
+      "document_id": "sim_policy",
+      "version": "v2",
+      "effective_date": "2026-10-01",
+      "current": true
+    }
+  ]
+}

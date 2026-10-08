@@ -1,0 +1,45 @@
+{
+  "id": "T23",
+  "title": "English: Hossam's duplicated 300 EGP roaming bundle needs a supervisor (over 200 EGP)",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D017",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "You charged me twice for the Gulf roaming bundle, 600 pounds gone!",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01112340017 and 4482",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "en",
+        "text_contains": "300"
+      }
+    },
+    {
+      "say": "yes please",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "en",
+        "escalation": "needs_approval"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "needs_approval",
+    "approval_requested": true,
+    "trace_invariants": true
+  }
+}

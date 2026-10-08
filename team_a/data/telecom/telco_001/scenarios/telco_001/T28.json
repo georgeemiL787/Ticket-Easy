@@ -1,0 +1,42 @@
+{
+  "id": "T28",
+  "title": "English: subscribe Mona to Net 30 (enough balance), then she says no",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D001",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "Please add the Net 30 bundle to my line",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01012340001 / 4821",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "en",
+        "text_contains": "30"
+      }
+    },
+    {
+      "say": "actually no, leave it",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

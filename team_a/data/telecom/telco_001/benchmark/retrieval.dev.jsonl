@@ -1,0 +1,102 @@
+{"id": "FAQ-001-en", "style": "en", "question": "How do I recharge my line?", "expected": ["prepaid_recharge_policy@v3#s2"]}
+{"id": "FAQ-001-ar", "style": "ar", "question": "اشحن الخط ازاي؟", "expected": ["prepaid_recharge_policy@v3#s2"]}
+{"id": "FAQ-001-arabizi", "style": "arabizi", "question": "ashan el 5at ezay?", "expected": ["prepaid_recharge_policy@v3#s2"]}
+{"id": "FAQ-003-en", "style": "en", "question": "Why does a 10 EGP card cost 13 EGP?", "expected": ["prepaid_recharge_policy@v3#s3"]}
+{"id": "FAQ-003-ar", "style": "ar", "question": "ليه كارت الـ 10 جنيه بـ 13؟", "expected": ["prepaid_recharge_policy@v3#s3"]}
+{"id": "FAQ-003-arabizi", "style": "arabizi", "question": "leh kart el 10 b 13?", "expected": ["prepaid_recharge_policy@v3#s3"]}
+{"id": "FAQ-005-en", "style": "en", "question": "My line stopped because I didn't use it. Can I get it back?", "expected": ["prepaid_recharge_policy@v3#s4"]}
+{"id": "FAQ-005-ar", "style": "ar", "question": "الخط اتقفل عشان مستخدمتوش، ينفع يرجع؟", "expected": ["prepaid_recharge_policy@v3#s4"]}
+{"id": "FAQ-005-arabizi", "style": "arabizi", "question": "el 5at et2afal 3ashan mastakhdemtosh, yenfa3 yerga3?", "expected": ["prepaid_recharge_policy@v3#s4"]}
+{"id": "FAQ-007-en", "style": "en", "question": "Why can't I take Salefny again?", "expected": ["prepaid_recharge_policy@v3#s5"]}
+{"id": "FAQ-007-ar", "style": "ar", "question": "ليه مش عارف آخد سلفني تاني؟", "expected": ["prepaid_recharge_policy@v3#s5"]}
+{"id": "FAQ-007-arabizi", "style": "arabizi", "question": "leh msh 3aref a5od salefny tany?", "expected": ["prepaid_recharge_policy@v3#s5"]}
+{"id": "FAQ-009-en", "style": "en", "question": "I transferred credit to the wrong number. Can you reverse it?", "expected": ["prepaid_recharge_policy@v3#s6"]}
+{"id": "FAQ-009-ar", "style": "ar", "question": "حولت رصيد لرقم غلط، ممكن ترجعوه؟", "expected": ["prepaid_recharge_policy@v3#s6"]}
+{"id": "FAQ-009-arabizi", "style": "arabizi", "question": "7awelt rased le ra2am 8alat, momken traga3oh?", "expected": ["prepaid_recharge_policy@v3#s6"]}
+{"id": "FAQ-011-en", "style": "en", "question": "When is my bill issued?", "expected": ["postpaid_billing_policy@v2#s1"]}
+{"id": "FAQ-011-ar", "style": "ar", "question": "الفاتورة بتنزل امتى؟", "expected": ["postpaid_billing_policy@v2#s1"]}
+{"id": "FAQ-011-arabizi", "style": "arabizi", "question": "el fatora btenzel emta?", "expected": ["postpaid_billing_policy@v2#s1"]}
+{"id": "FAQ-013-en", "style": "en", "question": "Why is there a 25 EGP late fee on my bill?", "expected": ["postpaid_billing_policy@v2#s2"]}
+{"id": "FAQ-013-ar", "style": "ar", "question": "ليه فيه 25 جنيه غرامة على الفاتورة؟", "expected": ["postpaid_billing_policy@v2#s2"]}
+{"id": "FAQ-013-arabizi", "style": "arabizi", "question": "leh fe 25 gneh 8arama 3al fatora?", "expected": ["postpaid_billing_policy@v2#s2"]}
+{"id": "FAQ-015-en", "style": "en", "question": "Why are my outgoing calls blocked?", "expected": ["postpaid_billing_policy@v2#s3"]}
+{"id": "FAQ-015-ar", "style": "ar", "question": "ليه مش عارف اتصل؟", "expected": ["postpaid_billing_policy@v2#s3"]}
+{"id": "FAQ-015-arabizi", "style": "arabizi", "question": "leh msh 3aref attesel?", "expected": ["postpaid_billing_policy@v2#s3"]}
+{"id": "FAQ-017-en", "style": "en", "question": "How can I pay my bill?", "expected": ["postpaid_billing_policy@v2#s5"]}
+{"id": "FAQ-017-ar", "style": "ar", "question": "ادفع الفاتورة منين؟", "expected": ["postpaid_billing_policy@v2#s5"]}
+{"id": "FAQ-017-arabizi", "style": "arabizi", "question": "adfa3 el fatora mnen?", "expected": ["postpaid_billing_policy@v2#s5"]}
+{"id": "FAQ-019-en", "style": "en", "question": "How do I subscribe to a bundle?", "expected": ["bundles_policy@v4#s1"]}
+{"id": "FAQ-019-ar", "style": "ar", "question": "اشترك في باقة ازاي؟", "expected": ["bundles_policy@v4#s1"]}
+{"id": "FAQ-019-arabizi", "style": "arabizi", "question": "ashtrek fe ba2a ezay?", "expected": ["bundles_policy@v4#s1"]}
+{"id": "FAQ-021-en", "style": "en", "question": "My bundle didn't renew.", "expected": ["bundles_policy@v4#s2"]}
+{"id": "FAQ-021-ar", "style": "ar", "question": "الباقة متجددتش.", "expected": ["bundles_policy@v4#s2"]}
+{"id": "FAQ-021-arabizi", "style": "arabizi", "question": "el ba2a matgaddedetsh.", "expected": ["bundles_policy@v4#s2"]}
+{"id": "FAQ-023-en", "style": "en", "question": "If I switch bundles, do I lose my remaining MBs?", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-023-ar", "style": "ar", "question": "لو غيرت الباقة الميجات اللي فاضلة تروح؟", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-023-arabizi", "style": "arabizi", "question": "law 8ayart el ba2a el megat el fadla trooh?", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-025-en", "style": "en", "question": "How many times can I change my postpaid plan?", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-025-ar", "style": "ar", "question": "اقدر اغير نظام الخط الشهري كام مرة؟", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-025-arabizi", "style": "arabizi", "question": "a2dar a8ayar nezam el 5at el shahry kam marra?", "expected": ["bundles_policy@v4#s4"]}
+{"id": "FAQ-027-en", "style": "en", "question": "Money was deducted from my balance for no reason.", "expected": ["refund_policy@v3#s2"]}
+{"id": "FAQ-027-ar", "style": "ar", "question": "اتخصم مني رصيد من غير سبب.", "expected": ["refund_policy@v3#s2"]}
+{"id": "FAQ-027-arabizi", "style": "arabizi", "question": "et5asam meny rased men 8eer sabab.", "expected": ["refund_policy@v3#s2"]}
+{"id": "FAQ-029-en", "style": "en", "question": "Can I get my prepaid balance back in cash?", "expected": ["refund_policy@v3#s5"]}
+{"id": "FAQ-029-ar", "style": "ar", "question": "ممكن آخد الرصيد كاش؟", "expected": ["refund_policy@v3#s5"]}
+{"id": "FAQ-029-arabizi", "style": "arabizi", "question": "momken a5od el rased cash?", "expected": ["refund_policy@v3#s5"]}
+{"id": "FAQ-031-en", "style": "en", "question": "The network was down for two days. Do I get compensation?", "expected": ["refund_policy@v3#s4"]}
+{"id": "FAQ-031-ar", "style": "ar", "question": "الشبكة كانت واقعة يومين، ليا تعويض؟", "expected": ["refund_policy@v3#s4"]}
+{"id": "FAQ-031-arabizi", "style": "arabizi", "question": "el shabaka kanet wa2a3a yomeen, leya ta3weed?", "expected": ["refund_policy@v3#s4"]}
+{"id": "FAQ-033-en", "style": "en", "question": "Can you do a SIM swap for me over chat?", "expected": ["sim_policy@v2#s2"]}
+{"id": "FAQ-033-ar", "style": "ar", "question": "ممكن تعملولي بدل فاقد على الشات؟", "expected": ["sim_policy@v2#s2"]}
+{"id": "FAQ-033-arabizi", "style": "arabizi", "question": "momken te3melooly badal fa2ed 3al chat?", "expected": ["sim_policy@v2#s2"]}
+{"id": "FAQ-035-en", "style": "en", "question": "How many lines can I have on my ID?", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-035-ar", "style": "ar", "question": "اقدر اطلع كام خط على بطاقتي؟", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-035-arabizi", "style": "arabizi", "question": "a2dar a6la3 kam 5at 3ala beta2ty?", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-037-en", "style": "en", "question": "How much is a new line?", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-037-ar", "style": "ar", "question": "الخط الجديد بكام؟", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-037-arabizi", "style": "arabizi", "question": "el 5at el gedeed b kam?", "expected": ["sim_policy@v2#s1"]}
+{"id": "FAQ-039-en", "style": "en", "question": "My SIM asks for a PUK code.", "expected": ["sim_policy@v2#s6"]}
+{"id": "FAQ-039-ar", "style": "ar", "question": "الشريحة بتطلب كود PUK.", "expected": ["sim_policy@v2#s6"]}
+{"id": "FAQ-039-arabizi", "style": "arabizi", "question": "el shee7a bt6lob kod PUK.", "expected": ["sim_policy@v2#s6"]}
+{"id": "FAQ-041-en", "style": "en", "question": "Can I move my number to another network?", "expected": ["porting_policy@v2#s2"]}
+{"id": "FAQ-041-ar", "style": "ar", "question": "ينفع انقل رقمي لشبكة تانية؟", "expected": ["porting_policy@v2#s2"]}
+{"id": "FAQ-041-arabizi", "style": "arabizi", "question": "yenfa3 a2el ra2my le shabaka tanya?", "expected": ["porting_policy@v2#s2"]}
+{"id": "FAQ-043-en", "style": "en", "question": "I'm travelling to Saudi Arabia. How do I use my line?", "expected": ["roaming_policy@v2#s1"]}
+{"id": "FAQ-043-ar", "style": "ar", "question": "مسافر السعودية، استخدم الخط ازاي؟", "expected": ["roaming_policy@v2#s1"]}
+{"id": "FAQ-043-arabizi", "style": "arabizi", "question": "msafer el sa3odeya, asta5dem el 5at ezay?", "expected": ["roaming_policy@v2#s1"]}
+{"id": "FAQ-045-en", "style": "en", "question": "Roaming charges appeared days after I came back.", "expected": ["roaming_policy@v2#s3"]}
+{"id": "FAQ-045-ar", "style": "ar", "question": "رسوم التجوال ظهرت بعد ما رجعت بأيام.", "expected": ["roaming_policy@v2#s3"]}
+{"id": "FAQ-045-arabizi", "style": "arabizi", "question": "rosoom el roaming zahret ba3d ma rge3t b ayam.", "expected": ["roaming_policy@v2#s3"]}
+{"id": "FAQ-047-en", "style": "en", "question": "My home internet quota finished.", "expected": ["home_internet_policy@v3#s2"]}
+{"id": "FAQ-047-ar", "style": "ar", "question": "باقة النت المنزلي خلصت.", "expected": ["home_internet_policy@v3#s2"]}
+{"id": "FAQ-047-arabizi", "style": "arabizi", "question": "ba2et el net el manzely 5elset.", "expected": ["home_internet_policy@v3#s2"]}
+{"id": "FAQ-049-en", "style": "en", "question": "My internet is completely down.", "expected": ["home_internet_policy@v3#s3"]}
+{"id": "FAQ-049-ar", "style": "ar", "question": "النت فاصل خالص.", "expected": ["home_internet_policy@v3#s3"]}
+{"id": "FAQ-049-arabizi", "style": "arabizi", "question": "el net fasel 5ales.", "expected": ["home_internet_policy@v3#s3"]}
+{"id": "FAQ-051-en", "style": "en", "question": "I'm moving house. Can I take my internet with me?", "expected": ["home_internet_policy@v3#s4"]}
+{"id": "FAQ-051-ar", "style": "ar", "question": "هعزل، ينفع انقل النت معايا؟", "expected": ["home_internet_policy@v3#s4"]}
+{"id": "FAQ-051-arabizi", "style": "arabizi", "question": "ha3zel, yenfa3 an2el el net ma3aya?", "expected": ["home_internet_policy@v3#s4"]}
+{"id": "FAQ-053-en", "style": "en", "question": "I missed a device installment.", "expected": ["contract_policy@v1#s3"]}
+{"id": "FAQ-053-ar", "style": "ar", "question": "اتأخرت في قسط الموبايل.", "expected": ["contract_policy@v1#s3"]}
+{"id": "FAQ-053-arabizi", "style": "arabizi", "question": "et2a5art fe 2est el mobile.", "expected": ["contract_policy@v1#s3"]}
+{"id": "FAQ-055-en", "style": "en", "question": "I want to file a complaint.", "expected": ["complaints_policy@v2#s1"]}
+{"id": "FAQ-055-ar", "style": "ar", "question": "عايز اعمل شكوى.", "expected": ["complaints_policy@v2#s1"]}
+{"id": "FAQ-055-arabizi", "style": "arabizi", "question": "3ayez a3mel shakwa.", "expected": ["complaints_policy@v2#s1"]}
+{"id": "FAQ-057-en", "style": "en", "question": "Why do you need my national ID number?", "expected": ["privacy_policy@v2#s1"]}
+{"id": "FAQ-057-ar", "style": "ar", "question": "ليه محتاجين الرقم القومي؟", "expected": ["privacy_policy@v2#s1"]}
+{"id": "FAQ-057-arabizi", "style": "arabizi", "question": "leh me7tageen el ra2am el 2awmy?", "expected": ["privacy_policy@v2#s1"]}
+{"id": "FAQ-059-en", "style": "en", "question": "I want to check my father's line balance.", "expected": ["privacy_policy@v2#s3"]}
+{"id": "FAQ-059-ar", "style": "ar", "question": "عايز اعرف رصيد خط بابا.", "expected": ["privacy_policy@v2#s3"]}
+{"id": "FAQ-059-arabizi", "style": "arabizi", "question": "3ayez a3raf rased 5at baba.", "expected": ["privacy_policy@v2#s3"]}
+{"id": "OFF-en-01", "style": "en", "question": "Do you sell smart TVs in your stores?", "expected": []}
+{"id": "OFF-en-03", "style": "en", "question": "Can I pay my electricity bill through your app?", "expected": []}
+{"id": "OFF-en-05", "style": "en", "question": "What is Masr Connect's share price today?", "expected": []}
+{"id": "OFF-en-07", "style": "en", "question": "How do I become an authorised dealer?", "expected": []}
+{"id": "OFF-ar-01", "style": "ar", "question": "عندكم شاشات تلفزيون في الفروع؟", "expected": []}
+{"id": "OFF-ar-03", "style": "ar", "question": "ينفع أدفع فاتورة الكهربا من التطبيق بتاعكم؟", "expected": []}
+{"id": "OFF-ar-05", "style": "ar", "question": "سعر سهم الشركة النهارده كام؟", "expected": []}
+{"id": "OFF-ar-07", "style": "ar", "question": "إزاي أبقى وكيل معتمد ليكم؟", "expected": []}
+{"id": "OFF-arabizi-01", "style": "arabizi", "question": "3andoko shashat TV fel fro3?", "expected": []}
+{"id": "OFF-arabizi-03", "style": "arabizi", "question": "momken adfa3 fatoret el kahraba men el app?", "expected": []}
+{"id": "OFF-arabizi-05", "style": "arabizi", "question": "se3r sahm el shereka kam enaharda?", "expected": []}
+{"id": "OFF-arabizi-07", "style": "arabizi", "question": "ezay ab2a wakeel mo3tamad?", "expected": []}

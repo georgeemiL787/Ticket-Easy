@@ -1,0 +1,28 @@
+{
+  "id": "T43",
+  "title": "Mixed: cancel line in chat is refused with store steps",
+  "status": "pending",
+  "language": "mixed",
+  "customer": "TC-D010",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "عايزة اعمل cancel للخط ده خالص",
+      "expect": {
+        "decision": "refuse",
+        "awaiting": null,
+        "locale": "ar",
+        "citations_include": [
+          "contract_policy@v1#s4"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

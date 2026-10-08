@@ -1,0 +1,38 @@
+{
+  "id": "T60",
+  "title": "English: billing system down while looking up the bill",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D002",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "What's my current bill?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01112340002 7315",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "en",
+        "escalation": "tool_failure"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "tool_failure",
+    "setup_faults": {
+      "get_invoice": "timeout"
+    },
+    "trace_invariants": true
+  }
+}

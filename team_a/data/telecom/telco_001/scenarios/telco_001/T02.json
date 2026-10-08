@@ -1,0 +1,29 @@
+{
+  "id": "T02",
+  "title": "Egyptian Arabic: how to transfer credit and the daily limit",
+  "status": "pending",
+  "language": "ar",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "ازاي احول رصيد لأختي؟ واقصى حاجة احولها كام؟",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "ar",
+        "citations_include": [
+          "prepaid_recharge_policy@v3#s6"
+        ],
+        "text_contains": "50"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

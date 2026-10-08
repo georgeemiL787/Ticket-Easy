@@ -1,0 +1,38 @@
+{
+  "id": "T12",
+  "title": "English: Karim asks why his bill is high; the agent points to the roaming line item",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D002",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "Why is my bill 1,288 pounds this month?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:identity",
+        "locale": "en"
+      }
+    },
+    {
+      "say": "01112340002, 7315",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "en",
+        "text_contains": "780.5",
+        "tools_called": [
+          "verify_customer",
+          "get_invoice"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

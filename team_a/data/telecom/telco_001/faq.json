@@ -1,0 +1,602 @@
+[
+  {
+    "faq_id": "FAQ-001",
+    "category": "recharge",
+    "question_en": "How do I recharge my line?",
+    "question_ar": "اشحن الخط ازاي؟",
+    "question_arabizi": "ashan el 5at ezay?",
+    "answer_en": "You can recharge with a scratch card, the app, USSD, Fawry, ATMs, InstaPay, e-wallets or any store. You'll get a free SMS confirming every recharge.",
+    "answer_ar": "تقدر تشحن بكارت شحن أو من التطبيق أو كود USSD أو فوري أو ماكينة ATM أو إنستاباي أو المحفظة أو من أي فرع، وهتوصلك رسالة مجانية بتأكد كل شحنة.",
+    "citation": "prepaid_recharge_policy@v3#s2"
+  },
+  {
+    "faq_id": "FAQ-002",
+    "category": "recharge",
+    "question_en": "My 10 EGP card only gave me 9.10. Why?",
+    "question_ar": "كارت الـ 10 جنيه شحنلي 9.10 بس ليه؟",
+    "question_arabizi": "kart el 10 gneh shahanly 9.10 bas leh?",
+    "answer_en": "Government taxes are taken from every recharge. Since December 2024 a 10 EGP card sells for 13 EGP and adds 9.10 EGP of credit, which is 91% of its value. Your SMS shows every deduction.",
+    "answer_ar": "الضرايب الحكومية بتتخصم من كل شحنة. من ديسمبر 2024 كارت الـ 10 جنيه بيتباع بـ 13 جنيه وبيضيف 9.10 جنيه رصيد، يعني 91% من قيمته، والرسالة بتوضح كل الخصومات.",
+    "citation": "prepaid_recharge_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-003",
+    "category": "recharge",
+    "question_en": "Why does a 10 EGP card cost 13 EGP?",
+    "question_ar": "ليه كارت الـ 10 جنيه بـ 13؟",
+    "question_arabizi": "leh kart el 10 b 13?",
+    "answer_en": "Cards are sold above their face value because of government taxes. A 20 EGP card, for example, costs 26 EGP and adds 18.20 EGP of credit.",
+    "answer_ar": "الكروت بتتباع بأعلى من قيمتها بسبب الضرايب الحكومية. مثلًا كارت الـ 20 جنيه بـ 26 جنيه وبيضيف 18.20 جنيه رصيد.",
+    "citation": "prepaid_recharge_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-004",
+    "category": "recharge",
+    "question_en": "Does my line expire if I don't use it?",
+    "question_ar": "الخط بيقفل لو مستخدمتوش؟",
+    "question_arabizi": "el 5at by2fel law mastakhdemtosh?",
+    "answer_en": "After 90 days with no recharge or paid use, the line receives calls only for 5 days, is suspended for 10 days, and is cancelled on day 105. Any recharge before then keeps it.",
+    "answer_ar": "بعد 90 يوم من غير شحن أو استخدام مدفوع، الخط بيستقبل بس 5 أيام، وبعدين بيتوقف 10 أيام، وفي اليوم 105 بيتلغي. أي شحنة قبل كده بتحافظ عليه.",
+    "citation": "prepaid_recharge_policy@v3#s4"
+  },
+  {
+    "faq_id": "FAQ-005",
+    "category": "recharge",
+    "question_en": "My line stopped because I didn't use it. Can I get it back?",
+    "question_ar": "الخط اتقفل عشان مستخدمتوش، ينفع يرجع؟",
+    "question_arabizi": "el 5at et2afal 3ashan mastakhdemtosh, yenfa3 yerga3?",
+    "answer_en": "If it hasn't reached day 105 yet, a recharge brings it back right away. After day 105 the number is cancelled and the remaining credit is lost.",
+    "answer_ar": "لو لسه موصلش لليوم 105 أي شحنة بترجعه على طول. بعد اليوم 105 الرقم بيتلغي والرصيد اللي عليه بيضيع.",
+    "citation": "prepaid_recharge_policy@v3#s4"
+  },
+  {
+    "faq_id": "FAQ-006",
+    "category": "recharge",
+    "question_en": "What is Salefny and how much does it cost?",
+    "question_ar": "يعني ايه سلفني وبكام؟",
+    "question_arabizi": "salefny ya3ny eh w bkam?",
+    "answer_en": "When your balance is under 5 EGP you can borrow 5, 10, 20, 30 or 50 EGP. The fee is taken when you receive it (for example 3 EGP on 10, 6 on 20), and the full borrowed amount is repaid from your next recharge.",
+    "answer_ar": "لما رصيدك يقل عن 5 جنيه تقدر تتسلف 5 أو 10 أو 20 أو 30 أو 50 جنيه. الرسوم بتتخصم وانت بتستلم (مثلًا 3 جنيه على الـ 10 و6 على الـ 20)، والمبلغ كله بيتسدد من الشحنة الجاية.",
+    "citation": "prepaid_recharge_policy@v3#s5"
+  },
+  {
+    "faq_id": "FAQ-007",
+    "category": "recharge",
+    "question_en": "Why can't I take Salefny again?",
+    "question_ar": "ليه مش عارف آخد سلفني تاني؟",
+    "question_arabizi": "leh msh 3aref a5od salefny tany?",
+    "answer_en": "Only one Salefny can be outstanding at a time, and your balance needs to be under 5 EGP. Once your next recharge repays it, you can borrow again.",
+    "answer_ar": "مينفعش يكون عليك أكتر من سلفة في نفس الوقت، ولازم رصيدك يكون أقل من 5 جنيه. أول ما الشحنة الجاية تسدد السلفة تقدر تتسلف تاني.",
+    "citation": "prepaid_recharge_policy@v3#s5"
+  },
+  {
+    "faq_id": "FAQ-008",
+    "category": "recharge",
+    "question_en": "How do I transfer credit to another number?",
+    "question_ar": "احول رصيد لرقم تاني ازاي؟",
+    "question_arabizi": "a7awel rased le ra2am tany ezay?",
+    "answer_en": "You can send 1 to 50 EGP per transfer to another Masr Connect line. The fee is 2% of the amount, at least 0.20 EGP.",
+    "answer_ar": "تقدر تحول من 1 لـ 50 جنيه في المرة لخط مصر كونكت تاني، والرسوم 2% من المبلغ وأقلها 20 قرش.",
+    "citation": "prepaid_recharge_policy@v3#s6"
+  },
+  {
+    "faq_id": "FAQ-009",
+    "category": "recharge",
+    "question_en": "I transferred credit to the wrong number. Can you reverse it?",
+    "question_ar": "حولت رصيد لرقم غلط، ممكن ترجعوه؟",
+    "question_arabizi": "7awelt rased le ra2am 8alat, momken traga3oh?",
+    "answer_en": "Sorry, balance transfers are final once confirmed and customer service can't reverse them.",
+    "answer_ar": "للأسف تحويل الرصيد نهائي بعد التأكيد وخدمة العملاء مش بتقدر تلغيه.",
+    "citation": "prepaid_recharge_policy@v3#s6"
+  },
+  {
+    "faq_id": "FAQ-010",
+    "category": "recharge",
+    "question_en": "I recharged but the balance didn't arrive.",
+    "question_ar": "شحنت والرصيد منزلش.",
+    "question_arabizi": "shahant w el rased manzelsh.",
+    "answer_en": "Recharges usually arrive within minutes; through outside outlets it can take up to 4 working hours. If it's longer, I can check the recharge with you.",
+    "answer_ar": "الشحن عادة بيوصل في دقايق، ومن المنافذ الخارجية ممكن ياخد لحد 4 ساعات عمل. لو أكتر من كده أقدر أراجع الشحنة معاك.",
+    "citation": "postpaid_billing_policy@v2#s5"
+  },
+  {
+    "faq_id": "FAQ-011",
+    "category": "billing",
+    "question_en": "When is my bill issued?",
+    "question_ar": "الفاتورة بتنزل امتى؟",
+    "question_arabizi": "el fatora btenzel emta?",
+    "answer_en": "On your account's bill day (the 1st, 8th, 15th or 22nd). It's detailed, and you can get it free by e-mail or in the app.",
+    "answer_ar": "في يوم الفاتورة بتاع حسابك (1 أو 8 أو 15 أو 22 في الشهر)، وبتبقى مفصلة وتقدر تاخدها مجانًا على الإيميل أو التطبيق.",
+    "citation": "postpaid_billing_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-012",
+    "category": "billing",
+    "question_en": "When do I have to pay my bill?",
+    "question_ar": "لازم ادفع الفاتورة امتى؟",
+    "question_arabizi": "lazem adfa3 el fatora emta?",
+    "answer_en": "Within 15 days of the bill day. After that a 25 EGP late fee is added to the next bill.",
+    "answer_ar": "خلال 15 يوم من يوم الفاتورة، وبعدها بيتضاف 25 جنيه غرامة تأخير على الفاتورة الجاية.",
+    "citation": "postpaid_billing_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-013",
+    "category": "billing",
+    "question_en": "Why is there a 25 EGP late fee on my bill?",
+    "question_ar": "ليه فيه 25 جنيه غرامة على الفاتورة؟",
+    "question_arabizi": "leh fe 25 gneh 8arama 3al fatora?",
+    "answer_en": "The previous bill wasn't fully paid by its due date. Partial payments don't stop the late fee.",
+    "answer_ar": "الفاتورة اللي قبلها متدفعتش كاملة في ميعادها، والدفع الجزئي مش بيمنع الغرامة.",
+    "citation": "postpaid_billing_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-014",
+    "category": "billing",
+    "question_en": "My bill is higher than usual.",
+    "question_ar": "الفاتورة جاية عالية عن العادي.",
+    "question_arabizi": "el fatora gaya 3alya 3an el 3ady.",
+    "answer_en": "I can go through the charges with you after verifying the line. If a charge looks wrong you can dispute it within 60 days of the bill date.",
+    "answer_ar": "أقدر أراجع معاك البنود بعد ما أتأكد من الخط. لو فيه بند غلط تقدر تعترض عليه خلال 60 يوم من تاريخ الفاتورة.",
+    "citation": "postpaid_billing_policy@v2#s4"
+  },
+  {
+    "faq_id": "FAQ-015",
+    "category": "billing",
+    "question_en": "Why are my outgoing calls blocked?",
+    "question_ar": "ليه مش عارف اتصل؟",
+    "question_arabizi": "leh msh 3aref attesel?",
+    "answer_en": "On postpaid, outgoing services stop when usage reaches your credit limit, or the line is suspended 30 days after an unpaid due date, always with at least a week's SMS notice. A payment brings it back.",
+    "answer_ar": "في الخط الشهري الخدمات الصادرة بتقف لما الاستهلاك يوصل للحد الائتماني، أو الخط بيتوقف بعد 30 يوم من ميعاد فاتورة متدفعتش، ودايمًا بعد رسالة تنبيه قبلها بأسبوع على الأقل. الدفع بيرجعه.",
+    "citation": "postpaid_billing_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-016",
+    "category": "billing",
+    "question_en": "I paid my bill but it still shows unpaid.",
+    "question_ar": "دفعت الفاتورة ولسه ظاهرة مش مدفوعة.",
+    "question_arabizi": "dafa3t el fatora w lessa zahra msh madfo3a.",
+    "answer_en": "Payments through Fawry or other outlets can take up to 4 working hours to appear. If it's been longer, send me the receipt reference and I'll check.",
+    "answer_ar": "الدفع من فوري أو المنافذ التانية ممكن ياخد لحد 4 ساعات عمل عشان يظهر. لو عدى أكتر ابعتلي رقم الإيصال وأنا أراجع.",
+    "citation": "postpaid_billing_policy@v2#s5"
+  },
+  {
+    "faq_id": "FAQ-017",
+    "category": "billing",
+    "question_en": "How can I pay my bill?",
+    "question_ar": "ادفع الفاتورة منين؟",
+    "question_arabizi": "adfa3 el fatora mnen?",
+    "answer_en": "Through the app, InstaPay, a bank card, Fawry, e-wallets, direct debit or any store.",
+    "answer_ar": "من التطبيق أو إنستاباي أو الفيزا أو فوري أو المحفظة أو الخصم المباشر أو أي فرع.",
+    "citation": "postpaid_billing_policy@v2#s5"
+  },
+  {
+    "faq_id": "FAQ-018",
+    "category": "billing",
+    "question_en": "Can you remove a charge from my bill?",
+    "question_ar": "ممكن تشيلوا مبلغ من الفاتورة؟",
+    "question_arabizi": "momken tsheelo mablagh men el fatora?",
+    "answer_en": "I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.",
+    "answer_ar": "أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان.",
+    "citation": "postpaid_billing_policy@v2#s4"
+  },
+  {
+    "faq_id": "FAQ-019",
+    "category": "bundles",
+    "question_en": "How do I subscribe to a bundle?",
+    "question_ar": "اشترك في باقة ازاي؟",
+    "question_arabizi": "ashtrek fe ba2a ezay?",
+    "answer_en": "From the app, the bundle's code, any store, or I can do it here after verifying your line. Nothing is ever added without your OK.",
+    "answer_ar": "من التطبيق أو كود الباقة أو أي فرع، أو أقدر أعملهولك هنا بعد ما أتأكد من الخط. مفيش حاجة بتتضاف أبدًا من غير موافقتك.",
+    "citation": "bundles_policy@v4#s1"
+  },
+  {
+    "faq_id": "FAQ-020",
+    "category": "bundles",
+    "question_en": "How do I stop my bundle from renewing?",
+    "question_ar": "اوقف تجديد الباقة ازاي؟",
+    "question_arabizi": "aw2af tagdeed el ba2a ezay?",
+    "answer_en": "You can switch off auto-renewal any time; it stops from the next renewal date, and you keep the current bundle until then.",
+    "answer_ar": "تقدر تلغي التجديد التلقائي في أي وقت، وبيقف من ميعاد التجديد الجاي، والباقة الحالية بتفضل معاك لحد ساعتها.",
+    "citation": "bundles_policy@v4#s2"
+  },
+  {
+    "faq_id": "FAQ-021",
+    "category": "bundles",
+    "question_en": "My bundle didn't renew.",
+    "question_ar": "الباقة متجددتش.",
+    "question_arabizi": "el ba2a matgaddedetsh.",
+    "answer_en": "Renewal needs enough balance on the renewal day. Recharge and renew, and you'll get SMS alerts at 50%, 80% and 100% of the bundle.",
+    "answer_ar": "التجديد محتاج رصيد كفاية يوم التجديد. اشحن وجدد، وهتوصلك رسايل تنبيه عند 50% و80% و100% من الباقة.",
+    "citation": "bundles_policy@v4#s2"
+  },
+  {
+    "faq_id": "FAQ-022",
+    "category": "bundles",
+    "question_en": "Do my unused Control units carry over?",
+    "question_ar": "وحدات الكنترول اللي متستخدمتش بتترحل؟",
+    "question_arabizi": "we7dat el control elly mat3amaletsh btetra7al?",
+    "answer_en": "Yes, if the plan renews before its 28 days end. If there isn't enough balance at renewal, the remaining units expire.",
+    "answer_ar": "أيوه، لو النظام اتجدد قبل ما الـ 28 يوم يخلصوا. لو مفيش رصيد كفاية وقت التجديد الوحدات اللي فاضلة بتنتهي.",
+    "citation": "bundles_policy@v4#s3"
+  },
+  {
+    "faq_id": "FAQ-023",
+    "category": "bundles",
+    "question_en": "If I switch bundles, do I lose my remaining MBs?",
+    "question_ar": "لو غيرت الباقة الميجات اللي فاضلة تروح؟",
+    "question_arabizi": "law 8ayart el ba2a el megat el fadla trooh?",
+    "answer_en": "No. If you switch before the renewal date, the remaining megabytes of the old bundle stay usable.",
+    "answer_ar": "لا، لو غيرت قبل ميعاد التجديد الميجات اللي فاضلة من الباقة القديمة بتفضل تقدر تستخدمها.",
+    "citation": "bundles_policy@v4#s4"
+  },
+  {
+    "faq_id": "FAQ-024",
+    "category": "bundles",
+    "question_en": "My bundle ran out before the renewal date. What now?",
+    "question_ar": "الباقة خلصت قبل ميعاد التجديد، اعمل ايه؟",
+    "question_arabizi": "el ba2a 5elset abl me3ad el tagdeed, a3mel eh?",
+    "answer_en": "Usage is charged pay-as-you-go until you renew early or buy an extra-GB add-on.",
+    "answer_ar": "الاستخدام بيتحاسب بالسعر العادي لحد ما تجدد بدري أو تشتري إضافة جيجا.",
+    "citation": "bundles_policy@v4#s5"
+  },
+  {
+    "faq_id": "FAQ-025",
+    "category": "bundles",
+    "question_en": "How many times can I change my postpaid plan?",
+    "question_ar": "اقدر اغير نظام الخط الشهري كام مرة؟",
+    "question_arabizi": "a2dar a8ayar nezam el 5at el shahry kam marra?",
+    "answer_en": "Once per billing cycle; the change starts from the next bill.",
+    "answer_ar": "مرة واحدة في كل دورة فاتورة، والتغيير بيبدأ من الفاتورة الجاية.",
+    "citation": "bundles_policy@v4#s4"
+  },
+  {
+    "faq_id": "FAQ-026",
+    "category": "refunds",
+    "question_en": "I subscribed to a bundle by mistake. Can I get my money back?",
+    "question_ar": "اشتركت في باقة بالغلط، ممكن فلوسي ترجع؟",
+    "question_arabizi": "eshtarakt fe ba2a bel 8alat, momken felousy terga3?",
+    "answer_en": "Yes, if you cancel within 24 hours and used less than 5% of it. I can check that for you.",
+    "answer_ar": "أيوه، لو لغيتها خلال 24 ساعة ومستخدمتش أكتر من 5% منها. أقدر أراجعلك ده.",
+    "citation": "refund_policy@v3#s1"
+  },
+  {
+    "faq_id": "FAQ-027",
+    "category": "refunds",
+    "question_en": "Money was deducted from my balance for no reason.",
+    "question_ar": "اتخصم مني رصيد من غير سبب.",
+    "question_arabizi": "et5asam meny rased men 8eer sabab.",
+    "answer_en": "I'll check the deductions on your line. If a charge is confirmed wrong or duplicated, it's returned in full within 48 hours.",
+    "answer_ar": "هراجع الخصومات على خطك، ولو اتأكدنا إن الخصم غلط أو متكرر بيرجع كامل خلال 48 ساعة.",
+    "citation": "refund_policy@v3#s2"
+  },
+  {
+    "faq_id": "FAQ-028",
+    "category": "refunds",
+    "question_en": "I'm being charged for a service I never subscribed to.",
+    "question_ar": "بيتخصم مني على خدمة عمري ما اشتركت فيها.",
+    "question_arabizi": "byet5asam meny 3ala khedma 3omry ma eshtarakt feeha.",
+    "answer_en": "No service may be added without your consent. I'll stop it right away, and its charges are refunded for up to the last 30 days.",
+    "answer_ar": "مفيش خدمة ينفع تتضاف من غير موافقتك. هلغيهالك فورًا، ورسومها بترجع عن آخر 30 يوم بحد أقصى.",
+    "citation": "refund_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-029",
+    "category": "refunds",
+    "question_en": "Can I get my prepaid balance back in cash?",
+    "question_ar": "ممكن آخد الرصيد كاش؟",
+    "question_arabizi": "momken a5od el rased cash?",
+    "answer_en": "No, prepaid balance isn't refunded in cash. Cash or card refunds are only for postpaid overpayments and device payments.",
+    "answer_ar": "لا، رصيد الكارت مش بيترد كاش. الاسترداد الكاش أو على الفيزا بس لزيادة الدفع في الخط الشهري ومدفوعات الأجهزة.",
+    "citation": "refund_policy@v3#s5"
+  },
+  {
+    "faq_id": "FAQ-030",
+    "category": "refunds",
+    "question_en": "How long does a card refund take?",
+    "question_ar": "الفلوس بترجع على الفيزا في قد ايه؟",
+    "question_arabizi": "el felous btrga3 3al visa fe ad eh?",
+    "answer_en": "Up to 14 working days, to the original payment method.",
+    "answer_ar": "لحد 14 يوم عمل، على نفس وسيلة الدفع.",
+    "citation": "refund_policy@v3#s5"
+  },
+  {
+    "faq_id": "FAQ-031",
+    "category": "refunds",
+    "question_en": "The network was down for two days. Do I get compensation?",
+    "question_ar": "الشبكة كانت واقعة يومين، ليا تعويض؟",
+    "question_arabizi": "el shabaka kanet wa2a3a yomeen, leya ta3weed?",
+    "answer_en": "For a confirmed outage over 24 hours, mobile customers get 1 GB free per full day, added automatically within 7 days of the outage closing.",
+    "answer_ar": "لو العطل مؤكد وأكتر من 24 ساعة، عملاء الموبايل بياخدوا 1 جيجا مجانًا عن كل يوم كامل، بتنزل تلقائي خلال 7 أيام من قفل العطل.",
+    "citation": "refund_policy@v3#s4"
+  },
+  {
+    "faq_id": "FAQ-032",
+    "category": "sim",
+    "question_en": "I lost my SIM. Can you send me a new one?",
+    "question_ar": "الشريحة ضاعت، ممكن تبعتولي واحدة جديدة؟",
+    "question_arabizi": "el shee7a da3et, momken teb3atoly wa7da gdeda?",
+    "answer_en": "A replacement SIM is only issued in a store, to the line owner with their original national ID, after signing a request form. The fee is 5 EGP. I can suspend the line now to protect it.",
+    "answer_ar": "بدل الفاقد بيطلع من الفرع بس لصاحب الخط ببطاقته الأصلية بعد ما يمضي على نموذج الطلب، والرسوم 5 جنيه. أقدر أوقفلك الخط دلوقتي عشان محدش يستخدمه.",
+    "citation": "sim_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-033",
+    "category": "sim",
+    "question_en": "Can you do a SIM swap for me over chat?",
+    "question_ar": "ممكن تعملولي بدل فاقد على الشات؟",
+    "question_arabizi": "momken te3melooly badal fa2ed 3al chat?",
+    "answer_en": "No, SIM replacement is never done through chat or phone, only in a store with the owner present and their original ID.",
+    "answer_ar": "لا، بدل الفاقد مبيتعملش أبدًا من الشات أو التليفون، بس من الفرع وصاحب الخط موجود ببطاقته الأصلية.",
+    "citation": "sim_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-034",
+    "category": "sim",
+    "question_en": "My phone was stolen.",
+    "question_ar": "الموبايل اتسرق.",
+    "question_arabizi": "el mobile etsara2.",
+    "answer_en": "I'm sorry. I can suspend the line right away after verifying you; to use the number again you'll need a replacement SIM from a store.",
+    "answer_ar": "آسف جدًا. أقدر أوقف الخط فورًا بعد التحقق منك، وعشان ترجع الرقم هتحتاج بدل فاقد من الفرع.",
+    "citation": "sim_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-035",
+    "category": "sim",
+    "question_en": "How many lines can I have on my ID?",
+    "question_ar": "اقدر اطلع كام خط على بطاقتي؟",
+    "question_arabizi": "a2dar a6la3 kam 5at 3ala beta2ty?",
+    "answer_en": "Up to 10 voice lines and 5 data lines per national ID. On a passport it's 5 and 5, tied to a valid residency.",
+    "answer_ar": "لحد 10 خطوط صوت و5 خطوط بيانات على الرقم القومي. وعلى الباسبور 5 و5 مع إقامة سارية.",
+    "citation": "sim_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-036",
+    "category": "sim",
+    "question_en": "How do I get an eSIM?",
+    "question_ar": "اعمل eSIM ازاي؟",
+    "question_arabizi": "a3mel esim ezay?",
+    "answer_en": "If you're already a customer and your phone supports it, switch in the app by uploading a photo of your national ID and scanning the QR code. New customers get an eSIM in a store.",
+    "answer_ar": "لو انت عميل بالفعل وموبايلك بيدعمها، حوّل من التطبيق برفع صورة البطاقة ومسح الـ QR. العملاء الجداد بياخدوها من الفرع.",
+    "citation": "sim_policy@v2#s4"
+  },
+  {
+    "faq_id": "FAQ-037",
+    "category": "sim",
+    "question_en": "How much is a new line?",
+    "question_ar": "الخط الجديد بكام؟",
+    "question_arabizi": "el 5at el gedeed b kam?",
+    "answer_en": "81.23 EGP including taxes, in a store with your original national ID.",
+    "answer_ar": "81.23 جنيه شامل الضرايب، من الفرع ببطاقتك الأصلية.",
+    "citation": "sim_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-038",
+    "category": "sim",
+    "question_en": "Can I move my line to my brother's name?",
+    "question_ar": "ينفع انقل الخط باسم أخويا؟",
+    "question_arabizi": "yenfa3 an2el el 5at b esm a5oya?",
+    "answer_en": "Yes, in a store with both of your valid IDs. The fee is 25 EGP.",
+    "answer_ar": "أيوه، من الفرع ومعاكم البطاقتين ساريين، والرسوم 25 جنيه.",
+    "citation": "sim_policy@v2#s5"
+  },
+  {
+    "faq_id": "FAQ-039",
+    "category": "sim",
+    "question_en": "My SIM asks for a PUK code.",
+    "question_ar": "الشريحة بتطلب كود PUK.",
+    "question_arabizi": "el shee7a bt6lob kod PUK.",
+    "answer_en": "I can give the PUK to the line owner after verifying identity. Be careful: 10 wrong tries block the SIM for good.",
+    "answer_ar": "أقدر أديك كود الـ PUK بعد ما أتحقق إنك صاحب الخط. خلي بالك، 10 محاولات غلط بتقفل الشريحة نهائي.",
+    "citation": "sim_policy@v2#s6"
+  },
+  {
+    "faq_id": "FAQ-040",
+    "category": "porting",
+    "question_en": "How do I move my number to Masr Connect?",
+    "question_ar": "انقل رقمي لمصر كونكت ازاي؟",
+    "question_arabizi": "a2el ra2my le masr connect ezay?",
+    "answer_en": "Visit any store with your ID and proof that you own the line. It's free and done within 24 hours; your old line works until the switch.",
+    "answer_ar": "روح أي فرع ومعاك البطاقة وما يثبت ملكيتك للخط. النقل مجاني وبيخلص خلال 24 ساعة، وخطك القديم شغال لحد ساعتها.",
+    "citation": "porting_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-041",
+    "category": "porting",
+    "question_en": "Can I move my number to another network?",
+    "question_ar": "ينفع انقل رقمي لشبكة تانية؟",
+    "question_arabizi": "yenfa3 a2el ra2my le shabaka tanya?",
+    "answer_en": "Yes, if you've owned the line for at least 4 months and your latest bill is paid. It's free, and your remaining balance and bundles are lost when the number leaves.",
+    "answer_ar": "أيوه، لو بقالك 4 شهور على الأقل مالك الخط وآخر فاتورة مدفوعة. النقل مجاني، والرصيد والباقات اللي فاضلة بتضيع لما الرقم يخرج.",
+    "citation": "porting_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-042",
+    "category": "porting",
+    "question_en": "Can I move my home internet to another company?",
+    "question_ar": "ينفع انقل النت المنزلي لشركة تانية؟",
+    "question_arabizi": "yenfa3 an2el el net el manzely le shereka tanya?",
+    "answer_en": "Yes, free, within 72 hours. Pay your latest bill and any remaining router installments first.",
+    "answer_ar": "أيوه، مجانًا وخلال 72 ساعة. بس ادفع آخر فاتورة وأي أقساط باقية للراوتر الأول.",
+    "citation": "porting_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-043",
+    "category": "roaming",
+    "question_en": "I'm travelling to Saudi Arabia. How do I use my line?",
+    "question_ar": "مسافر السعودية، استخدم الخط ازاي؟",
+    "question_arabizi": "msafer el sa3odeya, asta5dem el 5at ezay?",
+    "answer_en": "Prepaid and Control lines can turn roaming on for free any time; just keep enough balance. Postpaid lines get it free after 4 paid bills, or earlier with a 750 EGP deposit. A Gulf roaming bundle is usually cheaper.",
+    "answer_ar": "الكارت والكنترول تقدر تفعل التجوال مجانًا في أي وقت، بس خلي معاك رصيد كفاية. الخط الشهري بيتفعل مجانًا بعد 4 فواتير مدفوعة، أو قبلها بتأمين 750 جنيه. باقة تجوال الخليج غالبًا أوفر.",
+    "citation": "roaming_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-044",
+    "category": "roaming",
+    "question_en": "My roaming stopped working.",
+    "question_ar": "التجوال وقف وانا مسافر.",
+    "question_arabizi": "el roaming wa2af w ana msafer.",
+    "answer_en": "New postpaid lines with fewer than 4 paid bills have a 250 EGP limit for roaming and international use per bill. A deposit or a roaming bundle lifts it.",
+    "answer_ar": "الخطوط الشهرية الجديدة اللي أقل من 4 فواتير مدفوعة ليها حد 250 جنيه للتجوال والمكالمات الدولية في الفاتورة. التأمين أو باقة التجوال بيحلوا ده.",
+    "citation": "roaming_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-045",
+    "category": "roaming",
+    "question_en": "Roaming charges appeared days after I came back.",
+    "question_ar": "رسوم التجوال ظهرت بعد ما رجعت بأيام.",
+    "question_arabizi": "rosoom el roaming zahret ba3d ma rge3t b ayam.",
+    "answer_en": "Roaming charges can take up to 72 hours to reach us from the foreign network. If any charge looks wrong, I can open a dispute.",
+    "answer_ar": "رسوم التجوال ممكن تاخد لحد 72 ساعة توصلنا من الشبكة الأجنبية. لو فيه رسوم شكلها غلط أقدر أفتحلك اعتراض.",
+    "citation": "roaming_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-046",
+    "category": "home_internet",
+    "question_en": "When will the technician come to install my internet?",
+    "question_ar": "الفني هييجي يركب النت امتى؟",
+    "question_arabizi": "el fanny hayeegy yrakeb el net emta?",
+    "answer_en": "Installation is within 7 working days of signing if the landline is ready, in a 4-hour visit window. I can check your appointment.",
+    "answer_ar": "التركيب بيكون خلال 7 أيام عمل من التعاقد لو الخط الأرضي جاهز، والزيارة في نطاق 4 ساعات. أقدر أشوفلك ميعادك.",
+    "citation": "home_internet_policy@v3#s1"
+  },
+  {
+    "faq_id": "FAQ-047",
+    "category": "home_internet",
+    "question_en": "My home internet quota finished.",
+    "question_ar": "باقة النت المنزلي خلصت.",
+    "question_arabizi": "ba2et el net el manzely 5elset.",
+    "answer_en": "Speed drops sharply until you renew early or buy an add-on. Renewing early starts a new 30-day cycle from today.",
+    "answer_ar": "السرعة بتقل جدًا لحد ما تجدد بدري أو تشتري إضافة. التجديد المبكر بيبدأ دورة جديدة 30 يوم من النهارده.",
+    "citation": "home_internet_policy@v3#s2"
+  },
+  {
+    "faq_id": "FAQ-048",
+    "category": "home_internet",
+    "question_en": "My internet speed is much lower than my plan.",
+    "question_ar": "سرعة النت أقل بكتير من الباقة.",
+    "question_arabizi": "sor3et el net a2al b keteer men el ba2a.",
+    "answer_en": "If the speed is below 50% of your plan speed for 3 days in a row, we treat it as a fault. I can open a fault report and run a remote check.",
+    "answer_ar": "لو السرعة أقل من 50% من سرعة الباقة 3 أيام ورا بعض بنعتبرها عطل. أقدر أفتحلك بلاغ عطل وأعمل فحص عن بُعد.",
+    "citation": "home_internet_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-049",
+    "category": "home_internet",
+    "question_en": "My internet is completely down.",
+    "question_ar": "النت فاصل خالص.",
+    "question_arabizi": "el net fasel 5ales.",
+    "answer_en": "I'll check for an outage in your area first, then run a remote diagnosis. If a visit is needed, it's booked within 48 hours.",
+    "answer_ar": "هشوف الأول لو فيه عطل في منطقتك، وبعدين أعمل فحص عن بُعد. لو محتاج زيارة بتتحدد خلال 48 ساعة.",
+    "citation": "home_internet_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-050",
+    "category": "home_internet",
+    "question_en": "Will I pay for the technician visit?",
+    "question_ar": "هدفع فلوس زيارة الفني؟",
+    "question_arabizi": "hadfa3 felous zeyaret el fanny?",
+    "answer_en": "Only if the fault is in your inside wiring or devices; then the visit fee is 75 EGP.",
+    "answer_ar": "بس لو العطل في التوصيلات الداخلية أو أجهزتك، وساعتها الزيارة بـ 75 جنيه.",
+    "citation": "home_internet_policy@v3#s3"
+  },
+  {
+    "faq_id": "FAQ-051",
+    "category": "home_internet",
+    "question_en": "I'm moving house. Can I take my internet with me?",
+    "question_ar": "هعزل، ينفع انقل النت معايا؟",
+    "question_arabizi": "ha3zel, yenfa3 an2el el net ma3aya?",
+    "answer_en": "Yes, if the new address is covered. Relocation costs 100 EGP and takes up to 10 working days.",
+    "answer_ar": "أيوه لو العنوان الجديد متغطي. النقل بـ 100 جنيه وبياخد لحد 10 أيام عمل.",
+    "citation": "home_internet_policy@v3#s4"
+  },
+  {
+    "faq_id": "FAQ-052",
+    "category": "contracts",
+    "question_en": "How do I cancel my contract early?",
+    "question_ar": "الغي العقد قبل ميعاده ازاي؟",
+    "question_arabizi": "alghy el 3a2d abl me3ado ezay?",
+    "answer_en": "In a store, by the line owner. You pay the remaining device installments plus 20% of the remaining monthly fees.",
+    "answer_ar": "من الفرع وصاحب الخط موجود. بتدفع أقساط الجهاز الباقية و20% من الاشتراكات الشهرية الباقية.",
+    "citation": "contract_policy@v1#s2"
+  },
+  {
+    "faq_id": "FAQ-053",
+    "category": "contracts",
+    "question_en": "I missed a device installment.",
+    "question_ar": "اتأخرت في قسط الموبايل.",
+    "question_arabizi": "et2a5art fe 2est el mobile.",
+    "answer_en": "A 2% late charge is added. After two missed installments the device can be locked until you pay.",
+    "answer_ar": "بتتضاف رسوم 2% على القسط، وبعد قسطين متأخرين ممكن الجهاز يتقفل لحد ما تدفع.",
+    "citation": "contract_policy@v1#s3"
+  },
+  {
+    "faq_id": "FAQ-054",
+    "category": "contracts",
+    "question_en": "Can you cancel my line here?",
+    "question_ar": "ممكن تلغولي الخط من هنا؟",
+    "question_arabizi": "momken tlghooly el 5at men hena?",
+    "answer_en": "I can't cancel a line in chat, but here are the steps: the owner cancels it in a store, after paying any open bills for postpaid.",
+    "answer_ar": "مقدرش ألغي الخط من الشات، بس الخطوات: صاحب الخط بيلغيه من الفرع، وبعد سداد الفواتير لو خط شهري.",
+    "citation": "contract_policy@v1#s4"
+  },
+  {
+    "faq_id": "FAQ-055",
+    "category": "complaints",
+    "question_en": "I want to file a complaint.",
+    "question_ar": "عايز اعمل شكوى.",
+    "question_arabizi": "3ayez a3mel shakwa.",
+    "answer_en": "Sure, I can open it here and you'll get a reference starting with CMP-. Billing complaints are resolved within 3 working days, network within 5, others within 7.",
+    "answer_ar": "تمام، أقدر أفتحهالك هنا وهتاخد رقم مرجعي بيبدأ بـ CMP-. شكاوى الفواتير بتتحل في 3 أيام عمل، والشبكة في 5، والباقي في 7.",
+    "citation": "complaints_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-056",
+    "category": "complaints",
+    "question_en": "My complaint was not solved. What now?",
+    "question_ar": "الشكوى متحلتش، اعمل ايه؟",
+    "question_arabizi": "el shakwa matetlatsh, a3mel eh?",
+    "answer_en": "I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
+    "answer_ar": "هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب.",
+    "citation": "complaints_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-057",
+    "category": "privacy",
+    "question_en": "Why do you need my national ID number?",
+    "question_ar": "ليه محتاجين الرقم القومي؟",
+    "question_arabizi": "leh me7tageen el ra2am el 2awmy?",
+    "answer_en": "To protect your account, I need your line number and the last 4 digits of the owner's national ID before sharing any account details.",
+    "answer_ar": "عشان نحمي حسابك، محتاج رقم الخط وآخر 4 أرقام من الرقم القومي لصاحب الخط قبل ما أقول أي بيانات.",
+    "citation": "privacy_policy@v2#s1"
+  },
+  {
+    "faq_id": "FAQ-058",
+    "category": "privacy",
+    "question_en": "Can you send me my call log?",
+    "question_ar": "ممكن تبعتلي سجل المكالمات؟",
+    "question_arabizi": "momken teb3atly sigel el mokalmat?",
+    "answer_en": "Detailed call records are only given to the line owner in a store. You can see your usage totals in the app, and I can share them here.",
+    "answer_ar": "سجل المكالمات التفصيلي بيتسلم لصاحب الخط في الفرع بس. تقدر تشوف إجمالي استهلاكك على التطبيق، وأقدر أقولهولك هنا.",
+    "citation": "privacy_policy@v2#s2"
+  },
+  {
+    "faq_id": "FAQ-059",
+    "category": "privacy",
+    "question_en": "I want to check my father's line balance.",
+    "question_ar": "عايز اعرف رصيد خط بابا.",
+    "question_arabizi": "3ayez a3raf rased 5at baba.",
+    "answer_en": "Sorry, I can only share account details with the registered owner after verification.",
+    "answer_ar": "آسف، مقدرش أقول بيانات الحساب غير لصاحب الخط بعد التحقق منه.",
+    "citation": "privacy_policy@v2#s3"
+  },
+  {
+    "faq_id": "FAQ-060",
+    "category": "privacy",
+    "question_en": "How do I stop promotional messages?",
+    "question_ar": "اوقف الرسايل الدعائية ازاي؟",
+    "question_arabizi": "aw2af el rasayel el de3aeya ezay?",
+    "answer_en": "I can turn off promotional SMS and calls for you any time. Free service messages about deductions, payments and bundle usage can't be stopped.",
+    "answer_ar": "أقدر أوقفلك الرسايل والمكالمات الدعائية في أي وقت. رسايل الخدمة المجانية عن الخصومات والمدفوعات واستهلاك الباقات مينفعش تتوقف.",
+    "citation": "privacy_policy@v2#s4"
+  }
+]

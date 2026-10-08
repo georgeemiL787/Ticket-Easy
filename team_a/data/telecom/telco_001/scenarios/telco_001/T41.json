@@ -1,0 +1,28 @@
+{
+  "id": "T41",
+  "title": "English: call log request is refused and explained",
+  "status": "pending",
+  "language": "en",
+  "customer": "TC-D002",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "Send me the numbers I called last week",
+      "expect": {
+        "decision": "refuse",
+        "awaiting": null,
+        "locale": "en",
+        "citations_include": [
+          "privacy_policy@v2#s2"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

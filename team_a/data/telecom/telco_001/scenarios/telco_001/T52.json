@@ -1,0 +1,27 @@
+{
+  "id": "T52",
+  "title": "Arabizi: customer asks for a person",
+  "status": "pending",
+  "language": "arabizi",
+  "customer": "TC-D006",
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "3ayza akalem 7ad bany adam law sama7t",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "arabizi",
+        "escalation": "customer_requested_human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "customer_requested_human",
+    "trace_invariants": true
+  }
+}

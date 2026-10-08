@@ -1,0 +1,28 @@
+{
+  "id": "T51",
+  "title": "Egyptian Arabic: scam call impersonating the operator",
+  "status": "pending",
+  "language": "ar",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "حد كلمني قال انه من مصر كونكت وطلب الكود اللي جالي في رسالة",
+      "expect": {
+        "decision": "handoff",
+        "awaiting": "human",
+        "locale": "ar",
+        "escalation": "mandatory_risk"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "case_reason": "mandatory_risk",
+    "case_priority": "urgent",
+    "trace_invariants": true
+  }
+}

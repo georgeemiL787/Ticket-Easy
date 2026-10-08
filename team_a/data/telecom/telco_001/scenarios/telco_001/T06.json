@@ -1,0 +1,29 @@
+{
+  "id": "T06",
+  "title": "Egyptian Arabic: NTRA complaint route after an unresolved complaint",
+  "status": "pending",
+  "language": "ar",
+  "customer": null,
+  "setup": {
+    "today": "2026-10-08",
+    "now": "2026-10-08T15:00:00"
+  },
+  "turns": [
+    {
+      "say": "اشتكيت ومحدش رد عليا، اشتكي فين تاني؟",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "locale": "ar",
+        "citations_include": [
+          "complaints_policy@v2#s3"
+        ],
+        "text_contains": "155"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "trace_invariants": true
+  }
+}

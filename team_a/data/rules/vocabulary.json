@@ -11,16 +11,21 @@
     "create_ticket": "open a support ticket"
   },
   "facts": {
-    "order_status": {"type": "enum", "values": ["pending", "processing", "shipped", "delivered", "returned", "cancelled"]},
+    "order_status": {"type": "enum", "values": ["pending", "processing", "shipped", "delivered", "returned", "cancelled", "return_in_progress"]},
     "delivered_at": {"type": "date"},
     "expected_delivery_date": {"type": "date"},
     "days_since_delivery": {"type": "integer", "derived_from": "delivered_at"},
     "days_late": {"type": "integer", "derived_from": "expected_delivery_date, delivered_at"},
     "order_total": {"type": "number", "unit": "EGP"},
-    "product_category": {"type": "enum", "values": ["clothing", "shoes", "accessories", "underwear", "swimwear", "perfume", "cosmetics", "gift_card"]},
+    "product_category": {"type": "enum", "values": ["clothing", "shoes", "accessories", "underwear", "swimwear", "perfume", "cosmetics", "gift_card", "electronics", "fashion", "home_kitchen", "beauty_health", "grocery", "baby", "toys", "sports", "pet_supplies", "automotive", "tools", "books", "stationery"]},
     "is_clearance": {"type": "boolean"},
-    "item_condition": {"type": "enum", "values": ["unused", "used", "damaged_on_arrival", "defective"]},
-    "hours_since_delivery": {"type": "integer"}
+    "item_condition": {"type": "enum", "values": ["unused", "used", "damaged_on_arrival", "defective", "sealed", "opened", "unworn_tags_intact", "unwrapped", "damaged", "missing_parts"]},
+    "hours_since_delivery": {"type": "integer"},
+    "order_section": {"type": "enum", "values": ["noon", "minutes"], "note": "noon_eg: which storefront section the order came from"},
+    "product_subcategory": {"type": "string", "examples": ["smartphone", "apparel", "underwear", "hair_care", "vitamins", "furniture", "large_appliance", "bedding", "home_decor", "diapers", "feeding", "costume", "perishable"]},
+    "return_eligible_tag": {"type": "boolean", "note": "the offer carries the hassle-free returns / Returnable tag"},
+    "warranty_tag": {"type": "boolean", "note": "warranty-tagged items go to the seller or manufacturer service center"},
+    "payment_method": {"type": "enum", "values": ["card", "wallet", "instapay", "cod", "credit_card", "cash_on_delivery", "bnpl_tabby", "credit_card_emi"], "note": "values are each tenant's own; not normalized across tenants"}
   },
   "arguments": {
     "amount": {"type": "number", "unit": "EGP", "used_by": ["create_refund", "apply_voucher"]}

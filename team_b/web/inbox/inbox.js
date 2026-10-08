@@ -153,7 +153,10 @@ if (typeof document !== "undefined") {
   function listQuery() {
     const q = new URLSearchParams({ tenant_id: tenant(), limit: "50" });
     for (const [id, key] of [["f-status", "status"], ["f-priority", "priority"], ["f-reason", "reason"]]) {
-      if ($(id).value) q.set(key, $(id).value);
+      if (!$(id).value) continue;
+      if (id === "f-status" && $(id).value === "active") q.set("active", "true");  // open + claimed: what needs work
+      else if (id === "f-status" && $(id).value === "new") q.set("new", "true");  // untouched, newest first
+      else q.set(key, $(id).value);
     }
     if ($("f-mine").checked && agent()) q.set("claimed_by", agent());
     return q;

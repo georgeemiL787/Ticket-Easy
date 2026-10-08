@@ -53,7 +53,7 @@ def test_versions_must_name_the_schema_the_tenant_config_and_the_lexicon(missing
 def test_an_llm_reading_and_a_rewrite_must_name_their_prompt_ids() -> None:
     base = {"schema": "1.0", "tenant_config_hash": "a", "lexicon_hash": "b"}
     assert record_problems(trace(nlu_method="llm", versions=base)) == ["versions lacks prompt (the NLU prompt id)"]
-    assert record_problems(trace(nlu_method="llm", versions={**base, "prompt": "nlu_v1"})) == []
+    assert record_problems(trace(nlu_method="llm", versions={**base, "prompt": "nlu_v2"})) == []
     rewrite = [TraceStep(stage="rewrite", status="used", duration_ms=1.0)]
     assert record_problems(trace(steps=rewrite, versions=base)) == ["versions lacks rewrite_prompt"]
 

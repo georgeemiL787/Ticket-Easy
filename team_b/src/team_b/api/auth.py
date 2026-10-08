@@ -35,7 +35,7 @@ PUBLIC: tuple[tuple[frozenset[str], re.Pattern[str]], ...] = tuple(
     (frozenset(methods), re.compile(pattern))
     for methods, pattern in (
         (("GET",), r"^/health$"),
-        (("GET",), r"^/(chat|inbox|dashboard|ui)(/.*)?$"),  # the pages and their files; the data behind them is protected
+        (("GET",), r"^/(chat|inbox|dashboard|ui)(/.*)?$"),  # the pages and their files (data stays protected)
         (("POST",), r"^/v1/conversations/[^/]+/messages$"),  # the customer chat (tenant-scoped, optional API key)
         (("GET",), r"^/v1/conversations/[^/]+/(outbox|events)$"),
         (("GET",), r"^/v1/tenants/[^/]+/welcome$"),

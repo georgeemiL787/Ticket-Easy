@@ -7,6 +7,8 @@ UpstreamError; an answer that is not a JSON object raises InvalidLLMOutput, whic
 The API key is never logged and never put in an error message.
 """
 
+import asyncio
+import itertools
 import json
 import re
 from typing import Any
@@ -20,6 +22,16 @@ SERVICE = "llm"
 log = get_logger(__name__)
 _FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL | re.IGNORECASE)
 _ERROR_PREVIEW = 200
+RATE_LIMIT_ROUNDS = 3
+RATE_LIMIT_WAIT_S = 6.0
+
+
+def _wait_seconds(response: httpx.Response | None, round_: int) -> float:
+    try:
+        asked = float(response.headers.get("retry-after", "")) if response is not None else 0.0
+    except ValueError:
+        asked = 0.0
+    return min(RATE_LIMIT_WAIT_S, max(asked, 1.0 + round_))
 
 
 def parse_json_object(text: str) -> dict[str, Any]:
@@ -48,7 +60,10 @@ class OpenAICompatibleLLM:
     ) -> None:
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._model = model
-        self._headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        keys = [k.strip() for k in (api_key or "").split(",") if k.strip()]  # several keys allowed
+        self._headers = {"Authorization": f"Bearer {keys[0]}"} if keys else {}  # the first key's header
+        self._keys = itertools.cycle(keys or [""])
+        self._key_count = max(1, len(keys))
         self._timeout = timeout_s
         self._transport = transport
         self._json_mode = True  # switched off for good when the server rejects response_format
@@ -75,8 +90,7 @@ class OpenAICompatibleLLM:
 
     async def _post(self, payload: dict[str, Any]) -> httpx.Response:
         try:
-            async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
-                response = await client.post(self._url, json=payload, headers=self._headers)
+            response = await self._send(payload)
         except httpx.TimeoutException:
             raise UpstreamError(SERVICE, "TIMEOUT", "the AI model did not answer in time", retryable=True) from None
         except httpx.TransportError as exc:
@@ -91,6 +105,23 @@ class OpenAICompatibleLLM:
             )
         if response.status_code >= 400 and not (response.status_code == 400 and "response_format" in response.text):
             raise UpstreamError(SERVICE, "BAD_REQUEST", f"the AI model answered HTTP {response.status_code}")
+        return response
+
+    async def _send(self, payload: dict[str, Any]) -> httpx.Response:
+        """One request; on HTTP 429 the next key is tried at once, and after a full round the call waits (Retry-After,
+        at most RATE_LIMIT_WAIT_S) and goes round again, RATE_LIMIT_ROUNDS times in all."""
+        response: httpx.Response | None = None
+        async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
+            for round_ in range(RATE_LIMIT_ROUNDS):
+                for _ in range(self._key_count):
+                    key = next(self._keys)
+                    headers = {"Authorization": f"Bearer {key}"} if key else {}
+                    response = await client.post(self._url, json=payload, headers=headers)
+                    if response.status_code != 429:
+                        return response
+                if round_ + 1 < RATE_LIMIT_ROUNDS:
+                    await asyncio.sleep(_wait_seconds(response, round_))
+        assert response is not None
         return response
 
     @staticmethod

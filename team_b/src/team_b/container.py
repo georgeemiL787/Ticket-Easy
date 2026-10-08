@@ -7,6 +7,7 @@ from typing import Any
 
 from team_b.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
 from team_b.adapters.llm import OpenAICompatibleLLM
+from team_b.adapters.llm_policy_gate import LLMPolicyGate
 from team_b.adapters.memory_store import (
     FixedClock,
     InMemoryCaseStore,
@@ -24,6 +25,7 @@ from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, Te
 from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
 from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
+from team_b.brain.knowledge_llm import LLMKnowledgeAssistant
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
@@ -97,6 +99,11 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
     else:
         assert policy_search is not None and rule_checker is not None and safety_screen is not None
         evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
+    llm = build_llm(settings)
+    if (settings.llm_policy or settings.llm_knowledge) and llm is None:
+        raise ContainerError("TEAM_B_LLM_POLICY / TEAM_B_LLM_KNOWLEDGE need an AI model: set TEAM_B_LLM.")
+    if settings.llm_policy and llm is not None:
+        policy = LLMPolicyGate(policy, evidence, llm)  # the model may tighten the rule checker, never loosen it
     container = Container(
         settings=settings,
         clock=clock,
@@ -104,7 +111,7 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
         evidence=evidence,
         policy=policy,
         capabilities=shop,
-        llm=build_llm(settings),
+        llm=llm,
         sessions=sessions,
         traces=traces,
         cases=cases,
@@ -117,6 +124,7 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
     )
+    knowledge = LLMKnowledgeAssistant(container.llm) if settings.llm_knowledge and container.llm is not None else None
     nlu: NLU = LLMNLU(container.llm) if container.llm is not None else RuleBasedNLU()
     alerts: AlertStore = (
         SqliteAlertStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryAlertStore()
@@ -156,6 +164,7 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
             events=container.events,
             llm=container.llm,
+            knowledge=knowledge,
             registry=registry,
             policy=container.policy,
             max_queued_runs=settings.queue_max_runs,

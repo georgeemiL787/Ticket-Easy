@@ -28,7 +28,8 @@
     <section class="list-pane glass" aria-label="Cases">
       <form class="filters" id="filters">
         <select id="f-status" aria-label="Status">
-          <option value="">any status</option><option>open</option><option>claimed</option>
+          <option value="new">new (just arrived)</option><option value="active" selected>open + claimed</option><option value="">any status</option>
+          <option>open</option><option>claimed</option>
           <option>resolved</option><option>returned_to_agent</option>
         </select>
         <select id="f-priority" aria-label="Priority">

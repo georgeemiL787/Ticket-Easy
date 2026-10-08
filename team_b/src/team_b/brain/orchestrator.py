@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 from team_b.brain import actions, approval, knowledge, lookup
+from team_b.brain.knowledge_llm import KnowledgeAssistant
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
 from team_b.brain.registry import CapabilityRegistry
@@ -86,6 +87,7 @@ class Orchestrator:
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
         llm: LLMClient | None = None,
+        knowledge: KnowledgeAssistant | None = None,
         events: Publisher | None = None,
         registry: CapabilityRegistry | None = None,
         policy: PolicyGate | None = None,
@@ -106,6 +108,7 @@ class Orchestrator:
             capabilities=capabilities,
             rewriter=rewriter,
             llm=llm,
+            knowledge=knowledge,
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
             policy=policy,
             max_queued_runs=MAX_QUEUED_RUNS if max_queued_runs is None else max_queued_runs,

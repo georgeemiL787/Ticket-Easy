@@ -1,6 +1,6 @@
 {
   "id": "S05",
-  "title": "Refund 20 days after delivery is denied by R-REFUND-14D and handed to a human",
+  "title": "Refund 20 days after delivery is denied by R-REFUND-14D: explained with a colleague offered, and handed over only when asked again",
   "status": "active",
   "owner": "A",
   "setup": {
@@ -18,11 +18,18 @@
     {
       "say": "01012345601",
       "expect": {
-        "decision": "handoff",
-        "escalation": "policy_denied",
+        "decision": "refuse",
+        "escalation": null,
         "citations_include": [
           "refund_policy@v1#s1"
-        ],
+        ]
+      }
+    },
+    {
+      "say": "I want a refund for order NS-20512 anyway",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "policy_denied",
         "awaiting": "human"
       }
     }

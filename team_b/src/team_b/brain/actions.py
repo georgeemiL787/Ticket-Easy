@@ -22,6 +22,7 @@ Every failure of a check is fail-closed: no rule answer, no safety answer, no sh
 import asyncio
 import copy
 import hashlib
+import re
 import time
 import uuid
 from collections.abc import AsyncIterator
@@ -30,7 +31,7 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from team_b.brain import gates, identity
-from team_b.brain.composer import PLACEHOLDERS, default_composer
+from team_b.brain.composer import PLACEHOLDERS, default_composer, promises_handover
 from team_b.brain.lookup import load_own_order
 from team_b.brain.redaction import redact
 from team_b.brain.slots import resolve_arguments
@@ -155,6 +156,15 @@ async def check_policy(
 # ---- what to say for each answer ----
 
 
+_SENTENCE_END = re.compile(r"(?<=[.!?؟])\s+")
+
+
+def _without_handover(message: str) -> str:
+    """The rule's wording without the sentences that promise a colleague: no case is opened on a first refusal."""
+    kept = [s for s in _SENTENCE_END.split(message.strip()) if s and not promises_handover(s)]
+    return " ".join(kept).strip()
+
+
 def _deny_step(ctx: TurnContext, decision: PolicyDecision) -> Step:
     """A deny is never executed. A final one (the tenant's final_deny_rules) is told as a refusal; any other goes to a
     person (when the tenant escalates denies), with the rule's own wording and its citation."""
@@ -174,6 +184,17 @@ def _deny_step(ctx: TurnContext, decision: PolicyDecision) -> Step:
             reason=why,
             reply_key="policy_refusal",
             values={"message": message},
+            citations=decision.citations,
+        )
+    if decision.reason_code == "RULE_BLOCKED" and decision.action not in ctx.session.denied_actions:
+        # The first no is explained and a colleague is offered; asking for the same thing again goes to a person.
+        ctx.session.denied_actions.append(decision.action)
+        ctx.session.active_intent = None
+        return Step(
+            Decision.REFUSE,
+            reason=f"{why}; first refusal: explained and a colleague offered",
+            reply_key="policy_refusal_offer",
+            values={"message": _without_handover(message) or default_composer().t(locale, "policy_denied")},
             citations=decision.citations,
         )
     return Step(

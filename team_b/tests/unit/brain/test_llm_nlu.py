@@ -215,7 +215,7 @@ async def test_e_any_error_returns_the_rules_result(tenant: TenantConfig, error:
 async def test_the_result_names_the_prompt_version(tenant: TenantConfig) -> None:
     ok = await understand(FakeLLM(reading()), "hello", tenant)
     failed = await understand(FakeLLM(RuntimeError("x")), "hello", tenant)
-    assert ok.prompt_version == failed.prompt_version == "nlu_v1"
+    assert ok.prompt_version == failed.prompt_version == "nlu_v2"
     assert (await RuleBasedNLU().understand("hello", None, tenant)).prompt_version is None
 
 
@@ -288,7 +288,7 @@ async def test_a_message_that_tries_to_instruct_the_model_is_only_data(tenant: T
 
 def test_the_prompt_file_loads_and_has_a_version() -> None:
     prompt = PromptTemplate.load()
-    assert prompt.version == "nlu_v1" and "{{message}}" in prompt.user and "JSON" in prompt.system
+    assert prompt.version == "nlu_v2" and "{{message}}" in prompt.user and "JSON" in prompt.system
 
 
 def test_a_prompt_file_needs_both_sections(tmp_path: Path) -> None:

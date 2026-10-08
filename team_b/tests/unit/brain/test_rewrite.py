@@ -225,7 +225,7 @@ async def test_a_used_rewrite_reaches_the_customer_and_is_recorded(c: Container)
     trace = await trace_of(c)
     assert reply.text == "Hi there! How can I help you today?" == trace.response_text
     step = next(s for s in trace.steps if s.stage == "rewrite")
-    assert (step.status, step.detail) == ("used", "reworded") and trace.versions["rewrite_prompt"] == "rewrite_v1"
+    assert (step.status, step.detail) == ("used", "reworded") and trace.versions["rewrite_prompt"] == "rewrite_v2"
 
 
 async def test_a_rejected_rewrite_sends_the_template_and_says_so(c: Container) -> None:
@@ -243,31 +243,42 @@ async def test_without_a_rewriter_nothing_is_recorded_and_no_model_is_called(c: 
     assert all(s.stage != "rewrite" for s in trace.steps) and "rewrite_prompt" not in trace.versions
 
 
-@pytest.mark.parametrize(
-    "text",
-    [
-        "I want to talk to a human",
-        "someone used my card, it is fraud",
-        "yes",
-        "Where is my order NS-20877 and cancel it",
-    ],
-)
-async def test_high_stakes_replies_are_never_reworded(c: Container, text: str) -> None:
-    llm = FakeLLM(*[{"text": "reworded"}] * 4)
-    evidence = FakeEvidence()
-    if "fraud" in text:
-        from team_b.contracts.evidence import RiskAssessment
-
-        evidence = FakeEvidence(RiskAssessment(flagged=True, categories=("fraud_suspected",)))
-    reply = await orch(c, llm, evidence=evidence).handle_turn(T, C, text)
-    if reply.decision in (Decision.HANDOFF, Decision.CONFIRM, Decision.EXECUTE, Decision.REFUSE):
-        assert llm.calls == [] and reply.text != "reworded"
-
-
-async def test_confirmation_execution_refusal_and_handoff_decisions_are_not_eligible() -> None:
+async def test_the_shops_word_is_never_reworded() -> None:
     from team_b.brain.rewrite import REWRITABLE
 
-    assert REWRITABLE == {Decision.ANSWER, Decision.CLARIFY, Decision.VERIFY_IDENTITY}
+    assert Decision.EXECUTE not in REWRITABLE
+    assert REWRITABLE == {
+        Decision.ANSWER,
+        Decision.CLARIFY,
+        Decision.VERIFY_IDENTITY,
+        Decision.CONFIRM,
+        Decision.REFUSE,
+        Decision.HANDOFF,
+    }
+
+
+async def test_a_reworded_confirmation_must_still_ask_a_yes_no_question() -> None:
+    draft = "I can set up a return for order NS-20790. Shall I go ahead? (yes/no)"
+    ok = FakeLLM({"text": "Happy to set up the return for order NS-20790. Shall I go ahead?"})
+    out = await LLMRewriter(ok).reword(draft, Locale.EN, {"order_id": "NS-20790"}, decision=Decision.CONFIRM)
+    assert out.status == "used"
+    flat = FakeLLM({"text": "I have set up the return for order NS-20790."})
+    out = await LLMRewriter(flat).reword(draft, Locale.EN, {"order_id": "NS-20790"}, decision=Decision.CONFIRM)
+    assert out.status == "rejected" and out.text == draft
+
+
+async def test_a_reworded_refusal_cannot_promise_a_colleague_the_draft_does_not() -> None:
+    draft = "Returns are accepted within 14 days of delivery and that period has passed."
+    promise = FakeLLM({"text": "Sorry, the 14 days have passed. A colleague will contact you shortly."})
+    out = await LLMRewriter(promise).reword(draft, Locale.EN, {}, decision=Decision.REFUSE)
+    assert out.status == "rejected" and out.text == draft
+
+
+async def test_a_reworded_handoff_keeps_the_case_reference() -> None:
+    draft = "I'm connecting you with a colleague now. Your reference is case-117ad2e77ea1."
+    lost = FakeLLM({"text": "A colleague will take it from here."})
+    out = await LLMRewriter(lost).reword(draft, Locale.EN, {}, decision=Decision.HANDOFF)
+    assert out.status == "rejected"
 
 
 async def test_policy_passages_are_appended_after_the_rewrite_and_never_sent_to_the_model(c: Container) -> None:

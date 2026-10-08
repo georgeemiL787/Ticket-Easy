@@ -75,11 +75,19 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
     """One step's reply: the template, optionally reworded by the AI model (only if the fact check passes), then the
     policy passages appended verbatim. The passages are added after the rewrite, so the model never sees them."""
     composer = default_composer()
-    text = composer.t(locale, step.reply_key, **step.values)
+    text = step.text if step.text is not None else composer.t(locale, step.reply_key, **step.values)
     rewriter = ctx.deps.rewriter
-    if rewriter is not None and step.decision in REWRITABLE and not step.silent:
+    if rewriter is not None and step.text is None and step.decision in REWRITABLE and not step.silent:
         started = time.perf_counter()
-        result = await rewriter.reword(text, locale, {k: str(v) for k, v in step.values.items()})
+        recent = ctx.session.history[-6:]
+        result = await rewriter.reword(
+            text,
+            locale,
+            {k: str(v) for k, v in step.values.items()},
+            message=ctx.text,
+            decision=step.decision,
+            history="\n".join(f"{m.role}: {m.text}" for m in recent),
+        )
         elapsed = (time.perf_counter() - started) * 1000
         ctx.steps.append(TraceStep(stage="rewrite", status=result.status, duration_ms=elapsed, detail=result.detail))
         ctx.versions["rewrite_prompt"] = getattr(rewriter, "prompt_version", "unknown")

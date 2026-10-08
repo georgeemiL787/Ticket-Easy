@@ -310,6 +310,27 @@ def _out_of_scope(ctx: TurnContext) -> bool:
     return any(find_spans(normalized, normalize(term)) for term in default_lexicon().want_markers.all())
 
 
+def _park_for_policy_question(ctx: TurnContext, wanted: list[str]) -> str | None:
+    """A policy question asked while a lookup or action only waits for a detail ("which order?") is answered first.
+
+    Returns the parked intent (the caller queues it again behind the answer), or None when nothing was parked."""
+    session = ctx.session
+    active = session.active_intent
+    if (
+        active is None
+        or not wanted
+        or active in wanted
+        or not (session.awaiting or "").startswith("slot:")
+        or _kind(ctx, active) not in ("lookup", "action")
+        or any(_kind(ctx, name) != "knowledge" for name in wanted)
+    ):
+        return None
+    session.active_intent = None
+    session.awaiting = None
+    session.clarifications = 0
+    return active
+
+
 async def merge(ctx: TurnContext) -> str:
     """Details go into slots; new intents start or queue. A short answer to a question is not a new intent."""
     understanding, session = ctx.understanding, ctx.session
@@ -325,6 +346,7 @@ async def merge(ctx: TurnContext) -> str:
         and (session.awaiting.startswith("slot:") or session.awaiting in ("order_choice", "intent_choice"))
         and not wanted
     )
+    parked = _park_for_policy_question(ctx, wanted)
     for name in wanted:
         if name not in session.intents_seen:
             session.intents_seen.append(name)
@@ -333,6 +355,8 @@ async def merge(ctx: TurnContext) -> str:
             session.clarifications = 0  # clarifications are counted per intent
         elif name != session.active_intent and name not in session.intent_queue:
             session.intent_queue.append(name)
+    if parked is not None and parked not in session.intent_queue:
+        session.intent_queue.append(parked)  # asked again after the policy question has been answered
     for name, order in multi.assign_order_ids(ctx.text, wanted, ctx.tenant).items():
         if name == session.active_intent:
             session.slots["order_id"] = order  # each request about its own order when the message names several

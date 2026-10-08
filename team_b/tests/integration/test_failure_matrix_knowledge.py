@@ -34,13 +34,15 @@ async def trace_of(c: Container):  # type: ignore[no-untyped-def]
     return (await c.traces.for_conversation(T, C))[-1]
 
 
-async def test_an_empty_search_asks_to_rephrase_once_then_hands_off(container: Container) -> None:
+async def test_an_empty_search_asks_to_rephrase_then_says_so_then_hands_off(container: Container) -> None:
     o = turns(container)
     first = await o.handle_turn(T, C, UNKNOWN)
     assert (first.decision, first.awaiting, first.citations) == (Decision.CLARIFY, "detail", ())
     assert (await trace_of(container)).evidence_empty_reason == "no_match"
     second = await o.handle_turn(T, C, "I mean the warranty for electronic devices")
-    assert (second.decision, second.awaiting) == (Decision.HANDOFF, "human")
+    assert (second.decision, second.awaiting) == (Decision.ANSWER, None)  # said honestly, a colleague offered
+    third = await o.handle_turn(T, C, "Please tell me about the warranty on electronic devices")
+    assert (third.decision, third.awaiting) == (Decision.HANDOFF, "human")
     last = await trace_of(container)
     assert last.escalation_reason is EscalationReason.NO_EVIDENCE and not last.response_citations
 

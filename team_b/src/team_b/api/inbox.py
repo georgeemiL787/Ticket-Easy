@@ -170,21 +170,31 @@ async def list_cases(
     request: Request,
     tenant_id: TENANT,
     status: CaseStatus | None = None,
+    active: bool = False,
+    new: bool = False,
     reason: EscalationReason | None = None,
     priority: Priority | None = None,
     claimed_by: Annotated[str | None, Query(max_length=80)] = None,
     limit: Annotated[int, Query(ge=1, le=MAX_LIMIT)] = DEFAULT_LIMIT,
     cursor: Annotated[str | None, Query(max_length=300)] = None,
 ) -> CasePage:
-    """Cases of one business, most urgent first and oldest first within a priority. Pass next_cursor to go on."""
+    """Cases of one business, most urgent first and oldest first within a priority. Pass next_cursor to go on.
+
+    active=true keeps the cases that still need work (open or claimed): what the inbox shows by default.
+    new=true keeps the cases nobody has touched yet (open, unclaimed), newest first: just arrived from a chat."""
     built = checked_tenant(request, tenant_id)
     cases = [
         c
         for c in await built.cases.list(tenant_id, status=status)
-        if (reason is None or c.package.reason is reason)
+        if (not active or c.status in (CaseStatus.OPEN, CaseStatus.CLAIMED))
+        and (not new or (c.status is CaseStatus.OPEN and c.claimed_by is None))
+        and (reason is None or c.package.reason is reason)
         and (priority is None or c.package.priority == priority)
         and (claimed_by is None or c.claimed_by == claimed_by)
     ]
+    if new:  # newest first, one page: what just arrived
+        cases.sort(key=lambda c: (c.created_at, c.case_id), reverse=True)
+        return CasePage(items=[summary_of(c) for c in cases[:limit]], next_cursor=None)
     cases.sort(key=sort_key)
     if cursor is not None:
         after = decode_cursor(cursor)

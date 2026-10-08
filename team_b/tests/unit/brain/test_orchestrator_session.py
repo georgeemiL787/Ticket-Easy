@@ -120,7 +120,7 @@ async def test_an_ai_assisted_turn_records_the_method_and_the_prompt_version(c: 
     )
     await custom.handle_turn(T, C, "I want my money back")
     (trace,) = await c.traces.for_conversation(T, C)
-    assert trace.nlu_method == "llm" and trace.versions["prompt"] == "nlu_v1"
+    assert trace.nlu_method == "llm" and trace.versions["prompt"] == "nlu_v2"
     assert [i.name for i in trace.intents] == ["refund_request"]
 
 

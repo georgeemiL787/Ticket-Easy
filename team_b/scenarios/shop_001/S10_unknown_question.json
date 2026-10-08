@@ -1,6 +1,6 @@
 {
   "id": "S10",
-  "title": "An unanswerable question: clarify once, then handoff no_evidence",
+  "title": "An unanswerable question: clarify once, say so honestly and offer a colleague, hand off only the third time",
   "status": "active",
   "owner": "B",
   "setup": {
@@ -17,6 +17,13 @@
     },
     {
       "say": "I mean the warranty for electronic devices",
+      "expect": {
+        "decision": "answer",
+        "escalation": null
+      }
+    },
+    {
+      "say": "Please just tell me about the warranty on electronic devices",
       "expect": {
         "decision": "handoff",
         "escalation": "no_evidence",

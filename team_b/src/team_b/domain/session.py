@@ -63,7 +63,10 @@ class SessionState(MutableModel):
     clarifications: int = Field(default=0, ge=0)
     tool_failures: int = Field(default=0, ge=0)  # reads that failed in a row
     write_failures: int = Field(default=0, ge=0)  # actions the shop clearly refused, since the last success
-    no_evidence_count: int = Field(default=0, ge=0)
+    no_evidence_count: int = Field(default=0, ge=0)  # policy questions the documents could not answer, in a row
+    denied_actions: list[str] = Field(
+        default_factory=list
+    )  # actions the policy refused once; a second try goes to a person
     handoff_case_id: str | None = None
     choice_options: list[str] = Field(default_factory=list)  # intents offered in a "do you mean A or B?" question
     order_choices: list[str] = Field(default_factory=list)  # order ids offered in a "which order?" question

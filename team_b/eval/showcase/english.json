@@ -1,0 +1,18 @@
+{
+ "tenant_id": "shop_001",
+ "title": "English: a return, a refused return, and a person",
+ "customer": "Karim Hassan (C-101)",
+ "turns": [
+  "Hi, I ordered a few things recently and I'm a bit confused about how returns work",
+  "What's your return policy exactly? Is there a time limit?",
+  "Does it matter if I've already opened the box?",
+  "Okay. Can you check where my order NS-20790 is?",
+  "My phone number is 01123456702",
+  "Great. I'd like to return NS-20790, it's the wrong size",
+  "yes please go ahead",
+  "Thanks. I also have order NS-20810, I wore the shoes once. Can I return that one too?",
+  "That seems unfair, I only wore them for an hour",
+  "How long does shipping take for my next order?",
+  "Can I talk to someone about NS-20810? I think wearing them for an hour shouldn't count as used"
+ ]
+}

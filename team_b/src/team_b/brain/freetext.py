@@ -48,14 +48,26 @@ def _is_request_or_detail(clause: str) -> bool:
     return any(find_spans(normalized, normalize(term)) for term in lexicon.want_markers.all())
 
 
+_VAGUE = re.compile(
+    r"\b(?:problem|issue|trouble|help|complain\w*)\b|مشكل[ةه]|مساعد[ةه]|شكو[ىي]|\b(?:moshkela|mushkila|mos?a3da|shakwa)\b",
+    re.IGNORECASE,
+)
+MAX_VAGUE_WORDS = 8
+
+
+def _only_announces_a_problem(value: str) -> bool:
+    """ "I have a problem with my order" / "عندي مشكلة": a problem is announced, but nothing says what it is."""
+    return len(value.split()) <= MAX_VAGUE_WORDS and _VAGUE.search(value) is not None
+
+
 def reason_from(text: str) -> str | None:
     """The reason in a message that also makes a request, or None."""
     marked = _REASON_MARKERS.search(text)
     if marked is not None:
         value = _clean(marked.group(1))
         return value or None
-    clauses = [_clean(c) for c in _CLAUSE_SPLIT.split(text)]
-    reasons = [c for c in clauses[1:] if len(c.split()) >= 2 and not _is_request_or_detail(c)]
+    parts = [_clean(c) for c in _CLAUSE_SPLIT.split(text)]
+    reasons = [c for c in parts[1:] if len(c.split()) >= 2 and not _is_request_or_detail(c)]
     return _clean(", ".join(reasons)) or None
 
 
@@ -120,10 +132,14 @@ def capture(
         if _clean(remainder) and (answer := answer_to(asked, text)) is not None:
             found[asked] = answer
             return found
-    if (reason := reason_from(text)) is not None:
-        for slot in ("reason", "description"):  # what is wrong, said in the request itself
-            if slot in wanted:
-                found[slot] = reason
+    if "reason" in wanted and (reason := reason_from(text)) is not None:
+        found["reason"] = reason  # what is wrong, said in the request itself
+    if "description" in wanted:
+        # A complaint needs a real description. "Hi, I have a problem with my order" says nothing yet, so a short
+        # clause that only announces a problem is not taken; the agent then asks what happened.
+        described = entities.get("reason") or reason_from(text)
+        if described and not _only_announces_a_problem(described):
+            found["description"] = described
     if "new_address" in wanted and (address := address_from(text)) is not None:
         found["new_address"] = address
     return found

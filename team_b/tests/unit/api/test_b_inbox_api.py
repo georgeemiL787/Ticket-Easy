@@ -265,3 +265,23 @@ async def test_a_decision_from_the_claimer_reaches_the_orchestrator(
 def test_the_pending_proposal_model_is_what_the_case_carries() -> None:
     proposal = ActionProposal(proposal_id="p1", tool="t", capability="c", idempotency_key="k")
     assert proposal.state is ActionState.PROPOSED and CaseStatus.OPEN.value == "open"
+
+
+async def test_active_keeps_only_cases_that_still_need_work(chat: httpx.AsyncClient, chat_container: Container) -> None:
+    R = EscalationReason
+    await add_case(chat_container, "done", "normal", 0, R.NO_EVIDENCE, status=CaseStatus.RESOLVED)
+    await add_case(chat_container, "waiting", "normal", 1, R.NO_EVIDENCE)
+    await add_case(chat_container, "mine", "normal", 2, R.NO_EVIDENCE, status=CaseStatus.CLAIMED, claimed_by="sara")
+    everything = (await chat.get(BASE, params={"tenant_id": T})).json()["items"]
+    active = (await chat.get(BASE, params={"tenant_id": T, "active": "true"})).json()["items"]
+    assert [c["case_id"] for c in everything] == ["done", "waiting", "mine"]
+    assert [c["case_id"] for c in active] == ["waiting", "mine"]
+
+
+async def test_new_shows_untouched_cases_newest_first(chat: httpx.AsyncClient, chat_container: Container) -> None:
+    R = EscalationReason
+    await add_case(chat_container, "old", "normal", 0, R.NO_EVIDENCE)
+    await add_case(chat_container, "taken", "urgent", 1, R.NO_EVIDENCE, status=CaseStatus.CLAIMED, claimed_by="sara")
+    await add_case(chat_container, "fresh", "low", 9, R.NO_EVIDENCE)
+    new = (await chat.get(BASE, params={"tenant_id": T, "new": "true"})).json()["items"]
+    assert [c["case_id"] for c in new] == ["fresh", "old"]

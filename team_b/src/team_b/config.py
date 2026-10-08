@@ -46,6 +46,8 @@ ENV_VARS: dict[str, str] = {
     "log_json": "TEAM_B_LOG_JSON",
     "retention_days": "TEAM_B_RETENTION_DAYS",
     "llm_rewrite": "TEAM_B_LLM_REWRITE",
+    "llm_policy": "TEAM_B_LLM_POLICY",
+    "llm_knowledge": "TEAM_B_LLM_KNOWLEDGE",
     "rate_limit_per_minute": "TEAM_B_RATE_LIMIT_PER_MIN",
 }
 
@@ -88,6 +90,8 @@ class Settings(BaseModel):
     queue_max_runs: int = Field(default=3, ge=0)  # queued requests answered in one turn (chained in one reply)
     log_json: bool = True
     llm_rewrite: bool = False  # let the AI model reword replies (checked: it may not add any fact); needs TEAM_B_LLM
+    llm_policy: bool = False  # an AI agent reads the policy and may tighten (never loosen) the rule checker
+    llm_knowledge: bool = False  # the AI model writes the search query and words the policy answer
     rate_limit_per_minute: int = Field(default=20, ge=1)  # messages per conversation per minute (chat API)
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
 
@@ -108,6 +112,8 @@ class Settings(BaseModel):
         raw: dict[str, Any] = {
             field: source[name].strip() for field, name in ENV_VARS.items() if source.get(name, "").strip()
         }
+        if "llm" not in raw and raw.get("llm_base_url") and raw.get("llm_model"):
+            raw["llm"] = "openai"  # a configured AI endpoint is used unless TEAM_B_LLM=none says otherwise
         try:
             return cls.model_validate(raw)
         except ValidationError as exc:

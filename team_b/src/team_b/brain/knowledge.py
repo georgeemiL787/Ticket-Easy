@@ -6,8 +6,9 @@ Signatures are fixed; the orchestrator calls answer() for every intent of kind "
 quote_for() to add a policy quote to their own replies (for example the late-delivery policy next to an order status).
 
 Never invent policy: a reply is built only from passages the policy search returned, quoted verbatim with their
-citation. A question the search cannot match is asked once more in other words, then handed to a person
-(no_evidence). A search that cannot answer at all is handed over too (dependency_unavailable); nothing is guessed.
+citation. A question the search cannot match is asked once more in other words, then answered honestly with an offer
+of a colleague, and handed to a person (no_evidence) only the third time in a row (see _no_answer). A search that
+cannot answer at all is handed over too (dependency_unavailable); nothing is guessed.
 """
 
 import re
@@ -16,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from team_b.brain.text import normalize
-from team_b.brain.turn import Step, TurnContext
+from team_b.brain.turn import Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.evidence import Passage, RetrievalResult
 from team_b.domain.decision import Decision, EscalationReason
@@ -115,6 +116,13 @@ def _pick(passages: tuple[Passage, ...]) -> tuple[Passage, ...]:
 
 async def _find(ctx: TurnContext, query_hint: str | None) -> tuple[Passage, ...]:
     """Search with the customer's words; mixed and Arabizi messages get one more try with the normalized text."""
+    assistant = ctx.deps.knowledge
+    if assistant is not None:  # the AI model writes the query: it understands Arabizi, follow-ups and mixed messages
+        query = await assistant.search_query(ctx.text, ctx.session)
+        if query:
+            found = await _search(ctx, search_text(ctx, query_hint, text=query))
+            if found:
+                return found
     passages = await _search(ctx, search_text(ctx, query_hint))
     if not passages and ctx.session.language in (Language.MIXED, Language.ARABIZI):
         retry = search_text(ctx, query_hint, text=_plain(ctx.text))
@@ -138,21 +146,16 @@ async def answer(ctx: TurnContext) -> Step:
             awaiting="human",
         )
     if not passages:
-        if ctx.session.awaiting == "detail":  # already asked once: do not guess, do not ask forever
-            return Step(
-                Decision.HANDOFF,
-                reason=f"no policy passage answers {name} even after asking to rephrase",
-                reply_key=f"handoff_{EscalationReason.NO_EVIDENCE.value}",
-                escalation=EscalationReason.NO_EVIDENCE,
-                awaiting="human",
-            )
-        return Step(
-            Decision.CLARIFY,
-            reason=f"no policy passage found for {name}: asked the customer to rephrase",
-            reply_key="ask_rephrase",
-            awaiting="detail",
-        )
-    quoted = _pick(passages)
+        return _no_answer(ctx, name)
+    ctx.session.no_evidence_count = 0
+    quoted, text = _pick(passages), None
+    if ctx.deps.knowledge is not None:
+        verdict = await ctx.deps.knowledge.answer(ctx.text, ctx.session, passages, locale_of(ctx))
+        if verdict is not None and not verdict.answerable:
+            return _no_answer(ctx, name)
+        if verdict is not None and verdict.citations:
+            quoted = tuple(p for p in passages if p.citation in verdict.citations)[: MAX_QUOTED + 1]
+            text = verdict.text or None
     _record(ctx, quoted)
     return Step(
         Decision.ANSWER,
@@ -161,6 +164,35 @@ async def answer(ctx: TurnContext) -> Step:
         citations=tuple(p.citation for p in quoted),
         passages=quoted,
         knowledge=True,
+        text=text,
+    )
+
+
+def _no_answer(ctx: TurnContext, name: str) -> Step:
+    """Nothing in the documents answers the question. The first time the customer is asked to say it another way, the
+    second time told honestly that it is not in the policies (a colleague is offered), and only the third time in a row
+    is the case handed to a person."""
+    session = ctx.session
+    session.no_evidence_count += 1
+    if session.no_evidence_count == 1:
+        return Step(
+            Decision.CLARIFY,
+            reason=f"no policy passage answers {name}: asked the customer to rephrase",
+            reply_key="ask_rephrase",
+            awaiting="detail",
+        )
+    if session.no_evidence_count == 2:
+        return Step(
+            Decision.ANSWER,
+            reason=f"no policy passage answers {name} after a rephrase: said so and offered a colleague",
+            reply_key="no_answer_offer",
+        )
+    return Step(
+        Decision.HANDOFF,
+        reason=f"no policy passage answers {name} three times in a row",
+        reply_key=f"handoff_{EscalationReason.NO_EVIDENCE.value}",
+        escalation=EscalationReason.NO_EVIDENCE,
+        awaiting="human",
     )
 
 
@@ -170,8 +202,11 @@ async def quote_for(ctx: TurnContext, query: str) -> list[Passage]:
         passages = await _search(ctx, query)
     except SearchUnavailable:
         return []
-    _record(ctx, passages)
-    return list(passages)
+    if not passages:
+        return []
+    quoted = _pick(passages)  # the best passage, and one more only when it is nearly as relevant
+    _record(ctx, quoted)
+    return list(quoted)
 
 
 async def quote_citations(ctx: TurnContext, citations: tuple[str, ...], *, record: bool = True) -> list[Passage]:

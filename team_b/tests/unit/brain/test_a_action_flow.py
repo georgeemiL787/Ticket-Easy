@@ -173,7 +173,10 @@ async def test_an_order_that_became_ineligible_is_blocked_by_the_renewed_check(c
     backend_order(container, "NS-20790")["delivered_at"] = "2026-08-01"  # now 58 days ago
     reply = await say(container, "yes")
     trace = await trace_of(container, reply)
-    assert (reply.decision, trace.escalation_reason) == (Decision.HANDOFF, EscalationReason.POLICY_DENIED)
+    assert (reply.decision, trace.escalation_reason) == (
+        Decision.REFUSE,
+        None,
+    )  # the first no: explained, a person offered
     (proposal,) = await proposals(container)
     assert proposal.state is ActionState.BLOCKED and writes(container) == []
     assert [p.decision for p in proposal.policy_decisions] == ["allow", "deny"]
@@ -284,12 +287,17 @@ async def test_a_final_deny_is_a_refusal_with_the_rule_wording_and_no_case(conta
     assert reply.citations == ("return_policy@v2#s4",) and reply.handoff_case_id is None and writes(container) == []
 
 
-async def test_a_deny_that_a_person_may_reconsider_is_handed_off_with_the_rule_wording(container: Container) -> None:
+async def test_a_deny_that_a_person_may_reconsider_is_explained_then_handed_off_when_asked_again(
+    container: Container,
+) -> None:
     await say(container, "I want a refund for order NS-20512")
     reply = await say(container, C100)
-    trace = await trace_of(container, reply)
-    assert (reply.decision, trace.escalation_reason) == (Decision.HANDOFF, EscalationReason.POLICY_DENIED)
-    assert "more than 14 days" in reply.text and reply.handoff_case_id is not None and writes(container) == []
+    assert reply.decision is Decision.REFUSE and "more than 14 days" in reply.text and reply.handoff_case_id is None
+    assert "colleague" in reply.text and "I'll connect you" not in reply.text  # offered, not promised
+    again = await say(container, "I want a refund for order NS-20512 anyway")
+    trace = await trace_of(container, again)
+    assert (again.decision, trace.escalation_reason) == (Decision.HANDOFF, EscalationReason.POLICY_DENIED)
+    assert again.handoff_case_id is not None and writes(container) == []
 
 
 async def test_a_deny_in_arabic_uses_the_arabic_wording(container: Container) -> None:

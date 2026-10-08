@@ -1,0 +1,17 @@
+{
+ "tenant_id": "shop_001",
+ "title": "Mixed Arabic and English: address change, policy questions, then a refund that needs approval",
+ "customer": "Nour El-Din (C-104)",
+ "turns": [
+  "Hi, ازيك؟ انا عندي مشكلة في order بتاعي",
+  "كمان محتاج اعرف delivery بياخد كام يوم؟",
+  "can I pay cash لما الاوردر يوصل؟",
+  "وفي نفس الوقت عايز اغير address بتاع NS-20960 to 5 Nile Corniche, Maadi",
+  "my number is 01098765405",
+  "yes confirm",
+  "تمام. وبالنسبة للـ return policy، ممكن ارجع حاجة اشتريتها من اسبوع؟",
+  "I want a refund for NS-20934 لأن المنتج وصل بايظ",
+  "ايوه أكيد، go ahead",
+  "طب ممكن اعرف why does it need approval؟"
+ ]
+}

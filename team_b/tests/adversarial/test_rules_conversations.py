@@ -36,9 +36,9 @@ CASES = [
     Case(
         "R-RETURN-14D",
         ["I want to return order NS-20512, the size is wrong", C100],
-        Decision.HANDOFF,
+        Decision.REFUSE,
         "return_policy@v2#s2",
-        escalation="policy_denied",
+        escalation=None,
         contains=("14 days",),
     ),
     Case(
@@ -67,9 +67,9 @@ CASES = [
     Case(
         "R-REFUND-14D",
         ["I want a refund for order NS-20512", C100],
-        Decision.HANDOFF,
+        Decision.REFUSE,
         "refund_policy@v1#s1",
-        escalation="policy_denied",
+        escalation=None,
         contains=("14 days",),
     ),
     Case(

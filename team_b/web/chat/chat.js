@@ -88,6 +88,38 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  // While the agent works (it may read the policy and ask the AI model), show a bubble with moving dots and a short
+  // line about what is happening, so the customer never stares at a frozen page.
+  var PROGRESS = [
+    [0, "Reading your message"],
+    [2500, "Checking our policies and your order"],
+    [7000, "Still working on it, almost there"],
+    [20000, "This is taking longer than usual, thank you for waiting"]
+  ];
+
+  function showPending() {
+    var item = document.createElement("li");
+    item.className = "message agent pending";
+    item.setAttribute("role", "status");
+    var dots = document.createElement("span");
+    dots.className = "dots";
+    dots.setAttribute("aria-hidden", "true");
+    for (var i = 0; i < 3; i += 1) { dots.appendChild(document.createElement("i")); }
+    var label = document.createElement("span");
+    label.className = "pending-label";
+    item.appendChild(dots);
+    item.appendChild(label);
+    messagesEl.appendChild(item);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    var timers = PROGRESS.map(function (step) {
+      return window.setTimeout(function () { label.textContent = step[1]; }, step[0]);
+    });
+    return function stop() {
+      timers.forEach(function (timer) { window.clearTimeout(timer); });
+      if (item.parentNode) { item.parentNode.removeChild(item); }
+    };
+  }
+
   function errorText(body, status) {
     if (body && body.error && body.error.message) { return body.error.message; }
     return "Something went wrong (" + status + "). Please try again.";
@@ -97,6 +129,7 @@
     sendButton.disabled = true;
     showStatus("");
     addMessage("customer", text);
+    var stopPending = showPending();
     return fetch(base + "/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -110,6 +143,7 @@
     }).catch(function () {
       showStatus("Could not reach the server. Please try again.");
     }).then(function () {
+      stopPending();
       sendButton.disabled = false;
       input.focus();
     });

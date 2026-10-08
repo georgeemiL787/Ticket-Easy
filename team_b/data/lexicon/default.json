@@ -355,18 +355,19 @@
   "yes": {
     "en": [
       "yes", "yeah", "yep", "yup", "ok", "okay", "sure", "go ahead", "confirm", "confirmed", "proceed", "do it",
-      "that is right", "thats right", "correct", "please do", "alright"
+      "that is right", "thats right", "correct", "please do", "alright", "yes please", "yes please go ahead", "yes go ahead",
+      "yes confirm"
     ],
     "ar": [
       "ايوه", "ايوة", "اه", "ايوا", "اي", "تمام", "ماشي", "موافق", "اكيد", "طبعا", "ايوه عايز", "اتفضل نفذ", "نفذ",
-      "اكد", "اوكي", "اوك", "صح", "تمام كده"
+      "اكد", "اوكي", "اوك", "صح", "تمام كده", "كمل", "اكمل", "ايوه كمل", "ايوه اكمل", "ايوه نفذ", "كمل يا باشا"
     ],
     "arabizi": [
       "ah", "aah", "aywa", "aywah", "ayowa", "aiwa", "tamam", "tmam", "mashi", "mashy", "mwafe2", "akeed", "aked",
-      "tab3an", "nafez", "nafezha", "okey"
+      "tab3an", "nafez", "nafezha", "okey", "ekmel", "aywa ekmel", "kammel", "aywa kammel", "aywa nafez"
     ],
     "mixed": [
-      "yes تمام", "ok تمام", "ok ماشي", "ايوه yes"
+      "yes تمام", "ok تمام", "ok ماشي", "ايوه yes", "ايوه go ahead", "ايوه اكيد go ahead", "yes كمل"
     ]
   },
   "no": {

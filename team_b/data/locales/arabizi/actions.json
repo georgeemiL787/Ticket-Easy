@@ -25,5 +25,6 @@
   "approval_pending": "El talab da me7tag mwafa2a men fari2 khedmet el 3omala2. Ba3atlohom talabak w zameel hayrod 3aleik.",
   "policy_refusal": "{message}",
   "action_changed": "Fe haga etghayaret fel order ba3d ma so2eltak, fa ma3amaltesh 7aga. Momken te2olly tany 3ayez eh?",
-  "approval_rejected": "Shokran 3ala sabrak. Fari2na raga3 talabak w ma2darsh yewafe2 3aleih. Fe 7aga tanya a2dar asa3dak feha?"
+  "approval_rejected": "Shokran 3ala sabrak. Fari2na raga3 talabak w ma2darsh yewafe2 3aleih. Fe 7aga tanya a2dar asa3dak feha?",
+  "policy_refusal_offer": "{message}\n\nLaw 7abeb zameel men khedmet el 3omala2 yebos 3ala 7altak, olly bas."
 }

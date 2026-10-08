@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from team_b.brain.knowledge_llm import KnowledgeAssistant
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
 from team_b.brain.registry import CapabilityRegistry
@@ -46,6 +47,7 @@ class Step:
     silent: bool = False  # say nothing (a customer message that only goes to the human who owns the chat)
     passages: tuple[Passage, ...] = ()  # policy passages quoted verbatim after the reply; never sent to the AI model
     knowledge: bool = False  # a policy answer: the trace must then show the evidence it came from
+    text: str | None = None  # a policy answer worded by the AI model (fact-checked); replaces the template
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:
@@ -111,6 +113,7 @@ class Deps:
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
+    knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
     max_queued_runs: int = MAX_QUEUED_RUNS  # queued requests that may run after the first one, in a single turn

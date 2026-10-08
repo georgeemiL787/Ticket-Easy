@@ -1,5 +1,6 @@
 {
   "late_policy_note": "It is {days} days past the expected date. This is what our policy says:",
   "out_of_scope": "I can only help with your orders and our shop policies. Would you like to talk to a person?",
-  "policy_answer": "This is what our policy says:"
+  "policy_answer": "This is what our policy says:",
+  "no_answer_offer": "I could not find that in our policies. If you like, I can connect you with a colleague, or you can ask me in other words."
 }

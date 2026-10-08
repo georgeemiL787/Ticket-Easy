@@ -25,6 +25,7 @@ LOCALES_DIR = PROJECT_ROOT / "data" / "locales"
 
 PLACEHOLDERS: Mapping[str, frozenset[str]] = {
     "ask_generic": frozenset({"slot"}),
+    "policy_refusal_offer": frozenset({"message"}),
     "disambiguate_intent": frozenset({"a", "b"}),
     "disambiguate_order": frozenset({"orders"}),
     "order_status_in_transit": frozenset({"order_id", "status", "date"}),
@@ -213,6 +214,18 @@ def _exact_tokens(text: str) -> dict[str, set[str]]:
         "citation": set(_CITATION.findall(text)),
         "link": set(_URL.findall(text)),
     }
+
+
+HANDOVER_WORDS = re.compile(
+    r"colleague|connect you|connecting you|pass(?:ing|ed)? (?:it|this|your)|hand(?:ing|ed)? (?:it|this|over)|a person"
+    r"|transfer|escalat|زميل|هحول|هوصل|أحول|احول|zameel|7awel|hawel|awasal|ha7awel",
+    re.IGNORECASE,
+)
+
+
+def promises_handover(text: str) -> bool:
+    """Does the text say that a colleague takes over? Only a reply that really opens a case may say so."""
+    return HANDOVER_WORDS.search(text) is not None
 
 
 def check_grounded(text: str, sources: Sequence[str], *, keep: Sequence[str] = ()) -> list[str]:

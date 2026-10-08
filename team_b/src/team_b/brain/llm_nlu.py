@@ -34,7 +34,7 @@ from team_b.ports import LLMClient
 
 log = get_logger(__name__)
 PROMPTS_DIR = PROJECT_ROOT / "prompts"
-DEFAULT_PROMPT = "nlu_v1"
+DEFAULT_PROMPT = "nlu_v2"
 ENTITY_KEYS = ("order_id", "phone", "amount", "item", "reason")
 MAX_ENTITY_LENGTH = 200
 HISTORY_TURNS = 4  # a turn is a customer message and the reply to it

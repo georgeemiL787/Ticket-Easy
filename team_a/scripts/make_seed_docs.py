@@ -10,7 +10,7 @@ from docx import Document
 from fpdf import FPDF
 from openpyxl import Workbook
 
-OUT = Path(__file__).resolve().parents[1] / "data" / "corpus" / "shop_001"
+OUT = Path(__file__).resolve().parents[1] / "data" / "e-commerce" / "shop_001" / "corpus"
 
 SHIPPING_EN = [
     ("1. Delivery areas",

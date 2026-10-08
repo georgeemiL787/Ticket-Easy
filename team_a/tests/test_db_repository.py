@@ -17,7 +17,7 @@ from team_a.schemas import RetrievalResult, SearchKnowledgeRequest, SearchPastTi
 
 def _benchmark_questions() -> list[dict]:
     return [json.loads(line) for split in ("dev", "test")
-            for line in (settings.data_dir / "benchmark" / f"retrieval_shop_001.{split}.jsonl")
+            for line in settings.benchmark_file("shop_001", f"retrieval.{split}")
             .read_text(encoding="utf-8").splitlines() if line.strip()]
 
 

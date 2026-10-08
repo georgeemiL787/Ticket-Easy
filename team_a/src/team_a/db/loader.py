@@ -40,7 +40,7 @@ TENANT_TABLES = (
     "returns", "order_items", "orders", "customers", "db_sources", "tenants",
 )
 MIRRORS = ("rules_mirror", "resolutions_mirror")
-GLOBAL_SOURCES = ("synonyms/arabizi.json", "risk/keywords.json")
+SHARED_SOURCES = ("arabizi.json", "risk_keywords.json", "vocabulary.json")
 _TEXT_SUFFIXES = {".md", ".markdown", ".json", ".jsonl", ".py", ".txt", ".csv"}
 _SCENARIO_KEYS = {"scenario_id", "type", "language", "customer_id", "order_id", "return_id", "customer_message",
                   "check_action_input", "expected", "days_since_delivery", "test_purpose"}
@@ -67,8 +67,7 @@ def _json(value) -> str | None:
 
 
 def discover_tenants() -> list[str]:
-    root = settings.data_dir / "corpus"
-    return sorted(p.parent.name for p in root.glob("*/manifest.json"))
+    return settings.tenants()
 
 
 def _insert(conn: sqlite3.Connection, table: str, row: dict) -> None:
@@ -173,15 +172,15 @@ def _scenario_rows(tenant_id: str, mock: MockData, passages: list[dict]) -> tupl
 
 
 def _benchmark_rows(tenant_id: str) -> tuple[list[dict], list[tuple[Path, int]]]:
-    folder = settings.data_dir / "benchmark"
+    folder = settings.benchmark_file(tenant_id, "x").parent
     rows, files = [], []
-    for path in sorted(folder.glob(f"retrieval_{tenant_id}.*.jsonl")):
+    for path in sorted(folder.glob("retrieval.*.jsonl")):
         split = path.name.removesuffix(".jsonl").rsplit(".", 1)[1]
         cases = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
         files.append((path, len(cases)))
         rows += [{"tenant_id": tenant_id, "suite": "retrieval", "question_id": c["id"], "split": split,
                   "style": c["style"], "question": c["question"], "expected": _json(c["expected"])} for c in cases]
-    path = folder / f"guardrails_{tenant_id}.jsonl"
+    path = settings.benchmark_file(tenant_id, "guardrails")
     if path.exists():
         cases = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
         files.append((path, len(cases)))
@@ -315,9 +314,9 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
             _insert(conn, "benchmark_questions", b)
 
         conn.execute("INSERT INTO passages_fts(passages_fts) VALUES ('rebuild')")
-        for path in GLOBAL_SOURCES:
+        for name in SHARED_SOURCES:
             conn.execute("INSERT OR REPLACE INTO db_meta (key, value) VALUES (?, ?)",
-                         (f"source:data/{path}", file_sha(settings.data_dir / path)))
+                         (f"source:data/shared/{name}", file_sha(settings.shared_dir / name)))
         for sql in triggers:
             conn.execute(sql)
         violations = conn.execute("PRAGMA foreign_key_check").fetchall()

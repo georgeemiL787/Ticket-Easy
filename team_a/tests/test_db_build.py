@@ -141,7 +141,7 @@ def test_unmapped_source_field_fails_loudly(tmp_path, monkeypatch):
 
     from team_a import config
 
-    folder = tmp_path / "mock" / "noon_eg"
+    folder = tmp_path / "e-commerce" / "noon_eg" / "mock"
     folder.mkdir(parents=True)
     for f in config.settings.mock_dir("noon_eg").glob("noon_*.json"):
         (folder / f.name).write_bytes(f.read_bytes())

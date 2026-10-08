@@ -58,7 +58,7 @@ def risk_canonical(text: str) -> str:
 
 @lru_cache(maxsize=1)
 def _keywords() -> dict[str, list[tuple[str, str]]]:
-    raw = json.loads((settings.data_dir / "risk" / "keywords.json").read_text(encoding="utf-8"))
+    raw = json.loads((settings.shared_dir / "risk_keywords.json").read_text(encoding="utf-8"))
     return {
         cat: [(risk_canonical(t), normalize(t)) for t in terms]
         for cat, terms in raw["categories"].items()

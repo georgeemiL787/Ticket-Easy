@@ -118,7 +118,7 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
         raise ValueError(f"split must be one of {SPLITS}")
     if sweep and split != "dev":
         raise ValueError("--sweep runs on the dev split only; the test split must stay unseen by tuning")
-    cases = _load_jsonl(settings.data_dir / "benchmark" / f"retrieval_{tenant_id}.{split}.jsonl")
+    cases = _load_jsonl(settings.benchmark_file(tenant_id, f"retrieval.{split}"))
     index = TenantIndex.load(tenant_id)
     embedder = CachedEmbedder(OllamaEmbedder())
     print(f"Split: {split} ({len(cases)} questions, {sum(not c['expected'] for c in cases)} unanswerable)")

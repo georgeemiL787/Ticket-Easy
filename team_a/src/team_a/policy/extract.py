@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def vocabulary() -> dict:
-    return json.loads((settings.data_dir / "rules" / "vocabulary.json").read_text(encoding="utf-8"))
+    return json.loads((settings.shared_dir / "vocabulary.json").read_text(encoding="utf-8"))
 
 
 def _system_prompt() -> str:

@@ -4,7 +4,7 @@ import json
 
 from team_a.config import settings
 
-VOCAB = json.loads((settings.data_dir / "rules" / "vocabulary.json").read_text(encoding="utf-8"))
+VOCAB = json.loads((settings.shared_dir / "vocabulary.json").read_text(encoding="utf-8"))
 
 # The vocabulary before noon_eg was added: nothing in it may be removed or narrowed.
 BEFORE_NOON = {
@@ -38,6 +38,6 @@ def test_every_noon_scenario_fact_and_value_is_in_the_vocabulary():
 
 
 def test_every_guardrail_fact_is_in_the_vocabulary():
-    for line in (settings.data_dir / "benchmark" / "guardrails_shop_001.jsonl").read_text(encoding="utf-8").splitlines():
+    for line in (settings.benchmark_file("shop_001", "guardrails")).read_text(encoding="utf-8").splitlines():
         case = json.loads(line)
         assert set(case["request"].get("facts", {})) <= set(VOCAB["facts"]), case["id"]

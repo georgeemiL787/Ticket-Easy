@@ -7,7 +7,7 @@ scan) and the expected decision. Evaluated by: python -m team_a eval-guardrails
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parents[1] / "data" / "benchmark" / "guardrails_shop_001.jsonl"
+OUT = Path(__file__).resolve().parents[1] / "data" / "e-commerce" / "shop_001" / "benchmark" / "guardrails.jsonl"
 AS_OF = "2026-09-28"
 
 T = {

@@ -28,7 +28,7 @@ class GuardrailRegression(ValueError):
 
 
 def load_cases(tenant_id: str) -> list[dict]:
-    path = settings.data_dir / "benchmark" / f"guardrails_{tenant_id}.jsonl"
+    path = settings.benchmark_file(tenant_id, "guardrails")
     if not path.exists():
         return []
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]

@@ -86,14 +86,14 @@ def _load_map(path: Path) -> dict[str, list[str]]:
 
 @lru_cache(maxsize=1)
 def _arabizi_map() -> dict[str, list[str]]:
-    return _load_map(settings.data_dir / "synonyms" / "arabizi.json")
+    return _load_map(settings.shared_dir / "arabizi.json")
 
 
 @lru_cache(maxsize=32)
 def _tenant_map(tenant_id: str) -> dict[str, list[str]]:
-    """Optional tenant-specific expansions in data/synonyms/<tenant_id>.json (e.g. Arabic -> the English
+    """Optional tenant-specific expansions in the tenant folder's synonyms.json (e.g. Arabic -> the English
     wording of an English-only corpus). Applied on top of the shared list, only for that tenant."""
-    path = settings.data_dir / "synonyms" / f"{tenant_id}.json"
+    path = settings.synonyms_file(tenant_id)
     return _load_map(path) if path.exists() else {}
 
 

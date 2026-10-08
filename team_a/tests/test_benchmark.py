@@ -12,7 +12,7 @@ TENANTS = ["shop_001", "noon_eg"]
 
 
 def _load(split, tenant="shop_001"):
-    path = settings.data_dir / "benchmark" / f"retrieval_{tenant}.{split}.jsonl"
+    path = settings.benchmark_file(tenant, f"retrieval.{split}")
     return [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
 
 

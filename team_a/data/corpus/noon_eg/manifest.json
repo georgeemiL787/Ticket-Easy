@@ -1,0 +1,7 @@
+{
+  "tenant_id": "noon_eg",
+  "tenant_name": "noon Egypt (real public return policy; customers, orders and returns are fictional mock data)",
+  "documents": [
+    {"file": "noon_egypt_return_policy.md", "document_id": "noon_return_policy", "version": "v1", "effective_date": "2023-01-16", "current": true}
+  ]
+}

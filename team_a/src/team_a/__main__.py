@@ -10,6 +10,7 @@
   python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
   python -m team_a eval-guardrails
   python -m team_a export-schemas
+  python -m team_a db build [--tenant X] [--reset] [--no-embeddings] | db stats | db query "<sql>"
 """
 
 import argparse
@@ -141,6 +142,37 @@ def cmd_export_schemas(_args) -> None:
         print(f"wrote {path.relative_to(ROOT)}")
 
 
+def cmd_db(args) -> None:
+    from team_a.db import loader
+
+    if args.db_cmd == "build":
+        from team_a.knowledge.embeddings import OllamaEmbedder
+
+        embedder = None if args.no_embeddings else OllamaEmbedder()
+        report = loader.build([args.tenant] if args.tenant else None, embedder, reset=args.reset)
+        _print(report)
+        for tenant_id, r in report["tenants"].items():
+            for warning in r["warnings"]:
+                print(f"WARNING {tenant_id}: {warning}", file=sys.stderr)
+    elif args.db_cmd == "stats":
+        counts = loader.stats()
+        tenants = sorted(counts)
+        tables = list(next(iter(counts.values()), {}))
+        print(f"{'table':24}" + "".join(f"{t:>12}" for t in tenants))
+        for table in tables:
+            print(f"{table:24}" + "".join(f"{counts[t][table]:>12}" for t in tenants))
+    elif args.db_cmd == "query":
+        import sqlite3
+
+        try:
+            columns, rows = loader.query(args.sql, limit=args.limit)
+        except sqlite3.Error as exc:
+            sys.exit(f"Query failed: {exc}")
+        for row in rows:
+            print(json.dumps(dict(zip(columns, row)), ensure_ascii=False, default=lambda b: f"<{len(b)} bytes>"))
+        print(f"({len(rows)} row(s){', limit reached' if len(rows) == args.limit else ''})", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="team_a")
@@ -189,6 +221,15 @@ def main(argv: list[str] | None = None) -> None:
 
     p = sub.add_parser("export-schemas")
     p.set_defaults(func=cmd_export_schemas)
+
+    p = sub.add_parser("db", help="unified SQLite data layer (var/db/team_a.sqlite)")
+    dsub = p.add_subparsers(dest="db_cmd", required=True)
+    d = dsub.add_parser("build"); d.add_argument("--tenant", help="default: every tenant in data/corpus")
+    d.add_argument("--reset", action="store_true", help="delete the database file first")
+    d.add_argument("--no-embeddings", action="store_true", help="keyword-only (no Ollama needed)")
+    dsub.add_parser("stats")
+    d = dsub.add_parser("query"); d.add_argument("sql"); d.add_argument("--limit", type=int, default=200)
+    p.set_defaults(func=cmd_db)
 
     args = parser.parse_args(argv)
     args.func(args)

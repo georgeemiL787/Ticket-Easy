@@ -9,3 +9,9 @@ var/
 .env
 __pycache__/
 *.pyc
+
+# Generated SQLite data layer (rebuild with: python -m team_a db build)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

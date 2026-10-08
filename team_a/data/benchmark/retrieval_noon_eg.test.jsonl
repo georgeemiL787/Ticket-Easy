@@ -50,3 +50,15 @@
 {"id": "NQ101", "style": "arabizi", "question": "momken adfa3 b instapay?", "expected": []}
 {"id": "NQ103", "style": "arabizi", "question": "el delivery fel weekend shaghal?", "expected": []}
 {"id": "NQ105", "style": "arabizi", "question": "el mandoob mabyrodsh 3al telephone, a3mel eh?", "expected": []}
+{"id": "NQ107", "style": "en", "question": "Can I place an order by phone?", "expected": []}
+{"id": "NQ109", "style": "en", "question": "Do you deliver on Fridays?", "expected": []}
+{"id": "NQ111", "style": "en", "question": "Can I track my order on the noon app?", "expected": []}
+{"id": "NQ113", "style": "en", "question": "How do I leave a review for a product?", "expected": []}
+{"id": "NQ115", "style": "ar", "question": "ممكن أدفع بفودافون كاش؟", "expected": []}
+{"id": "NQ117", "style": "ar", "question": "نون بيبيع موبايلات مستعملة؟", "expected": []}
+{"id": "NQ119", "style": "ar", "question": "رقم الطلب بتاعي فين في الإيميل؟", "expected": []}
+{"id": "NQ121", "style": "ar", "question": "إزاي أفعل حساب نون الجديد؟", "expected": []}
+{"id": "NQ123", "style": "arabizi", "question": "fe free delivery law el order kbeer?", "expected": []}
+{"id": "NQ125", "style": "arabizi", "question": "noon by3mel offers fel Ramadan?", "expected": []}
+{"id": "NQ127", "style": "arabizi", "question": "el mandoob momken yedfa3ny bel card 3and el bab?", "expected": []}
+{"id": "NQ129", "style": "arabizi", "question": "el app bta3 noon fih dark mode?", "expected": []}

@@ -51,3 +51,15 @@
 {"id": "NQ100", "style": "arabizi", "question": "fe promo code lel order el gdid?", "expected": []}
 {"id": "NQ102", "style": "arabizi", "question": "noon One subscription b kam?", "expected": []}
 {"id": "NQ104", "style": "arabizi", "question": "momken a3mel order men gher account?", "expected": []}
+{"id": "NQ106", "style": "en", "question": "How long does delivery take to Cairo?", "expected": []}
+{"id": "NQ108", "style": "en", "question": "Is cash on delivery available for orders above 10,000 EGP?", "expected": []}
+{"id": "NQ110", "style": "en", "question": "How do I add a new delivery address to my account?", "expected": []}
+{"id": "NQ112", "style": "en", "question": "Does noon sell refurbished phones?", "expected": []}
+{"id": "NQ114", "style": "ar", "question": "الطلب بيوصل في نفس اليوم في القاهرة؟", "expected": []}
+{"id": "NQ116", "style": "ar", "question": "إزاي أضيف عنوان جديد للتوصيل؟", "expected": []}
+{"id": "NQ118", "style": "ar", "question": "إزاي أكتب تقييم للمنتج؟", "expected": []}
+{"id": "NQ120", "style": "ar", "question": "فيه شحن مجاني فوق مبلغ معين؟", "expected": []}
+{"id": "NQ122", "style": "arabizi", "question": "el order momken yewsal el nharda?", "expected": []}
+{"id": "NQ124", "style": "arabizi", "question": "momken a8ayar el phone number bta3 el account?", "expected": []}
+{"id": "NQ126", "style": "arabizi", "question": "ezay a3mel review lel product?", "expected": []}
+{"id": "NQ128", "style": "arabizi", "question": "momken atlob men noon w ana barra masr?", "expected": []}

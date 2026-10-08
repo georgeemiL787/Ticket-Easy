@@ -43,10 +43,10 @@ def logical_dump(path) -> list:
 def test_build_loads_every_tenant(built_db):
     counts = loader.stats(built_db)
     assert sorted(counts) == ["noon_eg", "shop_001"]
-    assert counts["noon_eg"]["customers"] == 11 and counts["noon_eg"]["orders"] == 56
-    assert counts["noon_eg"]["order_items"] == 57 and counts["noon_eg"]["returns"] == 10
-    assert counts["noon_eg"]["policy_passages"] == 32 and counts["noon_eg"]["eval_scenarios"] == 67
-    assert counts["noon_eg"]["past_tickets"] == 18
+    assert counts["noon_eg"]["customers"] == 5011 and counts["noon_eg"]["orders"] == 26166
+    assert counts["noon_eg"]["order_items"] == 40363 and counts["noon_eg"]["returns"] == 1335
+    assert counts["noon_eg"]["policy_passages"] == 32 and counts["noon_eg"]["eval_scenarios"] == 967
+    assert counts["noon_eg"]["past_tickets"] == 1518
     assert counts["shop_001"]["policy_passages"] == 40 and counts["shop_001"]["past_tickets"] == 20
     assert counts["shop_001"]["orders"] == 16 and counts["shop_001"]["rules_mirror"] == 33
     assert counts["shop_001"]["benchmark_questions"] == 70 + 44
@@ -81,13 +81,13 @@ def test_embeddings_are_stored_and_reused(tmp_path):
     path, embedder = tmp_path / "emb.sqlite", FakeEmbedder()
     report = loader.build(["noon_eg", "shop_001"], embedder=embedder, db_path=path)
     assert {r["retrieval_mode"] for r in report["tenants"].values()} == {"hybrid"}
-    assert embedder.calls == 32 + 40 + 20 + 18
+    assert embedder.calls == 32 + 40 + 20 + 1518
     conn = sqlite3.connect(path)
     assert conn.execute("SELECT DISTINCT model, dim FROM passage_embeddings").fetchall() == [("fake-8d", 8)]
     blob = conn.execute("SELECT vector FROM passage_embeddings LIMIT 1").fetchone()[0]
     assert abs(np.linalg.norm(np.frombuffer(blob, dtype="<f4")) - 1) < 1e-5
     loader.build(embedder=embedder, db_path=path)
-    assert embedder.calls == 32 + 40 + 20 + 18  # unchanged texts are not re-embedded
+    assert embedder.calls == 32 + 40 + 20 + 1518  # unchanged texts are not re-embedded
 
 
 def test_ollama_down_falls_back_to_keyword_only(tmp_path):

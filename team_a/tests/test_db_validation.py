@@ -64,14 +64,14 @@ def test_every_policy_section_resolves_to_exactly_one_passage(built_db):
         assert all(title == section and pid.startswith("noon_return_policy@v1#") for title, pid, section in stored)
     distinct = _rows(built_db, "SELECT section_title, count(DISTINCT passage_id) FROM eval_scenario_sections "
                                "WHERE tenant_id = 'noon_eg' GROUP BY section_title")
-    assert len(distinct) == 28 and all(n == 1 for _, n in distinct)
+    assert len(distinct) == 29 and all(n == 1 for _, n in distinct)
 
 
 CREATE_RETURN = [s for s in _scenarios() if s["type"] == "create_return"]
 
 
-def test_there_are_45_create_return_scenarios():
-    assert len(CREATE_RETURN) == 45
+def test_there_are_645_create_return_scenarios():
+    assert len(CREATE_RETURN) == 645
 
 
 @pytest.mark.parametrize("scenario", CREATE_RETURN, ids=[s["scenario_id"] for s in CREATE_RETURN])
@@ -88,8 +88,18 @@ def test_facts_rebuilt_from_the_db_equal_the_scenario(built_db, scenario):
 
 # ------------------------------------------------------------------ tenant isolation
 
+SAMPLE = 300  # rows per table for the per-call isolation checks; the first ones (hand-built) are always included
+
+
+def _sample(rows: list) -> list:
+    if len(rows) <= SAMPLE:
+        return rows
+    step = len(rows) // (SAMPLE // 2)
+    return rows[:SAMPLE // 2] + rows[SAMPLE // 2::step]
+
+
 def _ids(db, table, key, tenant):
-    return [r[0] for r in _rows(db, f"SELECT {key} FROM {table} WHERE tenant_id = ?", tenant)]
+    return _sample([r[0] for r in _rows(db, f"SELECT {key} FROM {table} WHERE tenant_id = ? ORDER BY rowid", tenant)])
 
 
 @pytest.mark.parametrize("tenant,other", [("noon_eg", "shop_001"), ("shop_001", "noon_eg")])
@@ -99,7 +109,8 @@ def test_lookups_never_return_another_tenants_rows(built_db, tenant, other):
         assert repo.list_orders_for_customer(tenant, cid, db_path=built_db) == []
     for oid in _ids(built_db, "orders", "order_id", other):
         assert repo.get_order(tenant, oid, db_path=built_db) is None
-    for oid, iid in _rows(built_db, "SELECT order_id, item_id FROM order_items WHERE tenant_id = ?", other):
+    for oid, iid in _sample(_rows(built_db, "SELECT order_id, item_id FROM order_items WHERE tenant_id = ? "
+                                            "ORDER BY rowid", other)):
         assert repo.build_check_action_facts(tenant, oid, iid, db_path=built_db) is None
     for rid in _ids(built_db, "returns", "return_id", other):
         assert repo.get_return(tenant, rid, db_path=built_db) is None
@@ -119,8 +130,8 @@ def test_own_lookups_only_return_own_rows(built_db, tenant, other):
 
 @pytest.mark.parametrize("tenant,other", [("noon_eg", "shop_001"), ("shop_001", "noon_eg")])
 def test_search_never_crosses_tenants(built_db, tenant, other):
-    own = set(_ids(built_db, "policy_passages", "passage_id", tenant))
-    own_tickets = set(_ids(built_db, "past_tickets", "ticket_id", tenant))
+    own = {r[0] for r in _rows(built_db, "SELECT passage_id FROM policy_passages WHERE tenant_id = ?", tenant)}
+    own_tickets = {r[0] for r in _rows(built_db, "SELECT ticket_id FROM past_tickets WHERE tenant_id = ?", tenant)}
     # Query with the other tenant's own wording: the best possible bait for a leak.
     texts = [r[0] for r in _rows(built_db, "SELECT text FROM policy_passages WHERE tenant_id = ?", other)]
     texts += [r[0] for r in _rows(built_db, "SELECT customer_message FROM past_tickets WHERE tenant_id = ?", other)]

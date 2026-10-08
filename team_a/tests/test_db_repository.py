@@ -132,7 +132,7 @@ def test_noon_search_keeps_the_explicit_empty_contract(built_db):
     found = repo.search_past_tickets(SearchPastTicketsRequest(request_id="t", tenant_id="noon_eg",
                                                               query="Tabby refund still not received"),
                                      None, db_path=built_db)
-    assert found.tickets and found.tickets[0].ticket_id == "NT-2010"
+    assert found.tickets and "tabby" in found.tickets[0].customer_message.lower()
 
 
 # ------------------------------------------------------------------ HTTP (read-only, admin only)

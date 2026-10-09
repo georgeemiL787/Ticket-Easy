@@ -2,6 +2,11 @@ import copy
 from .prompts import eligible
 
 
+def regex_escape(value):
+    """Escape one literal for a JSON-Schema regular expression, nothing beyond the metacharacters."""
+    return "".join("\\" + ch if ch in "\\^$.|?*+()[]{}" else ch for ch in value)
+
+
 def strict_schema(schema):
     """Make nullable/defaulted Pydantic fields explicit for strict provider schemas."""
     if isinstance(schema, dict):
@@ -22,6 +27,16 @@ def groq_schema(schema):
     Other providers continue to receive the original, fully constrained schema.
     """
     schema = copy.deepcopy(schema)
+    # The per-step binding copies constrain target to that operation's own input keys, which the
+    # shared definitions below cannot repeat per operation. Keep the offered keys as one pattern
+    # instead of an unconstrained string: decoding can no longer emit a bare input name where the
+    # operation declares a qualified key, the wire stays small enough for the provider, and
+    # grounding still checks the exact operation's keys. The provider reads an enum here as a
+    # second discriminator beside kind and rejects the schema, which a pattern does not do.
+    offered = sorted({key for name, definition in schema.get("$defs", {}).items()
+                      if name.startswith("StepTargets") for key in (definition.get("enum") or [])})
+    target_schema = {"type": "string", "pattern": "^(?:" + "|".join(regex_escape(k) for k in offered) + ")$"} \
+        if offered else {"type": "string"}
     for name in ("Output", "PreviousOutputBinding"):
         definition = schema.get("$defs", {}).get(name, {})
         variants = definition.get("anyOf")
@@ -38,7 +53,7 @@ def groq_schema(schema):
             prop["enum"] = list(dict.fromkeys(value for choice in choices for value in choice["enum"]))
         schema["$defs"][name] = dict(variants[0], properties=properties)
         if name == "PreviousOutputBinding":
-            properties["target"] = {"type": "string"}
+            properties["target"] = target_schema
     definitions = schema.get("$defs", {})
     for step in definitions.get("Step", {}).get("anyOf", []):
         bindings = step["properties"]["bindings"].get("items", {}).get("anyOf", [])
@@ -46,13 +61,14 @@ def groq_schema(schema):
             continue
         # Every step now uses the same binding shapes. Reuse definitions instead
         # of repeating four complete objects for every available operation.
-        # Target enums are checked by the original schema; kind is the sole
-        # discriminator in these shared Groq definitions.
+        # The shared definition carries the union of every offered input key, so a
+        # target the operation cannot accept is not decodable; which operation may
+        # take it stays with the original schema and with grounding.
         step["properties"]["bindings"]["items"]["anyOf"] = [
             {"$ref": "#/$defs/" + name} for name in ("RuntimeBinding", "ConfigurationBinding", "ContextBinding", "PreviousOutputBinding")]
     for name in ("RuntimeBinding", "ConfigurationBinding", "ContextBinding", "PreviousOutputBinding"):
         if name in definitions and "properties" in definitions[name]:
-            definitions[name]["properties"]["target"] = {"type": "string"}
+            definitions[name]["properties"]["target"] = target_schema
     return compact_schema(schema)
 
 

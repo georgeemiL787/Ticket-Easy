@@ -146,6 +146,14 @@ def main():
     print(f"Proposal state: {p['state']}, version: {p['version']}, rev: {p['review_revision']}")
 
     # --- 5. Answer questions AND requirements (before policy) ---
+    # Every question this proposal raises is about who may call it and how ownership is enforced, so
+    # the standing TEST-ONLY decision also answers whatever the keyword pass below does not match;
+    # a placeholder would correctly be judged insufficient by the reviewer.
+    OWNER_POLICY = ("TEST-ONLY owner decision: the caller is a logged-in customer (end_user) authenticated via "
+                    "the AstroCommerce customer OAuth2 password grant and must own the order. The enforcement "
+                    "policy checks that the response's customer_id field equals the authenticated customer's "
+                    "identity (customer_id context field) after the successful 200 response and denies access on mismatch.")
+
     def answer_all(pid, version, rev):
         p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), "get proposal for answers")
         q_answers = {}
@@ -155,7 +163,7 @@ def main():
             elif "verify" in q["text"].lower() or "belongs" in q["text"].lower() or "own" in q["text"].lower():
                 q_answers[q["id"]] = "The tool calls GET /api/v1/orders/{order_id} and the enforcement policy checks that the response's customer_id field matches the authenticated customer's identity (customer_id context field). This ownership check runs after the successful 200 response."
             else:
-                q_answers[q["id"]] = "TEST-ONLY answer provided by the owner for this capability."
+                q_answers[q["id"]] = OWNER_POLICY
         # Also answer requirements
         for r in p["requirements"]:
             if r["kind"] == "caller_access":
@@ -274,13 +282,30 @@ def main():
     # --- 9. Reconcile after policy until ready_for_review ---
     log_step("Reconcile after policy")
     max_reconciles = 5
-    for i in range(max_reconciles):
-        p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), f"get proposal for reconcile #{i+1}")
+    p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), "get proposal to start the reconcile loop")
+    question_ids = {q["id"] for q in p["content"]["questions"]}
+    for i in range(1, max_reconciles + 1):
+        p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), f"get proposal for reconcile #{i}")
         if p.get("state") == "ready_for_review":
-            print(f"Proposal ready for review after {i} reconciliations")
+            print(f"Proposal ready for review after {i - 1} reconciliations")
             break
+        # The owner restates the answer for anything the reviewer still finds insufficient; the
+        # reviewer, not the driver, decides whether the new answer resolves it.
+        last = (p.get("reconciliations") or [{}])[-1].get("result") or {}
+        open_findings = [f for f in last.get("findings", [])
+                         if f["status"] != "resolved" and f["question_id"] in question_ids]
+        if open_findings:
+            for f in open_findings:
+                print(f"  reviewer still finds {f['question_id']} {f['status']}: "
+                      f"{(f.get('explanation') or '')[:200].encode('ascii', 'replace').decode()}")
+            assert_ok(ec.post_json(f"{API}/proposals/{pid}/versions/{p['version']}/answers", {
+                "expected_revision": p["review_revision"],
+                "answers": {f["question_id"]: OWNER_POLICY for f in open_findings}
+            }), "re-answer questions the reviewer found insufficient")
+            p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), f"get proposal after re-answer #{i}")
         reconcile(pid, p["version"], p["review_revision"])
-        print(f"Reconcile #{i+1}: state={p.get('state')}")
+        p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), f"get proposal after reconcile #{i}")
+        print(f"Reconcile #{i}: state={p.get('state')}")
     else:
         raise AssertionError(f"Proposal did not reach ready_for_review after {max_reconciles} reconciliations")
 
@@ -288,11 +313,11 @@ def main():
     log_step("Confirm requirements")
     p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), "get proposal before confirm")
     for req in p.get("requirements", []):
-        rid = req["id"]
+        requirement_id = req["id"]
         if req.get("status") == "answer_sufficient":
-            assert_ok(ec.post_json(f"{API}/proposals/{pid}/versions/{p['version']}/requirements/{rid}/confirm", {
+            assert_ok(ec.post_json(f"{API}/proposals/{pid}/versions/{p['version']}/requirements/{requirement_id}/confirm", {
                 "expected_revision": p["review_revision"]
-            }), f"confirm requirement {rid}")
+            }), f"confirm requirement {requirement_id}")
 
     # --- 11. Approve to build ---
     log_step("Approve to build")
@@ -391,15 +416,33 @@ def main():
     # --- 13. Sandbox tests ---
     log_step("Run sandbox tests")
 
+    def execution_detail(execution_id):
+        """The target API's own answer for this run, read from the stored execution report."""
+        a = assert_ok(ec.get_json(f"{API}/artifacts/{aid}"), "get artifact for the execution report")
+        e = next((e for e in a.get("executions", []) if e["id"] == execution_id), {})
+        return (((e.get("report") or {}).get("failure") or {}).get("detail")) or ""
+
     def sandbox_test(name, identity, arguments, expect_status, scenario="general", record_owner=None):
-        return assert_ok(ec.post_json(f"{API}/artifacts/{aid}/sandbox-tests", {
+        body = {
             "name": name,
             "identity": identity,
             "arguments": arguments,
             "expect": {"status": expect_status},
             "scenario": scenario,
             "record_owner": record_owner
-        }), f"sandbox test {name}")
+        }
+        # The target API answers 5xx occasionally (an upstream fault, not a refusal this run can be
+        # judged on), so the same test is re-run for that reason only. Denials, validation failures
+        # and every other result are never retried, every run stays in the audit history, and the
+        # publication gate still judges the latest run.
+        for attempt in range(4):
+            result = assert_ok(ec.post_json(f"{API}/artifacts/{aid}/sandbox-tests", body), f"sandbox test {name}")
+            detail = execution_detail(result["execution_id"])
+            if not detail.startswith("HTTP 5"):
+                break
+            print(f"  {name}: target API answered {detail} ({attempt + 1}/4); re-running the same test")
+        print(f"  {name}: verdict={result.get('verdict')} status={result.get('status')} detail={detail or 'no upstream failure'}")
+        return result
 
     # Owner own_record
     sandbox_test("owner_own", "owner", {"order_id": OWNER_ORDER_ID}, "succeeded", "own_record")
@@ -436,13 +479,31 @@ def main():
         assert meta.get("team_c", {}).get("production_ready") is False, "production_ready must be False"
     print("[OK] Production activation correctly absent")
 
-    # --- 16. Verify retrieval metadata ---
+    # --- 16. Verify retrieval reaches beyond the first index slice ---
     log_step("Verify retrieval coverage")
+    request_a = assert_ok(ec.get_json(f"{API}/tool-requests/{rid}"), "get request A")
+    search_a = request_a["coverage"]
+    print(f"Request A: {search_a['searched_operations']}/{search_a['total_operations']} operations in "
+          f"{search_a['retrieval_rounds']} round(s), partial={search_a['partial_search']}")
+    assert search_a["searched_operations"] < search_a["total_operations"], "Request A should stop at its first slice"
+
+    # A request whose operation the first slice does not contain: retrieval has to widen the index.
+    goal_b = "TEST ONLY: show delivery cost and available rates for an address"
+    request_b = assert_ok(ec.post_json(f"{API}/businesses/{bid}/tool-requests", {
+        "goal": goal_b,
+        "examples": "",
+        "spec_id": sid,
+        "idempotency_key": secrets.token_urlsafe(16)
+    }), "tool request B")
+    search_b = request_b["coverage"]
+    print(f"Request B: {search_b['searched_operations']}/{search_b['total_operations']} operations in "
+          f"{search_b['retrieval_rounds']} round(s), partial={search_b['partial_search']}")
+    assert search_b["retrieval_rounds"] >= 2, f"retrieval must expand past the first slice, got {search_b['retrieval_rounds']} round(s)"
+    assert search_b["searched_operations"] > search_a["searched_operations"], (
+        f"Request B must search further than Request A's {search_a['searched_operations']}-operation slice")
+    print("[OK] Retrieval widened past the initial slice")
+
     p = assert_ok(ec.get_json(f"{API}/proposals/{pid}"), "final proposal")
-    cov = p.get("coverage", {})
-    print(f"Retrieval rounds: {cov.get('retrieval_rounds')}")
-    print(f"Searched ops: {cov.get('searched_operations')}/{cov.get('total_operations')}")
-    print(f"Partial search: {cov.get('partial_search')}")
 
     print("\n" + "="*60)
     print("E2E FLOW COMPLETE [OK]")

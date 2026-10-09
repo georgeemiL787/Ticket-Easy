@@ -103,6 +103,22 @@ def scripted_reconciliation(env, edits):
     return payloads
 
 
+def misattributed_reconciliation(env, always=False):
+    """Wrap the deterministic substitute: each requirement finding quotes the question's answer instead of its own."""
+    app, client, _ = env
+    original, payloads = app.state.service.providers.call, []
+    def call(kind, payload, model, run):
+        result = original(kind, payload, model, run)
+        if kind == "reconciliation":
+            payloads.append(payload)
+            if always or "evidence_feedback" not in payload:
+                quoted = payload["proposal"]["answers"]["q1"]["id"]
+                result.findings = [f.model_copy(update=dict(answer_revision_ids=[quoted])) if f.question_id != "q1" and f.answer_revision_ids else f for f in result.findings]
+        return result
+    app.state.service.providers.call = call
+    return payloads
+
+
 def test_drop_stale_configuration_only_removes_rebound_settings(env):
     pid = setup_proposal(env)[2]["proposal_ids"][0]
     content = ProposalContent.model_validate(env[1].get(f"/api/v1/proposals/{pid}").json()["content"])
@@ -146,6 +162,32 @@ def test_second_rejected_reconciliation_fails_with_both_runs(env):
     payloads = scripted_reconciliation(env, [unencoded, unencoded])
     r = answer_reconcile(client, pid, "Use support.")
     assert r.status_code == 422 and r.json()["code"] == "invalid_bindings" and len(payloads) == 2
+    details = r.json()["details"]
+    assert len(details["earlier_run_ids"]) == 1 and details["earlier_run_ids"][0] != details["run_id"]
+    assert client.get(f"/api/v1/proposals/{pid}").json()["version"] == 1
+
+
+def test_a_finding_citing_another_items_answer_is_retried_once_with_its_own(env):
+    app, client, _ = env
+    pid = setup_proposal(env)[2]["proposal_ids"][0]
+    payloads = misattributed_reconciliation(env)
+    r = answer_reconcile(client, pid, "Use support.")
+    assert r.status_code == 200, r.text
+    assert len(payloads) == 2 and "evidence_feedback" not in payloads[0]
+    answers = payloads[1]["proposal"]["answers"]
+    feedback = payloads[1]["evidence_feedback"]
+    requirements = {req["id"] for req in client.get(f"/api/v1/proposals/{pid}").json()["requirements"]}
+    assert {f["question_id"] for f in feedback} == requirements and "q1" not in {f["question_id"] for f in feedback}
+    assert all(f["answer_revision_id"] == answers[f["question_id"]]["id"] for f in feedback)
+
+
+def test_a_second_finding_that_still_cites_the_wrong_answer_fails(env):
+    app, client, _ = env
+    pid = setup_proposal(env)[2]["proposal_ids"][0]
+    payloads = misattributed_reconciliation(env, always=True)
+    r = answer_reconcile(client, pid, "Use support.")
+    assert r.status_code == 422 and r.json()["code"] == "invalid_reconciliation", r.text
+    assert len(payloads) == 2 and "evidence_feedback" in payloads[1]
     details = r.json()["details"]
     assert len(details["earlier_run_ids"]) == 1 and details["earlier_run_ids"][0] != details["run_id"]
     assert client.get(f"/api/v1/proposals/{pid}").json()["version"] == 1

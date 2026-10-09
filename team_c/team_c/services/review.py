@@ -48,6 +48,9 @@ class Review:
         payload = dict(proposal=snapshot,earlier_answers=[a for a in view["answer_history"] if a["id"] not in latest],requirements=[{k:r[k] for k in ("id","text","source_facts")} for r in reqs],inventory=self.proposals.scoped(spec["inventory"],scope),business=self.store.one("SELECT * FROM businesses WHERE id=?",(view["business_id"],)))
         structured = {r["id"] for r in reqs if view.get("policy") and r["events"] and r["events"][-1]["basis"] == "structured_policy" and r["status"] == "owner_confirmed"}
         payload["requirements"] = [r for r in payload["requirements"] if r["id"] not in structured]
+        old = canonical_content(ProposalContent.model_validate(view["content"]))
+        question_ids = {q.id for q in old.questions}
+        expected = question_ids | {r["id"] for r in reqs}
         run,result = self.runs.model_run(view["business_id"],"reconciliation",payload,ReconciliationOutput)
         earlier = []
         rejected = self.rejected_revision(result,spec,scope)
@@ -57,10 +60,17 @@ class Review:
             earlier = [run]
             payload = dict(payload,grounding_feedback=dict(previous_proposal=result.revised_proposal.model_dump(),errors=check_errors(rejected.details["errors"],self.settings.model_secrets)))
             run,result = self.runs.model_run(view["business_id"],"reconciliation",payload,ReconciliationOutput)
+        mis_cited = self.mis_cited_evidence(result,view,expected,structured)
+        if mis_cited:
+            # One automatic retry: the model sees which items cited an answer that is not their own.
+            # The evidence check runs again on the retry, so a repeat still fails.
+            self.runs.fail_run(run,AppError("invalid_reconciliation","Finding cites nonexistent or unrelated answer evidence",details={"findings":mis_cited}))
+            earlier.append(run)
+            payload = dict(payload,evidence_feedback=[dict(question_id=qid,
+                                                           answer_revision_id=view["answers"][qid]["id"] if qid in view["answers"] else None)
+                                                      for qid in sorted(set(mis_cited))])
+            run,result = self.runs.model_run(view["business_id"],"reconciliation",payload,ReconciliationOutput)
         try:
-            old = canonical_content(ProposalContent.model_validate(view["content"]))
-            question_ids = {q.id for q in old.questions}
-            expected = question_ids | {r["id"] for r in reqs}
             from ..models import Finding
             result.findings = [f for f in result.findings if f.question_id not in structured] + [Finding(question_id=qid, status="resolved", explanation="Explicit structured owner decision; enforcement is separately compiled and tested", answer_revision_ids=[view["answers"][qid]["id"]]) for qid in sorted(structured)]
             findings = {f.question_id: f for f in result.findings}
@@ -143,6 +153,19 @@ class Review:
             if exc.code == "invalid_bindings":
                 return exc
         return None
+
+    @staticmethod
+    def mis_cited_evidence(result, view, expected, structured):
+        """Findings citing an answer revision that belongs to another question or requirement.
+
+        Only assessed items are reported, so an assessment that is wrong in a different way still
+        surfaces its own error instead of this one. Structured owner decisions are excluded because
+        their findings are rewritten from the accepted policy before the evidence check runs.
+        """
+        history = {a["id"]: a for a in view["answer_history"]}
+        return [f.question_id for f in result.findings
+                if f.question_id in expected and f.question_id not in structured
+                and any(i not in history or history[i]["question_id"] != f.question_id for i in f.answer_revision_ids)]
 
     def decide(self,pid,version,submission):
         request_hash = digest(dict(pid=pid,version=version,action=submission.action,reason=submission.reason,reviewer=self.settings.dev_reviewer_id))

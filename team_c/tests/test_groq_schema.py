@@ -43,10 +43,17 @@ def test_groq_schema_adaptation_is_isolated_and_keeps_allowed_response_values(de
         assert "anyOf" not in wire["$defs"][name]
         expected = {v for variant in variants for v in variant["properties"][field]["enum"]}
         assert set(wire["$defs"][name]["properties"][field]["enum"]) == expected
+    offered = sorted({key for operation in payload["inventory"]["operations"] for key in operation["inputs"]})
+    assert offered
+    pattern = wire["$defs"]["RuntimeBinding"]["properties"]["target"]["pattern"]
+    matches = lambda value: Draft202012Validator({"type": "string", "pattern": pattern}).is_valid(value)
+    assert all(matches(key) for key in offered)
+    assert not matches(offered[0].split(".", 1)[-1])
     for step in wire["$defs"]["Step"]["anyOf"]:
         for binding in step["properties"]["bindings"]["items"]["anyOf"]:
             binding = wire["$defs"][binding["$ref"].split("/")[-1]] if "$ref" in binding else binding
-            assert binding["properties"]["target"] == {"type": "string"}
+            target = binding["properties"]["target"]
+            assert target == {"type": "string", "pattern": pattern}
 
 
 @pytest.mark.parametrize("defect", [None, "output_pointer", "output_status", "binding_target", "previous_operation", "echo_mismatch"])
@@ -61,7 +68,9 @@ def test_full_response_contract_is_enforced_after_groq_compatible_decoding(desk,
     elif defect == "output_status":
         output["response_status"] = "200"
     elif defect == "binding_target":
-        lookup["bindings"][0]["target"] = "query.invented"
+        # A key this API really declares, but for the other step: the wire schema now keeps decoding
+        # inside real input keys, while the original contract still checks the exact operation.
+        lookup["bindings"][0]["target"] = f'body.{desk.n["category"]}'
     elif defect == "previous_operation":
         previous["source_operation_id"] = create["operation_id"]
     elif defect == "echo_mismatch":
@@ -92,6 +101,35 @@ def test_full_response_contract_is_enforced_after_groq_compatible_decoding(desk,
         result = providers.call("generation", payload, GenerationOutput, run)
         assert result.proposals[0].steps[0].operation_id == lookup["operation_id"]
     assert len(sent) == 1  # Invalid output cannot rotate keys or providers.
+
+
+def test_wire_schema_cannot_decode_a_bare_reference_name_for_a_binding_target(desk):
+    """Regression for the live failure: the shared binding definitions left `target` unconstrained, so
+    decoding could emit the plain runtime reference where the operation declares its input key
+    (order_id for path.order_id). The router then rejected the whole answer as invalid output, and
+    invalid output never rotates keys or providers, so the tool request failed."""
+    payload, answer = proposal_case(desk)
+    runtime = answer["proposals"][0]["steps"][0]["bindings"][0]
+    other_step_target = answer["proposals"][0]["steps"][1]["bindings"][0]["target"]
+    original, _ = output_schema("generation", payload, GenerationOutput)
+    wire = groq_schema(original)
+    offered = sorted({key for operation in payload["inventory"]["operations"] for key in operation["inputs"]})
+    assert runtime["target"] in offered
+    assert other_step_target in offered and other_step_target != runtime["target"]
+    Draft202012Validator(wire).validate(answer)
+
+    # The bare input name the model reached for instead of the operation's own key.
+    bare = copy.deepcopy(answer)
+    bare["proposals"][0]["steps"][0]["bindings"][0]["target"] = runtime["target"].split(".", 1)[-1]
+    assert not Draft202012Validator(wire).is_valid(bare)
+    assert not Draft202012Validator(original).is_valid(bare)
+
+    # A key the API really declares, but for the other step, stays decodable; the original
+    # contract still rejects it, so the router reports invalid output rather than accepting it.
+    crossed = copy.deepcopy(answer)
+    crossed["proposals"][0]["steps"][0]["bindings"][0]["target"] = other_step_target
+    Draft202012Validator(wire).validate(crossed)
+    assert not Draft202012Validator(original).is_valid(crossed)
 
 
 def test_schema_compaction_preserves_named_properties_literals_and_constraints():

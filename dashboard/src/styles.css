@@ -721,3 +721,9 @@ td, th { border-block-end-color: rgba(255, 255, 255, 0.07); }
   .chip.check-pass { background: #1c3a2a; color: #8fd9ab; }
   .chip.check-fail { background: #4a2420; color: #f0a79d; }
 }
+
+/* replay (conversation page) */
+.replay { margin: 0.5rem 0 1rem; }
+.replay textarea { width: 100%; font-family: monospace; }
+.replay-table td { vertical-align: top; }
+.replay-table tr.differs { background: rgba(240, 180, 40, 0.15); }

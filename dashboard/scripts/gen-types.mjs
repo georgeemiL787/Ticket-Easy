@@ -22,7 +22,7 @@ const banner =
   "   team_b/src/team_b/api/dashboard.py, run `python scripts/export_schemas.py` there and `npm run types` here. */";
 
 const names = readdirSync(schemasDir)
-  .filter((f) => /^Dashboard.*\.schema\.json$/.test(f))
+  .filter((f) => /^(Dashboard.*|ReplayResult)\.schema\.json$/.test(f))
   .map((f) => f.replace(".schema.json", ""))
   .sort();
 if (names.length === 0) {

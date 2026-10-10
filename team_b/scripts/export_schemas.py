@@ -9,6 +9,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from team_b import replay
 from team_b.api import dashboard
 from team_b.domain.handoff import HandoffCase, HandoffPackage
 from team_b.domain.reply import AgentReply
@@ -27,6 +28,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     dashboard.DashboardConversation,
     dashboard.DashboardEscalations,
     dashboard.DashboardAgent,
+    replay.ReplayResult,
     dashboard.DashboardTools,
     dashboard.DashboardQueue,
     dashboard.DashboardPassage,

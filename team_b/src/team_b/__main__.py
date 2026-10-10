@@ -5,14 +5,16 @@ import asyncio
 import json
 import sys
 from collections.abc import Sequence
+from datetime import date
 from pathlib import Path
 
 from team_b import eval_conversations as convo
+from team_b import replay as replay_mod
 from team_b.adapters.llm_registry import LLMRegistry
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.config import Settings
-from team_b.container import Container
+from team_b.container import Container, build_container
 from team_b.demo_seed import DriftClock
 from team_b.domain.tenant import TenantRegistry
 from team_b.eval_compare import compare_runs, load_run
@@ -120,6 +122,21 @@ async def eval_conversations(
         small = await convo.evaluate(convo.sample(conversations, 5), settings, mode=mode)
         convo.save_baseline(report, small)
         print(f"recorded the baseline in {convo.BASELINE_PATH}")
+    return 0
+
+
+async def replay_cmd(args: argparse.Namespace) -> int:
+    """Say a stored conversation again with other settings, against a fresh stand-in shop, and write the comparison."""
+    settings = Settings.from_env()
+    live = build_container(settings)  # only read: for the customer's messages
+    try:
+        changes = replay_mod.parse_changes(args.set or [])
+        result = await replay_mod.replay(live, settings, args.tenant, args.conversation_id, changes)
+    except (ValueError, LookupError) as exc:
+        raise SystemExit(f"replay: {exc}") from None
+    when = date.today()
+    path = replay_mod.write_report(result, args.out, when)
+    print(f"{len(result.differing_turns)} of {len(result.before.turns)} replies differ; wrote {path}")
     return 0
 
 
@@ -274,6 +291,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     compare = commands.add_parser("eval-compare", help="show two saved evaluation runs side by side")
     compare.add_argument("first", type=Path, help="a report .json written by `eval` (the one to compare against)")
     compare.add_argument("second", type=Path, help="the report .json to compare")
+    replay_p = commands.add_parser(
+        "replay", help="say a past conversation again with other settings and compare the two runs (stand-in shop only)"
+    )
+    replay_p.add_argument("conversation_id")
+    replay_p.add_argument("--tenant", default="shop_001")
+    replay_p.add_argument(
+        "--set", action="append", metavar="KEY=VALUE",
+        help="a change for the second run, in the environment's names (repeat it), e.g. TEAM_B_AGENT_MODE=off",
+    )  # fmt: skip
+    replay_p.add_argument("--out", type=Path, default=Path("reports"), help="where the report goes")
     agree = commands.add_parser(
         "judge-agreement", help="compare the judge with the person who graded judge_spotcheck.csv"
     )
@@ -294,6 +321,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "create-user":
         return asyncio.run(create_user_cmd(args))
+    if args.command == "replay":
+        return asyncio.run(replay_cmd(args))
     if args.command == "eval":
         return asyncio.run(
             eval_conversations(

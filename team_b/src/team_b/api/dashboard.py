@@ -15,6 +15,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
+from team_b import replay as replay_mod
 from team_b.api.auth import visible_tenants
 from team_b.api.chat import CONVERSATION, TENANT, checked_tenant
 from team_b.api.errors import invalid_request, not_found
@@ -581,6 +582,27 @@ async def get_conversation(request: Request, conversation_id: CONVERSATION, tena
         case=cases[-1] if cases else None,
         timeline=timeline_of(traces, cases[-1] if cases else None),
     )
+
+
+class ReplayRequest(BaseModel):
+    tenant_id: str
+    changes: dict[str, str] = {}  # environment-style names, e.g. {"TEAM_B_LLM_MODEL_ORCHESTRATOR": "..."}
+
+
+@router.post("/conversations/{conversation_id}/replay", response_model=replay_mod.ReplayResult)
+async def replay_conversation(
+    request: Request, conversation_id: CONVERSATION, body: ReplayRequest
+) -> replay_mod.ReplayResult:
+    """Say the conversation again with other settings and return both runs. Admin only (a route not listed in the role
+    table needs the admin role). The replay runs on a fresh stand-in shop with memory stores: the real shop and the real
+    conversations are never touched, and nothing is saved."""
+    b = built(request, body.tenant_id)
+    try:
+        return await replay_mod.replay(b, b.settings, body.tenant_id, conversation_id, body.changes)
+    except LookupError:
+        raise not_found("conversation not found") from None
+    except ValueError as exc:
+        raise invalid_request(str(exc)) from None
 
 
 @router.get("/passage", response_model=DashboardPassage)

@@ -4,6 +4,7 @@ import { useApi } from "../api/useApi";
 import type { DashboardConversation } from "../api/types/DashboardConversation";
 import { Async } from "../components/Async";
 import { PassageDialog } from "../components/PassageDialog";
+import { ReplayPanel } from "../components/ReplayPanel";
 import { AgentTimeline } from "../components/AgentTimeline";
 import { TurnCard } from "../components/TurnCard";
 import { labelFor, useI18n } from "../i18n";
@@ -24,6 +25,7 @@ export default function ConversationDetail() {
       <h1>
         {t("detail.title")} <small className="muted">{id}</small>
       </h1>
+      <ReplayPanel tenant={filters.tenant} conversationId={id} />
       <Async state={state} isEmpty={(d) => d.transcript.length === 0 && d.traces.length === 0} empty={<p className="muted">{t("detail.noTurns")}</p>}>
         {(d) => (
           <div className="detail">

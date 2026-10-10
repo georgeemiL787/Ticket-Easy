@@ -12,10 +12,18 @@ Topics (every style has the same topics, written in its own words):
   T4      refund, with order id         T10 order status then the phone number (identity check, then the status)
   T5      return or exchange, no id     T11 very angry customer (apology, then high_frustration if again)
   T6      cancel, with order id         T12 fraud report (mandatory_risk)
+  T13..T22  the agent's behaviour: small talk, off-topic, three requests in one message, an angry message that
+            is solved, a refusal with its reason, a typo corrected, identity in the first message, a plan with
+            two actions, a customer who gives up, a policy question then a return (scripts/eval_set_agent.py)
 """
 
 import json
+import sys
+from collections.abc import Callable
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from eval_set_agent import AGENT_TOPICS, REFUND_14D  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "eval" / "conversations"
@@ -252,7 +260,40 @@ def conversations_for(style: str) -> list[dict[str, object]]:
     add("T11", [turn(topics["T11"], decision="clarify"),  # type: ignore[arg-type]
                 turn(topics["T11"], decision="handoff", escalation="high_frustration")])  # type: ignore[arg-type]  # fmt: skip
     add("T12", [turn(topics["T12"], decision="handoff", escalation="mandatory_risk")])  # type: ignore[arg-type]
+    add_agent_topics(style, add)
     return out
+
+
+def add_agent_topics(style: str, add: Callable[[str, list[dict[str, object]]], None]) -> None:
+    """T13..T22: one conversation each (see scripts/eval_set_agent.py for what each is about)."""
+    t = AGENT_TOPICS[style]
+    free_address = style in ("ar", "mixed")  # an address after "ل" is not always read: asking for it is fine too
+    add("T13", [turn(t["T13"][0], intents=["greeting"], decision="answer")])
+    add("T14", [turn(t["T14"][0], intents=[], decision=["clarify", "refuse"])])
+    first, phone = t["T15"]
+    add("T15", [turn(first, intents=["order_status"], entities={ORDER_ID: "NS-20955"}, decision="verify_identity"),
+                turn(phone, decision=["confirm", "clarify"] if free_address else "confirm",
+                     text_contains="NS-20955")])  # fmt: skip
+    add("T16", [turn(t["T16"][0], intents=["order_status"], decision="answer", text_contains="NS-20877")])
+    ask, phone = t["T17"]
+    add("T17", [turn(ask, intents=["refund_request"], entities=entities_of(ask), decision="verify_identity"),
+                turn(phone, decision="refuse", citations_any=[REFUND_14D])])  # fmt: skip
+    ask, phone, typo, fixed = t["T18"]
+    add("T18", [turn(ask, intents=["order_status"], entities=entities_of(ask), decision="verify_identity"),
+                turn(phone, decision="answer", text_contains="NS-20877"),
+                turn(typo, decision="clarify"),
+                turn(fixed, decision="answer", text_contains="NS-20512")])  # fmt: skip
+    add("T19", [turn(t["T19"][0], intents=["order_status"], decision="answer", text_contains="NS-20877")])
+    ask, phone = t["T20"]
+    add("T20", [turn(ask, intents=["refund_request"], decision="verify_identity"),
+                turn(phone, decision="confirm", text_contains="NS-20745")])  # fmt: skip
+    ask, give_up = t["T21"]
+    add("T21", [turn(ask, intents=["order_status"], decision="verify_identity"),
+                turn(give_up, decision="handoff", escalation="customer_request")])  # fmt: skip
+    question, request = t["T22"]
+    add("T22", [turn(question, intents=["policy_question"], decision="answer", citations_any=[R2]),
+                turn(request, intents=["return_request"], entities={ORDER_ID: "NS-20790"},
+                     decision="verify_identity")])  # fmt: skip
 
 
 def main() -> int:
@@ -260,7 +301,7 @@ def main() -> int:
     total = 0
     for style in STYLES:
         rows = conversations_for(style)
-        assert len(rows) == 50, (style, len(rows))
+        assert len(rows) == 60, (style, len(rows))
         (OUT / f"{style}.jsonl").write_text(
             "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8", newline="\n"
         )

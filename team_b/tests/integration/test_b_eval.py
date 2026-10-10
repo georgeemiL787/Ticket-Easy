@@ -45,10 +45,10 @@ def conversations() -> list[EvalConversation]:
 # ---- the set ----
 
 
-def test_the_set_has_fifty_conversations_of_each_style_with_unique_ids(conversations: list[EvalConversation]) -> None:
-    assert len(conversations) >= 200
+def test_the_set_has_sixty_conversations_of_each_style_with_unique_ids(conversations: list[EvalConversation]) -> None:
+    assert len(conversations) >= 240
     for style in STYLES:
-        assert sum(1 for c in conversations if c.language_style == style) == 50, style
+        assert sum(1 for c in conversations if c.language_style == style) == 60, style
     assert len({c.id for c in conversations}) == len(conversations)
     assert {p.name for p in CONVERSATIONS_DIR.glob("*.jsonl")} == {f"{s}.jsonl" for s in STYLES}
 
@@ -74,8 +74,8 @@ def test_the_gold_labels_name_real_things(conversations: list[EvalConversation])
             assert gold.escalation is None or gold.escalation in reasons, conversation.id
             if gold.escalation:
                 assert gold.decision == "handoff", conversation.id
-            if gold.citations_any:
-                assert gold.decision == "answer", conversation.id
+            if gold.citations_any:  # an answer quotes a policy; a refusal cites the rule that says no
+                assert gold.decision in ("answer", "refuse"), conversation.id
 
 
 def test_every_style_covers_every_topic(conversations: list[EvalConversation]) -> None:

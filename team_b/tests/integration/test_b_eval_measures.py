@@ -122,7 +122,7 @@ async def test_the_report_shows_the_measures_in_markdown_and_json(tmp_path: Path
 
 def test_the_phase_zero_baseline_is_recorded_and_clean() -> None:
     baseline = load_run(Path(__file__).parents[2] / "eval" / "baseline_phase0.json")
-    assert baseline["label"] == "phase0" and baseline["mode"] == "rules" and baseline["overall"]["conversations"] == 200
+    assert baseline["label"] == "phase0" and baseline["mode"] == "rules" and baseline["overall"]["conversations"] == 240
     m = baseline["overall"]["measures"]
     assert m["unbacked_facts"] == 0 and m["wrong_or_unapproved_actions"] == 0 and m["ai_calls_per_message"] == 0
 

@@ -2,6 +2,8 @@
   "mode": "rules",
   "date": "2026-10-10",
   "label": "phase0",
+  "agent_mode": null,
+  "shadow_disagreements": [],
   "topics": {
     "K1": {
       "right": 11,
@@ -47,9 +49,49 @@
       "right": 4,
       "total": 4
     },
+    "T13": {
+      "right": 4,
+      "total": 4
+    },
+    "T14": {
+      "right": 4,
+      "total": 4
+    },
+    "T15": {
+      "right": 2,
+      "total": 4
+    },
+    "T16": {
+      "right": 3,
+      "total": 4
+    },
+    "T17": {
+      "right": 3,
+      "total": 4
+    },
+    "T18": {
+      "right": 2,
+      "total": 4
+    },
+    "T19": {
+      "right": 2,
+      "total": 4
+    },
     "T2": {
       "right": 5,
       "total": 12
+    },
+    "T20": {
+      "right": 3,
+      "total": 4
+    },
+    "T21": {
+      "right": 2,
+      "total": 4
+    },
+    "T22": {
+      "right": 3,
+      "total": 4
     },
     "T3": {
       "right": 6,
@@ -83,147 +125,170 @@
   "judge": null,
   "overall": {
     "style": "all",
-    "conversations": 200,
-    "turns": 212,
+    "conversations": 240,
+    "turns": 284,
     "measures": {
-      "solved_without_person": 170,
-      "solved_without_person_rate": 0.85,
-      "no_person_needed": 176,
-      "needless_handoffs": 6,
+      "solved_without_person": 205,
+      "solved_without_person_rate": 0.8541666666666666,
+      "no_person_needed": 212,
+      "needless_handoffs": 8,
       "missed_escalations": 5,
-      "escalations_wanted": 24,
+      "escalations_wanted": 28,
       "wrong_or_unapproved_actions": 0,
       "writes": 0,
       "unbacked_facts": 0,
       "ai_calls_per_message": 0.0,
-      "time_p50_ms": 3.1363999987661373,
-      "time_p95_ms": 4.301500001020031
+      "time_p50_ms": 3.131800000119256,
+      "time_p95_ms": 5.587200001173187,
+      "shadow_asked": 0,
+      "shadow_agreement": null
     },
-    "intent_accuracy": 0.5969387755102041,
-    "decision_accuracy": 0.6084905660377359,
-    "citation_accuracy": 0.32608695652173914,
-    "locale_match": 0.9905660377358491,
+    "intent_accuracy": 0.625,
+    "decision_accuracy": 0.6619718309859155,
+    "citation_accuracy": 0.36,
+    "locale_match": 0.9894366197183099,
     "entity_recall": 1.0,
-    "handoff_precision": 0.76,
-    "handoff_recall": 0.7916666666666666,
-    "latency_p50_ms": 3.1363999987661373,
-    "latency_p95_ms": 4.301500001020031
+    "handoff_precision": 0.7419354838709677,
+    "handoff_recall": 0.8214285714285714,
+    "latency_p50_ms": 3.131800000119256,
+    "latency_p95_ms": 5.587200001173187
   },
   "styles": {
     "en": {
       "style": "en",
-      "conversations": 50,
-      "turns": 53,
+      "conversations": 60,
+      "turns": 71,
       "measures": {
-        "solved_without_person": 43,
-        "solved_without_person_rate": 0.86,
-        "no_person_needed": 44,
+        "solved_without_person": 52,
+        "solved_without_person_rate": 0.8666666666666667,
+        "no_person_needed": 53,
         "needless_handoffs": 1,
         "missed_escalations": 1,
-        "escalations_wanted": 6,
+        "escalations_wanted": 7,
         "wrong_or_unapproved_actions": 0,
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.0697999991389224,
-        "time_p95_ms": 4.524800000581308
+        "time_p50_ms": 3.1701000007160474,
+        "time_p95_ms": 5.8054000000993256,
+        "shadow_asked": 0,
+        "shadow_agreement": null
       },
-      "intent_accuracy": 0.7142857142857143,
-      "decision_accuracy": 0.7169811320754716,
-      "citation_accuracy": 0.43478260869565216,
+      "intent_accuracy": 0.7666666666666667,
+      "decision_accuracy": 0.7887323943661971,
+      "citation_accuracy": 0.48,
       "locale_match": 1.0,
       "entity_recall": 1.0,
-      "handoff_precision": 0.8333333333333334,
-      "handoff_recall": 0.8333333333333334,
-      "latency_p50_ms": 3.0697999991389224,
-      "latency_p95_ms": 4.524800000581308
+      "handoff_precision": 0.8571428571428571,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 3.1701000007160474,
+      "latency_p95_ms": 5.8054000000993256
     },
     "ar": {
       "style": "ar",
-      "conversations": 50,
-      "turns": 53,
+      "conversations": 60,
+      "turns": 71,
       "measures": {
-        "solved_without_person": 42,
-        "solved_without_person_rate": 0.84,
-        "no_person_needed": 44,
+        "solved_without_person": 51,
+        "solved_without_person_rate": 0.85,
+        "no_person_needed": 53,
         "needless_handoffs": 2,
         "missed_escalations": 1,
-        "escalations_wanted": 6,
+        "escalations_wanted": 7,
         "wrong_or_unapproved_actions": 0,
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.1976999998732936,
-        "time_p95_ms": 5.079900000055204
+        "time_p50_ms": 2.998500000103377,
+        "time_p95_ms": 5.196899997827131,
+        "shadow_asked": 0,
+        "shadow_agreement": null
       },
-      "intent_accuracy": 0.5918367346938775,
-      "decision_accuracy": 0.6037735849056604,
-      "citation_accuracy": 0.21739130434782608,
+      "intent_accuracy": 0.6666666666666666,
+      "decision_accuracy": 0.704225352112676,
+      "citation_accuracy": 0.28,
       "locale_match": 1.0,
       "entity_recall": 1.0,
-      "handoff_precision": 0.7142857142857143,
-      "handoff_recall": 0.8333333333333334,
-      "latency_p50_ms": 3.1976999998732936,
-      "latency_p95_ms": 5.079900000055204
+      "handoff_precision": 0.75,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 2.998500000103377,
+      "latency_p95_ms": 5.196899997827131
     },
     "mixed": {
       "style": "mixed",
-      "conversations": 50,
-      "turns": 53,
+      "conversations": 60,
+      "turns": 71,
       "measures": {
-        "solved_without_person": 43,
-        "solved_without_person_rate": 0.86,
-        "no_person_needed": 44,
+        "solved_without_person": 52,
+        "solved_without_person_rate": 0.8666666666666667,
+        "no_person_needed": 53,
         "needless_handoffs": 1,
         "missed_escalations": 1,
-        "escalations_wanted": 6,
+        "escalations_wanted": 7,
         "wrong_or_unapproved_actions": 0,
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.177200000209268,
-        "time_p95_ms": 4.000400000222726
+        "time_p50_ms": 3.131800000119256,
+        "time_p95_ms": 5.480600000737468,
+        "shadow_asked": 0,
+        "shadow_agreement": null
       },
-      "intent_accuracy": 0.673469387755102,
-      "decision_accuracy": 0.6792452830188679,
-      "citation_accuracy": 0.43478260869565216,
-      "locale_match": 1.0,
+      "intent_accuracy": 0.6666666666666666,
+      "decision_accuracy": 0.7183098591549296,
+      "citation_accuracy": 0.48,
+      "locale_match": 0.9859154929577465,
       "entity_recall": 1.0,
-      "handoff_precision": 0.8333333333333334,
-      "handoff_recall": 0.8333333333333334,
-      "latency_p50_ms": 3.177200000209268,
-      "latency_p95_ms": 4.000400000222726
+      "handoff_precision": 0.8571428571428571,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 3.131800000119256,
+      "latency_p95_ms": 5.480600000737468
     },
     "arabizi": {
       "style": "arabizi",
-      "conversations": 50,
-      "turns": 53,
+      "conversations": 60,
+      "turns": 71,
       "measures": {
-        "solved_without_person": 42,
-        "solved_without_person_rate": 0.84,
-        "no_person_needed": 44,
-        "needless_handoffs": 2,
+        "solved_without_person": 50,
+        "solved_without_person_rate": 0.8333333333333334,
+        "no_person_needed": 53,
+        "needless_handoffs": 4,
         "missed_escalations": 2,
-        "escalations_wanted": 6,
+        "escalations_wanted": 7,
         "wrong_or_unapproved_actions": 0,
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.1011999999464024,
-        "time_p95_ms": 3.9400999994541053
+        "time_p50_ms": 3.27119999928982,
+        "time_p95_ms": 5.587200001173187,
+        "shadow_asked": 0,
+        "shadow_agreement": null
       },
-      "intent_accuracy": 0.40816326530612246,
-      "decision_accuracy": 0.4339622641509434,
-      "citation_accuracy": 0.21739130434782608,
-      "locale_match": 0.9622641509433962,
+      "intent_accuracy": 0.4,
+      "decision_accuracy": 0.43661971830985913,
+      "citation_accuracy": 0.2,
+      "locale_match": 0.971830985915493,
       "entity_recall": 1.0,
-      "handoff_precision": 0.6666666666666666,
-      "handoff_recall": 0.6666666666666666,
-      "latency_p50_ms": 3.1011999999464024,
-      "latency_p95_ms": 3.9400999994541053
+      "handoff_precision": 0.5555555555555556,
+      "handoff_recall": 0.7142857142857143,
+      "latency_p50_ms": 3.27119999928982,
+      "latency_p95_ms": 5.587200001173187
     }
   },
   "worst_conversations": [
+    {
+      "id": "arabizi-56",
+      "style": "arabizi",
+      "topic": "T18",
+      "wrong_checks": 7,
+      "first_wrong_turn": 1,
+      "said": "el order NS-20877 wasal fein?",
+      "problems": [
+        "intent: expected order_status, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
+    },
     {
       "id": "arabizi-20",
       "style": "arabizi",
@@ -248,6 +313,19 @@
       "said": "el order NS-20877 wasal fein?",
       "problems": [
         "intent: expected order_status, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
+    },
+    {
+      "id": "arabizi-55",
+      "style": "arabizi",
+      "topic": "T17",
+      "wrong_checks": 4,
+      "first_wrong_turn": 1,
+      "said": "3ayez floosy bta3et NS-20512",
+      "problems": [
+        "intent: expected refund_request, got none",
         "decision: expected verify_identity, got clarify"
       ],
       "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
@@ -332,34 +410,6 @@
         "intent: expected policy_question, got none",
         "decision: expected answer, got clarify",
         "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
-      ],
-      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
-    },
-    {
-      "id": "ar-11",
-      "style": "ar",
-      "topic": "K3",
-      "wrong_checks": 3,
-      "first_wrong_turn": 1,
-      "said": "هل في دفع عند الاستلام؟",
-      "problems": [
-        "intent: expected policy_question, got none",
-        "decision: expected answer, got clarify",
-        "citation: expected one of shipping_policy@v1#s4, faq@v1#q02, got none"
-      ],
-      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
-    },
-    {
-      "id": "ar-12",
-      "style": "ar",
-      "topic": "K3",
-      "wrong_checks": 3,
-      "first_wrong_turn": 1,
-      "said": "اقدر ادفع كاش لما الاوردر يوصل؟",
-      "problems": [
-        "intent: expected policy_question, got none",
-        "decision: expected answer, got clarify",
-        "citation: expected one of shipping_policy@v1#s4, faq@v1#q02, got none"
       ],
       "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
     }

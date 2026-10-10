@@ -32,7 +32,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from team_b.brain.choices import short_date
+from team_b.brain.choices import mask_order_id, short_date
 from team_b.brain.composer import check_grounded, default_composer
 from team_b.brain.metrics import percentile
 from team_b.brain.shadow import Agreement, compare
@@ -172,6 +172,7 @@ def accepts_handoff(gold: Gold) -> bool:
 
 
 _ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+ORDER_ID = re.compile(r"NS-\d{4,6}")
 
 
 def known_text(container: Container) -> str:
@@ -193,7 +194,10 @@ async def unbacked_facts(container: Container, chat_id: str, said: Sequence[str]
     session = await container.sessions.load(TENANT, chat_id)
     extra = [json.dumps(session.facts, default=str, ensure_ascii=False)] if session is not None else []
     case = [session.handoff_case_id] if session is not None and session.handoff_case_id else []
-    return check_grounded(text, [known, *said, *extra, *case])
+    sources = [known, *said, *extra, *case]
+    # the order list shows ids hidden except their last digits (NS-**877): that is the same id, not a new number
+    masked = [mask_order_id(i) for i in dict.fromkeys(ORDER_ID.findall("\n".join(sources)))]
+    return check_grounded(text, [*sources, *masked])
 
 
 async def run_conversation(

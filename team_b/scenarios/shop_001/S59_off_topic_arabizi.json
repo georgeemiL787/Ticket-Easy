@@ -1,0 +1,26 @@
+{
+  "id": "S59",
+  "title": "A joke request (Arabizi): the shop agent asks what it can help with, no case",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "e7keeli nokta 3an el 2otat",
+      "expect": {
+        "decision": "clarify",
+        "escalation": null,
+        "locale": "arabizi",
+        "awaiting": "detail"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

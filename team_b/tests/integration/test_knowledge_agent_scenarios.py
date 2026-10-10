@@ -43,3 +43,26 @@ async def test_knowledge_scenario_with_the_knowledge_agent(tenant_id: str, path:
     scenario = load_scenario(path)  # type: ignore[arg-type]
     result = await run_scenario(scenario, tenant_id, customize=lambda c: with_agent(c, agent_mode=mode))
     assert not result.failures, f"{scenario.id} failed (agent mode {mode}):\n  " + "\n  ".join(result.failures)
+
+
+@pytest.mark.parametrize("mode", ["off", "on"])
+async def test_a_policy_found_only_on_the_second_search_is_answered_from_it(tmp_path: Any, mode: str) -> None:
+    """The first search (the customer's words) finds the wrong policy; the knowledge agent searches again with words
+    of its own and answers from the return policy it finds, quoted word for word. Both modes."""
+    from datetime import date
+
+    from team_b.container import build_container
+    from tests.support import make_settings
+
+    container = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))
+    llm = KnowledgeFakeLLM(requery="return window days")
+    bot: Any = container.orchestrator
+    changes: dict[str, Any] = {"knowledge_agent": KnowledgeAgent(llm), "agent_mode": mode}
+    if mode == "on":
+        changes["move_picker"] = FunctionPicker(expert)
+    bot._deps = replace(bot._deps, **changes)
+    reply = await bot.handle_turn("shop_001", "k2", "What is the policy on sending stuff back?")
+    trace = (await container.traces.for_conversation("shop_001", "k2"))[-1]
+    assert reply.decision.value == "answer" and tuple(reply.citations) == ("return_policy@v2#s2",)
+    assert "requery" in llm.tasks and llm.tasks[-1] == "answer"  # it searched again before it answered
+    assert trace.knowledge_answer and trace.evidence and not trace.errors

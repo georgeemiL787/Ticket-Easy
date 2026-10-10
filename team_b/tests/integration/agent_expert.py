@@ -61,6 +61,8 @@ def _details(view: AgentView, intent: str) -> dict[str, Any]:
             out["new_address"] = address
         if intent in ("return_request", "exchange_request") and "reason" not in out and (reason := reason_from(line)):
             out["reason"] = reason
+        if intent == "complaint" and "description" not in out and (reason := reason_from(line)):
+            out["description"] = reason
         if intent == "voucher_request" and "amount" not in out and (found := AMOUNT.search(line)):
             out["amount"] = found.group(1).replace(",", "")
     return out
@@ -99,6 +101,19 @@ def _asks_for_something_else(view: AgentView) -> bool:
     return any(find_spans(normalize(view.message), normalize(t)) for t in default_lexicon().want_markers.all())
 
 
+def _corrected(view: AgentView, steps: Steps) -> Steps:
+    """The customer corrects an order number the shop did not know ("I meant NS-20512"): the status step follows."""
+    named = view.entities.get("order_id", "")
+    if not named or view.intents:
+        return steps
+    unknown = [
+        t for t, s in steps if s == "open" and t.startswith("status:") and t.split(":", 1)[1] not in (named, "?")
+    ]
+    if not unknown or any(t == f"status:{named}" for t, _ in steps):
+        return steps
+    return [(f"status:{named}" if t == unknown[0] else t, s) for t, s in steps]
+
+
 def expert(view: AgentView) -> MoveProposal:
     kinds = [str(m.move.get("kind")) for m in view.moves]
     if view.frustration == "high" and view.frustration_strikes >= 2:  # still very upset after one try: a person
@@ -114,6 +129,7 @@ def expert(view: AgentView) -> MoveProposal:
         steps = [(t, s) for t, s in steps if s == "waiting"]
     carried = next((t.split(":", 1)[1] for t, _ in steps if t.startswith("choose the request:")), "")
     steps = [(t, s) for t, s in steps if not t.startswith("choose the request")]  # asked last turn, answered now
+    steps = _corrected(view, steps)
     steps = _new_steps(view, steps, carried)
     order = view.entities.get("order_id") or (view.known_order_ids[0] if len(view.known_order_ids) == 1 else "")
 

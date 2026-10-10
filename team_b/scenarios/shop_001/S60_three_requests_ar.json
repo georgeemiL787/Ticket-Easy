@@ -1,0 +1,65 @@
+{
+  "id": "S60",
+  "title": "Three requests in Egyptian Arabic: status, address change, refund; the missing address is asked, each action confirmed",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "فين الاوردر NS-20955 وعايز اغير عنوان التوصيل وعايز فلوسي للاوردر NS-20701",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01187654306",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "slot:new_address",
+        "locale": "ar",
+        "text_contains": "NS-20955"
+      }
+    },
+    {
+      "say": "العنوان الجديد 5 كورنيش النيل المعادي",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "ar",
+        "text_contains": "NS-20955"
+      }
+    },
+    {
+      "say": "ايوه",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "locale": "ar",
+        "text_contains": [
+          "ADR-",
+          "NS-20701"
+        ]
+      }
+    },
+    {
+      "say": "ايوه",
+      "expect": {
+        "decision": "execute",
+        "locale": "ar",
+        "text_contains": "REF-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "update_delivery_address",
+      "create_refund"
+    ],
+    "audit_count": 2,
+    "trace_invariants": true
+  }
+}

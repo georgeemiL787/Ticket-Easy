@@ -1,0 +1,34 @@
+{
+  "id": "S64",
+  "title": "The shop fails once while reading the order: the retry works, the status is given",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "inject": [
+    {
+      "plug": "shop",
+      "operation": "get_order",
+      "mode": "fail",
+      "code": "BACKEND_UNAVAILABLE",
+      "times": 1
+    }
+  ],
+  "turns": [
+    {
+      "say": "Where is my order NS-20877? My phone is 01012345601",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "text_contains": "NS-20877"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

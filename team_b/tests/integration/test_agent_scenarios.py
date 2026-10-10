@@ -30,10 +30,22 @@ LOOKUPS_AND_KNOWLEDGE = (
     "S29",
     "S34",
     "S40",
+    # small talk, off-topic, a typo corrected, a short outage retried (U6.1)
+    "S52",
+    "S53",
+    "S54",
+    "S55",
+    "S56",
+    "S57",
+    "S58",
+    "S59",
+    "S61",
+    "S63",
+    "S64",
 )
 ACTIONS = (
     "S04", "S05", "S06", "S06b", "S11", "S13", "S14", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "S26", "S27",
-    "S30", "S31", "S32", "S38",
+    "S30", "S31", "S32", "S38", "S60", "S62", "S65",
 )  # fmt: skip
 AGENT_SCENARIOS = (*LOOKUPS_AND_KNOWLEDGE, *ACTIONS)
 CASES = [(tenant, path) for tenant, path in discover() if path.name.split("_")[0] in AGENT_SCENARIOS]

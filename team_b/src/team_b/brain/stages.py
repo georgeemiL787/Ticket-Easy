@@ -26,6 +26,7 @@ from team_b.brain.handoff import open_case, priority_for
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
+from team_b.brain.shopcalls import record_retry
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
 from team_b.brain.text import find_spans, normalize
 from team_b.brain.turn import COMPLETED, PlannedIntent, Step, TurnContext, locale_of
@@ -118,14 +119,23 @@ async def risk_screen(ctx: TurnContext) -> str:
         ctx.risk_unavailable = True
         ctx.errors.append("no safety screen is configured")
     else:
-        try:
-            assessment = await ctx.deps.evidence.classify_risk(
-                ctx.tenant.tenant_id, ctx.text, request_id=ctx.request_id, conversation_id=ctx.session.conversation_id
-            )
-        except (UpstreamError, NotImplementedError) as exc:
-            ctx.risk_unavailable = True
-            ctx.errors.append(f"safety screen unavailable: {type(exc).__name__}")
-            log.warning("dependency_error", service="safety_screen", error=type(exc).__name__)
+        for attempt in range(2):  # a failure that may pass is tried once more at once (asking changes nothing)
+            try:
+                assessment = await ctx.deps.evidence.classify_risk(
+                    ctx.tenant.tenant_id,
+                    ctx.text,
+                    request_id=ctx.request_id,
+                    conversation_id=ctx.session.conversation_id,
+                )
+                break
+            except (UpstreamError, NotImplementedError) as exc:
+                log.warning("dependency_error", service="safety_screen", error=type(exc).__name__)
+                if attempt == 0 and isinstance(exc, UpstreamError) and exc.retryable:
+                    record_retry(ctx, "safety_screen", exc.code)
+                    continue
+                ctx.risk_unavailable = True
+                ctx.errors.append(f"safety screen unavailable: {type(exc).__name__}")
+                break
     if assessment is not None:
         ctx.risk = assessment
         flags += [c for c in assessment.categories if c not in flags]
@@ -383,16 +393,29 @@ async def merge(ctx: TurnContext) -> str:
 
 
 async def frustration(ctx: TurnContext) -> str:
+    """The first very frustrated message gets an apology and the request goes on; a second one in a row is handed over.
+
+    The count resets as soon as a message is not very frustrated."""
     level = ctx.understanding.frustration if ctx.understanding else "low"
-    if level == "high" and ctx.tenant.escalation.escalate_on_high_frustration:
-        ctx.step = Step(
-            Decision.HANDOFF,
-            reason="the customer is very frustrated",
-            reply_key="handoff_high_frustration",
-            escalation=EscalationReason.HIGH_FRUSTRATION,
-            awaiting="human",
-        )
-    return level
+    session = ctx.session
+    if level != "high":
+        session.frustration_strikes = 0
+        return level
+    if not ctx.tenant.escalation.escalate_on_high_frustration:
+        return level
+    session.frustration_strikes += 1
+    if session.frustration_strikes == 1:
+        ctx.apologise = True
+        session.clarifications = 0  # an apology and one more try: this message is not another unanswered question
+        return "high: apologised once, the request goes on"
+    ctx.step = Step(
+        Decision.HANDOFF,
+        reason="the customer is still very frustrated after an apology",
+        reply_key="handoff_high_frustration",
+        escalation=EscalationReason.HIGH_FRUSTRATION,
+        awaiting="human",
+    )
+    return "high again: handed over"
 
 
 async def plan(ctx: TurnContext) -> str:
@@ -456,6 +479,8 @@ async def _tools(ctx: TurnContext) -> dict[str, ToolSpec] | None:
     """The shop's published tools by name, or None when they cannot be listed (then the safe assumptions apply)."""
     if ctx.deps.registry is not None:
         catalog = await ctx.deps.registry.catalog(ctx.tenant.tenant_id)
+        if catalog is not None and catalog.retried:
+            record_retry(ctx, "shop_tools", "tool list")
         if catalog is None:
             ctx.errors.append("the shop tool list is unavailable")
         return catalog.tools if catalog is not None else None
@@ -604,6 +629,7 @@ async def handoff(ctx: TurnContext) -> str:
     step = ctx.step
     assert step is not None and step.escalation is not None
     waiting = next((a for a in ctx.session.actions if a.state is ActionState.AWAITING_HUMAN), None)
+    ctx.session.frustration_strikes = 0  # a person takes over: a later return to the agent starts fresh
     case_id = await open_case(ctx, step.escalation, step.reason, pending_approval=waiting)
     ctx.handoff_case_id = case_id
     ctx.step = replace(step, awaiting="human")

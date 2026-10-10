@@ -216,11 +216,21 @@ async def test_a_yes_that_needs_a_person_after_the_renewed_check_waits_for_one(c
 
 async def test_the_safety_screen_must_answer_in_the_yes_turn_too(container: Container) -> None:
     await to_confirmation(container)
-    inject(container, "safety_screen", {"switch": "fail_next", "times": 1})
+    inject(container, "safety_screen", {"switch": "fail_next", "times": 2})  # the screen and its one retry
     reply = await say(container, "yes")
     trace = await trace_of(container, reply)
     assert trace.escalation_reason is EscalationReason.DEPENDENCY_UNAVAILABLE and writes(container) == []
     assert (await proposals(container))[0].state is ActionState.BLOCKED
+    assert [s.detail for s in trace.steps if s.stage == "retry"] == ["safety_screen: BACKEND_UNAVAILABLE, asked again"]
+
+
+async def test_a_safety_screen_that_fails_once_is_asked_again_and_the_yes_goes_through(container: Container) -> None:
+    await to_confirmation(container)
+    inject(container, "safety_screen", {"switch": "fail_next", "times": 1})
+    reply = await say(container, "yes")
+    trace = await trace_of(container, reply)
+    assert reply.decision is Decision.EXECUTE and len(writes(container)) == 1
+    assert [s.stage for s in trace.steps if s.stage == "retry"] == ["retry"]
 
 
 async def test_the_rule_checker_must_answer_the_renewed_check(container: Container) -> None:
@@ -238,6 +248,7 @@ async def test_a_rule_checker_that_fails_once_is_asked_again(container: Containe
     reply = await say(container, C101)
     trace = await trace_of(container, reply)
     assert reply.decision is Decision.CONFIRM and "rule checker failed: BACKEND_UNAVAILABLE" in trace.errors
+    assert [s.detail for s in trace.steps if s.stage == "retry"] == ["rule_checker: BACKEND_UNAVAILABLE, asked again"]
 
 
 async def test_a_read_failure_on_yes_keeps_the_question_open(container: Container) -> None:

@@ -62,6 +62,20 @@ ROWS = [
         case_reason="dependency_unavailable",
     ),
     Row(
+        "safety screen fails once: asked again in the same turn, the customer is not bothered",
+        inject=[("safety_screen", {"switch": "fail_next", "times": 1})],
+        turns=[Turn(f"{RETURN}. My phone is {C101}", "confirm", awaiting="confirmation")],
+    ),
+    Row(
+        "an order number the shop does not know twice: asked once, then handoff, no data",
+        turns=[
+            Turn(f"Where is my order NS-20877? My phone is {C100}", "answer"),
+            Turn("and what about order NS-99999?", "clarify", awaiting="order_choice", absent=("Polo",)),
+            Turn("order NS-99998", "handoff", escalation="ownership_mismatch", absent=("Polo",)),
+        ],
+        case_reason="ownership_mismatch",
+    ),
+    Row(
         "rule checker down: nothing is written, handed off",
         inject=[("rule_checker", {"switch": "fail_next", "times": 2})],
         turns=[
@@ -160,10 +174,16 @@ ROWS = [
         case_reason="capability_missing",
     ),
     Row(
-        "high frustration on a repeat turn: handoff, the earlier checks still ran",
+        "high frustration twice in a row: apologised once, then handoff, the earlier checks still ran",
         turns=[
             Turn("Where is my order NS-20877? It is late", "verify_identity", awaiting="slot:phone"),
             Turn("I already asked, this is useless, why is it so slow?", "verify_identity", awaiting="slot:phone"),
+            Turn(
+                "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!",
+                "verify_identity",
+                awaiting="slot:phone",
+                contains=("sorry about the trouble",),
+            ),  # the first very angry message: an apology, the request goes on
             Turn(
                 "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!",
                 "handoff",

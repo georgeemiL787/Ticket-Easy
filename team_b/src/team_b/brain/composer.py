@@ -42,6 +42,9 @@ PLACEHOLDERS: Mapping[str, frozenset[str]] = {
     "confirm_action_default": frozenset({"action"}),
     "action_done": frozenset({"reference"}),
     "policy_refusal": frozenset({"message"}),
+    "policy_alternatives": frozenset({"options"}),
+    "order_not_found": frozenset({"order_id"}),
+    "order_not_found_choose": frozenset({"order_id", "orders"}),
 }
 
 

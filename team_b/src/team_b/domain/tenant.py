@@ -127,6 +127,7 @@ class IntentSpec(FrozenModel):
     knowledge_query: str | None = None  # hint added to the policy search for this intent
     knowledge_when: str | None = None  # condition (a named fact) under which a policy quote is also shown
     labels: dict[str, str] = Field(default_factory=dict)  # locale (en/ar/arabizi) -> short name used in questions
+    alternatives: tuple[str, ...] = ()  # other action intents to offer when the policy says no to this one
 
     @model_validator(mode="after")
     def _kind_has_its_tool(self) -> Self:
@@ -151,6 +152,14 @@ class TenantConfig(FrozenModel):
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
     managers: tuple[str, ...] = ()  # names that may reassign cases, until logins give people roles
+
+    @model_validator(mode="after")
+    def _alternatives_are_other_actions(self) -> Self:
+        for name, spec in self.intents.items():
+            for other in spec.alternatives:
+                if other == name or other not in self.intents or self.intents[other].kind != "action":
+                    raise ValueError(f"intents.{name}.alternatives: {other!r} must be another action intent")
+        return self
 
     @field_validator("order_id_pattern")
     @classmethod

@@ -9,7 +9,7 @@ A call that comes back TOOL_NOT_PUBLISHED proves the list is out of date, so dro
 asks the shop again. Time comes from the injected Clock, never from the real clock.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 
 from team_b.contracts.errors import UpstreamError
@@ -27,6 +27,7 @@ class Catalog:
     tools: dict[str, ToolSpec]
     fetched_at: datetime
     stale: bool = False
+    retried: bool = False  # the first ask failed and this answer came from the second one (or from the old list)
 
     def get(self, name: str | None) -> ToolSpec | None:
         return self.tools.get(name) if name else None
@@ -50,20 +51,26 @@ class CapabilityRegistry:
             and (now - cached.fetched_at).total_seconds() < self._ttl_s
         ):
             return cached
-        try:
-            tools = await self._client.list_tools(tenant_id)
-        except UpstreamError as exc:
-            log.warning(
-                "capability_discovery_failed", tenant_id=tenant_id, code=exc.code, have_last_good=cached is not None
-            )
-            if cached is None:
-                return None
-            stale = Catalog(cached.tools, cached.fetched_at, stale=True)
-            self._cache[tenant_id] = stale
-            return stale
-        fresh = Catalog({t.name: t for t in tools}, now)
-        self._cache[tenant_id] = fresh
-        return fresh
+        retried = False
+        for attempt in range(2):  # a failure that may pass is tried once more at once (listing changes nothing)
+            try:
+                tools = await self._client.list_tools(tenant_id)
+            except UpstreamError as exc:
+                log.warning(
+                    "capability_discovery_failed", tenant_id=tenant_id, code=exc.code, have_last_good=cached is not None
+                )
+                if attempt == 0 and exc.retryable:
+                    retried = True
+                    continue
+                if cached is None:
+                    return None
+                stale = Catalog(cached.tools, cached.fetched_at, stale=True)
+                self._cache[tenant_id] = stale
+                return replace(stale, retried=retried)
+            fresh = Catalog({t.name: t for t in tools}, now)
+            self._cache[tenant_id] = fresh
+            return replace(fresh, retried=retried)
+        return None  # unreachable: the second attempt always returns above
 
     def drop(self, tenant_id: str) -> None:
         """Forget the remembered list (a call said a tool is not published): the next catalog() asks the shop again."""

@@ -101,7 +101,10 @@ async def compose(ctx: TurnContext, locale: Locale) -> str:
     """The replies of every completed step and the final one, joined, in the customer's locale."""
     assert ctx.step is not None
     parts = [*ctx.earlier, ctx.step]
-    return "\n\n".join([await say_step(ctx, s, locale) for s in parts if not s.silent])
+    texts = [await say_step(ctx, s, locale) for s in parts if not s.silent]
+    if ctx.apologise and ctx.step.decision is not Decision.HANDOFF and not ctx.step.silent:
+        texts.insert(0, default_composer().t(locale, "frustration_ack"))  # a fixed sentence: never reworded
+    return "\n\n".join(texts)
 
 
 def understanding_fields(result: NLUResult | None) -> dict[str, Any]:

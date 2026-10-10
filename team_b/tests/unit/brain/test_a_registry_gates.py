@@ -48,10 +48,13 @@ class CountingShop:
     """A shop whose tool list can change or fail, counting how often it was asked."""
 
     def __init__(self, tools: list[ToolSpec]) -> None:
-        self.tools, self.asked, self.down = tools, 0, False
+        self.tools, self.asked, self.down, self.fail_next, self.retryable = tools, 0, False, 0, True
 
     async def list_tools(self, tenant_id: str) -> list[ToolSpec]:
         self.asked += 1
+        if self.fail_next > 0:
+            self.fail_next -= 1
+            raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "blip", retryable=self.retryable)
         if self.down:
             raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "down", retryable=True)
         return list(self.tools)
@@ -218,6 +221,34 @@ async def test_the_last_good_list_is_served_when_the_shop_is_down() -> None:
     shop.down = False
     fresh = await registry.catalog(T)
     assert fresh is not None and not fresh.stale
+
+
+async def test_a_list_that_fails_once_is_asked_again_at_once() -> None:
+    shop = CountingShop([spec("a")])
+    shop.fail_next = 1
+    registry = CapabilityRegistry(shop, StepClock(), ttl_s=60)  # type: ignore[arg-type]
+    catalog = await registry.catalog(T)
+    assert catalog is not None and set(catalog.tools) == {"a"} and not catalog.stale and catalog.retried
+    assert shop.asked == 2
+    again = await registry.catalog(T)
+    assert again is not None and not again.retried and shop.asked == 2  # remembered: nothing to report this time
+
+
+async def test_a_list_that_fails_twice_is_not_asked_a_third_time() -> None:
+    shop, clock = CountingShop([spec("a")]), StepClock()
+    registry = CapabilityRegistry(shop, clock, ttl_s=60)  # type: ignore[arg-type]
+    await registry.catalog(T)
+    clock.tick(120)
+    shop.fail_next, shop.asked = 5, 0
+    stale = await registry.catalog(T)
+    assert stale is not None and stale.stale and stale.retried and shop.asked == 2
+
+
+async def test_a_failure_that_cannot_pass_is_not_retried() -> None:
+    shop = CountingShop([spec("a")])
+    shop.fail_next, shop.retryable = 5, False
+    assert await CapabilityRegistry(shop, StepClock(), ttl_s=60).catalog(T) is None  # type: ignore[arg-type]
+    assert shop.asked == 1
 
 
 async def test_with_no_earlier_list_and_the_shop_down_there_is_nothing() -> None:

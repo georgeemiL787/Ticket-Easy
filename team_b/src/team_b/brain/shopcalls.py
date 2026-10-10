@@ -17,7 +17,7 @@ from team_b.brain.turn import Step, TurnContext
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.trace import ToolCallRecord
+from team_b.domain.trace import ToolCallRecord, TraceStep
 
 ATTEMPTS = 2  # the call, and one retry in the same turn
 
@@ -36,6 +36,11 @@ class ReadOutcome:
     @property
     def data(self) -> dict[str, Any]:
         return self.result.data if self.result is not None and self.result.status == "success" else {}
+
+
+def record_retry(ctx: TurnContext, service: str, code: str) -> None:
+    """Note in the trace that a dependency failed and was asked once more in the same turn (writes never come here)."""
+    ctx.steps.append(TraceStep(stage="retry", status="ok", duration_ms=0.001, detail=f"{service}: {code}, asked again"))
 
 
 def _record(

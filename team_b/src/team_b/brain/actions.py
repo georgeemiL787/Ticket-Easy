@@ -31,9 +31,11 @@ from enum import StrEnum
 from typing import Any, Literal
 
 from team_b.brain import gates, identity
+from team_b.brain.choices import label_of
 from team_b.brain.composer import PLACEHOLDERS, default_composer, promises_handover
 from team_b.brain.lookup import load_own_order
 from team_b.brain.redaction import redact
+from team_b.brain.shopcalls import record_retry
 from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.base import OperationKind
@@ -129,13 +131,15 @@ async def check_policy(
         resource_tenant_id=ctx.tenant.tenant_id,
         human_approval=approval,
     )
-    for _ in range(2):
+    for attempt in range(2):
         try:
             decision = await gate.check_action(request)
         except UpstreamError as exc:
             ctx.errors.append(f"rule checker failed: {exc.code}")
             if not exc.retryable:
                 return None
+            if attempt == 0:
+                record_retry(ctx, "rule_checker", exc.code)
             continue
         except NotImplementedError:
             ctx.errors.append("rule checker is not built")
@@ -165,9 +169,21 @@ def _without_handover(message: str) -> str:
     return " ".join(kept).strip()
 
 
-def _deny_step(ctx: TurnContext, decision: PolicyDecision) -> Step:
+def _with_alternatives(ctx: TurnContext, intent_spec: IntentSpec | None, message: str) -> str:
+    """The refusal plus, when the tenant lists other requests for this action, a line naming them ("an exchange or a
+    voucher"). They are only offered to look at: the rule checker still decides each one when the customer asks."""
+    if intent_spec is None or not intent_spec.alternatives:
+        return message
+    composer, locale = default_composer(), locale_of(ctx)
+    names = [label_of(ctx.tenant, name, locale) for name in intent_spec.alternatives]
+    options = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} {composer.t(locale, 'alt_or')} {names[-1]}"
+    return f"{message}\n\n{composer.t(locale, 'policy_alternatives', options=options)}"
+
+
+def _deny_step(ctx: TurnContext, decision: PolicyDecision, intent_spec: IntentSpec | None = None) -> Step:
     """A deny is never executed. A final one (the tenant's final_deny_rules) is told as a refusal; any other goes to a
-    person (when the tenant escalates denies), with the rule's own wording and its citation."""
+    person (when the tenant escalates denies), with the rule's own wording and its citation. A refusal that closes the
+    request also names the alternatives the tenant lists for this action."""
     locale = locale_of(ctx)
     message = default_composer().policy_message(locale, decision)
     denying = [o.rule_id for o in decision.rule_outcomes if o.effect_applied == "deny"]
@@ -183,7 +199,7 @@ def _deny_step(ctx: TurnContext, decision: PolicyDecision) -> Step:
             Decision.REFUSE,
             reason=why,
             reply_key="policy_refusal",
-            values={"message": message},
+            values={"message": _with_alternatives(ctx, intent_spec, message)},
             citations=decision.citations,
         )
     if decision.reason_code == "RULE_BLOCKED" and decision.action not in ctx.session.denied_actions:
@@ -194,7 +210,11 @@ def _deny_step(ctx: TurnContext, decision: PolicyDecision) -> Step:
             Decision.REFUSE,
             reason=f"{why}; first refusal: explained and a colleague offered",
             reply_key="policy_refusal_offer",
-            values={"message": _without_handover(message) or default_composer().t(locale, "policy_denied")},
+            values={
+                "message": _with_alternatives(
+                    ctx, intent_spec, _without_handover(message) or default_composer().t(locale, "policy_denied")
+                )
+            },
             citations=decision.citations,
         )
     return Step(
@@ -281,7 +301,7 @@ async def handle(ctx: TurnContext, intent_spec: IntentSpec) -> Step:
 async def _act_on(ctx: TurnContext, intent_spec: IntentSpec, tool: ToolSpec, decision: PolicyDecision) -> Step:
     """What the first rule check means: refuse or hand off a deny, hold for a person, or ask the customer to confirm."""
     if decision.decision == "deny":
-        return _deny_step(ctx, decision)
+        return _deny_step(ctx, decision, intent_spec)
     try:
         proposal = await COORDINATOR.propose(ctx, intent_spec)
     except ProposalError as exc:
@@ -355,7 +375,9 @@ async def on_confirmation(ctx: TurnContext, nlu: NLUResult) -> Step:
         return _block(ctx, proposal, why, _handoff(EscalationReason.DEPENDENCY_UNAVAILABLE, why))
     proposal.policy_decisions.append(decision)
     if decision.decision == "deny":
-        return _block(ctx, proposal, f"denied on the renewed check ({decision.reason_code})", _deny_step(ctx, decision))
+        return _block(
+            ctx, proposal, f"denied on the renewed check ({decision.reason_code})", _deny_step(ctx, decision, spec)
+        )
     session.pending_action_id = None
     if decision.decision == "require_human":
         proposal.transition(ActionState.AWAITING_HUMAN, at=ctx.now, note=f"renewed check: {decision.reason_code}")

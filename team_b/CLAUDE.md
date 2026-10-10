@@ -55,6 +55,12 @@ team_b/
                  rewrite (LLMRewriter, TEAM_B_LLM_REWRITE=1, prompts/rewrite_v2.md: the model writes ANSWER/CLARIFY/VERIFY_IDENTITY/CONFIRM/REFUSE/HANDOFF replies from the draft + the customer message + history, never EXECUTE (the shop's word); a CONFIRM must still ask yes/no; only a HANDOFF may promise a colleague (composer.promises_handover); composer.check_grounded
                  rejects any new number/date/month/id/currency/link/citation/time word and any dropped one -> the template is sent;
                  policy passages are appended after the rewrite, never sent to the model; trace step 'rewrite' + versions.rewrite_prompt)
+                 try before handing over: the first very frustrated message is answered with the fixed frustration_ack sentence in front and the request goes on
+                 (session.frustration_strikes; a second in a row = handoff high_frustration, calm resets); an order number the shop does not know (NOT_FOUND) asks
+                 "please check the number" once (order_not_found / order_not_found_choose with the customer's own open orders, masked; session.order_misses), a second
+                 miss in a row = ownership_mismatch, while another customer's order stays an immediate handoff with no data; the safety screen, the rule checker and the shop
+                 tool list are each asked once more at once when they fail with a retryable error (trace step "retry"; writes are never retried); a deny that closes the request
+                 also names the tenant's IntentSpec.alternatives ("I can check other options for you instead: exchange it or ask for a voucher": policy_alternatives)
                  escalation pace: a first non-final policy deny (RULE_BLOCKED) is a REFUSE with the rule's wording minus its "I'll connect you" sentences + an offer (policy_refusal_offer),
                  session.denied_actions remembers it, asking again -> handoff policy_denied; unanswerable policy question: ask_rephrase, then no_answer_offer (ANSWER), the third time in a row
                  (session.no_evidence_count) -> handoff no_evidence; complaint description: freetext ignores clauses that only announce a problem ("I have a problem with my order") and asks

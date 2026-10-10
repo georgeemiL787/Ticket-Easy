@@ -168,7 +168,11 @@
         "en": "get a refund",
         "ar": "استرداد الفلوس",
         "arabizi": "estredad el felous"
-      }
+      },
+      "alternatives": [
+        "exchange_request",
+        "voucher_request"
+      ]
     },
     "cancel_order": {
       "kind": "action",
@@ -191,7 +195,10 @@
         "en": "cancel the order",
         "ar": "إلغاء الأوردر",
         "arabizi": "elgha2 el order"
-      }
+      },
+      "alternatives": [
+        "return_request"
+      ]
     },
     "change_address": {
       "kind": "action",
@@ -231,6 +238,11 @@
         "order_id": "slot:order_id",
         "amount": "const:100",
         "reason": "const:late_delivery"
+      },
+      "labels": {
+        "en": "ask for a voucher",
+        "ar": "طلب كوبون",
+        "arabizi": "talab kobon"
       }
     },
     "complaint": {

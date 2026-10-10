@@ -150,13 +150,42 @@ async def test_another_customers_order_is_a_handoff_with_no_data(container: Cont
     assert session is not None and "Polo shirt" not in str(session.facts) and "order_id" not in session.slots
 
 
-async def test_a_missing_order_is_treated_like_someone_elses(container: Container) -> None:
+async def test_a_missing_order_is_asked_about_once_then_handed_over(container: Container) -> None:
     await verified_conversation(container)
-    gone = await say(container, "and what about order NS-99999?")
-    assert (gone.decision, (await trace_of(container, gone)).escalation_reason) == (
+    first = await say(container, "and what about order NS-99999?")
+    assert first.decision is Decision.CLARIFY and first.awaiting == "order_choice"
+    assert "NS-**999" in first.text and "NS-99999" not in first.text  # the typed number comes back masked
+    assert "NS-**877" in first.text  # the verified customer's own open orders are listed
+    assert not leaks(first.text)
+    second = await say(container, "order NS-99998")
+    assert (second.decision, (await trace_of(container, second)).escalation_reason) == (
         Decision.HANDOFF,
         EscalationReason.OWNERSHIP_MISMATCH,
     )
+
+
+async def test_a_typo_in_the_order_number_is_corrected_on_the_second_try(container: Container) -> None:
+    await verified_conversation(container)
+    miss = await say(container, "and what about order NS-99999?")
+    assert miss.decision is Decision.CLARIFY
+    retry = await say(container, "I meant NS-20512")
+    assert retry.decision is Decision.ANSWER and "NS-20512" in retry.text
+    session = await container.sessions.load(T, C)
+    assert session is not None and session.order_misses == 0
+
+
+async def test_someone_elses_order_is_still_an_immediate_handoff_with_no_data(container: Container) -> None:
+    await verified_conversation(container)
+    theirs = await say(container, "and what about order NS-20790?")
+    assert theirs.decision is Decision.HANDOFF and not leaks(theirs.text)
+    assert (await trace_of(container, theirs)).escalation_reason is EscalationReason.OWNERSHIP_MISMATCH
+
+
+async def test_a_missing_order_without_a_list_tool_asks_for_the_number_again(container: Container) -> None:
+    inject(container, "shop", {"switch": "unpublish", "tool": "list_customer_orders"})
+    await verified_conversation(container)
+    miss = await say(container, "and what about order NS-99999?")
+    assert miss.decision is Decision.CLARIFY and miss.awaiting == "slot:order_id" and "NS-**999" in miss.text
 
 
 async def test_session_facts_hold_only_the_customers_own_order(container: Container) -> None:
@@ -292,10 +321,15 @@ async def test_a_non_retryable_failure_is_not_retried(container: Container) -> N
 class Wrapped:
     """The shop with one call changed, to test how the brain treats odd answers."""
 
-    def __init__(self, inner: Any, *, drop: str | None = None, no_tools: bool = False) -> None:
-        self._inner, self._drop, self._no_tools = inner, drop, no_tools
+    def __init__(
+        self, inner: Any, *, drop: str | None = None, no_tools: bool = False, tools_fail_times: int = 0
+    ) -> None:
+        self._inner, self._drop, self._no_tools, self._tools_fail = inner, drop, no_tools, tools_fail_times
 
     async def list_tools(self, tenant_id: str) -> list[ToolSpec]:
+        if self._tools_fail > 0:
+            self._tools_fail -= 1
+            raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "blip", retryable=True)
         if self._no_tools:
             raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "down", retryable=True)
         return await self._inner.list_tools(tenant_id)  # type: ignore[no-any-return]
@@ -312,6 +346,23 @@ def with_shop(container: Container, **kw: Any) -> Orchestrator:
         clock=container.clock, tenants=container.tenants, sessions=container.sessions, traces=container.traces,
         cases=container.cases, capabilities=Wrapped(container.shop, **kw),
     )  # fmt: skip
+
+
+async def test_a_tool_list_that_fails_once_is_asked_again_and_the_lookup_goes_on(container: Container) -> None:
+    reply = await with_shop(container, tools_fail_times=1).handle_turn(
+        T, C, f"Where is my order NS-20877? My phone is {PHONE}"
+    )
+    trace = await trace_of(container, reply)
+    assert reply.decision is Decision.ANSWER and "NS-20877" in reply.text
+    assert [s.detail for s in trace.steps if s.stage == "retry"] == ["shop_tools: tool list, asked again"]
+
+
+async def test_a_tool_list_that_keeps_failing_is_a_handoff_dependency_unavailable(container: Container) -> None:
+    reply = await with_shop(container, tools_fail_times=20).handle_turn(
+        T, C, f"Where is my order NS-20877? My phone is {PHONE}"
+    )
+    trace = await trace_of(container, reply)
+    assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.DEPENDENCY_UNAVAILABLE
 
 
 async def test_an_incomplete_answer_from_the_shop_is_not_trusted(container: Container) -> None:

@@ -1,0 +1,55 @@
+{
+  "id": "S45",
+  "title": "A verified customer mistypes an order number: asked once with their own orders (masked), the right number is answered",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "NS-20877"
+      }
+    },
+    {
+      "say": "and what about order NS-99999?",
+      "expect": {
+        "decision": "clarify",
+        "escalation": null,
+        "awaiting": "order_choice",
+        "text_contains": [
+          "NS-**999",
+          "NS-**877"
+        ],
+        "text_not_contains": [
+          "NS-99999",
+          "NS-20877",
+          "NS-20512"
+        ]
+      }
+    },
+    {
+      "say": "I meant NS-20512",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "NS-20512"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

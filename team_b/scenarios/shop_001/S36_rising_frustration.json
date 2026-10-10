@@ -1,6 +1,6 @@
 {
   "id": "S36",
-  "title": "Frustration rising over three turns ends in handoff high_frustration",
+  "title": "Frustration rising: the first very angry message is apologised to and the request goes on, a second one in a row ends in handoff high_frustration",
   "status": "active",
   "owner": "A",
   "setup": {
@@ -21,6 +21,15 @@
         "decision": "verify_identity",
         "awaiting": "slot:phone",
         "escalation": null
+      }
+    },
+    {
+      "say": "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "escalation": null,
+        "text_contains": "sorry about the trouble"
       }
     },
     {

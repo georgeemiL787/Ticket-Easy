@@ -15,6 +15,7 @@ from datetime import date
 from typing import Any
 
 from team_b.brain import gates, identity, knowledge, shopcalls
+from team_b.brain.choices import describe_orders, mask_order_id
 from team_b.brain.composer import default_composer
 from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
@@ -23,6 +24,8 @@ from team_b.contracts.evidence import Passage
 from team_b.contracts.tools import ToolSpec
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.tenant import IntentSpec
+
+MAX_ORDER_MISSES = 2  # unknown order numbers in a row before a person takes over
 
 
 def _to_date(value: Any) -> date | None:
@@ -86,7 +89,7 @@ async def load_own_order(ctx: TurnContext, intent_spec: IntentSpec, tools: dict[
     outcome = await shopcalls.call_read(ctx, tool.name, arguments)
     if not outcome.ok:
         if outcome.error_code == "NOT_FOUND":
-            return _not_theirs(ctx, "the order does not exist")
+            return await _not_found(ctx, str(arguments.get("order_id", "")))
         return shopcalls.failed_read(ctx, f"reading the order ({outcome.error_code})")
     if not shopcalls.output_complete(tool, outcome.data):
         return shopcalls.failed_read(ctx, "reading the order (the answer was incomplete)")
@@ -97,8 +100,42 @@ async def load_own_order(ctx: TurnContext, intent_spec: IntentSpec, tools: dict[
         return shopcalls.failed_read(ctx, "reading the order (the answer was for a different order)")
     if order.get("customer_id") != session.identity.customer_id:
         return _not_theirs(ctx, "the order belongs to another customer")
+    session.order_misses = 0
     session.facts = derive_order_facts(order, ctx.deps.clock.today())
     return None
+
+
+async def _not_found(ctx: TurnContext, order_id: str) -> Step:
+    """The shop does not know this order number. The first time it is probably a typo: ask for the number again (with
+    the customer's own open orders to pick from when the shop lists them). A second miss in a row goes to a person.
+
+    This is different from another customer's order, which is an immediate handoff with no data (_not_theirs)."""
+    from team_b.brain.stages import _list_orders  # imported here: stages imports the action module
+
+    session = ctx.session
+    session.order_misses += 1
+    session.slots.pop("order_id", None)
+    if session.order_misses >= MAX_ORDER_MISSES:
+        return _handoff(
+            EscalationReason.OWNERSHIP_MISMATCH, f"the shop does not know the order number ({order_id}) twice"
+        )
+    masked = mask_order_id(order_id) if order_id else ""
+    if (listing := await _list_orders(ctx)) is not None:
+        session.order_choices = [o["order_id"] for o in listing]
+        return Step(
+            Decision.CLARIFY,
+            reason="the shop does not know that order number: asked again with the customer's own orders",
+            reply_key="order_not_found_choose",
+            values={"order_id": masked, "orders": describe_orders(listing, locale_of(ctx))},
+            awaiting="order_choice",
+        )
+    return Step(
+        Decision.CLARIFY,
+        reason="the shop does not know that order number: asked to check it",
+        reply_key="order_not_found",
+        values={"order_id": masked},
+        awaiting="slot:order_id",
+    )
 
 
 def _not_theirs(ctx: TurnContext, why: str) -> Step:

@@ -365,11 +365,31 @@ async def test_a_greeting_opens_no_intent(c: Container) -> None:
 # ---- frustration ----
 
 
-async def test_a_very_frustrated_customer_is_handed_off(c: Container) -> None:
-    text = "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!"
-    reply = await say(orch(c), text)
+ANGRY = "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!!"
+
+
+async def test_the_first_very_frustrated_message_gets_an_apology_and_the_request_goes_on(c: Container) -> None:
+    reply = await say(orch(c), f"{ANGRY} Where is my order NS-20877?")
+    assert reply.decision is Decision.VERIFY_IDENTITY and reply.text.startswith("I'm sorry about the trouble")
+    assert (await last_trace(c)).frustration == "high"
+    session = await c.sessions.load(T, C)
+    assert session is not None and session.frustration_strikes == 1
+
+
+async def test_a_second_very_frustrated_message_in_a_row_is_handed_off(c: Container) -> None:
+    await say(orch(c), ANGRY)
+    reply = await say(orch(c), ANGRY)
     assert reply.decision is Decision.HANDOFF
     assert (await last_trace(c)).escalation_reason is EscalationReason.HIGH_FRUSTRATION
+
+
+async def test_the_strike_is_forgotten_when_the_customer_calms_down(c: Container) -> None:
+    await say(orch(c), ANGRY)
+    await say(orch(c), "ok, where is my order NS-20877?")
+    session = await c.sessions.load(T, C)
+    assert session is not None and session.frustration_strikes == 0
+    again = await say(orch(c), ANGRY)
+    assert again.decision is not Decision.HANDOFF and again.text.startswith("I'm sorry about the trouble")
 
 
 async def test_a_medium_level_does_not_hand_off(c: Container) -> None:

@@ -166,3 +166,15 @@ def test_registry_rejects_invalid_json_and_name_mismatch_and_missing_dir(tmp_pat
 
 def test_empty_directory_gives_an_empty_registry(tmp_path: Path) -> None:
     assert len(TenantRegistry.from_dir(tmp_path)) == 0
+
+
+def test_alternatives_must_name_other_action_intents() -> None:
+    base = config()
+    ok = {**base["intents"]["refund"], "alternatives": ["exchange"]}
+    exchange = {**base["intents"]["refund"], "action_tool": "create_exchange"}
+    intents = {**base["intents"], "refund": ok, "exchange": exchange}
+    assert TenantConfig.model_validate(config(intents=intents)).intents["refund"].alternatives == ("exchange",)
+    for bad in (["refund"], ["nobody"], ["return_policy"]):  # itself, unknown, not an action
+        broken = {**intents, "refund": {**ok, "alternatives": bad}}
+        with pytest.raises(ValidationError, match="alternatives"):
+            TenantConfig.model_validate(config(intents=broken))

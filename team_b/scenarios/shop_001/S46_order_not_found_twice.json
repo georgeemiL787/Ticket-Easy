@@ -1,0 +1,51 @@
+{
+  "id": "S46",
+  "title": "An order number the shop does not know twice in a row: asked once, then handoff ownership_mismatch with no data",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "Where is my order NS-20877?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "NS-20877"
+      }
+    },
+    {
+      "say": "what about order NS-99999?",
+      "expect": {
+        "decision": "clarify",
+        "awaiting": "order_choice",
+        "text_contains": "NS-**999"
+      }
+    },
+    {
+      "say": "order NS-99998",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "ownership_mismatch",
+        "awaiting": "human",
+        "text_not_contains": [
+          "Polo shirt",
+          "TRK-20790"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "ownership_mismatch",
+    "trace_invariants": true
+  }
+}

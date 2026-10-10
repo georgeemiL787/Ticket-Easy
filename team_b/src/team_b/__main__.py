@@ -59,6 +59,7 @@ async def eval_conversations(
     writer_compare: bool = False,
     resume: bool = False,
     batch: int | None = None,
+    per_style: int | None = None,
 ) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
@@ -72,6 +73,8 @@ async def eval_conversations(
             raise SystemExit("--judge needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
         judge = Judge(llm)
     conversations = convo.load_set(directory)
+    if per_style is not None:
+        conversations = convo.sample(conversations, per_style)  # a small sample, spread over the topics
     if writer_compare:
         if not use_llm or not settings.llm_rewrite:
             raise SystemExit(
@@ -277,6 +280,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="answer the ar and arabizi conversations with the usual writer and with the Egyptian-Arabic model "
         "(TEAM_B_LLM_*_WRITER_EGYPTIAN) and save both to reports/writer_compare_<date>.csv to rate; needs --llm",
     )
+    full.add_argument(
+        "--per-style",
+        type=int,
+        default=None,
+        metavar="N",
+        help="use only N conversations of each language style (spread over the topics), for rate-limited runs",
+    )
     full.add_argument("--resume", action="store_true", help="continue a run that stopped (--batch or the rate limit)")
     full.add_argument(
         "--batch",
@@ -336,6 +346,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.writer_compare,
                 args.resume,
                 args.batch,
+                args.per_style,
             )
         )
     if args.command == "eval-compare":

@@ -151,6 +151,45 @@ account is refused at once, but no command calls it). Until it exists: reset the
 `--generate-password --reset-password` and do not pass it on, then rotate `TEAM_B_SECRET_KEY` (section 6) to end any
 session they have open. Ask a developer to add the command.
 
+## 8. The agent keeps giving up (the fallback rate rises)
+
+In agent mode the AI orchestrator plans each message and code checks every move. When the loop cannot finish a message it
+**falls back** to the usual step-by-step flow, so the customer still gets an answer. A few fallbacks are normal; the
+**Overview** page ("How the agent is doing") and the alert `agent_fallback_spike` show when there are too many.
+
+1. Open the Overview and read "Why the agent gave up". Then act on the biggest reason:
+   - **The AI provider's rate limit**: the free plan allows few requests and tokens a minute. Wait, or lower the load
+     (switch off the reviewer with `TEAM_B_LLM_REVIEW=0`, or move a job to a model with its own limit, section 9).
+   - **The AI model failed or answered badly**: check the provider's status page and the key. If a model is gone, section 9.
+   - **Code refused two moves in a row** or **too many moves**: the model is proposing things the checks refuse. Open a
+     few conversations (Conversation page, "How the agent worked this message") and read the refused moves. This is the
+     checks doing their job; tell a developer if it is the same move every time.
+2. If it does not settle within the hour, switch the shop back to today's flow (section 10). Nothing is lost: both flows
+   use the same checks.
+3. Also watch `reviewer_block_spike`: many blocked replies mean the writer keeps saying things code does not allow.
+
+## 9. A Groq model disappears (or a preview model is withdrawn)
+
+Each AI job has its own model setting, and an optional backup (`TEAM_B_LLM_FALLBACK_MODEL_<JOB>`). When the main model
+answers "not found" or "decommissioned", the backup is used at once and the main one is left alone for ten minutes; the
+trace shows `ai_backup_model`.
+
+1. Change the job's model in `.env`: `TEAM_B_LLM_MODEL_<JOB>=<new model id>` (jobs: READER, ORCHESTRATOR, KNOWLEDGE,
+   REVIEWER, WRITER, SUMMARY, JUDGE).
+2. Make the backup the new main model if it works well, and set a new backup (a production model, not a preview).
+3. Restart (`make down`, then `make demo-full`). Check the Overview: the fallback rate should be back to normal.
+4. Each model has its own per-minute budget (`TEAM_B_LLM_RPM_<JOB>`, `TEAM_B_LLM_TPM_<JOB>`); jobs on one model share it.
+
+## 10. Switch a shop back to today's flow
+
+Agent mode can be turned off for one shop or for all of them. Everything keeps working with the same safety checks.
+
+- One shop: in `config/tenants/<shop>.json` set `"agent_mode": "off"` and restart.
+- All shops: `TEAM_B_AGENT_MODE=off` in `.env` and restart.
+- To only watch the agent without letting it act, use `shadow`: the usual flow answers, the agent's first move is
+  compared in the trace.
+- Check: a conversation's page no longer shows the agent timeline for new messages; the Overview's agent cards go quiet.
+
 ---
 
 ## When to ask a developer

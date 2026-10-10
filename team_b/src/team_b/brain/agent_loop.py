@@ -262,7 +262,9 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
         ctx.session.agent_questions += 1
         values = {"slot": move.slot} if move.slot else {}
         awaiting = f"slot:{move.slot}" if move.slot else "detail"
-        step = Step(Decision.CLARIFY, reason=move.why or f"asked for {move.slot or 'a detail'}",
+        proves_identity = move.slot == "phone" and not ctx.session.identity.verified  # as the usual flow labels it
+        step = Step(Decision.VERIFY_IDENTITY if proves_identity else Decision.CLARIFY,
+                    reason=move.why or f"asked for {move.slot or 'a detail'}",
                     reply_key=move.question_key, values=values, awaiting=awaiting)  # fmt: skip
         return agent_reads.ReadResult(f"asked {move.question_key}", step)
     if isinstance(move, HandOver):

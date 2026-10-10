@@ -92,12 +92,20 @@ def load_set(directory: Path = CONVERSATIONS_DIR) -> list[EvalConversation]:
 
 
 def sample(conversations: Sequence[EvalConversation], per_style: int) -> list[EvalConversation]:
-    """A small, even sample: `per_style` conversations of every style, spread across the set (not the first ones)."""
+    """A small, even sample: `per_style` conversations of every style, each of a different topic, the topics spread
+    over the whole list (policy questions, order requests, hand-overs, the agent's own topics)."""
+    topics = sorted({c.topic or "-" for c in conversations}, key=lambda t: (len(t), t))
     chosen: list[EvalConversation] = []
-    for style in STYLES:
+    for number, style in enumerate(STYLES):
         rows = [c for c in conversations if c.language_style == style]
-        stride = max(1, len(rows) // per_style)
-        chosen += rows[::stride][:per_style]
+        used: set[str] = set()
+        for k in range(per_style):
+            wanted = topics[((k * len(topics)) // per_style + number) % len(topics)]
+            pick = next((c for c in rows if (c.topic or "-") == wanted and c.id not in used), None)
+            pick = pick or next((c for c in rows if c.id not in used), None)
+            if pick is not None:
+                used.add(pick.id)
+                chosen.append(pick)
     return chosen
 
 

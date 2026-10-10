@@ -216,3 +216,14 @@ async def test_the_sample_meets_the_targets_or_the_recorded_baseline(conversatio
         assert value >= floor, (
             f"{name}: {value:.3f} is below {'the target' if floor == target else 'the baseline'} {floor:.3f}"
         )
+
+
+def test_a_small_sample_takes_a_different_topic_each_time_and_spreads_over_the_set(
+    conversations: list[EvalConversation],
+) -> None:
+    small = sample(conversations, 4)
+    for style in STYLES:
+        topics = [c.topic for c in small if c.language_style == style]
+        assert len(topics) == 4 and len(set(topics)) == 4, (style, topics)
+    assert len({c.topic for c in small}) >= 10  # the styles start at different topics
+    assert any(c.topic.startswith("T1") and c.topic not in ("T1", "T10", "T11", "T12") for c in small)  # an agent topic

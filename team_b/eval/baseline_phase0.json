@@ -138,8 +138,8 @@
       "writes": 0,
       "unbacked_facts": 0,
       "ai_calls_per_message": 0.0,
-      "time_p50_ms": 3.131800000119256,
-      "time_p95_ms": 5.587200001173187,
+      "time_p50_ms": 3.257699999949182,
+      "time_p95_ms": 4.9489999998968415,
       "shadow_asked": 0,
       "shadow_agreement": null
     },
@@ -150,8 +150,8 @@
     "entity_recall": 1.0,
     "handoff_precision": 0.7419354838709677,
     "handoff_recall": 0.8214285714285714,
-    "latency_p50_ms": 3.131800000119256,
-    "latency_p95_ms": 5.587200001173187
+    "latency_p50_ms": 3.257699999949182,
+    "latency_p95_ms": 4.9489999998968415
   },
   "styles": {
     "en": {
@@ -169,8 +169,8 @@
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.1701000007160474,
-        "time_p95_ms": 5.8054000000993256,
+        "time_p50_ms": 3.1822000000829576,
+        "time_p95_ms": 5.5204000000230735,
         "shadow_asked": 0,
         "shadow_agreement": null
       },
@@ -181,8 +181,8 @@
       "entity_recall": 1.0,
       "handoff_precision": 0.8571428571428571,
       "handoff_recall": 0.8571428571428571,
-      "latency_p50_ms": 3.1701000007160474,
-      "latency_p95_ms": 5.8054000000993256
+      "latency_p50_ms": 3.1822000000829576,
+      "latency_p95_ms": 5.5204000000230735
     },
     "ar": {
       "style": "ar",
@@ -199,8 +199,8 @@
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 2.998500000103377,
-        "time_p95_ms": 5.196899997827131,
+        "time_p50_ms": 3.1821000000036292,
+        "time_p95_ms": 5.073999999922307,
         "shadow_asked": 0,
         "shadow_agreement": null
       },
@@ -211,8 +211,8 @@
       "entity_recall": 1.0,
       "handoff_precision": 0.75,
       "handoff_recall": 0.8571428571428571,
-      "latency_p50_ms": 2.998500000103377,
-      "latency_p95_ms": 5.196899997827131
+      "latency_p50_ms": 3.1821000000036292,
+      "latency_p95_ms": 5.073999999922307
     },
     "mixed": {
       "style": "mixed",
@@ -229,8 +229,8 @@
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.131800000119256,
-        "time_p95_ms": 5.480600000737468,
+        "time_p50_ms": 3.3292000000528787,
+        "time_p95_ms": 4.327099999954953,
         "shadow_asked": 0,
         "shadow_agreement": null
       },
@@ -241,8 +241,8 @@
       "entity_recall": 1.0,
       "handoff_precision": 0.8571428571428571,
       "handoff_recall": 0.8571428571428571,
-      "latency_p50_ms": 3.131800000119256,
-      "latency_p95_ms": 5.480600000737468
+      "latency_p50_ms": 3.3292000000528787,
+      "latency_p95_ms": 4.327099999954953
     },
     "arabizi": {
       "style": "arabizi",
@@ -259,8 +259,8 @@
         "writes": 0,
         "unbacked_facts": 0,
         "ai_calls_per_message": 0.0,
-        "time_p50_ms": 3.27119999928982,
-        "time_p95_ms": 5.587200001173187,
+        "time_p50_ms": 3.343299999869487,
+        "time_p95_ms": 4.951600000140388,
         "shadow_asked": 0,
         "shadow_agreement": null
       },
@@ -271,8 +271,8 @@
       "entity_recall": 1.0,
       "handoff_precision": 0.5555555555555556,
       "handoff_recall": 0.7142857142857143,
-      "latency_p50_ms": 3.27119999928982,
-      "latency_p95_ms": 5.587200001173187
+      "latency_p50_ms": 3.343299999869487,
+      "latency_p95_ms": 4.951600000140388
     }
   },
   "worst_conversations": [

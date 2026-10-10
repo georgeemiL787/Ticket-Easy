@@ -32,7 +32,7 @@ Moves (field "kind"):
   "tried": ["what you tried"], "why": "..."} gives the conversation to a person. Code checks that you tried first (see
   Rules); it refuses a hand-over that is too early and tells you what to do first.
 - {"kind": "reply", "plan": {"decision": "answer|clarify|refuse", "reply_key": "...", "citations": [...]}, "why": "..."}
-  reply_key is one of: greeting, thanks, ask_rephrase, out_of_scope, no_answer_offer; order_status (code writes the
+  reply_key is one of: greeting, thanks, ask_rephrase, out_of_scope (use decision "refuse"), no_answer_offer; order_status (code writes the
   status from the order you looked up); policy_answer (code quotes the passages you found: cite their ids);
   action_outcome (code tells the refusal, or the done / failed result, of an action); free_reply (an unexpected
   message: a joke, venting, a story, off-topic; set plan.intent to a few words on how to answer; no facts: a writer

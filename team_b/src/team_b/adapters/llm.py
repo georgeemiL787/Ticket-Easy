@@ -99,6 +99,23 @@ class OpenAICompatibleLLM:
             response = await self._post(self._body(payload), tokens)
         return parse_json_object(self._content(response))
 
+    async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
+        """The answer as plain text, with no JSON format asked for (for a small model that cannot keep one)."""
+        payload: dict[str, Any] = {
+            "model": self._model,
+            "temperature": temperature,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+        }
+        tokens = (len(system) + len(user)) // CHARS_PER_TOKEN + ANSWER_TOKENS
+        body = dict(payload)
+        if self._reasoning_effort:
+            body["reasoning_effort"] = self._reasoning_effort
+        response = await self._post(body, tokens)
+        if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
+            self._reasoning_effort = None
+            response = await self._post(payload, tokens)
+        return self._content(response)
+
     def _body(self, payload: dict[str, Any]) -> dict[str, Any]:
         body = dict(payload)
         if self._json_mode:

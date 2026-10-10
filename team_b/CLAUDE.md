@@ -78,6 +78,9 @@ team_b/
                  problems, blocked twice or reviewer down -> fixed template; the knowledge agent's wording is reviewed too; trace step 'review' + versions.reviewer_prompt); review_action is the former policy
                  agent (LLMPolicyGate finds passages, the stricter of reviewer and rule checker wins, uncited allow/deny -> require_human, failure -> POLICY_AGENT_UNAVAILABLE on an allowed write);
                  a HandOver with an empty `tried` is sent back once per turn (blocks_handover). The adversarial suite also runs with an over-eager reviewer ("reviewed")
+                 egyptian writer (optional, job writer_egyptian: its OWN base_url/model must be set, it never borrows the general model): ReplyWriter(egyptian_llm=) words ar and arabizi replies with
+                 Nile-Chat via Ollama, answer read as PLAIN TEXT (llm.complete_text, RoleLLM.complete_text; plain_reply strips fences/quotes/labels); same gate, retry, reviewer and template;
+                 versions.writer_model="egyptian"; `eval --llm --writer-compare [--judge]` (writer_compare.py) -> reports/writer_compare_<date>.csv with empty rating_* columns
                  shadow (brain/shadow.py; agent_mode "shadow" + a move picker: a "shadow" stage after the front stages asks the orchestrator ONCE on a deep copy of the turn (session, lists,
                  counters), the move is only checked (agent_loop.check_move), never worked; trace.shadow_plan / shadow_move / shadow_error; the plan of the last trace is read back only while the
                  conversation waits for an answer; the real session, replies and shop are untouched, errors and timeouts are noted and ignored; compare(trace) says whether the first move agrees

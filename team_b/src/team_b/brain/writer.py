@@ -15,6 +15,8 @@ orders, money, policies, promises or colleagues). What the shop executed ("done"
 by the model, and policy quotes are added after the reply, never shown to the model.
 """
 
+import json
+import re
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
@@ -37,6 +39,10 @@ if TYPE_CHECKING:  # brain.turn imports this module (Deps.writer)
 log = get_logger(__name__)
 PROMPT = "writer_v1"
 SCHEMA_HINT = {"text": "the final reply"}
+EGYPTIAN_LOCALES = frozenset({Locale.AR, Locale.ARABIZI})
+PLAIN_ASK = "\n\nAnswer with only the text of the reply for the customer: no label, no quotes, no explanation."
+LABEL = re.compile(r"^\s*(?:text|reply|answer|response|الرد|الإجابة|الاجابة|الجواب)\s*[:：]\s*", re.IGNORECASE)
+QUOTES = "\"'`“”‘’«»"
 WRITABLE = frozenset(
     {Decision.ANSWER, Decision.CLARIFY, Decision.VERIFY_IDENTITY, Decision.CONFIRM, Decision.REFUSE, Decision.HANDOFF}
 )  # never EXECUTE: "done" and the reference number are the shop's word, not the model's
@@ -111,6 +117,23 @@ class Writer(Protocol):
     ) -> WriteResult: ...
 
 
+def plain_reply(raw: str) -> str | None:
+    """The reply in a plain-text model answer: no code fence, no JSON wrapper, no label ("Reply:"), no quotes."""
+    body = raw.strip()
+    if body.startswith("```"):
+        body = re.sub(r"^```[a-zA-Z]*\s*|\s*```$", "", body).strip()
+    if body.startswith("{"):
+        try:
+            value = json.loads(body)
+        except json.JSONDecodeError:
+            value = None
+        if isinstance(value, dict):
+            inner = value.get("text")
+            body = inner.strip() if isinstance(inner, str) else ""
+    body = LABEL.sub("", body).strip().strip(QUOTES).strip()
+    return body or None
+
+
 def _asks(text: str) -> bool:
     return "?" in text or "؟" in text
 
@@ -131,15 +154,25 @@ def problems_in(plan: ReplyPlan, template: str, candidate: str, shop: str) -> li
 
 class ReplyWriter:
     def __init__(
-        self, llm: LLMClient, prompt: PromptTemplate | None = None, *, reviewer: Reviewer | None = None
+        self,
+        llm: LLMClient,
+        prompt: PromptTemplate | None = None,
+        *,
+        reviewer: Reviewer | None = None,
+        egyptian_llm: LLMClient | None = None,
     ) -> None:
         self._llm = llm
+        self._egyptian = egyptian_llm  # optional model trained on Egyptian Arabic, for ar and arabizi replies
         self._prompt = prompt or PromptTemplate.load(PROMPT)
         self._reviewer = reviewer
 
     @property
     def prompt_version(self) -> str:
         return self._prompt.version
+
+    def writes_egyptian(self, locale: Locale) -> bool:
+        """Is this reply written by the Egyptian-Arabic model (not the main writer)?"""
+        return self._egyptian is not None and locale in EGYPTIAN_LOCALES
 
     @property
     def reviewer_version(self) -> str | None:
@@ -166,6 +199,8 @@ class ReplyWriter:
                 f"\n\nYour last reply had these problems: {'; '.join(problems[:MAX_PROBLEMS_SHOWN])}. Write it again."
             )
         system = self._prompt.system.replace("{{register}}", register)
+        if self._egyptian is not None and locale in EGYPTIAN_LOCALES:
+            return await self._ask_plain(self._egyptian, system, user + PLAIN_ASK)
         try:
             data = await self._llm.complete_json(system=system, user=user, schema_hint=SCHEMA_HINT)
         except Exception as exc:  # any model failure means: send the template
@@ -173,6 +208,21 @@ class ReplyWriter:
             return None
         text = data.get("text")
         return text.strip() if isinstance(text, str) and text.strip() else None
+
+    @staticmethod
+    async def _ask_plain(llm: LLMClient, system: str, user: str) -> str | None:
+        """The Egyptian-Arabic model answers in plain text (a small model may not keep a JSON format)."""
+        try:
+            asker = getattr(llm, "complete_text", None)
+            if asker is None:  # a client with no plain-text call: JSON, as the main writer does
+                data = await llm.complete_json(system=system, user=user, schema_hint=SCHEMA_HINT)
+                text = data.get("text")
+                return plain_reply(text) if isinstance(text, str) else None
+            raw = await asker(system=system, user=user)
+        except Exception as exc:  # any model failure means: send the template
+            log.warning("writer_failed", reason=type(exc).__name__, job="writer_egyptian")
+            return None
+        return plain_reply(raw) if isinstance(raw, str) else None
 
     async def write(
         self,

@@ -14,9 +14,9 @@ llm_for(role) returns the client of a job, or None when the job has no AI model 
 """
 
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 import httpx
 
@@ -28,6 +28,7 @@ from team_b.observability import get_logger, record_ai_event
 from team_b.ports import LLMClient
 
 log = get_logger(__name__)
+_T = TypeVar("_T")
 OPENROUTER_URL = "https://openrouter.ai/api/v1"
 OPENROUTER_DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
 FAILURES_BEFORE_BACKUP = 3  # in a row: then the backup is used first for a while
@@ -71,6 +72,13 @@ def role_provider(settings: Settings, role: str) -> Provider | None:
     return Provider(general.base_url, own.model or general.model, key)
 
 
+def _text_of(client: LLMClient) -> Callable[..., Awaitable[str]]:
+    text = getattr(client, "complete_text", None)
+    if text is None:
+        raise UpstreamError("llm", "BAD_REQUEST", "this AI model client cannot answer in plain text")
+    return text  # type: ignore[no-any-return]
+
+
 class RoleLLM:
     """The AI model of one job: the main model, and a backup for when the main one is gone or keeps failing."""
 
@@ -91,12 +99,19 @@ class RoleLLM:
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
     ) -> dict[str, Any]:
+        return await self._run(
+            lambda c: c.complete_json(system=system, user=user, schema_hint=schema_hint, temperature=temperature)
+        )
+
+    async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
+        """The model's answer as plain text (for a small model that cannot keep a JSON format)."""
+        return await self._run(lambda c: _text_of(c)(system=system, user=user, temperature=temperature))
+
+    async def _run(self, call: Callable[[LLMClient], Awaitable[_T]]) -> _T:
         if self._backup is not None and self._clock() < self._skip_main_until:
-            return await self._ask_backup(system, user, schema_hint, temperature, "the main model is being skipped")
+            return await self._ask_backup(call, "the main model is being skipped")
         try:
-            answer = await self._main.complete_json(
-                system=system, user=user, schema_hint=schema_hint, temperature=temperature
-            )
+            answer = await call(self._main)
         except UpstreamError as exc:
             self._failures += 1
             if exc.code == "MODEL_NOT_FOUND":
@@ -106,21 +121,17 @@ class RoleLLM:
             if self._backup is None or exc.code == "UNAUTHORIZED":
                 record_ai_event(self._role, "failed", exc.code)
                 raise
-            return await self._ask_backup(system, user, schema_hint, temperature, exc.code)
+            return await self._ask_backup(call, exc.code)
         except Exception:
             record_ai_event(self._role, "failed", "INVALID_OUTPUT")  # nonsense: the caller uses its own fallback
             raise
         self._failures = 0
         return answer
 
-    async def _ask_backup(
-        self, system: str, user: str, schema_hint: dict[str, Any], temperature: float, why: str
-    ) -> dict[str, Any]:
+    async def _ask_backup(self, call: Callable[[LLMClient], Awaitable[_T]], why: str) -> _T:
         assert self._backup is not None
         try:
-            answer = await self._backup.complete_json(
-                system=system, user=user, schema_hint=schema_hint, temperature=temperature
-            )
+            answer = await call(self._backup)
         except UpstreamError as exc:
             record_ai_event(self._role, "failed", exc.code)
             raise

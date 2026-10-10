@@ -80,3 +80,28 @@ helpfulness, with a one-line reason each (rubric: `prompts/judge_v1.md`). The re
 are advice: they never decide whether a test passes. Ten percent of the graded replies are written to
 `reports/judge_spotcheck.csv`; a person fills in the `human_*` columns, then `python -m team_b judge-agreement reports/judge_spotcheck.csv`
 prints how often the judge is exactly right and within one point.
+
+### The Egyptian Arabic writer (`writer_egyptian`, optional)
+
+When the customer writes Egyptian Arabic or Arabizi, the reply can be worded by a model trained on that dialect instead of
+the main writer: [Nile-Chat](https://arxiv.org/abs/2507.04569) (4B, 3x4B and 12B), run locally through Ollama. It only
+words the reply; the same checks (no new number, date or id), the same reviewer and the same template fallback apply. With
+no `writer_egyptian` settings nothing changes (the job never borrows the general model).
+
+1. Pull a Nile-Chat model into Ollama. The 4B model is on Hugging Face as a GGUF file:
+   `ollama pull hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M` (about 2.7 GB; on Windows with a small system drive set
+   `OLLAMA_MODELS` to a folder on a bigger drive first and restart Ollama).
+2. In `.env` set (the writer must be on, `TEAM_B_LLM_REWRITE=1`):
+
+   ```text
+   TEAM_B_LLM_BASE_URL_WRITER_EGYPTIAN=http://127.0.0.1:11434/v1
+   TEAM_B_LLM_MODEL_WRITER_EGYPTIAN=hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M
+   ```
+
+   A small model may not keep a JSON format, so for this job the answer is read as plain text (code fences, quotes and a
+   leading "Reply:" or "الرد:" are removed). The trace shows `versions.writer_model = egyptian` for such a reply.
+3. Compare it with the main writer: `python -m team_b eval --llm --writer-compare [--judge]` answers the Arabic and Arabizi
+   conversations twice and writes `reports/writer_compare_<date>.csv`: the customer message and both replies side by side,
+   the AI judge's grades when `--judge` is given, and two empty columns, `rating_default` and `rating_egyptian`. Open the file
+   in Excel (it is UTF-8), give each reply a whole number from 1 (unnatural or wrong) to 5 (sounds like a native Egyptian
+   speaker, says exactly what the plan says), and compare the averages. Nothing in the file decides a test.

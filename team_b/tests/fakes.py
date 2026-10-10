@@ -12,7 +12,7 @@ class FakeLLM:
     Calls are recorded in `calls` (system, user, schema_hint, temperature). Running out of responses fails the test.
     """
 
-    def __init__(self, *responses: dict[str, Any] | Exception) -> None:
+    def __init__(self, *responses: dict[str, Any] | str | Exception) -> None:
         self._responses = list(responses)
         self.calls: list[dict[str, Any]] = []
 
@@ -25,6 +25,17 @@ class FakeLLM:
         response = self._responses.pop(0)
         if isinstance(response, Exception):
             raise response
+        return response
+
+    async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
+        """The plain-text call: a scripted str is the answer, an Exception is raised."""
+        self.calls.append({"system": system, "user": user, "temperature": temperature, "plain": True})
+        if not self._responses:
+            raise AssertionError("FakeLLM has no scripted response left")
+        response = self._responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        assert isinstance(response, str), "a plain-text call needs a str response"
         return response
 
 

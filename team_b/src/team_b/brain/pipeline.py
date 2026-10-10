@@ -187,6 +187,8 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
         elapsed = (time.perf_counter() - started) * 1000
         ctx.steps.append(TraceStep(stage="write", status=written.status, duration_ms=elapsed, detail=written.detail))
         ctx.versions["writer_prompt"] = writer.prompt_version
+        if getattr(writer, "writes_egyptian", lambda _locale: False)(locale):
+            ctx.versions["writer_model"] = "egyptian"
         if written.review:
             ctx.steps.append(
                 TraceStep(stage="review", status=written.review.split(":")[0], duration_ms=0.001, detail=written.review)

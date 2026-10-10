@@ -18,6 +18,7 @@ from team_b.domain.tenant import TenantRegistry
 from team_b.eval_compare import compare_runs, load_run
 from team_b.judge import Judge, agreement, pick_spotcheck, write_spotcheck
 from team_b.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
+from team_b.writer_compare import compare_writers
 
 
 def build_nlu(mode: str, settings: Settings) -> NLU:
@@ -53,6 +54,7 @@ async def eval_conversations(
     use_judge: bool = False,
     label: str = "",
     agent_mode: str | None = None,
+    writer_compare: bool = False,
 ) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
@@ -66,6 +68,17 @@ async def eval_conversations(
             raise SystemExit("--judge needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
         judge = Judge(llm)
     conversations = convo.load_set(directory)
+    if writer_compare:
+        if not use_llm or not settings.llm_rewrite:
+            raise SystemExit(
+                "--writer-compare needs --llm and the AI writer on (TEAM_B_LLM_REWRITE=1, see .env.example)."
+            )
+        try:
+            path, rows = await compare_writers(conversations, settings, out, judge=judge)
+        except ValueError as exc:
+            raise SystemExit(f"--writer-compare: {exc}") from None
+        print(f"wrote {rows} replies side by side to {path}: fill rating_default and rating_egyptian (1 to 5)")
+        return 0
     mode = "llm" if use_llm else "rules"
     if agent_mode in ("on", "shadow") and not use_llm:
         raise SystemExit(f"--agent-mode {agent_mode} needs the orchestrator's AI model: add --llm (see .env.example).")
@@ -225,6 +238,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "on and shadow need --llm. Shadow adds the agreement of the agent's first move to the report.",
     )
     full.add_argument(
+        "--writer-compare",
+        action="store_true",
+        help="answer the ar and arabizi conversations with the usual writer and with the Egyptian-Arabic model "
+        "(TEAM_B_LLM_*_WRITER_EGYPTIAN) and save both to reports/writer_compare_<date>.csv to rate; needs --llm",
+    )
+    full.add_argument(
         "--label", default="", help="name this run: the report is saved as reports/eval_<label>_<date>.json and .md"
     )
     compare = commands.add_parser("eval-compare", help="show two saved evaluation runs side by side")
@@ -253,7 +272,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "eval":
         return asyncio.run(
             eval_conversations(
-                args.set, args.llm, args.out, args.save_baseline, args.judge, args.label, args.agent_mode
+                args.set,
+                args.llm,
+                args.out,
+                args.save_baseline,
+                args.judge,
+                args.label,
+                args.agent_mode,
+                args.writer_compare,
             )
         )
     if args.command == "eval-compare":

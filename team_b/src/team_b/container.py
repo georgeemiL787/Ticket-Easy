@@ -140,6 +140,8 @@ def build_container(
     registry = CapabilityRegistry(container.capabilities, clock, settings.capability_ttl_s)
     summary_llm, reader_llm, knowledge_llm = llms.llm_for("summary"), llms.llm_for("reader"), llms.llm_for("knowledge")
     writer_llm = llms.llm_for("writer") if settings.llm_rewrite else None
+    own = settings.role("writer_egyptian")  # only when this job has its own server or model: it never borrows
+    egyptian_llm = llms.llm_for("writer_egyptian") if settings.llm_rewrite and (own.base_url or own.model) else None
     orchestrator_llm = llms.llm_for("orchestrator")
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(summary_llm) if summary_llm is not None else TemplateHistorySummarizer()
@@ -182,7 +184,9 @@ def build_container(
             evidence=container.evidence,
             capabilities=container.capabilities,
             rewriter=LLMRewriter(writer_llm) if writer_llm is not None else None,
-            writer=ReplyWriter(writer_llm, reviewer=reviewer) if writer_llm is not None else None,
+            writer=ReplyWriter(writer_llm, reviewer=reviewer, egyptian_llm=egyptian_llm)
+            if writer_llm is not None
+            else None,
             reviewer=reviewer,
             smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,

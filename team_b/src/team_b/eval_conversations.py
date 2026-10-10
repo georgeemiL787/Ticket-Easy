@@ -117,6 +117,10 @@ class CountingLLM:
             system=system, user=user, schema_hint=schema_hint, temperature=temperature
         )
 
+    async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
+        self.calls += 1
+        return await self._inner.complete_text(system=system, user=user, temperature=temperature)  # type: ignore[attr-defined,no-any-return]
+
 
 @dataclass
 class TurnResult:

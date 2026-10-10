@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from team_b.brain.knowledge_agent import KnowledgeAgent
 from team_b.brain.knowledge_llm import KnowledgeAssistant
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
@@ -83,6 +84,8 @@ class TurnContext:
     handoff_case_id: str | None = None
     ai_events: list[tuple[str, str, str]] = field(default_factory=list)  # (job, kind, detail)
     agent_passages: list[Passage] = field(default_factory=list)  # policy passages the agent found this turn
+    agent_policy_text: str = ""  # the knowledge agent's checked wording of the policy answer found this turn
+    agent_policy_citations: tuple[str, ...] = ()  # the passages that wording relies on
     agent_outcomes: list[Step] = field(default_factory=list)  # refusals and done/failed actions not yet told
     agent_wrote: bool = False  # the agent loop had the shop change something this turn
     shadow_plan: AgentPlan | None = None  # shadow mode: what the agent would have planned
@@ -131,6 +134,7 @@ class Deps:
     smalltalk: SmallTalk | None = None  # optional AI writer of small-talk replies (greetings, check-ins)
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
     knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer
+    knowledge_agent: KnowledgeAgent | None = None  # optional AI agent: searches (twice if needed), answers or not found
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
     move_picker: MovePicker | None = None  # the orchestrator; without it the agent is unavailable

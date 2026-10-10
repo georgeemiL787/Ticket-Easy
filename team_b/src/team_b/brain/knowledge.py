@@ -13,9 +13,11 @@ cannot answer at all is handed over too (dependency_unavailable); nothing is gue
 
 import re
 import weakref
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
+from team_b.brain.knowledge_agent import Found, NotFound
 from team_b.brain.text import normalize
 from team_b.brain.turn import Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
@@ -96,6 +98,11 @@ async def _search(ctx: TurnContext, query: str) -> tuple[Passage, ...]:
     return result.passages
 
 
+def record_evidence(ctx: TurnContext, passages: Sequence[Passage]) -> None:
+    """Note passages on the turn so the trace shows what the reply stands on."""
+    _record(ctx, tuple(passages))
+
+
 def _record(ctx: TurnContext, passages: tuple[Passage, ...]) -> None:
     """Note the passages on the turn so the trace shows what the reply stands on."""
     have = {e.citation for e in ctx.evidence}
@@ -131,20 +138,67 @@ async def _find(ctx: TurnContext, query_hint: str | None) -> tuple[Passage, ...]
     return passages
 
 
+async def research(ctx: TurnContext, message: str, hint: str | None, *, query: str | None = None) -> Found | NotFound:
+    """The knowledge agent's answer to `message` from the policy search (SearchUnavailable when the search is down).
+
+    `query` is a search the orchestrator already wrote; the agent then skips writing one."""
+    agent = ctx.deps.knowledge_agent
+    assert agent is not None
+
+    async def search(text: str) -> tuple[Passage, ...]:
+        return await _search(ctx, search_text(ctx, hint, text=text))
+
+    ctx.versions["knowledge_prompt"] = agent.prompt_version
+    return await agent.research(
+        message, ctx.session, locale_of(ctx), search, min_score=ctx.tenant.knowledge.min_score, first_query=query
+    )
+
+
+async def _answer_with_the_agent(ctx: TurnContext, name: str, hint: str | None) -> Step:
+    try:
+        outcome = await research(ctx, ctx.text, hint)
+    except SearchUnavailable as exc:
+        return _search_down(exc)
+    if isinstance(outcome, NotFound):
+        return _no_answer(ctx, name)
+    ctx.session.no_evidence_count = 0
+    quoted, text = _pick(outcome.passages), None
+    if outcome.citations:
+        quoted = tuple(p for p in outcome.passages if p.citation in outcome.citations)[: MAX_QUOTED + 1]
+        text = outcome.text or None
+    _record(ctx, quoted)
+    return Step(
+        Decision.ANSWER,
+        reason=f"answered {name} from {', '.join(p.citation for p in quoted)}"
+        + (" after a second search" if outcome.retried else ""),
+        reply_key="policy_answer",
+        citations=tuple(p.citation for p in quoted),
+        passages=quoted,
+        knowledge=True,
+        text=text,
+    )
+
+
+def _search_down(exc: SearchUnavailable) -> Step:
+    return Step(
+        Decision.HANDOFF,
+        reason=f"the policy search is unavailable: {exc}",
+        reply_key=f"handoff_{EscalationReason.DEPENDENCY_UNAVAILABLE.value}",
+        escalation=EscalationReason.DEPENDENCY_UNAVAILABLE,
+        awaiting="human",
+    )
+
+
 async def answer(ctx: TurnContext) -> Step:
     """The reply to a policy question: retrieved passages quoted with citations, or an honest "no evidence"."""
     name = ctx.plan.name if ctx.plan else "knowledge"
     spec = ctx.tenant.intents.get(name)
+    if ctx.deps.knowledge_agent is not None:
+        return await _answer_with_the_agent(ctx, name, spec.knowledge_query if spec else None)
     try:
         passages = await _find(ctx, spec.knowledge_query if spec else None)
     except SearchUnavailable as exc:
-        return Step(
-            Decision.HANDOFF,
-            reason=f"the policy search is unavailable: {exc}",
-            reply_key=f"handoff_{EscalationReason.DEPENDENCY_UNAVAILABLE.value}",
-            escalation=EscalationReason.DEPENDENCY_UNAVAILABLE,
-            awaiting="human",
-        )
+        return _search_down(exc)
     if not passages:
         return _no_answer(ctx, name)
     ctx.session.no_evidence_count = 0

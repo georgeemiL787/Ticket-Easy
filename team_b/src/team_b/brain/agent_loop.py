@@ -30,7 +30,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from team_b.brain import agent_actions, agent_reads
-from team_b.brain.choices import describe_orders
+from team_b.brain.choices import describe_orders, label_of
 from team_b.brain.composer import PLACEHOLDERS, default_composer
 from team_b.brain.redaction import redact, redact_mapping
 from team_b.brain.turn import COMPLETED, Step, TurnContext, locale_of
@@ -132,7 +132,12 @@ def check_move(ctx: TurnContext, move: AnyMove, seen: set[str]) -> list[CheckRec
         checks.append(_check("intent_is_an_action", ok, f"{move.intent!r} is not an action of this shop"))
     if isinstance(move, AskCustomer):
         key = move.question_key
-        if move.options:
+        if key == "disambiguate_intent":  # "return or exchange?": two requests that cannot both be meant
+            pair = len(move.options) == 2 and all(
+                o in ctx.tenant.intents and ctx.tenant.intents[o].kind == "action" for o in move.options
+            )
+            checks.append(_check("options_are_two_actions", pair, "a request choice offers exactly two actions"))
+        elif move.options:
             listed = {o.get("order_id") for o in ctx.agent_listing}
             ok = key == "disambiguate_order" and set(move.options) <= listed and len(move.options) <= MAX_OPTIONS
             checks.append(
@@ -179,8 +184,16 @@ async def _reply_step(ctx: TurnContext, move: Reply) -> Step:
         quoted = tuple(p for p in ctx.agent_passages if not wanted or p.citation in wanted)
         cited = tuple(p.citation for p in quoted)
         reason = f"answered from {', '.join(cited)}"
+        # the knowledge agent's own words, when it worded the answer and every passage it relied on is being quoted
+        own = ctx.agent_policy_text if ctx.agent_policy_text and set(ctx.agent_policy_citations) <= set(cited) else None
         return Step(
-            Decision.ANSWER, reason=reason, reply_key=POLICY_ANSWER, citations=cited, passages=quoted, knowledge=True
+            Decision.ANSWER,
+            reason=reason,
+            reply_key=POLICY_ANSWER,
+            citations=cited,
+            passages=quoted,
+            knowledge=True,
+            text=own,
         )
     assert plan.reply_key is not None  # checked: template_is_allowed
     waits = "detail" if plan.decision is Decision.CLARIFY else None
@@ -197,6 +210,13 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
         return await agent_actions.propose_action(ctx, move)  # the whole gate order of actions.py decides
     composer, locale = default_composer(), locale_of(ctx)
     if isinstance(move, AskCustomer):
+        if move.question_key == "disambiguate_intent":  # "return or exchange?"
+            first, second = move.options
+            ctx.session.choice_options = [first, second]
+            names = {"a": label_of(ctx.tenant, first, locale), "b": label_of(ctx.tenant, second, locale)}
+            choice = Step(Decision.CLARIFY, reason=move.why or f"cannot tell {first} from {second}",
+                          reply_key="disambiguate_intent", values=names, awaiting="intent_choice")  # fmt: skip
+            return agent_reads.ReadResult("asked which request", choice)
         if move.options:  # "which order?": the customer's own orders, masked, to pick from
             chosen = [o for o in ctx.agent_listing if o.get("order_id") in move.options]
             ctx.session.order_choices = [o["order_id"] for o in chosen]
@@ -326,6 +346,8 @@ async def run_agent(ctx: TurnContext) -> Step:
             raise AgentFallback(reason) from exc
         step = _give_up(ctx, reason)
     pending = step.awaiting
-    waits = pending in ("confirmation", "detail", "order_choice") or (pending or "").startswith("slot:")
+    waits = pending in ("confirmation", "detail", "order_choice", "intent_choice") or (pending or "").startswith(
+        "slot:"
+    )
     ctx.session.agent_pending = pending if waits else None
     return step

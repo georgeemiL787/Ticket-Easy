@@ -98,3 +98,32 @@ class FunctionPicker:
     async def next_move(self, view: Any) -> Any:
         self.views.append(view)
         return self._decide(view)
+
+
+class KnowledgeFakeLLM:
+    """A deterministic stand-in for the knowledge agent's model: it reads the task and answers like a careful one.
+
+    query: the customer's message; requery: the same words again unless told otherwise (a real model would also give
+    up on a question the documents do not cover); answer: the first passage, word for word, cited."""
+
+    def __init__(self, requery: str = "") -> None:
+        self.requery = requery
+        self.tasks: list[str] = []
+
+    async def complete_json(
+        self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
+    ) -> dict[str, Any]:
+        import re
+
+        task = re.search(r"<task>(\w+)</task>", user)
+        name = task.group(1) if task else ""
+        self.tasks.append(name)
+        message = re.search(r"<customer_message>\n(.*?)\n</customer_message>", user, re.S)
+        if name == "query":
+            return {"query": message.group(1) if message else ""}
+        if name == "requery":
+            return {"query": self.requery or (message.group(1) if message else "")}
+        passages = re.findall(r"^\[([^\]]+)\] (.*)$", user.split("<passages>")[1], re.M)
+        if not passages:
+            return {"answerable": False, "answer": "", "citations": [], "missing": "nothing was found"}
+        return {"answerable": True, "answer": passages[0][1], "citations": [passages[0][0]], "missing": ""}

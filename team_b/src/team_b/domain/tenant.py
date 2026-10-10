@@ -117,6 +117,12 @@ class AlertThresholds(FrozenModel):
     backlog_sla_min: int = Field(default=15, ge=1)  # an urgent case nobody claimed for this long
 
 
+class KnowledgeConfig(FrozenModel):
+    """How the knowledge agent judges what the policy search returns."""
+
+    min_score: float = Field(default=0.0, ge=0.0)  # passages scoring below this count as weak: another search is tried
+
+
 class IntentSpec(FrozenModel):
     kind: IntentKind
     description: str = ""
@@ -150,6 +156,7 @@ class TenantConfig(FrozenModel):
     escalation: EscalationConfig = Field(default_factory=EscalationConfig)
     permissions: PermissionsConfig = Field(default_factory=PermissionsConfig)
     alerts: AlertThresholds = Field(default_factory=AlertThresholds)
+    knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
     agent_mode: AgentMode | None = None  # on | off | shadow; unset: the service setting TEAM_B_AGENT_MODE

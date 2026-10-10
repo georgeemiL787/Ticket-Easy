@@ -78,6 +78,8 @@ async def agent_stage(ctx: TurnContext) -> str:
         remember_order_ids(session, [i for i in stated.split(",") if i])
     if session.awaiting == "order_choice" and session.order_choices:
         stages.resolve_order_choice(ctx)  # "the second" picks one of the orders that were offered
+    if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
+        stages.resolve_intent_choice(ctx)  # "the second" picks one of the two requests that were offered
     version = getattr(ctx.deps.move_picker, "prompt_version", None)
     if version:
         ctx.versions["orchestrator_prompt"] = str(version)

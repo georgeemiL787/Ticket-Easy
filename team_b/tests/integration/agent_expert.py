@@ -65,16 +65,20 @@ def _details(view: AgentView, intent: str) -> dict[str, Any]:
     return out
 
 
-def _new_steps(view: AgentView, steps: Steps) -> Steps:
+def _new_steps(view: AgentView, steps: Steps, carried: str = "") -> Steps:
     """The requests of this message that the saved plan does not hold yet, status first, actions in the order said."""
     action_intents = {a.intent for a in view.actions}
-    order = view.entities.get("order_id", "")
+    order = view.entities.get("order_id", "") or carried
     own = assign_order_ids(view.message, list(view.intents), _TENANT)  # two orders in one message: each request its own
     wanted: Steps = []
     if "order_status" in view.intents:
         wanted.append((f"status:{own.get('order_status', order) or '?'}", "open"))
     elif not view.intents and order and not any(t.startswith(("status:", "action:")) for t, _ in steps):
         wanted.append((f"status:{order}", "open"))  # "and what about NS-20790?"
+    pairs = [set(p) for p in _TENANT.conflicting_intents]
+    asking = [i for i in view.intents if i in action_intents]
+    if len(asking) >= 2 and set(asking[:2]) in pairs:
+        return steps  # "return or exchange?": ask which one before planning either
     wanted += [(f"action:{i}:{own.get(i, order) or '?'}", "open") for i in view.intents if i in action_intents]
     if "policy_question" in view.intents:
         wanted.append(("policy", "open"))
@@ -94,10 +98,17 @@ def expert(view: AgentView) -> MoveProposal:
     steps = [(t, s) for t, s in steps if s in ("open", "waiting")]
     if not any(s == "open" for _, s in steps):
         steps = [(t, s) for t, s in steps if s == "waiting"]
-    steps = _new_steps(view, steps)
+    carried = next((t.split(":", 1)[1] for t, _ in steps if t.startswith("choose the request:")), "")
+    steps = [(t, s) for t, s in steps if not t.startswith("choose the request")]  # asked last turn, answered now
+    steps = _new_steps(view, steps, carried)
     order = view.entities.get("order_id") or (view.known_order_ids[0] if len(view.known_order_ids) == 1 else "")
 
     current = next((t for t, s in steps if s == "open"), None)
+    chosen = [i for i in view.intents if i in {a.intent for a in view.actions}]
+    if current is None and len(chosen) >= 2 and {chosen[0], chosen[1]} in [set(p) for p in _TENANT.conflicting_intents]:
+        ask = AskCustomer(question_key="disambiguate_intent", options=[chosen[0], chosen[1]], why="return or exchange?")
+        carry = view.entities.get("order_id", "")
+        return MoveProposal(plan=_plan([(f"choose the request:{carry}", "open")]), move=ask)
     if current is None:
         if "greeting" in view.intents and not steps:
             text = normalize(view.message)

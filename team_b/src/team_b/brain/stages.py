@@ -225,7 +225,7 @@ def _ask_which_intent(ctx: TurnContext, options: list[str], *, again: bool) -> S
     )
 
 
-def _resolve_intent_choice(ctx: TurnContext) -> str:
+def resolve_intent_choice(ctx: TurnContext) -> str:
     """The answer to "do you mean A or B?": a position, a name, both, or a change of subject."""
     session, understanding = ctx.session, ctx.understanding
     options, lexicon = list(session.choice_options), default_lexicon()
@@ -277,7 +277,7 @@ async def disambiguate(ctx: TurnContext) -> str:
     if session.awaiting == "order_choice" and session.order_choices:
         return resolve_order_choice(ctx)
     if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
-        return _resolve_intent_choice(ctx)
+        return resolve_intent_choice(ctx)
     pair = conflicting_pair(understanding.intents, ctx.tenant) if understanding else None
     if pair is None:
         return "no conflict"

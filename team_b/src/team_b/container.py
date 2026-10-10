@@ -25,7 +25,7 @@ from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, Te
 from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
 from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
-from team_b.brain.knowledge_llm import LLMKnowledgeAssistant
+from team_b.brain.knowledge_agent import KnowledgeAgent
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.move_picker import LLMMovePicker
 from team_b.brain.nlu import NLU, RuleBasedNLU
@@ -137,7 +137,7 @@ def build_container(
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(summary_llm) if summary_llm is not None else TemplateHistorySummarizer()
     )
-    knowledge = LLMKnowledgeAssistant(knowledge_llm) if settings.llm_knowledge and knowledge_llm is not None else None
+    knowledge = KnowledgeAgent(knowledge_llm) if settings.llm_knowledge and knowledge_llm is not None else None
     nlu: NLU = LLMNLU(reader_llm) if reader_llm is not None else RuleBasedNLU()
     alerts: AlertStore = (
         SqliteAlertStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryAlertStore()
@@ -179,7 +179,7 @@ def build_container(
             events=container.events,
             llm=summary_llm,
             move_picker=LLMMovePicker(orchestrator_llm) if orchestrator_llm is not None else None,
-            knowledge=knowledge,
+            knowledge_agent=knowledge,
             registry=registry,
             policy=container.policy,
             max_queued_runs=settings.queue_max_runs,

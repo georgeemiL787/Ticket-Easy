@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from team_b.brain import gates, identity, knowledge, lookup, shopcalls
+from team_b.brain.knowledge_agent import NotFound
 from team_b.brain.nlu import extract_order_ids
 from team_b.brain.redaction import redact, redact_mapping
 from team_b.brain.text import normalize
@@ -46,6 +47,7 @@ MAX_RESULT_CHARS = 1200
 PASSAGE_CHARS = 280
 MAX_ORDERS_SHOWN = 10
 MAX_SEEN_IDS = 30
+MAX_PASSAGES_SHOWN = 3
 SHORTLIST_OVER = 10  # the tool menu is cut down to the reader's intents when there are more tools than this
 ORDER_FIELDS = ("order_id", "order_status", "placed_at", "delivered_at", "expected_delivery_date", "order_total")
 
@@ -208,7 +210,30 @@ def _listing_result(ctx: TurnContext, orders: list[Any], checks: list[CheckRecor
     return ReadResult(json.dumps({"orders": shown}, ensure_ascii=False, default=str), None, checks)
 
 
+async def _research(ctx: TurnContext, move: SearchPolicy) -> ReadResult:
+    """SearchPolicy with the knowledge agent: search, search again if needed, then answer or say what is missing."""
+    try:
+        outcome = await knowledge.research(ctx, ctx.text, None, query=move.query)
+    except knowledge.SearchUnavailable:
+        step = _handoff(EscalationReason.DEPENDENCY_UNAVAILABLE, "the policy search is unavailable")
+        return ReadResult("the policy search is unavailable", step)
+    if isinstance(outcome, NotFound):
+        ctx.session.no_evidence_count += 1
+        return ReadResult(f"no policy passage answers this: {outcome.what_was_missing}")
+    ctx.session.no_evidence_count = 0
+    passages = outcome.passages[:MAX_PASSAGES_SHOWN]
+    knowledge.record_evidence(ctx, passages)
+    known = {p.passage_id for p in ctx.agent_passages}
+    ctx.agent_passages.extend(p for p in passages if p.passage_id not in known)
+    if outcome.text:  # the agent's own words, already checked against the passages
+        ctx.agent_policy_text, ctx.agent_policy_citations = outcome.text, outcome.citations
+    shown = [{"id": p.citation, "text": redact(p.text)[:PASSAGE_CHARS]} for p in passages]
+    return ReadResult(json.dumps(shown, ensure_ascii=False))
+
+
 async def search_policy(ctx: TurnContext, move: SearchPolicy) -> ReadResult:
+    if ctx.deps.knowledge_agent is not None:
+        return await _research(ctx, move)
     errors_before = len(ctx.errors)
     passages = await knowledge.quote_for(ctx, move.query)
     if not passages and any(e.startswith("policy search failed") for e in ctx.errors[errors_before:]):

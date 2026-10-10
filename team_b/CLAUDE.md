@@ -102,6 +102,13 @@ team_b/
                  knowledge_llm (LLMKnowledgeAssistant, TEAM_B_LLM_KNOWLEDGE=1: search_query = the model writes the search query (Arabizi, follow-ups); answer = the model words the reply from
                  the passages in the customer's register (Step.text), names the passages it used, check_grounded vs the passages else the verbatim quote; answerable=false -> ask_rephrase/no_evidence;
                  prompts/knowledge_query_v1.md, knowledge_answer_v1.md)
+                 knowledge_agent (KnowledgeAgent, job knowledge, TEAM_B_LLM_KNOWLEDGE=1, prompts/knowledge_agent_v1.md = tasks query / requery / answer; research(): write the search (or take the
+                 orchestrator's query), search, if empty or every passage below tenant knowledge.min_score (default 0) write a DIFFERENT search once, then answer from the passages naming those used
+                 or return NotFound(what_was_missing); only retrieved passages can be cited, older versions of a document are dropped (latest_versions), the worded answer must pass check_grounded vs the
+                 passages and promise no colleague else the passages are quoted word for word, passages are appended after the reply and never reworded; knowledge.answer uses it in the usual flow
+                 (NotFound = today's ask_rephrase / no_answer_offer / no_evidence sequence), the SearchPolicy move uses it in agent mode (NotFound goes back to the orchestrator: "no policy passage
+                 answers this: <missing>", no_evidence_count; the agent's worded text becomes the policy_answer reply when its citations are all quoted); the old LLMKnowledgeAssistant and its two
+                 prompts stay for the old path (Deps.knowledge); AskCustomer disambiguate_intent offers two actions ("return or exchange?"), answered by the usual intent-choice resolver)
                  knowledge (answer: policy search with message + knowledge_query, one normalized retry for mixed/arabizi, 60 s cache per (tenant, query),
                  top passage(s) quoted verbatim; empty -> ask_rephrase once then handoff no_evidence; search down (one retry) ->
                  handoff dependency_unavailable; quote_for, quote_citations via get_passage; trace.knowledge_answer needs evidence + citations)

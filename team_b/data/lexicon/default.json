@@ -21,24 +21,34 @@
     "dilwaqty", "mkalemnish", "mekalemnish", "mkalmnish", "la2", "la2a", "laa", "ah", "aah", "aha", "ahh", "montag",
     "montage", "montaga", "talabak", "talabek", "talabko", "sa3a", "sa3at", "yom", "ayam", "3enwan", "3anwan",
     "3unwan", "3enwany", "ta3ala", "ta3ali", "ta3alo", "yarab", "inshallah", "inshaallah", "mashallah", "bokra",
-    "embare7", "elnaharda", "enharda", "nharda", "naharda", "elnahar"
+    "embare7", "elnaharda", "enharda", "nharda", "naharda", "elnahar", "ezaykom", "ezayko", "akhbarak", "akhbarek", "tosbah"
   ],
   "intents": {
     "greeting": {
       "en": [
         "hello", "hi", "hey", "good morning", "good evening", "good afternoon", "thanks", "thank you", "thx", "bye",
-        "goodbye", "see you"
+        "goodbye", "see you",
+        "how are you", "how are you doing", "how are things", "how's it going", "hows it going",
+        "what's up", "whats up", "good night", "nice to meet you", "pleased to meet you",
+        "have a nice day"
       ],
       "ar": [
         "السلام عليكم", "سلام عليكم", "اهلا", "اهلا بيك", "مرحبا", "صباح الخير", "مساء الخير", "شكرا", "شكرا ليك",
-        "شكرا ليكم", "تسلم", "مع السلامة", "يسلمو"
+        "شكرا ليكم", "تسلم", "مع السلامة", "يسلمو",
+        "عامل ايه", "عاملة ايه", "عاملين ايه", "ازيك", "ازيكم",
+        "اخبارك ايه", "اخبارك", "صباح النور", "مساء النور", "تصبح على خير",
+        "كيف حالك", "منور", "اهلا وسهلا"
       ],
       "arabizi": [
         "ahlan", "ahlan bik", "ezayak", "ezayek", "ezzayak", "salam", "salam 3alaykom", "sabah el kheir",
-        "masa2 el kheir", "shokran", "shukran", "tslm", "ma3 el salama", "m3 el salama"
+        "masa2 el kheir", "shokran", "shukran", "tslm", "ma3 el salama", "m3 el salama",
+        "3amel eh", "3amla eh", "3amleen eh", "ezaykom", "ezayko",
+        "akhbarak eh", "akhbarek eh", "sabah el nour", "masa2 el nour", "tosbah 3ala kheir",
+        "ahlan wa sahlan", "kol sana w enta tayeb"
       ],
       "mixed": [
-        "hello يا", "hi يا", "thanks يا", "thank you يا"
+        "hello يا", "hi يا", "thanks يا", "thank you يا",
+        "how are you يا", "عامل ايه يا", "hi عامل ايه", "hello ازيك"
       ]
     },
     "policy_question": {

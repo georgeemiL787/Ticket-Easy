@@ -92,3 +92,14 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
     facts = await container.traces.facts("shop_001", end.replace(year=2026, month=9, day=20), end.replace(hour=23))
     assert len(facts.turns) >= 40  # inside the window the dashboard looks at (it ends at the service's "now")
     assert date(2026, 9, 28) == container.clock.today()
+
+
+def test_the_demo_env_example_turns_the_ai_replies_on_but_the_code_defaults_stay_off() -> None:
+    from team_b.config import Settings
+
+    for name in ("TEAM_B_LLM_REWRITE", "TEAM_B_LLM_POLICY", "TEAM_B_LLM_KNOWLEDGE"):
+        assert re.search(rf"^{name}=1\b", ENV_EXAMPLE, flags=re.MULTILINE), name
+        assert f"{name}: ${{{name}:-1}}" in COMPOSE  # the full profile starts the AI model, so they are on there
+    assert "need an AI model" in ENV_EXAMPLE.lower() or "NEED an AI model" in ENV_EXAMPLE
+    settings = Settings.from_env({})
+    assert not (settings.llm_rewrite or settings.llm_policy or settings.llm_knowledge)  # tests and no-model demo

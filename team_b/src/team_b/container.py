@@ -31,6 +31,7 @@ from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
 from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import LLMRewriter
+from team_b.brain.smalltalk import SmallTalkWriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
@@ -162,6 +163,7 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
             evidence=container.evidence,
             capabilities=container.capabilities,
             rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
+            smalltalk=SmallTalkWriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
             events=container.events,
             llm=container.llm,
             knowledge=knowledge,

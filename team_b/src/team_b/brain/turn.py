@@ -10,6 +10,7 @@ from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
 from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
+from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import Passage, RiskAssessment
 from team_b.domain.decision import Decision, EscalationReason
@@ -113,6 +114,7 @@ class Deps:
     handlers: Mapping[str, Handler]  # by intent kind
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
+    smalltalk: SmallTalk | None = None  # optional AI writer of small-talk replies (greetings, check-ins)
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
     knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools

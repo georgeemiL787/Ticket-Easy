@@ -35,7 +35,7 @@ from team_b.contracts.tools import ToolCallRequest, ToolSpec
 from team_b.domain.actions import ActionState
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.handoff import CaseStatus
-from team_b.domain.trace import ToolCallRecord
+from team_b.domain.trace import ToolCallRecord, TraceStep
 from team_b.domain.understanding import IntentCandidate, Locale
 from team_b.observability import get_logger
 
@@ -438,10 +438,30 @@ async def plan(ctx: TurnContext) -> str:
 
 
 async def smalltalk_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
-    """Greetings and thanks are answered from templates; no intent is opened."""
+    """Greetings, check-ins and thanks; no intent is opened. The reply is the fixed greeting or thanks template, unless
+    an AI model is configured: then it writes a natural answer ("I'm doing well, thanks for asking!") that code has
+    checked (brain/smalltalk.py); on any problem the template is sent."""
     text = normalize(ctx.text)
     key = "thanks" if any(find_spans(text, term) for term in THANKS_TERMS) else "greeting"
-    return Step(Decision.ANSWER, reason=f"small talk ({planned.name})", reply_key=key)
+    step = Step(Decision.ANSWER, reason=f"small talk ({planned.name})", reply_key=key)
+    writer = ctx.deps.smalltalk
+    if writer is None:
+        return step
+    started = time.perf_counter()
+    locale = locale_of(ctx)
+    result = await writer.write(
+        ctx.text,
+        "\n".join(f"{m.role}: {m.text}" for m in ctx.session.history[-7:-1]),
+        locale,
+        ctx.tenant.display_name,
+        default_composer().t(locale, key),
+    )
+    elapsed = (time.perf_counter() - started) * 1000
+    ctx.steps.append(
+        TraceStep(stage="smalltalk_write", status=result.status, duration_ms=max(elapsed, 0.001), detail=result.detail)
+    )
+    ctx.versions["smalltalk_prompt"] = writer.prompt_version
+    return replace(step, text=result.text) if result.status == "used" else step
 
 
 async def placeholder_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:

@@ -20,6 +20,7 @@ from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
 from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
+from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
@@ -86,6 +87,7 @@ class Orchestrator:
         handlers: Mapping[str, Handler] | None = None,
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
+        smalltalk: SmallTalk | None = None,
         llm: LLMClient | None = None,
         knowledge: KnowledgeAssistant | None = None,
         events: Publisher | None = None,
@@ -107,6 +109,7 @@ class Orchestrator:
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
             capabilities=capabilities,
             rewriter=rewriter,
+            smalltalk=smalltalk,
             llm=llm,
             knowledge=knowledge,
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),

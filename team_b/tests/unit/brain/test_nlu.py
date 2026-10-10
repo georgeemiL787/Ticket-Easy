@@ -92,7 +92,31 @@ ARABIZI = [
     ("3ayez a3mel return", ["return_request"]),
     ("el shahn bekam lel eskandareya?", ["policy_question"]),
 ]
-ALL = EN + AR + MIXED + ARABIZI
+CHECK_INS = [  # "how are you" and the like are greetings in every style, not a request for more detail
+    ("how are you", ["greeting"]),
+    ("How are you doing today?", ["greeting"]),
+    ("how's it going", ["greeting"]),
+    ("what's up", ["greeting"]),
+    ("good night", ["greeting"]),
+    ("nice to meet you", ["greeting"]),
+    ("عامل ايه", ["greeting"]),
+    ("عاملة ايه؟", ["greeting"]),
+    ("ازيك", ["greeting"]),
+    ("ازيكم", ["greeting"]),
+    ("اخبارك ايه", ["greeting"]),
+    ("صباح النور", ["greeting"]),
+    ("مساء النور", ["greeting"]),
+    ("3amel eh", ["greeting"]),
+    ("3amla eh", ["greeting"]),
+    ("ezaykom", ["greeting"]),
+    ("akhbarak eh", ["greeting"]),
+    ("sabah el nour", ["greeting"]),
+    ("masa2 el nour", ["greeting"]),
+    ("hi عامل ايه", ["greeting"]),
+    ("how are you, where is my order NS-20877?", ["order_status"]),  # the request wins over the greeting
+    ("عامل ايه، الاوردر وصل فين؟", ["order_status"]),
+]
+ALL = EN + AR + MIXED + ARABIZI + CHECK_INS
 
 
 @pytest.mark.parametrize(("text", "expected"), ALL, ids=[t[:40] for t, _ in ALL])

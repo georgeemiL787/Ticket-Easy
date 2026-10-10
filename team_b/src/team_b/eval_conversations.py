@@ -25,13 +25,15 @@ import re
 import time
 from collections import defaultdict
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal
 
 from pydantic import Field
 
+from team_b.adapters.llm_limits import RateBudgetExceeded
 from team_b.brain.choices import mask_order_id, short_date
 from team_b.brain.composer import check_grounded, default_composer
 from team_b.brain.metrics import percentile
@@ -41,7 +43,7 @@ from team_b.container import Container, build_container
 from team_b.domain.agent import AgentMode
 from team_b.domain.base import FrozenModel
 from team_b.domain.understanding import Locale
-from team_b.judge import CRITERIA, Judge, JudgedTurn, JudgeStats
+from team_b.judge import CRITERIA, Judge, JudgedTurn, JudgeScore, JudgeStats
 from team_b.ports import LLMClient, MovePicker
 
 CONVERSATIONS_DIR = PROJECT_ROOT / "eval" / "conversations"
@@ -108,14 +110,19 @@ class CountingLLM:
     def __init__(self, inner: LLMClient) -> None:
         self._inner = inner
         self.calls = 0
+        self.budget_hit = False  # the provider's per-minute budget ran out during a call
 
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
     ) -> dict[str, Any]:
         self.calls += 1
-        return await self._inner.complete_json(
-            system=system, user=user, schema_hint=schema_hint, temperature=temperature
-        )
+        try:
+            return await self._inner.complete_json(
+                system=system, user=user, schema_hint=schema_hint, temperature=temperature
+            )
+        except RateBudgetExceeded:
+            self.budget_hit = True
+            raise
 
     async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
         self.calls += 1
@@ -386,6 +393,10 @@ class EvalReport:
     label: str = ""  # a name for this run (--label), used in the report's file name
     agent_mode: str | None = None  # the agent mode this run used (on, off, shadow), if it was set
     shadow_disagreements: list[dict[str, Any]] = field(default_factory=list)  # shadow mode: where the agent differs
+    complete: bool = (
+        True  # False: the run stopped (--batch, or the provider's budget ran out) before the last conversation
+    )
+    remaining: int = 0  # conversations still to run
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -398,6 +409,38 @@ class EvalReport:
         }  # fmt: skip
 
 
+def save_checkpoint(
+    path: Path, conversation_id: str, results: list[TurnResult], writes: list[bool], scores: list[Any]
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {
+        "id": conversation_id,
+        "results": [asdict(r) for r in results],
+        "writes": writes,
+        "scores": [None if sc is None else sc.model_dump(by_alias=True) for sc in scores],
+    }
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def load_checkpoint(path: Path) -> dict[str, tuple[list[TurnResult], list[bool], list[Any]]]:
+    """The conversations a stopped run finished: id -> (results, write flags, judge scores)."""
+    found: dict[str, tuple[list[TurnResult], list[bool], list[Any]]] = {}
+    if not path.is_file():
+        return found
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        results = []
+        for r in row["results"]:
+            shadow = r.pop("shadow", None)
+            results.append(TurnResult(**r, shadow=Agreement(**shadow) if shadow else None))
+        scores = [None if sc is None else JudgeScore.model_validate(sc) for sc in row["scores"]]
+        found[row["id"]] = (results, row["writes"], scores)
+    return found
+
+
 async def evaluate(
     conversations: Sequence[EvalConversation],
     settings: Settings,
@@ -408,8 +451,15 @@ async def evaluate(
     label: str = "",
     agent_mode: AgentMode | None = None,
     move_picker: MovePicker | None = None,
+    checkpoint: Path | None = None,
+    batch: int | None = None,
 ) -> EvalReport:
-    """Run the conversations on one container (each in its own chat) and measure every turn."""
+    """Run the conversations on one container (each in its own chat) and measure every turn.
+
+    checkpoint: a file that keeps every finished conversation (one JSON line each). Conversations already in it are
+    not run again, so a long run can be stopped and continued (`eval --resume`). batch: run at most this many new
+    conversations, then stop. A conversation during which the provider's budget ran out is dropped, not recorded
+    (its answers came from the fallback), and the run stops there: report.complete is False until all are done."""
     counter: list[CountingLLM] = []
 
     def count(llm: LLMClient) -> LLMClient:
@@ -430,12 +480,14 @@ async def evaluate(
     topics: dict[str, Counter] = defaultdict(Counter)
     judge_stats = {s: JudgeStats() for s in (*STYLES, "all")} if judge is not None else None
     judged: list[JudgedTurn] = []
-    for conversation in conversations:
-        audit_before = len(container.shop.audit_log(TENANT))
-        results = await run_conversation(
-            container, conversation, (lambda: sum(c.calls for c in counter)) if counter else None
-        )
-        writes = [e for e in container.shop.audit_log(TENANT)[audit_before:] if kinds.get(e.tool, "write") != "read"]
+    saved = load_checkpoint(checkpoint) if checkpoint is not None else {}
+    done = 0
+    complete = True
+
+    def absorb(
+        conversation: EvalConversation, results: list[TurnResult], writes: list[bool], scores: list[Any]
+    ) -> None:
+        """Count one finished conversation into the report (writes: was each write the shop saw rule-checked)."""
         locale = LOCALE_OF_STYLE[conversation.language_style]
         report = styles[conversation.language_style]
         report.conversations += 1
@@ -451,11 +503,11 @@ async def evaluate(
                         "said": turn.say, "today": got.shadow.today, "agent": got.shadow.agent, "why": got.shadow.why,
                     }
                 )  # fmt: skip
-        report.add_conversation(conversation, results, writes)
-        overall.add_conversation(conversation, results, writes)
-        if judge is not None and judge_stats is not None:
-            for turn, got in zip(conversation.turns, results, strict=True):
-                score = await judge.score(turn.say, got.text, conversation.language_style)
+        audit = [SimpleNamespace(policy_request_id="checked" if ok else "") for ok in writes]
+        report.add_conversation(conversation, results, audit)
+        overall.add_conversation(conversation, results, audit)
+        if judge_stats is not None:
+            for turn, got, score in zip(conversation.turns, results, scores, strict=True):
                 judge_stats[conversation.language_style].add(score)
                 judge_stats["all"].add(score)
                 if score is not None:
@@ -482,10 +534,45 @@ async def evaluate(
                     },
                 )  # fmt: skip
             )
+
+    for conversation in conversations:
+        if conversation.id in saved:  # finished in an earlier run
+            old_results, old_writes, old_scores = saved[conversation.id]
+            absorb(conversation, old_results, old_writes, old_scores)
+            continue
+        if batch is not None and done >= batch:
+            complete = False
+            break
+        for c in counter:
+            c.budget_hit = False
+        audit_before = len(container.shop.audit_log(TENANT))
+        results = await run_conversation(
+            container, conversation, (lambda: sum(c.calls for c in counter)) if counter else None
+        )
+        if any(c.budget_hit for c in counter):  # the answers came from the fallback: not a measurement of the model
+            complete = False
+            break
+        writes = [
+            bool(e.policy_request_id)
+            for e in container.shop.audit_log(TENANT)[audit_before:]
+            if kinds.get(e.tool, "write") != "read"
+        ]
+        scores = []
+        if judge is not None:
+            scores = [
+                await judge.score(t.say, r.text, conversation.language_style)
+                for t, r in zip(conversation.turns, results, strict=True)
+            ]
+        absorb(conversation, results, writes, scores)
+        done += 1
+        if checkpoint is not None:
+            save_checkpoint(checkpoint, conversation.id, results, writes, scores)
     scored.sort(key=lambda item: (-item[0], item[1]))
     final = EvalReport(mode, when or date.today(), styles, overall, [row for _, _, row in scored[:WORST]], dict(topics))
     final.judge, final.judged, final.label = judge_stats, judged, label
     final.agent_mode, final.shadow_disagreements = agent_mode, disagreements
+    final.complete = complete
+    final.remaining = len(conversations) - sum(r.conversations for r in styles.values())
     return final
 
 

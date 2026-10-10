@@ -55,6 +55,8 @@ async def eval_conversations(
     label: str = "",
     agent_mode: str | None = None,
     writer_compare: bool = False,
+    resume: bool = False,
+    batch: int | None = None,
 ) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
@@ -80,6 +82,11 @@ async def eval_conversations(
         print(f"wrote {rows} replies side by side to {path}: fill rating_default and rating_egyptian (1 to 5)")
         return 0
     mode = "llm" if use_llm else "rules"
+    checkpoint: Path | None = None
+    if resume or batch is not None:
+        checkpoint = out / f"eval_{label or 'run'}_{mode}_{agent_mode or 'default'}.partial.jsonl"
+        if not resume and checkpoint.exists():
+            checkpoint.unlink()  # a new run starts from the first conversation; --resume keeps the earlier ones
     if agent_mode in ("on", "shadow") and not use_llm:
         raise SystemExit(f"--agent-mode {agent_mode} needs the orchestrator's AI model: add --llm (see .env.example).")
     report = await convo.evaluate(
@@ -89,7 +96,17 @@ async def eval_conversations(
         judge=judge,
         label=label,
         agent_mode=agent_mode,  # type: ignore[arg-type]
+        checkpoint=checkpoint,
+        batch=batch,
     )
+    if not report.complete:
+        print(
+            f"stopped with {report.remaining} conversation(s) still to run (batch size or the provider's rate limit): "
+            f"run the same command with --resume to continue; the progress is kept in {checkpoint}"
+        )
+        return 3
+    if checkpoint is not None and checkpoint.exists():
+        checkpoint.unlink()  # the run is finished: the report holds everything
     print(convo.render(report))
     markdown, data = convo.write_report(report, out)
     print(f"wrote {markdown} and {data}")
@@ -243,6 +260,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="answer the ar and arabizi conversations with the usual writer and with the Egyptian-Arabic model "
         "(TEAM_B_LLM_*_WRITER_EGYPTIAN) and save both to reports/writer_compare_<date>.csv to rate; needs --llm",
     )
+    full.add_argument("--resume", action="store_true", help="continue a run that stopped (--batch or the rate limit)")
+    full.add_argument(
+        "--batch",
+        type=int,
+        default=None,
+        metavar="N",
+        help="run at most N new conversations, then stop; with --resume, continue where the last run stopped",
+    )
     full.add_argument(
         "--label", default="", help="name this run: the report is saved as reports/eval_<label>_<date>.json and .md"
     )
@@ -280,6 +305,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.label,
                 args.agent_mode,
                 args.writer_compare,
+                args.resume,
+                args.batch,
             )
         )
     if args.command == "eval-compare":

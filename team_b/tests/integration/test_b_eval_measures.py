@@ -198,3 +198,47 @@ def test_the_label_option_names_the_saved_report(tmp_path: Path) -> None:
     (folder / "en.jsonl").write_text(json.dumps(line) + "\n", encoding="utf-8")
     assert cli.main(["eval", "--set", str(folder), "--out", str(tmp_path / "out"), "--label", "phase0"]) == 0
     assert list((tmp_path / "out").glob("eval_phase0_*.json"))
+
+
+# ---- a long run that stops and continues (--batch, --resume) ----
+
+
+async def test_a_run_in_batches_gives_the_same_report_as_one_run(tmp_path: Path) -> None:
+    from team_b.config import Settings
+    from team_b.eval_conversations import evaluate, load_set, sample
+
+    settings = Settings.from_env({"TEAM_B_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
+    conversations = sample(load_set(), 2)  # 8 conversations
+    whole = await evaluate(conversations, settings)
+    checkpoint = tmp_path / "partial.jsonl"
+    first = await evaluate(conversations, settings, checkpoint=checkpoint, batch=3)
+    assert not first.complete and first.remaining == 5 and len(checkpoint.read_text(encoding="utf-8").splitlines()) == 3
+    second = await evaluate(conversations, settings, checkpoint=checkpoint, batch=3)
+    assert not second.complete and second.remaining == 2
+    last = await evaluate(conversations, settings, checkpoint=checkpoint, batch=3)
+    assert last.complete and last.remaining == 0
+
+    def counts(report: Any) -> dict[str, Any]:
+        return {k: v for k, v in report.as_dict()["overall"]["measures"].items() if not k.startswith("time_")}
+
+    assert counts(last) == counts(whole)  # the same numbers (how long each took differs from run to run)
+    assert last.as_dict()["overall"]["intent_accuracy"] == whole.as_dict()["overall"]["intent_accuracy"]
+    assert [w["id"] for w in last.worst] == [w["id"] for w in whole.worst]
+
+
+async def test_a_conversation_during_which_the_budget_ran_out_is_not_recorded(tmp_path: Path) -> None:
+    from team_b.adapters.llm_limits import RateBudgetExceeded
+    from team_b.config import Settings
+    from team_b.eval_conversations import CountingLLM, evaluate, load_set, sample
+
+    class Empty:
+        async def complete_json(self, **kw: Any) -> dict[str, Any]:
+            raise RateBudgetExceeded(30.0, "requests per minute")
+
+    counting = CountingLLM(Empty())  # type: ignore[arg-type]
+    with pytest.raises(RateBudgetExceeded):
+        await counting.complete_json(system="", user="", schema_hint={})
+    assert counting.budget_hit
+    settings = Settings.from_env({"TEAM_B_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
+    done = await evaluate(sample(load_set(), 1), settings, checkpoint=tmp_path / "p.jsonl", batch=2)
+    assert done.remaining == 2 and len((tmp_path / "p.jsonl").read_text(encoding="utf-8").splitlines()) == 2

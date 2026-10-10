@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 
 from team_b.adapters.llm_policy_gate import LLMPolicyGate
+from team_b.brain.llm_nlu import PROMPTS_DIR, PromptTemplate
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.evidence import Passage, RetrievalResult
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
@@ -138,3 +139,64 @@ async def test_a_low_risk_allow_needs_no_citation_but_a_risky_one_does() -> None
     low = request(tool={"name": "create_ticket", "operation_kind": "create", "risk": "low"})
     out = await agent("allow", FakeLLM(verdict("allow", citations=["none#1"]))).check_action(low)
     assert out.decision == "allow"
+
+
+# ---- prompt v2: a person is asked only when a person can add something ----
+
+
+def test_the_gate_uses_prompt_v2_and_v1_is_kept() -> None:
+    gate = agent("allow", FakeLLM())
+    assert gate.prompt_version == "policy_agent_v2"
+    assert (PROMPTS_DIR / "policy_agent_v1.md").is_file()
+
+
+def test_v2_asks_a_person_only_in_the_three_named_cases() -> None:
+    system = PromptTemplate.load("policy_agent_v2").system
+    assert "When in doubt" not in system and "never allow" not in system  # v1's catch-all is gone
+    assert "Being unsure is not a reason on its own" in system
+    for case in ("(a) a fact", "(b) the passages themselves name an exception", "(c) the amount is above"):
+        assert case in system
+    assert "name any other option" in system  # a deny says why and names the alternatives the passages allow
+    assert "When in doubt" in PromptTemplate.load("policy_agent_v1").system  # the old version is untouched
+
+
+async def test_a_borderline_case_the_passages_decide_is_denied_with_the_alternative_not_sent_to_a_person() -> None:
+    llm = FakeLLM(
+        verdict(
+            "deny",
+            message_en="Refunds are allowed within 14 days of delivery, but an exchange may be possible.",
+            message_ar="الاسترداد خلال 14 يوم من الاستلام، لكن ممكن نشوف استبدال.",
+        )
+    )
+    out = await agent("allow", llm).check_action(request(facts={"days_since_delivery": 15}))
+    assert out.decision == "deny" and out.reason_code == "POLICY_AGENT_DENY"
+    assert out.user_message is not None and "exchange" in out.user_message.en
+    assert "Being unsure is not a reason on its own" in llm.calls[0]["system"]  # the model was given v2
+
+
+async def test_a_case_the_passages_decide_as_allowed_stays_allowed() -> None:
+    out = await agent("allow", FakeLLM(verdict("allow"))).check_action(request(facts={"days_since_delivery": 14}))
+    assert out.decision == "allow"
+
+
+async def test_a_real_exception_case_still_goes_to_a_person() -> None:
+    llm = FakeLLM(
+        verdict(
+            "require_human",
+            message_en="A colleague will look at it.",
+            message_ar="زميل هيبص على الموضوع.",
+        )
+    )
+    out = await agent("allow", llm).check_action(request(arguments={"order_id": "NS-20877", "reason": "damaged item"}))
+    assert out.decision == "require_human" and out.reason_code == "POLICY_AGENT_REQUIRE_HUMAN"
+
+
+@pytest.mark.parametrize("engine", ["deny", "require_human"])
+async def test_v2_cannot_loosen_a_rule_checker_deny_or_hold(engine: str) -> None:
+    out = await agent(engine, FakeLLM(verdict("allow"))).check_action(request())
+    assert out.decision == engine
+
+
+async def test_v2_does_not_trust_an_allow_that_cites_nothing() -> None:
+    out = await agent("allow", FakeLLM(verdict("allow", citations=["made_up#1"]))).check_action(request())
+    assert out.decision == "require_human"

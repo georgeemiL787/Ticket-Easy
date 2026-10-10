@@ -22,7 +22,7 @@ from team_b.observability import get_logger
 from team_b.ports import EvidenceProvider, LLMClient, PolicyGate
 
 log = get_logger(__name__)
-PROMPT = "policy_agent_v1"
+PROMPT = "policy_agent_v2"
 STRICTNESS: Final[dict[str, int]] = {"allow": 0, "require_human": 1, "deny": 2}
 SCHEMA_HINT = {
     "decision": "allow|require_human|deny",

@@ -170,4 +170,6 @@ def record_problems(trace: DecisionTrace) -> list[str]:
         problems.append("versions lacks rewrite_prompt")
     if any(s.stage == "write" for s in trace.steps) and not trace.versions.get("writer_prompt"):
         problems.append("versions lacks writer_prompt")
+    if any(s.stage == "review" for s in trace.steps) and not trace.versions.get("reviewer_prompt"):
+        problems.append("versions lacks reviewer_prompt")
     return problems

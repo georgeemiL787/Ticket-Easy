@@ -33,6 +33,7 @@ from team_b.brain import agent_actions, agent_reads
 from team_b.brain.choices import describe_orders, label_of
 from team_b.brain.composer import PLACEHOLDERS, default_composer
 from team_b.brain.redaction import redact, redact_mapping
+from team_b.brain.reviewer import HandoverWatch, blocks_handover
 from team_b.brain.turn import COMPLETED, Step, TurnContext, locale_of
 from team_b.domain.agent import (
     MAX_ARGUMENT_CHARS,
@@ -292,6 +293,7 @@ async def _loop(ctx: TurnContext) -> Step:
     refused: str | None = None
     refused_in_a_row = 0
     calls = 0
+    watch = HandoverWatch()
     while calls < deps.agent_max_moves:
         calls += 1
         view = await agent_reads.build_view(ctx, refused, ctx.agent_steps)
@@ -321,6 +323,9 @@ async def _loop(ctx: TurnContext) -> Step:
             refused, refused_in_a_row = "that is not a move of the menu", refused_in_a_row + 1
         else:
             checks = check_move(ctx, move, seen)
+            if isinstance(move, HandOver) and deps.reviewer is not None and blocks_handover(move, watch):
+                reason = "the reviewer: say what was tried before handing over"
+                checks.append(CheckRecord(name="handover_lists_what_was_tried", passed=False, reason=reason))
             worked = agent_reads.ReadResult("refused") if any(not c.passed for c in checks) else await _work(ctx, move)
             checks = checks + worked.checks
             if all(c.passed for c in checks):

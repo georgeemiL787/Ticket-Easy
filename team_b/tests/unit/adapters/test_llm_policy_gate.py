@@ -144,9 +144,9 @@ async def test_a_low_risk_allow_needs_no_citation_but_a_risky_one_does() -> None
 # ---- prompt v2: a person is asked only when a person can add something ----
 
 
-def test_the_gate_uses_prompt_v2_and_v1_is_kept() -> None:
+def test_the_gate_uses_the_reviewer_prompt_and_the_old_policy_prompts_are_kept() -> None:
     gate = agent("allow", FakeLLM())
-    assert gate.prompt_version == "policy_agent_v2"
+    assert gate.prompt_version == "reviewer_v1"
     assert (PROMPTS_DIR / "policy_agent_v1.md").is_file()
 
 

@@ -50,6 +50,7 @@ ENV_VARS: dict[str, str] = {
     "llm_rewrite": "TEAM_B_LLM_REWRITE",
     "llm_policy": "TEAM_B_LLM_POLICY",
     "llm_knowledge": "TEAM_B_LLM_KNOWLEDGE",
+    "llm_review": "TEAM_B_LLM_REVIEW",
     "rate_limit_per_minute": "TEAM_B_RATE_LIMIT_PER_MIN",
     "llm_max_wait_s": "TEAM_B_LLM_MAX_WAIT_S",
     "agent_mode": "TEAM_B_AGENT_MODE",
@@ -143,6 +144,7 @@ class Settings(BaseModel):
     llm_rewrite: bool = False  # let the AI model reword replies (checked: it may not add any fact); needs TEAM_B_LLM
     llm_policy: bool = False  # an AI agent reads the policy and may tighten (never loosen) the rule checker
     llm_knowledge: bool = False  # the AI model writes the search query and words the policy answer
+    llm_review: bool = False  # the reviewer checks every written reply and every write (stricter only); needs a model
     rate_limit_per_minute: int = Field(default=20, ge=1)  # messages per conversation per minute (chat API)
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
 

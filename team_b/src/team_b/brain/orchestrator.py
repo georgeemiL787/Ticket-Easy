@@ -21,6 +21,7 @@ from team_b.brain.knowledge_llm import KnowledgeAssistant
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.pipeline import run_turn
 from team_b.brain.registry import CapabilityRegistry
+from team_b.brain.reviewer import Reviewer
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.stages import handoff_handler, smalltalk_handler
@@ -93,6 +94,7 @@ class Orchestrator:
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
         writer: Writer | None = None,
+        reviewer: Reviewer | None = None,
         smalltalk: SmallTalk | None = None,
         llm: LLMClient | None = None,
         knowledge: KnowledgeAssistant | None = None,
@@ -121,6 +123,7 @@ class Orchestrator:
             capabilities=capabilities,
             rewriter=rewriter,
             writer=writer,
+            reviewer=reviewer,
             smalltalk=smalltalk,
             llm=llm,
             knowledge=knowledge,

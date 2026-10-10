@@ -182,11 +182,33 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
             message=ctx.text,
             history="\n".join(f"{m.role}: {m.text}" for m in recent),
             shop=ctx.tenant.display_name,
+            passages=step.passages,
         )
         elapsed = (time.perf_counter() - started) * 1000
         ctx.steps.append(TraceStep(stage="write", status=written.status, duration_ms=elapsed, detail=written.detail))
         ctx.versions["writer_prompt"] = writer.prompt_version
+        if written.review:
+            ctx.steps.append(
+                TraceStep(stage="review", status=written.review.split(":")[0], duration_ms=0.001, detail=written.review)
+            )
+            ctx.versions["reviewer_prompt"] = getattr(writer, "reviewer_version", None) or "unknown"
         text = written.text
+    elif step.text is not None and ctx.deps.reviewer is not None and step.decision in WRITABLE and not step.silent:
+        # a policy answer worded by the knowledge agent: the reviewer checks it against the passages it relies on
+        started = time.perf_counter()
+        verdict = await ctx.deps.reviewer.review_reply(plan_of(step), step.text, ctx.text, step.passages)
+        note = "failed" if verdict.failed else ("ok" if verdict.ok else f"blocked: {verdict.detail}")
+        ctx.steps.append(
+            TraceStep(
+                stage="review",
+                status=note.split(":")[0],
+                duration_ms=(time.perf_counter() - started) * 1000,
+                detail=note,
+            )
+        )
+        ctx.versions["reviewer_prompt"] = ctx.deps.reviewer.prompt_version
+        if not verdict.ok:  # fail closed: the passages are quoted word for word instead
+            text = composer.t(locale, step.reply_key, **step.values)
     elif rewriter is not None and step.text is None and step.decision in REWRITABLE and not step.silent:
         started = time.perf_counter()
         recent = ctx.session.history[-6:]

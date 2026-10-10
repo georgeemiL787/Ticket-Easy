@@ -15,13 +15,16 @@ orders, money, policies, promises or colleagues). What the shop executed ("done"
 by the model, and policy quotes are added after the reply, never shown to the model.
 """
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
 from team_b.brain.composer import check_grounded, promises_handover
 from team_b.brain.llm_nlu import PromptTemplate
 from team_b.brain.redaction import redact
+from team_b.brain.reviewer import Reviewer
 from team_b.brain.rewrite import MAX_GROWTH, MAX_PROBLEMS_SHOWN, REGISTER
 from team_b.brain.smalltalk import problems_with as small_talk_problems
+from team_b.contracts.evidence import Passage
 from team_b.domain.agent import ReplyPlan
 from team_b.domain.decision import Decision
 from team_b.domain.understanding import Locale
@@ -88,6 +91,7 @@ class WriteResult(NamedTuple):
     text: str  # what to send: the written reply if it passed, else the template
     status: Literal["used", "retried", "template"]
     detail: str
+    review: str = ""  # what the reviewer said about the last text it saw: ok, blocked: ..., failed (empty: not asked)
 
 
 class Writer(Protocol):
@@ -103,6 +107,7 @@ class Writer(Protocol):
         message: str = "",
         history: str = "",
         shop: str = "",
+        passages: Sequence[Passage] = (),
     ) -> WriteResult: ...
 
 
@@ -125,13 +130,20 @@ def problems_in(plan: ReplyPlan, template: str, candidate: str, shop: str) -> li
 
 
 class ReplyWriter:
-    def __init__(self, llm: LLMClient, prompt: PromptTemplate | None = None) -> None:
+    def __init__(
+        self, llm: LLMClient, prompt: PromptTemplate | None = None, *, reviewer: Reviewer | None = None
+    ) -> None:
         self._llm = llm
         self._prompt = prompt or PromptTemplate.load(PROMPT)
+        self._reviewer = reviewer
 
     @property
     def prompt_version(self) -> str:
         return self._prompt.version
+
+    @property
+    def reviewer_version(self) -> str | None:
+        return self._reviewer.prompt_version if self._reviewer is not None else None
 
     async def _ask(
         self, plan: ReplyPlan, template: str, locale: Locale, message: str, history: str, problems: list[str]
@@ -171,14 +183,24 @@ class ReplyWriter:
         message: str = "",
         history: str = "",
         shop: str = "",
+        passages: Sequence[Passage] = (),
     ) -> WriteResult:
-        """The written reply if it passes the checks (after one retry with the problems), else the template."""
+        """The written reply if it passes the code checks and the reviewer (after one retry with the problems named),
+        else the template. The reviewer sees the text only after the code checks passed; if it cannot answer, the
+        template is sent (fail closed)."""
         problems: list[str] = []
+        review = ""
         for attempt in (1, 2):
             candidate = await self._ask(plan, template, locale, message, history, problems)
             if candidate is None:
-                return WriteResult(template, "template", "the model failed or answered without text")
+                return WriteResult(template, "template", "the model failed or answered without text", review)
             problems = problems_in(plan, template, candidate, shop)
+            if not problems and self._reviewer is not None:
+                verdict = await self._reviewer.review_reply(plan, candidate, message, passages)
+                review = "failed" if verdict.failed else ("ok" if verdict.ok else f"blocked: {verdict.detail}")
+                if verdict.failed:
+                    return WriteResult(template, "template", "the reviewer could not answer", review)
+                problems = [f"the reviewer: {p}" for p in verdict.problems]
             if not problems:
-                return WriteResult(candidate, "used" if attempt == 1 else "retried", "written")
-        return WriteResult(template, "template", "; ".join(problems[:MAX_PROBLEMS_SHOWN]))
+                return WriteResult(candidate, "used" if attempt == 1 else "retried", "written", review)
+        return WriteResult(template, "template", "; ".join(problems[:MAX_PROBLEMS_SHOWN]), review)

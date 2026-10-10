@@ -10,6 +10,7 @@ from team_b.brain.knowledge_llm import KnowledgeAssistant
 from team_b.brain.language import LOCALE_FOR
 from team_b.brain.nlu import NLU
 from team_b.brain.registry import CapabilityRegistry
+from team_b.brain.reviewer import Reviewer
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.summarizer import HistorySummarizer
@@ -134,6 +135,7 @@ class Deps:
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
     rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies (the usual flow, agent off)
     writer: Writer | None = None  # optional AI writer of replies from a reply plan (agent mode)
+    reviewer: Reviewer | None = None  # optional AI reviewer: replies and hand-overs (stricter only)
     smalltalk: SmallTalk | None = None  # optional AI writer of small-talk replies (greetings, check-ins)
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
     knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer

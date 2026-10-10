@@ -107,9 +107,9 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
 def test_the_demo_env_example_turns_the_ai_replies_on_but_the_code_defaults_stay_off() -> None:
     from team_b.config import Settings
 
-    for name in ("TEAM_B_LLM_REWRITE", "TEAM_B_LLM_POLICY", "TEAM_B_LLM_KNOWLEDGE"):
+    for name in ("TEAM_B_LLM_REWRITE", "TEAM_B_LLM_POLICY", "TEAM_B_LLM_KNOWLEDGE", "TEAM_B_LLM_REVIEW"):
         assert re.search(rf"^{name}=1\b", ENV_EXAMPLE, flags=re.MULTILINE), name
         assert f"{name}: ${{{name}:-1}}" in COMPOSE  # the full profile starts the AI model, so they are on there
     assert "need an AI model" in ENV_EXAMPLE.lower() or "NEED an AI model" in ENV_EXAMPLE
     settings = Settings.from_env({})
-    assert not (settings.llm_rewrite or settings.llm_policy or settings.llm_knowledge)  # tests and no-model demo
+    assert not (settings.llm_rewrite or settings.llm_policy or settings.llm_knowledge or settings.llm_review)

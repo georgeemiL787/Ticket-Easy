@@ -74,6 +74,10 @@ team_b/
                  EXECUTE is never written; policy passages are appended after and never shown to the model; trace step 'write' + versions.writer_prompt; used by pipeline.say_step unless the turn's
                  agent_mode is off (then the old LLMRewriter keeps wording); Reply free_reply = the orchestrator's answer to an off-topic message (no facts, a ReplyPlan with free=True, fallback
                  template ask_rephrase, also checked by the small-talk rules: no orders/money/policies/promises/colleagues))
+                 reviewer (brain/reviewer.py, job reviewer, TEAM_B_LLM_REVIEW=1, prompts/reviewer_v1.md; STRICTER ONLY): review_reply runs after the code gate passed (blocked -> one writer retry with the
+                 problems, blocked twice or reviewer down -> fixed template; the knowledge agent's wording is reviewed too; trace step 'review' + versions.reviewer_prompt); review_action is the former policy
+                 agent (LLMPolicyGate finds passages, the stricter of reviewer and rule checker wins, uncited allow/deny -> require_human, failure -> POLICY_AGENT_UNAVAILABLE on an allowed write);
+                 a HandOver with an empty `tried` is sent back once per turn (blocks_handover). The adversarial suite also runs with an over-eager reviewer ("reviewed")
                  shadow (brain/shadow.py; agent_mode "shadow" + a move picker: a "shadow" stage after the front stages asks the orchestrator ONCE on a deep copy of the turn (session, lists,
                  counters), the move is only checked (agent_loop.check_move), never worked; trace.shadow_plan / shadow_move / shadow_error; the plan of the last trace is read back only while the
                  conversation waits for an answer; the real session, replies and shop are untouched, errors and timeouts are noted and ignored; compare(trace) says whether the first move agrees

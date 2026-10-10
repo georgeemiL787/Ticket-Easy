@@ -55,6 +55,7 @@ services:
       TEAM_B_LLM_REWRITE: ${TEAM_B_LLM_REWRITE:-1}
       TEAM_B_LLM_POLICY: ${TEAM_B_LLM_POLICY:-1}
       TEAM_B_LLM_KNOWLEDGE: ${TEAM_B_LLM_KNOWLEDGE:-1}
+      TEAM_B_LLM_REVIEW: ${TEAM_B_LLM_REVIEW:-1}
     depends_on:
       ollama:
         condition: service_healthy

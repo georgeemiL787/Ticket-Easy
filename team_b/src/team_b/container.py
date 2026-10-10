@@ -31,6 +31,7 @@ from team_b.brain.move_picker import LLMMovePicker
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
 from team_b.brain.registry import CapabilityRegistry
+from team_b.brain.reviewer import Reviewer
 from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.smalltalk import SmallTalkWriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
@@ -112,8 +113,13 @@ def build_container(
         raise ContainerError("TEAM_B_LLM_POLICY needs an AI model: set TEAM_B_LLM.")
     if settings.llm_knowledge and llms.llm_for("knowledge") is None:
         raise ContainerError("TEAM_B_LLM_KNOWLEDGE needs an AI model: set TEAM_B_LLM.")
-    if settings.llm_policy and (reviewer := llms.llm_for("reviewer")) is not None:
-        policy = LLMPolicyGate(policy, evidence, reviewer)  # the model may tighten the rule checker, never loosen it
+    if settings.llm_review and llms.llm_for("reviewer") is None:
+        raise ContainerError("TEAM_B_LLM_REVIEW needs an AI model: set TEAM_B_LLM.")
+    reviewer_llm = llms.llm_for("reviewer")
+    reviewer = Reviewer(reviewer_llm) if settings.llm_review and reviewer_llm is not None else None
+    if (settings.llm_policy or settings.llm_review) and reviewer_llm is not None:
+        # the model may tighten the rule checker, never loosen it
+        policy = LLMPolicyGate(policy, evidence, reviewer_llm, reviewer=reviewer or Reviewer(reviewer_llm))
     container = Container(
         settings=settings,
         clock=clock,
@@ -176,7 +182,8 @@ def build_container(
             evidence=container.evidence,
             capabilities=container.capabilities,
             rewriter=LLMRewriter(writer_llm) if writer_llm is not None else None,
-            writer=ReplyWriter(writer_llm) if writer_llm is not None else None,
+            writer=ReplyWriter(writer_llm, reviewer=reviewer) if writer_llm is not None else None,
+            reviewer=reviewer,
             smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,
             llm=summary_llm,

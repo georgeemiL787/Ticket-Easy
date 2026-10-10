@@ -105,7 +105,7 @@ export type Steps =
   | [PlanStep, PlanStep, PlanStep]
   | [PlanStep, PlanStep, PlanStep, PlanStep]
   | [PlanStep, PlanStep, PlanStep, PlanStep, PlanStep];
-export type Status = "open" | "done" | "dropped";
+export type Status = "open" | "waiting" | "done" | "dropped";
 export type Text2 = string;
 export type Name = string;
 export type Passed = boolean;

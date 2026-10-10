@@ -83,6 +83,9 @@ class TurnContext:
     handoff_case_id: str | None = None
     ai_events: list[tuple[str, str, str]] = field(default_factory=list)  # (job, kind, detail)
     agent_passages: list[Passage] = field(default_factory=list)  # policy passages the agent found this turn
+    agent_outcomes: list[Step] = field(default_factory=list)  # refusals and done/failed actions not yet told
+    agent_wrote: bool = False  # the agent loop had the shop change something this turn
+    resumed: Step | None = None  # the answer to the customer's yes, kept while the agent goes on with its plan
     agent_listing: list[dict[str, str]] = field(default_factory=list)  # the customer's own orders, if listed this turn
     agent_mode: str | None = None  # how the agent was configured for this turn
     agent_steps: list[AgentStepRecord] = field(default_factory=list)  # the loop's moves this turn

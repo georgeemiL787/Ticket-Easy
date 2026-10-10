@@ -74,12 +74,15 @@ class LLMMovePicker:
         }
         verified = {
             "customer_verified": view.identity_verified,
+            "customer_id": view.customer_id,
             "orders_read": [o.model_dump(exclude_none=True) for o in view.orders],
             "order_numbers_known": view.known_order_ids,
             "policy_passages_found": [p.model_dump() for p in view.passages],
             "no_evidence_count": view.no_evidence_count,
             "waiting_for": view.pending,
         }
+        if view.told_already:
+            verified["already_told_to_the_customer_this_turn"] = view.told_already
         if view.refused:
             verified["last_move_refused_because"] = view.refused
         tools = [

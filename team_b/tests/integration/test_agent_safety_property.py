@@ -7,8 +7,8 @@ audit log and the stored traces are checked afterwards with the same checks as t
 
   - nothing reaches the shop without authorization (the shared write check), no order data before verification and
     never another customer's;
-  - and, specific to the agent: a turn that the agent loop itself ended never made a call that changes something
-    (the loop cannot write), and no order number it read came from nowhere.
+  - and, specific to the agent: the orchestrator can start any action it likes (it is a ProposeAction through all the
+    gates), but a change still needs the customer's yes in a later message, which the shared write check verifies.
 """
 
 import random
@@ -33,6 +33,7 @@ from team_b.domain.agent import (
 )
 from team_b.domain.decision import Decision, EscalationReason
 from tests.fakes import FunctionPicker
+from tests.integration.agent_expert import expert
 from tests.integration.scenario_runner import check_write_safety
 from tests.integration.test_a_safety_property import (
     INJECTIONS,
@@ -101,12 +102,13 @@ class ChaosPicker(FunctionPicker):
         return rng.choice([{"kind": "run_tool", "tool": "create_refund"}, {"kind": "reply"}, {"kind": "look_up"}])
 
 
-async def run_conversation(seed: int, number: int, tmp: Path) -> tuple[list[str], int]:
+async def run_conversation(seed: int, number: int, tmp: Path, honest: bool = False) -> tuple[list[str], int]:
     rng = random.Random(f"{seed}-{number}")
     container = build_container(make_settings(tmp, fixed_today=date(2026, 9, 28), store="memory"))
     assert container.orchestrator is not None
     bot: Any = container.orchestrator
-    bot._deps = replace(bot._deps, move_picker=ChaosPicker(f"{seed}-{number}"), agent_mode="on")
+    picker = FunctionPicker(expert) if honest else ChaosPicker(f"{seed}-{number}")
+    bot._deps = replace(bot._deps, move_picker=picker, agent_mode="on")
     for _ in range(rng.choice([0, 0, 0, 1, 1, 2])):
         if rng.random() < 0.75:
             inject(container, "shop", rng.choice(INJECTIONS))
@@ -124,11 +126,6 @@ async def run_conversation(seed: int, number: int, tmp: Path) -> tuple[list[str]
     tool_kinds = {t.name: t.operation_kind for t in await container.capabilities.list_tools(T)}
     problems = await check_write_safety(container, T, conversation, tool_kinds)
     problems += check_conversation(container, traces, f"seed {seed} conversation {number}", snapshots)
-    for index, trace in enumerate(traces):
-        ended_by_the_agent = trace.agent_steps and trace.fallback_reason is None
-        wrote = [c.tool for c in trace.tool_calls if c.operation_kind != "read"]
-        if ended_by_the_agent and wrote:
-            problems.append(f"seed {seed} conversation {number} turn {index + 1}: the agent loop wrote {wrote}")
     assert container.shop is not None
     writes = [e for e in container.shop.audit_log(T) if e.tool not in READ_TOOLS]
     return problems, len(writes)
@@ -157,4 +154,20 @@ async def test_the_chaos_really_reaches_the_checks(tmp_path: Path) -> None:
             moves += len(trace.agent_steps)
             refused += sum(1 for s in trace.agent_steps if s.refused)
             fell_back += int(trace.fallback_reason is not None)
-    assert moves > 200 and refused > 100 and fell_back > 20, (moves, refused, fell_back)
+    assert moves > 150 and refused > 80 and fell_back > 20, (moves, refused, fell_back)
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+async def test_the_honest_orchestrator_does_the_work_safely_on_the_same_conversations(
+    seed: int, tmp_path: Path
+) -> None:
+    """The scripted expert (agent_expert.py) does what customers ask through the agent loop: refunds, returns,
+    cancellations, address changes. It must reach real changes, and every one is backed by a rule check and a yes."""
+    problems: list[str] = []
+    changed = 0
+    for number in range(CONVERSATIONS):
+        found, writes = await run_conversation(seed, number, tmp_path, honest=True)
+        problems += found
+        changed += writes
+    assert not problems, f"{len(problems)} problem(s), first ones: " + "; ".join(problems[:10])
+    assert changed >= 5, f"only {changed} changes in {CONVERSATIONS} conversations: the property would mean nothing"

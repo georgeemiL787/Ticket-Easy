@@ -1091,6 +1091,7 @@
           "default": "open",
           "enum": [
             "open",
+            "waiting",
             "done",
             "dropped"
           ],

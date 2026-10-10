@@ -14,6 +14,7 @@ from datetime import datetime
 from typing import Any
 
 from team_b.brain import stages
+from team_b.brain.agent_actions import settle_waiting
 from team_b.brain.agent_loop import AgentFallback, run_agent
 from team_b.brain.agent_reads import remember_order_ids
 from team_b.brain.composer import default_composer
@@ -68,6 +69,8 @@ assert [s.name for s in MIDDLE_STAGES][0] == "disambiguate" and HANDOFF_STAGE.na
 async def agent_stage(ctx: TurnContext) -> str:
     """Work the message as agent moves. On a fallback the saved plan is put back and ctx.fallback_reason is set."""
     session = ctx.session
+    if session.pending_action_id is None:
+        settle_waiting(ctx, "dropped")  # no confirmation is pending any more: a step that waited for one is over
     stages.store_details(ctx)  # what the customer told us is kept, as the usual merge stage would
     if ctx.understanding is not None:
         stated = ctx.understanding.entities.get("order_ids") or ctx.understanding.entities.get("order_id") or ""
@@ -77,13 +80,23 @@ async def agent_stage(ctx: TurnContext) -> str:
     version = getattr(ctx.deps.move_picker, "prompt_version", None)
     if version:
         ctx.versions["orchestrator_prompt"] = str(version)
-    before = session.agent_plan
+    before = (session.agent_plan, list(session.denied_actions), session.active_intent, dict(session.slots))
+    earlier_before = list(ctx.earlier)
     try:
         ctx.step = await run_agent(ctx)
     except AgentFallback as fallback:
-        session.agent_plan = before
+        session.agent_plan, denied, session.active_intent, slots = before
+        session.denied_actions[:] = (
+            denied  # a refusal the loop recorded must not count when the usual stages start over
+        )
+        session.slots.clear()
+        session.slots.update(slots)
+        ctx.agent_outcomes.clear()
+        ctx.earlier[:] = earlier_before
+        if ctx.resumed is not None:  # the yes was already answered: that stays the answer
+            ctx.earlier.remove(ctx.resumed)
+            ctx.step = ctx.resumed
         session.agent_pending = None
-        ctx.earlier.clear()  # nothing the loop said or did is kept: the usual stages start again from the message
         ctx.plan = None
         ctx.fallback_reason = fallback.reason
         return f"fell back to the usual stages: {fallback.reason}"
@@ -92,6 +105,21 @@ async def agent_stage(ctx: TurnContext) -> str:
 
 
 AGENT_STAGE = Stage("agent", agent_stage)
+
+
+def resume_plan_after_confirmation(ctx: TurnContext) -> None:
+    """The customer said yes and the action ran (or said no): if the saved plan still has open steps, the agent goes on
+    with them in this same turn, and the action's result is told in front of what comes next."""
+    step = ctx.step
+    if step is None or not ctx.proposal_ids or ctx.agent_steps:
+        return  # nothing was settled by a confirmation in this turn
+    if step.decision is Decision.EXECUTE or step.reply_key in ("action_failed", "action_cancelled"):
+        settle_waiting(ctx, "done" if step.decision is Decision.EXECUTE else "dropped")
+    plan = ctx.session.agent_plan
+    if step.decision in (Decision.EXECUTE, Decision.REFUSE, Decision.ANSWER) and plan is not None and plan.open_steps:
+        ctx.earlier.append(step)
+        ctx.resumed = step
+        ctx.step = None
 
 
 def agent_runs(ctx: TurnContext) -> bool:
@@ -360,9 +388,11 @@ async def run_turn(
             with ai_events() as events:
                 ctx.ai_events = events
                 if agent_runs(ctx):
-                    for stage in (*FRONT_STAGES, AGENT_STAGE):
+                    for stage in FRONT_STAGES:
                         await run_stage(ctx, stage)
-                    if ctx.fallback_reason is not None:  # the loop gave up: the usual middle, from its start
+                    resume_plan_after_confirmation(ctx)
+                    await run_stage(ctx, AGENT_STAGE)
+                    if ctx.fallback_reason is not None and ctx.step is None:  # the loop gave up: the usual middle
                         for stage in MIDDLE_STAGES:
                             await run_stage(ctx, stage)
                     await run_stage(ctx, HANDOFF_STAGE)

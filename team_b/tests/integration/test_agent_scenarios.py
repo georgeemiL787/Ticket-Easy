@@ -12,10 +12,32 @@ from tests.integration.agent_expert import with_expert
 from tests.integration.scenario_format import discover, load_scenario
 from tests.integration.scenario_runner import run_scenario
 
-# the knowledge scenarios (S01, S02, S10, S17, S25, S34) and the lookup scenarios (S03, S09, S12, S15, S28, S29),
-# plus the greetings (S00, S40) the same picker handles
-AGENT_SCENARIOS = ("S00", "S01", "S02", "S03", "S09", "S10", "S12", "S15", "S17", "S25", "S28", "S29", "S34", "S40")
+# the knowledge scenarios (S01, S02, S10, S17, S25, S34), the lookup scenarios (S03, S09, S12, S15, S28, S29), the
+# greetings (S00, S40) and every action scenario (S04, S05, S06, S06b, S11, S13, S14, S18 to S24, S26, S27, S30,
+# S31, S32, S38): the same picker handles them all
+LOOKUPS_AND_KNOWLEDGE = (
+    "S00",
+    "S01",
+    "S02",
+    "S03",
+    "S09",
+    "S10",
+    "S12",
+    "S15",
+    "S17",
+    "S25",
+    "S28",
+    "S29",
+    "S34",
+    "S40",
+)
+ACTIONS = (
+    "S04", "S05", "S06", "S06b", "S11", "S13", "S14", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "S26", "S27",
+    "S30", "S31", "S32", "S38",
+)  # fmt: skip
+AGENT_SCENARIOS = (*LOOKUPS_AND_KNOWLEDGE, *ACTIONS)
 CASES = [(tenant, path) for tenant, path in discover() if path.name.split("_")[0] in AGENT_SCENARIOS]
+ACTION_CASES = [(t, p) for t, p in CASES if p.name.split("_")[0] in ACTIONS]
 
 
 def test_every_agent_scenario_exists() -> None:

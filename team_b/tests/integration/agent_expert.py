@@ -1,16 +1,23 @@
-"""A scripted orchestrator that follows the expected path of the lookup and knowledge scenarios (no AI model).
+"""A scripted orchestrator that follows the expected path of the lookup, knowledge and action scenarios (no AI model).
 
 It plays the part the real orchestrator will: it reads the AgentView (what the reader understood, what is verified, the
-plan it saved, the moves already made) and proposes one move at a time. The loop, the checks and the stand-in shop and
-policy search are the real ones; only the choosing is scripted. Its plan steps carry its memory between messages:
-"lookup:<order id>" (an order status is wanted), "lookup:?" (the number is still missing), "policy" (a policy question).
+plan it saved, the moves already made) and proposes one move at a time. The loop, the checks, the whole gate order of
+actions.py and the stand-in shop, policy search and rule checker are the real ones; only the choosing is scripted. Its
+plan steps carry its memory between messages:
+  "status:<order id>"  an order status is wanted        "policy"  a policy question
+  "action:<intent>:<order id>"  an action is wanted      "lookup:?"  the order number is still missing
 """
 
+import json
+import re
 from dataclasses import replace
 from typing import Any
 
+from team_b.brain.freetext import address_from, reason_from
+from team_b.brain.multi import assign_order_ids
 from team_b.brain.stages import THANKS_TERMS
 from team_b.brain.text import find_spans, normalize
+from team_b.config import Settings
 from team_b.container import Container
 from team_b.domain.agent import (
     AgentPlan,
@@ -20,71 +27,140 @@ from team_b.domain.agent import (
     LookUp,
     MoveProposal,
     PlanStep,
+    ProposeAction,
     Reply,
     ReplyPlan,
     SearchPolicy,
 )
 from team_b.domain.decision import Decision, EscalationReason
+from team_b.domain.tenant import TenantRegistry
+
+_TENANT = TenantRegistry.from_dir(Settings().config_dir).get("shop_001")
+AMOUNT = re.compile(r"(\d[\d,]*)\s*(?:egp|le|جنيه)", re.IGNORECASE)
+Steps = list[tuple[str, str]]
 
 
-def _plan(text: str, status: str = "open") -> AgentPlan:
-    return AgentPlan(steps=[PlanStep(text=text, status=status)])  # type: ignore[arg-type]
+def _plan(steps: Steps) -> AgentPlan:
+    return AgentPlan(steps=[PlanStep(text=text, status=status) for text, status in steps])  # type: ignore[arg-type]
 
 
-def _open_step(view: AgentView) -> str:
-    if view.plan is None:
-        return ""
-    return next((s.text for s in view.plan.steps if s.status == "open"), "")
+def _mark(steps: Steps, text: str, status: str) -> Steps:
+    return [(t, status if t == text else s) for t, s in steps]
 
 
-def _kinds(view: AgentView) -> list[str]:
-    return [str(m.move.get("kind")) for m in view.moves]
+def _customer_lines(view: AgentView) -> list[str]:
+    return [line.split(": ", 1)[1] for line in view.history if line.startswith("customer: ")] + [view.message]
+
+
+def _details(view: AgentView, intent: str) -> dict[str, Any]:
+    """The details of an action, read from the customer's own words (so the loop's provenance check passes)."""
+    out: dict[str, Any] = {}
+    for line in reversed(_customer_lines(view)):
+        if intent == "change_address" and "new_address" not in out and (address := address_from(line)):
+            out["new_address"] = address
+        if intent in ("return_request", "exchange_request") and "reason" not in out and (reason := reason_from(line)):
+            out["reason"] = reason
+        if intent == "voucher_request" and "amount" not in out and (found := AMOUNT.search(line)):
+            out["amount"] = found.group(1).replace(",", "")
+    return out
+
+
+def _new_steps(view: AgentView, steps: Steps) -> Steps:
+    """The requests of this message that the saved plan does not hold yet, status first, actions in the order said."""
+    action_intents = {a.intent for a in view.actions}
+    order = view.entities.get("order_id", "")
+    own = assign_order_ids(view.message, list(view.intents), _TENANT)  # two orders in one message: each request its own
+    wanted: Steps = []
+    if "order_status" in view.intents:
+        wanted.append((f"status:{own.get('order_status', order) or '?'}", "open"))
+    elif not view.intents and order and not any(t.startswith(("status:", "action:")) for t, _ in steps):
+        wanted.append((f"status:{order}", "open"))  # "and what about NS-20790?"
+    wanted += [(f"action:{i}:{own.get(i, order) or '?'}", "open") for i in view.intents if i in action_intents]
+    if "policy_question" in view.intents:
+        wanted.append(("policy", "open"))
+    have = {t.split(":")[0] + ":" + (t.split(":")[1] if t.startswith("action") else "") for t, _ in steps}
+    added = [
+        (t, s)
+        for t, s in wanted
+        if t.split(":")[0] + ":" + (t.split(":")[1] if t.startswith("action") else "") not in have
+    ]
+    return steps + added
 
 
 def expert(view: AgentView) -> MoveProposal:
-    kinds, step = _kinds(view), _open_step(view)
-    names_an_order = not view.intents and bool(view.entities.get("order_id"))  # "and what about NS-20790?"
-    wants_order = "order_status" in view.intents or step.startswith("lookup:") or names_an_order
-    wants_policy = ("policy_question" in view.intents or step == "policy") and not wants_order
+    kinds = [str(m.move.get("kind")) for m in view.moves]
+    steps: Steps = [(s.text, s.status) for s in view.plan.steps] if view.plan else []
+    # steps from earlier messages that are already closed are forgotten; open ones carry on
+    steps = [(t, s) for t, s in steps if s in ("open", "waiting")]
+    if not any(s == "open" for _, s in steps):
+        steps = [(t, s) for t, s in steps if s == "waiting"]
+    steps = _new_steps(view, steps)
+    order = view.entities.get("order_id") or (view.known_order_ids[0] if len(view.known_order_ids) == 1 else "")
 
-    if wants_policy:
-        if "search_policy" not in kinds:
-            return MoveProposal(plan=_plan("policy"), move=SearchPolicy(query=view.message, why="a policy question"))
-        if view.passages:
-            reply = Reply(
-                plan=ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer", citations=[view.passages[0].id])
-            )
-            return MoveProposal(plan=_plan("policy", "done"), move=reply)
-        if view.no_evidence_count <= 1:
+    current = next((t for t, s in steps if s == "open"), None)
+    if current is None:
+        if "greeting" in view.intents and not steps:
+            text = normalize(view.message)
+            key = "thanks" if any(find_spans(text, term) for term in THANKS_TERMS) else "greeting"
             return MoveProposal(
-                plan=_plan("policy"), move=AskCustomer(question_key="ask_rephrase", why="nothing matched")
+                plan=_plan([("greet", "done")]), move=Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key=key))
             )
+        return MoveProposal(
+            plan=_plan(steps or [("understand", "open")]), move=AskCustomer(question_key="ask_rephrase", why="unclear")
+        )
+    plan = _plan(steps)
+    done = _plan(_mark(steps, current, "done"))
+
+    if current == "policy":
+        if "search_policy" not in kinds:
+            return MoveProposal(plan=plan, move=SearchPolicy(query=view.message, why="a policy question"))
+        if view.passages:
+            answer = ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer", citations=[view.passages[0].id])
+            return MoveProposal(plan=done, move=Reply(plan=answer))
+        if view.no_evidence_count <= 1:
+            return MoveProposal(plan=plan, move=AskCustomer(question_key="ask_rephrase", why="nothing matched"))
         if view.no_evidence_count == 2:
             offer = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="no_answer_offer"), why="say so honestly")
-            return MoveProposal(plan=_plan("policy", "done"), move=offer)
+            return MoveProposal(plan=done, move=offer)
         tried = ["searched the policy three times", "asked to rephrase"]
-        return MoveProposal(plan=_plan("policy"), move=HandOver(reason=EscalationReason.NO_EVIDENCE, tried=tried))
+        return MoveProposal(plan=plan, move=HandOver(reason=EscalationReason.NO_EVIDENCE, tried=tried))
 
-    if wants_order:
-        order = view.entities.get("order_id") or (step.split(":", 1)[1] if step.startswith("lookup:") else "")
-        if not order or order == "?":
-            known = view.known_order_ids
-            order = known[0] if len(known) == 1 else ""
-        if "look_up" in kinds and view.orders and view.orders[0].order_id == order:
+    kind, _, rest = current.partition(":")
+    if kind in ("status", "lookup"):
+        wanted_id = (rest if rest != "?" else "") or order
+        if not wanted_id and len(view.known_order_ids) == 1:
+            wanted_id = view.known_order_ids[0]
+        if "look_up" in kinds and view.orders and view.orders[0].order_id == wanted_id:
             reply = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="order_status"), why="the order was read")
-            return MoveProposal(plan=_plan(f"lookup:{order}", "done"), move=reply)
-        if not order:
-            return MoveProposal(plan=_plan("lookup:?"), move=AskCustomer(question_key="ask_order_id", slot="order_id"))
-        read = LookUp(tool="get_order", arguments={"order_id": order}, why="where is the order")
-        return MoveProposal(plan=_plan(f"lookup:{order}"), move=read)
+            return MoveProposal(plan=done, move=reply)
+        if not wanted_id:
+            return MoveProposal(plan=plan, move=AskCustomer(question_key="ask_order_id", slot="order_id"))
+        return MoveProposal(plan=plan, move=LookUp(tool="get_order", arguments={"order_id": wanted_id}, why="status"))
 
-    if "greeting" in view.intents:
-        text = normalize(view.message)
-        key = "thanks" if any(find_spans(text, term) for term in THANKS_TERMS) else "greeting"
-        return MoveProposal(
-            plan=_plan("greet", "done"), move=Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key=key))
-        )
-    return MoveProposal(plan=_plan("understand"), move=AskCustomer(question_key="ask_rephrase", why="unclear"))
+    if kind == "action":
+        intent, _, planned_order = rest.partition(":")
+        wanted_id = (planned_order if planned_order != "?" else "") or view.entities.get("order_id", "")
+        proposed = [m for m in view.moves if m.move.get("kind") == "propose_action"]
+        if proposed:
+            result = proposed[-1].result
+            if result.startswith(("done", "failed")) or result.startswith('{"refused_by_the_rules"'):
+                reply = Reply(
+                    plan=ReplyPlan(decision=Decision.ANSWER, reply_key="action_outcome"), why="tell the outcome"
+                )
+                return MoveProposal(plan=done, move=reply)
+        if not wanted_id and view.identity_verified and view.customer_id:  # which order? show the customer's own
+            listed = [m for m in view.moves if m.move.get("tool") == "list_customer_orders"]
+            if not listed:
+                look = LookUp(
+                    tool="list_customer_orders", arguments={"customer_id": view.customer_id}, why="which order?"
+                )
+                return MoveProposal(plan=plan, move=look)
+            ids = [o["order_id"] for o in json.loads(listed[-1].result)["orders"]][:3]
+            return MoveProposal(plan=plan, move=AskCustomer(question_key="disambiguate_order", options=ids))
+        arguments = {"order_id": wanted_id, **_details(view, intent)} if wanted_id else _details(view, intent)
+        return MoveProposal(plan=plan, move=ProposeAction(intent=intent, arguments=arguments, why="the customer asked"))
+
+    return MoveProposal(plan=plan, move=AskCustomer(question_key="ask_rephrase", why="unclear"))
 
 
 def with_expert(container: Container) -> Container:

@@ -287,6 +287,7 @@ async def build_view(ctx: TurnContext, refused: str | None, moves: list[Any]) ->
         entities={k: str(v) for k, v in redact_mapping(reading.entities).items()} if reading else {},
         frustration=reading.frustration if reading else "low",
         identity_verified=session.identity.verified,
+        customer_id=session.identity.customer_id if session.identity.verified else None,
         orders=orders,
         known_order_ids=sorted(known_order_ids(ctx)),
         passages=[PassageBrief(id=p.citation, text=redact(p.text)[:PASSAGE_CHARS]) for p in ctx.agent_passages],
@@ -297,4 +298,7 @@ async def build_view(ctx: TurnContext, refused: str | None, moves: list[Any]) ->
         moves=list(moves),
         refused=refused,
         pending=session.agent_pending,
+        told_already=[
+            f"{s.decision.value}: {s.reply_key} {s.values.get('reference', '')}".strip() for s in ctx.earlier
+        ],
     )

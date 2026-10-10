@@ -29,7 +29,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from team_b.brain import agent_reads
+from team_b.brain import agent_actions, agent_reads
 from team_b.brain.choices import describe_orders
 from team_b.brain.composer import PLACEHOLDERS, default_composer
 from team_b.brain.redaction import redact, redact_mapping
@@ -59,10 +59,10 @@ REPLY_DECISIONS = frozenset({Decision.ANSWER, Decision.CLARIFY, Decision.REFUSE}
 # A reply the model picks may not be a confirmation, a result, a handoff or a policy statement: those come from code.
 FORBIDDEN_REPLY_PREFIXES = ("handoff_", "confirm_action", "action_", "policy_refusal", "approval_", "status_")
 ORDER_STATUS = "order_status"  # built by code from the verified order, never from the model's words
+ACTION_OUTCOME = "action_outcome"  # the refusal / done / failed text of an action, as the rules and the shop gave it
 POLICY_ANSWER = "policy_answer"  # the retrieved passages, quoted word for word
 MAX_TRIED = 10
 MAX_OPTIONS = 3
-NOT_BUILT = "not built yet"
 
 
 class AgentFallback(Exception):
@@ -99,6 +99,8 @@ def _reply_checks(ctx: TurnContext, move: Reply) -> list[CheckRecord]:
             )
         )
         checks.append(_check("answer_decision", plan.decision is Decision.ANSWER, "an order status is an answer"))
+    elif key == ACTION_OUTCOME:
+        checks.append(_check("an_outcome_is_waiting", bool(ctx.agent_outcomes), "no action has an outcome to tell yet"))
     elif key == POLICY_ANSWER:
         found = {p.citation for p in ctx.agent_passages}
         checks.append(_check("passages_were_retrieved", bool(found), "no policy passage was retrieved this turn"))
@@ -166,6 +168,8 @@ async def _reply_step(ctx: TurnContext, move: Reply) -> Step:
     from team_b.brain.lookup import _policy_quote, _status_reply
 
     plan = move.plan
+    if plan.reply_key == ACTION_OUTCOME:
+        return ctx.agent_outcomes.pop(0)  # the words are the rules' and the shop's, not the model's
     if plan.reply_key == ORDER_STATUS:
         spec = next((s for s in ctx.tenant.intents.values() if s.kind == "lookup" and s.lookup_tool), None)
         passages = await _policy_quote(ctx, spec) if spec is not None else []
@@ -190,7 +194,7 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
     if isinstance(move, SearchPolicy):
         return await agent_reads.search_policy(ctx, move)
     if isinstance(move, ProposeAction):
-        return agent_reads.ReadResult(NOT_BUILT)  # actions arrive in a later step
+        return await agent_actions.propose_action(ctx, move)  # the whole gate order of actions.py decides
     composer, locale = default_composer(), locale_of(ctx)
     if isinstance(move, AskCustomer):
         if move.options:  # "which order?": the customer's own orders, masked, to pick from
@@ -215,6 +219,18 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
         return agent_reads.ReadResult(f"handed over: {move.reason.value}", step)
     assert isinstance(move, Reply)
     return agent_reads.ReadResult(f"replied with {move.plan.reply_key}", await _reply_step(ctx, move))
+
+
+def _give_up(ctx: TurnContext, reason: str) -> Step:
+    """The loop cannot go on. Normally the usual stages take over (AgentFallback), but not once the shop was asked to
+    change something this turn: running the whole message again could do it twice. Then the turn ends with what was
+    already settled (the outcome of the action), and the trace says the loop stopped."""
+    if not ctx.agent_wrote:
+        raise AgentFallback(reason)
+    ctx.errors.append(f"agent stopped early: {reason}")
+    ctx.earlier.extend(ctx.agent_outcomes)
+    ctx.agent_outcomes.clear()
+    return ctx.earlier.pop()
 
 
 def _plan_changed(old: AgentPlan | None, new: AgentPlan) -> bool:
@@ -255,7 +271,9 @@ async def _loop(ctx: TurnContext) -> Step:
             raise
         except Exception as exc:  # the model or its parsing failed: today's stages take over
             ctx.agent_steps.append(_record(None, "the move picker failed", [], type(exc).__name__, started))
-            raise AgentFallback(f"move picker error: {type(exc).__name__}") from exc
+            if not ctx.agent_wrote:
+                raise AgentFallback(f"move picker error: {type(exc).__name__}") from exc
+            return _give_up(ctx, f"move picker error: {type(exc).__name__}")
         if isinstance(proposal, MoveProposal):  # a plan and a move in one answer
             if proposal.plan is not None:
                 _apply_plan(ctx, proposal.plan, started)
@@ -286,13 +304,15 @@ async def _loop(ctx: TurnContext) -> Step:
                 if isinstance(move, Reply) and step.decision in COMPLETED and more and calls < deps.agent_max_moves:
                     ctx.earlier.append(step)  # one request answered, others still open: its text goes in front
                     continue
+                ctx.earlier.extend(ctx.agent_outcomes)  # a refusal or result nobody delivered is still told, in front
+                ctx.agent_outcomes.clear()
                 return step
             refused = "; ".join(c.reason for c in checks if not c.passed)
             refused_in_a_row += 1
             ctx.agent_steps.append(_record(move, move.why, checks, f"refused: {refused}", started))
         if refused_in_a_row >= 2:
-            raise AgentFallback("two refused moves in a row")
-    raise AgentFallback(f"more than {deps.agent_max_moves} moves without an answer")
+            return _give_up(ctx, "two refused moves in a row")
+    return _give_up(ctx, f"more than {deps.agent_max_moves} moves without an answer")
 
 
 async def run_agent(ctx: TurnContext) -> Step:
@@ -301,7 +321,10 @@ async def run_agent(ctx: TurnContext) -> Step:
         async with asyncio.timeout(ctx.deps.agent_turn_timeout_s):
             step = await _loop(ctx)
     except TimeoutError as exc:
-        raise AgentFallback(f"the turn took longer than {ctx.deps.agent_turn_timeout_s:g} seconds") from exc
+        reason = f"the turn took longer than {ctx.deps.agent_turn_timeout_s:g} seconds"
+        if not ctx.agent_wrote:
+            raise AgentFallback(reason) from exc
+        step = _give_up(ctx, reason)
     pending = step.awaiting
     waits = pending in ("confirmation", "detail", "order_choice") or (pending or "").startswith("slot:")
     ctx.session.agent_pending = pending if waits else None

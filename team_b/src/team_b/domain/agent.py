@@ -90,7 +90,7 @@ def parse_move(data: Any) -> AnyMove:
 
 class PlanStep(FrozenModel):
     text: str = Field(min_length=1, max_length=300)
-    status: Literal["open", "done", "dropped"] = "open"
+    status: Literal["open", "waiting", "done", "dropped"] = "open"  # waiting: for the customer's yes to an action
 
 
 class AgentPlan(FrozenModel):
@@ -155,6 +155,7 @@ class AgentView(FrozenModel):
     entities: dict[str, str] = Field(default_factory=dict)
     frustration: str = "low"
     identity_verified: bool = False
+    customer_id: str | None = None  # the verified customer's id (the argument list_customer_orders takes)
     orders: list[OrderBrief] = Field(default_factory=list)  # looked up and confirmed to be the customer's own
     known_order_ids: list[str] = Field(default_factory=list)  # ids the customer wrote or a tool returned
     passages: list[PassageBrief] = Field(default_factory=list)  # policy passages found this turn
@@ -165,6 +166,7 @@ class AgentView(FrozenModel):
     moves: list["AgentStepRecord"] = Field(default_factory=list)  # the moves already made this turn, with results
     refused: str | None = None  # why the last proposed move was refused, so the next one can differ
     pending: str | None = None  # what the agent was waiting for from the customer last turn (slot:<name>, ...)
+    told_already: list[str] = Field(default_factory=list)  # replies already settled this turn (the customer's yes)
 
 
 class CheckRecord(FrozenModel):

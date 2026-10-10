@@ -58,7 +58,15 @@ team_b/
                  to the picker as short redacted summaries (whitelisted fields). SearchPolicy = knowledge.quote_for (ids + short texts back, a down search = handoff dependency_unavailable, no_evidence_count).
                  Reply keys are limited: order_status (built by code from session.facts, needs a verified own order), policy_answer (the retrieved passages quoted, citations must be retrieved),
                  static templates without placeholders; EXECUTE/HANDOFF/CONFIRM decisions, handoff_/confirm_/action_ templates and unverified facts are refused. A Reply that finishes one request while the
-                 plan still has an open step does not end the turn (ctx.earlier). ProposeAction still answers "not built yet": the loop cannot write (a write tool in a LookUp is refused).
+                 plan still has an open step does not end the turn (ctx.earlier). A write tool in a LookUp is refused. ProposeAction (agent_actions.py, SAFETY-CRITICAL): the intent must be an action of the
+                 tenant; the model's arguments fill a slot only if the customer's own messages or a shop answer contain the value (else dropped, a detail_dropped:<name> check on the trace); the details
+                 of the current message are captured as the merge stage does (freetext); then actions.handle() runs UNCHANGED (the whole gate order). CONFIRM / a question / a handoff end the turn
+                 (agent_pending = confirmation; the plan step is "waiting"); a refusal by the rules (with alternatives), a done action or action_failed becomes an OUTCOME (ctx.agent_outcomes): the
+                 picker is told (JSON refused_by_the_rules + alternatives, or done/failed), delivers it with Reply action_outcome (the rule's and the shop's own words), and any outcome left is shown
+                 in front of the final reply. The yes is handled by the front stage pending_confirmation (the orchestrator never executes); then pipeline.resume_plan_after_confirmation settles the
+                 waiting step (done / dropped) and, if plan steps are still open, the agent goes on in the same turn with the action's result in front. A fallback restores plan, denied_actions,
+                 active_intent and slots and keeps an already answered yes; once the shop was asked to change something (ctx.agent_wrote) a failure ends the turn with the outcome instead of
+                 running the message again ("agent stopped early" in trace.errors)
                  move_picker (LLMMovePicker, job orchestrator, prompts/orchestrator_v1.md: sections customer_message/history/reading/verified/plan/moves_this_turn/tools, tool results in <tool_result>
                  tags as data, answer {plan, move} = MoveProposal in ONE ask, one repair attempt then the loop falls back; container wires it when llm_for("orchestrator") exists; trace versions
                  orchestrator_prompt). tests: ScriptedMovePicker / FunctionPicker (tests/fakes.py), tests/integration/agent_expert.py + test_agent_scenarios.py (the lookup/knowledge scenarios again in

@@ -124,20 +124,6 @@ async def test_hand_over_opens_a_case_with_what_was_tried(c: Container) -> None:
     assert "asked twice" in trace.decision_reason
 
 
-async def test_an_action_proposal_answers_not_built_yet_and_the_loop_goes_on(c: Container) -> None:
-    picker = ScriptedMovePicker(
-        ProposeAction(intent="refund_request", arguments={"order_id": "NS-20877"}, why="refund"),
-        ProposeAction(intent="cancel_order", arguments={"order_id": "NS-20877"}, why="cancel"),
-        ProposeAction(intent="return_request", arguments={"order_id": "NS-20877"}, why="return"),
-        GREETING,
-    )
-    reply = await orch(c, picker).handle_turn(T, C, "hi")
-    trace = await trace_of(c)
-    assert reply.decision is Decision.ANSWER
-    assert [r.result for r in trace.agent_steps[:3]] == ["not built yet"] * 3
-    assert len(picker.views) == 4 and len(picker.views[3].moves) == 3  # the picker sees what was already tried
-
-
 async def test_the_loop_cannot_write_or_read_the_shop_yet(c: Container) -> None:
     assert c.shop is not None
     picker = ScriptedMovePicker(
@@ -224,22 +210,22 @@ async def test_two_refused_moves_in_a_row_fall_back_to_the_usual_stages(c: Conta
 
 async def test_a_good_move_between_two_refusals_resets_the_count(c: Container) -> None:
     bad = ProposeAction(intent="made_up", arguments={})
-    ok = ProposeAction(intent="refund_request", arguments={})
-    reply = await orch(c, ScriptedMovePicker(bad, ok, bad, GREETING)).handle_turn(T, C, "hi")
+    ok = SearchPolicy(query="q")
+    reply = await orch(c, ScriptedMovePicker(bad, ok, bad, GREETING), evidence=c.evidence).handle_turn(T, C, "hi")
     assert reply.decision is Decision.ANSWER and (await trace_of(c)).fallback_reason is None
 
 
 async def test_the_move_limit(c: Container) -> None:
-    picker = ScriptedMovePicker(*[ProposeAction(intent="cancel_order", arguments={"i": i}) for i in range(10)])
-    reply = await orch(c, picker, agent_max_moves=3).handle_turn(T, C, "Hello")
+    picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
+    reply = await orch(c, picker, evidence=c.evidence, agent_max_moves=3).handle_turn(T, C, "Hello")
     trace = await trace_of(c)
     assert len(picker.views) == 3 and trace.fallback_reason == "more than 3 moves without an answer"
     assert reply.text == "Hello! How can I help you today?"  # the usual flow
 
 
 async def test_the_default_limit_is_five_moves(c: Container) -> None:
-    picker = ScriptedMovePicker(*[ProposeAction(intent="cancel_order", arguments={"i": i}) for i in range(10)])
-    await orch(c, picker).handle_turn(T, C, "Hello")
+    picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
+    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "Hello")
     assert len(picker.views) == 5
 
 

@@ -1328,6 +1328,246 @@
       "title": "SimilarTicket",
       "type": "object"
     },
+    "TimelineCheck": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "passed"
+      ],
+      "title": "TimelineCheck",
+      "type": "object"
+    },
+    "TimelineMove": {
+      "description": "One move of the agent loop: what it was, why, what the code checked and what came of it.",
+      "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/TimelineCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "number": {
+          "title": "Number",
+          "type": "integer"
+        },
+        "refused": {
+          "title": "Refused",
+          "type": "boolean"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tool"
+        },
+        "why": {
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "kind",
+        "why",
+        "summary",
+        "refused",
+        "checks",
+        "duration_ms"
+      ],
+      "title": "TimelineMove",
+      "type": "object"
+    },
+    "TimelinePlanStep": {
+      "properties": {
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "status"
+      ],
+      "title": "TimelinePlanStep",
+      "type": "object"
+    },
+    "TimelineReview": {
+      "properties": {
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "TimelineReview",
+      "type": "object"
+    },
+    "TimelineTurn": {
+      "description": "What the agent did on one customer message (personal values are hidden, as in the trace).",
+      "properties": {
+        "agent_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Agent Mode"
+        },
+        "escalation_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Escalation Kind"
+        },
+        "escalation_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Escalation Reason"
+        },
+        "fallback_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fallback Reason"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/TimelineMove"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "plan": {
+          "items": {
+            "$ref": "#/$defs/TimelinePlanStep"
+          },
+          "title": "Plan",
+          "type": "array"
+        },
+        "plan_changes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Plan Changes",
+          "type": "array"
+        },
+        "plan_revision": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Plan Revision"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimelineReview"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trace_id": {
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "tried": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tried",
+          "type": "array"
+        },
+        "turn_index": {
+          "title": "Turn Index",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "trace_id",
+        "turn_index",
+        "agent_mode",
+        "plan",
+        "plan_revision",
+        "plan_changes",
+        "moves",
+        "reviewer",
+        "fallback_reason",
+        "escalation_reason",
+        "escalation_kind",
+        "tried"
+      ],
+      "title": "TimelineTurn",
+      "type": "object"
+    },
     "ToolCallRecord": {
       "additionalProperties": false,
       "properties": {
@@ -1517,6 +1757,14 @@
     "tenant_id": {
       "title": "Tenant Id",
       "type": "string"
+    },
+    "timeline": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TimelineTurn"
+      },
+      "title": "Timeline",
+      "type": "array"
     },
     "traces": {
       "items": {

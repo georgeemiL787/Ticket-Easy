@@ -50,7 +50,7 @@ export function useI18n(): I18n {
 }
 
 /** The label of an escalation reason, decision or language value; unknown values are shown as they are. */
-export function labelFor(t: Translate, prefix: "reason" | "decision" | "lang.value", value: string | null | undefined): string {
+export function labelFor(t: Translate, prefix: "reason" | "decision" | "lang.value" | "move", value: string | null | undefined): string {
   if (!value) return t("common.noData");
   const key = `${prefix}.${value}` as TextKey;
   return key in en ? t(key) : value.replaceAll("_", " ");

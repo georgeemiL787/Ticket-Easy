@@ -99,12 +99,102 @@ class DashboardConversationPage(BaseModel):
     next_cursor: str | None = None
 
 
+class TimelineCheck(BaseModel):
+    name: str
+    passed: bool
+    reason: str = ""
+
+
+class TimelineMove(BaseModel):
+    """One move of the agent loop: what it was, why, what the code checked and what came of it."""
+
+    number: int  # 1, 2, ... in the order made
+    kind: str  # look_up, search_policy, propose_action, ask_customer, hand_over, reply, plan_update, invalid
+    why: str
+    tool: str | None = None  # the shop tool of a look-up, or the action of a proposal
+    summary: str  # a short, redacted summary of the result
+    refused: bool
+    checks: list[TimelineCheck]
+    duration_ms: float
+
+
+class TimelinePlanStep(BaseModel):
+    text: str
+    status: str  # open | waiting | done | dropped
+
+
+class TimelineReview(BaseModel):
+    status: str  # ok | blocked | failed
+    detail: str = ""
+
+
+class TimelineTurn(BaseModel):
+    """What the agent did on one customer message (personal values are hidden, as in the trace)."""
+
+    trace_id: str
+    turn_index: int
+    agent_mode: str | None
+    plan: list[TimelinePlanStep]  # the plan after this message
+    plan_revision: int | None
+    plan_changes: list[str]  # the plan updates made during this message, in order
+    moves: list[TimelineMove]
+    reviewer: TimelineReview | None
+    fallback_reason: str | None
+    escalation_reason: str | None
+    escalation_kind: str | None  # forced | chosen
+    tried: list[str]  # what the assistant had tried when it handed over
+
+
 class DashboardConversation(BaseModel):
     tenant_id: str
     conversation_id: str
     transcript: list[TranscriptLine]
     traces: list[DecisionTrace]
     case: HandoffCase | None
+    timeline: list[TimelineTurn] = []
+
+
+def timeline_of(traces: list[DecisionTrace], case: HandoffCase | None) -> list[TimelineTurn]:
+    """The agent's reasoning per message, cut from the traces (and the briefing's list of what was tried)."""
+    turns: list[TimelineTurn] = []
+    for trace in traces:
+        if trace.kind != "customer_turn":
+            continue
+        moves = [
+            TimelineMove(
+                number=number,
+                kind=str(step.move.get("kind", "invalid")),
+                why=step.why,
+                tool=str(step.move.get("tool") or step.move.get("intent") or "") or None,
+                summary=step.result,
+                refused=step.refused,
+                checks=[TimelineCheck(name=c.name, passed=c.passed, reason=c.reason) for c in step.checks],
+                duration_ms=step.duration_ms,
+            )
+            for number, step in enumerate(trace.agent_steps, start=1)
+        ]
+        review = next((s for s in reversed(trace.steps) if s.stage == "review"), None)
+        handed = case is not None and trace.handoff_case_id == case.case_id
+        turns.append(
+            TimelineTurn(
+                trace_id=trace.trace_id,
+                turn_index=trace.turn_index,
+                agent_mode=trace.agent_mode,
+                plan=[
+                    TimelinePlanStep(text=s.text, status=s.status)
+                    for s in (trace.agent_plan.steps if trace.agent_plan else [])
+                ],
+                plan_revision=trace.agent_plan.revision if trace.agent_plan else None,
+                plan_changes=[mv.summary for mv in moves if mv.kind == "plan_update"],
+                moves=moves,
+                reviewer=TimelineReview(status=review.status, detail=review.detail) if review else None,
+                fallback_reason=trace.fallback_reason,
+                escalation_reason=trace.escalation_reason.value if trace.escalation_reason else None,
+                escalation_kind=trace.escalation_kind,
+                tried=list(case.package.tried) if handed and case is not None else [],
+            )
+        )
+    return turns
 
 
 class DashboardPassage(BaseModel):
@@ -460,6 +550,7 @@ async def get_conversation(request: Request, conversation_id: CONVERSATION, tena
         transcript=transcript_from_traces(traces),
         traces=traces,
         case=cases[-1] if cases else None,
+        timeline=timeline_of(traces, cases[-1] if cases else None),
     )
 
 

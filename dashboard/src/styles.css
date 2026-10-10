@@ -704,3 +704,20 @@ td, th { border-block-end-color: rgba(255, 255, 255, 0.07); }
 .kpi:hover, .chart-card:hover { border-color: rgba(45, 212, 191, 0.35); }
 .login button { padding: 12px; font-family: "Space Grotesk", "Inter", sans-serif; font-weight: 600; color: var(--ink); background: linear-gradient(100deg, #2dd4bf, #e879f9); border: 0; box-shadow: 0 10px 30px -8px rgba(45, 212, 191, 0.55), 0 10px 30px -8px rgba(232, 121, 249, 0.5); }
 .login button:hover { background: linear-gradient(100deg, #2dd4bf, #e879f9); filter: brightness(1.1); transform: translateY(-2px); }
+
+/* the agent's moves on a message (conversation page) */
+.agent-timeline { border-inline-start: 3px solid #4f6bed; padding-inline-start: 0.75rem; margin: 0.25rem 0 1.25rem; }
+.agent-moves { list-style: none; padding: 0; margin: 0.5rem 0; display: grid; gap: 0.5rem; }
+.agent-move { border: 1px solid #d9dce3; border-radius: 8px; padding: 0.5rem 0.75rem; }
+.agent-move.refused { border-color: #c0392b; }
+.agent-move header { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.checks { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.25rem 0 0; }
+.chip.check-pass { background: #e3f4ea; color: #1b6b3a; }
+.chip.check-fail { background: #fbe6e3; color: #9c2b1e; }
+.agent-plan ol { margin: 0.25rem 0; padding-inline-start: 1.25rem; }
+.agent-plan .step-done, .agent-plan .step-dropped { opacity: 0.7; }
+@media (prefers-color-scheme: dark) {
+  .agent-move { border-color: #3a3f4b; }
+  .chip.check-pass { background: #1c3a2a; color: #8fd9ab; }
+  .chip.check-fail { background: #4a2420; color: #f0a79d; }
+}

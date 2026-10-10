@@ -4,6 +4,7 @@ import { useApi } from "../api/useApi";
 import type { DashboardConversation } from "../api/types/DashboardConversation";
 import { Async } from "../components/Async";
 import { PassageDialog } from "../components/PassageDialog";
+import { AgentTimeline } from "../components/AgentTimeline";
 import { TurnCard } from "../components/TurnCard";
 import { labelFor, useI18n } from "../i18n";
 import { sharedQuery, useFilters } from "../state/useFilters";
@@ -44,9 +45,15 @@ export default function ConversationDetail() {
             </section>
             <section className="detail-timeline" aria-label={t("detail.timeline")}>
               <h2>{t("detail.timeline")}</h2>
-              {d.traces.map((trace, index) => (
-                <TurnCard key={trace.trace_id} trace={trace} index={index} onOpenPassage={setPassage} />
-              ))}
+              {d.traces.map((trace, index) => {
+                const agent = (d.timeline ?? []).find((turn) => turn.trace_id === trace.trace_id);
+                return (
+                  <div key={trace.trace_id}>
+                    <TurnCard trace={trace} index={index} onOpenPassage={setPassage} />
+                    {agent ? <AgentTimeline turn={agent} /> : null}
+                  </div>
+                );
+              })}
             </section>
           </div>
         )}

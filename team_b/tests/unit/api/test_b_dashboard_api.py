@@ -1,5 +1,6 @@
 """The dashboard API: exact numbers on a small hand-made data set, and consistency on seeded conversations."""
 
+import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -336,3 +337,49 @@ async def test_a_passage_is_served_by_its_citation(small: Any) -> None:
         await http.get("/v1/dashboard/passage", params={"tenant_id": T, "citation": "nope@v1#s9"})
     ).status_code == 404
     assert (await http.get("/v1/dashboard/passage", params={"tenant_id": T})).status_code == 422
+
+
+async def test_the_conversation_timeline_shows_the_plan_the_moves_and_their_checks(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    from tests.fakes import FunctionPicker
+    from tests.integration.agent_expert import expert
+
+    container = build_container(make_settings(tmp_path, fixed_today=datetime(2026, 9, 28, tzinfo=UTC).date()))
+    bot: Any = container.orchestrator
+    bot._deps = replace(bot._deps, move_picker=FunctionPicker(expert), agent_mode="on")
+    await bot.handle_turn(T, "tl", "Where is my order NS-20877? My phone is 01012345601")
+    await bot.handle_turn(T, "tl", "I want to talk to a human")
+    app, http = await client_for(container)
+    async with app.router.lifespan_context(app), http:
+        body = (await http.get("/v1/dashboard/conversations/tl", params={"tenant_id": T})).json()
+    first, second = body["timeline"]
+    assert first["agent_mode"] == "on" and first["fallback_reason"] is None and first["escalation_kind"] is None
+    kinds = [m["kind"] for m in first["moves"]]
+    assert "look_up" in kinds and kinds[-1] == "reply" and kinds[0] == "plan_update"
+    lookup = next(m for m in first["moves"] if m["kind"] == "look_up")
+    assert lookup["tool"] and lookup["refused"] is False
+    assert {c["name"] for c in lookup["checks"]} >= {"tool_is_published", "tool_only_reads", "order_id_is_known"}
+    assert all(c["passed"] for c in lookup["checks"])
+    assert first["plan"] and first["plan_revision"] and first["plan_changes"]
+    # the second message was handed over by code before the agent worked: forced, no moves, and what was tried
+    assert second["escalation_kind"] == "forced" and second["escalation_reason"] == "customer_request"
+    assert second["moves"] == [] and isinstance(second["tried"], list)
+    assert "01012345601" not in json.dumps(body["timeline"])  # personal values stay hidden
+
+
+async def test_a_refused_move_and_a_fallback_are_visible_in_the_timeline() -> None:
+    from team_b.api.dashboard import timeline_of
+    from team_b.domain.agent import AgentStepRecord, CheckRecord
+
+    refused = AgentStepRecord(
+        move={"kind": "look_up", "tool": "create_refund"},
+        why="to check",
+        checks=[CheckRecord(name="tool_only_reads", passed=False, reason="create_refund changes something")],
+        result="refused: create_refund changes something",
+    )
+    t = trace("t1", "R", Decision.ANSWER, agent_steps=(refused,), fallback_reason="two refused moves in a row")
+    [turn] = timeline_of([t], None)
+    [move] = turn.moves
+    assert move.refused and move.checks[0].passed is False and move.tool == "create_refund"
+    assert turn.fallback_reason == "two refused moves in a row"

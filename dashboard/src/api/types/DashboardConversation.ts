@@ -93,8 +93,35 @@ export type TenantId = string;
 export type UpdatedAt = string;
 export type ConversationId1 = string;
 export type TenantId1 = string;
-export type ActiveIntent = string | null;
 export type AgentMode = string | null;
+export type EscalationKind = string | null;
+export type EscalationReason1 = string | null;
+export type FallbackReason = string | null;
+export type Name = string;
+export type Passed = boolean;
+export type Reason1 = string;
+export type Checks = TimelineCheck[];
+export type DurationMs = number;
+export type Kind1 = string;
+export type Number = number;
+export type Refused = boolean;
+export type Summary1 = string;
+export type Tool2 = string | null;
+export type Why = string;
+export type Moves = TimelineMove[];
+export type Status = string;
+export type Text2 = string;
+export type Plan = TimelinePlanStep[];
+export type PlanChanges = string[];
+export type PlanRevision = number | null;
+export type Detail1 = string;
+export type Status1 = string;
+export type TraceId2 = string;
+export type Tried1 = string[];
+export type TurnIndex1 = number;
+export type Timeline = TimelineTurn[];
+export type ActiveIntent = string | null;
+export type AgentMode1 = string | null;
 export type Revision = number;
 /**
  * @maxItems 5
@@ -106,16 +133,16 @@ export type Steps =
   | [PlanStep, PlanStep, PlanStep]
   | [PlanStep, PlanStep, PlanStep, PlanStep]
   | [PlanStep, PlanStep, PlanStep, PlanStep, PlanStep];
-export type Status = "open" | "waiting" | "done" | "dropped";
-export type Text2 = string;
-export type Name = string;
-export type Passed = boolean;
-export type Reason1 = string;
-export type Checks = CheckRecord[];
-export type DurationMs = number;
-export type FallbackReason = string | null;
+export type Status2 = "open" | "waiting" | "done" | "dropped";
+export type Text3 = string;
+export type Name1 = string;
+export type Passed1 = boolean;
+export type Reason2 = string;
+export type Checks1 = CheckRecord[];
+export type DurationMs1 = number;
+export type FallbackReason1 = string | null;
 export type Result = string;
-export type Why = string;
+export type Why1 = string;
 export type AgentSteps = AgentStepRecord[];
 export type ConversationId2 = string;
 export type CustomerMessage = string;
@@ -125,14 +152,14 @@ export type CustomerMessage = string;
 export type Decision1 = "answer" | "clarify" | "verify_identity" | "confirm" | "execute" | "refuse" | "handoff";
 export type DecisionReason = string;
 export type Errors = string[];
-export type EscalationKind = ("forced" | "chosen") | null;
+export type EscalationKind1 = ("forced" | "chosen") | null;
 export type Citation2 = string;
 export type DocumentId = string;
 export type Score = number;
 export type Version = string;
 export type Evidence = EvidenceRef[];
 export type EvidenceEmptyReason = string | null;
-export type FallbackReason1 = string | null;
+export type FallbackReason2 = string | null;
 export type Frustration = ("low" | "medium" | "high") | null;
 export type HandoffCaseId = string | null;
 export type Attempts = number;
@@ -140,28 +167,28 @@ export type CustomerId1 = string | null;
 export type Method1 = string | null;
 export type Verified1 = boolean;
 export type Confidence = number;
-export type Name1 = string;
+export type Name2 = string;
 export type Intents1 = IntentCandidate[];
-export type Kind1 = "customer_turn" | "human_action";
+export type Kind2 = "customer_turn" | "human_action";
 export type KnowledgeAnswer = boolean;
 export type LatencyMs = number;
 export type NluMethod = ("rules" | "llm" | "rules_fallback") | null;
 export type Allowed = boolean;
-export type Reason2 = string | null;
+export type Reason3 = string | null;
 export type Policy = PolicyRecord[];
 export type ProposalId2 = string;
 export type State1 = string;
-export type Tool2 = string;
+export type Tool3 = string;
 export type Proposals = ProposalRecord[];
 export type RequestId1 = string;
 export type ResponseCitations = string[];
 export type ResponseText = string;
 export type RiskCategories = string[];
 export type ShadowError = string | null;
-export type Detail1 = string;
-export type DurationMs1 = number;
+export type Detail2 = string;
+export type DurationMs2 = number;
 export type Stage = string;
-export type Status1 = string;
+export type Status3 = string;
 export type Steps1 = TraceStep[];
 export type TenantId2 = string;
 export type Actor1 = "customer" | "human";
@@ -172,11 +199,11 @@ export type LatencyMs1 = number;
 export type OperationKind = "read" | "create" | "update" | "delete";
 export type PolicyRequestId = string | null;
 export type RequestId2 = string;
-export type Status2 = "success" | "error";
-export type Tool3 = string;
+export type Status4 = "success" | "error";
+export type Tool4 = string;
 export type ToolCalls = ToolCallRecord[];
-export type TraceId2 = string;
-export type TurnIndex1 = number;
+export type TraceId3 = string;
+export type TurnIndex2 = number;
 export type Traces = DecisionTrace[];
 export type Transcript1 = TranscriptLine[];
 
@@ -184,6 +211,7 @@ export interface DashboardConversation {
   case: HandoffCase | null;
   conversation_id: ConversationId1;
   tenant_id: TenantId1;
+  timeline?: Timeline;
   traces: Traces;
   transcript: Transcript1;
 }
@@ -314,9 +342,52 @@ export interface TranscriptLine {
   trace_id: TraceId1;
   turn_index: TurnIndex;
 }
+/**
+ * What the agent did on one customer message (personal values are hidden, as in the trace).
+ */
+export interface TimelineTurn {
+  agent_mode: AgentMode;
+  escalation_kind: EscalationKind;
+  escalation_reason: EscalationReason1;
+  fallback_reason: FallbackReason;
+  moves: Moves;
+  plan: Plan;
+  plan_changes: PlanChanges;
+  plan_revision: PlanRevision;
+  reviewer: TimelineReview | null;
+  trace_id: TraceId2;
+  tried: Tried1;
+  turn_index: TurnIndex1;
+}
+/**
+ * One move of the agent loop: what it was, why, what the code checked and what came of it.
+ */
+export interface TimelineMove {
+  checks: Checks;
+  duration_ms: DurationMs;
+  kind: Kind1;
+  number: Number;
+  refused: Refused;
+  summary: Summary1;
+  tool?: Tool2;
+  why: Why;
+}
+export interface TimelineCheck {
+  name: Name;
+  passed: Passed;
+  reason?: Reason1;
+}
+export interface TimelinePlanStep {
+  status: Status;
+  text: Text2;
+}
+export interface TimelineReview {
+  detail?: Detail1;
+  status: Status1;
+}
 export interface DecisionTrace {
   active_intent?: ActiveIntent;
-  agent_mode?: AgentMode;
+  agent_mode?: AgentMode1;
   agent_plan?: AgentPlan | null;
   agent_steps?: AgentSteps;
   conversation_id: ConversationId2;
@@ -325,16 +396,16 @@ export interface DecisionTrace {
   decision_reason?: DecisionReason;
   entities?: Entities;
   errors?: Errors;
-  escalation_kind?: EscalationKind;
+  escalation_kind?: EscalationKind1;
   escalation_reason?: EscalationReason | null;
   evidence?: Evidence;
   evidence_empty_reason?: EvidenceEmptyReason;
-  fallback_reason?: FallbackReason1;
+  fallback_reason?: FallbackReason2;
   frustration?: Frustration;
   handoff_case_id?: HandoffCaseId;
   identity?: SessionIdentity;
   intents?: Intents1;
-  kind?: Kind1;
+  kind?: Kind2;
   knowledge_answer?: KnowledgeAnswer;
   language?: Language | null;
   latency_ms?: LatencyMs;
@@ -352,8 +423,8 @@ export interface DecisionTrace {
   steps?: Steps1;
   tenant_id: TenantId2;
   tool_calls?: ToolCalls;
-  trace_id: TraceId2;
-  turn_index: TurnIndex1;
+  trace_id: TraceId3;
+  turn_index: TurnIndex2;
   versions?: Versions;
 }
 /**
@@ -364,27 +435,27 @@ export interface AgentPlan {
   steps?: Steps;
 }
 export interface PlanStep {
-  status?: Status;
-  text: Text2;
+  status?: Status2;
+  text: Text3;
 }
 /**
  * One step of the loop, for the trace. Personal values are redacted before it is stored.
  */
 export interface AgentStepRecord {
-  checks?: Checks;
-  duration_ms?: DurationMs;
-  fallback_reason?: FallbackReason;
+  checks?: Checks1;
+  duration_ms?: DurationMs1;
+  fallback_reason?: FallbackReason1;
   move: Move;
   result?: Result;
-  why?: Why;
+  why?: Why1;
 }
 /**
  * One check that code made on a move before it ran: passed or not, and why.
  */
 export interface CheckRecord {
-  name: Name;
-  passed: Passed;
-  reason?: Reason1;
+  name: Name1;
+  passed: Passed1;
+  reason?: Reason2;
 }
 export interface Move {
   [k: string]: unknown;
@@ -409,22 +480,22 @@ export interface SessionIdentity {
 }
 export interface IntentCandidate {
   confidence: Confidence;
-  name: Name1;
+  name: Name2;
 }
 export interface PermissionRecord {
   allowed: Allowed;
-  reason?: Reason2;
+  reason?: Reason3;
 }
 export interface ProposalRecord {
   proposal_id: ProposalId2;
   state: State1;
-  tool: Tool2;
+  tool: Tool3;
 }
 export interface TraceStep {
-  detail?: Detail1;
-  duration_ms?: DurationMs1;
+  detail?: Detail2;
+  duration_ms?: DurationMs2;
   stage: Stage;
-  status: Status1;
+  status: Status3;
 }
 export interface ToolCallRecord {
   actor?: Actor1;
@@ -436,8 +507,8 @@ export interface ToolCallRecord {
   operation_kind: OperationKind;
   policy_request_id?: PolicyRequestId;
   request_id: RequestId2;
-  status: Status2;
-  tool: Tool3;
+  status: Status4;
+  tool: Tool4;
 }
 export interface Arguments2 {
   [k: string]: unknown;

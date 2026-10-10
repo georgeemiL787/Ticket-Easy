@@ -79,6 +79,7 @@ class TurnContext:
     step: Step | None = None  # the decision, once a stage has made it
     earlier: list[Step] = field(default_factory=list)  # completed steps whose replies come before the final one
     handoff_case_id: str | None = None
+    ai_events: list[tuple[str, str, str]] = field(default_factory=list)  # (job, kind, detail)
     apologise: bool = False  # the customer is very frustrated for the first time: the reply starts with an apology
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)

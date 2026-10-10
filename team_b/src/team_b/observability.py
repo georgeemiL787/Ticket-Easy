@@ -4,6 +4,7 @@ import logging
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 import structlog
 from structlog.contextvars import bind_contextvars, bound_contextvars, clear_contextvars, merge_contextvars
@@ -77,3 +78,26 @@ EVENTS = ("turn_start", "turn_complete", "policy_check", "tool_call", "handoff_c
 
 def clear_context() -> None:
     clear_contextvars()
+
+
+# ---- what the AI model did during one turn (which job used a backup model, which fell back to the rules) ----
+
+_AI_EVENTS: ContextVar[list[tuple[str, str, str]] | None] = ContextVar("ai_events", default=None)
+
+
+@contextmanager
+def ai_events() -> Iterator[list[tuple[str, str, str]]]:
+    """Collect the AI events of the code run inside the block: (role, kind, detail), kind "backup_model" or "failed"."""
+    events: list[tuple[str, str, str]] = []
+    token = _AI_EVENTS.set(events)
+    try:
+        yield events
+    finally:
+        _AI_EVENTS.reset(token)
+
+
+def record_ai_event(role: str, kind: str, detail: str) -> None:
+    """Note that an AI job used its backup model (backup_model) or could not be answered at all (failed)."""
+    events = _AI_EVENTS.get()
+    if events is not None:
+        events.append((role, kind, detail))

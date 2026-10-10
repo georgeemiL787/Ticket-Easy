@@ -11,6 +11,7 @@ from pydantic import Field
 from team_b.domain.base import FrozenModel
 from team_b.domain.trace import DecisionTrace
 
+AI_MODEL_SERVICE = "ai_model"  # an AI job fell back to the rules or the template (rate budget, outage, nonsense)
 # The brain names the part of the system in the first words of an error it records for the trace.
 _SERVICE_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("policy search", "policy_search"),
@@ -20,8 +21,20 @@ _SERVICE_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("rule checker", "rule_checker"),
     ("the shop tool list", "shop_tools"),
     ("order list", "shop_tools"),
+    ("ai model", AI_MODEL_SERVICE),
 )
 OTHER_SERVICE = "other"
+AI_METHODS = ("llm", "rules_fallback")  # the readings where the AI model was asked
+
+
+def ai_asked(turn: "TurnFact") -> bool:
+    """Was the AI model asked in this turn (to read the message, or for any other job)?"""
+    return turn.nlu_method in AI_METHODS or AI_MODEL_SERVICE in turn.dependency_errors
+
+
+def ai_fell_back(turn: "TurnFact") -> bool:
+    """Did an AI job of this turn fall back to the rules or the template?"""
+    return turn.nlu_method == "rules_fallback" or AI_MODEL_SERVICE in turn.dependency_errors
 
 
 class TurnFact(FrozenModel):

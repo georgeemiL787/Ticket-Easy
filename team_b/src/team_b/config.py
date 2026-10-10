@@ -49,11 +49,48 @@ ENV_VARS: dict[str, str] = {
     "llm_policy": "TEAM_B_LLM_POLICY",
     "llm_knowledge": "TEAM_B_LLM_KNOWLEDGE",
     "rate_limit_per_minute": "TEAM_B_RATE_LIMIT_PER_MIN",
+    "llm_max_wait_s": "TEAM_B_LLM_MAX_WAIT_S",
 }
+
+# The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
+ROLES: tuple[str, ...] = (
+    "reader", "orchestrator", "knowledge", "reviewer", "writer", "writer_egyptian", "summary", "judge",
+)  # fmt: skip
+# RoleSettings field -> the variable's name; {ROLE} is the role in capitals (TEAM_B_LLM_MODEL_WRITER_EGYPTIAN).
+ROLE_ENV_VARS: dict[str, str] = {
+    "model": "TEAM_B_LLM_MODEL_{ROLE}",
+    "base_url": "TEAM_B_LLM_BASE_URL_{ROLE}",
+    "api_key": "TEAM_B_LLM_API_KEY_{ROLE}",
+    "fallback_model": "TEAM_B_LLM_FALLBACK_MODEL_{ROLE}",
+    "reasoning_effort": "TEAM_B_LLM_REASONING_EFFORT_{ROLE}",
+    "rpm": "TEAM_B_LLM_RPM_{ROLE}",
+    "tpm": "TEAM_B_LLM_TPM_{ROLE}",
+}
+ReasoningEffort = Literal["low", "medium", "high"]
 
 
 class SettingsError(ValueError):
     """An environment variable has a value we cannot use. The message names the variable."""
+
+
+class RoleSettings(BaseModel):
+    """How one job of the AI model differs from the general TEAM_B_LLM_* settings. Unset: the general one is used."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    model: str | None = None  # TEAM_B_LLM_MODEL_<ROLE>
+    base_url: str | None = None  # another provider for this job (e.g. Ollama); then api_key is its own, never shared
+    api_key: SecretStr | None = None  # several keys separated by commas are rotated on a rate limit
+    fallback_model: str | None = None  # used when the model is gone ("not found", "decommissioned") or keeps failing
+    reasoning_effort: ReasoningEffort | None = None  # sent as reasoning_effort only when set (GPT-OSS on Groq)
+    rpm: int | None = Field(default=None, ge=1)  # requests per minute this job's model may be sent (free plan limits)
+    tpm: int | None = Field(default=None, ge=1)  # tokens per minute
+
+    @model_validator(mode="after")
+    def _own_provider_needs_a_model(self) -> Self:
+        if self.base_url and not self.model:
+            raise ValueError("a role with its own base_url needs its own model too")
+        return self
 
 
 class Settings(BaseModel):
@@ -75,6 +112,10 @@ class Settings(BaseModel):
     llm_api_key: SecretStr | None = None  # its key (never put in a file that is committed)
     llm_model: str | None = None  # overrides the default model of the chosen provider
     llm_timeout_s: float = Field(default=20.0, gt=0)
+    llm_max_wait_s: float = Field(
+        default=4.0, ge=0
+    )  # a call waits at most this long for its rate-limit slot, else it falls back
+    roles: dict[str, RoleSettings] = Field(default_factory=dict)  # only the roles that have settings of their own
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
     auth_required: bool = True  # staff must sign in to the inbox, dashboard and traces. 0 only for local experiments.
@@ -114,12 +155,32 @@ class Settings(BaseModel):
         }
         if "llm" not in raw and raw.get("llm_base_url") and raw.get("llm_model"):
             raw["llm"] = "openai"  # a configured AI endpoint is used unless TEAM_B_LLM=none says otherwise
+        roles: dict[str, dict[str, str]] = {}
+        for role in ROLES:
+            found = {
+                field: source[name.format(ROLE=role.upper())].strip()
+                for field, name in ROLE_ENV_VARS.items()
+                if source.get(name.format(ROLE=role.upper()), "").strip()
+            }
+            if found:
+                roles[role] = found
+        if roles:
+            raw["roles"] = roles
         try:
             return cls.model_validate(raw)
         except ValidationError as exc:
             problems = []
             for error in exc.errors():
                 field = str(error["loc"][0]) if error["loc"] else ""
-                name = ENV_VARS.get(field, field or "settings")
+                if field == "roles" and len(error["loc"]) > 1:
+                    role = str(error["loc"][1])
+                    sub = str(error["loc"][2]) if len(error["loc"]) > 2 else ""
+                    name = ROLE_ENV_VARS.get(sub, "TEAM_B_LLM_*_{ROLE}").format(ROLE=role.upper())
+                else:
+                    name = ENV_VARS.get(field, field or "settings")
                 problems.append(f"{name}: {error['msg']}")
             raise SettingsError("; ".join(problems)) from None
+
+    def role(self, name: str) -> RoleSettings:
+        """The settings of one job (all unset when it has none of its own)."""
+        return self.roles.get(name, RoleSettings())

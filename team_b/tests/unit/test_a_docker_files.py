@@ -20,6 +20,16 @@ def test_the_root_env_example_documents_every_setting() -> None:
     assert not missing, f"not in the root .env.example: {sorted(missing)}"
 
 
+def test_the_root_env_example_documents_the_settings_of_every_ai_job() -> None:
+    from team_b.config import ROLE_ENV_VARS, ROLES
+
+    for pattern in ROLE_ENV_VARS.values():
+        assert pattern.replace("{ROLE}", "<JOB>") in ENV_EXAMPLE, pattern  # the pattern is explained
+        examples = [pattern.format(ROLE=role.upper()) for role in ROLES]
+        assert any(re.search(rf"^#?\s*{name}=", ENV_EXAMPLE, flags=re.MULTILINE) for name in examples), pattern
+    assert "https://console.groq.com/docs/rate-limits" in ENV_EXAMPLE  # where the free-plan numbers come from
+
+
 def test_the_image_is_built_in_two_stages_and_runs_without_privileges() -> None:
     assert re.search(r"^FROM python:3\.12-slim", DOCKERFILE, flags=re.MULTILINE)
     assert re.search(r"^FROM node:\S+ AS dashboard", DOCKERFILE, flags=re.MULTILINE)

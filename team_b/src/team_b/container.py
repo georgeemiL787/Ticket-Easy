@@ -6,8 +6,8 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from team_b.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
-from team_b.adapters.llm import OpenAICompatibleLLM
 from team_b.adapters.llm_policy_gate import LLMPolicyGate
+from team_b.adapters.llm_registry import LLMRegistry
 from team_b.adapters.memory_store import (
     FixedClock,
     InMemoryCaseStore,
@@ -62,7 +62,7 @@ class Container:
     evidence: EvidenceProvider
     policy: PolicyGate
     capabilities: CapabilityClient
-    llm: LLMClient | None  # None: rules only
+    llm: LLMClient | None  # the general AI model (TEAM_B_LLM_*); None: rules only
     sessions: SessionStore
     traces: TraceStore
     cases: CaseStore
@@ -73,6 +73,7 @@ class Container:
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
+    llms: LLMRegistry | None = None  # the AI model of every job (reader, writer, reviewer ...): llms.llm_for(role)
     users: UserStore | None = None  # people who sign in to the inbox and the dashboard
     auth: AuthService | None = None  # checks passwords and the sign-in cookie
     alerts: AlertStore | None = None  # alerts for managers (opened and resolved by alert_engine)
@@ -84,7 +85,8 @@ def build_container(
     settings: Settings, *, clock: Clock | None = None, llm_wrapper: Callable[[LLMClient], LLMClient] | None = None
 ) -> Container:
     """Wire the service. llm_wrapper (the evaluation uses it to count AI calls) wraps the AI model, if there is one."""
-    if settings.llm_rewrite and settings.llm == "none":
+    llms = LLMRegistry(settings, wrapper=llm_wrapper)
+    if settings.llm_rewrite and llms.llm_for("writer") is None:
         raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
 
     clock = clock or (FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock())
@@ -103,13 +105,13 @@ def build_container(
     else:
         assert policy_search is not None and rule_checker is not None and safety_screen is not None
         evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
-    llm = build_llm(settings)
-    if llm is not None and llm_wrapper is not None:
-        llm = llm_wrapper(llm)
-    if (settings.llm_policy or settings.llm_knowledge) and llm is None:
-        raise ContainerError("TEAM_B_LLM_POLICY / TEAM_B_LLM_KNOWLEDGE need an AI model: set TEAM_B_LLM.")
-    if settings.llm_policy and llm is not None:
-        policy = LLMPolicyGate(policy, evidence, llm)  # the model may tighten the rule checker, never loosen it
+    llm = llms.default()
+    if settings.llm_policy and llms.llm_for("reviewer") is None:
+        raise ContainerError("TEAM_B_LLM_POLICY needs an AI model: set TEAM_B_LLM.")
+    if settings.llm_knowledge and llms.llm_for("knowledge") is None:
+        raise ContainerError("TEAM_B_LLM_KNOWLEDGE needs an AI model: set TEAM_B_LLM.")
+    if settings.llm_policy and (reviewer := llms.llm_for("reviewer")) is not None:
+        policy = LLMPolicyGate(policy, evidence, reviewer)  # the model may tighten the rule checker, never loosen it
     container = Container(
         settings=settings,
         clock=clock,
@@ -118,6 +120,7 @@ def build_container(
         policy=policy,
         capabilities=shop,
         llm=llm,
+        llms=llms,
         sessions=sessions,
         traces=traces,
         cases=cases,
@@ -127,11 +130,13 @@ def build_container(
         safety_screen=safety_screen,
     )
     registry = CapabilityRegistry(container.capabilities, clock, settings.capability_ttl_s)
+    summary_llm, reader_llm, knowledge_llm = llms.llm_for("summary"), llms.llm_for("reader"), llms.llm_for("knowledge")
+    writer_llm = llms.llm_for("writer") if settings.llm_rewrite else None
     summarizer: HistorySummarizer = (
-        LLMHistorySummarizer(container.llm) if container.llm is not None else TemplateHistorySummarizer()
+        LLMHistorySummarizer(summary_llm) if summary_llm is not None else TemplateHistorySummarizer()
     )
-    knowledge = LLMKnowledgeAssistant(container.llm) if settings.llm_knowledge and container.llm is not None else None
-    nlu: NLU = LLMNLU(container.llm) if container.llm is not None else RuleBasedNLU()
+    knowledge = LLMKnowledgeAssistant(knowledge_llm) if settings.llm_knowledge and knowledge_llm is not None else None
+    nlu: NLU = LLMNLU(reader_llm) if reader_llm is not None else RuleBasedNLU()
     alerts: AlertStore = (
         SqliteAlertStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryAlertStore()
     )
@@ -167,10 +172,10 @@ def build_container(
             nlu=nlu,
             evidence=container.evidence,
             capabilities=container.capabilities,
-            rewriter=LLMRewriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
-            smalltalk=SmallTalkWriter(container.llm) if settings.llm_rewrite and container.llm is not None else None,
+            rewriter=LLMRewriter(writer_llm) if writer_llm is not None else None,
+            smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,
-            llm=container.llm,
+            llm=summary_llm,
             knowledge=knowledge,
             registry=registry,
             policy=container.policy,
@@ -179,36 +184,11 @@ def build_container(
     )
 
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_DEFAULT_MODEL = "anthropic/claude-haiku-4.5"
-
-
 def build_llm(settings: Settings) -> LLMClient | None:
-    """The AI model TEAM_B_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no key.
-    `openai` is any OpenAI-format server named by TEAM_B_LLM_BASE_URL and TEAM_B_LLM_MODEL."""
-    if settings.llm == "ollama":
-        return OpenAICompatibleLLM(
-            base_url=settings.ollama_url.rstrip("/") + "/v1",
-            model=settings.llm_model or settings.ollama_model,
-            timeout_s=settings.llm_timeout_s,
-        )
-    if settings.llm == "openrouter":
-        key = settings.openrouter_api_key.get_secret_value() if settings.openrouter_api_key else None
-        return OpenAICompatibleLLM(
-            base_url=OPENROUTER_URL,
-            model=settings.llm_model or OPENROUTER_DEFAULT_MODEL,
-            api_key=key,
-            timeout_s=settings.llm_timeout_s,
-        )
-    if settings.llm == "openai":
-        assert settings.llm_base_url is not None and settings.llm_model is not None  # checked by Settings
-        return OpenAICompatibleLLM(
-            base_url=settings.llm_base_url,
-            model=settings.llm_model,
-            api_key=settings.llm_api_key.get_secret_value() if settings.llm_api_key else None,
-            timeout_s=settings.llm_timeout_s,
-        )
-    return None
+    """The general AI model TEAM_B_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no
+    key. `openai` is any OpenAI-format server named by TEAM_B_LLM_BASE_URL and TEAM_B_LLM_MODEL. Each job can have its
+    own model: see LLMRegistry (adapters/llm_registry.py)."""
+    return LLMRegistry(settings).default()
 
 
 def build_stores(settings: Settings, clock: Clock) -> tuple[SessionStore, TraceStore, CaseStore]:

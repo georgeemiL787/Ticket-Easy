@@ -25,7 +25,7 @@ from team_b.domain.session import Message, SessionState
 from team_b.domain.tenant import TenantConfig
 from team_b.domain.trace import DecisionTrace, ProposalRecord, TraceStep, record_problems
 from team_b.domain.understanding import Language, Locale, NLUResult
-from team_b.observability import get_logger, turn_context
+from team_b.observability import ai_events, get_logger, turn_context
 
 log = get_logger(__name__)
 
@@ -151,6 +151,18 @@ def log_turn_events(ctx: TurnContext, trace: DecisionTrace) -> None:
     )  # fmt: skip
 
 
+def note_ai_events(ctx: TurnContext, events: list[tuple[str, str, str]]) -> None:
+    """Put on the trace which AI job could not be answered (the rules or the template were used) or used its backup
+    model. A job that fell back is an error entry the AI-fallback alert counts; the backup model is only noted."""
+    failed = [f"{role}: {detail}" for role, kind, detail in events if kind == "failed"]
+    backups = [f"{role}: {detail}" for role, kind, detail in events if kind == "backup_model"]
+    ctx.errors += [f"AI model fell back to the rules or template ({item})" for item in dict.fromkeys(failed)]
+    if failed:
+        ctx.versions["ai_fallback"] = "; ".join(dict.fromkeys(failed))
+    if backups:
+        ctx.versions["ai_backup_model"] = "; ".join(dict.fromkeys(backups))
+
+
 async def finish(ctx: TurnContext) -> AgentReply:
     started = time.perf_counter()
     step, session = ctx.step, ctx.session
@@ -169,6 +181,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
         )
     )
 
+    note_ai_events(ctx, ctx.ai_events)
     citations = tuple(dict.fromkeys(c for s in (*ctx.earlier, step) for c in s.citations))
     fields = understanding_fields(ctx.understanding)
     fields["versions"] = {**base_versions(ctx.tenant), **fields.get("versions", {}), **ctx.versions}
@@ -281,6 +294,8 @@ async def run_turn(
             trace_id=ctx.trace_id,
         ):
             log.info("turn_start", turn_index=ctx.session.turn_index, channel=channel, message_chars=len(text))
-            for stage in STAGES:
-                await run_stage(ctx, stage)
-            return await finish(ctx)
+            with ai_events() as events:
+                ctx.ai_events = events
+                for stage in STAGES:
+                    await run_stage(ctx, stage)
+                return await finish(ctx)

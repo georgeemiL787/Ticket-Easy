@@ -159,6 +159,16 @@ team_b/
                            SqliteSessionStore/TraceStore/CaseStore, same behaviour as the memory stores; TEAM_B_STORE=sqlite)
                  llm (OpenAICompatibleLLM: Ollama, OpenRouter, Groq... over /chat/completions, JSON mode, UpstreamError / InvalidLLMOutput; TEAM_B_LLM_API_KEY may hold
                            several comma-separated keys: a 429 tries the next key, then waits (Retry-After, max 6 s) and goes round again, 3 rounds)
+                 llm_registry (LLMRegistry.llm_for(role) -> LLMClient | None, built by the container; Container.llms; jobs = config.ROLES: reader, orchestrator, knowledge, reviewer, writer,
+                 writer_egyptian, summary, judge; wired: LLMNLU=reader, LLMKnowledgeAssistant=knowledge, LLMPolicyGate=reviewer, LLMRewriter+SmallTalkWriter=writer, summarizers and the
+                 handoff summary=summary, the eval judge=judge. A job reads TEAM_B_LLM_<SETTING>_<ROLE> and, for what it does not set, the general TEAM_B_LLM_*; with no per-job settings every job
+                 is the same client as before. Settings per job (config.RoleSettings / ROLE_ENV_VARS): MODEL, BASE_URL (its own server: it never gets the general key; needs MODEL), API_KEY,
+                 FALLBACK_MODEL (RoleLLM: used when the model answers "not found / decommissioned" (MODEL_NOT_FOUND, skipped 10 min) or fails 3 times in a row (skipped 1 min); a bad key is never
+                 hidden), REASONING_EFFORT (low|medium|high, sent only when set, dropped for good if the server rejects it), RPM, TPM. TEAM_B_LLM_MAX_WAIT_S (4): llm_limits.RateLimiter is one per
+                 (server, model) shared by every job on that model (tightest numbers win), a call waits for its slot at most that long, else RateBudgetExceeded (an UpstreamError, code RATE_BUDGET)
+                 is raised at once; tokens are estimated, then replaced by the server's usage count. Callers treat it like any model error (rules or template). observability.ai_events /
+                 record_ai_event: pipeline.note_ai_events puts "AI model fell back to the rules or template (job: code)" in trace.errors + versions.ai_fallback (domain/facts maps it to the
+                 ai_model service; facts.ai_asked / ai_fell_back feed the ai_fallback alert and metric) and versions.ai_backup_model when a backup model answered)
                  llm_policy_gate (LLMPolicyGate, TEAM_B_LLM_POLICY=1: wraps the PolicyGate; for a write the model reads the retrieved policy passages (prompts/policy_agent_v2.md; v1 kept: v2 asks a person only for a missing fact, an exception a person may grant, or an amount above the chat limit)
                            and picks allow/require_human/deny; the STRICTER of its route and the rule checker's wins, it never loosens; uncited allow/deny -> require_human; model or
                            search failure -> an allowed write becomes require_human POLICY_AGENT_UNAVAILABLE; deny and reads pass through; a human approval still turns its require_human into allow)

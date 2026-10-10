@@ -387,7 +387,7 @@ async def evaluate(
 
     def count(llm: LLMClient) -> LLMClient:
         counter.append(CountingLLM(llm))
-        return counter[0]
+        return counter[-1]
 
     container = build_container(
         settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}), llm_wrapper=count
@@ -402,7 +402,9 @@ async def evaluate(
     judged: list[JudgedTurn] = []
     for conversation in conversations:
         audit_before = len(container.shop.audit_log(TENANT))
-        results = await run_conversation(container, conversation, (lambda: counter[0].calls) if counter else None)
+        results = await run_conversation(
+            container, conversation, (lambda: sum(c.calls for c in counter)) if counter else None
+        )
         writes = [e for e in container.shop.audit_log(TENANT)[audit_before:] if kinds.get(e.tool, "write") != "read"]
         locale = LOCALE_OF_STYLE[conversation.language_style]
         report = styles[conversation.language_style]

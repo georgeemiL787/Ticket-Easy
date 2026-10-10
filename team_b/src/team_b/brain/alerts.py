@@ -37,7 +37,7 @@ import httpx
 from team_b.brain.gaps import group_questions
 from team_b.domain.alerts import Alert, AlertSeverity
 from team_b.domain.decision import EscalationReason
-from team_b.domain.facts import Facts, TurnFact
+from team_b.domain.facts import Facts, TurnFact, ai_asked, ai_fell_back
 from team_b.domain.handoff import CaseStatus
 from team_b.domain.tenant import AlertThresholds, TenantRegistry
 from team_b.observability import get_logger
@@ -46,7 +46,6 @@ from team_b.ports import AlertStore, AlreadyExistsError, CaseStore, Clock, Trace
 log = get_logger(__name__)
 UNAVAILABLE_CODES = frozenset({"BACKEND_UNAVAILABLE", "TIMEOUT"})
 SERVICES = ("policy_search", "safety_screen", "rule_checker", "shop_tools")
-AI_METHODS = frozenset({"llm", "rules_fallback"})
 BASELINE_DAYS = 7
 RULES = (
     "service_down", "action_failing", "unverified_result", "action_missing", "knowledge_gap",
@@ -175,8 +174,8 @@ def escalation_spike(t: AlertThresholds, now: datetime, facts: Facts) -> list[Co
 
 
 def ai_fallback(t: AlertThresholds, now: datetime, facts: Facts) -> list[Condition]:
-    ai = [x for x in _within(facts.turns, now, t.ai_fallback_window_min) if x.nlu_method in AI_METHODS]
-    fell = sum(1 for x in ai if x.nlu_method == "rules_fallback")
+    ai = [x for x in _within(facts.turns, now, t.ai_fallback_window_min) if ai_asked(x)]
+    fell = sum(1 for x in ai if ai_fell_back(x))
     if len(ai) >= t.ai_fallback_min_turns and fell / len(ai) > t.ai_fallback_rate:
         return [Condition("ai_fallback", "info", details={"ai_turns": len(ai), "fell_back": fell,
                                                           "rate": round(fell / len(ai), 3)})]  # fmt: skip

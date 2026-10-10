@@ -8,10 +8,11 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from team_b import eval_conversations as convo
+from team_b.adapters.llm_registry import LLMRegistry
 from team_b.brain.llm_nlu import LLMNLU
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.config import Settings
-from team_b.container import Container, build_llm
+from team_b.container import Container
 from team_b.demo_seed import DriftClock
 from team_b.domain.tenant import TenantRegistry
 from team_b.eval_compare import compare_runs, load_run
@@ -23,7 +24,7 @@ def build_nlu(mode: str, settings: Settings) -> NLU:
     """The understanding to measure: the rules alone, or the AI-assisted one when an AI model is configured."""
     if mode == "rules":
         return RuleBasedNLU()
-    llm = build_llm(settings)
+    llm = LLMRegistry(settings).llm_for("reader")
     if llm is None:
         raise SystemExit("--mode llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
     return LLMNLU(llm)
@@ -51,10 +52,10 @@ async def eval_conversations(
     if use_llm and settings.llm == "none":
         raise SystemExit("--llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
     if not use_llm:
-        settings = settings.model_copy(update={"llm": "none", "llm_rewrite": False})
+        settings = settings.model_copy(update={"llm": "none", "llm_rewrite": False, "roles": {}})
     judge = None
     if use_judge:
-        llm = build_llm(Settings.from_env())
+        llm = LLMRegistry(Settings.from_env()).llm_for("judge")
         if llm is None:
             raise SystemExit("--judge needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
         judge = Judge(llm)

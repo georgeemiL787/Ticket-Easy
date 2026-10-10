@@ -14,7 +14,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal, TypeVar
 
 from team_b.domain.base import FrozenModel
-from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact
+from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact, ai_asked, ai_fell_back
 from team_b.domain.handoff import HandoffCase
 from team_b.ports import CaseStore, TraceStore
 
@@ -24,7 +24,6 @@ MAX_BUCKETS = 2000  # a window that would need more points is refused rather tha
 UNKNOWN = "unknown"
 HANDOFF = "handoff"
 READ = "read"
-AI_METHODS = ("llm", "rules_fallback")  # the turns where an AI model was asked
 
 
 @dataclass(frozen=True)
@@ -518,11 +517,11 @@ class MetricsService:
     ) -> list[RatePoint]:
         starts = bucket_starts(start, end, bucket)
         window = await self._window(tenant_id, start, end, filters)
-        asked = (t for t in window.turns if t.nlu_method in AI_METHODS)
+        asked = (t for t in window.turns if ai_asked(t))
         grouped = self._by_bucket(asked, lambda t: t.created_at, starts, bucket)
         points = []
         for s in starts:
-            fell = sum(1 for t in grouped[s] if t.nlu_method == "rules_fallback")
+            fell = sum(1 for t in grouped[s] if ai_fell_back(t))
             points.append(
                 RatePoint(bucket_start=s, numerator=fell, denominator=len(grouped[s]), rate=rate(fell, len(grouped[s])))
             )

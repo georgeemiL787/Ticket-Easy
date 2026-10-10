@@ -13,7 +13,8 @@ from collections.abc import Mapping
 from typing import Any
 
 _DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# starts only at the beginning of a run and keeps the local part short: a 100,000-letter message is read in one pass
+_EMAIL = re.compile(r"(?<![\w.+-])[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+")
 _PHONE = re.compile(r"(?<![\w+])(?:(?:\+|00)\s?20[\s-]?|0)1[0125](?:[\s-]?\d){8}(?!\d)")
 _CARD = re.compile(r"(?<![\w+])\d(?:[ -]?\d){12,18}(?!\d)")
 _OTP = re.compile(r"(?i)(?:otp|code|pin|cvv|cvc|رمز|كود)\D{0,12}?(\d{4,8})(?!\d)")
@@ -43,9 +44,10 @@ def redact(text: str) -> str:
     """Replace phones, emails, cards, one-time codes and addresses with [phone], [email], [card], [otp], [address]."""
     ascii_text = text.translate(_DIGITS)
     spans: list[tuple[int, int, str]] = []
+    covered = bytearray(len(ascii_text))  # 1 where an earlier pattern already hid the character
 
     def free(start: int, end: int) -> bool:
-        return all(end <= s or start >= e for s, e, _ in spans)
+        return not any(covered[start:end])
 
     patterns = (
         ("[email]", _EMAIL),
@@ -59,6 +61,7 @@ def redact(text: str) -> str:
             start, end = match.span(1) if label == "[otp]" else match.span()
             if free(start, end):
                 spans.append((start, end, label))
+                covered[start:end] = b"" * (end - start)
     out: list[str] = []
     position = 0
     for start, end, label in sorted(spans):

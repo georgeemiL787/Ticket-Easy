@@ -85,6 +85,9 @@ team_b/
                  no_evidence_count>=2 and a question asked, outage needs tool_failures>retries, low_confidence needs session.agent_questions>=max_clarifications; unsupported/capability_missing/
                  customer_request always allowed. Two refused moves in a row still fall back to the usual stages. HandoffPackage.tried = the orchestrator's list + the turn's moves + session counts, shown in
                  the inbox ("Already tried"); trace.escalation_kind; turn_facts gets escalation_kind/agent_mode/agent_moves/agent_fallback (migration 005_agent_facts.sql))
+                 attack tests (tests/adversarial/test_agent_loop_attacks.py): a compromised model (AttackerLLM through the real LLMMovePicker) and the honest picker; judged by the shop audit log, the
+                 replies and the traces. Holes they found and code fixed: ProposeAction needs the customer to have asked for that action (check action_was_asked_for; agent mode now keeps
+                 session.intents_seen), the trace clips long texts in a move (_clipped), redact() was quadratic on a long run of letters (email pattern) and on many matches (free()) - fixed
                  egyptian writer (optional, job writer_egyptian: its OWN base_url/model must be set, it never borrows the general model): ReplyWriter(egyptian_llm=) words ar and arabizi replies with
                  Nile-Chat via Ollama, answer read as PLAIN TEXT (llm.complete_text, RoleLLM.complete_text; plain_reply strips fences/quotes/labels); same gate, retry, reviewer and template;
                  versions.writer_model="egyptian"; `eval --llm --writer-compare [--judge]` (writer_compare.py) -> reports/writer_compare_<date>.csv with empty rating_* columns

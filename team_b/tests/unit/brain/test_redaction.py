@@ -26,3 +26,22 @@ def test_redact(text: str, expected: str) -> None:
 def test_several_values_in_one_message() -> None:
     out = redact("order NS-20877, phone 01012345601, email a@b.co")
     assert out == "order NS-20877, phone [phone], email [email]"
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["A" * 100_000, "1 " * 50_000, "st a " * 20_000, "a@" * 50_000, "a." * 50_000, "ا" * 100_000, "12 st x " * 12_000],
+    ids=["letters", "digits", "street words", "at signs", "dots", "arabic", "mixed"],
+)
+def test_a_huge_text_is_hidden_in_one_pass_not_in_minutes(text: str) -> None:
+    """A model's 100,000-character argument took 43 seconds to redact once (a pattern started at every letter)."""
+    import time
+
+    started = time.perf_counter()
+    redact(text)
+    assert time.perf_counter() - started < 2.0
+
+
+def test_an_email_is_still_found_after_the_speed_fix() -> None:
+    assert redact("mail mona.adel+shop@example.co.uk now") == "mail [email] now"
+    assert redact("y" * 64 + "@example.com") == "[email]"  # 64 characters is the longest address part there is

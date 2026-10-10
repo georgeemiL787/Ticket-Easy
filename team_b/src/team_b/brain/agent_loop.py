@@ -138,6 +138,11 @@ def check_move(ctx: TurnContext, move: AnyMove, seen: set[str]) -> list[CheckRec
         spec = ctx.tenant.intents.get(move.intent)
         ok = spec is not None and spec.kind == "action"
         checks.append(_check("intent_is_an_action", ok, f"{move.intent!r} is not an action of this shop"))
+        asked = {i.name for i in (ctx.understanding.intents if ctx.understanding else [])}
+        asked |= {*ctx.session.intents_seen, *ctx.session.intent_queue, ctx.session.active_intent or ""}
+        checks.append(  # a model (or a text hidden in the data it reads) must not start what nobody asked for
+            _check("action_was_asked_for", move.intent in asked, f"the customer did not ask for {move.intent!r}")
+        )
     if isinstance(move, AskCustomer):
         key = move.question_key
         if key == "disambiguate_intent":  # "return or exchange?": two requests that cannot both be meant
@@ -165,9 +170,25 @@ def check_move(ctx: TurnContext, move: AnyMove, seen: set[str]) -> list[CheckRec
     return checks
 
 
+MAX_SHOWN_CHARS = 300  # a longer text in a move is clipped in the trace: a huge argument must not fill the store
+
+
+def _clipped(value: Any) -> Any:
+    """The same value with every long text cut short (the trace keeps what the move was, not a megabyte of it)."""
+    if isinstance(value, str):
+        return value if len(value) <= MAX_SHOWN_CHARS else f"{value[:MAX_SHOWN_CHARS]}... ({len(value)} characters)"
+    if isinstance(value, dict):
+        return {k: _clipped(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_clipped(v) for v in value[:MAX_TRIED]]
+    return value
+
+
 def _record(move: AnyMove | None, why: str, checks: list[CheckRecord], result: str, started: float) -> AgentStepRecord:
     shown: dict[str, Any] = (
-        redact_mapping(move.model_dump(mode="json", exclude={"why"})) if move is not None else {"kind": "invalid"}
+        _clipped(redact_mapping(move.model_dump(mode="json", exclude={"why"})))
+        if move is not None
+        else {"kind": "invalid"}
     )
     return AgentStepRecord(
         move=shown,

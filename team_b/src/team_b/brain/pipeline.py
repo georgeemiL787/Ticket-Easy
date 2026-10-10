@@ -87,6 +87,9 @@ async def agent_stage(ctx: TurnContext) -> str:
     before = (session.agent_plan, list(session.denied_actions), session.active_intent, dict(session.slots))
     counts = (session.frustration_strikes, session.agent_questions, session.clarifications, ctx.apologise)
     escalation.note_turn_start(ctx)
+    for candidate in ctx.understanding.intents if ctx.understanding else ():
+        if candidate.name not in session.intents_seen:
+            session.intents_seen.append(candidate.name)  # what the customer asked for, as the usual plan stage keeps it
     earlier_before = list(ctx.earlier)
     try:
         ctx.step = await run_agent(ctx)

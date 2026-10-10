@@ -12,6 +12,7 @@ import { labelFor, useI18n } from "../i18n";
 import { formatRemaining, rememberName, rememberedName } from "../lib/caseActions";
 import { OTHER, stackedReasonRows } from "../lib/series";
 import { useFilters } from "../state/useFilters";
+import { AutomateNext, ForcedChosenTable } from "../components/AgentCards";
 
 const NAME_KEY = "dashboard.name";
 
@@ -175,6 +176,9 @@ export default function Escalations() {
               </tbody>
             </table>
             <ReasonsOverTime />
+            <ForcedChosenTable byReason={d.by_reason_kind ?? {}} forced={d.forced ?? 0} chosen={d.chosen ?? 0} />
+            <h2>{t("agent.automateNext")}</h2>
+            <AutomateNext rows={d.automate_next ?? []} />
             {d.top_rules.length > 0 ? (
               <>
                 <h2>{t("esc.topRules")}</h2>

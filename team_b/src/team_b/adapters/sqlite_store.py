@@ -105,14 +105,16 @@ async def _insert_facts(
         await db.execute(
             "INSERT INTO turn_facts (trace_id, tenant_id, conversation_id, created_at, decision, escalation_reason, "
             "language, intent, latency_ms, evidence_empty, evidence_count, nlu_method, tool_errors, "
-            "dependency_errors, stage_ms, escalation_kind, agent_mode, agent_moves, agent_fallback) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "dependency_errors, stage_ms, escalation_kind, agent_mode, agent_moves, agent_fallback, "
+            "agent_fallback_reason, reviewer_blocked_replies, reviewer_blocked_actions) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 turn.trace_id, turn.tenant_id, turn.conversation_id, _iso(turn.created_at), turn.decision,
                 turn.escalation_reason, turn.language, turn.intent, turn.latency_ms, int(turn.evidence_empty),
                 turn.evidence_count, turn.nlu_method, turn.tool_errors, json.dumps(turn.dependency_errors),
                 json.dumps(turn.stage_ms), turn.escalation_kind, turn.agent_mode, turn.agent_moves,
-                int(turn.agent_fallback),
+                int(turn.agent_fallback), turn.agent_fallback_reason, turn.reviewer_blocked_replies,
+                turn.reviewer_blocked_actions,
             ),
         )  # fmt: skip
     await db.executemany(
@@ -345,6 +347,7 @@ class SqliteTraceStore:
                     evidence_empty=bool(r[9]), evidence_count=r[10], nlu_method=r[11], tool_errors=r[12],
                     dependency_errors=tuple(json.loads(r[13])), stage_ms=json.loads(r[14]), escalation_kind=r[15],
                     agent_mode=r[16], agent_moves=r[17], agent_fallback=bool(r[18]),
+                    agent_fallback_reason=r[19], reviewer_blocked_replies=r[20], reviewer_blocked_actions=r[21],
                 )
                 for r in turns
             ),

@@ -10,7 +10,8 @@ Never edit a migration that has been pushed: add a new one.
 | 003 | alerts (done) | A |
 | 004 | users and user_tenants (logins, done) | A |
 | 005 | turn_facts gets escalation_kind, agent_mode, agent_moves, agent_fallback (agent counters, done) | B |
-| 006+ | ask the other person first | - |
+| 006 | turn_facts gets agent_fallback_reason, reviewer_blocked_replies, reviewer_blocked_actions (done) | B |
+| 007+ | ask the other person first | - |
 
 Numbers must have no gaps: if 002 is not written yet when 003 is, the runner refuses to start, so whoever pushes
 second keeps the numbers above and adds their file on top of the other's.

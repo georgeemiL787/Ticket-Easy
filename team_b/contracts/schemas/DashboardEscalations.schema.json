@@ -1,5 +1,34 @@
 {
   "$defs": {
+    "AutomateRow": {
+      "additionalProperties": false,
+      "properties": {
+        "handoffs": {
+          "title": "Handoffs",
+          "type": "integer"
+        },
+        "intent": {
+          "title": "Intent",
+          "type": "string"
+        },
+        "rate": {
+          "title": "Rate",
+          "type": "number"
+        },
+        "turns": {
+          "title": "Turns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "intent",
+        "handoffs",
+        "turns",
+        "rate"
+      ],
+      "title": "AutomateRow",
+      "type": "object"
+    },
     "DashboardRuleCount": {
       "properties": {
         "count": {
@@ -61,12 +90,31 @@
     }
   },
   "properties": {
+    "automate_next": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/AutomateRow"
+      },
+      "title": "Automate Next",
+      "type": "array"
+    },
     "by_reason": {
       "items": {
         "$ref": "#/$defs/ReasonPoint"
       },
       "title": "By Reason",
       "type": "array"
+    },
+    "by_reason_kind": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "integer"
+        },
+        "type": "object"
+      },
+      "default": {},
+      "title": "By Reason Kind",
+      "type": "object"
     },
     "by_reason_total": {
       "additionalProperties": {
@@ -75,12 +123,22 @@
       "title": "By Reason Total",
       "type": "object"
     },
+    "chosen": {
+      "default": 0,
+      "title": "Chosen",
+      "type": "integer"
+    },
     "claimed_cases": {
       "title": "Claimed Cases",
       "type": "integer"
     },
     "conversations": {
       "title": "Conversations",
+      "type": "integer"
+    },
+    "forced": {
+      "default": 0,
+      "title": "Forced",
       "type": "integer"
     },
     "open_cases": {

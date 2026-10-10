@@ -26,6 +26,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     dashboard.DashboardConversationPage,
     dashboard.DashboardConversation,
     dashboard.DashboardEscalations,
+    dashboard.DashboardAgent,
     dashboard.DashboardTools,
     dashboard.DashboardQueue,
     dashboard.DashboardPassage,

@@ -27,6 +27,29 @@ OTHER_SERVICE = "other"
 AI_METHODS = ("llm", "rules_fallback")  # the readings where the AI model was asked
 
 
+def fallback_category(trace: DecisionTrace) -> str | None:
+    """Why the agent loop gave up on this turn, as one of a few categories (the free text may hold a number)."""
+    reason = (trace.fallback_reason or "").lower()
+    if not reason:
+        return None
+    if "ratebudget" in reason or "rate_budget" in reason or "RATE_BUDGET" in trace.versions.get("ai_fallback", ""):
+        return "rate_limit"
+    if "move picker" in reason:
+        return "model_error"
+    if "refused" in reason:
+        return "refused_moves"
+    if "moves without" in reason:
+        return "too_many_moves"
+    if "longer than" in reason:
+        return "too_slow"
+    return "other"
+
+
+def agent_worked(turn: "TurnFact") -> bool:
+    """Did the agent loop work on this turn (it made moves, or it tried and gave up)?"""
+    return turn.agent_mode == "on" and (turn.agent_moves > 0 or turn.agent_fallback)
+
+
 def ai_asked(turn: "TurnFact") -> bool:
     """Was the AI model asked in this turn (to read the message, or for any other job)?"""
     return turn.nlu_method in AI_METHODS or AI_MODEL_SERVICE in turn.dependency_errors
@@ -57,6 +80,11 @@ class TurnFact(FrozenModel):
     agent_mode: str | None = None  # on | off | shadow
     agent_moves: int = Field(default=0, ge=0)  # moves the agent loop made in this turn
     agent_fallback: bool = False  # the agent loop gave up and the usual stages answered
+    agent_fallback_reason: str | None = (
+        None  # why, as a category: rate_limit, model_error, refused_moves, too_many_moves, too_slow
+    )
+    reviewer_blocked_replies: int = Field(default=0, ge=0)  # replies the reviewer blocked or could not check
+    reviewer_blocked_actions: int = Field(default=0, ge=0)  # writes the reviewer sent to a person or refused
 
 
 class ToolCallFact(FrozenModel):
@@ -134,6 +162,9 @@ def facts_from_trace(
             agent_mode=trace.agent_mode,
             agent_moves=len(trace.agent_steps),
             agent_fallback=trace.fallback_reason is not None,
+            agent_fallback_reason=fallback_category(trace),
+            reviewer_blocked_replies=sum(1 for s in trace.steps if s.stage == "review" and s.status != "ok"),
+            reviewer_blocked_actions=sum(1 for p in trace.policy if p.reason_code.startswith("POLICY_AGENT_")),
         )
     calls = [
         ToolCallFact(

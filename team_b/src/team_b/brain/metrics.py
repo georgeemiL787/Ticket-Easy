@@ -14,7 +14,16 @@ from datetime import UTC, datetime, timedelta
 from typing import Literal, TypeVar
 
 from team_b.domain.base import FrozenModel
-from team_b.domain.facts import Facts, FactsSummary, PolicyFact, ToolCallFact, TurnFact, ai_asked, ai_fell_back
+from team_b.domain.facts import (
+    Facts,
+    FactsSummary,
+    PolicyFact,
+    ToolCallFact,
+    TurnFact,
+    agent_worked,
+    ai_asked,
+    ai_fell_back,
+)
 from team_b.domain.handoff import HandoffCase
 from team_b.ports import CaseStore, TraceStore
 
@@ -96,6 +105,31 @@ class SpeedStat(FrozenModel):
     count: int
     p50: float | None  # milliseconds
     p95: float | None
+
+
+class AutomateRow(FrozenModel):
+    intent: str  # the request type
+    handoffs: int  # turns that ended with a person for it
+    turns: int  # all its turns
+    rate: float
+
+
+class AgentSummary(FrozenModel):
+    """How the agent did over a window (metrics 15 to 19 in docs/metrics.md)."""
+
+    agent_turns: int  # turns the agent loop worked (moves made, or it tried and gave up)
+    fallbacks: int
+    fallback_rate: float | None
+    fallback_reasons: dict[
+        str, int
+    ]  # category -> turns: rate_limit, model_error, refused_moves, too_many_moves, too_slow
+    reviewer_blocked_replies: int
+    reviewer_blocked_actions: int
+    moves_per_message: float | None
+    handoffs_forced: int
+    handoffs_chosen: int
+    by_reason: dict[str, dict[str, int]]  # reason -> {"forced": n, "chosen": n}
+    automate_next: list[AutomateRow]  # request types ranked by handoffs
 
 
 class LatencyPoint(Point):
@@ -506,6 +540,13 @@ class MetricsService:
             for s in starts
         ]
 
+    # 15 to 19. the agent: fallbacks and their reasons, reviewer blocks, moves per message, forced vs chosen handoffs,
+    # and the request types that most often end with a person ("automate next")
+    async def agent_summary(
+        self, tenant_id: str, start: datetime, end: datetime, filters: MetricFilters | None = None
+    ) -> AgentSummary:
+        return agent_summary_of((await self._window(tenant_id, start, end, filters)).turns)
+
     # 14. AI fallback rate: AI-assisted readings that fell back to the rules / readings where the AI was asked
     async def ai_fallback_rate(
         self,
@@ -526,6 +567,36 @@ class MetricsService:
                 RatePoint(bucket_start=s, numerator=fell, denominator=len(grouped[s]), rate=rate(fell, len(grouped[s])))
             )
         return points
+
+
+def agent_summary_of(turns: Iterable[TurnFact]) -> AgentSummary:
+    rows = list(turns)
+    worked = [t for t in rows if agent_worked(t)]
+    fell = [t for t in worked if t.agent_fallback]
+    handoffs = [t for t in rows if t.decision == HANDOFF]
+    by_reason: dict[str, dict[str, int]] = {}
+    for t in handoffs:
+        kind = t.escalation_kind or "forced"  # a handoff of the usual flow is decided by code
+        bucket = by_reason.setdefault(t.escalation_reason or UNKNOWN, {"forced": 0, "chosen": 0})
+        bucket[kind] = bucket.get(kind, 0) + 1
+    per_intent: Counter[str] = Counter(t.intent or UNKNOWN for t in rows)
+    asked: Counter[str] = Counter(t.intent or UNKNOWN for t in handoffs)
+    ranked = sorted(asked.items(), key=lambda item: (-item[1], item[0]))
+    return AgentSummary(
+        agent_turns=len(worked),
+        fallbacks=len(fell),
+        fallback_rate=rate(len(fell), len(worked)),
+        fallback_reasons=dict(Counter(t.agent_fallback_reason or "other" for t in fell)),
+        reviewer_blocked_replies=sum(t.reviewer_blocked_replies for t in rows),
+        reviewer_blocked_actions=sum(t.reviewer_blocked_actions for t in rows),
+        moves_per_message=(sum(t.agent_moves for t in worked) / len(worked)) if worked else None,
+        handoffs_forced=sum(v["forced"] for v in by_reason.values()),
+        handoffs_chosen=sum(v["chosen"] for v in by_reason.values()),
+        by_reason=by_reason,
+        automate_next=[
+            AutomateRow(intent=i, handoffs=n, turns=per_intent[i], rate=n / per_intent[i]) for i, n in ranked
+        ],
+    )
 
 
 # ---- the overview: current period and the one before it ----

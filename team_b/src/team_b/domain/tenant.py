@@ -118,6 +118,14 @@ class AlertThresholds(FrozenModel):
     ai_fallback_rate: float = Field(default=0.10, gt=0, le=1)  # AI turns that fell back to the rules ...
     ai_fallback_min_turns: int = Field(default=5, ge=1)
     ai_fallback_window_min: int = Field(default=60, ge=1)  # ... in this many minutes
+    agent_fallback_rate: float = Field(default=0.20, gt=0, le=1)  # agent turns that gave up and used the usual flow ...
+    agent_fallback_min_turns: int = Field(default=5, ge=1)
+    agent_fallback_window_min: int = Field(default=60, ge=1)  # ... in this many minutes
+    reviewer_block_rate: float = Field(
+        default=0.15, gt=0, le=1
+    )  # agent turns where the reviewer stopped a reply or write ...
+    reviewer_block_min_turns: int = Field(default=5, ge=1)
+    reviewer_block_window_min: int = Field(default=60, ge=1)  # ... in this many minutes
     backlog_sla_min: int = Field(default=15, ge=1)  # an urgent case nobody claimed for this long
 
 

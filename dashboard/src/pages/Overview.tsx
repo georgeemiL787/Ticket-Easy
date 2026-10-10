@@ -3,6 +3,7 @@ import type { DashboardOverview } from "../api/types/DashboardOverview";
 import type { DashboardTimeseries } from "../api/types/DashboardTimeseries";
 import { Async } from "../components/Async";
 import { CategoryBars, ChartCard, RowsTable, StackedBars, TimeLine } from "../components/Charts";
+import { AgentCards } from "../components/AgentCards";
 import { KpiTile } from "../components/Kpi";
 import { labelFor, useI18n } from "../i18n";
 import { hasData, latencyRows, mixTotals, rateRows, stackedReasonRows, valueRows, OTHER } from "../lib/series";
@@ -107,6 +108,7 @@ export default function Overview() {
                 <p className="kpi-value">{d.open_cases}</p>
               </section>
             </div>
+            <AgentCards />
             <div className="charts">
               <LineSection title={t("overview.conversationsOverTime")} metric="conversations" kind="count" />
               <LineSection title={t("overview.automationOverTime")} metric="automation_rate" kind="rate" unit="%" />

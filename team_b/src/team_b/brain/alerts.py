@@ -16,6 +16,8 @@ The rules (each reads only counts, never message text; "key" tells apart the ale
   slow_replies       the 95th percentile of reply time is too high
   escalation_spike   the share of conversations handed to a person is far above the 7-day share
   ai_fallback        too many AI turns fell back to the rules
+  agent_fallback_spike   too many agent turns gave up and used the usual flow
+  reviewer_block_spike   the reviewer stops too many replies or writes
   queue_backlog      an urgent case nobody has taken for too long
 
 It reads through the ports: TraceStore.facts() (the text-free rows of every turn, tool call and rule answer),
@@ -37,7 +39,7 @@ import httpx
 from team_b.brain.gaps import group_questions
 from team_b.domain.alerts import Alert, AlertSeverity
 from team_b.domain.decision import EscalationReason
-from team_b.domain.facts import Facts, TurnFact, ai_asked, ai_fell_back
+from team_b.domain.facts import Facts, TurnFact, agent_worked, ai_asked, ai_fell_back
 from team_b.domain.handoff import CaseStatus
 from team_b.domain.tenant import AlertThresholds, TenantRegistry
 from team_b.observability import get_logger
@@ -49,7 +51,7 @@ SERVICES = ("policy_search", "safety_screen", "rule_checker", "shop_tools")
 BASELINE_DAYS = 7
 RULES = (
     "service_down", "action_failing", "unverified_result", "action_missing", "knowledge_gap",
-    "slow_replies", "escalation_spike", "ai_fallback", "queue_backlog",
+    "slow_replies", "escalation_spike", "ai_fallback", "agent_fallback_spike", "reviewer_block_spike", "queue_backlog",
 )  # fmt: skip
 
 
@@ -182,9 +184,32 @@ def ai_fallback(t: AlertThresholds, now: datetime, facts: Facts) -> list[Conditi
     return []
 
 
+def agent_fallback_spike(t: AlertThresholds, now: datetime, facts: Facts) -> list[Condition]:
+    agent = [x for x in _within(facts.turns, now, t.agent_fallback_window_min) if agent_worked(x)]
+    fell = [x for x in agent if x.agent_fallback]
+    if len(agent) >= t.agent_fallback_min_turns and len(fell) / len(agent) > t.agent_fallback_rate:
+        details = {
+            "agent_turns": len(agent),
+            "fell_back": len(fell),
+            "rate": round(len(fell) / len(agent), 3),
+            "reasons": dict(Counter(x.agent_fallback_reason or "other" for x in fell)),
+        }
+        return [Condition("agent_fallback_spike", "warning", details=details)]
+    return []
+
+
+def reviewer_block_spike(t: AlertThresholds, now: datetime, facts: Facts) -> list[Condition]:
+    agent = [x for x in _within(facts.turns, now, t.reviewer_block_window_min) if agent_worked(x)]
+    blocked = sum(1 for x in agent if x.reviewer_blocked_replies or x.reviewer_blocked_actions)
+    if len(agent) >= t.reviewer_block_min_turns and blocked / len(agent) > t.reviewer_block_rate:
+        details = {"agent_turns": len(agent), "blocked": blocked, "rate": round(blocked / len(agent), 3)}
+        return [Condition("reviewer_block_spike", "warning", details=details)]
+    return []
+
+
 FACT_RULES: tuple[Callable[[AlertThresholds, datetime, Facts], list[Condition]], ...] = (
     service_down, action_failing, unverified_result, action_missing, knowledge_gap_rate, slow_replies,
-    escalation_spike, ai_fallback,
+    escalation_spike, ai_fallback, agent_fallback_spike, reviewer_block_spike,
 )  # fmt: skip
 
 

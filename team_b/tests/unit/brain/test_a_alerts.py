@@ -227,6 +227,75 @@ async def test_ai_fallback_when_too_many_ai_turns_fell_back() -> None:
     assert await w.evaluate() == ([], ["ai_fallback"])
 
 
+def agent_turn(**kw: Any) -> dict[str, Any]:
+    """A turn the agent loop worked: it made one move."""
+    from team_b.domain.agent import AgentStepRecord
+
+    return {"agent_mode": "on", "agent_steps": (AgentStepRecord(move={"kind": "reply"}),), **kw}
+
+
+async def test_agent_fallback_spike_opens_with_the_reasons_and_resolves() -> None:
+    w = World()
+    for _ in range(8):
+        await w.turn(**agent_turn())
+    await w.turn(**agent_turn(fallback_reason="move picker error: UpstreamError"))
+    assert await w.evaluate() == ([], [])  # 1 of 9: 11%, under 20%
+    await w.turn(**agent_turn(fallback_reason="two refused moves in a row"))
+    await w.turn(**agent_turn(fallback_reason="two refused moves in a row"))
+    assert await w.evaluate() == (["agent_fallback_spike"], [])  # 3 of 11: 27%
+    [alert] = await w.alerts.list(T, open_only=True)
+    assert alert.details["fell_back"] == 3 and alert.details["reasons"] == {"model_error": 1, "refused_moves": 2}
+    w.clock.tick(61)
+    for _ in range(6):
+        await w.turn(**agent_turn())
+    assert await w.evaluate() == ([], ["agent_fallback_spike"])
+
+
+async def test_agent_fallback_needs_enough_agent_turns_and_ignores_turns_the_agent_did_not_work() -> None:
+    w = World()
+    for _ in range(3):
+        await w.turn(**agent_turn(fallback_reason="move picker error: x"))
+    assert await w.evaluate() == ([], [])  # only 3 agent turns: too few to tell
+    for _ in range(30):
+        await w.turn(agent_mode="off")  # the usual flow: not agent turns
+    assert await w.evaluate() == ([], [])
+
+
+async def test_reviewer_block_spike_opens_and_resolves() -> None:
+    from team_b.domain.trace import TraceStep
+
+    blocked = (TraceStep(stage="review", status="blocked", duration_ms=1.0, detail="says it was refunded"),)
+    w = World()
+    for _ in range(9):
+        await w.turn(**agent_turn())
+    await w.turn(**agent_turn(steps=blocked))
+    assert await w.evaluate() == ([], [])  # 1 of 10: 10%, under 15%
+    await w.turn(**agent_turn(steps=blocked))
+    assert await w.evaluate() == (["reviewer_block_spike"], [])  # 2 of 11: 18%
+    w.clock.tick(61)
+    for _ in range(6):
+        await w.turn(**agent_turn())
+    assert await w.evaluate() == ([], ["reviewer_block_spike"])
+
+
+async def test_a_reviewer_that_sent_a_write_to_a_person_counts_as_a_block() -> None:
+    w = World()
+    blocked = (PolicyRecord(request_id="p", action="create_refund", decision="require_human",
+                            reason_code="POLICY_AGENT_REQUIRE_HUMAN", citations=()),)  # fmt: skip
+    for _ in range(5):
+        await w.turn(**agent_turn(policy=blocked))
+    assert await w.evaluate() == (["reviewer_block_spike"], [])
+
+
+async def test_the_agent_alert_thresholds_can_be_changed_per_shop() -> None:
+    w = World(AlertThresholds(agent_fallback_rate=0.5, agent_fallback_min_turns=2))
+    await w.turn(**agent_turn())
+    await w.turn(**agent_turn(fallback_reason="the turn took longer than 30 seconds"))
+    assert await w.evaluate() == ([], [])  # 50% is not above 50%
+    await w.turn(**agent_turn(fallback_reason="the turn took longer than 30 seconds"))
+    assert await w.evaluate() == (["agent_fallback_spike"], [])
+
+
 async def test_rule_based_turns_do_not_count_as_ai_turns() -> None:
     w = World()
     for _ in range(20):
@@ -271,7 +340,7 @@ async def test_a_normal_priority_case_is_not_a_backlog() -> None:
 def test_every_rule_has_a_test_above() -> None:
     assert set(RULES) == {
         "service_down", "action_failing", "unverified_result", "action_missing", "knowledge_gap", "slow_replies",
-        "escalation_spike", "ai_fallback", "queue_backlog",
+        "escalation_spike", "ai_fallback", "agent_fallback_spike", "reviewer_block_spike", "queue_backlog",
     }  # fmt: skip
 
 

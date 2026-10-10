@@ -77,6 +77,16 @@ class DashboardTimeseries(BaseModel):
     points: list[dict[str, Any]]  # one per bucket; the fields depend on the metric (see docs/metrics.md)
 
 
+class DashboardAgent(BaseModel):
+    """How the agent did in the window, next to the period before it."""
+
+    tenant_id: str
+    period_start: datetime
+    period_end: datetime
+    now: m.AgentSummary
+    previous: m.AgentSummary
+
+
 class DashboardConversationRow(BaseModel):
     conversation_id: str
     first_at: datetime
@@ -224,6 +234,10 @@ class DashboardEscalations(BaseModel):
     open_cases: int
     claimed_cases: int
     top_rules: list[DashboardRuleCount]  # the rules behind denied or human-approval answers, most frequent first
+    forced: int = 0  # handoffs decided by code (safety screen, rules, identity ...)
+    chosen: int = 0  # handoffs the agent chose after trying
+    by_reason_kind: dict[str, dict[str, int]] = {}  # reason -> {forced, chosen}
+    automate_next: list[m.AutomateRow] = []  # request types ranked by handoffs
 
 
 class DashboardQueueRow(BaseModel):
@@ -359,6 +373,21 @@ async def get_overview(request: Request, tenant_id: TENANT, from_: FROM = None, 
         unverified_results=kpi(now.unverified_results, before.unverified_results),
         p95_latency_ms=kpi(now.p95_latency_ms, before.p95_latency_ms),
         open_cases=await count_cases(b, tenant_id, CaseStatus.OPEN),
+    )
+
+
+@router.get("/agent", response_model=DashboardAgent)
+async def get_agent(request: Request, tenant_id: TENANT, from_: FROM = None, to: TO = None) -> DashboardAgent:
+    """Fallbacks and their reasons, reviewer blocks, moves per message, forced vs chosen handoffs, automate next."""
+    b = built(request, tenant_id)
+    start, end = window(b, from_, to)
+    previous_start, previous_end = m.previous_period(start, end)
+    return DashboardAgent(
+        tenant_id=tenant_id,
+        period_start=start,
+        period_end=end,
+        now=await service(b).agent_summary(tenant_id, start, end),
+        previous=await service(b).agent_summary(tenant_id, previous_start, previous_end),
     )
 
 
@@ -598,6 +627,7 @@ async def get_escalations(
             action, reason_code, decision = key.rsplit(":", 2)
             if decision in HUMAN_DECISIONS:
                 rules[(f"{action}:{reason_code}", decision)] += count
+    summary = await service(b).agent_summary(tenant_id, start, end)
     return DashboardEscalations(
         tenant_id=tenant_id,
         period_start=start,
@@ -611,6 +641,10 @@ async def get_escalations(
             (DashboardRuleCount(rule=r, decision=d, count=n) for (r, d), n in rules.items()),
             key=lambda x: (-x.count, x.rule),
         ),
+        forced=summary.handoffs_forced,
+        chosen=summary.handoffs_chosen,
+        by_reason_kind=summary.by_reason,
+        automate_next=summary.automate_next,
     )
 
 

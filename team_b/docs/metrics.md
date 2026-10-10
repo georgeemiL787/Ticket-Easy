@@ -35,6 +35,11 @@ Conventions
 | 12 | Latency p50 / p95 (`latency`) | Milliseconds of `latency_ms` per turn, overall, and for every stage that ran (skipped stages are not timed). |
 | 13 | Language mix (`language_mix`) | Turns counted by language (`en`, `ar`, `mixed`, `arabizi`, `unknown`). |
 | 14 | AI fallback rate (`ai_fallback_rate`) | Turns whose understanding fell back to the rules (`rules_fallback`) ÷ turns where the AI model was asked (`llm` or `rules_fallback`). 0 of 0 when no AI model is configured. |
+| 15 | Agent fallback rate and reasons (`agent_summary`) | Turns the agent loop worked (it made moves, or tried and gave up) that fell back to the usual flow ÷ turns the agent loop worked. Reasons are counted by category: `rate_limit` (the AI provider's limit), `model_error` (the model failed or answered nonsense), `refused_moves` (code refused two moves in a row), `too_many_moves`, `too_slow`, `other`. |
+| 16 | Reviewer blocks (`agent_summary`) | Replies the reviewer blocked or could not check (a `review` step that is not `ok`), and writes the reviewer sent to a person or refused (a rule-checker answer with a `POLICY_AGENT_*` reason code). |
+| 17 | Moves per message (`agent_summary`) | The mean number of moves of the agent loop over the turns it worked. |
+| 18 | Handoffs forced vs chosen (`agent_summary`) | Turns that ended with a person, split by who decided: `forced` (code: safety screen, rules, identity, a person asked for ...; also every handoff of the usual flow) or `chosen` (the orchestrator, after trying), per reason. |
+| 19 | Automate next (`agent_summary`) | Request types (the turn's active intent) ranked by the number of turns that ended with a person, with how many turns that type had. |
 
 ## Summary rows (migration 002)
 
@@ -42,6 +47,8 @@ Written in the same transaction as the trace, by `facts_from_trace` (`domain/fac
 rows in lists. They hold no message text or personal value and **outlive the trace**: deleting old traces (retention)
 does not change the numbers of past periods.
 
+- Migrations 005 and 006 add `escalation_kind`, `agent_mode`, `agent_moves`, `agent_fallback`, `agent_fallback_reason`,
+  `reviewer_blocked_replies` and `reviewer_blocked_actions` to `turn_facts` (metrics 15 to 19).
 - `turn_facts(trace_id, tenant_id, conversation_id, created_at, decision, escalation_reason, language, intent, latency_ms,
   evidence_empty, nlu_method, tool_errors, dependency_errors)` plus `evidence_count` (passages used) and `stage_ms` (stage
   → ms). One row per customer turn. `dependency_errors` is the list of services. `intent` is the active intent.
@@ -50,6 +57,18 @@ does not change the numbers of past periods.
 - `policy_facts(trace_id, tenant_id, created_at, action, decision, reason_code)`. One row per rule checker answer.
 
 `created_at` is the moment the store saved the trace.
+
+## The agent's alerts (docs: brain/alerts.py)
+
+Both read the text-free turn rows of the last hour (tenant thresholds in `alerts`, defaults shown) and only count turns
+the agent loop worked:
+
+- `agent_fallback_spike` (warning): at least `agent_fallback_min_turns` (5) agent turns in `agent_fallback_window_min`
+  (60) and more than `agent_fallback_rate` (20%) of them fell back to the usual flow. The alert lists the reasons.
+- `reviewer_block_spike` (warning): at least `reviewer_block_min_turns` (5) agent turns in `reviewer_block_window_min`
+  (60) and more than `reviewer_block_rate` (15%) had a reply or a write stopped by the reviewer.
+
+Each opens once and resolves itself when the rate falls back under the threshold.
 
 ## Assumptions to review
 

@@ -155,6 +155,7 @@ export type RequestId1 = string;
 export type ResponseCitations = string[];
 export type ResponseText = string;
 export type RiskCategories = string[];
+export type ShadowError = string | null;
 export type Detail1 = string;
 export type DurationMs1 = number;
 export type Stage = string;
@@ -341,6 +342,9 @@ export interface DecisionTrace {
   response_citations?: ResponseCitations;
   response_text?: ResponseText;
   risk_categories?: RiskCategories;
+  shadow_error?: ShadowError;
+  shadow_move?: AgentStepRecord | null;
+  shadow_plan?: AgentPlan | null;
   steps?: Steps1;
   tenant_id: TenantId2;
   tool_calls?: ToolCalls;

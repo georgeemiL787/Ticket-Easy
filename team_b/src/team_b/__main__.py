@@ -46,7 +46,13 @@ async def eval_nlu(mode: str, tenant_id: str, data: Path, save: bool) -> list[Ev
 
 
 async def eval_conversations(
-    directory: Path, use_llm: bool, out: Path, save: bool, use_judge: bool = False, label: str = ""
+    directory: Path,
+    use_llm: bool,
+    out: Path,
+    save: bool,
+    use_judge: bool = False,
+    label: str = "",
+    agent_mode: str | None = None,
 ) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
@@ -61,7 +67,16 @@ async def eval_conversations(
         judge = Judge(llm)
     conversations = convo.load_set(directory)
     mode = "llm" if use_llm else "rules"
-    report = await convo.evaluate(conversations, settings, mode=mode, judge=judge, label=label)
+    if agent_mode in ("on", "shadow") and not use_llm:
+        raise SystemExit(f"--agent-mode {agent_mode} needs the orchestrator's AI model: add --llm (see .env.example).")
+    report = await convo.evaluate(
+        conversations,
+        settings,
+        mode=mode,
+        judge=judge,
+        label=label,
+        agent_mode=agent_mode,  # type: ignore[arg-type]
+    )
     print(convo.render(report))
     markdown, data = convo.write_report(report, out)
     print(f"wrote {markdown} and {data}")
@@ -203,6 +218,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     full.add_argument("--save-baseline", action="store_true", help="record the rules' result as the baseline")
     full.add_argument(
+        "--agent-mode",
+        choices=["on", "off", "shadow"],
+        default=None,
+        help="run the agent (on), the usual flow (off) or the usual flow with the agent only watching (shadow); "
+        "on and shadow need --llm. Shadow adds the agreement of the agent's first move to the report.",
+    )
+    full.add_argument(
         "--label", default="", help="name this run: the report is saved as reports/eval_<label>_<date>.json and .md"
     )
     compare = commands.add_parser("eval-compare", help="show two saved evaluation runs side by side")
@@ -229,7 +251,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "create-user":
         return asyncio.run(create_user_cmd(args))
     if args.command == "eval":
-        return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline, args.judge, args.label))
+        return asyncio.run(
+            eval_conversations(
+                args.set, args.llm, args.out, args.save_baseline, args.judge, args.label, args.agent_mode
+            )
+        )
     if args.command == "eval-compare":
         print(compare_runs(load_run(args.first), load_run(args.second), args.first.stem, args.second.stem))
         return 0

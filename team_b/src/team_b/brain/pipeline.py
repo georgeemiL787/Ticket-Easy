@@ -20,6 +20,7 @@ from team_b.brain.agent_reads import remember_order_ids
 from team_b.brain.composer import default_composer
 from team_b.brain.redaction import redact, redact_mapping, redact_value
 from team_b.brain.rewrite import REWRITABLE
+from team_b.brain.shadow import run_shadow
 from team_b.brain.turn import Deps, StageFn, Step, TurnContext, locale_of
 from team_b.brain.versions import base_versions
 from team_b.domain.agent import AgentPlan, PlanStep
@@ -122,16 +123,26 @@ def resume_plan_after_confirmation(ctx: TurnContext) -> None:
         ctx.step = None
 
 
-def agent_runs(ctx: TurnContext) -> bool:
-    """Does the agent loop work this turn? Its mode is the tenant's, else the service's; it needs a move picker (a
-    model for the orchestrator job). Shadow behaves like off until it is built."""
+async def shadow_stage(ctx: TurnContext) -> str:
+    """Shadow mode: ask the orchestrator for its first move on a copy; the real turn goes on untouched."""
+    return await run_shadow(ctx)
+
+
+SHADOW_STAGE = Stage("shadow", shadow_stage)
+SHADOW_STAGES: tuple[Stage, ...] = (*STAGES[:5], SHADOW_STAGE, *STAGES[5:])
+
+
+def agent_flow(ctx: TurnContext) -> str:
+    """How this turn runs: "agent" (the loop works it), "shadow" (the usual flow answers, the agent only watches) or
+    "usual". The mode is the tenant's, else the service's; the agent and its shadow need a move picker (a model for the
+    orchestrator job): without one the usual flow runs and the trace says so."""
     ctx.agent_mode = ctx.tenant.agent_mode or ctx.deps.agent_mode
-    if ctx.agent_mode != "on":
-        return False
+    if ctx.agent_mode not in ("on", "shadow"):
+        return "usual"
     if ctx.deps.move_picker is None:
         ctx.versions["agent"] = "unavailable: no model"
-        return False
-    return True
+        return "usual"
+    return "agent" if ctx.agent_mode == "on" else "shadow"
 
 
 async def run_stage(ctx: TurnContext, stage: Stage) -> None:
@@ -305,6 +316,9 @@ async def finish(ctx: TurnContext) -> AgentReply:
         agent_plan=redacted_plan(session.agent_plan),
         agent_steps=tuple(ctx.agent_steps),
         fallback_reason=redact(ctx.fallback_reason) if ctx.fallback_reason else None,
+        shadow_plan=ctx.shadow_plan,
+        shadow_move=ctx.shadow_move,
+        shadow_error=ctx.shadow_error,
         steps=tuple(ctx.steps),
         latency_ms=(time.perf_counter() - ctx.started) * 1000,
     )
@@ -387,7 +401,8 @@ async def run_turn(
             log.info("turn_start", turn_index=ctx.session.turn_index, channel=channel, message_chars=len(text))
             with ai_events() as events:
                 ctx.ai_events = events
-                if agent_runs(ctx):
+                flow = agent_flow(ctx)
+                if flow == "agent":
                     for stage in FRONT_STAGES:
                         await run_stage(ctx, stage)
                     resume_plan_after_confirmation(ctx)
@@ -397,6 +412,6 @@ async def run_turn(
                             await run_stage(ctx, stage)
                     await run_stage(ctx, HANDOFF_STAGE)
                 else:
-                    for stage in STAGES:
+                    for stage in SHADOW_STAGES if flow == "shadow" else STAGES:
                         await run_stage(ctx, stage)
                 return await finish(ctx)

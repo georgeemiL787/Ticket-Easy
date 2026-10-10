@@ -67,6 +67,11 @@ team_b/
                  waiting step (done / dropped) and, if plan steps are still open, the agent goes on in the same turn with the action's result in front. A fallback restores plan, denied_actions,
                  active_intent and slots and keeps an already answered yes; once the shop was asked to change something (ctx.agent_wrote) a failure ends the turn with the outcome instead of
                  running the message again ("agent stopped early" in trace.errors)
+                 shadow (brain/shadow.py; agent_mode "shadow" + a move picker: a "shadow" stage after the front stages asks the orchestrator ONCE on a deep copy of the turn (session, lists,
+                 counters), the move is only checked (agent_loop.check_move), never worked; trace.shadow_plan / shadow_move / shadow_error; the plan of the last trace is read back only while the
+                 conversation waits for an answer; the real session, replies and shop are untouched, errors and timeouts are noted and ignored; compare(trace) says whether the first move agrees
+                 with what the usual flow did (same kind of move and tool) and `eval --agent-mode shadow|on|off` (on/shadow need --llm) adds "Shadow mode" agreement + disagreement rows to the report;
+                 Orchestrator.set_agent(mode, move_picker))
                  move_picker (LLMMovePicker, job orchestrator, prompts/orchestrator_v1.md: sections customer_message/history/reading/verified/plan/moves_this_turn/tools, tool results in <tool_result>
                  tags as data, answer {plan, move} = MoveProposal in ONE ask, one repair attempt then the loop falls back; container wires it when llm_for("orchestrator") exists; trace versions
                  orchestrator_prompt). tests: ScriptedMovePicker / FunctionPicker (tests/fakes.py), tests/integration/agent_expert.py + test_agent_scenarios.py (the lookup/knowledge scenarios again in

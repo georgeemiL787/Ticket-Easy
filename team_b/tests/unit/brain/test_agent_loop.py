@@ -65,10 +65,13 @@ async def test_mode_off_is_exactly_the_usual_flow_even_with_a_picker(c: Containe
     assert reply.decision is Decision.ANSWER and trace.agent_mode == "off" and "agent" not in trace.versions
 
 
-async def test_shadow_behaves_like_off_until_it_is_built(c: Container) -> None:
-    picker = ScriptedMovePicker()
-    await orch(c, picker, agent_mode="shadow").handle_turn(T, C, "Hello")
-    assert picker.views == [] and (await trace_of(c)).agent_mode == "shadow"
+async def test_shadow_answers_like_the_usual_flow_and_only_watches(c: Container) -> None:
+    picker = ScriptedMovePicker(GREETING)
+    reply = await orch(c, picker, agent_mode="shadow").handle_turn(T, C, "Hello")
+    trace = await trace_of(c)
+    assert len(picker.views) == 1 and reply.text == "Hello! How can I help you today?"
+    assert trace.agent_mode == "shadow" and "agent" not in stages(trace) and trace.agent_steps == ()
+    assert trace.shadow_move is not None and trace.shadow_move.move["kind"] == "reply"
 
 
 async def test_a_business_can_set_its_own_mode(c: Container) -> None:

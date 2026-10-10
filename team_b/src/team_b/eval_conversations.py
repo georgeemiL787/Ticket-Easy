@@ -35,12 +35,14 @@ from pydantic import Field
 from team_b.brain.choices import short_date
 from team_b.brain.composer import check_grounded, default_composer
 from team_b.brain.metrics import percentile
+from team_b.brain.shadow import Agreement, compare
 from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
+from team_b.domain.agent import AgentMode
 from team_b.domain.base import FrozenModel
 from team_b.domain.understanding import Locale
 from team_b.judge import CRITERIA, Judge, JudgedTurn, JudgeStats
-from team_b.ports import LLMClient
+from team_b.ports import LLMClient, MovePicker
 
 CONVERSATIONS_DIR = PROJECT_ROOT / "eval" / "conversations"
 BASELINE_PATH = PROJECT_ROOT / "eval" / "eval_baseline.json"
@@ -49,6 +51,7 @@ EVAL_TODAY = date(2026, 9, 28)  # the demo shop's orders are dated against this 
 STYLES = ("en", "ar", "mixed", "arabizi")
 LOCALE_OF_STYLE = {"en": "en", "ar": "ar", "mixed": "ar", "arabizi": "arabizi"}  # mixed customers get Egyptian Arabic
 WORST = 10
+MAX_DISAGREEMENTS = 40
 METRICS = ("intent", "decision", "citation", "locale")
 Style = Literal["en", "ar", "mixed", "arabizi"]
 
@@ -132,6 +135,7 @@ class TurnResult:
     wrong: list[str] = field(default_factory=list)  # which checks failed, with what was expected and what happened
     ai_calls: int = 0  # times the AI model was asked while answering this message
     unbacked: list[str] = field(default_factory=list)  # facts in the reply that nothing the agent knew contains
+    shadow: Agreement | None = None  # shadow mode: does the agent's first move agree with what was done?
 
 
 @dataclass
@@ -196,6 +200,8 @@ async def run_conversation(
     chat_id = f"eval-{conversation.id}"
     known = known_text(container)
     said: list[str] = []
+    tenant = container.tenants.get(TENANT)
+    action_tools = {name: spec.action_tool for name, spec in tenant.intents.items() if spec.action_tool}
     for index, turn in enumerate(conversation.turns):
         calls_before = ai_calls() if ai_calls is not None else 0
         started = time.perf_counter()
@@ -213,6 +219,7 @@ async def run_conversation(
             latency_ms=latency, ai_calls=(ai_calls() - calls_before) if ai_calls is not None else 0,
         )  # fmt: skip
         result.unbacked = await unbacked_facts(container, chat_id, said, reply.text, known)
+        result.shadow = compare(trace, action_tools)
         result.wrong = problems(turn.gold, result, LOCALE_OF_STYLE[conversation.language_style])
         results.append(result)
     return results
@@ -269,6 +276,8 @@ class StyleReport:
     writes: int = 0
     unbacked_replies: int = 0  # replies holding a fact nothing the agent knew contains (must be 0)
     ai_calls: int = 0
+    shadow_asked: int = 0  # shadow mode: turns where the agent's first move was recorded
+    shadow_agreed: int = 0  # ... and agreed with what the usual flow did
 
     def add_conversation(
         self, conversation: EvalConversation, results: Sequence[TurnResult], audit: Sequence[Any]
@@ -283,6 +292,9 @@ class StyleReport:
         self.wrong_actions += max(0, len(audit) - expected_writes) + sum(1 for e in audit if not e.policy_request_id)
         for turn, got in zip(conversation.turns, results, strict=True):
             self.ai_calls += got.ai_calls
+            if got.shadow is not None:
+                self.shadow_asked += 1
+                self.shadow_agreed += int(got.shadow.agrees)
             self.unbacked_replies += int(bool(got.unbacked))
             wanted, allowed = wants_a_person(turn.gold), decisions_allowed(turn.gold)
             if wanted or allowed:
@@ -337,6 +349,8 @@ class StyleReport:
             "ai_calls_per_message": self.ai_calls / self.turns if self.turns else None,
             "time_p50_ms": percentile(self.latencies, 0.5),
             "time_p95_ms": percentile(self.latencies, 0.95),
+            "shadow_asked": self.shadow_asked,
+            "shadow_agreement": self.shadow_agreed / self.shadow_asked if self.shadow_asked else None,
         }
 
     def as_dict(self) -> dict[str, Any]:
@@ -362,10 +376,13 @@ class EvalReport:
     judge: dict[str, JudgeStats] | None = None  # the AI judge's advice per style (never part of pass or fail)
     judged: list[JudgedTurn] = field(default_factory=list)
     label: str = ""  # a name for this run (--label), used in the report's file name
+    agent_mode: str | None = None  # the agent mode this run used (on, off, shadow), if it was set
+    shadow_disagreements: list[dict[str, Any]] = field(default_factory=list)  # shadow mode: where the agent differs
 
     def as_dict(self) -> dict[str, Any]:
         return {
-            "mode": self.mode, "date": self.when.isoformat(), "label": self.label,
+            "mode": self.mode, "date": self.when.isoformat(), "label": self.label, "agent_mode": self.agent_mode,
+            "shadow_disagreements": self.shadow_disagreements,
             "topics": {t: {"right": c.right, "total": c.total} for t, c in sorted(self.topics.items())},
             "judge": None if self.judge is None else {s: j.as_dict() for s, j in self.judge.items()},
             "overall": self.overall.as_dict(), "styles": {s: r.as_dict() for s, r in self.styles.items()},
@@ -381,6 +398,8 @@ async def evaluate(
     when: date | None = None,
     judge: Judge | None = None,
     label: str = "",
+    agent_mode: AgentMode | None = None,
+    move_picker: MovePicker | None = None,
 ) -> EvalReport:
     """Run the conversations on one container (each in its own chat) and measure every turn."""
     counter: list[CountingLLM] = []
@@ -392,7 +411,10 @@ async def evaluate(
     container = build_container(
         settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}), llm_wrapper=count
     )
-    assert container.shop is not None
+    assert container.shop is not None and container.orchestrator is not None
+    if agent_mode is not None or move_picker is not None:
+        container.orchestrator.set_agent(mode=agent_mode, move_picker=move_picker)
+    disagreements: list[dict[str, Any]] = []
     kinds = {t.name: t.operation_kind for t in await container.capabilities.list_tools(TENANT)}
     styles = {s: StyleReport(s) for s in STYLES}
     overall = StyleReport("all")
@@ -413,6 +435,14 @@ async def evaluate(
         for turn, got in zip(conversation.turns, results, strict=True):
             report.add(turn.gold, got, locale)
             overall.add(turn.gold, got, locale)
+        for turn, got in zip(conversation.turns, results, strict=True):
+            if got.shadow is not None and not got.shadow.agrees and len(disagreements) < MAX_DISAGREEMENTS:
+                disagreements.append(
+                    {
+                        "conversation": conversation.id, "turn": got.index + 1, "style": conversation.language_style,
+                        "said": turn.say, "today": got.shadow.today, "agent": got.shadow.agent, "why": got.shadow.why,
+                    }
+                )  # fmt: skip
         report.add_conversation(conversation, results, writes)
         overall.add_conversation(conversation, results, writes)
         if judge is not None and judge_stats is not None:
@@ -447,6 +477,7 @@ async def evaluate(
     scored.sort(key=lambda item: (-item[0], item[1]))
     final = EvalReport(mode, when or date.today(), styles, overall, [row for _, _, row in scored[:WORST]], dict(topics))
     final.judge, final.judged, final.label = judge_stats, judged, label
+    final.agent_mode, final.shadow_disagreements = agent_mode, disagreements
     return final
 
 
@@ -525,6 +556,25 @@ def render(report: EvalReport) -> str:
         "  without a rule check; unbacked fact: a sent reply with a number, date, id or link nothing the agent knew",
         "  contains (it must be 0).",
     ]
+    if report.overall.shadow_asked:
+        o = report.overall
+        lines += [
+            "",
+            "## Shadow mode: does the agent's first move agree with what the usual flow did?",
+            "",
+            f"The agent was asked on {o.shadow_asked} turns and agreed on {o.shadow_agreed} "
+            f"({pct(o.shadow_agreed / o.shadow_asked)}). Nothing it proposed was worked: the usual flow answered.",
+            "",
+        ]
+        if report.shadow_disagreements:
+            lines += [
+                "| conversation | turn | the customer said | the usual flow | the agent | why |",
+                "|---|---|---|---|---|---|",
+            ]
+            lines += [
+                f"| {d['conversation']} | {d['turn']} | {d['said']} | {d['today']} | {d['agent']} | {d['why']} |"
+                for d in report.shadow_disagreements
+            ]
     lines += ["", f"## The {len(report.worst)} conversations that went wrong most", ""]
     if not report.worst:
         lines.append("None: every turn matched its gold labels.")

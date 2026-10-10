@@ -13,7 +13,7 @@ from team_b.brain.rewrite import Rewriter
 from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import Passage, RiskAssessment
-from team_b.domain.agent import AgentMode, AgentStepRecord
+from team_b.domain.agent import AgentMode, AgentPlan, AgentStepRecord
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
@@ -85,6 +85,9 @@ class TurnContext:
     agent_passages: list[Passage] = field(default_factory=list)  # policy passages the agent found this turn
     agent_outcomes: list[Step] = field(default_factory=list)  # refusals and done/failed actions not yet told
     agent_wrote: bool = False  # the agent loop had the shop change something this turn
+    shadow_plan: AgentPlan | None = None  # shadow mode: what the agent would have planned
+    shadow_move: AgentStepRecord | None = None  # shadow mode: its first move
+    shadow_error: str | None = None  # shadow mode: why it could not be asked
     resumed: Step | None = None  # the answer to the customer's yes, kept while the agent goes on with its plan
     agent_listing: list[dict[str, str]] = field(default_factory=list)  # the customer's own orders, if listed this turn
     agent_mode: str | None = None  # how the agent was configured for this turn

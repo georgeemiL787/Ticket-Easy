@@ -12,6 +12,7 @@ The human methods share one signature so the scenario runner can call them by na
 """
 
 from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any, Protocol
 
 from team_b.brain import actions, approval, knowledge, lookup
@@ -126,6 +127,15 @@ class Orchestrator:
             agent_max_moves=agent_max_moves,
             agent_turn_timeout_s=agent_turn_timeout_s,
         )
+
+    def set_agent(self, *, mode: AgentMode | None = None, move_picker: MovePicker | None = None) -> None:
+        """Change how the agent runs (used by the evaluation and the tests): its mode and/or its move picker."""
+        changes: dict[str, Any] = {}
+        if mode is not None:
+            changes["agent_mode"] = mode
+        if move_picker is not None:
+            changes["move_picker"] = move_picker
+        self._deps = replace(self._deps, **changes)
 
     async def handle_turn(
         self, tenant_id: str, conversation_id: str, text: str, *, request_id: str | None = None, channel: str = "web"

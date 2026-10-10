@@ -108,6 +108,9 @@ class DecisionTrace(FrozenModel):
     agent_plan: AgentPlan | None = None  # the agent's plan after this turn (personal values hidden)
     agent_steps: tuple[AgentStepRecord, ...] = ()  # the moves of the agent loop, with their checks
     fallback_reason: str | None = None  # set when the agent loop gave up and the usual stages ran
+    shadow_plan: AgentPlan | None = None  # shadow mode: the plan the agent would keep (nothing was done)
+    shadow_move: AgentStepRecord | None = None  # shadow mode: the agent's first move and the checks on it
+    shadow_error: str | None = None  # shadow mode: the agent could not be asked (never shown to the customer)
 
     @model_validator(mode="after")
     def _handoff_has_reason(self) -> Self:

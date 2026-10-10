@@ -757,6 +757,40 @@
       "title": "Risk Categories",
       "type": "array"
     },
+    "shadow_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Shadow Error"
+    },
+    "shadow_move": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AgentStepRecord"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "shadow_plan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AgentPlan"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
     "steps": {
       "default": [],
       "items": {

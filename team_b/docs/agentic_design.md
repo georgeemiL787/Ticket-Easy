@@ -52,10 +52,11 @@ each move.
 | wrong or unapproved actions | 0 | 0 |
 | unbacked facts reaching customers | 0 | 0 |
 | understanding the request | 94% | 100% |
-| the right outcome | 88% | 71% |
-| reply quality (judge, 1-5) | 4.1 | 4.0 |
-| AI calls per message | 2.6 | 4.6 |
-| median time per reply | 2.6 s | 22 s (mostly waiting for the free plan's limits) |
+| the right outcome | 88% | 83% |
+| reply quality (judge, 1-5) | 4.1 | 3.9 |
+| AI calls per message | 2.6 | 5.3 |
+| median time per reply | 2.6 s | 61 s (waiting for the free plan's token limit) |
+| gave up and used today's flow | n/a | 2 of 24 messages |
 
 **Decision:** agent mode is built, safe, observable and switchable per shop, but **stays off by default** until the outcome
 accuracy and the cost per message match today's flow. The next steps are listed in `docs/agent_comparison.md`.

@@ -155,6 +155,7 @@ class TurnResult:
     ai_calls: int = 0  # times the AI model was asked while answering this message
     unbacked: list[str] = field(default_factory=list)  # facts in the reply that nothing the agent knew contains
     shadow: Agreement | None = None  # shadow mode: does the agent's first move agree with what was done?
+    fallback: str | None = None  # agent mode: why the loop gave up and the usual flow answered this message
 
 
 @dataclass
@@ -169,6 +170,18 @@ class Counter:
     @property
     def rate(self) -> float | None:
         return self.right / self.total if self.total else None
+
+
+def fallback_kind(reason: str) -> str:
+    """The category of an agent fallback text (the same ones the dashboard uses)."""
+    lowered = reason.lower()
+    if "longer than" in lowered:
+        return "too_slow"
+    if "move picker" in lowered:
+        return "model_error"
+    if "refused" in lowered:
+        return "refused_moves"
+    return "too_many_moves" if "moves without" in lowered else "other"
 
 
 def decisions_allowed(gold: Gold) -> tuple[str, ...]:
@@ -240,6 +253,7 @@ async def run_conversation(
             locale=reply.locale.value, citations=tuple(reply.citations),
             intent=trace.intents[0].name if trace.intents else "none", entities=dict(trace.entities), text=reply.text,
             latency_ms=latency, ai_calls=(ai_calls() - calls_before) if ai_calls is not None else 0,
+            fallback=trace.fallback_reason,
         )  # fmt: skip
         result.unbacked = await unbacked_facts(container, chat_id, said, reply.text, known)
         result.shadow = compare(trace, action_tools)
@@ -298,6 +312,8 @@ class StyleReport:
     wrong_actions: int = 0  # writes the gold did not expect, or sent without a rule check
     writes: int = 0
     unbacked_replies: int = 0  # replies holding a fact nothing the agent knew contains (must be 0)
+    fallbacks: int = 0  # agent mode: messages where the agent loop gave up and the usual flow answered
+    fallback_reasons: dict[str, int] = field(default_factory=dict)
     ai_calls: int = 0
     shadow_asked: int = 0  # shadow mode: turns where the agent's first move was recorded
     shadow_agreed: int = 0  # ... and agreed with what the usual flow did
@@ -319,6 +335,10 @@ class StyleReport:
                 self.shadow_asked += 1
                 self.shadow_agreed += int(got.shadow.agrees)
             self.unbacked_replies += int(bool(got.unbacked))
+            if got.fallback:
+                self.fallbacks += 1
+                kind = fallback_kind(got.fallback)
+                self.fallback_reasons[kind] = self.fallback_reasons.get(kind, 0) + 1
             wanted, allowed = wants_a_person(turn.gold), decisions_allowed(turn.gold)
             if wanted or allowed:
                 self.handoff_opinions += 1
@@ -369,6 +389,7 @@ class StyleReport:
             "wrong_or_unapproved_actions": self.wrong_actions,
             "writes": self.writes,
             "unbacked_facts": self.unbacked_replies,
+            "agent_fallbacks": self.fallbacks,
             "ai_calls_per_message": self.ai_calls / self.turns if self.turns else None,
             "time_p50_ms": percentile(self.latencies, 0.5),
             "time_p95_ms": percentile(self.latencies, 0.95),
@@ -379,7 +400,7 @@ class StyleReport:
     def as_dict(self) -> dict[str, Any]:
         return {
             "style": self.style, "conversations": self.conversations, "turns": self.turns,
-            "measures": self.measures(),
+            "measures": self.measures(), "agent_fallback_reasons": dict(self.fallback_reasons),
             "intent_accuracy": self.intent.rate, "decision_accuracy": self.decision.rate,
             "citation_accuracy": self.citation.rate, "locale_match": self.locale.rate,
             "entity_recall": self.entities.rate,

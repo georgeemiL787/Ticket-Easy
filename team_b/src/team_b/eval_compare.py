@@ -35,6 +35,7 @@ MEASURES: tuple[tuple[str, Getter, str, str], ...] = (
     ("missed escalations", _measure("missed_escalations"), "count", "lower"),
     ("wrong or unapproved actions", _measure("wrong_or_unapproved_actions"), "count", "lower (target 0)"),
     ("unbacked facts sent", _measure("unbacked_facts"), "count", "lower (target 0)"),
+    ("agent gave up (fallbacks)", _measure("agent_fallbacks"), "count", "lower"),
     ("AI calls per message", _measure("ai_calls_per_message"), "float", "lower"),
     ("time per reply p50 (ms)", _measure("time_p50_ms"), "ms", "lower"),
     ("time per reply p95 (ms)", _measure("time_p95_ms"), "ms", "lower"),

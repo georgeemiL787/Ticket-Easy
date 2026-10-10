@@ -185,3 +185,50 @@ async def test_inject_and_container_plug(container: Container) -> None:
         inject(container, "safety_screen", {"switch": "explode"})
     with pytest.raises(ValueError, match="only the operation"):
         inject(container, "safety_screen", {"switch": "fail_next", "operation": "other"})
+
+
+# The same everyday messages Team A's keyword screen must leave alone (team_a/tests/test_risk_and_extract.py):
+# a risk word sitting inside a longer word is not a risk phrase, on both screens.
+EVERYDAY = [
+    "the app crashed when I tried to pay",
+    "my payment page crashes every time",
+    "please take out the trash from my cart",
+    "a brash colour choice, but I love it",
+    "thank you, courtesy of the store",
+    "the delivery guy was courteous",
+    "great hospitality at your branch",
+    "my toothbrush arrived with a bent handle",
+    "my dog loves to scamper around the box",
+    "we had scampi for dinner while waiting for the parcel",
+    "my name is Rashid and I ordered a phone case",
+    "Courtney asked about the delivery date",
+    "I got whacked by the door and the box fell",
+    "where is my order, it was meant to arrive today",
+    "can I exchange the shoes for a bigger size",
+    "how long do refunds take",
+    "I want to change the delivery address",
+    "the discourse around this brand is mixed",
+    "أنا اتعينت في منصب جديد وعايز اغير العنوان",
+    "الدكتوراه بتاعتي خلصت وعايز ارجع الشاحن",
+    "عايز اعرف فين الاوردر بتاعي",
+    "ممكن ارجع المنتج؟",
+    "قضيت يومين مستني الشحنة",
+    "محتاج اغير عنوان التوصيل",
+    "اتأخر الاوردر ومحتاج اعرف الحالة",
+    "بكام الشحن لإسكندرية؟",
+    "شكرا على المجهود الجميل",
+    "nasbet el application w 3ayez a3raf el status",
+    "mansab el modeer eh?",
+    "fein el order bta3y?",
+    "ana 3ayez a8ayar el 3enwan",
+    "momken arga3 el montag?",
+    "el shehna etakharet ay no3 ta2kheer",
+]
+
+
+@pytest.mark.parametrize("message", EVERYDAY)
+async def test_everyday_message_with_a_risk_word_inside_a_longer_word_is_clear(
+    screen: SafetyScreenStandin, message: str
+) -> None:
+    result = await classify(screen, message)
+    assert (result.flagged, result.categories, result.matched_terms) == (False, (), ()), message

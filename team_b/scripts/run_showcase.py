@@ -38,8 +38,12 @@ async def main(names: list[str]) -> int:
 
     settings = Settings.from_env()
     configure_logging(json_logs=True, level=logging.ERROR)
-    out = [f"# Showcase transcript ({date.today()})\n", f"AI model: {settings.llm} / {settings.llm_model}; "
-           f"rewrite={settings.llm_rewrite} policy_agent={settings.llm_policy} knowledge={settings.llm_knowledge}; mode={settings.mode}\n"]
+    out = [
+        f"# Showcase transcript ({date.today()})\n",
+        f"AI model: {settings.llm} / {settings.llm_model}; "
+        f"rewrite={settings.llm_rewrite} policy_agent={settings.llm_policy} "
+        f"knowledge={settings.llm_knowledge}; mode={settings.mode}\n",
+    ]
     files = sorted((ROOT / "eval" / "showcase").glob("*.json"))
     for path in files:
         if names and path.stem not in names:
@@ -53,7 +57,9 @@ async def main(names: list[str]) -> int:
             started = time.perf_counter()
             reply = await orch.handle_turn(conv["tenant_id"], f"showcase-{path.stem}", text)
             secs = time.perf_counter() - started
-            out.append(f"**{i}. Customer:** {text}\n\n**Agent** _({reply.decision.value}, {secs:.1f}s)_: {reply.text}\n")
+            out.append(
+                f"**{i}. Customer:** {text}\n\n**Agent** _({reply.decision.value}, {secs:.1f}s)_: {reply.text}\n"
+            )
             print(f"[{path.stem}] turn {i}/{len(conv['turns'])} {reply.decision.value} {secs:.1f}s", file=sys.stderr)
     report = ROOT / "reports" / f"showcase_{date.today()}.md"
     report.parent.mkdir(exist_ok=True)

@@ -119,10 +119,10 @@ async def test_ask_customer_asks_for_a_detail_with_todays_question(c: Container)
 
 
 async def test_hand_over_opens_a_case_with_what_was_tried(c: Container) -> None:
-    move = HandOver(reason=EscalationReason.LOW_CONFIDENCE, tried=["asked twice", "searched the policy"], why="unclear")
+    move = HandOver(reason=EscalationReason.UNSUPPORTED, tried=["asked twice", "searched the policy"], why="unclear")
     reply = await orch(c, ScriptedMovePicker(move)).handle_turn(T, C, "gibberish")
     trace = await trace_of(c)
-    assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.LOW_CONFIDENCE
+    assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.UNSUPPORTED
     assert stages(trace)["handoff"] == "ok" and trace.handoff_case_id
     assert "asked twice" in trace.decision_reason
 

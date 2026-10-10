@@ -180,27 +180,27 @@ async def test_a_policy_answer_worded_by_the_model_is_reviewed_against_its_passa
 
 
 def test_an_empty_tried_list_is_sent_back_once_per_turn_then_it_goes_through() -> None:
-    empty = HandOver(reason=EscalationReason.NO_EVIDENCE)
+    empty = HandOver(reason=EscalationReason.UNSUPPORTED)
     watch = HandoverWatch()
     assert blocks_handover(empty, watch) is True
     assert blocks_handover(empty, watch) is False
     assert (
-        blocks_handover(HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["asked twice"]), HandoverWatch()) is False
+        blocks_handover(HandOver(reason=EscalationReason.UNSUPPORTED, tried=["asked twice"]), HandoverWatch()) is False
     )
 
 
 async def test_the_orchestrator_is_sent_back_once_when_it_hands_over_without_saying_what_it_tried(c: Container) -> None:
-    empty = HandOver(reason=EscalationReason.NO_EVIDENCE, why="gave up")
+    empty = HandOver(reason=EscalationReason.UNSUPPORTED, why="gave up")
     picker = ScriptedMovePicker(empty, empty)
     reply = await orch(c, move_picker=picker, reviewer=Reviewer(FakeLLM())).handle_turn(T, C, "do you ship to mars?")
     trace = await trace_of(c)
-    assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.NO_EVIDENCE
+    assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.UNSUPPORTED
     assert trace.agent_steps[0].refused and "say what was tried" in picker.views[1].refused
     assert not trace.agent_steps[1].refused and trace.fallback_reason is None
 
 
 async def test_with_the_reviewer_off_an_empty_hand_over_goes_straight_through(c: Container) -> None:
-    empty = HandOver(reason=EscalationReason.NO_EVIDENCE)
+    empty = HandOver(reason=EscalationReason.UNSUPPORTED)
     picker = ScriptedMovePicker(empty)
     reply = await orch(c, move_picker=picker).handle_turn(T, C, "do you ship to mars?")
     assert reply.decision is Decision.HANDOFF and len(picker.views) == 1

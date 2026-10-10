@@ -362,6 +362,22 @@
           "title": "Errors",
           "type": "array"
         },
+        "escalation_kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "forced",
+                "chosen"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Escalation Kind"
+        },
         "escalation_reason": {
           "anyOf": [
             {
@@ -1012,6 +1028,14 @@
             "$ref": "#/$defs/TranscriptLine"
           },
           "title": "Transcript",
+          "type": "array"
+        },
+        "tried": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tried",
           "type": "array"
         }
       },

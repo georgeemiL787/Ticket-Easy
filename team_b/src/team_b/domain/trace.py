@@ -99,6 +99,7 @@ class DecisionTrace(FrozenModel):
     response_text: str = ""
     response_citations: tuple[str, ...] = ()
     escalation_reason: EscalationReason | None = None
+    escalation_kind: Literal["forced", "chosen"] | None = None  # a handoff decided by code, or chosen by the agent
     handoff_case_id: str | None = None
     errors: tuple[str, ...] = ()
     steps: tuple[TraceStep, ...] = ()
@@ -172,4 +173,6 @@ def record_problems(trace: DecisionTrace) -> list[str]:
         problems.append("versions lacks writer_prompt")
     if any(s.stage == "review" for s in trace.steps) and not trace.versions.get("reviewer_prompt"):
         problems.append("versions lacks reviewer_prompt")
+    if trace.decision is Decision.HANDOFF and trace.kind == "customer_turn" and trace.escalation_kind is None:
+        problems.append("a handoff lacks escalation_kind (forced or chosen)")
     return problems

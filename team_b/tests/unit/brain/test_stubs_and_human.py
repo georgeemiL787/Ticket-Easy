@@ -47,7 +47,7 @@ def test_the_stub_signatures_are_the_agreed_ones() -> None:
     assert params(identity.ensure_verified) == ["ctx"]
     assert params(lookup.answer) == ["ctx", "intent_spec"]
     assert params(actions.handle) == ["ctx", "intent_spec"] and params(actions.on_confirmation) == ["ctx", "nlu"]
-    assert params(open_case) == ["ctx", "reason", "detail", "pending_approval"]
+    assert params(open_case) == ["ctx", "reason", "detail", "pending_approval", "tried"]
     for name, expected in {
         "human_reply": ["case_id", "agent", "text"],
         "human_decide": ["case_id", "agent", "approve", "note"],

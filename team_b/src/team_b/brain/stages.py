@@ -12,7 +12,7 @@ import time
 import uuid
 from dataclasses import replace
 
-from team_b.brain import actions, freetext, multi
+from team_b.brain import actions, escalation, freetext, multi
 from team_b.brain.choices import (
     MAX_ORDER_CHOICES,
     conflicting_pair,
@@ -649,8 +649,10 @@ async def handoff(ctx: TurnContext) -> str:
     step = ctx.step
     assert step is not None and step.escalation is not None
     waiting = next((a for a in ctx.session.actions if a.state is ActionState.AWAITING_HUMAN), None)
+    tried = escalation.tried_in_words(ctx, step)
+    case_id = await open_case(ctx, step.escalation, step.reason, pending_approval=waiting, tried=tried)
     ctx.session.frustration_strikes = 0  # a person takes over: a later return to the agent starts fresh
-    case_id = await open_case(ctx, step.escalation, step.reason, pending_approval=waiting)
+    ctx.session.agent_questions = 0
     ctx.handoff_case_id = case_id
     ctx.step = replace(step, awaiting="human")
     return f"case {case_id} opened ({priority_for(ctx.tenant, step.escalation)})"

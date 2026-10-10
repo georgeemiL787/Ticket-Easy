@@ -29,7 +29,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from team_b.brain import agent_actions, agent_reads
+from team_b.brain import agent_actions, agent_reads, escalation
 from team_b.brain.choices import describe_orders, label_of
 from team_b.brain.composer import PLACEHOLDERS, default_composer
 from team_b.brain.redaction import redact, redact_mapping
@@ -158,6 +158,8 @@ def check_move(ctx: TurnContext, move: AnyMove, seen: set[str]) -> list[CheckRec
             checks.append(_check("slot_is_known", ok, f"slot {move.slot!r} is not a detail this agent collects"))
     if isinstance(move, HandOver):
         checks.append(_check("tried_is_short", len(move.tried) <= MAX_TRIED, "the list of what was tried is too long"))
+        problem = escalation.handover_problem(ctx, move)
+        checks.append(_check("handover_after_trying", problem is None, problem or ""))
     if isinstance(move, Reply):
         checks += _reply_checks(ctx, move)
     return checks
@@ -236,6 +238,7 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
             asked = Step(Decision.CLARIFY, reason=move.why or "asked which order", reply_key="disambiguate_order",
                          values=values, awaiting="order_choice")  # fmt: skip
             return agent_reads.ReadResult("asked which order", asked)
+        ctx.session.agent_questions += 1
         values = {"slot": move.slot} if move.slot else {}
         awaiting = f"slot:{move.slot}" if move.slot else "detail"
         step = Step(Decision.CLARIFY, reason=move.why or f"asked for {move.slot or 'a detail'}",
@@ -247,7 +250,8 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
         if move.tried:
             why += f" (tried: {'; '.join(move.tried)})"
         step = Step(Decision.HANDOFF, reason=why, reply_key=key if composer.has(locale, key) else "handoff_generic",
-                    escalation=move.reason, awaiting="human")  # fmt: skip
+                    escalation=move.reason, awaiting="human", escalation_kind="chosen",
+                    tried=tuple(redact(t) for t in move.tried))  # fmt: skip
         return agent_reads.ReadResult(f"handed over: {move.reason.value}", step)
     assert isinstance(move, Reply)
     return agent_reads.ReadResult(f"replied with {move.plan.reply_key}", await _reply_step(ctx, move))

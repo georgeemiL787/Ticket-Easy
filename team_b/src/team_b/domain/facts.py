@@ -53,6 +53,10 @@ class TurnFact(FrozenModel):
     tool_errors: int = Field(default=0, ge=0)  # tool calls that failed in this turn
     dependency_errors: tuple[str, ...] = ()  # the service of every dependency error, one entry per error
     stage_ms: dict[str, float] = Field(default_factory=dict)  # stage -> duration, for stages that ran
+    escalation_kind: str | None = None  # a handoff: forced (decided by code) or chosen (by the agent after trying)
+    agent_mode: str | None = None  # on | off | shadow
+    agent_moves: int = Field(default=0, ge=0)  # moves the agent loop made in this turn
+    agent_fallback: bool = False  # the agent loop gave up and the usual stages answered
 
 
 class ToolCallFact(FrozenModel):
@@ -126,6 +130,10 @@ def facts_from_trace(
             tool_errors=sum(1 for c in trace.tool_calls if c.status == "error"),
             dependency_errors=tuple(dependency_service(e) for e in trace.errors),
             stage_ms=stage_ms,
+            escalation_kind=trace.escalation_kind,
+            agent_mode=trace.agent_mode,
+            agent_moves=len(trace.agent_steps),
+            agent_fallback=trace.fallback_reason is not None,
         )
     calls = [
         ToolCallFact(

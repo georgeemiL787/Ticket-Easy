@@ -66,6 +66,7 @@ class SessionState(MutableModel):
     write_failures: int = Field(default=0, ge=0)  # actions the shop clearly refused, since the last success
     no_evidence_count: int = Field(default=0, ge=0)  # policy questions the documents could not answer, in a row
     frustration_strikes: int = Field(default=0, ge=0)  # high-frustration messages in a row (the first is apologised to)
+    agent_questions: int = Field(default=0, ge=0)  # questions the agent asked since it last answered or did something
     order_misses: int = Field(default=0, ge=0)  # order numbers in a row that the shop does not know
     denied_actions: list[str] = Field(
         default_factory=list

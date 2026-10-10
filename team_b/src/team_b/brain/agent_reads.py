@@ -317,6 +317,8 @@ async def build_view(ctx: TurnContext, refused: str | None, moves: list[Any]) ->
         known_order_ids=sorted(known_order_ids(ctx)),
         passages=[PassageBrief(id=p.citation, text=redact(p.text)[:PASSAGE_CHARS]) for p in ctx.agent_passages],
         no_evidence_count=session.no_evidence_count,
+        questions_asked=session.agent_questions,
+        frustration_strikes=session.frustration_strikes,
         tools=menu,
         actions=actions,
         plan=session.agent_plan,

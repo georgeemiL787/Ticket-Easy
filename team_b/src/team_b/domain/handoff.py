@@ -126,6 +126,7 @@ class HandoffPackage(FrozenModel):
     attempted_actions: tuple[AttemptedAction, ...] = ()
     failures: tuple[FailureRecord, ...] = ()
     pending_approval: PendingApproval | None = None
+    tried: tuple[str, ...] = ()  # what the assistant already tried, in plain words: do not ask the customer again
     transcript: tuple[TranscriptLine, ...] = ()
     trace_ids: tuple[str, ...] = ()
     similar_tickets: tuple[SimilarTicket, ...] = ()

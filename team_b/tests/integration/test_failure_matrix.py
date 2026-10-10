@@ -14,6 +14,7 @@ import pytest
 
 from team_b.container import Container, build_container, inject
 from team_b.domain.trace import DecisionTrace
+from tests.integration.agent_expert import with_expert
 from tests.integration.scenario_runner import check_write_safety
 from tests.support import make_settings
 
@@ -216,9 +217,11 @@ ROWS = [
 ]
 
 
-@pytest.fixture
-def container(tmp_path: Path) -> Container:
-    return build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))
+@pytest.fixture(params=["usual", "agent"])
+def container(request: pytest.FixtureRequest, tmp_path: Path) -> Container:
+    """Every row runs twice: the usual step-by-step flow, and the agent loop with the scripted orchestrator."""
+    built = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))
+    return with_expert(built) if request.param == "agent" else built
 
 
 async def traces_of(container: Container, conversation: str) -> list[DecisionTrace]:
@@ -269,9 +272,15 @@ async def test_frustration_handoff_still_ran_every_earlier_check(container: Cont
     row = next(r for r in ROWS if r.name.startswith("high frustration"))
     for turn in row.turns:
         await container.orchestrator.handle_turn(T, "f", turn.say)
-    stages = {s.stage: s.status for s in (await traces_of(container, "f"))[-1].steps}
+    last = (await traces_of(container, "f"))[-1]
+    stages = {s.stage: s.status for s in last.steps}
     assert stages["understand"] == stages["risk_screen"] == stages["human_request"] == "ok"
-    assert stages["frustration"] == "ok" and stages["handler"] == "skipped"  # decided before any work was started
+    if "agent" in stages:  # the agent chose the handoff after trying; code checked it was allowed
+        assert last.escalation_kind == "chosen" and stages["agent"] == "ok" and stages["handoff"] == "ok"
+        assert [c.name for c in last.agent_steps[-1].checks if c.name == "handover_after_trying" and c.passed]
+    else:
+        assert stages["frustration"] == "ok" and stages["handler"] == "skipped"  # decided before any work was started
+        assert last.escalation_kind == "forced"
 
 
 async def test_every_row_has_a_distinct_name() -> None:

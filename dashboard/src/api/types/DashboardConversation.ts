@@ -87,6 +87,7 @@ export type Text1 = string;
 export type TraceId1 = string;
 export type TurnIndex = number;
 export type Transcript = TranscriptLine[];
+export type Tried = string[];
 export type CaseStatus = "open" | "claimed" | "resolved" | "returned_to_agent";
 export type TenantId = string;
 export type UpdatedAt = string;
@@ -124,6 +125,7 @@ export type CustomerMessage = string;
 export type Decision1 = "answer" | "clarify" | "verify_identity" | "confirm" | "execute" | "refuse" | "handoff";
 export type DecisionReason = string;
 export type Errors = string[];
+export type EscalationKind = ("forced" | "chosen") | null;
 export type Citation2 = string;
 export type DocumentId = string;
 export type Score = number;
@@ -231,6 +233,7 @@ export interface HandoffPackage {
   summary_source?: SummarySource;
   trace_ids?: TraceIds;
   transcript?: Transcript;
+  tried?: Tried;
 }
 export interface AttemptedAction {
   arguments?: Arguments;
@@ -322,6 +325,7 @@ export interface DecisionTrace {
   decision_reason?: DecisionReason;
   entities?: Entities;
   errors?: Errors;
+  escalation_kind?: EscalationKind;
   escalation_reason?: EscalationReason | null;
   evidence?: Evidence;
   evidence_empty_reason?: EvidenceEmptyReason;

@@ -573,6 +573,22 @@
       "title": "Errors",
       "type": "array"
     },
+    "escalation_kind": {
+      "anyOf": [
+        {
+          "enum": [
+            "forced",
+            "chosen"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Escalation Kind"
+    },
     "escalation_reason": {
       "anyOf": [
         {

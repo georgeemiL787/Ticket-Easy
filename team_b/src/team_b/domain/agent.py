@@ -162,6 +162,8 @@ class AgentView(FrozenModel):
     known_order_ids: list[str] = Field(default_factory=list)  # ids the customer wrote or a tool returned
     passages: list[PassageBrief] = Field(default_factory=list)  # policy passages found this turn
     no_evidence_count: int = 0  # policy questions in a row that the documents could not answer
+    questions_asked: int = 0  # questions asked to the customer since the last answer or action
+    frustration_strikes: int = 0  # very frustrated messages in a row (the first one was apologised to)
     tools: list[ToolMenuEntry] = Field(default_factory=list)
     actions: list[ActionMenuEntry] = Field(default_factory=list)
     plan: AgentPlan | None = None

@@ -227,6 +227,8 @@ if (typeof document !== "undefined") {
         el("p", {}, el("strong", { text: "Suggested next step: " }), el("span", { dir: "auto", text: pkg.suggested_next_step })),
         pkg.ai_suggestion ? el("p", { dir: "auto" }, el("span", { class: "tag", text: "AI" }), " ", pkg.ai_suggestion) : null,
         el("p", { class: "muted", text: "Why: " + (pkg.detail || pkg.reason) + " · priority " + pkg.priority })),
+      pkg.tried && pkg.tried.length ? block("Already tried (do not ask the customer again)",
+        list(pkg.tried, (t) => el("span", { dir: "auto", text: t }))) : null,
       c.pending_approval ? block("Waiting for approval", el("div", { class: "pending" },
         el("strong", { text: c.pending_approval.capability }), facts(c.pending_approval.arguments),
         el("p", { class: "muted", dir: "auto", text: c.pending_approval.reason }))) : null,

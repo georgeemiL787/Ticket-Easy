@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from team_b.brain import stages
+from team_b.brain import escalation, stages
 from team_b.brain.agent_actions import settle_waiting
 from team_b.brain.agent_loop import AgentFallback, run_agent
 from team_b.brain.agent_reads import remember_order_ids
@@ -85,9 +85,12 @@ async def agent_stage(ctx: TurnContext) -> str:
     if version:
         ctx.versions["orchestrator_prompt"] = str(version)
     before = (session.agent_plan, list(session.denied_actions), session.active_intent, dict(session.slots))
+    counts = (session.frustration_strikes, session.agent_questions, session.clarifications, ctx.apologise)
+    escalation.note_turn_start(ctx)
     earlier_before = list(ctx.earlier)
     try:
         ctx.step = await run_agent(ctx)
+        escalation.note_turn_end(ctx, ctx.step)
     except AgentFallback as fallback:
         session.agent_plan, denied, session.active_intent, slots = before
         session.denied_actions[:] = (
@@ -95,6 +98,7 @@ async def agent_stage(ctx: TurnContext) -> str:
         )
         session.slots.clear()
         session.slots.update(slots)
+        session.frustration_strikes, session.agent_questions, session.clarifications, ctx.apologise = counts
         ctx.agent_outcomes.clear()
         ctx.earlier[:] = earlier_before
         if ctx.resumed is not None:  # the yes was already answered: that stays the answer
@@ -346,6 +350,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
         response_text=redact(text),  # the customer gets `text`; the stored record hides personal values
         response_citations=citations,
         escalation_reason=step.escalation if step.decision is Decision.HANDOFF else None,
+        escalation_kind=step.escalation_kind if step.decision is Decision.HANDOFF else None,
         handoff_case_id=(ctx.handoff_case_id or session.handoff_case_id) if step.decision is Decision.HANDOFF else None,
         tool_calls=calls,
         policy=tuple(ctx.policy),

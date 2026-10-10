@@ -79,6 +79,8 @@ class LLMMovePicker:
             "order_numbers_known": view.known_order_ids,
             "policy_passages_found": [p.model_dump() for p in view.passages],
             "no_evidence_count": view.no_evidence_count,
+            "questions_asked": view.questions_asked,
+            "frustration_strikes": view.frustration_strikes,
             "waiting_for": view.pending,
         }
         if view.told_already:

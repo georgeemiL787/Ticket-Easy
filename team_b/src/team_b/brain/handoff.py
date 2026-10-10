@@ -254,7 +254,11 @@ def template_summary(
 
 
 async def build_package(
-    ctx: TurnContext, reason: EscalationReason, detail: str, pending: PendingApproval | None
+    ctx: TurnContext,
+    reason: EscalationReason,
+    detail: str,
+    pending: PendingApproval | None,
+    tried: tuple[str, ...] = (),
 ) -> HandoffPackage:
     session, tenant = ctx.session, ctx.tenant
     traces = await ctx.deps.traces.for_conversation(tenant.tenant_id, session.conversation_id)
@@ -302,6 +306,7 @@ async def build_package(
         attempted_actions=_attempted(session.actions),
         failures=failures,
         pending_approval=pending,
+        tried=tried,
         transcript=tuple(transcript),
         trace_ids=tuple(_unique([*(t.trace_id for t in traces), ctx.trace_id])),
         similar_tickets=await _similar_tickets(ctx),
@@ -352,6 +357,7 @@ async def open_case(
     reason: EscalationReason,
     detail: str,
     pending_approval: ActionProposal | None = None,
+    tried: tuple[str, ...] = (),
 ) -> str:
     """Store a new open case for this conversation, mark the session handed off, and return the case id.
 
@@ -369,7 +375,7 @@ async def open_case(
         if pending_approval is not None
         else None
     )
-    package = await build_package(ctx, reason, detail, waiting)
+    package = await build_package(ctx, reason, detail, waiting, tried)
     if ctx.deps.llm is not None:
         outcome = await add_ai_summary(ctx.deps.llm, package)
         package = outcome.package

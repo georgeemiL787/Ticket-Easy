@@ -230,7 +230,7 @@ async def test_a_choice_may_only_offer_orders_the_shop_listed(c: Container) -> N
 
 
 async def test_a_hand_over_needs_a_valid_reason_and_keeps_what_was_tried(c: Container) -> None:
-    move = HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["searched twice"], why="not in the policy")
+    move = HandOver(reason=EscalationReason.UNSUPPORTED, tried=["searched twice"], why="not in the policy")
     reply = await orch(c, ScriptedMovePicker(move)).handle_turn(T, C, "do you ship to the moon?")
     trace = await trace_of(c)
     assert reply.decision is Decision.HANDOFF and "searched twice" in trace.decision_reason

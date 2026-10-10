@@ -78,6 +78,13 @@ team_b/
                  problems, blocked twice or reviewer down -> fixed template; the knowledge agent's wording is reviewed too; trace step 'review' + versions.reviewer_prompt); review_action is the former policy
                  agent (LLMPolicyGate finds passages, the stricter of reviewer and rule checker wins, uncited allow/deny -> require_human, failure -> POLICY_AGENT_UNAVAILABLE on an allowed write);
                  a HandOver with an empty `tried` is sent back once per turn (blocks_handover). The adversarial suite also runs with an over-eager reviewer ("reviewed")
+                 escalation (brain/escalation.py; FORCED = decided by code with no orchestrator move: safety screen, customer asks for a person, human owns the chat, rules/reviewer require_human,
+                 unverified write, another customer's order (also an order number unknown twice), identity failed, repeated deny -> Step.escalation_kind "forced"; the orchestrator may NOT state FORCED_ONLY
+                 reasons. CHOSEN = HandOver move, kind "chosen", checked by handover_after_trying with the tenant's escalation limits frustration_attempts=1 / policy_questions=1 /
+                 outage_retries=1 / max_clarifications=2: high_frustration needs strikes>1 and a still-high message (agent mode counts strikes and apologises like the usual stage), no_evidence needs
+                 no_evidence_count>=2 and a question asked, outage needs tool_failures>retries, low_confidence needs session.agent_questions>=max_clarifications; unsupported/capability_missing/
+                 customer_request always allowed. Two refused moves in a row still fall back to the usual stages. HandoffPackage.tried = the orchestrator's list + the turn's moves + session counts, shown in
+                 the inbox ("Already tried"); trace.escalation_kind; turn_facts gets escalation_kind/agent_mode/agent_moves/agent_fallback (migration 005_agent_facts.sql))
                  egyptian writer (optional, job writer_egyptian: its OWN base_url/model must be set, it never borrows the general model): ReplyWriter(egyptian_llm=) words ar and arabizi replies with
                  Nile-Chat via Ollama, answer read as PLAIN TEXT (llm.complete_text, RoleLLM.complete_text; plain_reply strips fences/quotes/labels); same gate, retry, reviewer and template;
                  versions.writer_model="egyptian"; `eval --llm --writer-compare [--judge]` (writer_compare.py) -> reports/writer_compare_<date>.csv with empty rating_* columns

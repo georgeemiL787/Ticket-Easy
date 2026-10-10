@@ -14,6 +14,7 @@ from dataclasses import replace
 from typing import Any
 
 from team_b.brain.freetext import address_from, reason_from
+from team_b.brain.lexicon import default_lexicon
 from team_b.brain.multi import assign_order_ids
 from team_b.brain.stages import THANKS_TERMS
 from team_b.brain.text import find_spans, normalize
@@ -91,8 +92,21 @@ def _new_steps(view: AgentView, steps: Steps, carried: str = "") -> Steps:
     return steps + added
 
 
+def _asks_for_something_else(view: AgentView) -> bool:
+    """A clear request ("please", "I want") for something this shop does not do: no intent, no entity."""
+    if view.intents or view.entities or len(normalize(view.message).split()) < 3:
+        return False
+    return any(find_spans(normalize(view.message), normalize(t)) for t in default_lexicon().want_markers.all())
+
+
 def expert(view: AgentView) -> MoveProposal:
     kinds = [str(m.move.get("kind")) for m in view.moves]
+    if view.frustration == "high" and view.frustration_strikes >= 2:  # still very upset after one try: a person
+        tried = ["apologised and kept working on the request", "the customer is still very frustrated"]
+        return MoveProposal(
+            plan=_plan([("calm the customer", "open")]),
+            move=HandOver(reason=EscalationReason.HIGH_FRUSTRATION, tried=tried),
+        )
     steps: Steps = [(s.text, s.status) for s in view.plan.steps] if view.plan else []
     # steps from earlier messages that are already closed are forgotten; open ones carry on
     steps = [(t, s) for t, s in steps if s in ("open", "waiting")]
@@ -115,6 +129,11 @@ def expert(view: AgentView) -> MoveProposal:
             key = "thanks" if any(find_spans(text, term) for term in THANKS_TERMS) else "greeting"
             return MoveProposal(
                 plan=_plan([("greet", "done")]), move=Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key=key))
+            )
+        if _asks_for_something_else(view):
+            refuse = ReplyPlan(decision=Decision.REFUSE, reply_key="out_of_scope")
+            return MoveProposal(
+                plan=_plan([("out of scope", "done")]), move=Reply(plan=refuse, why="not something I do")
             )
         return MoveProposal(
             plan=_plan(steps or [("understand", "open")]), move=AskCustomer(question_key="ask_rephrase", why="unclear")

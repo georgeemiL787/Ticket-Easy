@@ -577,6 +577,14 @@
       },
       "title": "Transcript",
       "type": "array"
+    },
+    "tried": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Tried",
+      "type": "array"
     }
   },
   "required": [

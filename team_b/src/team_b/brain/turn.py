@@ -4,6 +4,7 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Literal
 
 from team_b.brain.knowledge_agent import KnowledgeAgent
 from team_b.brain.knowledge_llm import KnowledgeAssistant
@@ -55,6 +56,8 @@ class Step:
     knowledge: bool = False  # a policy answer: the trace must then show the evidence it came from
     text: str | None = None  # a policy answer worded by the AI model (fact-checked); replaces the template
     plan: ReplyPlan | None = None  # the reply plan the orchestrator chose; else it is read off the key and values
+    escalation_kind: Literal["forced", "chosen"] = "forced"  # a handoff decided by code, or chosen by the orchestrator
+    tried: tuple[str, ...] = ()  # what the orchestrator says it tried before handing over (plain words)
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:

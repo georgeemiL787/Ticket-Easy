@@ -23,6 +23,7 @@ from team_b.brain.choices import (
 )
 from team_b.brain.composer import default_composer
 from team_b.brain.handoff import open_case, priority_for
+from team_b.brain.injection import looks_like_override
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
@@ -105,6 +106,7 @@ async def understand(ctx: TurnContext) -> str:
         ctx.errors.append("understanding failed")
         return "failed: continuing without a reading"
     result = ctx.understanding
+    ctx.override_notice = looks_like_override(ctx.text)
     if result.language_confidence >= LANGUAGE_TRUST:
         ctx.session.language = result.language  # a message with no language content keeps the old one
     names = ",".join(i.name for i in result.intents) or "none"
@@ -435,6 +437,20 @@ async def plan(ctx: TurnContext) -> str:
 
 
 # ---- doing it ----
+
+
+def small_talk_only(ctx: TurnContext) -> PlannedIntent | None:
+    """The plan for a message that is only a greeting, a check-in or thanks (agent mode answers it without the
+    orchestrator: no request is hiding in it, so a small, checked wording is all it needs). None for anything else."""
+    reading = ctx.understanding
+    if reading is None or not reading.intents or ctx.session.agent_pending is not None:
+        return None
+    names = [i.name for i in reading.intents]
+    if any(_kind(ctx, n) != "smalltalk" for n in names) or reading.wants_human or reading.affirmation is not None:
+        return None
+    if reading.safety_flags or reading.frustration == "high" or ctx.override_notice:
+        return None
+    return PlannedIntent(names[0], "smalltalk")
 
 
 async def smalltalk_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:

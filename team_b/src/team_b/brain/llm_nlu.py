@@ -170,7 +170,8 @@ class LLMNLU:
         if wants_human and "human_request" in tenant.intents and all(i.name != "human_request" for i in intents):
             intents = (*intents, IntentCandidate(name="human_request", confidence=0.7))
         language, confidence = base.language, base.language_confidence
-        if confidence < LANGUAGE_TRUST and (guess := self._language(reading.language)) is not None:
+        # a message with no language in it (an order number, a phone number) keeps the conversation's language
+        if 0 < confidence < LANGUAGE_TRUST and (guess := self._language(reading.language)) is not None:
             language, confidence = guess, LANGUAGE_TRUST
         return NLUResult(
             language=language,

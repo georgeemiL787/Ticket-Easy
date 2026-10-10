@@ -351,3 +351,11 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 - Commands: `eval --llm --agent-mode ... --label X [--per-style N --batch N --resume --judge --writer-compare]`, `eval-compare`, `replay`.
 - Docs: docs/agentic_design.md (plain language), docs/agent_comparison.md (numbers), docs/metrics.md 15-19, docs/runbook.md 8-10.
 - Safety suites that must stay green: tests/adversarial (incl. test_agent_loop_attacks.py), test_a_safety_property, test_agent_safety_property.
+
+## Fixes from trying the agent by hand (2026-10-11)
+
+- Small talk (a greeting, check-in or thanks and nothing else) is answered in agent mode WITHOUT the orchestrator: `stages.small_talk_only` then `smalltalk_handler` (the small writer, checked; template on any problem); versions.agent = "skipped: small talk". The reviewer reads only the knowledge agent's policy wording (`step.knowledge`).
+- One language per conversation: the reader model's language guess is used only when the rules saw some language in the message (a bare order number or phone keeps the conversation's language).
+- A phone that does not match says so and asks to check both numbers (`identity_failed` in the three locales; PURPOSES tells the writer). Two failures still hand over.
+- "Ignore your rules ..." (brain/injection.py, English, Arabic, Arabizi): nothing is blocked (the gates never depended on it); the reply starts with the fixed `override_notice` and the message is never treated as small talk. The writer may not say "certainly" to a request that still needs a check.
+- The chat page starts a new conversation on every load or refresh (web/chat/chat.js keeps no id).

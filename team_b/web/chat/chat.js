@@ -5,7 +5,6 @@
 
   var params = new URLSearchParams(window.location.search);
   var tenantId = params.get("tenant_id") || "shop_001";
-  var storageKey = "ticket-easy-conversation-" + tenantId;
 
   var messagesEl = document.getElementById("messages");
   var statusEl = document.getElementById("status");
@@ -20,19 +19,8 @@
     return "web-" + random;
   }
 
-  function loadConversationId() {
-    try {
-      var saved = window.localStorage.getItem(storageKey);
-      if (saved) { return saved; }
-      var fresh = newConversationId();
-      window.localStorage.setItem(storageKey, fresh);
-      return fresh;
-    } catch (e) {
-      return newConversationId(); // storage blocked: a conversation for this page view only
-    }
-  }
-
-  var conversationId = loadConversationId();
+  // Every load or refresh of the page starts a NEW conversation (nothing is kept between page views).
+  var conversationId = newConversationId();
   var base = "/v1/conversations/" + encodeURIComponent(conversationId);
   var tenantQuery = "tenant_id=" + encodeURIComponent(tenantId);
 

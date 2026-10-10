@@ -81,6 +81,11 @@ async def agent_stage(ctx: TurnContext) -> str:
         stages.resolve_order_choice(ctx)  # "the second" picks one of the orders that were offered
     if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
         stages.resolve_intent_choice(ctx)  # "the second" picks one of the two requests that were offered
+    if (small_talk := stages.small_talk_only(ctx)) is not None:  # a greeting or thanks: no orchestrator call
+        ctx.plan = small_talk
+        ctx.step = await ctx.deps.handlers.get("smalltalk", stages.placeholder_handler)(ctx, small_talk)
+        ctx.versions["agent"] = "skipped: small talk"
+        return "small talk answered without the orchestrator"
     version = getattr(ctx.deps.move_picker, "prompt_version", None)
     if version:
         ctx.versions["orchestrator_prompt"] = str(version)
@@ -202,7 +207,13 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
             )
             ctx.versions["reviewer_prompt"] = getattr(writer, "reviewer_version", None) or "unknown"
         text = written.text
-    elif step.text is not None and ctx.deps.reviewer is not None and step.decision in WRITABLE and not step.silent:
+    elif (
+        step.text is not None
+        and step.knowledge
+        and ctx.deps.reviewer is not None
+        and step.decision in WRITABLE
+        and not step.silent
+    ):
         # a policy answer worded by the knowledge agent: the reviewer checks it against the passages it relies on
         started = time.perf_counter()
         verdict = await ctx.deps.reviewer.review_reply(plan_of(step), step.text, ctx.text, step.passages)
@@ -243,6 +254,8 @@ async def compose(ctx: TurnContext, locale: Locale) -> str:
     assert ctx.step is not None
     parts = [*ctx.earlier, ctx.step]
     texts = [await say_step(ctx, s, locale) for s in parts if not s.silent]
+    if ctx.override_notice and ctx.step.decision is not Decision.HANDOFF and not ctx.step.silent:
+        texts.insert(0, default_composer().t(locale, "override_notice"))  # a fixed sentence: never reworded
     if ctx.apologise and ctx.step.decision is not Decision.HANDOFF and not ctx.step.silent:
         texts.insert(0, default_composer().t(locale, "frustration_ack"))  # a fixed sentence: never reworded
     return "\n\n".join(texts)

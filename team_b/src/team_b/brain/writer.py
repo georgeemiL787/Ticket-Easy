@@ -53,6 +53,10 @@ PURPOSES: tuple[tuple[str, str], ...] = (
     ("ask_", "ask the customer for one missing detail"),
     ("confirm_action", "ask the customer to confirm the action, yes or no"),
     ("confirm_again", "ask again for a clear yes or no"),
+    (
+        "identity_failed",
+        "tell the customer the phone number did not match the order and ask them to check both numbers",
+    ),
     ("order_status", "tell the customer where their order is"),
     ("policy_answer", "answer the policy question (the quoted policy text is added after your reply)"),
     ("policy_refusal", "tell the customer no, and why, as the rules say it"),

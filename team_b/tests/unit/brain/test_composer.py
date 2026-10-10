@@ -74,7 +74,7 @@ def test_every_locale_has_exactly_the_same_keys() -> None:
 
 
 def test_the_key_count_is_the_one_in_the_report() -> None:
-    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 69, "ar": 69, "arabizi": 69}
+    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 70, "ar": 70, "arabizi": 70}
 
 
 @pytest.mark.parametrize("locale", list(Locale))

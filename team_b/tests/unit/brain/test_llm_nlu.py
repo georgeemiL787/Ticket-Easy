@@ -219,13 +219,18 @@ async def test_the_result_names_the_prompt_version(tenant: TenantConfig) -> None
     assert (await RuleBasedNLU().understand("hello", None, tenant)).prompt_version is None
 
 
-async def test_the_model_decides_the_language_only_when_the_rules_are_unsure(tenant: TenantConfig) -> None:
+async def test_the_model_never_overrules_a_clear_reading_of_the_language(tenant: TenantConfig) -> None:
     sure = await understand(FakeLLM(reading(language="ar")), "Where is my order?", tenant)
     assert sure.language is Language.EN
-    unsure = await understand(FakeLLM(reading(language="arabizi")), "01012345601", tenant)
-    assert unsure.language is Language.ARABIZI and unsure.language_confidence == 0.6
-    junk = await understand(FakeLLM(reading(language="klingon")), "01012345601", tenant)
-    assert junk.language_confidence == 0.0
+    still_sure = await understand(FakeLLM(reading(language="arabizi")), "refund", tenant)
+    assert still_sure.language is Language.EN  # the rules had a clear reading: the model does not overrule it
+
+
+async def test_a_message_with_no_language_in_it_keeps_the_conversations_language(tenant: TenantConfig) -> None:
+    """An order number or a phone number says nothing about the language: the model's guess is ignored."""
+    for text in ("01012345601", "NS-20877", "NS-2079", "ok"):
+        got = await understand(FakeLLM(reading(language="mixed")), text, tenant)
+        assert got.language_confidence == 0.0, text  # the stage then keeps the language the conversation already has
 
 
 async def test_yes_and_no_from_the_model_count_only_for_a_very_short_message(tenant: TenantConfig) -> None:

@@ -1,6 +1,6 @@
 {
   "confirm_again": "Please answer yes to go ahead or no to cancel.",
-  "identity_failed": "I'm sorry, those details do not match our records. Could you check the phone number and send it again?",
+  "identity_failed": "I'm sorry, that phone number does not match this order. Please check the order number and the phone number, and send them again.",
   "status_pending": "waiting to be processed",
   "status_processing": "being prepared",
   "status_shipped": "on its way to you",

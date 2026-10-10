@@ -28,6 +28,9 @@ from team_b.domain.trace import DecisionTrace, record_problems
 from tests.fakes import FakeEvidence, ScriptedMovePicker
 
 T, C = "shop_001", "conv-agent"
+ASK_MORE = (
+    "Could you tell me a little more about what you need help with?"  # the usual flow on a message it cannot place
+)
 GREETING = Reply(why="a greeting", plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting"))
 
 
@@ -80,7 +83,7 @@ async def test_a_business_can_set_its_own_mode(c: Container) -> None:
 
     only_off = TenantRegistry({T: tenant.model_copy(update={"agent_mode": "off"})})
     picker = ScriptedMovePicker()
-    await orch(c, picker, tenants=only_off, agent_mode="on").handle_turn(T, C, "Hello")
+    await orch(c, picker, tenants=only_off, agent_mode="on").handle_turn(T, C, "hmm okay then")
     assert picker.views == [] and (await trace_of(c)).agent_mode == "off"
 
 
@@ -89,7 +92,7 @@ async def test_a_business_can_set_its_own_mode(c: Container) -> None:
 
 async def test_a_reply_move_ends_the_turn_with_todays_template(c: Container) -> None:
     picker = ScriptedMovePicker(GREETING)
-    reply = await orch(c, picker).handle_turn(T, C, "Hello")
+    reply = await orch(c, picker).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert reply.text == "Hello! How can I help you today?" and reply.decision is Decision.ANSWER
     s = stages(trace)
@@ -172,7 +175,7 @@ async def test_a_move_code_does_not_accept_is_refused_and_the_picker_is_told_why
     c: Container, move: Any, why: str
 ) -> None:
     picker = ScriptedMovePicker(move, GREETING)
-    reply = await orch(c, picker).handle_turn(T, C, "hi")
+    reply = await orch(c, picker).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and reply.text == "Hello! How can I help you today?"
     assert trace.agent_steps[0].refused and why in picker.views[1].refused
@@ -181,7 +184,7 @@ async def test_a_move_code_does_not_accept_is_refused_and_the_picker_is_told_why
 
 async def test_the_same_look_up_twice_is_refused_the_second_time(c: Container) -> None:
     other = SearchPolicy(query="a"), SearchPolicy(query="a"), SearchPolicy(query="b"), GREETING
-    await orch(c, ScriptedMovePicker(*other), evidence=c.evidence).handle_turn(T, "conv-2", "hi")
+    await orch(c, ScriptedMovePicker(*other), evidence=c.evidence).handle_turn(T, "conv-2", "hmm okay then")
     steps = (await trace_of(c, "conv-2")).agent_steps
     assert [s.refused for s in steps] == [False, True, False, False]
     assert "already made" in steps[1].result
@@ -190,7 +193,7 @@ async def test_the_same_look_up_twice_is_refused_the_second_time(c: Container) -
 async def test_a_reply_cannot_carry_a_number_the_loop_never_verified(c: Container) -> None:
     lie = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="action_done", facts={"reference": "RET-1"}))
     picker = ScriptedMovePicker(lie, lie, GREETING)
-    reply = await orch(c, picker).handle_turn(T, C, "hi")
+    reply = await orch(c, picker).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert "RET-1" not in reply.text and trace.fallback_reason == "two refused moves in a row"
 
@@ -200,9 +203,9 @@ async def test_a_reply_cannot_carry_a_number_the_loop_never_verified(c: Containe
 
 async def test_two_refused_moves_in_a_row_fall_back_to_the_usual_stages(c: Container) -> None:
     bad = ProposeAction(intent="made_up", arguments={})
-    reply = await orch(c, ScriptedMovePicker(bad, bad, GREETING)).handle_turn(T, C, "Hello")
+    reply = await orch(c, ScriptedMovePicker(bad, bad, GREETING)).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
-    assert reply.text == "Hello! How can I help you today?"  # the usual flow answered the greeting
+    assert reply.text == ASK_MORE  # the usual flow took over
     assert trace.fallback_reason == "two refused moves in a row" and stages(trace)["agent"] == "ok"
     names = list(stages(trace))
     assert names[names.index("agent") :] == [
@@ -214,28 +217,30 @@ async def test_two_refused_moves_in_a_row_fall_back_to_the_usual_stages(c: Conta
 async def test_a_good_move_between_two_refusals_resets_the_count(c: Container) -> None:
     bad = ProposeAction(intent="made_up", arguments={})
     ok = SearchPolicy(query="q")
-    reply = await orch(c, ScriptedMovePicker(bad, ok, bad, GREETING), evidence=c.evidence).handle_turn(T, C, "hi")
+    reply = await orch(c, ScriptedMovePicker(bad, ok, bad, GREETING), evidence=c.evidence).handle_turn(
+        T, C, "hmm okay then"
+    )
     assert reply.decision is Decision.ANSWER and (await trace_of(c)).fallback_reason is None
 
 
 async def test_the_move_limit(c: Container) -> None:
     picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
-    reply = await orch(c, picker, evidence=c.evidence, agent_max_moves=3).handle_turn(T, C, "Hello")
+    reply = await orch(c, picker, evidence=c.evidence, agent_max_moves=3).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert len(picker.views) == 3 and trace.fallback_reason == "more than 3 moves without an answer"
-    assert reply.text == "Hello! How can I help you today?"  # the usual flow
+    assert reply.text == ASK_MORE  # the usual flow
 
 
 async def test_the_default_limit_is_five_moves(c: Container) -> None:
     picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
-    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "Hello")
+    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "hmm okay then")
     assert len(picker.views) == 5
 
 
 async def test_a_picker_error_falls_back(c: Container) -> None:
-    reply = await orch(c, ScriptedMovePicker(RuntimeError("model down"))).handle_turn(T, C, "Hello")
+    reply = await orch(c, ScriptedMovePicker(RuntimeError("model down"))).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
-    assert reply.decision is Decision.ANSWER and trace.fallback_reason == "move picker error: RuntimeError"
+    assert reply.decision is Decision.CLARIFY and trace.fallback_reason == "move picker error: RuntimeError"
     assert trace.agent_steps[0].result == "RuntimeError"
 
 
@@ -244,14 +249,14 @@ async def test_the_turn_time_limit_falls_back(c: Container) -> None:
         async def next_move(self, view: Any) -> Any:
             await asyncio.sleep(5)
 
-    reply = await orch(c, Slow(), agent_turn_timeout_s=0.05).handle_turn(T, C, "Hello")
+    reply = await orch(c, Slow(), agent_turn_timeout_s=0.05).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
-    assert reply.decision is Decision.ANSWER and trace.fallback_reason == "the turn took longer than 0.05 seconds"
+    assert reply.decision is Decision.CLARIFY and trace.fallback_reason == "the turn took longer than 0.05 seconds"
 
 
 async def test_an_endless_loop_of_the_same_move_ends_in_a_fallback(c: Container) -> None:
     picker = ScriptedMovePicker(SearchPolicy(query="same"), repeat_last=True)
-    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "Hello")
+    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert trace.fallback_reason == "two refused moves in a row" and len(picker.views) == 3
 
@@ -259,7 +264,7 @@ async def test_an_endless_loop_of_the_same_move_ends_in_a_fallback(c: Container)
 async def test_a_fallback_leaves_no_trace_of_the_loop_on_the_session(c: Container) -> None:
     plan = AgentPlan(steps=[PlanStep(text="look up the order")])
     picker = ScriptedMovePicker(plan, RuntimeError("boom"))
-    await orch(c, picker).handle_turn(T, C, "Hello")
+    await orch(c, picker).handle_turn(T, C, "hmm okay then")
     session = await c.sessions.load(T, C)
     assert session is not None and session.agent_plan is None and session.agent_pending is None
 
@@ -273,7 +278,7 @@ async def test_a_plan_is_saved_and_the_next_turn_sees_it(c: Container) -> None:
     )
     first = ScriptedMovePicker(plan, GREETING)
     bot = orch(c, first)
-    await bot.handle_turn(T, C, "hi")
+    await bot.handle_turn(T, C, "hmm okay then")
     session = await c.sessions.load(T, C)
     assert session is not None and session.agent_plan is not None and session.agent_plan.revision == 1
     assert [s.text for s in session.agent_plan.steps] == ["check identity", "look up the order"]
@@ -291,7 +296,7 @@ async def test_a_plan_is_saved_and_the_next_turn_sees_it(c: Container) -> None:
 
 
 async def test_an_old_saved_session_without_the_agent_fields_still_loads(c: Container) -> None:
-    await orch(c).handle_turn(T, C, "Hello")
+    await orch(c).handle_turn(T, C, "hmm okay then")
     session = await c.sessions.load(T, C)
     assert session is not None
     data = session.model_dump(mode="json", exclude={"agent_plan", "agent_pending"})
@@ -304,7 +309,7 @@ async def test_an_old_saved_session_without_the_agent_fields_still_loads(c: Cont
 async def test_personal_values_in_a_plan_or_a_move_are_hidden_in_the_trace(c: Container) -> None:
     plan = AgentPlan(steps=[PlanStep(text="verify the phone 01012345601")])
     look = LookUp(tool="verify_customer", arguments={"phone": "01012345601"}, why="check 01012345601")
-    await orch(c, ScriptedMovePicker(plan, look, GREETING)).handle_turn(T, C, "hi")
+    await orch(c, ScriptedMovePicker(plan, look, GREETING)).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     dumped = trace.model_dump_json()
     assert "01012345601" not in dumped
@@ -330,7 +335,7 @@ async def test_a_move_given_as_a_dict_is_parsed_and_checked_the_same_way(c: Cont
     picker = ScriptedMovePicker(
         {"kind": "teleport"}, {"kind": "reply", "plan": {"decision": "answer", "reply_key": "greeting"}}
     )
-    reply = await orch(c, picker).handle_turn(T, C, "hi")
+    reply = await orch(c, picker).handle_turn(T, C, "hmm okay then")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and trace.agent_steps[0].refused
 

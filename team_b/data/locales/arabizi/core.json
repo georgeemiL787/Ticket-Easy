@@ -17,5 +17,6 @@
   "dependency_down": "Goz2 men el system mesh shaghal delwa2ty fa ma2darsh a3mel da 7alan. Garrab tany ba3d shwaya.",
   "frustration_ack": "Asef 3ala el ez3ag, ha3mel elly a2der 3aleih 3ashan a7el el mawdoo3 da ma3ak.",
   "order_not_found": "Ma la2etesh el order {order_id}. Momken tet2aked mn el ra2am w tebba3atoly tany?",
-  "order_not_found_choose": "Ma la2etesh el order {order_id}. Di orderatak:\n{orders}\nMomken te2ol el awel aw el tany, aw tebba3atly ra2am el order el sa7."
+  "order_not_found_choose": "Ma la2etesh el order {order_id}. Di orderatak:\n{orders}\nMomken te2ol el awel aw el tany, aw tebba3atly ra2am el order el sa7.",
+  "override_notice": "Ana dayman baltazem bi 2awa3ed el matgar w mesh momken aghayarha aw atkhataha."
 }

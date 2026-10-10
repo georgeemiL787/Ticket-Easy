@@ -17,5 +17,6 @@
   "dependency_down": "Part of our system is not available right now, so I can't do that yet. Please try again shortly.",
   "frustration_ack": "I'm sorry about the trouble, I'll do my best to sort this out for you.",
   "order_not_found": "I couldn't find order {order_id}. Could you check the number and send it again?",
-  "order_not_found_choose": "I couldn't find order {order_id}. Here are your orders:\n{orders}\nYou can say the first, the second, or send the right order number."
+  "order_not_found_choose": "I couldn't find order {order_id}. Here are your orders:\n{orders}\nYou can say the first, the second, or send the right order number.",
+  "override_notice": "I always follow the shop's rules and I can't change or skip them."
 }

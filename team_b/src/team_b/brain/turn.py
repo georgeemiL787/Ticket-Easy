@@ -102,6 +102,9 @@ class TurnContext:
     agent_mode: str | None = None  # how the agent was configured for this turn
     agent_steps: list[AgentStepRecord] = field(default_factory=list)  # the loop's moves this turn
     fallback_reason: str | None = None  # why the agent loop gave up (the usual stages ran instead)
+    override_notice: bool = (
+        False  # the message tells the agent to ignore its rules: the reply starts with a fixed notice
+    )
     apologise: bool = False  # the customer is very frustrated for the first time: the reply starts with an apology
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)

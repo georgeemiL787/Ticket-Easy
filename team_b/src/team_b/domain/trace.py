@@ -13,6 +13,7 @@ from typing import Any, Literal, Self
 from pydantic import Field, model_validator
 
 from team_b.contracts.base import OperationKind
+from team_b.domain.agent import AgentPlan, AgentStepRecord
 from team_b.domain.base import FrozenModel
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionIdentity
@@ -103,6 +104,10 @@ class DecisionTrace(FrozenModel):
     steps: tuple[TraceStep, ...] = ()
     latency_ms: float = Field(default=0.0, ge=0.0)
     versions: dict[str, str] = Field(default_factory=dict)  # prompt, lexicon, tenant config versions used
+    agent_mode: str | None = None  # on | off | shadow: how this turn was configured to run
+    agent_plan: AgentPlan | None = None  # the agent's plan after this turn (personal values hidden)
+    agent_steps: tuple[AgentStepRecord, ...] = ()  # the moves of the agent loop, with their checks
+    fallback_reason: str | None = None  # set when the agent loop gave up and the usual stages ran
 
     @model_validator(mode="after")
     def _handoff_has_reason(self) -> Self:

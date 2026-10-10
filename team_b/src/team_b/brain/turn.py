@@ -13,6 +13,7 @@ from team_b.brain.rewrite import Rewriter
 from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.summarizer import HistorySummarizer
 from team_b.contracts.evidence import Passage, RiskAssessment
+from team_b.domain.agent import AgentMode, AgentStepRecord
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
@@ -24,6 +25,7 @@ from team_b.ports import (
     Clock,
     EvidenceProvider,
     LLMClient,
+    MovePicker,
     PolicyGate,
     SessionStore,
     TraceStore,
@@ -80,6 +82,9 @@ class TurnContext:
     earlier: list[Step] = field(default_factory=list)  # completed steps whose replies come before the final one
     handoff_case_id: str | None = None
     ai_events: list[tuple[str, str, str]] = field(default_factory=list)  # (job, kind, detail)
+    agent_mode: str | None = None  # how the agent was configured for this turn
+    agent_steps: list[AgentStepRecord] = field(default_factory=list)  # the loop's moves this turn
+    fallback_reason: str | None = None  # why the agent loop gave up (the usual stages ran instead)
     apologise: bool = False  # the customer is very frustrated for the first time: the reply starts with an apology
     steps: list[TraceStep] = field(default_factory=list)
     tool_calls: list[ToolCallRecord] = field(default_factory=list)
@@ -120,4 +125,8 @@ class Deps:
     knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
+    move_picker: MovePicker | None = None  # the orchestrator; without it the agent is unavailable
+    agent_mode: AgentMode = "on"  # the service default; a tenant may set its own
+    agent_max_moves: int = 5
+    agent_turn_timeout_s: float = 20.0
     max_queued_runs: int = MAX_QUEUED_RUNS  # queued requests that may run after the first one, in a single turn

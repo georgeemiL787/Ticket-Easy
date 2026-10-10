@@ -14,11 +14,13 @@ from datetime import datetime
 from typing import Any
 
 from team_b.brain import stages
+from team_b.brain.agent_loop import AgentFallback, run_agent
 from team_b.brain.composer import default_composer
 from team_b.brain.redaction import redact, redact_mapping, redact_value
 from team_b.brain.rewrite import REWRITABLE
 from team_b.brain.turn import Deps, StageFn, Step, TurnContext, locale_of
 from team_b.brain.versions import base_versions
+from team_b.domain.agent import AgentPlan, PlanStep
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message, SessionState
@@ -52,6 +54,44 @@ STAGES: tuple[Stage, ...] = (
     Stage("queue", stages.queue, skip_when_decided=False),
     Stage("handoff", stages.handoff, skip_when_decided=False, only_when_handoff=True),
 )
+
+
+# Agent mode: the front stages run as always, the middle (disambiguate ... queue) becomes the one "agent" stage,
+# and handoff and finish stay. If the agent loop gives up, the middle stages run from their start (see agent_loop).
+FRONT_STAGES = STAGES[:5]
+MIDDLE_STAGES = STAGES[5:11]
+HANDOFF_STAGE = STAGES[11]
+assert [s.name for s in MIDDLE_STAGES][0] == "disambiguate" and HANDOFF_STAGE.name == "handoff"
+
+
+async def agent_stage(ctx: TurnContext) -> str:
+    """Work the message as agent moves. On a fallback the saved plan is put back and ctx.fallback_reason is set."""
+    stages.store_details(ctx)  # what the customer told us is kept, as the usual merge stage would
+    before = ctx.session.agent_plan
+    try:
+        ctx.step = await run_agent(ctx)
+    except AgentFallback as fallback:
+        ctx.session.agent_plan = before
+        ctx.session.agent_pending = None
+        ctx.fallback_reason = fallback.reason
+        return f"fell back to the usual stages: {fallback.reason}"
+    kinds = ", ".join(str(r.move.get("kind")) for r in ctx.agent_steps)
+    return f"{len(ctx.agent_steps)} move(s): {kinds}"
+
+
+AGENT_STAGE = Stage("agent", agent_stage)
+
+
+def agent_runs(ctx: TurnContext) -> bool:
+    """Does the agent loop work this turn? Its mode is the tenant's, else the service's; it needs a move picker (a
+    model for the orchestrator job). Shadow behaves like off until it is built."""
+    ctx.agent_mode = ctx.tenant.agent_mode or ctx.deps.agent_mode
+    if ctx.agent_mode != "on":
+        return False
+    if ctx.deps.move_picker is None:
+        ctx.versions["agent"] = "unavailable: no model"
+        return False
+    return True
 
 
 async def run_stage(ctx: TurnContext, stage: Stage) -> None:
@@ -129,6 +169,13 @@ async def _trim(ctx: TurnContext) -> None:
         folded = session.history[:excess]
         session.history_summary = await ctx.deps.summarizer.summarize(session, folded, ctx.tenant)
         del session.history[:excess]
+
+
+def redacted_plan(plan: AgentPlan | None) -> AgentPlan | None:
+    """The saved plan as the trace keeps it: personal values in the step texts hidden."""
+    if plan is None:
+        return None
+    return AgentPlan(steps=[PlanStep(text=redact(s.text), status=s.status) for s in plan.steps], revision=plan.revision)
 
 
 def log_turn_events(ctx: TurnContext, trace: DecisionTrace) -> None:
@@ -214,6 +261,10 @@ async def finish(ctx: TurnContext) -> AgentReply:
             if a.proposal_id in ctx.proposal_ids
         ),
         errors=tuple(redact(e) for e in ctx.errors),
+        agent_mode=ctx.agent_mode,
+        agent_plan=redacted_plan(session.agent_plan),
+        agent_steps=tuple(ctx.agent_steps),
+        fallback_reason=redact(ctx.fallback_reason) if ctx.fallback_reason else None,
         steps=tuple(ctx.steps),
         latency_ms=(time.perf_counter() - ctx.started) * 1000,
     )
@@ -296,6 +347,14 @@ async def run_turn(
             log.info("turn_start", turn_index=ctx.session.turn_index, channel=channel, message_chars=len(text))
             with ai_events() as events:
                 ctx.ai_events = events
-                for stage in STAGES:
-                    await run_stage(ctx, stage)
+                if agent_runs(ctx):
+                    for stage in (*FRONT_STAGES, AGENT_STAGE):
+                        await run_stage(ctx, stage)
+                    if ctx.fallback_reason is not None:  # the loop gave up: the usual middle, from its start
+                        for stage in MIDDLE_STAGES:
+                            await run_stage(ctx, stage)
+                    await run_stage(ctx, HANDOFF_STAGE)
+                else:
+                    for stage in STAGES:
+                        await run_stage(ctx, stage)
                 return await finish(ctx)

@@ -4,10 +4,10 @@
 Ticket-Easy is a customer-service agent for e-commerce shops. Customers write in English, Egyptian Arabic, mixed Arabic-English, or Arabizi (Arabic in Latin letters and digits, e.g. "3ayez a3raf el order feen"). For every customer message this service decides exactly one outcome: answer, clarify, verify_identity, confirm, execute, refuse, or handoff, and records why in a DecisionTrace.
 
 ## The journey of one message
-load memory → understand (language, intents, entities, yes/no, wants human, frustration) → risk screen → customer wants a human? → pending confirmation? → missing information? → route by intent kind (knowledge / lookup / action) → handoff if needed → compose reply in the customer's register → save trace and session.
+load memory → understand (language, intents, entities, yes/no, wants human, frustration) → risk screen → customer wants a human? → pending confirmation? → **agent** (agent mode: the orchestrator plans and picks one move at a time, code checks each: look up / search policy / propose action / ask / hand over / reply; with no orchestrator model, or off, or after a fallback: missing information? → route by intent kind (knowledge / lookup / action)) → handoff if needed → compose reply in the customer's register → save trace and session.
 
 ## Non-negotiable rules
-1. The LLM proposes, code decides. Identity, ownership, permission, policy check, confirmation and result verification are deterministic code. The LLM may fill structured fields that code validates; it may raise safety flags but never clear them; it never chooses a tool.
+1. The LLM proposes, code decides. The orchestrator may propose a move from the move menu, including a tool and its arguments; code validates every move and runs the gates of rule 4 before anything happens. The LLM never runs a tool itself, never clears a safety flag and never skips a gate. Identity, ownership, permission, policy check, confirmation and result verification are deterministic code; the LLM may fill structured fields that code validates and may raise safety flags.
 2. Never invent. No policy claim without a retrieved passage and its citation. No order fact without a tool result. No "done" without a verified tool result (success + audit id + required output fields + reference id for creates).
 3. Fail closed. If the policy check, risk screen or identity check cannot run, no side effect happens and the case is handed off.
 4. Fixed gate order for actions: required slots → identity verified → facts loaded from a read tool → ownership → permission gate → risk screen completed this turn → policy check_action → customer confirmation (or human approval) → renewed check_action → execution authorized → call tool → verify result.
@@ -46,6 +46,14 @@ team_b/
                  orchestrator (handle_turn -> pipeline.run_turn, retries once on a stale session; human methods raise
                  NotImplementedError until the handoff step), pipeline (STAGES, run_stage, finish: compose in the customer's
                  locale, validate and store trace + session), turn (Step, TurnContext, Deps: stages share state through them),
+                 agent_loop (run_agent(ctx) -> Step | raises AgentFallback; agent mode "on" = tenant agent_mode else TEAM_B_AGENT_MODE, and only with a MovePicker in Deps (a model for the orchestrator job);
+                 the front stages run first, then ONE "agent" stage replaces disambiguate..queue; the loop asks MovePicker.next_move(view) up to TEAM_B_AGENT_MAX_MOVES (5) times (a plan update counts),
+                 TEAM_B_AGENT_TURN_TIMEOUT_S (20) for the whole loop; check_move = the code checks per move (on the menu, same look-up/search at most once, arguments size, action intent exists, question
+                 template exists, a reply may only answer/clarify/refuse with an allowed template and no facts/citations nobody verified, hand-over needs a valid EscalationReason); a refused move is told
+                 back to the picker (view.refused), two in a row, a picker error, a time-out or the move limit = AgentFallback: the saved plan is put back and the usual middle stages run from their start
+                 (trace.fallback_reason). In this step look-ups, policy searches and actions only answer "not built yet": the loop cannot write. domain/agent.py = the move menu (LookUp, SearchPolicy,
+                 ProposeAction, AskCustomer, HandOver, Reply(ReplyPlan)), AgentPlan/PlanStep (saved on session.agent_plan, revision), AgentView, AgentStepRecord/CheckRecord (trace.agent_steps, redacted),
+                 trace.agent_mode/agent_plan/fallback_reason; no model = versions.agent "unavailable: no model"; shadow behaves like off until it is built)
                  stages (the 12 stage functions + smalltalk/placeholder/handoff handlers; kinds plug in via Deps.handlers),
                  slots (required_slots, resolve_arguments -> Resolution(arguments, missing, missing_facts, unsourced, needs_identity),
                  next_question: order id, phone, item, reason, amount; sources slot:/fact:/identity:/const:, facts beat the customer)
@@ -259,21 +267,10 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 - Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
 - Regenerate JSON Schemas after changing DecisionTrace, HandoffPackage, HandoffCase or AgentReply: `make schemas`
 
-## Ownership (two-person team)
-Track A (the agent that acts) owns: brain/identity.py, brain/lookup.py, brain/actions.py, brain/registry.py, brain/gates.py,
-brain/alerts.py, adapters/standins/shop.py, rule_checker.py, safety_screen.py, api/alerts.py, api/auth.py,
-data/locales/*/actions.json, tests/adversarial/, loadtest/, docker files, and tests named test_a_*.py.
-Track B owns: brain/knowledge.py, brain/handoff.py, brain/summarizer.py, brain/metrics.py, adapters/standins/policy_search.py,
-adapters/*_store.py, adapters/migrations/ (except files numbered for A), api/inbox.py, api/dashboard.py, web/inbox/, dashboard/,
-eval/, .github/workflows/, data/locales/*/knowledge.json and handoff.json, and tests named test_b_*.py.
-Shared: brain/orchestrator.py, domain/, contracts/, ports/, container.py, config.py, Makefile, CLAUDE.md,
-data/locales/*/core.json, tests/integration/test_scenarios.py.
-
-Rules:
-- Never change a stub's name, inputs or return type: the other track depends on it.
-- Edit shared files only by adding small pieces, and mention them in the commit message so the other person can spot them.
-- A scenario is activated only by its owner (the "owner" field: A, B, or sync = both), or by a sync prompt for "sync" ones.
-- If a task truly needs the other track's file, make the smallest change and list it in the report.
+## Stubs and ownership
+The work is one build sequence (the agentic upgrade); there are no separate tracks any more. Safety-critical files still need a
+careful second look before a change: brain/actions.py, brain/approval.py, domain/actions.py, the two invariants in domain/trace.py,
+brain/agent_loop.py (the checks on every move). The `owner` field of a scenario is kept for history only.
 
 Stubs (signatures are fixed; the orchestrator routes by intent kind through them):
 - brain/knowledge.py (B): `answer(ctx) -> Step`, `quote_for(ctx, query) -> list[Passage]`. Kind "knowledge".

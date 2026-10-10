@@ -6,6 +6,7 @@ from typing import Any, Literal, Self
 from pydantic import Field, model_validator
 
 from team_b.domain.actions import ActionProposal
+from team_b.domain.agent import AgentPlan
 from team_b.domain.base import FrozenModel, MutableModel
 from team_b.domain.decision import EscalationReason
 from team_b.domain.understanding import Language
@@ -74,6 +75,8 @@ class SessionState(MutableModel):
     order_choices: list[str] = Field(default_factory=list)  # order ids offered in a "which order?" question
     handoff_notice_sent: bool = False  # the customer was already told that a colleague will reply
     outbox: list[Message] = Field(default_factory=list)  # replies waiting to be shown to the customer (human replies)
+    agent_plan: AgentPlan | None = None  # the steps the agent keeps for the customer's request (agent mode)
+    agent_pending: str | None = None  # what the agent loop waits for: confirmation, slot:<name>, detail
     version: int = Field(default=0, ge=0)  # bumped on every save: detects two writers at once
     created_at: datetime
     updated_at: datetime

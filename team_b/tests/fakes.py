@@ -66,3 +66,23 @@ class ScriptedNLU:
         if isinstance(self.result, Exception):
             raise self.result
         return self.result
+
+
+class ScriptedMovePicker:
+    """A MovePicker that returns prepared moves (or plans, or raises), one per ask. Records every view it was given.
+
+    With repeat_last=True the last prepared answer is given again for as long as it is asked (an endless loop)."""
+
+    def __init__(self, *answers: Any, repeat_last: bool = False) -> None:
+        self._answers = list(answers)
+        self._repeat_last = repeat_last
+        self.views: list[Any] = []
+
+    async def next_move(self, view: Any) -> Any:
+        self.views.append(view)
+        if not self._answers:
+            raise AssertionError("ScriptedMovePicker has no prepared answer left")
+        answer = self._answers[0] if (self._repeat_last and len(self._answers) == 1) else self._answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer

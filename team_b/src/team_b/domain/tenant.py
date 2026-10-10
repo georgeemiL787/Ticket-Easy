@@ -8,6 +8,7 @@ from typing import Literal, Self
 from pydantic import Field, ValidationError, field_validator, model_validator
 
 from team_b.contracts.base import OperationKind, RiskLevel
+from team_b.domain.agent import AgentMode
 from team_b.domain.base import FrozenModel
 from team_b.domain.decision import EscalationReason
 from team_b.domain.understanding import Locale
@@ -151,6 +152,7 @@ class TenantConfig(FrozenModel):
     alerts: AlertThresholds = Field(default_factory=AlertThresholds)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
+    agent_mode: AgentMode | None = None  # on | off | shadow; unset: the service setting TEAM_B_AGENT_MODE
     managers: tuple[str, ...] = ()  # names that may reassign cases, until logins give people roles
 
     @model_validator(mode="after")

@@ -13,6 +13,7 @@ from typing import Any, Protocol, runtime_checkable
 from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from team_b.domain.agent import AgentPlan, AgentView, AnyMove
 from team_b.domain.alerts import Alert
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.facts import Facts, FactsSummary
@@ -29,6 +30,7 @@ __all__ = [
     "Clock",
     "EvidenceProvider",
     "LLMClient",
+    "MovePicker",
     "NotFoundError",
     "PolicyGate",
     "SessionConflictError",
@@ -107,6 +109,13 @@ class LLMClient(Protocol):
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
     ) -> dict[str, Any]: ...
+
+
+@runtime_checkable
+class MovePicker(Protocol):
+    """The orchestrator: proposes the next move (or a changed plan). It only proposes; code checks and decides."""
+
+    async def next_move(self, view: AgentView) -> AnyMove | AgentPlan: ...
 
 
 @runtime_checkable

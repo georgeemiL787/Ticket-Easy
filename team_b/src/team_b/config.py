@@ -8,6 +8,8 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
 
+from team_b.domain.agent import AgentMode
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]  # the team_b/ folder
 
 Mode = Literal["standin", "live"]
@@ -50,6 +52,9 @@ ENV_VARS: dict[str, str] = {
     "llm_knowledge": "TEAM_B_LLM_KNOWLEDGE",
     "rate_limit_per_minute": "TEAM_B_RATE_LIMIT_PER_MIN",
     "llm_max_wait_s": "TEAM_B_LLM_MAX_WAIT_S",
+    "agent_mode": "TEAM_B_AGENT_MODE",
+    "agent_max_moves": "TEAM_B_AGENT_MAX_MOVES",
+    "agent_turn_timeout_s": "TEAM_B_AGENT_TURN_TIMEOUT_S",
 }
 
 # The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
@@ -115,6 +120,11 @@ class Settings(BaseModel):
     llm_max_wait_s: float = Field(
         default=4.0, ge=0
     )  # a call waits at most this long for its rate-limit slot, else it falls back
+    agent_mode: AgentMode = (
+        "on"  # the default for businesses that do not set agent_mode; needs a model for the orchestrator job
+    )
+    agent_max_moves: int = Field(default=5, ge=1)  # asks of the orchestrator per message, then the usual stages run
+    agent_turn_timeout_s: float = Field(default=20.0, gt=0)  # seconds the agent loop may take for one message
     roles: dict[str, RoleSettings] = Field(default_factory=dict)  # only the roles that have settings of their own
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached

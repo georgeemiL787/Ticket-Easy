@@ -201,7 +201,7 @@ async def pending_confirmation(ctx: TurnContext) -> str:
 # ---- what the customer wants ----
 
 
-def _store_entities(ctx: TurnContext) -> None:
+def store_details(ctx: TurnContext) -> None:
     if ctx.understanding is not None:
         for key, value in ctx.understanding.entities.items():
             if key in SLOT_KEYS:
@@ -281,7 +281,7 @@ async def disambiguate(ctx: TurnContext) -> str:
     pair = conflicting_pair(understanding.intents, ctx.tenant) if understanding else None
     if pair is None:
         return "no conflict"
-    _store_entities(ctx)
+    store_details(ctx)
     for name in _wanted_names(ctx, understanding.intents if understanding else ()):
         if name not in pair and name not in session.intent_queue:
             session.intent_queue.append(name)  # the rest of the message waits its turn

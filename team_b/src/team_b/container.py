@@ -180,6 +180,9 @@ def build_container(
             registry=registry,
             policy=container.policy,
             max_queued_runs=settings.queue_max_runs,
+            agent_mode=settings.agent_mode,
+            agent_max_moves=settings.agent_max_moves,
+            agent_turn_timeout_s=settings.agent_turn_timeout_s,
         ),
     )
 

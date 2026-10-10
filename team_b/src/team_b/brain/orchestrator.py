@@ -24,6 +24,7 @@ from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
+from team_b.domain.agent import AgentMode
 from team_b.domain.handoff import CaseStatus, HandoffCase, NotManagerError
 from team_b.domain.reply import AgentReply
 from team_b.domain.session import Message
@@ -34,6 +35,7 @@ from team_b.ports import (
     Clock,
     EvidenceProvider,
     LLMClient,
+    MovePicker,
     NotFoundError,
     PolicyGate,
     SessionConflictError,
@@ -94,6 +96,10 @@ class Orchestrator:
         registry: CapabilityRegistry | None = None,
         policy: PolicyGate | None = None,
         max_queued_runs: int | None = None,
+        move_picker: MovePicker | None = None,
+        agent_mode: AgentMode = "on",
+        agent_max_moves: int = 5,
+        agent_turn_timeout_s: float = 20.0,
     ) -> None:
         self._tenants = tenants
         self._events = events
@@ -115,6 +121,10 @@ class Orchestrator:
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
             policy=policy,
             max_queued_runs=MAX_QUEUED_RUNS if max_queued_runs is None else max_queued_runs,
+            move_picker=move_picker,
+            agent_mode=agent_mode,
+            agent_max_moves=agent_max_moves,
+            agent_turn_timeout_s=agent_turn_timeout_s,
         )
 
     async def handle_turn(

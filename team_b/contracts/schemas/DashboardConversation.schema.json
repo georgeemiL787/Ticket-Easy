@@ -1,5 +1,78 @@
 {
   "$defs": {
+    "AgentPlan": {
+      "additionalProperties": false,
+      "description": "The steps the agent keeps for the customer's message(s). Saved on the session; `revision` counts the changes.",
+      "properties": {
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/PlanStep"
+          },
+          "maxItems": 5,
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "title": "AgentPlan",
+      "type": "object"
+    },
+    "AgentStepRecord": {
+      "additionalProperties": false,
+      "description": "One step of the loop, for the trace. Personal values are redacted before it is stored.",
+      "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/CheckRecord"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "duration_ms": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Duration Ms",
+          "type": "number"
+        },
+        "fallback_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallback Reason"
+        },
+        "move": {
+          "additionalProperties": true,
+          "title": "Move",
+          "type": "object"
+        },
+        "result": {
+          "default": "",
+          "title": "Result",
+          "type": "string"
+        },
+        "why": {
+          "default": "",
+          "title": "Why",
+          "type": "string"
+        }
+      },
+      "required": [
+        "move"
+      ],
+      "title": "AgentStepRecord",
+      "type": "object"
+    },
     "AttemptedAction": {
       "additionalProperties": false,
       "properties": {
@@ -115,6 +188,31 @@
       "title": "CaseStatus",
       "type": "string"
     },
+    "CheckRecord": {
+      "additionalProperties": false,
+      "description": "One check that code made on a move before it ran: passed or not, and why.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "passed"
+      ],
+      "title": "CheckRecord",
+      "type": "object"
+    },
     "CustomerSnapshot": {
       "additionalProperties": false,
       "properties": {
@@ -200,6 +298,37 @@
           "default": null,
           "title": "Active Intent"
         },
+        "agent_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Mode"
+        },
+        "agent_plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AgentPlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "agent_steps": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/AgentStepRecord"
+          },
+          "title": "Agent Steps",
+          "type": "array"
+        },
         "conversation_id": {
           "minLength": 1,
           "title": "Conversation Id",
@@ -263,6 +392,18 @@
           ],
           "default": null,
           "title": "Evidence Empty Reason"
+        },
+        "fallback_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fallback Reason"
         },
         "frustration": {
           "anyOf": [
@@ -941,6 +1082,32 @@
         "allowed"
       ],
       "title": "PermissionRecord",
+      "type": "object"
+    },
+    "PlanStep": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "done",
+            "dropped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 300,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "PlanStep",
       "type": "object"
     },
     "PolicyQuote": {

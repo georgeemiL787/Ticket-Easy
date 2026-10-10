@@ -86,3 +86,15 @@ class ScriptedMovePicker:
         if isinstance(answer, Exception):
             raise answer
         return answer
+
+
+class FunctionPicker:
+    """A MovePicker that decides with a function of the view (a tiny scripted orchestrator). Records the views."""
+
+    def __init__(self, decide: Any) -> None:
+        self._decide = decide
+        self.views: list[Any] = []
+
+    async def next_move(self, view: Any) -> Any:
+        self.views.append(view)
+        return self._decide(view)

@@ -104,10 +104,63 @@ class AgentPlan(FrozenModel):
         return [s for s in self.steps if s.status == "open"]
 
 
+class MoveProposal(FrozenModel):
+    """What the orchestrator answers in one ask: the plan as it now stands (None: unchanged) and the next move."""
+
+    plan: AgentPlan | None = None
+    move: AnyMove
+
+
+class ToolMenuEntry(FrozenModel):
+    """A shop tool the agent may name in a LookUp: what it does, whether it only reads, and what it takes."""
+
+    name: str
+    description: str = ""
+    kind: Literal["read", "write"]
+    arguments: dict[str, Any] = Field(default_factory=dict)  # the tool's input schema
+
+
+class ActionMenuEntry(FrozenModel):
+    """An action the agent may propose by intent name (code maps it to the tool and runs every gate)."""
+
+    intent: str
+    description: str = ""
+
+
+class OrderBrief(FrozenModel):
+    """An order the agent has looked up for this verified customer (only what it needs to decide)."""
+
+    order_id: str
+    status: str
+    delivered_at: str | None = None
+    expected_delivery_date: str | None = None
+    total: float | None = None
+    days_late: int | None = None
+
+
+class PassageBrief(FrozenModel):
+    id: str
+    text: str
+
+
 class AgentView(FrozenModel):
-    """What the move picker sees. Built by code, personal values already hidden. (U2.1 fills it in properly.)"""
+    """What the move picker sees. Built by code; personal values (phone, email, card, address) are already hidden."""
 
     message: str
+    turn_id: str = ""
+    locale: str = "en"  # the reply style: en, ar or arabizi
+    history: list[str] = Field(default_factory=list)  # the last few messages, "customer: ..." / "agent: ..."
+    language: str | None = None  # what the reader understood ...
+    intents: list[str] = Field(default_factory=list)
+    entities: dict[str, str] = Field(default_factory=dict)
+    frustration: str = "low"
+    identity_verified: bool = False
+    orders: list[OrderBrief] = Field(default_factory=list)  # looked up and confirmed to be the customer's own
+    known_order_ids: list[str] = Field(default_factory=list)  # ids the customer wrote or a tool returned
+    passages: list[PassageBrief] = Field(default_factory=list)  # policy passages found this turn
+    no_evidence_count: int = 0  # policy questions in a row that the documents could not answer
+    tools: list[ToolMenuEntry] = Field(default_factory=list)
+    actions: list[ActionMenuEntry] = Field(default_factory=list)
     plan: AgentPlan | None = None
     moves: list["AgentStepRecord"] = Field(default_factory=list)  # the moves already made this turn, with results
     refused: str | None = None  # why the last proposed move was refused, so the next one can differ

@@ -254,7 +254,7 @@ def _resolve_intent_choice(ctx: TurnContext) -> str:
     return "no clear answer: asked again"
 
 
-def _resolve_order_choice(ctx: TurnContext) -> str:
+def resolve_order_choice(ctx: TurnContext) -> str:
     """The answer to "which order?": the number typed in full, a position in the list, or a change of subject."""
     session, understanding = ctx.session, ctx.understanding
     if understanding is not None and understanding.entities.get("order_id"):
@@ -275,7 +275,7 @@ async def disambiguate(ctx: TurnContext) -> str:
     """Ask instead of guessing: two requests that cannot both be meant, or which of the customer's orders."""
     session, understanding = ctx.session, ctx.understanding
     if session.awaiting == "order_choice" and session.order_choices:
-        return _resolve_order_choice(ctx)
+        return resolve_order_choice(ctx)
     if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
         return _resolve_intent_choice(ctx)
     pair = conflicting_pair(understanding.intents, ctx.tenant) if understanding else None

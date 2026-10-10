@@ -27,6 +27,7 @@ from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
 from team_b.brain.knowledge_llm import LLMKnowledgeAssistant
 from team_b.brain.llm_nlu import LLMNLU
+from team_b.brain.move_picker import LLMMovePicker
 from team_b.brain.nlu import NLU, RuleBasedNLU
 from team_b.brain.orchestrator import Orchestrator
 from team_b.brain.registry import CapabilityRegistry
@@ -132,6 +133,7 @@ def build_container(
     registry = CapabilityRegistry(container.capabilities, clock, settings.capability_ttl_s)
     summary_llm, reader_llm, knowledge_llm = llms.llm_for("summary"), llms.llm_for("reader"), llms.llm_for("knowledge")
     writer_llm = llms.llm_for("writer") if settings.llm_rewrite else None
+    orchestrator_llm = llms.llm_for("orchestrator")
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(summary_llm) if summary_llm is not None else TemplateHistorySummarizer()
     )
@@ -176,6 +178,7 @@ def build_container(
             smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,
             llm=summary_llm,
+            move_picker=LLMMovePicker(orchestrator_llm) if orchestrator_llm is not None else None,
             knowledge=knowledge,
             registry=registry,
             policy=container.policy,

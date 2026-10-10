@@ -82,6 +82,8 @@ class TurnContext:
     earlier: list[Step] = field(default_factory=list)  # completed steps whose replies come before the final one
     handoff_case_id: str | None = None
     ai_events: list[tuple[str, str, str]] = field(default_factory=list)  # (job, kind, detail)
+    agent_passages: list[Passage] = field(default_factory=list)  # policy passages the agent found this turn
+    agent_listing: list[dict[str, str]] = field(default_factory=list)  # the customer's own orders, if listed this turn
     agent_mode: str | None = None  # how the agent was configured for this turn
     agent_steps: list[AgentStepRecord] = field(default_factory=list)  # the loop's moves this turn
     fallback_reason: str | None = None  # why the agent loop gave up (the usual stages ran instead)

@@ -124,11 +124,11 @@ async def test_hand_over_opens_a_case_with_what_was_tried(c: Container) -> None:
     assert "asked twice" in trace.decision_reason
 
 
-async def test_work_moves_answer_not_built_yet_and_the_loop_goes_on(c: Container) -> None:
+async def test_an_action_proposal_answers_not_built_yet_and_the_loop_goes_on(c: Container) -> None:
     picker = ScriptedMovePicker(
-        LookUp(tool="get_order", arguments={"order_id": "NS-20877"}, why="status"),
-        SearchPolicy(query="return window", why="policy"),
         ProposeAction(intent="refund_request", arguments={"order_id": "NS-20877"}, why="refund"),
+        ProposeAction(intent="cancel_order", arguments={"order_id": "NS-20877"}, why="cancel"),
+        ProposeAction(intent="return_request", arguments={"order_id": "NS-20877"}, why="return"),
         GREETING,
     )
     reply = await orch(c, picker).handle_turn(T, C, "hi")
@@ -163,7 +163,10 @@ async def test_the_loop_cannot_write_or_read_the_shop_yet(c: Container) -> None:
         (Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="handoff_generic")), "reserved for code"),
         (Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="no_such_key")), "unknown"),
         (Reply(plan=ReplyPlan(decision=Decision.ANSWER)), "unknown"),
-        (Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting", facts={"amount": "5000"})), "verified"),
+        (
+            Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting", facts={"amount": "5000"})),
+            "code can back",
+        ),
         (
             Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting", citations=["return_policy@v2#s2"])),
             "citation",
@@ -188,17 +191,11 @@ async def test_a_move_code_does_not_accept_is_refused_and_the_picker_is_told_why
 
 
 async def test_the_same_look_up_twice_is_refused_the_second_time(c: Container) -> None:
-    look = LookUp(tool="get_order", arguments={"order_id": "NS-20877"})
-    picker = ScriptedMovePicker(look, look.model_copy(update={"why": "again"}), GREETING)
-    await orch(c, picker).handle_turn(T, C, "hi")
-    steps = (await trace_of(c)).agent_steps
-    assert [s.result for s in steps][:2] == [
-        "not built yet",
-        "refused: the same look-up with the same arguments was already made",
-    ]
     other = SearchPolicy(query="a"), SearchPolicy(query="a"), SearchPolicy(query="b"), GREETING
-    await orch(c, ScriptedMovePicker(*other)).handle_turn(T, "conv-2", "hi")
-    assert [s.refused for s in (await trace_of(c, "conv-2")).agent_steps] == [False, True, False, False]
+    await orch(c, ScriptedMovePicker(*other), evidence=c.evidence).handle_turn(T, "conv-2", "hi")
+    steps = (await trace_of(c, "conv-2")).agent_steps
+    assert [s.refused for s in steps] == [False, True, False, False]
+    assert "already made" in steps[1].result
 
 
 async def test_a_reply_cannot_carry_a_number_the_loop_never_verified(c: Container) -> None:
@@ -227,13 +224,13 @@ async def test_two_refused_moves_in_a_row_fall_back_to_the_usual_stages(c: Conta
 
 async def test_a_good_move_between_two_refusals_resets_the_count(c: Container) -> None:
     bad = ProposeAction(intent="made_up", arguments={})
-    ok = SearchPolicy(query="q")
+    ok = ProposeAction(intent="refund_request", arguments={})
     reply = await orch(c, ScriptedMovePicker(bad, ok, bad, GREETING)).handle_turn(T, C, "hi")
     assert reply.decision is Decision.ANSWER and (await trace_of(c)).fallback_reason is None
 
 
 async def test_the_move_limit(c: Container) -> None:
-    picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
+    picker = ScriptedMovePicker(*[ProposeAction(intent="cancel_order", arguments={"i": i}) for i in range(10)])
     reply = await orch(c, picker, agent_max_moves=3).handle_turn(T, C, "Hello")
     trace = await trace_of(c)
     assert len(picker.views) == 3 and trace.fallback_reason == "more than 3 moves without an answer"
@@ -241,7 +238,7 @@ async def test_the_move_limit(c: Container) -> None:
 
 
 async def test_the_default_limit_is_five_moves(c: Container) -> None:
-    picker = ScriptedMovePicker(*[SearchPolicy(query=f"q{i}") for i in range(10)])
+    picker = ScriptedMovePicker(*[ProposeAction(intent="cancel_order", arguments={"i": i}) for i in range(10)])
     await orch(c, picker).handle_turn(T, C, "Hello")
     assert len(picker.views) == 5
 
@@ -265,7 +262,7 @@ async def test_the_turn_time_limit_falls_back(c: Container) -> None:
 
 async def test_an_endless_loop_of_the_same_move_ends_in_a_fallback(c: Container) -> None:
     picker = ScriptedMovePicker(SearchPolicy(query="same"), repeat_last=True)
-    await orch(c, picker).handle_turn(T, C, "Hello")
+    await orch(c, picker, evidence=c.evidence).handle_turn(T, C, "Hello")
     trace = await trace_of(c)
     assert trace.fallback_reason == "two refused moves in a row" and len(picker.views) == 3
 
@@ -282,7 +279,9 @@ async def test_a_fallback_leaves_no_trace_of_the_loop_on_the_session(c: Containe
 
 
 async def test_a_plan_is_saved_and_the_next_turn_sees_it(c: Container) -> None:
-    plan = AgentPlan(steps=[PlanStep(text="check identity"), PlanStep(text="look up the order")])
+    plan = AgentPlan(
+        steps=[PlanStep(text="check identity", status="done"), PlanStep(text="look up the order", status="done")]
+    )
     first = ScriptedMovePicker(plan, GREETING)
     bot = orch(c, first)
     await bot.handle_turn(T, C, "hi")

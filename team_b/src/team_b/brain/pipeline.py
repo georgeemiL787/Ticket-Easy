@@ -15,6 +15,7 @@ from typing import Any
 
 from team_b.brain import stages
 from team_b.brain.agent_loop import AgentFallback, run_agent
+from team_b.brain.agent_reads import remember_order_ids
 from team_b.brain.composer import default_composer
 from team_b.brain.redaction import redact, redact_mapping, redact_value
 from team_b.brain.rewrite import REWRITABLE
@@ -66,13 +67,24 @@ assert [s.name for s in MIDDLE_STAGES][0] == "disambiguate" and HANDOFF_STAGE.na
 
 async def agent_stage(ctx: TurnContext) -> str:
     """Work the message as agent moves. On a fallback the saved plan is put back and ctx.fallback_reason is set."""
+    session = ctx.session
     stages.store_details(ctx)  # what the customer told us is kept, as the usual merge stage would
-    before = ctx.session.agent_plan
+    if ctx.understanding is not None:
+        stated = ctx.understanding.entities.get("order_ids") or ctx.understanding.entities.get("order_id") or ""
+        remember_order_ids(session, [i for i in stated.split(",") if i])
+    if session.awaiting == "order_choice" and session.order_choices:
+        stages.resolve_order_choice(ctx)  # "the second" picks one of the orders that were offered
+    version = getattr(ctx.deps.move_picker, "prompt_version", None)
+    if version:
+        ctx.versions["orchestrator_prompt"] = str(version)
+    before = session.agent_plan
     try:
         ctx.step = await run_agent(ctx)
     except AgentFallback as fallback:
-        ctx.session.agent_plan = before
-        ctx.session.agent_pending = None
+        session.agent_plan = before
+        session.agent_pending = None
+        ctx.earlier.clear()  # nothing the loop said or did is kept: the usual stages start again from the message
+        ctx.plan = None
         ctx.fallback_reason = fallback.reason
         return f"fell back to the usual stages: {fallback.reason}"
     kinds = ", ".join(str(r.move.get("kind")) for r in ctx.agent_steps)

@@ -13,7 +13,7 @@ from typing import Any, Protocol, runtime_checkable
 from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.domain.agent import AgentPlan, AgentView, AnyMove
+from team_b.domain.agent import AgentPlan, AgentView, AnyMove, MoveProposal
 from team_b.domain.alerts import Alert
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.facts import Facts, FactsSummary
@@ -115,7 +115,7 @@ class LLMClient(Protocol):
 class MovePicker(Protocol):
     """The orchestrator: proposes the next move (or a changed plan). It only proposes; code checks and decides."""
 
-    async def next_move(self, view: AgentView) -> AnyMove | AgentPlan: ...
+    async def next_move(self, view: AgentView) -> AnyMove | AgentPlan | MoveProposal: ...
 
 
 @runtime_checkable

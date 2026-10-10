@@ -26,6 +26,7 @@ from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.stages import handoff_handler, smalltalk_handler
 from team_b.brain.summarizer import HistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.turn import MAX_QUEUED_RUNS, Deps, Handler, PlannedIntent, Step, TurnContext
+from team_b.brain.writer import Writer
 from team_b.domain.agent import AgentMode
 from team_b.domain.handoff import CaseStatus, HandoffCase, NotManagerError
 from team_b.domain.reply import AgentReply
@@ -91,6 +92,7 @@ class Orchestrator:
         handlers: Mapping[str, Handler] | None = None,
         capabilities: CapabilityClient | None = None,
         rewriter: Rewriter | None = None,
+        writer: Writer | None = None,
         smalltalk: SmallTalk | None = None,
         llm: LLMClient | None = None,
         knowledge: KnowledgeAssistant | None = None,
@@ -118,6 +120,7 @@ class Orchestrator:
             handlers={**DEFAULT_HANDLERS, **(handlers or {})},
             capabilities=capabilities,
             rewriter=rewriter,
+            writer=writer,
             smalltalk=smalltalk,
             llm=llm,
             knowledge=knowledge,

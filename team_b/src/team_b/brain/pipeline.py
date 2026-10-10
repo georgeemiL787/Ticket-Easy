@@ -23,6 +23,7 @@ from team_b.brain.rewrite import REWRITABLE
 from team_b.brain.shadow import run_shadow
 from team_b.brain.turn import Deps, StageFn, Step, TurnContext, locale_of
 from team_b.brain.versions import base_versions
+from team_b.brain.writer import WRITABLE, plan_of
 from team_b.domain.agent import AgentPlan, PlanStep
 from team_b.domain.decision import Decision
 from team_b.domain.reply import AgentReply
@@ -169,8 +170,24 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
     policy passages appended verbatim. The passages are added after the rewrite, so the model never sees them."""
     composer = default_composer()
     text = step.text if step.text is not None else composer.t(locale, step.reply_key, **step.values)
+    writer = ctx.deps.writer if ctx.agent_mode != "off" else None  # agent off keeps the old rewriter
     rewriter = ctx.deps.rewriter
-    if rewriter is not None and step.text is None and step.decision in REWRITABLE and not step.silent:
+    if writer is not None and step.text is None and step.decision in WRITABLE and not step.silent:
+        started = time.perf_counter()
+        recent = ctx.session.history[-6:]
+        written = await writer.write(
+            plan_of(step),
+            text,
+            locale,
+            message=ctx.text,
+            history="\n".join(f"{m.role}: {m.text}" for m in recent),
+            shop=ctx.tenant.display_name,
+        )
+        elapsed = (time.perf_counter() - started) * 1000
+        ctx.steps.append(TraceStep(stage="write", status=written.status, duration_ms=elapsed, detail=written.detail))
+        ctx.versions["writer_prompt"] = writer.prompt_version
+        text = written.text
+    elif rewriter is not None and step.text is None and step.decision in REWRITABLE and not step.silent:
         started = time.perf_counter()
         recent = ctx.session.history[-6:]
         result = await rewriter.reword(

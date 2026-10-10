@@ -67,6 +67,13 @@ team_b/
                  waiting step (done / dropped) and, if plan steps are still open, the agent goes on in the same turn with the action's result in front. A fallback restores plan, denied_actions,
                  active_intent and slots and keeps an already answered yes; once the shop was asked to change something (ctx.agent_wrote) a failure ends the turn with the outcome instead of
                  running the message again ("agent stopped early" in trace.errors)
+                 writer (brain/writer.py, job writer, TEAM_B_LLM_REWRITE=1, prompts/writer_v1.md: plan_of(step) gives EVERY step a ReplyPlan (decision, intent line, facts = the step's values, must_ask,
+                 citations; Step.plan when the orchestrator chose it); ReplyWriter.write writes the reply freely from the plan + fallback template + customer message + history in the customer's
+                 language/tone; the gate: check_grounded vs template + plan facts (no new number/date/id/currency/link/time word, none dropped), no colleague promise unless a HANDOFF plan,
+                 a plan with must_ask still asks (a CONFIRM keeps its yes/no), not much longer; one retry with the problems named (status retried), then the fixed template (status template);
+                 EXECUTE is never written; policy passages are appended after and never shown to the model; trace step 'write' + versions.writer_prompt; used by pipeline.say_step unless the turn's
+                 agent_mode is off (then the old LLMRewriter keeps wording); Reply free_reply = the orchestrator's answer to an off-topic message (no facts, a ReplyPlan with free=True, fallback
+                 template ask_rephrase, also checked by the small-talk rules: no orders/money/policies/promises/colleagues))
                  shadow (brain/shadow.py; agent_mode "shadow" + a move picker: a "shadow" stage after the front stages asks the orchestrator ONCE on a deep copy of the turn (session, lists,
                  counters), the move is only checked (agent_loop.check_move), never worked; trace.shadow_plan / shadow_move / shadow_error; the plan of the last trace is read back only while the
                  conversation waits for an answer; the real session, replies and shop are untouched, errors and timeouts are noted and ignored; compare(trace) says whether the first move agrees

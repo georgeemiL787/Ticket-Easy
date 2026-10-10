@@ -34,6 +34,7 @@ from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.smalltalk import SmallTalkWriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
+from team_b.brain.writer import ReplyWriter
 from team_b.config import Settings
 from team_b.domain.tenant import TenantRegistry
 from team_b.events import EventHub
@@ -175,6 +176,7 @@ def build_container(
             evidence=container.evidence,
             capabilities=container.capabilities,
             rewriter=LLMRewriter(writer_llm) if writer_llm is not None else None,
+            writer=ReplyWriter(writer_llm) if writer_llm is not None else None,
             smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,
             llm=summary_llm,

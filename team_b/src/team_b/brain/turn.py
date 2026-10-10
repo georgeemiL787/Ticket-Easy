@@ -13,8 +13,9 @@ from team_b.brain.registry import CapabilityRegistry
 from team_b.brain.rewrite import Rewriter
 from team_b.brain.smalltalk import SmallTalk
 from team_b.brain.summarizer import HistorySummarizer
+from team_b.brain.writer import Writer
 from team_b.contracts.evidence import Passage, RiskAssessment
-from team_b.domain.agent import AgentMode, AgentPlan, AgentStepRecord
+from team_b.domain.agent import AgentMode, AgentPlan, AgentStepRecord, ReplyPlan
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.session import SessionState
 from team_b.domain.tenant import TenantConfig
@@ -52,6 +53,7 @@ class Step:
     passages: tuple[Passage, ...] = ()  # policy passages quoted verbatim after the reply; never sent to the AI model
     knowledge: bool = False  # a policy answer: the trace must then show the evidence it came from
     text: str | None = None  # a policy answer worded by the AI model (fact-checked); replaces the template
+    plan: ReplyPlan | None = None  # the reply plan the orchestrator chose; else it is read off the key and values
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:
@@ -130,7 +132,8 @@ class Deps:
     summarizer: HistorySummarizer
     handlers: Mapping[str, Handler]  # by intent kind
     capabilities: CapabilityClient | None = None  # the shop tools; None means none are known
-    rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies
+    rewriter: Rewriter | None = None  # optional AI rewording of low-stakes replies (the usual flow, agent off)
+    writer: Writer | None = None  # optional AI writer of replies from a reply plan (agent mode)
     smalltalk: SmallTalk | None = None  # optional AI writer of small-talk replies (greetings, check-ins)
     llm: LLMClient | None = None  # optional AI model, used for the handoff summary
     knowledge: KnowledgeAssistant | None = None  # optional AI model that steers the policy search and words the answer

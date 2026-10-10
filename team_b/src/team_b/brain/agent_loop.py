@@ -47,6 +47,7 @@ from team_b.domain.agent import (
     PlanStep,
     ProposeAction,
     Reply,
+    ReplyPlan,
     SearchPolicy,
     parse_move,
 )
@@ -59,6 +60,7 @@ REPLY_DECISIONS = frozenset({Decision.ANSWER, Decision.CLARIFY, Decision.REFUSE}
 # A reply the model picks may not be a confirmation, a result, a handoff or a policy statement: those come from code.
 FORBIDDEN_REPLY_PREFIXES = ("handoff_", "confirm_action", "action_", "policy_refusal", "approval_", "status_")
 ORDER_STATUS = "order_status"  # built by code from the verified order, never from the model's words
+FREE_REPLY = "free_reply"  # an off-topic message: the writer answers the person and steers back (no facts)
 ACTION_OUTCOME = "action_outcome"  # the refusal / done / failed text of an action, as the rules and the shop gave it
 POLICY_ANSWER = "policy_answer"  # the retrieved passages, quoted word for word
 MAX_TRIED = 10
@@ -99,6 +101,11 @@ def _reply_checks(ctx: TurnContext, move: Reply) -> list[CheckRecord]:
             )
         )
         checks.append(_check("answer_decision", plan.decision is Decision.ANSWER, "an order status is an answer"))
+    elif key == FREE_REPLY:
+        checks.append(
+            _check("free_reply_has_no_facts", not plan.facts and not plan.citations, "a free reply holds no facts")
+        )
+        checks.append(_check("free_reply_is_an_answer", plan.decision is Decision.ANSWER, "a free reply is an answer"))
     elif key == ACTION_OUTCOME:
         checks.append(_check("an_outcome_is_waiting", bool(ctx.agent_outcomes), "no action has an outcome to tell yet"))
     elif key == POLICY_ANSWER:
@@ -173,6 +180,10 @@ async def _reply_step(ctx: TurnContext, move: Reply) -> Step:
     from team_b.brain.lookup import _policy_quote, _status_reply
 
     plan = move.plan
+    if plan.reply_key == FREE_REPLY:
+        purpose = plan.intent or "answer the person kindly and steer back to how you can help"
+        free = ReplyPlan(decision=Decision.ANSWER, intent=purpose, free=True, reply_key="ask_rephrase")
+        return Step(Decision.ANSWER, reason=move.why or "an unexpected message", reply_key="ask_rephrase", plan=free)
     if plan.reply_key == ACTION_OUTCOME:
         return ctx.agent_outcomes.pop(0)  # the words are the rules' and the shop's, not the model's
     if plan.reply_key == ORDER_STATUS:

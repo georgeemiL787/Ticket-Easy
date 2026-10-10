@@ -30,6 +30,8 @@ class ReplyPlan(FrozenModel):
     """What a reply may say (filled in with the reply writer): the decision, the template and the verified facts."""
 
     decision: Decision
+    intent: str = Field(default="", max_length=200)  # what the reply is for, in one line ("ask for the order number")
+    free: bool = False  # an off-topic message: the writer answers the person and steers back (code sets it)
     reply_key: str | None = None  # a template of data/locales (the fallback text, and what code sends for now)
     facts: dict[str, str] = Field(default_factory=dict)  # name -> value, only values taken from verified data
     must_ask: str | None = None  # a question the reply must ask, e.g. a yes/no

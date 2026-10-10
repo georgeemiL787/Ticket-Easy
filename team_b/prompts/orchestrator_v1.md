@@ -33,7 +33,9 @@ Moves (field "kind"):
 - {"kind": "reply", "plan": {"decision": "answer|clarify|refuse", "reply_key": "...", "citations": [...]}, "why": "..."}
   reply_key is one of: greeting, thanks, ask_rephrase, out_of_scope, no_answer_offer; order_status (code writes the
   status from the order you looked up); policy_answer (code quotes the passages you found: cite their ids);
-  action_outcome (code tells the refusal, or the done / failed result, of an action).
+  action_outcome (code tells the refusal, or the done / failed result, of an action); free_reply (an unexpected
+  message: a joke, venting, a story, off-topic; set plan.intent to a few words on how to answer; no facts: a writer
+  answers the person kindly and steers back to helping).
 
 Rules:
 - Never invent an order number, an amount, a date or a policy. Use only what the customer wrote and what results show.

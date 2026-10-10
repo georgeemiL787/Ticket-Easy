@@ -115,6 +115,12 @@ CHECK_INS = [  # "how are you" and the like are greetings in every style, not a 
     ("hi عامل ايه", ["greeting"]),
     ("how are you, where is my order NS-20877?", ["order_status"]),  # the request wins over the greeting
     ("عامل ايه، الاوردر وصل فين؟", ["order_status"]),
+    ("الطقس عامل ايه النهاردة؟", []),  # a question about something else that happens to contain the words
+    ("الـ weather عامل ايه النهاردة؟", []),
+    ("how are you going to deliver my parcel", []),
+    ("el taqs 3amel eh el naharda", []),
+    ("hi, how are you today", ["greeting"]),
+    ("عامل ايه يا باشا", ["greeting"]),
 ]
 ALL = EN + AR + MIXED + ARABIZI + CHECK_INS
 

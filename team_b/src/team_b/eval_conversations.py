@@ -11,13 +11,20 @@ the policy search) and every turn is compared with its gold labels:
 - entity recall: the gold details (order id) were read;
 - latency p50 and p95 per style, and the conversations that went wrong most, with their first wrong turn.
 
+Measures for comparing two ways of running the agent (rules or AI, agent mode on or off; see measures_of):
+solved without a person, needless handoffs, missed escalations, wrong or unapproved actions, unbacked facts (must be 0),
+AI calls per message, time per reply. They are only added to the report: how a turn is judged right or wrong is the
+five checks above. `--label NAME` saves a run as reports/eval_NAME_<date>.json/.md and `eval-compare A B` shows two runs
+side by side.
+
 The gold labels come from the policies and business rules, not from the brain (see scripts/make_eval_set.py).
 """
 
 import json
+import re
 import time
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -25,11 +32,15 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from team_b.brain.choices import short_date
+from team_b.brain.composer import check_grounded, default_composer
 from team_b.brain.metrics import percentile
 from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
 from team_b.domain.base import FrozenModel
+from team_b.domain.understanding import Locale
 from team_b.judge import CRITERIA, Judge, JudgedTurn, JudgeStats
+from team_b.ports import LLMClient
 
 CONVERSATIONS_DIR = PROJECT_ROOT / "eval" / "conversations"
 BASELINE_PATH = PROJECT_ROOT / "eval" / "eval_baseline.json"
@@ -88,6 +99,22 @@ def sample(conversations: Sequence[EvalConversation], per_style: int) -> list[Ev
 # ---- running ----
 
 
+class CountingLLM:
+    """The AI model, with a count of how many times it was asked (the evaluation's "AI calls per message")."""
+
+    def __init__(self, inner: LLMClient) -> None:
+        self._inner = inner
+        self.calls = 0
+
+    async def complete_json(
+        self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
+    ) -> dict[str, Any]:
+        self.calls += 1
+        return await self._inner.complete_json(
+            system=system, user=user, schema_hint=schema_hint, temperature=temperature
+        )
+
+
 @dataclass
 class TurnResult:
     conversation: str
@@ -103,6 +130,8 @@ class TurnResult:
     text: str
     latency_ms: float
     wrong: list[str] = field(default_factory=list)  # which checks failed, with what was expected and what happened
+    ai_calls: int = 0  # times the AI model was asked while answering this message
+    unbacked: list[str] = field(default_factory=list)  # facts in the reply that nothing the agent knew contains
 
 
 @dataclass
@@ -125,14 +154,54 @@ def decisions_allowed(gold: Gold) -> tuple[str, ...]:
     return (gold.decision,) if isinstance(gold.decision, str) else gold.decision
 
 
-async def run_conversation(container: Container, conversation: EvalConversation) -> list[TurnResult]:
+def wants_a_person(gold: Gold) -> bool:
+    """The gold says this turn must reach a person: an escalation reason, or a handoff as the only decision."""
+    return gold.escalation is not None or decisions_allowed(gold) == ("handoff",)
+
+
+def accepts_handoff(gold: Gold) -> bool:
+    return wants_a_person(gold) or "handoff" in decisions_allowed(gold)
+
+
+_ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def known_text(container: Container) -> str:
+    """Everything the agent may legitimately say a fact from, besides the conversation itself: its reply templates and
+    the shop's and the policies' data (dates also written the short way, as the order list shows them)."""
+    folder = container.settings.fixtures_dir / TENANT
+    data = "\n".join(
+        (folder / name).read_text(encoding="utf-8-sig") for name in ("backend.json", "policies.json", "rules.json")
+    )
+    short = [short_date(d, locale) for d in set(_ISO_DATE.findall(data)) for locale in Locale]
+    return "\n".join([*default_composer().template_texts(), data, *short])
+
+
+async def unbacked_facts(container: Container, chat_id: str, said: Sequence[str], text: str, known: str) -> list[str]:
+    """Facts in a reply that none of the customer's messages, the agent's known texts or the order facts contain.
+
+    check_grounded is the very check that stops the AI from inventing facts; run again here on every reply that was
+    really sent, so a gap in the live check would show up as a number above zero."""
+    session = await container.sessions.load(TENANT, chat_id)
+    extra = [json.dumps(session.facts, default=str, ensure_ascii=False)] if session is not None else []
+    case = [session.handoff_case_id] if session is not None and session.handoff_case_id else []
+    return check_grounded(text, [known, *said, *extra, *case])
+
+
+async def run_conversation(
+    container: Container, conversation: EvalConversation, ai_calls: Callable[[], int] | None = None
+) -> list[TurnResult]:
     assert container.orchestrator is not None
     results: list[TurnResult] = []
     chat_id = f"eval-{conversation.id}"
+    known = known_text(container)
+    said: list[str] = []
     for index, turn in enumerate(conversation.turns):
+        calls_before = ai_calls() if ai_calls is not None else 0
         started = time.perf_counter()
         reply = await container.orchestrator.handle_turn(TENANT, chat_id, turn.say)
         latency = (time.perf_counter() - started) * 1000
+        said.append(turn.say)
         trace = await container.traces.get(TENANT, reply.trace_id)
         assert trace is not None
         escalation = trace.escalation_reason.value if trace.escalation_reason else None
@@ -141,8 +210,9 @@ async def run_conversation(container: Container, conversation: EvalConversation)
             decision=reply.decision.value, escalation=escalation,
             locale=reply.locale.value, citations=tuple(reply.citations),
             intent=trace.intents[0].name if trace.intents else "none", entities=dict(trace.entities), text=reply.text,
-            latency_ms=latency,
+            latency_ms=latency, ai_calls=(ai_calls() - calls_before) if ai_calls is not None else 0,
         )  # fmt: skip
+        result.unbacked = await unbacked_facts(container, chat_id, said, reply.text, known)
         result.wrong = problems(turn.gold, result, LOCALE_OF_STYLE[conversation.language_style])
         results.append(result)
     return results
@@ -188,6 +258,42 @@ class StyleReport:
     handoff_wanted: int = 0
     handoff_right: int = 0
     latencies: list[float] = field(default_factory=list)
+    # the comparison measures (see measures())
+    solved: int = 0  # conversations the agent finished with no handoff, where the gold wants no person
+    no_person_needed: int = 0  # conversations whose gold wants no person at any turn
+    needless_handoffs: int = 0  # turns that handed over where the gold has an opinion and wants no handoff
+    handoff_opinions: int = 0  # turns where the gold says whether a handoff is wanted
+    missed_escalations: int = 0  # turns where the gold wants a person and none was offered
+    escalations_wanted: int = 0
+    wrong_actions: int = 0  # writes the gold did not expect, or sent without a rule check
+    writes: int = 0
+    unbacked_replies: int = 0  # replies holding a fact nothing the agent knew contains (must be 0)
+    ai_calls: int = 0
+
+    def add_conversation(
+        self, conversation: EvalConversation, results: Sequence[TurnResult], audit: Sequence[Any]
+    ) -> None:
+        """The measures that need the whole conversation and the shop's audit log."""
+        wants_person = any(wants_a_person(t.gold) for t in conversation.turns)
+        handed_over = any(r.decision == "handoff" for r in results)
+        self.no_person_needed += int(not wants_person)
+        self.solved += int(not wants_person and not handed_over)
+        expected_writes = sum(1 for t in conversation.turns if "execute" in decisions_allowed(t.gold))
+        self.writes += len(audit)
+        self.wrong_actions += max(0, len(audit) - expected_writes) + sum(1 for e in audit if not e.policy_request_id)
+        for turn, got in zip(conversation.turns, results, strict=True):
+            self.ai_calls += got.ai_calls
+            self.unbacked_replies += int(bool(got.unbacked))
+            wanted, allowed = wants_a_person(turn.gold), decisions_allowed(turn.gold)
+            if wanted or allowed:
+                self.handoff_opinions += 1
+            self.escalations_wanted += int(wanted)
+            self.missed_escalations += int(wanted and got.decision != "handoff")
+            self.needless_handoffs += int(
+                got.decision == "handoff"
+                and (allowed or turn.gold.escalation is not None)
+                and not accepts_handoff(turn.gold)
+            )
 
     def add(self, gold: Gold, got: TurnResult, locale: str) -> None:
         self.turns += 1
@@ -216,9 +322,27 @@ class StyleReport:
     def handoff_recall(self) -> float | None:
         return self.handoff_right / self.handoff_wanted if self.handoff_wanted else None
 
+    def measures(self) -> dict[str, float | int | None]:
+        """What the comparison between two runs looks at (all counted from this run, none from the gold alone)."""
+        return {
+            "solved_without_person": self.solved,
+            "solved_without_person_rate": self.solved / self.conversations if self.conversations else None,
+            "no_person_needed": self.no_person_needed,
+            "needless_handoffs": self.needless_handoffs,
+            "missed_escalations": self.missed_escalations,
+            "escalations_wanted": self.escalations_wanted,
+            "wrong_or_unapproved_actions": self.wrong_actions,
+            "writes": self.writes,
+            "unbacked_facts": self.unbacked_replies,
+            "ai_calls_per_message": self.ai_calls / self.turns if self.turns else None,
+            "time_p50_ms": percentile(self.latencies, 0.5),
+            "time_p95_ms": percentile(self.latencies, 0.95),
+        }
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "style": self.style, "conversations": self.conversations, "turns": self.turns,
+            "measures": self.measures(),
             "intent_accuracy": self.intent.rate, "decision_accuracy": self.decision.rate,
             "citation_accuracy": self.citation.rate, "locale_match": self.locale.rate,
             "entity_recall": self.entities.rate,
@@ -237,10 +361,11 @@ class EvalReport:
     topics: dict[str, Counter] = field(default_factory=dict)  # topic -> conversations with every check right
     judge: dict[str, JudgeStats] | None = None  # the AI judge's advice per style (never part of pass or fail)
     judged: list[JudgedTurn] = field(default_factory=list)
+    label: str = ""  # a name for this run (--label), used in the report's file name
 
     def as_dict(self) -> dict[str, Any]:
         return {
-            "mode": self.mode, "date": self.when.isoformat(),
+            "mode": self.mode, "date": self.when.isoformat(), "label": self.label,
             "topics": {t: {"right": c.right, "total": c.total} for t, c in sorted(self.topics.items())},
             "judge": None if self.judge is None else {s: j.as_dict() for s, j in self.judge.items()},
             "overall": self.overall.as_dict(), "styles": {s: r.as_dict() for s, r in self.styles.items()},
@@ -255,9 +380,20 @@ async def evaluate(
     mode: str = "rules",
     when: date | None = None,
     judge: Judge | None = None,
+    label: str = "",
 ) -> EvalReport:
     """Run the conversations on one container (each in its own chat) and measure every turn."""
-    container = build_container(settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}))
+    counter: list[CountingLLM] = []
+
+    def count(llm: LLMClient) -> LLMClient:
+        counter.append(CountingLLM(llm))
+        return counter[0]
+
+    container = build_container(
+        settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}), llm_wrapper=count
+    )
+    assert container.shop is not None
+    kinds = {t.name: t.operation_kind for t in await container.capabilities.list_tools(TENANT)}
     styles = {s: StyleReport(s) for s in STYLES}
     overall = StyleReport("all")
     scored: list[tuple[int, str, dict[str, Any]]] = []
@@ -265,7 +401,9 @@ async def evaluate(
     judge_stats = {s: JudgeStats() for s in (*STYLES, "all")} if judge is not None else None
     judged: list[JudgedTurn] = []
     for conversation in conversations:
-        results = await run_conversation(container, conversation)
+        audit_before = len(container.shop.audit_log(TENANT))
+        results = await run_conversation(container, conversation, (lambda: counter[0].calls) if counter else None)
+        writes = [e for e in container.shop.audit_log(TENANT)[audit_before:] if kinds.get(e.tool, "write") != "read"]
         locale = LOCALE_OF_STYLE[conversation.language_style]
         report = styles[conversation.language_style]
         report.conversations += 1
@@ -273,6 +411,8 @@ async def evaluate(
         for turn, got in zip(conversation.turns, results, strict=True):
             report.add(turn.gold, got, locale)
             overall.add(turn.gold, got, locale)
+        report.add_conversation(conversation, results, writes)
+        overall.add_conversation(conversation, results, writes)
         if judge is not None and judge_stats is not None:
             for turn, got in zip(conversation.turns, results, strict=True):
                 score = await judge.score(turn.say, got.text, conversation.language_style)
@@ -304,7 +444,7 @@ async def evaluate(
             )
     scored.sort(key=lambda item: (-item[0], item[1]))
     final = EvalReport(mode, when or date.today(), styles, overall, [row for _, _, row in scored[:WORST]], dict(topics))
-    final.judge, final.judged = judge_stats, judged
+    final.judge, final.judged, final.label = judge_stats, judged, label
     return final
 
 
@@ -355,6 +495,34 @@ def render(report: EvalReport) -> str:
         for name, stats in report.judge.items():
             means = " | ".join("—" if stats.mean(c) is None else f"{stats.mean(c):.2f}" for c in CRITERIA)
             lines.append(f"| {name} | {stats.judged} | {stats.failed} | {means} |")
+    lines += [
+        "",
+        "## Measures for comparing runs (counted from this run; the gold only says what should happen)",
+        "",
+        "| style | solved without a person | needless handoffs | missed escalations | wrong or unapproved actions "
+        "| unbacked facts | AI calls per message | time p50 ms | time p95 ms |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for r in rows:
+        m = r.measures()
+        calls = m["ai_calls_per_message"]
+        solved = (
+            f"{m['solved_without_person']} of {m['no_person_needed']} ({pct(m['solved_without_person_rate'])} of all)"
+        )
+        missed = f"{m['missed_escalations']} of {m['escalations_wanted']}"
+        wrong = f"{m['wrong_or_unapproved_actions']} of {m['writes']} writes"
+        lines.append(
+            f"| {r.style} | {solved} | {m['needless_handoffs']} | {missed} | {wrong} | {m['unbacked_facts']} "
+            f"| {'—' if calls is None else f'{calls:.2f}'} | {ms(m['time_p50_ms'])} | {ms(m['time_p95_ms'])} |"
+        )
+    lines += [
+        "",
+        "- solved without a person: conversations that ended with no handoff, out of those whose gold wants no person;",
+        "- needless handoff: a turn that handed over where the gold wants none; missed escalation: the gold wants a",
+        "  person and none was offered; wrong or unapproved action: a write the gold did not expect, or one sent",
+        "  without a rule check; unbacked fact: a sent reply with a number, date, id or link nothing the agent knew",
+        "  contains (it must be 0).",
+    ]
     lines += ["", f"## The {len(report.worst)} conversations that went wrong most", ""]
     if not report.worst:
         lines.append("None: every turn matched its gold labels.")
@@ -371,7 +539,10 @@ def render(report: EvalReport) -> str:
 
 def write_report(report: EvalReport, directory: Path) -> tuple[Path, Path]:
     directory.mkdir(parents=True, exist_ok=True)
-    stem = f"eval_{report.when.isoformat()}" + ("" if report.mode == "rules" else f"_{report.mode}")
+    if report.label:
+        stem = f"eval_{report.label}_{report.when.isoformat()}"
+    else:
+        stem = f"eval_{report.when.isoformat()}" + ("" if report.mode == "rules" else f"_{report.mode}")
     md, js = directory / f"{stem}.md", directory / f"{stem}.json"
     md.write_text(render(report), encoding="utf-8", newline="\n")
     js.write_text(json.dumps(report.as_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")

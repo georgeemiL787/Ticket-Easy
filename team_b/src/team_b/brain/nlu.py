@@ -25,6 +25,8 @@ from team_b.domain.understanding import Frustration, IntentCandidate, Language, 
 NEGATION_WINDOW = 3  # a negation counts when it is at most this many words before the keyword
 BASE_CONFIDENCE = 0.7
 SHORT_MESSAGE_WORDS = 3  # "agent please" is a request for a person even without a longer phrase
+CHECKIN_TRAILING_WORDS = 2  # "how are you today", "عامل ايه يا باشا": a check-in may end with a word or two
+ADDRESS_WORDS = frozenset({"يا", "ya"})  # "hi يا باشا"
 _SENTENCE_BREAK = re.compile(r"[.,;!?\n]")
 _WORD = re.compile(r"[\w']+")
 _PHONE = re.compile(r"(?<!\d)(?:\+?\s?20|0020)?[\s\-]*0?(1[0125](?:[\s\-]*\d){8})(?!\d)")
@@ -102,6 +104,12 @@ def extract_amount(normalized: str) -> str | None:
 class RuleBasedNLU:
     def __init__(self, lexicon: Lexicon | None = None) -> None:
         self._lexicon = lexicon or default_lexicon()
+        greeting = self._lexicon.intents.get("greeting")
+        # the words a check-in may follow: those of the greeting phrases themselves ("hi", "ازيك", "good morning")
+        self._greeting_words = (
+            frozenset(word for term in (greeting.all() if greeting else ()) for word in _WORD.findall(term))
+            | ADDRESS_WORDS
+        )
 
     async def understand(self, text: str, session: SessionState | None, tenant: TenantConfig) -> NLUResult:
         return self.understand_sync(text, session, tenant)
@@ -157,12 +165,25 @@ class RuleBasedNLU:
                 continue
             for term in words.all():
                 candidates += [_Hit(s, e, intent) for s, e in find_spans(normalized, term)]
+        if "greeting" in tenant.intents:
+            for term in self._lexicon.checkin.all():
+                candidates += [
+                    _Hit(s, e, "greeting") for s, e in find_spans(normalized, term) if self._checkin(normalized, s, e)
+                ]
         candidates.sort(key=lambda h: (-(h.end - h.start), h.start))
         accepted: list[_Hit] = []
         for hit in candidates:
             if all(hit.end <= other.start or hit.start >= other.end for other in accepted):
                 accepted.append(hit)
         return sorted(accepted, key=lambda h: h.start)
+
+    def _checkin(self, normalized: str, start: int, end: int) -> bool:
+        """Is "how are you" / "عامل ايه" a check-in? Only at the start of the message, after nothing but greeting
+        words ("hi", "ازيك", "يا"), and with at most two words after it ("today", "يا باشا"). "الطقس عامل ايه
+        النهاردة؟" (what is the weather like) and "how are you going to deliver my parcel" ask about something else."""
+        before = _WORD.findall(normalized[:start])
+        after = _WORD.findall(normalized[end:])
+        return len(after) <= CHECKIN_TRAILING_WORDS and all(w in self._greeting_words for w in before)
 
     def _negated(self, normalized: str, start: int) -> bool:
         before = normalized[max(0, start - _MAX_SPEECH_BREAK) : start]

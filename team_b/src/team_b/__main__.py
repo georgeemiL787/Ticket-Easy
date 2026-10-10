@@ -14,6 +14,7 @@ from team_b.config import Settings
 from team_b.container import Container, build_llm
 from team_b.demo_seed import DriftClock
 from team_b.domain.tenant import TenantRegistry
+from team_b.eval_compare import compare_runs, load_run
 from team_b.judge import Judge, agreement, pick_spotcheck, write_spotcheck
 from team_b.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
 
@@ -43,7 +44,9 @@ async def eval_nlu(mode: str, tenant_id: str, data: Path, save: bool) -> list[Ev
     return reports
 
 
-async def eval_conversations(directory: Path, use_llm: bool, out: Path, save: bool, use_judge: bool = False) -> int:
+async def eval_conversations(
+    directory: Path, use_llm: bool, out: Path, save: bool, use_judge: bool = False, label: str = ""
+) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
         raise SystemExit("--llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
@@ -57,7 +60,7 @@ async def eval_conversations(directory: Path, use_llm: bool, out: Path, save: bo
         judge = Judge(llm)
     conversations = convo.load_set(directory)
     mode = "llm" if use_llm else "rules"
-    report = await convo.evaluate(conversations, settings, mode=mode, judge=judge)
+    report = await convo.evaluate(conversations, settings, mode=mode, judge=judge, label=label)
     print(convo.render(report))
     markdown, data = convo.write_report(report, out)
     print(f"wrote {markdown} and {data}")
@@ -198,6 +201,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--judge", action="store_true", help="also grade how the replies read with the AI judge (advice only)"
     )
     full.add_argument("--save-baseline", action="store_true", help="record the rules' result as the baseline")
+    full.add_argument(
+        "--label", default="", help="name this run: the report is saved as reports/eval_<label>_<date>.json and .md"
+    )
+    compare = commands.add_parser("eval-compare", help="show two saved evaluation runs side by side")
+    compare.add_argument("first", type=Path, help="a report .json written by `eval` (the one to compare against)")
+    compare.add_argument("second", type=Path, help="the report .json to compare")
     agree = commands.add_parser(
         "judge-agreement", help="compare the judge with the person who graded judge_spotcheck.csv"
     )
@@ -219,7 +228,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "create-user":
         return asyncio.run(create_user_cmd(args))
     if args.command == "eval":
-        return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline, args.judge))
+        return asyncio.run(eval_conversations(args.set, args.llm, args.out, args.save_baseline, args.judge, args.label))
+    if args.command == "eval-compare":
+        print(compare_runs(load_run(args.first), load_run(args.second), args.first.stem, args.second.stem))
+        return 0
     if args.command == "judge-agreement":
         result = agreement(args.file)
         print(json.dumps(result.as_dict(), indent=2))

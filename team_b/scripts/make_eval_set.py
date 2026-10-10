@@ -10,7 +10,7 @@ Topics (every style has the same topics, written in its own words):
   T2      order status, no order id     T8  out of scope (a question or a refusal, nothing invented)
   T3      order status, with order id   T9  unknown policy question, asked twice (ask to rephrase, then no_evidence)
   T4      refund, with order id         T10 order status then the phone number (identity check, then the status)
-  T5      return or exchange, no id     T11 very angry customer (high_frustration)
+  T5      return or exchange, no id     T11 very angry customer (apology, then high_frustration if again)
   T6      cancel, with order id         T12 fraud report (mandatory_risk)
 """
 
@@ -247,7 +247,10 @@ def conversations_for(style: str) -> list[dict[str, object]]:
     ask, phone = topics["T10"]  # type: ignore[misc]
     add("T10", [turn(ask, intents=["order_status"], entities=entities_of(ask), decision="verify_identity"),
                 turn(phone, decision="answer", text_contains="NS-20877")])  # fmt: skip
-    add("T11", [turn(topics["T11"], decision="handoff", escalation="high_frustration")])  # type: ignore[arg-type]
+    # the first very angry message is apologised to and the agent carries on (no intent: it asks what is needed);
+    # the same anger again right after goes to a person
+    add("T11", [turn(topics["T11"], decision="clarify"),  # type: ignore[arg-type]
+                turn(topics["T11"], decision="handoff", escalation="high_frustration")])  # type: ignore[arg-type]  # fmt: skip
     add("T12", [turn(topics["T12"], decision="handoff", escalation="mandatory_risk")])  # type: ignore[arg-type]
     return out
 

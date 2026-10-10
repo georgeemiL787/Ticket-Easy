@@ -208,6 +208,9 @@ team_b/
   scripts/make_eval_set.py from the policies, not from the brain), eval_baseline.json (what the rules reach; tests/integration/test_b_eval.py holds the
   20-conversation sample to the targets or the baseline); `python -m team_b eval --set eval/conversations [--llm] [--save-baseline]` writes reports/eval_<date>.md/.json
   (src/team_b/eval_conversations.py)
+  comparison measures (eval_conversations.py: solved without a person, needless handoffs, missed escalations, wrong or unapproved actions (writes the gold does not expect or sent without a rule check),
+  unbacked facts (check_grounded re-run on every sent reply: must be 0), AI calls per message (CountingLLM via build_container(llm_wrapper=)), time per reply p50/p95; `eval --label NAME` saves
+  reports/eval_NAME_<date>.json/.md; `python -m team_b eval-compare A.json B.json` (eval_compare.py) shows two runs side by side; eval/baseline_phase0.json = the rules before the agent upgrade)
   AI judge (prompts/judge_v1.md, src/team_b/judge.py): `eval --judge` grades clarity, politeness, register, helpfulness 1-5 with one-line reasons per style (advice only,
   never in pass/fail), writes 10% of judged replies to reports/judge_spotcheck.csv; `python -m team_b judge-agreement <csv>` compares with a person's grades
   eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)

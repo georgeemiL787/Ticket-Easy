@@ -54,6 +54,7 @@ class Lexicon(BaseModel):
 
     arabizi_tokens: frozenset[str] = frozenset()  # Arabic words written in Latin letters, normalized, no spaces
     intents: dict[str, StyleWords] = {}  # intent name -> keywords that signal it
+    checkin: StyleWords = StyleWords()  # "how are you", "عامل ايه": a greeting only when nothing else is being asked
     want_markers: StyleWords = StyleWords()  # "I want", "عايز", "3ayez"
     question_markers: StyleWords = StyleWords()  # "how", "ازاي", "emta", "?"
     policy_timing_markers: StyleWords = StyleWords()  # "how many days", "كام يوم": asks about a rule, not for an action

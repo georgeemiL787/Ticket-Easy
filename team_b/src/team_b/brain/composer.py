@@ -85,6 +85,10 @@ class ResponseComposer:
     def keys(self, locale: Locale) -> frozenset[str]:
         return frozenset(self._texts[locale])
 
+    def template_texts(self) -> list[str]:
+        """Every template text of every locale (used to audit that a reply holds nothing but known text)."""
+        return [text for texts in self._texts.values() for text in texts.values()]
+
     def has(self, locale: Locale, key: str) -> bool:
         return key in self._texts[locale]
 

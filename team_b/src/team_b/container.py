@@ -1,7 +1,7 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
 import secrets
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -80,7 +80,10 @@ class Container:
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
 
 
-def build_container(settings: Settings, *, clock: Clock | None = None) -> Container:
+def build_container(
+    settings: Settings, *, clock: Clock | None = None, llm_wrapper: Callable[[LLMClient], LLMClient] | None = None
+) -> Container:
+    """Wire the service. llm_wrapper (the evaluation uses it to count AI calls) wraps the AI model, if there is one."""
     if settings.llm_rewrite and settings.llm == "none":
         raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
 
@@ -101,6 +104,8 @@ def build_container(settings: Settings, *, clock: Clock | None = None) -> Contai
         assert policy_search is not None and rule_checker is not None and safety_screen is not None
         evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
     llm = build_llm(settings)
+    if llm is not None and llm_wrapper is not None:
+        llm = llm_wrapper(llm)
     if (settings.llm_policy or settings.llm_knowledge) and llm is None:
         raise ContainerError("TEAM_B_LLM_POLICY / TEAM_B_LLM_KNOWLEDGE need an AI model: set TEAM_B_LLM.")
     if settings.llm_policy and llm is not None:

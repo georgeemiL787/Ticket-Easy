@@ -105,3 +105,27 @@ no `writer_egyptian` settings nothing changes (the job never borrows the general
    the AI judge's grades when `--judge` is given, and two empty columns, `rating_default` and `rating_egyptian`. Open the file
    in Excel (it is UTF-8), give each reply a whole number from 1 (unnatural or wrong) to 5 (sounds like a native Egyptian
    speaker, says exactly what the plan says), and compare the averages. Nothing in the file decides a test.
+
+## Agent mode (the AI orchestrator)
+
+With `TEAM_B_AGENT_MODE=on` (or `"agent_mode": "on"` for one shop) an AI **orchestrator** plans each message and proposes one
+move at a time (look something up, search the policy, propose an action, ask the customer, hand over, reply); code checks
+every move before it runs. **The model proposes, code decides**: the gates that allow a refund, the customer's yes, the
+identity check, the safety screen and the forced handoffs are the same code with the agent on or off. If the loop cannot
+finish a message it falls back to today's step-by-step flow. Default: **off** (see `docs/agent_comparison.md` for why).
+`shadow` lets the agent watch without acting. It needs an AI model for the ORCHESTRATOR job.
+
+One model per job (Groq's free plan is used in the demo; any OpenAI-compatible server works), each with an optional backup
+model and its own limits: `TEAM_B_LLM_MODEL_<JOB>`, `TEAM_B_LLM_FALLBACK_MODEL_<JOB>`, `TEAM_B_LLM_RPM_<JOB>`,
+`TEAM_B_LLM_TPM_<JOB>`, `TEAM_B_LLM_REASONING_EFFORT_<JOB>`; jobs: READER, ORCHESTRATOR, KNOWLEDGE, REVIEWER, WRITER,
+WRITER_EGYPTIAN, SUMMARY, JUDGE. Jobs on the same model share one per-minute budget; a call that would wait longer than
+`TEAM_B_LLM_MAX_WAIT_S` fails and the message uses the fallback. Switches: `TEAM_B_LLM_REWRITE=1` (the AI writer),
+`TEAM_B_LLM_KNOWLEDGE=1` (the knowledge agent), `TEAM_B_LLM_REVIEW=1` (the reviewer, stricter only), `TEAM_B_LLM_POLICY=1`.
+The free plan (30 requests and 8K tokens a minute, 200K tokens a day per model) is enough to try the agent, not to
+evaluate it on the whole set: use `eval --per-style N`, `--batch N` and `--resume`.
+
+Useful commands: `python -m team_b eval --llm --agent-mode on|off|shadow --label NAME [--per-style N] [--batch N] [--resume]
+[--judge]`, `eval-compare A.json B.json`, `eval --llm --writer-compare` (the Egyptian writer, section above),
+`python -m team_b replay <conversation_id> --set KEY=VALUE` (say a past conversation again with other settings on a
+stand-in shop). On the dashboard: the agent timeline of every message, the agent cards on the Overview, forced and chosen
+handoffs and "automate next" on Escalations, and a Replay button (admin).

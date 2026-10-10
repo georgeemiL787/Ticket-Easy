@@ -1,6 +1,6 @@
 """Replay: a past conversation said again with other settings, on a fresh stand-in shop, never touching the real one."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -118,7 +118,7 @@ async def test_a_conversation_without_messages_is_not_found(live: Container) -> 
 
 
 async def test_when_the_session_is_gone_the_stored_traces_are_used(live: Container) -> None:
-    live.sessions._sessions.clear()  # type: ignore[attr-defined]  # retention removed it
+    await live.sessions.purge_older_than(datetime(2100, 1, 1, tzinfo=UTC))  # retention removed it
     said, source = await replay.customer_messages(live, T, "past")
     assert source == "traces" and len(said) == 2 and PHONE not in said[0]
 

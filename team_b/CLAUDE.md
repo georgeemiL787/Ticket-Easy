@@ -341,3 +341,13 @@ Stubs (signatures are fixed; the orchestrator routes by intent kind through them
 - domain/alerts.py: the `Alert` model (A fills the engine).
 Reply texts live in data/locales/<locale>/{core,actions,knowledge,handoff}.json; the composer merges them and rejects a key defined twice.
 Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ ask first (see adapters/migrations/README.md).
+
+## Agentic upgrade: where things are (U0 to U7)
+
+- Modes: `TEAM_B_AGENT_MODE` on|off|shadow (default off, see docs/agent_comparison.md); a shop may set `agent_mode`. Rule 1 holds:
+  the model proposes, code decides; forced handoffs never wait for the orchestrator (brain/escalation.py).
+- Jobs and settings: reader, orchestrator, knowledge, reviewer, writer, writer_egyptian, summary, judge; `TEAM_B_LLM_<SETTING>_<JOB>`
+  (MODEL, FALLBACK_MODEL, BASE_URL, API_KEY, RPM, TPM, REASONING_EFFORT) and TEAM_B_LLM_MAX_WAIT_S; switches LLM_REWRITE, LLM_KNOWLEDGE, LLM_REVIEW, LLM_POLICY.
+- Commands: `eval --llm --agent-mode ... --label X [--per-style N --batch N --resume --judge --writer-compare]`, `eval-compare`, `replay`.
+- Docs: docs/agentic_design.md (plain language), docs/agent_comparison.md (numbers), docs/metrics.md 15-19, docs/runbook.md 8-10.
+- Safety suites that must stay green: tests/adversarial (incl. test_agent_loop_attacks.py), test_a_safety_property, test_agent_safety_property.

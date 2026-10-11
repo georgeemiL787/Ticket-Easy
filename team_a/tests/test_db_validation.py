@@ -10,7 +10,8 @@ from team_a.db import connect
 from team_a.db import repository as repo
 from team_a.schemas import SearchKnowledgeRequest, SearchPastTicketsRequest
 
-TENANTS = ("noon_eg", "shop_001")
+TENANTS = ("noon_eg", "shop_001", "telco_001")
+PAIRS = [(a, b) for a in TENANTS for b in TENANTS if a != b]
 
 
 def _scenarios() -> list[dict]:
@@ -102,7 +103,7 @@ def _ids(db, table, key, tenant):
     return _sample([r[0] for r in _rows(db, f"SELECT {key} FROM {table} WHERE tenant_id = ? ORDER BY rowid", tenant)])
 
 
-@pytest.mark.parametrize("tenant,other", [("noon_eg", "shop_001"), ("shop_001", "noon_eg")])
+@pytest.mark.parametrize("tenant,other", PAIRS)
 def test_lookups_never_return_another_tenants_rows(built_db, tenant, other):
     for cid in _ids(built_db, "customers", "customer_id", other):
         assert repo.get_customer(tenant, cid, db_path=built_db) is None
@@ -118,7 +119,7 @@ def test_lookups_never_return_another_tenants_rows(built_db, tenant, other):
         assert repo.get_passage(tenant, pid, db_path=built_db) is None
 
 
-@pytest.mark.parametrize("tenant,other", [("noon_eg", "shop_001"), ("shop_001", "noon_eg")])
+@pytest.mark.parametrize("tenant,other", PAIRS)
 def test_own_lookups_only_return_own_rows(built_db, tenant, other):
     for cid in _ids(built_db, "customers", "customer_id", tenant):
         assert repo.get_customer(tenant, cid, db_path=built_db)["tenant_id"] == tenant
@@ -128,7 +129,7 @@ def test_own_lookups_only_return_own_rows(built_db, tenant, other):
         assert repo.get_return(tenant, rid, db_path=built_db)["tenant_id"] == tenant
 
 
-@pytest.mark.parametrize("tenant,other", [("noon_eg", "shop_001"), ("shop_001", "noon_eg")])
+@pytest.mark.parametrize("tenant,other", PAIRS)
 def test_search_never_crosses_tenants(built_db, tenant, other):
     own = {r[0] for r in _rows(built_db, "SELECT passage_id FROM policy_passages WHERE tenant_id = ?", tenant)}
     own_tickets = {r[0] for r in _rows(built_db, "SELECT ticket_id FROM past_tickets WHERE tenant_id = ?", tenant)}

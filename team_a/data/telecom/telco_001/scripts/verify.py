@@ -66,5 +66,24 @@ check("rule quotes match their cited policy text", all(r["citation"] in text and
 check("policy sources all exist", all(k in SOURCES for *_, secs in POLICIES for s in secs for k in s[5]))
 check("salefny fee taken on receipt", one("SELECT COUNT(*) FROM transactions WHERE txn_type='salefny_loan' AND net_credit >= amount") == 0)
 
+# network troubleshooting (migrations/ + net_generate.py)
+if one("SELECT COUNT(*) FROM sqlite_master WHERE name='line_network_bindings'"):
+    current = lambda role: f"SELECT COUNT(*) FROM line_network_bindings b WHERE b.line_id=l.line_id AND b.role='{role}' AND b.valid_to IS NULL"
+    check("every active mobile line has exactly one current serving cell",
+          one(f"SELECT COUNT(*) FROM lines l WHERE l.status='active' AND l.line_type!='home_internet' AND ({current('serving_cell')}) != 1") == 0)
+    check("every active home internet line has one access port and one home router",
+          one(f"SELECT COUNT(*) FROM lines l WHERE l.status='active' AND l.line_type='home_internet' "
+              f"AND (({current('access_port')}) != 1 OR ({current('cpe')}) != 1)") == 0)
+    check("approved procedures on shared equipment need a person's approval",
+          one("SELECT COUNT(*) FROM resolution_procedures WHERE status='approved' AND target_scope!='single_line' AND needs_human_approval!=1") == 0)
+    check("every outage is linked to equipment",
+          one("SELECT COUNT(*) FROM network_outages o WHERE NOT EXISTS (SELECT 1 FROM outage_elements e WHERE e.outage_id=o.outage_id)") == 0)
+    check("every procedure's cause is in the catalogue",
+          one("SELECT COUNT(*) FROM resolution_procedures WHERE cause_code NOT IN (SELECT cause_code FROM root_cause_catalog)") == 0)
+    check("every cause has English and Arabic customer wording",
+          one("SELECT COUNT(*) FROM root_cause_catalog WHERE trim(coalesce(customer_text_en,''))='' OR trim(coalesce(customer_text_ar,''))=''") == 0)
+else:
+    check("network tables present (run net_generate.py)", False)
+
 print(f"\n{len(fails)} failed" if fails else "\nall checks passed")
 sys.exit(1 if fails else 0)

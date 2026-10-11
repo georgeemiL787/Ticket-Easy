@@ -8,7 +8,7 @@ from team_a.config import settings
 from team_a.knowledge.index import build_passages
 
 STYLES = {"ar", "en", "arabizi"}
-TENANTS = ["shop_001", "noon_eg"]
+TENANTS = ["shop_001", "noon_eg", "telco_001"]
 
 
 def _load(split, tenant="shop_001"):
@@ -39,8 +39,15 @@ def test_gold_citations_exist_in_current_corpus(keyword_index, split):
             assert passage and passage["current"], f"{case['id']}: {citation}"
 
 
+@pytest.mark.parametrize("tenant", ["noon_eg", "telco_001"])
 @pytest.mark.parametrize("split", ["dev", "test"])
-def test_noon_gold_citations_exist_in_current_corpus(split):
-    current = {p["citation"] for p in build_passages("noon_eg")[0] if p["current"]}
-    for case in _load(split, "noon_eg"):
+def test_other_tenants_gold_citations_exist_in_current_corpus(tenant, split):
+    current = {p["citation"] for p in build_passages(tenant)[0] if p["current"]}
+    for case in _load(split, tenant):
         assert set(case["expected"]) <= current, case["id"]
+
+
+def test_telecom_split_keeps_each_faq_question_in_one_split():
+    def faq_ids(split):
+        return {c["id"].rsplit("-", 1)[0] for c in _load(split, "telco_001") if c["expected"]}
+    assert faq_ids("dev") and not faq_ids("dev") & faq_ids("test")

@@ -33,10 +33,22 @@ def rule_store(tmp_path) -> rules_module.RuleStore:
 
 
 @pytest.fixture(scope="session")
-def built_db(tmp_path_factory):
+def telecom_db(tmp_path_factory):
+    """A tenth-size telecom.db from the tenant's own generator (~2 s), so tests never need the 214 MB file."""
+    import subprocess
+    import sys
+
+    path = tmp_path_factory.mktemp("telecom") / "telecom.db"
+    script = config.settings.tenant_dir("telco_001") / "scripts" / "generate.py"
+    subprocess.run([sys.executable, str(script), "--small", "--out", str(path)], check=True, capture_output=True)
+    return path
+
+
+@pytest.fixture(scope="session")
+def built_db(tmp_path_factory, telecom_db):
     """Keyword-only SQLite build of every tenant in a temp dir (no Ollama needed)."""
     from team_a.db import loader
 
     path = tmp_path_factory.mktemp("db") / "team_a.sqlite"
-    loader.build(embedder=None, db_path=path)
+    loader.build(embedder=None, db_path=path, telecom_dbs={"telco_001": telecom_db})
     return path

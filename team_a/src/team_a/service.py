@@ -216,6 +216,30 @@ def get_check_action_facts_endpoint(order_id: str, item_id: str, tenant_id: str 
                  include_derived=include_derived, what=f"item '{item_id}' on order '{order_id}'")
 
 
+@app.get("/v1/data/lines/{number}", dependencies=[Depends(require_admin)])
+def get_line_endpoint(number: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    """Telecom: a line by its number or home landline, with plan and active bundles."""
+    from team_a.db import repository
+
+    return _data(repository.get_line, tenant_id, msisdn=number, what=f"line '{number}'")
+
+
+@app.get("/v1/data/accounts/{account_id}", dependencies=[Depends(require_admin)])
+def get_account_endpoint(account_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    account = _data(repository.get_account, tenant_id, account_id, what=f"account '{account_id}'")
+    account["recent_invoices"] = repository.list_invoices(tenant_id, account_id)
+    return account
+
+
+@app.get("/v1/data/invoices/{invoice_id}", dependencies=[Depends(require_admin)])
+def get_invoice_endpoint(invoice_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
+    from team_a.db import repository
+
+    return _data(repository.get_invoice, tenant_id, invoice_id, what=f"invoice '{invoice_id}'")
+
+
 @app.get("/v1/data/returns/{return_id}", dependencies=[Depends(require_admin)])
 def get_return_endpoint(return_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
     from team_a.db import repository

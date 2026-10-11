@@ -39,9 +39,16 @@ def _build(headed_blocks: list[tuple[str, list[str]]]) -> list[Section]:
     return sections
 
 
+_CITATION_LINE = re.compile(r"^\s*`[\w.-]+@[\w.-]+#[\w-]+`\s*$")  # a section's own citation, e.g. `refund_policy@v3#s1`
+_HTML_TAG = re.compile(r"</?div\b[^>]*>")  # layout-only wrappers such as <div dir="rtl"> around Arabic text
+
+
 def parse_markdown(path: Path) -> list[Section]:
     blocks: list[tuple[str, list[str]]] = [("", [])]
     for line in path.read_text(encoding="utf-8").splitlines():
+        if _CITATION_LINE.match(line):
+            continue
+        line = _HTML_TAG.sub("", line)
         heading = re.match(r"^(#{1,6})\s+(.*)$", line)
         if heading and len(heading.group(1)) >= 2:
             blocks.append((heading.group(2), []))

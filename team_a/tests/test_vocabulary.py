@@ -41,3 +41,12 @@ def test_every_guardrail_fact_is_in_the_vocabulary():
     for line in (settings.benchmark_file("shop_001", "guardrails")).read_text(encoding="utf-8").splitlines():
         case = json.loads(line)
         assert set(case["request"].get("facts", {})) <= set(VOCAB["facts"]), case["id"]
+
+
+def test_every_telecom_rule_action_fact_and_argument_is_in_the_vocabulary():
+    rules = json.loads(settings.rules_file("telco_001").read_text(encoding="utf-8"))["rules"]
+    for rule in rules:
+        assert rule["action"] in VOCAB["actions"], rule["rule_id"]
+        for cond in rule["applies_if"] + rule["conditions"]:
+            allowed = VOCAB["facts"] if cond.get("from", "facts") == "facts" else VOCAB["arguments"]
+            assert cond["field"] in allowed, f"{rule['rule_id']}: {cond['field']}"

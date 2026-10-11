@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 
 from team_a.config import ROOT, settings
-from team_a.db import SCHEMA_FILE, SCHEMA_VERSION, connect
+from team_a.db import SCHEMA_FILE, SCHEMA_VERSION, connect, telecom
 from team_a.db.sources import MockData, read_mock
 from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
 from team_a.knowledge.index import (
@@ -37,7 +37,13 @@ TENANT_TABLES = (
     "eval_scenario_sections", "eval_scenarios", "benchmark_questions",
     "passage_embeddings", "policy_passages", "policy_documents",
     "ticket_embeddings", "past_tickets", "rules_mirror", "resolutions_mirror",
-    "returns", "order_items", "orders", "customers", "db_sources", "tenants",
+    "tel_refunds", "tel_complaints", "tel_technician_appointments", "tel_network_outages", "tel_port_requests",
+    "tel_sim_events", "tel_device_installments", "tel_usage_daily", "tel_invoice_items", "tel_invoices",
+    "tel_transactions", "tel_vas_subscriptions", "tel_line_bundles", "tel_lines", "tel_accounts",
+    "tel_customer_profiles",
+    "returns", "order_items", "orders", "customers",
+    "tel_stores", "tel_devices", "tel_vas_services", "tel_bundles", "tel_plans",
+    "db_sources", "tenants",
 )
 MIRRORS = ("rules_mirror", "resolutions_mirror")
 SHARED_SOURCES = ("arabizi.json", "risk_keywords.json", "vocabulary.json")
@@ -59,7 +65,10 @@ def _text_sha(text: str) -> str:
 
 
 def _rel(path: Path) -> str:
-    return path.resolve().relative_to(ROOT).as_posix()
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:  # a source outside the repo (e.g. a test's generated telecom.db)
+        return f"external/{path.name}"
 
 
 def _json(value) -> str | None:
@@ -190,7 +199,8 @@ def _benchmark_rows(tenant_id: str) -> tuple[list[dict], list[tuple[Path, int]]]
     return rows, files
 
 
-def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder | None) -> dict:
+def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder | None,
+                  telecom_db: Path | None = None) -> dict:
     # ---- read and validate everything first; nothing is written if any source is bad
     manifest = load_manifest(tenant_id)
     passages, _ = build_passages(tenant_id)
@@ -200,6 +210,11 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
     rules = RuleStore(tenant_id).all()  # same validation and tenant check as the live rule store
     resolutions, warnings = _resolution_rows(tenant_id)
     mock = read_mock(tenant_id)
+    category = settings.category(tenant_id)
+    telecom_src = telecom.source_path(tenant_id, telecom_db) if category == "telecom" else None
+    if telecom_src is not None:
+        telecom_meta = telecom.source_meta(telecom_src)
+        mock.as_of, mock.currency = telecom_meta["as_of"], telecom_meta["currency"]
     scenarios, scenario_sections = _scenario_rows(tenant_id, mock, passages)
     benchmarks, benchmark_files = _benchmark_rows(tenant_id)
 
@@ -229,10 +244,14 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
                    "scenarios": len(mock.scenarios)}
     sources += [(f, mock_counts.get(f.stem.rsplit("_", 1)[-1], len(mock.orders))) for f in mock.files]
     sources += benchmark_files
+    if telecom_src is not None:
+        sources.append((telecom_src, telecom_meta["customers"]))
 
     # ---- write: one transaction per tenant
     triggers = [r[0] for r in conn.execute(
         "SELECT sql FROM sqlite_master WHERE type='trigger' AND tbl_name IN (?, ?) ORDER BY name", MIRRORS)]
+    if telecom_src is not None:
+        telecom.attach(conn, telecom_src)  # outside the transaction: SQLite refuses ATTACH inside one
     conn.execute("BEGIN")
     try:
         for name in [r[0] for r in conn.execute(
@@ -242,7 +261,8 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
             conn.execute(f"DELETE FROM {table} WHERE tenant_id = ?", (tenant_id,))
 
         _insert(conn, "tenants", {
-            "tenant_id": tenant_id, "name": manifest.get("tenant_name", tenant_id), "currency": mock.currency,
+            "tenant_id": tenant_id, "category": category, "name": manifest.get("tenant_name", tenant_id),
+            "currency": mock.currency,
             "as_of": mock.as_of, "fictional": 1, "retrieval_mode": mode,
         })
         for path, n in sources:
@@ -258,6 +278,8 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
             _insert(conn, "order_items", {"tenant_id": tenant_id, **i})
         for r in mock.returns:
             _insert(conn, "returns", {"tenant_id": tenant_id, **r})
+        if telecom_src is not None:
+            telecom.copy_rows(conn, tenant_id)
 
         for doc in manifest["documents"]:
             _insert(conn, "policy_documents", {
@@ -326,6 +348,9 @@ def _build_tenant(conn: sqlite3.Connection, tenant_id: str, embedder: Embedder |
     except BaseException:
         conn.execute("ROLLBACK")
         raise
+    finally:
+        if telecom_src is not None:
+            telecom.detach(conn)
 
     return {"retrieval_mode": mode, "rows": tenant_counts(conn, tenant_id), "warnings": warnings}
 
@@ -338,7 +363,8 @@ def tenant_counts(conn: sqlite3.Connection, tenant_id: str) -> dict[str, int]:
 
 
 def build(tenant_ids: list[str] | None = None, embedder: Embedder | None = None,
-          reset: bool = False, db_path: Path | None = None) -> dict:
+          reset: bool = False, db_path: Path | None = None, telecom_dbs: dict[str, Path] | None = None) -> dict:
+    """telecom_dbs overrides a telecom tenant's source database (default data/telecom/<tenant>/telecom.db)."""
     path = Path(db_path or settings.db_path)
     known = discover_tenants()
     tenant_ids = tenant_ids or known
@@ -353,7 +379,8 @@ def build(tenant_ids: list[str] | None = None, embedder: Embedder | None = None,
         _ensure_schema(conn)
         report = {"db_path": str(path), "schema_version": SCHEMA_VERSION, "tenants": {}}
         for tenant_id in tenant_ids:
-            report["tenants"][tenant_id] = _build_tenant(conn, tenant_id, embedder)
+            report["tenants"][tenant_id] = _build_tenant(conn, tenant_id, embedder,
+                                                          (telecom_dbs or {}).get(tenant_id))
         return report
     finally:
         conn.close()

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from team_a.config import settings
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 SCHEMA_FILE = Path(__file__).with_name("schema.sql")
 
 

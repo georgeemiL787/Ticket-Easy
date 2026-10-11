@@ -141,6 +141,148 @@ def build_check_action_facts(tenant_id: str, order_id: str, item_id: str, as_of:
     return facts
 
 
+# ------------------------------------------------------------------ telecom lookups (category 'telecom')
+
+_TEL_BOOL = {"roaming_enabled", "ported_in", "auto_renew", "is_duplicate", "device_locked", "ntra_referral",
+             "compensation_eligible", "marketing_opt_out", "is_demo"}
+
+
+def _tel_row(row: sqlite3.Row | None, drop: tuple[str, ...] = ()) -> dict | None:
+    out = _row(row, drop)
+    if out:
+        for key in _TEL_BOOL & out.keys():
+            out[key] = None if out[key] is None else bool(out[key])
+    return out
+
+
+def _all(conn, sql: str, *params) -> list[dict]:
+    return [_tel_row(r) for r in conn.execute(sql, params)]
+
+
+def get_line(tenant_id: str, msisdn: str | None = None, line_id: str | None = None,
+             db_path: Path | None = None) -> dict | None:
+    """A line by its number, home landline or id, with its plan and its active bundles."""
+    if not (msisdn or line_id):
+        raise ValueError("pass msisdn or line_id")
+    conn = _open(tenant_id, db_path)
+    try:
+        if line_id:
+            row = conn.execute("SELECT * FROM tel_lines WHERE tenant_id = ? AND line_id = ?", (tenant_id, line_id))
+        else:
+            row = conn.execute("SELECT * FROM tel_lines WHERE tenant_id = ? AND (msisdn = ? OR home_landline = ?)",
+                               (tenant_id, msisdn, msisdn))
+        line = _tel_row(row.fetchone())
+        if line is None:
+            return None
+        line["plan"] = _tel_row(conn.execute("SELECT plan_id, plan_type, name_en, name_ar, monthly_fee FROM tel_plans "
+                                             "WHERE tenant_id = ? AND plan_id = ?",
+                                             (tenant_id, line["plan_id"])).fetchone(), drop=())
+        line["active_bundles"] = _all(conn, """
+            SELECT lb.subscription_id, lb.bundle_id, b.name_en, b.name_ar, lb.subscribed_at, lb.expires_at,
+                   lb.auto_renew, lb.data_mb_total, lb.data_mb_used, lb.minutes_total, lb.minutes_used, lb.price
+            FROM tel_line_bundles lb JOIN tel_bundles b ON b.tenant_id = lb.tenant_id AND b.bundle_id = lb.bundle_id
+            WHERE lb.tenant_id = ? AND lb.line_id = ? AND lb.status = 'active' ORDER BY lb.subscribed_at""",
+                                      tenant_id, line["line_id"])
+        return line
+    finally:
+        conn.close()
+
+
+def list_lines_for_customer(tenant_id: str, customer_id: str, db_path: Path | None = None) -> list[dict]:
+    conn = _open(tenant_id, db_path)
+    try:
+        return _all(conn, "SELECT line_id, account_id, msisdn, home_landline, line_type, plan_id, status, "
+                          "prepaid_balance FROM tel_lines WHERE tenant_id = ? AND customer_id = ? "
+                          "ORDER BY activated_at, line_id", tenant_id, customer_id)
+    finally:
+        conn.close()
+
+
+def get_account(tenant_id: str, account_id: str, db_path: Path | None = None) -> dict | None:
+    conn = _open(tenant_id, db_path)
+    try:
+        account = _tel_row(conn.execute("SELECT * FROM tel_accounts WHERE tenant_id = ? AND account_id = ?",
+                                        (tenant_id, account_id)).fetchone())
+        if account:
+            account["lines"] = _all(conn, "SELECT line_id, msisdn, home_landline, line_type, status FROM tel_lines "
+                                          "WHERE tenant_id = ? AND account_id = ? ORDER BY line_id",
+                                    tenant_id, account_id)
+        return account
+    finally:
+        conn.close()
+
+
+def list_invoices(tenant_id: str, account_id: str, limit: int = 6, db_path: Path | None = None) -> list[dict]:
+    """Newest first."""
+    conn = _open(tenant_id, db_path)
+    try:
+        return _all(conn, "SELECT * FROM tel_invoices WHERE tenant_id = ? AND account_id = ? "
+                          "ORDER BY issued_at DESC, invoice_id DESC LIMIT ?", tenant_id, account_id, limit)
+    finally:
+        conn.close()
+
+
+def get_invoice(tenant_id: str, invoice_id: str, db_path: Path | None = None) -> dict | None:
+    conn = _open(tenant_id, db_path)
+    try:
+        invoice = _tel_row(conn.execute("SELECT * FROM tel_invoices WHERE tenant_id = ? AND invoice_id = ?",
+                                        (tenant_id, invoice_id)).fetchone())
+        if invoice:
+            invoice["items"] = _all(conn, "SELECT item_id, line_id, item_type, description, amount FROM "
+                                          "tel_invoice_items WHERE tenant_id = ? AND invoice_id = ? ORDER BY item_id",
+                                    tenant_id, invoice_id)
+        return invoice
+    finally:
+        conn.close()
+
+
+def list_transactions(tenant_id: str, line_id: str, since: str | None = None, limit: int = 50,
+                      db_path: Path | None = None) -> list[dict]:
+    """A line's money movements, newest first; `since` is an ISO date or datetime."""
+    conn = _open(tenant_id, db_path)
+    try:
+        return _all(conn, "SELECT * FROM tel_transactions WHERE tenant_id = ? AND line_id = ? AND created_at >= ? "
+                          "ORDER BY created_at DESC, txn_id DESC LIMIT ?", tenant_id, line_id, since or "", limit)
+    finally:
+        conn.close()
+
+
+def get_complaint(tenant_id: str, complaint_id: str, db_path: Path | None = None) -> dict | None:
+    conn = _open(tenant_id, db_path)
+    try:
+        complaint = _tel_row(conn.execute("SELECT * FROM tel_complaints WHERE tenant_id = ? AND complaint_id = ?",
+                                          (tenant_id, complaint_id)).fetchone())
+        if complaint:
+            complaint["refunds"] = _all(conn, "SELECT refund_id, reason, amount, method, status, processed_at FROM "
+                                              "tel_refunds WHERE tenant_id = ? AND complaint_id = ? ORDER BY refund_id",
+                                        tenant_id, complaint_id)
+        return complaint
+    finally:
+        conn.close()
+
+
+def verify_identity(tenant_id: str, number: str, nid_last4: str, db_path: Path | None = None) -> str | None:
+    """Telecom identity check: line number (or home landline) plus the last 4 digits of the national ID.
+
+    Returns the customer_id when both match, else None. An unknown number and a wrong ID look the same, and the
+    stored digits are never returned.
+    """
+    import hmac
+
+    conn = _open(tenant_id, db_path)
+    try:
+        row = conn.execute("""
+            SELECT l.customer_id, p.nid_last4 FROM tel_lines l
+            JOIN tel_customer_profiles p ON p.tenant_id = l.tenant_id AND p.customer_id = l.customer_id
+            WHERE l.tenant_id = ? AND (l.msisdn = ? OR l.home_landline = ?)""", (tenant_id, number, number)).fetchone()
+    finally:
+        conn.close()
+    supplied = "".join(ch for ch in str(nid_last4) if ch.isdigit())
+    if row is None or not row[1] or not hmac.compare_digest(row[1], supplied):
+        return None
+    return row[0]
+
+
 # ------------------------------------------------------------------ knowledge
 
 _index_cache: dict[tuple, TenantIndex] = {}

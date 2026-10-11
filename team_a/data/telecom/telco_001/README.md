@@ -25,7 +25,7 @@ A complete Egyptian mobile and home-internet company so Ticket-Easy can be tried
 | Complaints and refunds | 5,099 complaints, 1,482 refunds |
 | Also | phone installments, SIM replacements, number transfers, network outages, technician visits, 31 stores |
 
-**20 hand-made demo customers** (`TC-D001` to `TC-D020`). Each one is set up for a specific situation: someone who subscribed to a bundle by mistake an hour ago, someone whose bill is high because of roaming, someone whose line is suspended for unpaid bills, a stolen phone, a duplicated charge above the agent's refund limit, a line too new to move to another network (under 4 months), a new monthly line that needs a deposit before roaming, and so on. Their notes are in the database (`customers.demo_note`).
+**30 hand-made demo customers** (`TC-D001` to `TC-D030`; the last 10 are network faults, see below). Each one is set up for a specific situation: someone who subscribed to a bundle by mistake an hour ago, someone whose bill is high because of roaming, someone whose line is suspended for unpaid bills, a stolen phone, a duplicated charge above the agent's refund limit, a line too new to move to another network (under 4 months), a new monthly line that needs a deposit before roaming, and so on. Their notes are in the database (`customers.demo_note`).
 
 **43 test conversations** (`scenarios/telco_001/`), about a quarter each in English, Egyptian Arabic, mixed Arabic-English, and Arabizi. Each one says what the customer types and what the agent should do at every step: answer, ask for identity, ask to confirm, carry out the action, refuse, or hand over to a person. They use the demo customers, so the facts they expect match the data. They're marked "pending" because the agent doesn't support telecom yet.
 
@@ -41,10 +41,13 @@ The data comes from a script with a fixed seed, so every run gives exactly the s
 
 ```
 cd scripts
-python3 generate.py    # builds telecom.db (about 20 seconds)
-python3 export.py      # writes the policies, FAQ, fixtures and test conversations
-python3 verify.py      # 28 consistency checks; all pass
+python3 generate.py      # builds telecom.db (about 20 seconds)
+python3 net_generate.py  # adds the network map and troubleshooting tables (migrations/), about 1 second
+python3 export.py        # writes the policies, FAQ, fixtures and test conversations
+python3 verify.py        # 34 consistency checks; all pass
 ```
+
+**Network troubleshooting.** `migrations/001_network_automation.sql` adds the network map (sites, equipment, links, which equipment serves each line, alarms), the troubleshooting playbook (16 root causes, 12 procedures) and the history tables for investigations and fixes. `002_seed_catalogue_and_demo_cluster.sql` fills the playbook and a 7-cell demo cluster that mirrors TelecomAgent's default network. `net_generate.py` applies both, then builds a site for every city, cells and core per region, a port and home router for every home line, a serving cell for every mobile line, and links each outage to its equipment. It also adds 10 more demo customers, `TC-D021` to `TC-D030`, one per fault type (used-up bundle, stuck data session, outdated line settings, phone not connected, weak signal, cell down, backhaul fault, core fault, known outage, unclear). `fixtures/telco_001/network.json` holds the part of the network around the demo customers, so tests run without the database. The database itself refuses unsafe rows: no change to shared equipment without a person's approval, the same fix never runs twice, and the audit log can't be edited.
 
 `python3 generate.py --small` builds a tenth-size copy for quick tries. The database is SQLite, so it needs no setup. `schema.sql` describes every table and uses plain types, so moving to Postgres later is straightforward.
 

@@ -13,6 +13,7 @@ from content_faq import FAQ
 from content_policies import BRAND_AR, BRAND_EN, EFFECTIVE, POLICIES, SOURCES
 from content_scenarios import SCENARIOS
 from demo_and_rules import DEMO, RULES
+from demo_network import DEMO_NET
 
 OUT = Path(__file__).resolve().parent.parent
 TENANT = "telco_001"
@@ -156,6 +157,56 @@ TENANT_CONFIG = {
 }
 
 
+def network_fixture(con, q, demo_ids):
+    """The equipment around the demo customers, their bindings, open alarms, ongoing outages, the playbook and the demo faults,
+    so troubleshooting tests run without telecom.db."""
+    marks = ",".join("?" * len(demo_ids))
+    bindings = q(f"SELECT b.* FROM line_network_bindings b JOIN lines l USING(line_id) WHERE l.customer_id IN ({marks}) AND b.valid_to IS NULL "
+                 "ORDER BY b.line_id, b.role", *demo_ids)
+    ids = {b["element_id"] for b in bindings}
+    ids |= {r["element_id"] for r in q("SELECT element_id FROM network_elements WHERE site_id = 'SITE-CAI-DT'")}  # demo cluster
+    ids |= {r["element_id"] for r in q("SELECT element_id FROM network_alarms WHERE cleared_at IS NULL")}
+    ids |= {r["element_id"] for r in q("SELECT element_id FROM outage_elements JOIN network_outages USING(outage_id) WHERE status = 'ongoing'")}
+    serving = [b["element_id"] for b in bindings if b["role"] == "serving_cell"]
+    ids |= {r["element_id"] for r in q(f"SELECT n.element_id FROM network_elements n JOIN network_elements s ON s.site_id = n.site_id "  # neighbours
+                                        f"WHERE s.element_id IN ({','.join('?' * len(serving))}) AND n.element_type IN ('gnb_cell','enb_cell')", *serving)}
+    while True:  # everything upstream: parents, uplinks and the core functions next to them
+        idl = sorted(ids)
+        m = ",".join("?" * len(idl))
+        more = {r["x"] for r in q(f"SELECT parent_element_id AS x FROM network_elements WHERE element_id IN ({m}) AND parent_element_id IS NOT NULL", *idl)}
+        more |= {r["x"] for r in q(f"SELECT b_element_id AS x FROM network_links WHERE a_element_id IN ({m}) AND link_type IN ('backhaul','fiber','N2','N3')", *idl)}
+        more |= {r["x"] for r in q(f"SELECT c.element_id AS x FROM network_elements c JOIN network_elements n ON n.site_id = c.site_id "
+                                    f"WHERE n.element_id IN ({m}) AND n.element_type = 'core_nf' AND c.element_type = 'core_nf'", *idl)}
+        if more <= ids:
+            break
+        ids |= more
+    idl = sorted(ids)
+    m = ",".join("?" * len(idl))
+    elements = q(f"SELECT * FROM network_elements WHERE element_id IN ({m}) ORDER BY element_id", *idl)
+    for e in elements:
+        e["attributes"] = json.loads(e.pop("attributes_json"))
+    js = lambda rows, *cols: [{**r, **{c: json.loads(r[c]) for c in cols}} for r in rows]
+    outages = q("SELECT * FROM network_outages WHERE status = 'ongoing' ORDER BY outage_id")
+    for o in outages:
+        o["element_ids"] = [r["element_id"] for r in q("SELECT element_id FROM outage_elements WHERE outage_id = ? ORDER BY 1", o["outage_id"])]
+    line_of = {r["customer_id"]: r for r in q(f"SELECT customer_id, line_id, msisdn FROM lines WHERE customer_id IN ({marks})", *demo_ids)}
+    return {"tenant_id": TENANT, "as_of": AS_OF,
+            "note": "Equipment serving the demo customers and everything upstream of it; the full network is in telecom.db.",
+            "sites": q(f"SELECT * FROM network_sites WHERE site_id IN (SELECT site_id FROM network_elements WHERE element_id IN ({m})) ORDER BY 1", *idl),
+            "elements": elements,
+            "interfaces": q(f"SELECT * FROM element_interfaces WHERE element_id IN ({m}) ORDER BY 1", *idl),
+            "links": q(f"SELECT * FROM network_links WHERE a_element_id IN ({m}) AND b_element_id IN ({m}) ORDER BY 1", *idl, *idl),
+            "bindings": bindings,
+            "alarms": q("SELECT * FROM network_alarms WHERE cleared_at IS NULL ORDER BY alarm_id"),
+            "outages": outages,
+            "playbook": {"root_causes": q("SELECT * FROM root_cause_catalog ORDER BY cause_code"),
+                         "procedures": js(q("SELECT * FROM resolution_procedures WHERE status = 'approved' ORDER BY procedure_id, version"),
+                                          "steps_json", "verify_checks_json")},
+            "demo_faults": [{"customer_id": d["customer_id"], "line_id": line_of[d["customer_id"]]["line_id"], "msisdn": d["msisdn"],
+                             "symptom": d["symptom"], "fault": d["fault"], "note": d["note"], "measurements": d["measurements"],
+                             "expected": d["expected"]} for d in DEMO_NET]}
+
+
 def main():
     con = sqlite3.connect(OUT / "telecom.db")
     con.row_factory = sqlite3.Row
@@ -213,10 +264,10 @@ def main():
                              "rules": RULES})
     dump(fx / "tools.json", {"tenant_id": TENANT, "tools": TOOLS})
 
-    demo_ids = [d["customer"]["customer_id"] for d in DEMO]
+    demo_ids = [d["customer"]["customer_id"] for d in DEMO] + [d["customer_id"] for d in DEMO_NET]
     marks = ",".join("?" * len(demo_ids))
     backend = {"tenant_id": TENANT, "as_of": AS_OF,
-               "note": "Only the 20 hand-made demo customers; the full data set is in telecom.db.",
+               "note": "Only the 30 hand-made demo customers; the full data set is in telecom.db.",
                "customers": q(f"SELECT customer_id, first_name_en || ' ' || last_name_en AS name, full_name_ar AS name_ar, nid_last4, preferred_language, governorate, city, demo_note FROM customers WHERE customer_id IN ({marks})", *demo_ids),
                "accounts": q(f"SELECT * FROM accounts WHERE customer_id IN ({marks})", *demo_ids),
                "lines": q(f"SELECT * FROM lines WHERE customer_id IN ({marks})", *demo_ids),
@@ -229,6 +280,7 @@ def main():
                "appointments": q("SELECT * FROM technician_appointments WHERE appointment_id LIKE 'TA-D%'"),
                "outages": q("SELECT * FROM network_outages WHERE status='ongoing'")}
     dump(fx / "backend.json", backend)
+    dump(fx / "network.json", network_fixture(con, q, demo_ids))
     dump(OUT / "config" / "tenants" / f"{TENANT}.json", TENANT_CONFIG)
 
     # ---- scenarios (fill values that come from generated data) ----

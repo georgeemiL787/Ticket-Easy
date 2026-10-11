@@ -42,7 +42,7 @@ def logical_dump(path) -> list:
 
 def test_build_loads_every_tenant(built_db):
     counts = loader.stats(built_db)
-    assert sorted(counts) == ["noon_eg", "shop_001"]
+    assert sorted(counts) == ["noon_eg", "shop_001", "telco_001"]
     assert counts["noon_eg"]["customers"] == 5011 and counts["noon_eg"]["orders"] == 26166
     assert counts["noon_eg"]["order_items"] == 40363 and counts["noon_eg"]["returns"] == 1335
     assert counts["noon_eg"]["policy_passages"] == 32 and counts["noon_eg"]["eval_scenarios"] == 967
@@ -50,18 +50,22 @@ def test_build_loads_every_tenant(built_db):
     assert counts["shop_001"]["policy_passages"] == 40 and counts["shop_001"]["past_tickets"] == 20
     assert counts["shop_001"]["orders"] == 16 and counts["shop_001"]["rules_mirror"] == 33
     assert counts["shop_001"]["benchmark_questions"] == 70 + 44
+    assert counts["telco_001"]["policy_passages"] == 59 and counts["telco_001"]["past_tickets"] == 527
+    assert counts["telco_001"]["rules_mirror"] == 19 and counts["telco_001"]["benchmark_questions"] == 204
+    _, rows = loader.query("SELECT tenant_id, category FROM tenants ORDER BY tenant_id", db_path=built_db)
+    assert rows == [("noon_eg", "e-commerce"), ("shop_001", "e-commerce"), ("telco_001", "telecom")]
 
 
 def test_tenant_as_of_comes_from_the_data_not_the_clock(built_db):
     _, rows = loader.query("SELECT tenant_id, as_of FROM tenants ORDER BY tenant_id", db_path=built_db)
-    assert rows == [("noon_eg", "2026-10-08"), ("shop_001", "2026-09-28")]
+    assert rows == [("noon_eg", "2026-10-08"), ("shop_001", "2026-09-28"), ("telco_001", "2026-10-08")]
 
 
-def test_build_is_idempotent_and_deterministic(tmp_path, built_db):
-    path = tmp_path / "again.sqlite"
-    loader.build(embedder=None, db_path=path)
+def test_build_is_idempotent_and_deterministic(tmp_path, built_db, telecom_db):
+    path, small = tmp_path / "again.sqlite", {"telco_001": telecom_db}
+    loader.build(embedder=None, db_path=path, telecom_dbs=small)
     first = logical_dump(path)
-    loader.build(embedder=None, db_path=path)               # rebuild in place
+    loader.build(embedder=None, db_path=path, telecom_dbs=small)  # rebuild in place
     assert logical_dump(path) == first
     loader.build(["noon_eg"], embedder=None, db_path=path)  # one tenant only
     assert logical_dump(path) == first
@@ -86,7 +90,7 @@ def test_embeddings_are_stored_and_reused(tmp_path):
     assert conn.execute("SELECT DISTINCT model, dim FROM passage_embeddings").fetchall() == [("fake-8d", 8)]
     blob = conn.execute("SELECT vector FROM passage_embeddings LIMIT 1").fetchone()[0]
     assert abs(np.linalg.norm(np.frombuffer(blob, dtype="<f4")) - 1) < 1e-5
-    loader.build(embedder=embedder, db_path=path)
+    loader.build(["noon_eg", "shop_001"], embedder=embedder, db_path=path)
     assert embedder.calls == 32 + 40 + 20 + 1518  # unchanged texts are not re-embedded
 
 

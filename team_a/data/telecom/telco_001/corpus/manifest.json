@@ -1,6 +1,11 @@
 {
   "tenant_id": "telco_001",
   "tenant_name": "Masr Connect (مصر كونكت): fictional Egyptian mobile and home-internet operator; rules follow real operators' and NTRA's public terms",
+  "retrieval_thresholds": {
+    "min_cosine": 0.52,
+    "min_bm25": 4.0,
+    "chosen_on": "telco_001 dev split (eval-retrieval --sweep), 2026-10-08; min_top_score off (no gain on dev)"
+  },
   "documents": [
     {
       "file": "bundles_policy.md",

@@ -1,0 +1,11 @@
+{
+  "description": "shop_001 only: the return and refund policies are in Arabic, so English customer words are mapped to the policy's own Arabic terms (BM25 needs the exact words, and the embedding gets the Arabic wording too). Applied on top of arabizi.json for this tenant only. Single words only: the query is matched word by word.",
+  "entries": [
+    {"variants": ["exchange", "exchanges", "exchanged", "exchanging", "swap", "swapped", "replace", "replacement", "replacing"], "means": ["استبدال", "الاستبدال", "مقاس", "لون"]},
+    {"variants": ["size", "sizes", "bigger", "smaller", "larger", "colour", "color"], "means": ["مقاس", "لون", "الاستبدال"]},
+    {"variants": ["return", "returns", "returned", "returning"], "means": ["استرجاع", "الاسترجاع", "المرتجع"]},
+    {"variants": ["refund", "refunds", "refunded", "refunding", "reimburse", "reimbursed"], "means": ["رد", "المبلغ", "رد المبلغ", "استرداد"]},
+    {"variants": ["damaged", "defective", "broken", "faulty", "defect"], "means": ["التالفة", "المعيبة"]},
+    {"variants": ["policy", "policies", "rules"], "means": ["سياسة"]}
+  ]
+}

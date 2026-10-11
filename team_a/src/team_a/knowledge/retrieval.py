@@ -10,6 +10,7 @@ Two stages:
 
 import hashlib
 import logging
+import re
 from functools import lru_cache
 
 import numpy as np
@@ -31,6 +32,9 @@ log = logging.getLogger(__name__)
 
 COSINE_WEIGHT = 0.65
 PASSAGE_COS_MARGIN = 0.08
+PREAMBLE_CHARS = 80  # a passage shorter than this is a title or a date line, not a rule
+NAMED_DOCUMENT_BOOST = 0.08  # the question names the document ("return policy"): its passages go first
+GENERIC_DOCUMENT_WORDS = {"policy", "policies", "faq", "terms", "your", "the", "what", "about"}
 
 
 @lru_cache(maxsize=32)
@@ -121,6 +125,19 @@ def search_knowledge(
     bm25 = index.passage_bm25.scores(tokenize(expanded))
     cos = _cosines(expanded, index.passage_vectors, embedder)
     ranked = _rank(candidates, bm25, cos, min_cosine, min_bm25)
+    named = {w for w in re.findall(r"[a-z]{4,}", req.query.lower()) if w not in GENERIC_DOCUMENT_WORDS}
+    if named:  # only a document that the question names by a word of its own name (return_policy <- "return")
+        ranked = sorted(
+            ((i, sc + (NAMED_DOCUMENT_BOOST if named & set(index.passages[i]["document_id"].split("_")) else 0.0))
+             for i, sc in ranked),
+            key=lambda pair: pair[1],
+            reverse=True,
+        )
+
+    # A one-line preamble ("last updated ...", a title) matches a broad question well but answers nothing: behind the rules.
+    ranked = [r for r in ranked if len(index.passages[r[0]]["text"]) >= PREAMBLE_CHARS] + [
+        r for r in ranked if len(index.passages[r[0]]["text"]) < PREAMBLE_CHARS
+    ]
 
     passages, seen_text = [], set()
     for i, score in ranked:

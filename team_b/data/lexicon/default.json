@@ -227,6 +227,31 @@
         "عايز اعمل complaint", "complaint على", "اقدم complaint", "الـ complaint"
       ]
     },
+    "refund_status": {
+      "en": [
+        "where is my refund", "wheres my refund", "where's my refund", "refund status", "status of my refund",
+        "when will i get my refund", "when will my refund arrive", "when do i get my money back",
+        "when will i get my money back", "has my refund been processed", "have you refunded me",
+        "i have not received my refund", "i havent received my refund", "refund not received",
+        "still waiting for my refund", "track my refund", "refund tracking", "where is my return", "return status",
+        "status of my return", "haven't received my refund", "have not received my refund", "didn't get my refund",
+        "didnt get my refund", "did not receive my refund", "haven't got my refund"
+      ],
+      "ar": [
+        "فين الاسترداد", "فين فلوسي", "فلوسي فين", "حالة الاسترداد", "حاله الاسترداد", "امتى هاخد فلوسي",
+        "امتى الفلوس هترجع", "الفلوس لسه مجتش", "لسه مخدتش فلوسي", "فين المرتجع", "حالة المرتجع", "حالة الاسترجاع",
+        "حاله الاسترجاع", "الاسترداد وصل", "فلوسي لسه"
+      ],
+      "arabizi": [
+        "feen flousi", "flousi feen", "emta hakhod flousi", "emta hakhod floosy", "flousi lessa", "floosy lessa",
+        "feen el refund", "el refund lessa", "refund status", "7alet el refund", "7alet el esterdad",
+        "7alet el estergaa3", "feen el mortga3", "emta el refund", "emta hageb floosy"
+      ],
+      "mixed": [
+        "feen el refund", "الـ refund لسه", "الـ refund فين", "where is الفلوس", "refund status", "حالة الـ refund",
+        "أمتى الـ refund", "emta الـ refund"
+      ]
+    },
     "human_request": {
       "en": [
         "talk to a human", "talk to a person", "talk to someone", "speak to a human", "speak to a person",

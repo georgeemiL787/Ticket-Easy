@@ -139,6 +139,22 @@
       ],
       "required_slots": [],
       "argument_map": {}
+    },
+    "refund_status": {
+      "kind": "lookup",
+      "description": "Where is my refund or my return: its status, the quality check, the amount and where it goes.",
+      "examples": [
+        "Where is my refund for order ORD-30027?",
+        "فين فلوسي بتاعة الاوردر ORD-30027؟",
+        "feen flousi bta3et el order ORD-30027"
+      ],
+      "required_slots": [
+        "order_id"
+      ],
+      "lookup_tool": "get_return_status",
+      "knowledge_query": "refund timeline payment method",
+      "knowledge_when": "returns",
+      "argument_map": {}
     }
   },
   "conflicting_intents": []

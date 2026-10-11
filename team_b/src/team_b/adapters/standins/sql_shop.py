@@ -234,7 +234,8 @@ def get_return_status(b: SqlBackend, a: dict[str, Any]) -> Outcome:
     rows = b.rows("SELECT * FROM returns WHERE order_id = ? ORDER BY return_id", a["order_id"])
     keys = ("return_id", "status", "requested_at", "received_at", "qc_result", "refund_amount_egp",
             "refund_destination", "refund_initiated_at")  # fmt: skip
-    return Ok({"returns": [{k: r[k] for k in keys} for r in rows]})
+    mine = {"order_id": a["order_id"], "customer_id": b.order(a["order_id"])["customer_id"]}  # type: ignore[index]
+    return Ok({**mine, "returns": [{k: r[k] for k in keys} for r in rows]})
 
 
 def create_return(b: SqlBackend, a: dict[str, Any]) -> Outcome:

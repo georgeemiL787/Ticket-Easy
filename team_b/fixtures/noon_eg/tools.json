@@ -300,9 +300,17 @@
        ],
        "additionalProperties": false
       }
+     },
+     "order_id": {
+      "type": "string"
+     },
+     "customer_id": {
+      "type": "string"
      }
     },
     "required": [
+     "order_id",
+     "customer_id",
      "returns"
     ],
     "additionalProperties": false

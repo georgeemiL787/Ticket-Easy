@@ -84,7 +84,11 @@ async def test_return_and_refund_status_is_read_from_the_returns_table() -> None
     status = (await call(shop(), "get_return_status", {"order_id": "ORD-30027"})).data["returns"]
     assert status[0]["return_id"] == "RET-5001" and status[0]["status"] == "refund_initiated"
     assert status[0]["refund_amount_egp"] == 450 and status[0]["refund_destination"] == "original_card"
-    assert (await call(shop(), "get_return_status", {"order_id": "ORD-30001"})).data == {"returns": []}
+    assert (await call(shop(), "get_return_status", {"order_id": "ORD-30001"})).data == {
+        "order_id": "ORD-30001",
+        "customer_id": "C-1001",
+        "returns": [],
+    }
     assert (await call(shop(), "get_return_status", {"order_id": "ORD-1"})).error_code == "NOT_FOUND"
 
 

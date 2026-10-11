@@ -1,0 +1,37 @@
+{
+  "id": "N12",
+  "title": "Noon: where is my refund in Egyptian Arabic (completed, to the noon wallet)",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "فين فلوسي بتاعة الاوردر ORD-30028",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone",
+        "locale": "ar"
+      }
+    },
+    {
+      "say": "01000000004",
+      "expect": {
+        "decision": "answer",
+        "locale": "ar",
+        "text_contains": [
+          "RET-5002",
+          "799",
+          "محفظة نون"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

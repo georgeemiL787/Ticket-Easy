@@ -158,7 +158,47 @@ async def _policy_quote(ctx: TurnContext, spec: IntentSpec) -> list[Passage]:
         return []
 
 
+def _return_reply(ctx: TurnContext, facts: dict[str, Any], passages: list[Passage]) -> Step:
+    """Where a return and its refund are, from the shop's returns table (amounts and dates exactly as it sent them)."""
+    composer, locale = default_composer(), locale_of(ctx)
+    order_id = str(facts.get("order_id", ""))
+    returns = sorted(facts.get("returns") or [], key=lambda r: str(r.get("return_id", "")))
+    if not returns:
+        return Step(
+            Decision.ANSWER,
+            reason=f"order {order_id} has no return",
+            reply_key="return_none",
+            values={"order_id": order_id},
+        )
+    latest = returns[-1]
+    status = str(latest.get("status", ""))
+    key = f"return_status_{status}" if composer.has(locale, f"return_status_{status}") else "return_status_other"
+    destination = str(latest.get("refund_destination") or "unknown")
+    destination_key = (
+        f"refund_to_{destination}" if composer.has(locale, f"refund_to_{destination}") else "refund_to_unknown"
+    )
+    amount = latest.get("refund_amount_egp")
+    values = {
+        "order_id": order_id,
+        "return_id": str(latest.get("return_id", "")),
+        "status": status.replace("_", " "),
+        "amount": f"{amount:g}" if isinstance(amount, int | float) else "",
+        "destination": composer.t(locale, destination_key),
+        "date": str(latest.get("refund_initiated_at") or latest.get("requested_at") or "")[:10],
+    }
+    return Step(
+        Decision.ANSWER,
+        reason=f"return {values['return_id']} of order {order_id} is {status}",
+        reply_key=key,
+        values=values,
+        citations=tuple(p.passage_id for p in passages),
+        passages=tuple(passages),
+    )
+
+
 def _status_reply(ctx: TurnContext, facts: dict[str, Any], passages: list[Passage]) -> Step:
+    if "returns" in facts:  # a return and refund lookup (get_return_status), not an order lookup
+        return _return_reply(ctx, facts, passages)
     composer, locale = default_composer(), locale_of(ctx)
     status = str(facts.get("order_status", ""))
     status_key = f"status_{status}"

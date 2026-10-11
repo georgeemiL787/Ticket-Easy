@@ -1,0 +1,14 @@
+{
+  "return_status_requested": "Your return {return_id} for order {order_id} was requested on {date}. Once noon receives and checks the item, the refund starts.",
+  "return_status_refund_approved": "Your return {return_id} for order {order_id} passed the check and your refund of EGP {amount} is approved. It will be sent to {destination}.",
+  "return_status_refund_initiated": "Your refund of EGP {amount} for return {return_id} (order {order_id}) was started on {date}. It will be sent to {destination}.",
+  "return_status_refunded": "Your refund of EGP {amount} for return {return_id} (order {order_id}) was completed. It was sent to {destination}.",
+  "return_status_partially_refunded": "Your return {return_id} (order {order_id}) was partly refunded: EGP {amount} was sent to {destination}. Some fees are not refundable.",
+  "return_status_rejected_in_hub": "Your return {return_id} for order {order_id} did not pass the check at the hub, so no refund was made. I can connect you with a colleague to look into it.",
+  "return_status_other": "Your return {return_id} for order {order_id} is {status}.",
+  "return_none": "I can't see a return for order {order_id}. If you would like to return an item, just tell me.",
+  "refund_to_original_card": "your original card",
+  "refund_to_noon_wallet": "your noon wallet",
+  "refund_to_bnpl_provider": "your payment provider (Tabby or Tamara)",
+  "refund_to_unknown": "the original payment method"
+}

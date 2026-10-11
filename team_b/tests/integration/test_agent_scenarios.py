@@ -47,7 +47,8 @@ ACTIONS = (
     "S04", "S05", "S06", "S06b", "S11", "S13", "S14", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "S26", "S27",
     "S30", "S31", "S32", "S38", "S60", "S62", "S65",
 )  # fmt: skip
-AGENT_SCENARIOS = (*LOOKUPS_AND_KNOWLEDGE, *ACTIONS)
+NOON = ("N01", "N02", "N03", "N04", "N05", "N06", "N07", "N08", "N09", "N10")  # the Noon shop (SQLite stand-in)
+AGENT_SCENARIOS = (*LOOKUPS_AND_KNOWLEDGE, *ACTIONS, *NOON)
 CASES = [(tenant, path) for tenant, path in discover() if path.name.split("_")[0] in AGENT_SCENARIOS]
 ACTION_CASES = [(t, p) for t, p in CASES if p.name.split("_")[0] in ACTIONS]
 

@@ -95,7 +95,8 @@ def build_container(
     clock = clock or (FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock())
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
-    shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids())
+    shops_dir = settings.db_path.parent / "shops" if settings.store == "sqlite" else None  # SQLite shops keep files
+    shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
     live = settings.mode == "live"  # Team A is real; the shop stays a stand-in until Team C's tools are connected
     policy_search = None if live else PolicySearchStandin(settings.fixtures_dir)
     rule_checker = None if live else RuleCheckerStandin(settings.fixtures_dir)

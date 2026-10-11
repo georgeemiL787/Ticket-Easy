@@ -190,7 +190,7 @@ async def test_an_admin_sees_every_business(secured: Container, client: httpx.As
     for tenant in ("shop_001", OTHER):
         assert (await client.get("/v1/dashboard/overview", params={"tenant_id": tenant})).status_code == 200
     tenants = await client.get("/v1/dashboard/tenants")
-    assert sorted(t["tenant_id"] for t in tenants.json()["tenants"]) == ["shop_001", OTHER]
+    assert sorted(t["tenant_id"] for t in tenants.json()["tenants"]) == ["noon_eg", "shop_001", OTHER]
 
 
 # ---- roles ----

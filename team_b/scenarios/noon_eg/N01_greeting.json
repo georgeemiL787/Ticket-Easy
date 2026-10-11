@@ -1,0 +1,25 @@
+{
+  "id": "N01",
+  "title": "Noon: a greeting is answered, nothing else happens",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "hi",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "locale": "en"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

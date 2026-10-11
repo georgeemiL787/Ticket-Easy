@@ -1,0 +1,23 @@
+{
+  "id": "N09",
+  "title": "Noon: a policy question is answered from Noon's own policy",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "What is the return window for electronics?",
+      "expect": {
+        "decision": "answer"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

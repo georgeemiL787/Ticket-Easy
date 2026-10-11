@@ -359,3 +359,10 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 - A phone that does not match says so and asks to check both numbers (`identity_failed` in the three locales; PURPOSES tells the writer). Two failures still hand over.
 - "Ignore your rules ..." (brain/injection.py, English, Arabic, Arabizi): nothing is blocked (the gates never depended on it); the reply starts with the fixed `override_notice` and the message is never treated as small talk. The writer may not say "certainly" to a request that still needs a check.
 - The chat page starts a new conversation on every load or refresh (web/chat/chat.js keeps no id).
+
+## Noon (noon_eg): a second shop on a SQLite stand-in (2026-10-11)
+
+- Data: Team A's Noon mock data is copied by `scripts/build_noon_fixtures.py` into `fixtures/noon_eg/` (seed.json = customers, orders, returns; policies/risk/rules/synonyms/tickets.json for the offline stand-ins; tools.json is Team B's). The policy passages are numbered like Team A's index (noon_return_policy@v1#s<n>).
+- Shop: a tenant folder with `seed.json` is a SQLite shop (`adapters/standins/sql_shop.py`, wired in `StandinShop`); data, audit log and idempotency memory are rows, kept in `<db dir>/shops/noon_eg_shop.sqlite3` when the store is sqlite (memory otherwise). Tools: verify_customer, get_order, list_customer_orders, get_return_status, create_return, create_ticket. Nile Style stays on its JSON stand-in.
+- Tenant config `config/tenants/noon_eg.json` (order ids ORD-#####). Team A needs `python -m team_a ingest --tenant noon_eg` for the real search.
+- NO approved Noon rules exist in Team A (data/rules has shop_001 only): every Noon change goes to a person (scenario N06). tests/integration/test_noon_write_path.py shows the write path with one temporary rule.

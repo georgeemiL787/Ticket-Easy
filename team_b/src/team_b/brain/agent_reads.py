@@ -330,6 +330,9 @@ async def build_view(ctx: TurnContext, refused: str | None, moves: list[Any]) ->
         moves=list(moves),
         refused=refused,
         pending=session.agent_pending,
+        active_request=session.active_intent,
+        requests_so_far=list(session.intents_seen),
+        details_given={k: (redact(v) if k == "order_id" else "given") for k, v in session.slots.items() if v},
         told_already=[
             f"{s.decision.value}: {s.reply_key} {s.values.get('reference', '')}".strip() for s in ctx.earlier
         ],

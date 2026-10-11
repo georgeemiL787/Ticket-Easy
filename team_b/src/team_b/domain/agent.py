@@ -171,6 +171,9 @@ class AgentView(FrozenModel):
     refused: str | None = None  # why the last proposed move was refused, so the next one can differ
     pending: str | None = None  # what the agent was waiting for from the customer last turn (slot:<name>, ...)
     told_already: list[str] = Field(default_factory=list)  # replies already settled this turn (the customer's yes)
+    active_request: str | None = None  # the request being worked on, kept by code across turns (return_request, ...)
+    requests_so_far: list[str] = Field(default_factory=list)  # every request of this conversation, in order
+    details_given: dict[str, str] = Field(default_factory=dict)  # what the customer already told: order number, "given"
 
 
 class CheckRecord(FrozenModel):

@@ -1,12 +1,13 @@
 # One-command demo of the whole stack (needs Docker). The service's own commands are in team_b/Makefile.
 # make demo        start the demo (no AI model) and fill the dashboard with example conversations
 # make demo-full   the same plus a local AI model (Ollama, qwen3:8b: the first start downloads about 5 GB)
+# make demo-live  Team B with the real Team A (policy search, safety, rules); needs Ollama on the host with bge-m3 pulled
 # make down        stop it (your data is kept)   make logs   follow what it is doing
 
 PORT ?= 8010
 COMPOSE = docker compose
 
-.PHONY: demo demo-full down logs reset
+.PHONY: demo demo-full demo-live down logs reset
 
 demo:
 	$(COMPOSE) --profile light up -d --build --wait
@@ -20,15 +21,21 @@ demo-full:
 	@$(COMPOSE) --profile full exec team-b-full python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
+demo-live:
+	$(COMPOSE) --profile live up -d --build --wait
+	$(COMPOSE) --profile live exec team-b-live python -m team_b seed-demo
+	@$(COMPOSE) --profile live exec team-b-live python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	@$(MAKE) --no-print-directory urls
+
 down:
-	$(COMPOSE) --profile light --profile full down
+	$(COMPOSE) --profile light --profile full --profile live down
 
 logs:
-	$(COMPOSE) --profile light --profile full logs -f --tail=100
+	$(COMPOSE) --profile light --profile full --profile live logs -f --tail=100
 
 # stop and delete the stored data too (the database and the downloaded model)
 reset:
-	$(COMPOSE) --profile light --profile full down -v
+	$(COMPOSE) --profile light --profile full --profile live down -v
 
 .PHONY: urls
 urls:

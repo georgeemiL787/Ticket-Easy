@@ -159,9 +159,13 @@ class LLMRegistry:
             provider = role_provider(settings, role)
             if provider is not None:
                 own = settings.role(role)
-                self._limiters.add(provider.base_url, provider.model, own.rpm, own.tpm)
+                # the numbers are per key: with several keys (rotated one request after the other) the budget is the sum
+                keys = max(1, len([k for k in (provider.api_key or "").split(",") if k.strip()]))
+                rpm = own.rpm * keys if own.rpm is not None else None
+                tpm = own.tpm * keys if own.tpm is not None else None
+                self._limiters.add(provider.base_url, provider.model, rpm, tpm)
                 if own.fallback_model:  # the backup model has its own budget, with the same numbers
-                    self._limiters.add(provider.base_url, own.fallback_model, own.rpm, own.tpm)
+                    self._limiters.add(provider.base_url, own.fallback_model, rpm, tpm)
         for role in ROLES:
             self._roles[role] = self._build(role)
 

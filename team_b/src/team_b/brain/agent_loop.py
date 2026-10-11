@@ -161,6 +161,34 @@ def check_move(ctx: TurnContext, move: AnyMove, seen: set[str]) -> list[CheckRec
             checks.append(_check("question_exists", known, f"no question template {key!r}"))
             ok = (move.slot is None and key != "ask_generic") or move.slot in SLOT_KEYS
             checks.append(_check("slot_is_known", ok, f"slot {move.slot!r} is not a detail this agent collects"))
+            session = ctx.session
+            have = (
+                bool(move.slot)
+                and move.slot != "order_id"
+                and (  # a new order number may be wanted: that one is asked
+                    bool(session.slots.get(move.slot or "")) or (move.slot == "phone" and session.identity.verified)
+                )
+            )
+            checks.append(  # the customer already gave it: asking again is what makes the agent seem to forget
+                _check(
+                    "slot_not_already_known", not have, f"you already have the {move.slot}: use it, do not ask for it"
+                )
+            )
+            lost = move.slot is None and session.active_intent is not None and session.awaiting != "detail"
+            checks.append(  # the shop's record says what the customer wants: asking "what do you need?" is forgetting
+                _check(
+                    "not_forgetting_the_request",
+                    not lost,
+                    f"the customer asked for {session.active_intent}: go on with it",
+                )
+            )
+            repeats = move.slot is None and session.awaiting == "detail"
+            tired = repeats and session.agent_questions >= ctx.tenant.escalation.max_clarifications
+            checks.append(
+                _check(
+                    "not_asking_the_same_again", not tired, "you already asked twice for more detail: hand over instead"
+                )
+            )
     if isinstance(move, HandOver):
         checks.append(_check("tried_is_short", len(move.tried) <= MAX_TRIED, "the list of what was tried is too long"))
         problem = escalation.handover_problem(ctx, move)
@@ -260,6 +288,7 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
                          values=values, awaiting="order_choice")  # fmt: skip
             return agent_reads.ReadResult("asked which order", asked)
         ctx.session.agent_questions += 1
+        _remember_the_request(ctx)
         values = {"slot": move.slot} if move.slot else {}
         awaiting = f"slot:{move.slot}" if move.slot else "detail"
         proves_identity = move.slot == "phone" and not ctx.session.identity.verified  # as the usual flow labels it
@@ -278,6 +307,19 @@ async def _work(ctx: TurnContext, move: AnyMove) -> agent_reads.ReadResult:
         return agent_reads.ReadResult(f"handed over: {move.reason.value}", step)
     assert isinstance(move, Reply)
     return agent_reads.ReadResult(f"replied with {move.plan.reply_key}", await _reply_step(ctx, move))
+
+
+def _remember_the_request(ctx: TurnContext) -> None:
+    """The agent asks for a detail of a request: that request is now the active one. Without it, a turn the AI cannot
+    take (rate limit, timeout) falls to the usual stages, which would not know what the answer belongs to."""
+    session = ctx.session
+    if session.active_intent is not None or ctx.understanding is None:
+        return
+    for found in ctx.understanding.intents:
+        spec = ctx.tenant.intents.get(found.name)
+        if spec is not None and spec.kind in ("action", "lookup"):
+            session.active_intent = found.name
+            return
 
 
 def _give_up(ctx: TurnContext, reason: str) -> Step:

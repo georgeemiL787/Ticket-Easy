@@ -57,3 +57,15 @@ def test_past_ticket_search(keyword_index):
 def test_retrieval_result_requires_empty_reason_when_empty():
     with pytest.raises(ValidationError):
         RetrievalResult(request_id="r", tenant_id="shop_001", query="q", passages=[])
+
+
+def test_english_exchange_question_reaches_the_arabic_exchange_rule(keyword_index):
+    # shop_001/synonyms.json maps "exchange", "size" ... to the policy's own words (الاستبدال, مقاس)
+    result = search(keyword_index, "I want to exchange order NS-20790 for a bigger size, it is too small")
+    assert result.passages and result.passages[0].citation == "return_policy@v2#s5"
+
+
+def test_a_question_that_names_the_return_policy_does_not_start_with_a_date_line(keyword_index):
+    result = search(keyword_index, "What is your return policy?")
+    assert all(len(p.text) >= 80 for p in result.passages[:3])  # no one-line "last updated" preamble in front
+    # (which rule comes first for a broad question needs the embeddings: `eval-retrieval` and `search` measure that)

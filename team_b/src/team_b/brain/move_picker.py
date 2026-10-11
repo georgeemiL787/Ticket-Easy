@@ -82,6 +82,9 @@ class LLMMovePicker:
             "questions_asked": view.questions_asked,
             "frustration_strikes": view.frustration_strikes,
             "waiting_for": view.pending,
+            "active_request": view.active_request,
+            "requests_so_far": view.requests_so_far,
+            "details_the_customer_already_gave": view.details_given,
         }
         if view.told_already:
             verified["already_told_to_the_customer_this_turn"] = view.told_already

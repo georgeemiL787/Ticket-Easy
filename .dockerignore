@@ -10,6 +10,8 @@
 team_b/tests
 team_b/loadtest/out
 team_b/web/dashboard
-team_a
+team_a/tests
+team_a/.venv
+team_a/scripts
 team_c
 Docs

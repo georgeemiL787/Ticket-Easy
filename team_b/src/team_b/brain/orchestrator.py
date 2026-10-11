@@ -173,6 +173,9 @@ class Orchestrator:
                 raise NotFoundError(f"conversation {conversation_id} does not exist")
             message = Message(role=role, text=text, at=self._clock.now())  # type: ignore[arg-type]
             session.outbox.append(message)
+            session.history.append(
+                message
+            )  # the assistant reads this when the case is handed back: it must know what was said
             await deps.sessions.save(session)
         if self._events is not None:
             self._events.publish(tenant_id, conversation_id, message.model_dump(mode="json"))
@@ -187,8 +190,10 @@ class Orchestrator:
                 return found
         raise NotFoundError(f"case {case_id} does not exist")
 
-    async def _reopen_conversation(self, case: HandoffCase) -> None:
-        """The case is over: the assistant owns the conversation again, its memory (slots, identity) intact."""
+    async def _reopen_conversation(self, case: HandoffCase, note: str | None = None) -> None:
+        """The case is over: the assistant owns the conversation again, its memory (slots, identity) intact.
+
+        The person's replies are already in the history; the closing note is added to it as a system line."""
         deps = self._deps
         async with deps.sessions.lock(case.tenant_id, case.conversation_id):
             session = await deps.sessions.load(case.tenant_id, case.conversation_id)
@@ -196,6 +201,14 @@ class Orchestrator:
                 return  # gone, or already linked to a newer case
             session.status, session.handoff_case_id, session.handoff_notice_sent = "active", None, False
             session.awaiting = None
+            if note and note.strip():
+                session.history.append(
+                    Message(
+                        role="system",
+                        text=f"Note from the colleague who handled this: {note.strip()}",
+                        at=self._clock.now(),
+                    )
+                )
             session.updated_at = self._clock.now()
             await deps.sessions.save(session)
 
@@ -244,7 +257,7 @@ class Orchestrator:
         case.require_claimer(agent)
         case.transition(CaseStatus.RETURNED_TO_AGENT, actor=agent, at=self._clock.now(), note=note or "")
         await self._deps.cases.save(case)
-        await self._reopen_conversation(case)
+        await self._reopen_conversation(case, note)
 
     async def resolve(self, case_id: str, agent: str, note: str | None = None) -> None:
         """The agent closes the case."""
@@ -252,4 +265,4 @@ class Orchestrator:
         case.require_claimer(agent)
         case.transition(CaseStatus.RESOLVED, actor=agent, at=self._clock.now(), note=note or "")
         await self._deps.cases.save(case)
-        await self._reopen_conversation(case)
+        await self._reopen_conversation(case, note)

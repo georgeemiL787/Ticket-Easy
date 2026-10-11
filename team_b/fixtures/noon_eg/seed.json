@@ -1,7 +1,7 @@
 {
  "tenant_id": "noon_eg",
  "as_of": "2026-10-08",
- "source": "team_a/data/mock/noon_eg (fictional people, phones and prices)",
+ "source": "team_a/data/e-commerce/noon_eg/seed (fictional people, phones and prices)",
  "customers": [
   {
    "customer_id": "C-1001",

@@ -1,6 +1,6 @@
 """Copy Team A's Noon (noon_eg) mock data into Team B's fixtures: Team B stays self-contained, tests repeatable.
 
-Usage: python scripts/build_noon_fixtures.py [--source ../team_a/data/mock/noon_eg]
+Usage: python scripts/build_noon_fixtures.py [--source ../team_a/data/e-commerce/noon_eg/seed]
 
 Team A owns the data (customers, orders, returns). This writes fixtures/noon_eg/seed.json, which the stand-in shop loads
 into a SQLite database (adapters/standins/sql_shop.py). Run it again whenever Team A updates the Noon data; the tools
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_SOURCE = ROOT.parent / "team_a" / "data" / "mock" / "noon_eg"
+DEFAULT_SOURCE = ROOT.parent / "team_a" / "data" / "e-commerce" / "noon_eg" / "seed"
 OUT = ROOT / "fixtures" / "noon_eg" / "seed.json"
 
 
@@ -26,7 +26,7 @@ def build(source: Path) -> dict[str, object]:
     return {
         "tenant_id": "noon_eg",
         "as_of": meta["as_of"],  # type: ignore[index]
-        "source": "team_a/data/mock/noon_eg (fictional people, phones and prices)",
+        "source": "team_a/data/e-commerce/noon_eg/seed (fictional people, phones and prices)",
         "customers": customers["customers"],
         "orders": orders["orders"],
         "returns": returns["returns"],
@@ -41,7 +41,7 @@ def keywords_of(title: str) -> list[str]:
 
 def policy_passages(source: Path) -> dict[str, object]:
     """The Noon return policy as passages numbered like Team A's index: one per "## " heading (…#s<n>)."""
-    text = (source.parent.parent / "corpus" / "noon_eg" / "noon_egypt_return_policy.md").read_text(encoding="utf-8")
+    text = (source.parent / "corpus" / "noon_egypt_return_policy.md").read_text(encoding="utf-8")
     sections: list[tuple[str, list[str]]] = []
     for line in text.splitlines():
         if line.startswith("## "):

@@ -91,8 +91,9 @@ def test_the_reply_is_built_from_the_returns_table_only() -> None:
         none = _return_reply(Ctx(), {"order_id": "ORD-30001", "returns": []}, [])  # type: ignore[arg-type]
         assert none.reply_key == "return_none"
         odd = _return_reply(Ctx(), {"order_id": "O", "returns": [{"return_id": "R", "status": "something_new"}]}, [])  # type: ignore[arg-type]
-        assert (
-            odd.reply_key == "return_status_other" and odd.values["destination"]
-        )  # an unknown status is still said plainly
+        assert odd.reply_key == "return_status_other" and odd.values["status"] == "something new"  # said plainly
+        rows = [{"return_id": "R", "status": "rejected_in_hub", "requested_at": "2026-10-01"}]
+        rejected = _return_reply(Ctx(), {"order_id": "O", "returns": rows}, [])  # type: ignore[arg-type]
+        assert "date" not in rejected.values  # the request date must not read as the date of the rejection
     finally:
         lookup.locale_of = original  # type: ignore[assignment]

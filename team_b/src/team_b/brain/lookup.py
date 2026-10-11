@@ -16,7 +16,7 @@ from typing import Any
 
 from team_b.brain import gates, identity, knowledge, shopcalls
 from team_b.brain.choices import describe_orders, mask_order_id
-from team_b.brain.composer import default_composer
+from team_b.brain.composer import PLACEHOLDERS, default_composer
 from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.errors import UpstreamError
@@ -186,9 +186,13 @@ def _return_reply(ctx: TurnContext, facts: dict[str, Any], passages: list[Passag
         "destination": composer.t(locale, destination_key),
         "date": str(latest.get("refund_initiated_at") or latest.get("requested_at") or "")[:10],
     }
+    used = PLACEHOLDERS.get(
+        key, frozenset()
+    )  # only the facts this sentence is about: a date must not be read as another
+    values = {k: v for k, v in values.items() if k in used}
     return Step(
         Decision.ANSWER,
-        reason=f"return {values['return_id']} of order {order_id} is {status}",
+        reason=f"return {latest.get('return_id')} of order {order_id} is {status}",
         reply_key=key,
         values=values,
         citations=tuple(p.passage_id for p in passages),

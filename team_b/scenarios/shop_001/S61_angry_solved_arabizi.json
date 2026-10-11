@@ -1,0 +1,26 @@
+{
+  "id": "S61",
+  "title": "One very angry message (Arabizi) is apologised to and still solved, no handoff",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "mohzela!!! afsha khedma, feen el order NS-20877? ra2mi 01012345601",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "locale": "arabizi",
+        "text_contains": "NS-20877"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "ticket-easy-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Manager dashboard of Ticket-Easy (Team B). Built into team_b/web/dashboard and served at /dashboard.",
+  "scripts": {
+    "dev": "vite",
+    "types": "node scripts/gen-types.mjs",
+    "types:check": "node scripts/gen-types.mjs --check",
+    "typecheck": "npm run types:check && tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run typecheck && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0",
+    "recharts": "^3.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^26.1.0",
+    "json-schema-to-typescript": "^15.0.4",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0",
+    "vitest": "^3.2.0"
+  }
+}

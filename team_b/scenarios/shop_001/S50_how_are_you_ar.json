@@ -1,0 +1,29 @@
+{
+  "id": "S50",
+  "title": "How are you (Egyptian Arabic): the greeting template, no question back, no case",
+  "status": "active",
+  "owner": "sync",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "عامل ايه؟",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "escalation": null,
+        "locale": "ar",
+        "text_contains_any": [
+          "أهلاً"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

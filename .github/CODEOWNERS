@@ -1,0 +1,12 @@
+# Code that decides whether the shop is touched, and the record that proves it, needs two reviewers.
+# This file names who must look; "two reviewers" and "must be a code owner" are switched on in the branch protection
+# (Require approvals: 2, Require review from Code Owners). See team_b/docs/ci.md.
+#
+# Safety-critical files: the action flow, the action state machine, the trace rules, and the rule checker stand-in.
+/team_b/src/team_b/brain/actions.py                      @georgeemiL787 @Asmaa-Nazeh @omarEssam-11 @Basel-Elhofy @pasmala2004
+/team_b/src/team_b/domain/actions.py                     @georgeemiL787 @Asmaa-Nazeh @omarEssam-11 @Basel-Elhofy @pasmala2004
+/team_b/src/team_b/domain/trace.py                       @georgeemiL787 @Asmaa-Nazeh @omarEssam-11 @Basel-Elhofy @pasmala2004
+/team_b/src/team_b/adapters/standins/rule_checker.py     @georgeemiL787 @Asmaa-Nazeh @omarEssam-11 @Basel-Elhofy @pasmala2004
+
+# The checks themselves: weakening them needs the same care.
+/.github/                                                @georgeemiL787 @Asmaa-Nazeh @omarEssam-11 @Basel-Elhofy @pasmala2004

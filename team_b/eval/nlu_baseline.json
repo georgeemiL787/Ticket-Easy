@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "intent_accuracy": 0.8742,
+    "messages": 151
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "description": "A policy passage exactly as stored, for the evidence a decision stood on.",
+  "properties": {
+    "citation": {
+      "title": "Citation",
+      "type": "string"
+    },
+    "document_id": {
+      "title": "Document Id",
+      "type": "string"
+    },
+    "language": {
+      "title": "Language",
+      "type": "string"
+    },
+    "section": {
+      "title": "Section",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "citation",
+    "document_id",
+    "version",
+    "section",
+    "language",
+    "text"
+  ],
+  "title": "DashboardPassage",
+  "type": "object"
+}

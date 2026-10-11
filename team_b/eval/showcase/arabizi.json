@@ -1,0 +1,18 @@
+{
+ "tenant_id": "shop_001",
+ "title": "Arabizi (Franco): late order voucher, refused refund, support",
+ "customer": "Mona Adel (C-100)",
+ "turns": [
+  "ahlan, ana 3ayza a3raf el order bta3y wasal fein",
+  "el order raqam NS-20877",
+  "ra2my 01012345601",
+  "eh el 2ekhbar? ana mesh ba2dar astanna aktar men keda",
+  "el shahn 3adi bekam law talabt tany?",
+  "w law el order et2akhar kter, fi 7aga bet3awedony beha?",
+  "ena 3ayza el voucher bta3 el ta2khir lel order NS-20877",
+  "aywa ekmel",
+  "w el order el tany NS-20512 3ayza a3mel refund 3ashan mesh 3agebny",
+  "leh la2? ana estalemto men 3esherin yom bas",
+  "mashi, momken akalem 7ad men el support?"
+ ]
+}

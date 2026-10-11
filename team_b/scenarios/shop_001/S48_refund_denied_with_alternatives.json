@@ -1,0 +1,39 @@
+{
+  "id": "S48",
+  "title": "A refund after 14 days is explained, other options (exchange, voucher) are named, and a colleague is offered",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want a refund for order NS-20512",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "refuse",
+        "escalation": null,
+        "citations_include": [
+          "refund_policy@v1#s1"
+        ],
+        "text_contains": [
+          "exchange",
+          "voucher",
+          "colleague"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

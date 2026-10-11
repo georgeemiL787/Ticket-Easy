@@ -1,0 +1,29 @@
+{
+  "id": "S55",
+  "title": "Good morning (Arabizi): the greeting in Arabizi, no question back, no case",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "sabah el kheir",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "locale": "arabizi",
+        "text_contains_any": [
+          "Ahlan",
+          "Ahlan beek"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

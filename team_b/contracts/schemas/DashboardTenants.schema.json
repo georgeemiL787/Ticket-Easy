@@ -1,0 +1,41 @@
+{
+  "$defs": {
+    "DashboardTenant": {
+      "properties": {
+        "default_locale": {
+          "title": "Default Locale",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "tenant_id": {
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "display_name",
+        "default_locale"
+      ],
+      "title": "DashboardTenant",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "tenants": {
+      "items": {
+        "$ref": "#/$defs/DashboardTenant"
+      },
+      "title": "Tenants",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenants"
+  ],
+  "title": "DashboardTenants",
+  "type": "object"
+}

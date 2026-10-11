@@ -1,0 +1,33 @@
+{
+  "id": "S16",
+  "title": "Rule checker unavailable: fail closed, handoff, nothing written",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "inject": [
+    {
+      "plug": "rule_checker",
+      "operation": "check_action",
+      "mode": "fail",
+      "times": 2
+    }
+  ],
+  "turns": [
+    {
+      "say": "I want to return order NS-20790, wrong size. My phone is 01123456702",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "dependency_unavailable",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "dependency_unavailable",
+    "trace_invariants": true
+  }
+}

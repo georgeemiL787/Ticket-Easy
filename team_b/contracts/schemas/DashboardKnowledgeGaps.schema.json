@@ -1,0 +1,73 @@
+{
+  "$defs": {
+    "QuestionGroup": {
+      "additionalProperties": false,
+      "properties": {
+        "count": {
+          "title": "Count",
+          "type": "integer"
+        },
+        "examples": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Examples",
+          "type": "array"
+        },
+        "last_seen": {
+          "format": "date-time",
+          "title": "Last Seen",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "question",
+        "count",
+        "examples",
+        "last_seen"
+      ],
+      "title": "QuestionGroup",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "groups": {
+      "items": {
+        "$ref": "#/$defs/QuestionGroup"
+      },
+      "title": "Groups",
+      "type": "array"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "questions_without_answer": {
+      "title": "Questions Without Answer",
+      "type": "integer"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "period_start",
+    "period_end",
+    "questions_without_answer",
+    "groups"
+  ],
+  "title": "DashboardKnowledgeGaps",
+  "type": "object"
+}

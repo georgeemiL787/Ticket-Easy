@@ -1,0 +1,33 @@
+{
+  "id": "S47",
+  "title": "The safety screen fails once: it is asked again in the same turn and the return goes on to a confirmation",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "inject": [
+    {
+      "plug": "safety_screen",
+      "operation": "classify_risk",
+      "mode": "fail",
+      "times": 1
+    }
+  ],
+  "turns": [
+    {
+      "say": "I want to return order NS-20790, wrong size. My phone is 01123456702",
+      "expect": {
+        "decision": "confirm",
+        "escalation": null,
+        "awaiting": "confirmation"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

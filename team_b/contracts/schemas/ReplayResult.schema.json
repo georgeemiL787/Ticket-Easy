@@ -1,0 +1,177 @@
+{
+  "$defs": {
+    "ReplayMove": {
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "refused": {
+          "title": "Refused",
+          "type": "boolean"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "summary",
+        "refused"
+      ],
+      "title": "ReplayMove",
+      "type": "object"
+    },
+    "ReplayRun": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "turns": {
+          "items": {
+            "$ref": "#/$defs/ReplayTurn"
+          },
+          "title": "Turns",
+          "type": "array"
+        },
+        "writes": {
+          "title": "Writes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label",
+        "turns",
+        "writes"
+      ],
+      "title": "ReplayRun",
+      "type": "object"
+    },
+    "ReplayTurn": {
+      "properties": {
+        "agent_mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Agent Mode"
+        },
+        "awaiting": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Awaiting"
+        },
+        "decision": {
+          "title": "Decision",
+          "type": "string"
+        },
+        "escalation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Escalation"
+        },
+        "fallback_reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fallback Reason"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/ReplayMove"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "reply": {
+          "title": "Reply",
+          "type": "string"
+        },
+        "said": {
+          "title": "Said",
+          "type": "string"
+        }
+      },
+      "required": [
+        "said",
+        "reply",
+        "decision",
+        "escalation",
+        "awaiting",
+        "agent_mode",
+        "fallback_reason",
+        "moves"
+      ],
+      "title": "ReplayTurn",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "after": {
+      "$ref": "#/$defs/ReplayRun"
+    },
+    "before": {
+      "$ref": "#/$defs/ReplayRun"
+    },
+    "changes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Changes",
+      "type": "object"
+    },
+    "conversation_id": {
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "differing_turns": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Differing Turns",
+      "type": "array"
+    },
+    "messages_from": {
+      "title": "Messages From",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "tenant_id",
+    "messages_from",
+    "changes",
+    "before",
+    "after",
+    "differing_turns"
+  ],
+  "title": "ReplayResult",
+  "type": "object"
+}

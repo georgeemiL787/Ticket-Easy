@@ -1,0 +1,104 @@
+{
+  "$defs": {
+    "Decision": {
+      "description": "Every customer message ends in exactly one of these.",
+      "enum": [
+        "answer",
+        "clarify",
+        "verify_identity",
+        "confirm",
+        "execute",
+        "refuse",
+        "handoff"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "Locale": {
+      "description": "Reply style. Mixed-language customers get Egyptian Arabic, so there is no mixed locale.",
+      "enum": [
+        "en",
+        "ar",
+        "arabizi"
+      ],
+      "title": "Locale",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "awaiting": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Awaiting"
+    },
+    "citations": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Citations",
+      "type": "array"
+    },
+    "conversation_id": {
+      "minLength": 1,
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "decision": {
+      "$ref": "#/$defs/Decision"
+    },
+    "handoff_case_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Handoff Case Id"
+    },
+    "locale": {
+      "$ref": "#/$defs/Locale"
+    },
+    "request_id": {
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+    },
+    "tenant_id": {
+      "minLength": 1,
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "trace_id": {
+      "minLength": 1,
+      "title": "Trace Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "tenant_id",
+    "conversation_id",
+    "text",
+    "locale",
+    "decision",
+    "trace_id"
+  ],
+  "title": "AgentReply",
+  "type": "object"
+}

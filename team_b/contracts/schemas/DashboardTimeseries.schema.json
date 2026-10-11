@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "bucket": {
+      "enum": [
+        "hour",
+        "day",
+        "week",
+        "month"
+      ],
+      "title": "Bucket",
+      "type": "string"
+    },
+    "metric": {
+      "title": "Metric",
+      "type": "string"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "points": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Points",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "metric",
+    "bucket",
+    "period_start",
+    "period_end",
+    "points"
+  ],
+  "title": "DashboardTimeseries",
+  "type": "object"
+}

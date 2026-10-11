@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "AgentSummary": {
+      "additionalProperties": false,
+      "description": "How the agent did over a window (metrics 15 to 19 in docs/metrics.md).",
+      "properties": {
+        "agent_turns": {
+          "title": "Agent Turns",
+          "type": "integer"
+        },
+        "automate_next": {
+          "items": {
+            "$ref": "#/$defs/AutomateRow"
+          },
+          "title": "Automate Next",
+          "type": "array"
+        },
+        "by_reason": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "title": "By Reason",
+          "type": "object"
+        },
+        "fallback_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fallback Rate"
+        },
+        "fallback_reasons": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Fallback Reasons",
+          "type": "object"
+        },
+        "fallbacks": {
+          "title": "Fallbacks",
+          "type": "integer"
+        },
+        "handoffs_chosen": {
+          "title": "Handoffs Chosen",
+          "type": "integer"
+        },
+        "handoffs_forced": {
+          "title": "Handoffs Forced",
+          "type": "integer"
+        },
+        "moves_per_message": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Moves Per Message"
+        },
+        "reviewer_blocked_actions": {
+          "title": "Reviewer Blocked Actions",
+          "type": "integer"
+        },
+        "reviewer_blocked_replies": {
+          "title": "Reviewer Blocked Replies",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agent_turns",
+        "fallbacks",
+        "fallback_rate",
+        "fallback_reasons",
+        "reviewer_blocked_replies",
+        "reviewer_blocked_actions",
+        "moves_per_message",
+        "handoffs_forced",
+        "handoffs_chosen",
+        "by_reason",
+        "automate_next"
+      ],
+      "title": "AgentSummary",
+      "type": "object"
+    },
+    "AutomateRow": {
+      "additionalProperties": false,
+      "properties": {
+        "handoffs": {
+          "title": "Handoffs",
+          "type": "integer"
+        },
+        "intent": {
+          "title": "Intent",
+          "type": "string"
+        },
+        "rate": {
+          "title": "Rate",
+          "type": "number"
+        },
+        "turns": {
+          "title": "Turns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "intent",
+        "handoffs",
+        "turns",
+        "rate"
+      ],
+      "title": "AutomateRow",
+      "type": "object"
+    }
+  },
+  "description": "How the agent did in the window, next to the period before it.",
+  "properties": {
+    "now": {
+      "$ref": "#/$defs/AgentSummary"
+    },
+    "period_end": {
+      "format": "date-time",
+      "title": "Period End",
+      "type": "string"
+    },
+    "period_start": {
+      "format": "date-time",
+      "title": "Period Start",
+      "type": "string"
+    },
+    "previous": {
+      "$ref": "#/$defs/AgentSummary"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "period_start",
+    "period_end",
+    "now",
+    "previous"
+  ],
+  "title": "DashboardAgent",
+  "type": "object"
+}

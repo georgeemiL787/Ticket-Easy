@@ -1,0 +1,18 @@
+{
+  "human_will_reply": "Zameel men fari2 khedmet el 3omala2 hayrod 3aleik hena fe a2rab wa2t.",
+  "handoff_generic": "Ha7awelak le zameel ye2dar yesa3dak fe da.",
+  "handoff_customer_request": "Akeed. Ha7awelak delwa2ty le zameel men fari2 khedmet el 3omala2.",
+  "handoff_mandatory_risk": "Ha7awel el mawdoo3 da fawran le fari2 khedmet el 3omala2 3ashan zameel yetab3o ma3ak benafso.",
+  "handoff_policy_denied": "Ma2darsh akammel fel talab da, bas ha7awelo le zameel yeb8 3ala 7altak.",
+  "handoff_approval_required": "El talab da me7tag mwafa2a men fari2 khedmet el 3omala2, fa 7awaltoh le zameel yeraga3o.",
+  "handoff_repeated_tool_failure": "Ma3raftesh agib el ma3lomat elly me7tagha delwa2ty, fa ha7awelak le zameel.",
+  "handoff_unverified_result": "Ma3raftesh at2akked en el talab da etnaffez, fa mesh ha2olak enno khalas. Zameel hayraga3o w yrod 3aleik.",
+  "handoff_no_evidence": "Mal2etsh egaba mo2akkada lel so2al da, fa ha7awelak le zameel ye2dar yesa3dak.",
+  "handoff_dependency_unavailable": "Goz2 men el system mesh shaghal delwa2ty, fa ha7awel el mawdoo3 le zameel.",
+  "handoff_low_confidence": "Mesh 2ader afham el talab kwayes, fa ha7awelak le zameel ye2dar yesa3dak.",
+  "handoff_identity_failed": "Ma3raftesh at2akked men bayanatak, fa 7efazan 3ala amanak ha7awelak le zameel.",
+  "handoff_ownership_mismatch": "Ma2darsh adilak tafaseel el order da hena. Ha7awelak le zameel yeraga3o ma3ak.",
+  "handoff_high_frustration": "Asef 3ala el ez3ag. Ha7awelak fawran le zameel ye7el el mawdoo3 da ma3ak.",
+  "handoff_capability_missing": "Lessa ma2darsh a3mel da benafsy, fa ha7awelo le zameel.",
+  "handoff_unsupported": "Da 7aga zameel men el fari2 bas elly ye2dar ye3melha, fa ha7awelak delwa2ty."
+}

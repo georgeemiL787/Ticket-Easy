@@ -1,0 +1,76 @@
+{
+  "tenant_id": "shop_001",
+  "description": "Fictional past tickets. No personal data.",
+  "tickets": [
+    {
+      "ticket_id": "T-2001",
+      "category": "return",
+      "customer_message": "ana 3ayez a3mel return lel jacket, el ma2as kebeer",
+      "resolution": "Return opened inside the 14-day window; courier pickup arranged within 3 working days.",
+      "created_at": "2026-08-11"
+    },
+    {
+      "ticket_id": "T-2002",
+      "category": "late_delivery",
+      "customer_message": "الاوردر متأخر 5 ايام ومحدش رد عليا",
+      "resolution": "Order was 5 days past the latest expected date; EGP 100 voucher issued per the late-delivery policy and the courier was chased.",
+      "created_at": "2026-08-14"
+    },
+    {
+      "ticket_id": "T-2003",
+      "category": "refund",
+      "customer_message": "I returned my order last week, when will I get my money back?",
+      "resolution": "Explained that card refunds take 7 to 14 business days after the warehouse inspection; refund was already approved.",
+      "created_at": "2026-08-19"
+    },
+    {
+      "ticket_id": "T-2004",
+      "category": "exchange",
+      "customer_message": "عايزة ابدل المقاس من M ل L",
+      "resolution": "Exchange for size L created within 14 days of delivery; size was in stock.",
+      "created_at": "2026-08-23"
+    },
+    {
+      "ticket_id": "T-2005",
+      "category": "address_change",
+      "customer_message": "ghayart el 3enwan ba3d ma el order et3amal, mumken a8ayro?",
+      "resolution": "Order was still processing, so the address was updated. After shipping this is not possible.",
+      "created_at": "2026-08-27"
+    },
+    {
+      "ticket_id": "T-2006",
+      "category": "cancellation",
+      "customer_message": "I want to cancel my order, I ordered the wrong colour",
+      "resolution": "Order had not shipped, so it was cancelled free of charge and the prepaid amount returned to the original payment method.",
+      "created_at": "2026-09-02"
+    },
+    {
+      "ticket_id": "T-2007",
+      "category": "refund",
+      "customer_message": "طلبت رد فلوس بعد 20 يوم من الاستلام",
+      "resolution": "Refund declined by the 14-day rule; case passed to customer care, which reviewed it as an exception request.",
+      "created_at": "2026-09-05"
+    },
+    {
+      "ticket_id": "T-2008",
+      "category": "voucher",
+      "customer_message": "el kobon el 3ayez a3mel beh order tany msh sha8al",
+      "resolution": "Voucher cannot be used on clearance items; customer advised to choose a regular item.",
+      "created_at": "2026-09-09"
+    },
+    {
+      "ticket_id": "T-2009",
+      "category": "complaint",
+      "customer_message": "المندوب كلمني وانا مش في البيت ورجع الاوردر",
+      "resolution": "Two delivery attempts had failed, so the order returned to the warehouse; redelivery was scheduled.",
+      "created_at": "2026-09-15"
+    },
+    {
+      "ticket_id": "T-2010",
+      "category": "payment",
+      "customer_message": "Can I pay cash on delivery for a 6000 EGP order?",
+      "resolution": "Cash on delivery is limited to EGP 5,000; customer was advised to pay by card, wallet or InstaPay.",
+      "created_at": "2026-09-21"
+    }
+  ]
+}

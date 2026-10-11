@@ -13,8 +13,10 @@ class Settings:
     data_dir: Path = ROOT / "data"
     index_dir: Path = ROOT / "var" / "index"
     resolutions_dir: Path = ROOT / "data" / "resolutions"  # separate so tests can redirect writes
+    db_path: Path = ROOT / "var" / "db" / "team_a.sqlite"
     ollama_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     embed_model: str = os.getenv("EMBED_MODEL", "bge-m3")
+    ollama_keep_alive: str = os.getenv("OLLAMA_KEEP_ALIVE", "30m")  # how long Ollama keeps the model loaded
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     openrouter_models: list[str] = field(
         default_factory=lambda: [
@@ -29,6 +31,9 @@ class Settings:
 
     def corpus_dir(self, tenant_id: str) -> Path:
         return self.data_dir / "corpus" / tenant_id
+
+    def mock_dir(self, tenant_id: str) -> Path:
+        return self.data_dir / "mock" / tenant_id
 
     def rules_file(self, tenant_id: str) -> Path:
         return self.data_dir / "rules" / f"{tenant_id}.json"

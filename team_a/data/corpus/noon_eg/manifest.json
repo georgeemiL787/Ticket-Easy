@@ -1,0 +1,8 @@
+{
+  "tenant_id": "noon_eg",
+  "tenant_name": "noon Egypt (real public return policy; customers, orders and returns are fictional mock data)",
+  "retrieval_thresholds": {"min_cosine": 0.6, "min_bm25": 4.0, "chosen_on": "noon_eg dev split (eval-retrieval --sweep), 2026-10-08; min_top_score left off: it traded recall for refusals at equal test accuracy"},
+  "documents": [
+    {"file": "noon_egypt_return_policy.md", "document_id": "noon_return_policy", "version": "v1", "effective_date": "2023-01-16", "current": true}
+  ]
+}

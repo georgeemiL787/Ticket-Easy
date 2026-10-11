@@ -32,6 +32,17 @@ def is_configured() -> bool:
     return bool(settings.openrouter_api_key and _free_models())
 
 
+_http: httpx.Client | None = None
+
+
+def _client() -> httpx.Client:
+    """One reused client: building one per call reloads the TLS bundle (~250 ms on Windows)."""
+    global _http
+    if _http is None:
+        _http = httpx.Client()
+    return _http
+
+
 def complete_json(system: str, user: str, timeout: float = 90) -> dict:
     """Ask for a JSON object; try each configured free model in turn."""
     if not is_configured():
@@ -39,7 +50,7 @@ def complete_json(system: str, user: str, timeout: float = 90) -> dict:
     errors = []
     for model in _free_models():
         try:
-            resp = httpx.post(
+            resp = _client().post(
                 OPENROUTER_URL,
                 headers={
                     "Authorization": f"Bearer {settings.openrouter_api_key}",

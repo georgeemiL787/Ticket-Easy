@@ -20,7 +20,7 @@ copy .env.example .env          # add OPENROUTER_API_KEY (free) if you want rule
 $env:PYTHONPATH = "src"
 python scripts\make_seed_docs.py          # regenerates the PDF/DOCX/XLSX seed documents
 python -m team_a ingest --tenant shop_001 # builds var/index/shop_001 (add --no-embeddings to skip Ollama)
-python -m pytest                          # 136 tests, no Ollama or API key needed
+python -m pytest                          # 262 tests, no Ollama or API key needed
 uvicorn team_a.service:app --app-dir src --port 8001
 ```
 
@@ -39,6 +39,8 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
 | `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
 | `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
+| `python -m team_a db build [--tenant X] [--reset] [--no-embeddings]` / `db stats` / `db query "<sql>"` | Build, count, or query (read-only) the SQLite data layer; see below |
+| `python -m team_a eval-scenarios [--tenant noon_eg]` | Retrieval smoke test on a tenant's scenarios, read from the database |
 | `python -m team_a export-schemas` | Write JSON Schemas to `contracts/schemas/` |
 
 ## HTTP API (for Team C's MCP adapter)
@@ -53,6 +55,7 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `explain_rule` | `GET /v1/policy/rules/{rule_id}/explain?tenant_id=` | `RuleExplanation` | none |
 | review (admin) | `GET /v1/policy/rules`, `POST .../{id}/approve`, `POST .../{id}/reject`, `PATCH .../{id}` | `Rule` | `X-Admin-Key` |
 | after re-ingest | `POST /v1/admin/reload` | clears the cached index | `X-Admin-Key` |
+| data lookups (read-only) | `GET /v1/data/customers/{id}`, `.../customers/{id}/orders`, `/v1/data/orders/{id}`, `.../orders/{id}/items/{item}/facts`, `/v1/data/returns/{id}` (all `?tenant_id=`) | JSON record | `X-Admin-Key` |
 | store a precedent (Team B, on `resolved`) | `POST /v1/knowledge/resolutions` | `ResolutionWriteResult` (`stored: false` + reasons when refused) | `X-Admin-Key` |
 | precedents for a human reviewer | `POST /v1/knowledge/resolutions/search` | `ResolutionSearchResult` (advisory only) | `X-Admin-Key` |
 
@@ -116,13 +119,36 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | Retrieval recall@5, dev sweep (27 answerable) | 92.6% (ar 8/9, Arabizi 9/9, en 8/9) |
 | No-answer precision / recall, dev sweep (6 unanswerable) | 100% / 50.0% |
 | Guardrail cases | **44/44**, 0 blocked actions executed |
-| Unit tests | 136 passed |
+| Unit tests | 262 passed |
 
 Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic. The held-out test numbers are the real estimate.
+
+**noon_eg** (English policy, questions in Arabic/Arabizi/English; 129 questions, dev 65 / test 64 with 24 off-topic in each, written before tuning). It has its own thresholds (`retrieval_thresholds` in its manifest: 0.60 / 4.0, from the dev sweep) and its own synonyms (`data/synonyms/noon_eg.json`, Arabic/Arabizi → the page's English wording, tuned on dev only):
+
+| noon_eg, held-out test | untuned (first 52 questions) | shipped (all 64) |
+|---|---|---|
+| Recall@5 (40 answerable) | 75.0% | **97.5%** (ar 12/12, Arabizi 11/12, en 16/16) |
+| No-answer precision / recall | 35.7% / 41.7% | **93.8% / 62.5%** (24 off-topic) |
+
+No-answer recall is the weak spot: off-topic questions that share words with the page (delivery, order, phone) still return passages, so the agent must check that a passage actually answers the question. An optional confidence floor on the top passage's score (`min_top_score` in `retrieval_thresholds`, swept by `eval-retrieval --sweep`) exists but is off: on noon it rejected 92% of off-topic questions but cut recall to 80% at the same test accuracy. `eval-scenarios` (noon's own customer scenarios, not used for tuning): expected-section recall@5 78%, 3/4 no-evidence cases empty.
+
+**Latency** (warm, through the API, bge-m3 half on GPU): a search is ~110 ms, of which ~95 ms is the query embedding; a repeated query is ~12 ms (embeddings are cached per text); structured lookups ~1-3 ms. The service loads the model at start-up and asks Ollama to keep it loaded for `OLLAMA_KEEP_ALIVE` (default 30m), so the first query after idle no longer pays the ~13 s load. Keeping it loaded holds ~1.3 GB of memory; lower the value on a small machine.
 
 **Demo 1:** the same return-window question asked in English, Egyptian Arabic and Arabizi cites `return_policy@v2#s2`. It ranks first in Arabic and Arabizi, and second in English, behind `refund_policy@v1#s1`, which states the same 14-day limit.
 
 **Demo 2:** a refund on day 20 is denied under `R-REFUND-14D`, citing `refund_policy@v1#s1`, with an Egyptian-Arabic `user_message` (see [contracts/examples/check_action.deny.json](contracts/examples/check_action.deny.json)).
+
+## Data layer (SQLite)
+
+One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant's structured data and knowledge. Build it with `python -m team_a db build` (add `--no-embeddings` without Ollama; if Ollama is down the build stores that tenant keyword-only and says so). Rebuilding is idempotent.
+
+- **Tenants:** `shop_001` (Nile Style; customers/orders from Team B's fixture, `data/mock/shop_001/backend.json`) and `noon_eg` (noon's real public return policy, with fictional customers/orders/returns/scenarios in `data/mock/noon_eg/`, regenerated by `build_noon_mock_data.py`).
+- **Tables:** `tenants`, `customers`, `orders`, `order_items`, `returns`, `policy_documents`, `policy_passages` (+ `passages_fts`, `passage_embeddings`), `past_tickets` (+ `ticket_embeddings`), `rules_mirror`, `resolutions_mirror`, `eval_scenarios`, `eval_scenario_sections`, `benchmark_questions`, `db_meta`, `db_sources`. Schema: [src/team_a/db/schema.sql](src/team_a/db/schema.sql).
+- **Repository** ([db/repository.py](src/team_a/db/repository.py)), all tenant-scoped: `get_customer`, `list_orders_for_customer`, `get_order` (with items), `get_return`, `build_check_action_facts`, `search_knowledge`, `get_passage`, `search_past_tickets`. Search uses the same retrieval code, thresholds and result contracts as the file index.
+- **Tenant isolation:** `tenant_id` leads every primary key and foreign key, so a row cannot reference another tenant's row.
+- **Source of truth stays in files.** `rules_mirror` and `resolutions_mirror` are read-only copies for joins and reporting (writes are rejected); resolutions are re-checked by `is_safe_to_persist` on import. `check_action` never reads the database.
+- **Per-tenant retrieval:** a tenant may set `retrieval_thresholds` in its manifest and add `data/synonyms/<tenant>.json`; tenants without them use the global values (shop_001 is unchanged).
+- **as_of:** dates are ISO text. Day counts are computed as of a date you pass; for mock tenants the default is the data's own `as_of` (`noon_eg` 2026-10-08, `shop_001` 2026-09-28), never the wall clock.
 
 ## Data (all fictional)
 
@@ -133,12 +159,13 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 - `data/synonyms/arabizi.json`: reviewed query expansions for Arabizi and dialect words.
 - `data/risk/keywords.json`: escalation keywords in Arabic, English and Arabizi.
 - `data/benchmark/`: 70 retrieval questions split into dev and held-out test, and the 44 guardrail cases.
+- `data/corpus/noon_eg/`, `data/mock/`: see [Data layer](#data-layer-sqlite). The noon policy text is a structured rewrite of noon's public page; all people, phones, emails and orders are fictional.
 
 ## Known limitations
 
 - The held-out test set is small (37 questions, 9 unanswerable; one question moves recall about 3.6 points), so treat retrieval numbers as rough. When adding questions, keep the stratified split, sweep on dev only and score test once.
 - Unanswerable shop questions the corpus doesn't cover, such as instalment plans, are the weakest retrieval area.
-- Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json`, and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
+- Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json` (and, for noon_eg, Arabic/Arabizi to English in `noon_eg.json`), and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
 - Risk keywords handle spelling variants, but miss new vocabulary (e.g. "someone changed the phone number on my account") and dropped Arabizi vowels. Substring matching over-flags ("court shoes" escalates as legal), which fails safe.
 - The `proposed` queue holds 20 LLM-extracted rules. The approval gate only catches rules that break a guardrail case, so review each one before approving.
 - Admin endpoints share one `X-Admin-Key`, with no per-user accounts, and `reviewer` is self-reported. Replace with real auth before any real deployment.

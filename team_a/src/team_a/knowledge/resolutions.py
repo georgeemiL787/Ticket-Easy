@@ -19,7 +19,7 @@ from datetime import date
 from team_a.config import settings
 from team_a.knowledge.embeddings import Embedder
 from team_a.knowledge.index import TenantIndex, index_resolutions, load_resolutions
-from team_a.knowledge.retrieval import _cosines, _rank
+from team_a.knowledge.retrieval import _cosines, _rank, tenant_thresholds
 from team_a.policy.risk import keyword_scan
 from team_a.schemas import (
     MANDATORY_ESCALATION,
@@ -210,11 +210,11 @@ def search_resolutions(
         i for i, r in enumerate(index.resolutions)
         if r["tenant_id"] == req.tenant_id and not _record_is_mandatory(r)  # defence in depth
     ]
-    expanded = expand_query(req.query)
+    expanded = expand_query(req.query, req.tenant_id)
     bm25 = index.resolution_bm25.scores(tokenize(expanded))
     cos = _cosines(expanded, index.resolution_vectors, embedder)
     mode = "hybrid" if cos is not None else "keyword_only"
-    ranked = _rank(candidates, bm25, cos, settings.min_cosine, settings.min_bm25)
+    ranked = _rank(candidates, bm25, cos, *tenant_thresholds(req.tenant_id))
 
     precedents = [
         Precedent(**index.resolutions[i], score=round(score, 4), citation=f"resolution:{index.resolutions[i]['case_id']}")

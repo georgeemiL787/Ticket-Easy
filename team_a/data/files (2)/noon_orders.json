@@ -1,0 +1,982 @@
+{
+  "_meta": {
+    "tenant_id": "noon_eg",
+    "as_of": "2026-10-08",
+    "currency": "EGP",
+    "fictional": true,
+    "source_policy": "noon_egypt_return_policy.md (https://www.noon.com/egypt-en/return-policy/)",
+    "note": "Fictional people, phones and emails. Prices and the 20 EGP COD fee are invented."
+  },
+  "orders": [
+    {
+      "order_id": "ORD-30001",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1001",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-30",
+      "expected_delivery_date": "2026-10-03",
+      "delivered_at": "2026-10-03",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30001-I1",
+          "sku": "SKU-09377",
+          "name": "Android smartphone 128GB",
+          "category": "electronics",
+          "product_subcategory": "smartphone",
+          "qty": 1,
+          "price_egp": 8999,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 8999
+    },
+    {
+      "order_id": "ORD-30002",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1002",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-02",
+      "expected_delivery_date": "2026-10-05",
+      "delivered_at": "2026-10-05",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30002-I1",
+          "sku": "SKU-33070",
+          "name": "Wireless headphones",
+          "category": "electronics",
+          "product_subcategory": "headphones",
+          "qty": 1,
+          "price_egp": 1299,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "opened",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1319
+    },
+    {
+      "order_id": "ORD-30003",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1003",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-23",
+      "expected_delivery_date": "2026-09-26",
+      "delivered_at": "2026-09-26",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30003-I1",
+          "sku": "SKU-93151",
+          "name": "14-inch laptop",
+          "category": "electronics",
+          "product_subcategory": "laptop",
+          "qty": 1,
+          "price_egp": 18500,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "defective",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 18500
+    },
+    {
+      "order_id": "ORD-30004",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1004",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-20",
+      "expected_delivery_date": "2026-09-23",
+      "delivered_at": "2026-09-23",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30004-I1",
+          "sku": "SKU-24669",
+          "name": "Men's padded jacket",
+          "category": "fashion",
+          "product_subcategory": "apparel",
+          "qty": 1,
+          "price_egp": 1450,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "unworn_tags_intact",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1470
+    },
+    {
+      "order_id": "ORD-30005",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1005",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-19",
+      "expected_delivery_date": "2026-09-22",
+      "delivered_at": "2026-09-22",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30005-I1",
+          "sku": "SKU-57418",
+          "name": "Women's summer dress",
+          "category": "fashion",
+          "product_subcategory": "apparel",
+          "qty": 1,
+          "price_egp": 899,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "unworn_tags_intact",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 899
+    },
+    {
+      "order_id": "ORD-30006",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1006",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-03",
+      "expected_delivery_date": "2026-10-06",
+      "delivered_at": "2026-10-06",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30006-I1",
+          "sku": "SKU-36330",
+          "name": "Men's boxer briefs 3-pack",
+          "category": "fashion",
+          "product_subcategory": "underwear",
+          "qty": 1,
+          "price_egp": 350,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 370
+    },
+    {
+      "order_id": "ORD-30007",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1007",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-04",
+      "expected_delivery_date": "2026-10-07",
+      "delivered_at": "2026-10-07",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30007-I1",
+          "sku": "SKU-30494",
+          "name": "Potato chips box",
+          "category": "grocery",
+          "product_subcategory": "snacks",
+          "qty": 1,
+          "price_egp": 240,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 260
+    },
+    {
+      "order_id": "ORD-30008",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1008",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-01",
+      "expected_delivery_date": "2026-10-04",
+      "delivered_at": "2026-10-04",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30008-I1",
+          "sku": "SKU-82609",
+          "name": "Face moisturizer",
+          "category": "beauty_health",
+          "product_subcategory": "skincare",
+          "qty": 1,
+          "price_egp": 420,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 420
+    },
+    {
+      "order_id": "ORD-30009",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1009",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-29",
+      "expected_delivery_date": "2026-10-02",
+      "delivered_at": "2026-10-02",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30009-I1",
+          "sku": "SKU-19384",
+          "name": "Women's perfume 100ml",
+          "category": "beauty_health",
+          "product_subcategory": "fragrance",
+          "qty": 1,
+          "price_egp": 1800,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "opened",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1800
+    },
+    {
+      "order_id": "ORD-30010",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1010",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-03",
+      "expected_delivery_date": "2026-10-06",
+      "delivered_at": "2026-10-06",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30010-I1",
+          "sku": "SKU-50227",
+          "name": "Anti-dandruff shampoo",
+          "category": "beauty_health",
+          "product_subcategory": "hair_care",
+          "qty": 1,
+          "price_egp": 160,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 180
+    },
+    {
+      "order_id": "ORD-30011",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1001",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-02",
+      "expected_delivery_date": "2026-10-05",
+      "delivered_at": "2026-10-05",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30011-I1",
+          "sku": "SKU-97874",
+          "name": "3-seater sofa",
+          "category": "home_kitchen",
+          "product_subcategory": "furniture",
+          "qty": 1,
+          "price_egp": 12500,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 12500
+    },
+    {
+      "order_id": "ORD-30012",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1002",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-30",
+      "expected_delivery_date": "2026-10-03",
+      "delivered_at": "2026-10-03",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30012-I1",
+          "sku": "SKU-79983",
+          "name": "Cotton bed sheet set",
+          "category": "home_kitchen",
+          "product_subcategory": "bedding",
+          "qty": 1,
+          "price_egp": 780,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "unwrapped",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 780
+    },
+    {
+      "order_id": "ORD-30013",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1003",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-28",
+      "expected_delivery_date": "2026-10-01",
+      "delivered_at": "2026-10-01",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30013-I1",
+          "sku": "SKU-13486",
+          "name": "Ceramic vase",
+          "category": "home_kitchen",
+          "product_subcategory": "home_decor",
+          "qty": 1,
+          "price_egp": 650,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 650
+    },
+    {
+      "order_id": "ORD-30014",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1007",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-03",
+      "expected_delivery_date": "2026-10-06",
+      "delivered_at": "2026-10-06",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30014-I1",
+          "sku": "SKU-91333",
+          "name": "Diapers size 4 (60 pcs)",
+          "category": "baby",
+          "product_subcategory": "diapers",
+          "qty": 1,
+          "price_egp": 520,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 540
+    },
+    {
+      "order_id": "ORD-30015",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1005",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-26",
+      "expected_delivery_date": "2026-09-29",
+      "delivered_at": "2026-09-29",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30015-I1",
+          "sku": "SKU-43749",
+          "name": "Foldable baby stroller",
+          "category": "baby",
+          "product_subcategory": "stroller",
+          "qty": 1,
+          "price_egp": 4300,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 4300
+    },
+    {
+      "order_id": "ORD-30016",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1006",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-02",
+      "expected_delivery_date": "2026-10-05",
+      "delivered_at": "2026-10-05",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30016-I1",
+          "sku": "SKU-24661",
+          "name": "Kids dress-up costume",
+          "category": "toys",
+          "product_subcategory": "costume",
+          "qty": 1,
+          "price_egp": 380,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 400
+    },
+    {
+      "order_id": "ORD-30017",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1008",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-09-25",
+      "expected_delivery_date": "2026-09-28",
+      "delivered_at": "2026-09-28",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30017-I1",
+          "sku": "SKU-05679",
+          "name": "Building blocks set 500 pcs",
+          "category": "toys",
+          "product_subcategory": "building_toy",
+          "qty": 1,
+          "price_egp": 1100,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1100
+    },
+    {
+      "order_id": "ORD-30018",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1009",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-04",
+      "expected_delivery_date": "2026-10-07",
+      "delivered_at": "2026-10-07",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30018-I1",
+          "sku": "SKU-09244",
+          "name": "Dog food treats",
+          "category": "pet_supplies",
+          "product_subcategory": "perishable",
+          "qty": 1,
+          "price_egp": 275,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 275
+    },
+    {
+      "order_id": "ORD-30019",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1010",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-01",
+      "expected_delivery_date": "2026-10-04",
+      "delivered_at": "2026-10-04",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30019-I1",
+          "sku": "SKU-25984",
+          "name": "Bluetooth speaker",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 950,
+          "return_eligible_tag": false,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 970
+    },
+    {
+      "order_id": "ORD-30020",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1002",
+      "section": "minutes",
+      "status": "delivered",
+      "placed_at": "2026-09-25",
+      "expected_delivery_date": "2026-09-28",
+      "delivered_at": "2026-09-28",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30020-I1",
+          "sku": "SKU-11874",
+          "name": "USB-C wall charger",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 249,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 269
+    },
+    {
+      "order_id": "ORD-30021",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1004",
+      "section": "minutes",
+      "status": "delivered",
+      "placed_at": "2026-09-20",
+      "expected_delivery_date": "2026-09-23",
+      "delivered_at": "2026-09-23",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30021-I1",
+          "sku": "SKU-18502",
+          "name": "USB-C cable 2m",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 120,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 140
+    },
+    {
+      "order_id": "ORD-30022",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1003",
+      "section": "minutes",
+      "status": "delivered",
+      "placed_at": "2026-09-10",
+      "expected_delivery_date": "2026-09-13",
+      "delivered_at": "2026-09-13",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30022-I1",
+          "sku": "SKU-94903",
+          "name": "Power bank 10000mAh",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 599,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "defective",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 599
+    },
+    {
+      "order_id": "ORD-30023",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1005",
+      "section": "minutes",
+      "status": "delivered",
+      "placed_at": "2026-09-29",
+      "expected_delivery_date": "2026-10-02",
+      "delivered_at": "2026-10-02",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30023-I1",
+          "sku": "SKU-46064",
+          "name": "Electric kettle",
+          "category": "home_kitchen",
+          "product_subcategory": "small_appliance",
+          "qty": 1,
+          "price_egp": 699,
+          "return_eligible_tag": true,
+          "warranty_tag": true,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 699
+    },
+    {
+      "order_id": "ORD-30024",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1006",
+      "section": "minutes",
+      "status": "delivered",
+      "placed_at": "2026-10-04",
+      "expected_delivery_date": "2026-10-07",
+      "delivered_at": "2026-10-07",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30024-I1",
+          "sku": "SKU-14182",
+          "name": "Bottled water 12-pack",
+          "category": "grocery",
+          "product_subcategory": "beverages",
+          "qty": 1,
+          "price_egp": 90,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 110
+    },
+    {
+      "order_id": "ORD-30025",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1011",
+      "section": "noon",
+      "status": "delivered",
+      "placed_at": "2026-10-01",
+      "expected_delivery_date": "2026-10-04",
+      "delivered_at": "2026-10-04",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30025-I1",
+          "sku": "SKU-31051",
+          "name": "Wireless mouse",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 450,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 450
+    },
+    {
+      "order_id": "ORD-30026",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1007",
+      "section": "noon",
+      "status": "shipped",
+      "placed_at": "2026-10-05",
+      "expected_delivery_date": "2026-10-10",
+      "delivered_at": null,
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30026-I1",
+          "sku": "SKU-20800",
+          "name": "Kitchen blender",
+          "category": "home_kitchen",
+          "product_subcategory": "small_appliance",
+          "qty": 1,
+          "price_egp": 1250,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1270
+    },
+    {
+      "order_id": "ORD-30027",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1001",
+      "section": "noon",
+      "status": "returned",
+      "placed_at": "2026-09-21",
+      "expected_delivery_date": "2026-09-24",
+      "delivered_at": "2026-09-24",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30027-I1",
+          "sku": "SKU-31051",
+          "name": "Wireless mouse",
+          "category": "electronics",
+          "product_subcategory": "accessory",
+          "qty": 1,
+          "price_egp": 450,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 450
+    },
+    {
+      "order_id": "ORD-30028",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1004",
+      "section": "noon",
+      "status": "returned",
+      "placed_at": "2026-09-26",
+      "expected_delivery_date": "2026-09-29",
+      "delivered_at": "2026-09-29",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30028-I1",
+          "sku": "SKU-42910",
+          "name": "Men's sneakers",
+          "category": "fashion",
+          "product_subcategory": "footwear",
+          "qty": 1,
+          "price_egp": 799,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 819
+    },
+    {
+      "order_id": "ORD-30029",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1005",
+      "section": "noon",
+      "status": "returned",
+      "placed_at": "2026-09-20",
+      "expected_delivery_date": "2026-09-23",
+      "delivered_at": "2026-09-23",
+      "payment_method": "bnpl_tabby",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30029-I1",
+          "sku": "SKU-68031",
+          "name": "Backpack",
+          "category": "fashion",
+          "product_subcategory": "bags",
+          "qty": 1,
+          "price_egp": 650,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 650
+    },
+    {
+      "order_id": "ORD-30030",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1003",
+      "section": "noon",
+      "status": "returned",
+      "placed_at": "2026-09-22",
+      "expected_delivery_date": "2026-09-25",
+      "delivered_at": "2026-09-25",
+      "payment_method": "credit_card_emi",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30030-I1",
+          "sku": "SKU-22160",
+          "name": "10-inch tablet",
+          "category": "electronics",
+          "product_subcategory": "tablet",
+          "qty": 1,
+          "price_egp": 7200,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 7200
+    },
+    {
+      "order_id": "ORD-30031",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1002",
+      "section": "noon",
+      "status": "return_in_progress",
+      "placed_at": "2026-09-25",
+      "expected_delivery_date": "2026-09-28",
+      "delivered_at": "2026-09-28",
+      "payment_method": "cash_on_delivery",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 20,
+      "items": [
+        {
+          "item_id": "ORD-30031-I1",
+          "sku": "SKU-98626",
+          "name": "Gaming headset",
+          "category": "electronics",
+          "product_subcategory": "headphones",
+          "qty": 1,
+          "price_egp": 1500,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1520
+    },
+    {
+      "order_id": "ORD-30032",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1008",
+      "section": "noon",
+      "status": "return_in_progress",
+      "placed_at": "2026-09-23",
+      "expected_delivery_date": "2026-09-26",
+      "delivered_at": "2026-09-26",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 40,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30032-I1",
+          "sku": "SKU-31289",
+          "name": "Yoga mat",
+          "category": "sports",
+          "product_subcategory": "fitness",
+          "qty": 1,
+          "price_egp": 380,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        },
+        {
+          "item_id": "ORD-30032-I2",
+          "sku": "SKU-55018",
+          "name": "Dumbbell set",
+          "category": "sports",
+          "product_subcategory": "fitness",
+          "qty": 1,
+          "price_egp": 900,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1320
+    },
+    {
+      "order_id": "ORD-30033",
+      "tenant_id": "noon_eg",
+      "customer_id": "C-1009",
+      "section": "noon",
+      "status": "returned",
+      "placed_at": "2026-09-13",
+      "expected_delivery_date": "2026-09-16",
+      "delivered_at": "2026-09-16",
+      "payment_method": "credit_card",
+      "shipping_fee_egp": 0,
+      "cod_fee_egp": 0,
+      "items": [
+        {
+          "item_id": "ORD-30033-I1",
+          "sku": "SKU-01071",
+          "name": "Women's handbag",
+          "category": "fashion",
+          "product_subcategory": "bags",
+          "qty": 1,
+          "price_egp": 1250,
+          "return_eligible_tag": true,
+          "warranty_tag": false,
+          "item_condition": "sealed",
+          "is_clearance": false
+        }
+      ],
+      "total_egp": 1250
+    }
+  ]
+}

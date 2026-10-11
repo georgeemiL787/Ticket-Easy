@@ -6,6 +6,9 @@ from ..diagnostics import check_errors
 from .. import capabilities
 
 
+# Model calls one suggestion request may make while looking for enough strong suggestions.
+SUGGESTION_ROUNDS = 3
+
 class Requests:
     """Owner tool requests (triage, then generation) and model suggestions that become requests only when accepted."""
 
@@ -189,19 +192,35 @@ class Requests:
         if not index:
             raise AppError("no_next_batch", "Every operation in the selected areas has already been reviewed; press Suggest additional tools to start again", 409)
         coverage["all_considered_ids"] = list(dict.fromkeys(list(exclude) + coverage["considered_ids"]))
-        run, output = self.runs.model_run(business_id, "suggestion", payload, SuggestionOutput)
-        try:
-            kept, withheld, recognized = capabilities.screen(output, index, existing, prior, count)
-            bid, stamp = uid(), now()
-            with self.store.connect(write=True) as c:
-                c.execute("INSERT INTO suggestion_batches VALUES(?,?,?,?,?,?,?,?,?)", (bid, business_id, spec["id"], run, count, dump(coverage), dump(withheld), dump(recognized), stamp))
-                for d in kept:
-                    c.execute("INSERT INTO suggestions(id,batch_id,business_id,spec_id,content,category,status,created_at) VALUES(?,?,?,?,?,?,'open',?)",
-                              (uid(), bid, business_id, spec["id"], dump(d), d["category"], stamp))
-            self.store.finish_run(run, dict(batch_id=bid, kept=len(kept), withheld=len(withheld), recognized=len(recognized)))
-        except Exception as exc:
-            self.runs.fail_run(run, exc)
-            raise
+        # Ask again until `count` buildable suggestions pass the potential gate (security first), at most
+        # SUGGESTION_ROUNDS model calls. Each later round names what was withheld and why, so the model
+        # does not resubmit it; a short result is reported rather than padded with weak ideas.
+        kept, withheld, recognized, runs = [], [], [], []
+        for _ in range(SUGGESTION_ROUNDS):
+            remaining = count - sum(k["category"] != "blocked_by_missing_api" for k in kept)
+            if remaining <= 0:
+                break
+            payload = dict(payload, max_suggestions=remaining, rejected_this_batch=[dict(title=w["title"], reason=w["reason"]) for w in withheld])
+            run, output = self.runs.model_run(business_id, "suggestion", payload, SuggestionOutput)
+            runs.append(run)
+            try:
+                seen = prior + [dict(title=x["title"]) for x in kept + withheld]
+                round_kept, round_withheld, round_recognized = capabilities.screen(output, index, existing, seen, remaining)
+                self.store.finish_run(run, dict(kept=len(round_kept), withheld=len(round_withheld), recognized=len(round_recognized)))
+            except Exception as exc:
+                self.runs.fail_run(run, exc)
+                raise
+            kept += round_kept
+            withheld += round_withheld
+            recognized += round_recognized
+        kept.sort(key=lambda k: -k.get("potential_score", 0))
+        coverage.update(suggestion_rounds=len(runs), run_ids=runs, good=sum(k["category"] != "blocked_by_missing_api" for k in kept))
+        bid, stamp = uid(), now()
+        with self.store.connect(write=True) as c:
+            c.execute("INSERT INTO suggestion_batches VALUES(?,?,?,?,?,?,?,?,?)", (bid, business_id, spec["id"], runs[0], count, dump(coverage), dump(withheld), dump(recognized), stamp))
+            for d in kept:
+                c.execute("INSERT INTO suggestions(id,batch_id,business_id,spec_id,content,category,status,created_at) VALUES(?,?,?,?,?,?,'open',?)",
+                          (uid(), bid, business_id, spec["id"], dump(d), d["category"], stamp))
         batch = next(b for b in self.suggestions(business_id)["batches"] if b["id"] == bid)
         return dict(batch, suggestions=[dict(r, content=json.loads(r["content"])) for r in self.store.all("SELECT * FROM suggestions WHERE batch_id=? ORDER BY rowid", (bid,))])
 

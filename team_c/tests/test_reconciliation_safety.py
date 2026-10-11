@@ -15,7 +15,8 @@ def test_compact_check_prompt_preserves_all_answers_and_grounding_evidence():
     data, messages = model_messages("reconciliation", payload)
     assert json.loads(data) == payload
     assert messages[0]["content"] == RECONCILIATION_SYSTEM
-    assert len(RECONCILIATION_SYSTEM) < len(SYSTEM) / 2
+    # A dedicated, shorter prompt: none of the proposal-writing rules travel with an answer check.
+    assert len(RECONCILIATION_SYSTEM) < len(SYSTEM) and "For generation:" not in RECONCILIATION_SYSTEM
     assert "latest nonempty answer" in RECONCILIATION_SYSTEM and "UNTRUSTED_DATA" in messages[1]["content"]
 
 

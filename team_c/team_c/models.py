@@ -126,6 +126,15 @@ class RequestTriageOutput(StrictModel):
     missing: list[MissingCapability] = Field(max_length=8)
 
 
+POTENTIAL = ("security", "business_value", "api_fit", "novelty", "input_simplicity")
+
+
+class PotentialScore(StrictModel):
+    criterion: Literal["security", "business_value", "api_fit", "novelty", "input_simplicity"]
+    score: int = Field(ge=1, le=5, description="1 poor, 5 strong. Be strict; score 1 where unsure")
+    reason: str = Field(min_length=1, description="One sentence naming the evidence for this score")
+
+
 class Suggestion(StrictModel):
     title: str = Field(min_length=1, max_length=120)
     purpose: str = Field(min_length=1)
@@ -136,6 +145,8 @@ class Suggestion(StrictModel):
     related_proposal_ids: list[str]
     relationship: str = Field(min_length=1, description="How it relates to existing tools (extends, complements, or none)")
     missing: list[MissingCapability] = Field(max_length=8)
+    potential: list[PotentialScore] = Field(min_length=len(POTENTIAL), max_length=len(POTENTIAL),
+                                            description="Exactly one entry per criterion: " + ", ".join(POTENTIAL))
 
 
 class SuggestionOutput(StrictModel):
@@ -187,6 +198,40 @@ class ReconciliationOutput(StrictModel):
     revised_proposal: ProposalContent | None = None
     capability_gaps: list[CapabilityGap]
     self_review: SelfReview = Field(description="Re-rate the proposal now that the answers and access requirements are known. This replaces the generation-time rating as the current verdict; a review written before the owner answered cannot describe the current proposal.")
+
+
+class SuggestedAnswer(StrictModel):
+    question_id: str
+    owner_decision: bool = Field(description="true when the answer is a business decision the supplied evidence cannot establish; then answer is empty and options lists neutral choices")
+    answer: str = Field(description="A draft answer the owner can submit as is, or empty when owner_decision is true")
+    options: list[str] = Field(description="For an owner decision: two to four neutral, mutually exclusive choices; otherwise []")
+    confidence: Literal["low", "medium", "high"]
+    operation_ids: list[str] = Field(description="Supplied operations the answer relies on")
+    evidence: str = Field(description="One sentence: the supplied facts the answer rests on, or why only the owner can decide")
+
+
+class AnswerSuggestionOutput(StrictModel):
+    suggestions: list[SuggestedAnswer]
+
+
+PRINCIPAL = Literal["public", "end_user", "resource_owner", "admin", "service", "guest"]
+
+
+class RequirementAdvice(StrictModel):
+    requirement_id: str
+    mode: Literal["checked", "unrestricted", "api_filtered", "not_applicable"] = Field(
+        description="checked: a selected record must belong to the caller (record_scope only); api_filtered: the API returns only the caller's own data (data_scope only); "
+                    "unrestricted: any record for the chosen callers; not_applicable: the requirement is decided by principals alone (caller_access, public_access, account_administration)")
+    owner_decision: bool = Field(description="true when the evidence cannot settle it and the owner must choose")
+    confidence: Literal["low", "medium", "high"]
+    reason: str = Field(min_length=1, description="One or two sentences citing the supplied facts")
+
+
+class AccessAdviceOutput(StrictModel):
+    principals: list[PRINCIPAL] = Field(min_length=1, description="The least privileged set of caller kinds that serves the tool's purpose")
+    principals_reason: str = Field(min_length=1)
+    principals_confidence: Literal["low", "medium", "high"]
+    requirements: list[RequirementAdvice]
 
 
 class AnswerSubmission(StrictModel):

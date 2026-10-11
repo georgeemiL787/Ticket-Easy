@@ -247,6 +247,81 @@ class Building:
             names |= {src["reference"] for key, src in inputs if key in fields and src["kind"] == "runtime_argument"}
         return sorted(names)
 
+    def fix_and_retest(self, aid, identity, scenario="general", record_owner=None, arguments=None, attempts=3):
+        """Up to `attempts` rounds of: run the test, diagnose, fix. Stops on a pass, on a question only the owner can
+        answer, or after a model repair (its new version needs the owner's approval, which is never automated).
+        Every round is recorded on a run so the page shows what was tried."""
+        from ..models import SandboxExpectation, SandboxTestSubmission, RepairSubmission
+        from ..connectors import load_connectors
+        attempts = max(1, min(int(attempts), 5))
+        a = self.artifact(aid)
+        run = self.store.start_run(a["content"]["proposal"]["business_id"], "fix_loop", dict(artifact_id=aid, identity=identity, scenario=scenario, attempts=attempts))
+        log, outcome, ask, retire = [], "exhausted", None, []
+        for n in range(1, attempts + 1):
+            name = "-".join(x for x in (scenario, identity, f"on-{record_owner}" if record_owner else "") if x)[:80].replace(" ", "-")
+            result = self.run_sandbox_test(aid, SandboxTestSubmission(name=name, identity=identity, arguments=arguments or {}, scenario=scenario, record_owner=record_owner,
+                                                                       expect=SandboxExpectation(status="failed" if scenario == "cross_user" else "succeeded")))
+            if result["verdict"] == "passed":
+                log.append(dict(attempt=n, identity=identity, result="passed", note="The test passed."))
+                outcome = "passed"
+                for old in retire:
+                    self.retire_test(old, "Set up with an account type the accepted policy does not allow; the policy refused it before any request was sent. "
+                                          f"Replaced by the passing test as {identity}.", "fix_and_retest")
+                    log.append(dict(attempt=n, identity=identity, result="retired", note="The wrongly set-up test was retired (kept in history)."))
+                break
+            identities = (load_connectors(self.settings).get(a["content"]["connector"]["id"]) or {}).get("identities") or {}
+            how, action, why = repairs.diagnose(result["failure_report"], a["content"], identities)
+            log.append(dict(attempt=n, identity=identity, result="failed", diagnosis=how, note=why))
+            if how == "auto":
+                if result["failure_report"]["actual"].get("code") == "policy_denied" and not result["failure_report"]["actual"].get("trace"):
+                    retire.append(result["test_id"])  # refused before sending: a wrong test setup, not tool behaviour
+                if action.get("create_identity"):
+                    from .connectors import Connectors
+                    Connectors(self.settings, self.store, self.proposals, self.discovery).save_identity(a["content"], action["create_identity"], action["scope"], {}, {})
+                    identity = action["create_identity"]
+                else:
+                    identity = action["use_identity"]
+                continue
+            if how == "repair":
+                try:
+                    repaired = self.repair(result["test_id"], RepairSubmission())
+                    outcome = "repaired" if repaired.get("outcome") == "revised" else "repair_" + repaired.get("outcome", "failed")
+                    ask = dict(where="proposal", question=(f'The AI repair created version {repaired["version"]} ({"; ".join(repaired.get("changes") or [])}). Review and approve it, build it, then press Fix and retest on the new artifact.'
+                                                           if repaired.get("outcome") == "revised" else repaired.get("detail", "The AI repair could not fix this; it needs your revision.")))
+                except AppError as exc:
+                    outcome, ask = "repair_refused", dict(where="#test-results", question=exc.message)
+                log.append(dict(attempt=n, identity=identity, result=outcome, note=ask["question"]))
+                break
+            outcome, ask = "needs_owner", dict(where=action, question=why)
+            break
+        if outcome == "exhausted":
+            ask = dict(where="#test-results", question=f"Still failing after {attempts} attempts. Read the last failure above; it needs a decision Team C cannot make on its own.")
+        result = dict(artifact_id=aid, outcome=outcome, attempts_used=len({s["attempt"] for s in log}), log=log, ask=ask, final_identity=identity)
+        self.store.finish_run(run, result)
+        return result
+
+    def retire_test(self, test_id, reason, actor=None):
+        """Record that a failed test was set up wrongly; the latest row of that name becomes 'retired'.
+
+        The failed run stays in history. A retired name no longer blocks publication; it never counts as a pass,
+        so the tool still needs its own passing tests. Only the latest failed run of a name can be retired.
+        """
+        t = self.store.one("SELECT * FROM sandbox_tests WHERE id=?", (test_id,))
+        latest = self.store.all("SELECT id FROM sandbox_tests WHERE artifact_id=? AND name=? ORDER BY created_at DESC, rowid DESC LIMIT 1", (t["artifact_id"], t["name"]))[0]["id"]
+        if latest != test_id or t["verdict"] != "failed":
+            raise AppError("retire_not_allowed", "Only the latest run of a test, and only a failed one, can be retired", 409)
+        if not (reason or "").strip():
+            raise AppError("reason_required", "Say why this test was set up wrongly; the reason is kept in history")
+        with self.store.connect(write=True) as c:
+            c.execute("INSERT INTO sandbox_tests(id,artifact_id,execution_id,name,expectation,verdict,failure_report,created_at,scenario,record_owner,selector_sha256) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                      (uid(), t["artifact_id"], t["execution_id"], t["name"], t["expectation"], "retired",
+                       dump(dict(retired_by=actor or self.settings.dev_reviewer_id, reason=reason.strip(), retired_test_id=test_id)), now(), t["scenario"], t["record_owner"], t["selector_sha256"]))
+        return self.artifact(t["artifact_id"])
+
+    def latest_fix(self, aid):
+        rows = self.store.all("SELECT result FROM runs WHERE kind='fix_loop' AND status='succeeded' AND json_extract(result,'$.artifact_id')=? ORDER BY created_at DESC LIMIT 1", (aid,))
+        return json.loads(rows[0]["result"]) if rows else None
+
     def repair(self, test_id, submission):
         """At most MAX_ATTEMPTS model repairs per failing case; each success is a new unapproved version."""
         test = self.store.one("SELECT t.*,a.proposal_id,a.version FROM sandbox_tests t JOIN artifacts a ON a.id=t.artifact_id WHERE t.id=?", (test_id,))

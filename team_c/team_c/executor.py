@@ -33,6 +33,27 @@ def checked_path(path):
     raise ValueError("excessively encoded path")
 
 
+
+def returned_records(outputs):
+    """Per output: how many records it returned and one fingerprint per record, never the content.
+
+    Works on any shape: a list of records, a single record, or a record holding a list. A record is
+    fingerprinted by its id when it has one, otherwise by its whole content. Publication evidence uses
+    this to tell an empty result from real data, and whether two identities received the same records.
+    """
+    def rows(value):
+        if isinstance(value, list):
+            return [r for r in value if r not in (None, {}, [])]
+        if isinstance(value, dict) and value:
+            inner = [v for v in value.values() if isinstance(v, list)]
+            return rows(inner[0]) if len(inner) == 1 and all(not isinstance(v, (dict, list)) for k, v in value.items() if v is not inner[0]) else [value]
+        return [] if value in (None, "", {}, []) else [value]
+    result = {}
+    for name, value in (outputs or {}).items():
+        found = rows(value)
+        result[name] = dict(count=len(found), id_sha256=sorted({digest(r["id"] if isinstance(r, dict) and "id" in r else r) for r in found}))
+    return result
+
 class StepFailure(Exception):
     def __init__(self, outcome, detail, write_state="not_applied"):
         self.outcome, self.detail, self.write_state = outcome, detail, write_state
@@ -355,5 +376,5 @@ class Run:
             message = f"{failed_step} failed: {failure.detail}. " + ("The API rejected the write; that no change occurred has not been verified." if rejected else "No write was sent.")
         report = dict(status=status, message=message, failure=dict(step_id=failed_step, outcome=failure.outcome, detail=failure.detail) if failure else None,
                       trace=self.trace, arguments=sorted(self.arguments),
-                      outputs_sha256={k: digest(v) for k, v in (outputs or {}).items()}, runtime_ready=False)
+                      outputs_sha256={k: digest(v) for k, v in (outputs or {}).items()}, outputs_records=returned_records(outputs), runtime_ready=False)
         return report, outputs

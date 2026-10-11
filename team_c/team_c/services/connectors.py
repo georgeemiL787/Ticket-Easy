@@ -103,7 +103,49 @@ class Connectors:
         return dict(managed=cid not in external_connectors(self.settings) and bool(connector.get("confirmed_by")),
                     context_fields=connector.get("context_fields", []),
                     context_schemas=schemas,
-                    auth=artifact["connector"].get("auth"))
+                    auth=artifact["connector"].get("auth"),
+                    guide=self.identity_guide(artifact, connector),
+                    saved={n: dict(scope=i.get("scope"), username=i.get("username", ""), context=i.get("context") or {}) for n, i in (connector.get("identities") or {}).items()})
+
+    def identity_guide(self, artifact, connector):
+        """What the next test identity should be and where its values come from, read from the policy and the API.
+
+        Computed from facts, never from a model: credentials and context values are entered by the owner,
+        stay in the local database and never reach a model. Nothing here is saved until the owner submits.
+        """
+        policy = artifact.get("access_policy") or {}
+        principals = policy.get("principals") or []
+        scope = next((s for p, s in (("resource_owner", "end_user"), ("end_user", "end_user"), ("admin", "admin"), ("service", "service"),
+                                      ("guest", "guest"), ("public", "public")) if p in principals), "")
+        existing = connector.get("identities") or {}
+        same = [n for n, i in existing.items() if i.get("scope") == scope]
+        ownership = any(c.get("kind") == "ownership" for c in policy.get("checks", []))
+        if not same:
+            name, why = ("owner-customer" if scope == "end_user" else f"test-{scope or 'account'}"), "the account whose own records the tool should reach"
+        elif ownership and len(same) == 1:
+            name, why = "other-customer", "a second account, so a test can prove one customer cannot reach another customer's record"
+        else:
+            name, why = f"test-{scope or 'account'}-{len(same) + 1}", "another test account"
+        try:
+            ops = self.discovery.spec(artifact["source"]["spec_id"])["inventory"]["operations"]
+        except (AppError, KeyError, TypeError):
+            ops = []
+        signup = [o["method"] + " " + o["path"] for o in ops if o["method"] == "POST" and re.search(r"regist|sign-?up", o["path"], re.I)]
+        fields = {}
+        for field in connector.get("context_fields", []):
+            for o in ops:
+                if o["method"] != "GET" or "{" in o["path"] or not re.search(r"/(me|profile|account|current|whoami)/?$", o["path"], re.I):
+                    continue
+                success = next((r for code, r in sorted(o.get("responses", {}).items()) if code.startswith("2") and r.get("schema")), None)
+                props = ((success or {}).get("schema") or {}).get("properties") or {}
+                prefix = field[:-3] if field.endswith("_id") else None
+                if field in props:
+                    fields[field] = f'After signing in as this account, GET {o["path"]} returns {field}.'
+                elif prefix and "id" in props and prefix in o["path"].lower():
+                    fields[field] = f'After signing in as this account, GET {o["path"]} returns it as id.'
+                if field in fields:
+                    break
+        return dict(name=name, scope=scope, why=why, existing=sorted(existing), signup=signup[:2], fields=fields)
 
     def save_identity(self, artifact, name, scope, credential, context):
         cid = artifact["connector"]["id"]
@@ -115,6 +157,10 @@ class Connectors:
             raise AppError("identity_scope", "Choose the identity's actual account type")
         auth = artifact["connector"].get("auth")
         keys = ("token",) if auth and auth["type"] == "http_bearer" else ("username", "password") if auth else ()
+        current = ((load_connectors(self.settings).get(cid) or {}).get("identities") or {}).get(name) or {}
+        # Editing an existing identity: a field left blank keeps its saved value, so a password is never retyped to change a name or scope.
+        credential = {k: credential.get(k) or current.get(k, "") for k in keys}
+        context = dict(current.get("context") or {}, **context)
         if any(not credential.get(k) for k in keys):
             raise AppError("credential_missing", "Enter the credentials required by this API")
         with self.store.connect(write=True) as conn:

@@ -46,6 +46,11 @@ def disable_publication(pub_id:str,body:PublicationDisableSubmission,service:Ser
     return service.disable_publication(pub_id,body)
 
 
+@router.post("/artifacts/{aid}/fix-and-retest")
+def fix_and_retest(aid:str,body:dict,service:ServiceDep):
+    return service.fix_and_retest(aid,str(body.get("identity","")),str(body.get("scenario","general")),body.get("record_owner"),body.get("arguments") or {},int(body.get("attempts") or 3))
+
+
 @router.post("/sandbox-tests/{tid}/repairs")
 def repair(tid:str,body:RepairSubmission,service:ServiceDep):
     return service.repair(tid,body)

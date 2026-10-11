@@ -132,7 +132,10 @@ def test_insufficient_or_contradictory_answers_stay_unresolved(lifecycle, text, 
     pid = generate(client, spec, scope)
     supersede_q2(client, pid)
     answer_all(client, pid, requirement_text=text)
-    assert post(client, pid, "reconcile").json()["state"] == "needs_clarification"
+    state = post(client, pid, "reconcile").json()["state"]
+    # A blank requirement is not sent for assessment; the substitute then revises the proposal for
+    # the resolved question, so the check continues on a new version. Either way nothing is resolved.
+    assert state == "needs_clarification" if text else state in ("needs_clarification", "needs_reconciliation")
     p = current(client, pid)
     expected = "unanswered" if not text else status
     assert {r["status"] for r in p["requirements"]} == {expected}

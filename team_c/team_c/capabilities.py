@@ -5,6 +5,9 @@ import unicodedata
 from collections import Counter
 from .config import AppError
 
+# Suggestion potential gate: security decides first, the other criteria must still be usable.
+SECURITY_MIN, POTENTIAL_MIN = 4, 3
+WRITES = {"POST", "PUT", "PATCH", "DELETE"}
 BLOCKING = {"absent_operation", "unsupported_operation", "restricted_operation"}
 
 # A retrieval round shows the model one budget-sized slice of the catalog. Absence is only a claim
@@ -70,9 +73,15 @@ def reason(op):
     return errors[0].split(":", 1)[0].replace("_", " ")
 
 
+# Top-level success-response fields shown per index entry. Triage judges whether an operation returns
+# what the goal needs from this list alone, so a short cut-off reads as "this field does not exist":
+# at 12, an order lookup lost items, status and totals and requests for them were declared unavailable.
+RETURNS_SHOWN = 32
+
+
 def entry(op):
     success = next((r for c, r in sorted(op.get("responses", {}).items()) if c.startswith("2") and r.get("schema")), None)
-    returns = sorted((success or {}).get("schema", {}).get("properties", {}))[:12] if success else []
+    returns = sorted((success or {}).get("schema", {}).get("properties", {}))[:RETURNS_SHOWN] if success else []
     return dict(id=op["id"], method=op["method"], path=op["path"], summary=(op.get("summary") or op.get("description") or "")[:160],
                 status=status(op), auth=op.get("declared_auth", {}).get("status"), inputs=sorted(op.get("inputs", {}))[:16], returns=returns)
 
@@ -159,6 +168,31 @@ def title_key(text):
     return " ".join("".join(c if c.isalnum() or unicodedata.category(c).startswith("M") else " " for c in normalized).split())
 
 
+def potential_problem(d, entries):
+    """Why a suggestion's potential is too weak to show, or None. Also records the scores the gate used on d.
+
+    The model's own ratings are capped by what the index proves: a write that declares no authentication
+    cannot be rated secure, whatever the model says.
+    """
+    scores = {p["criterion"]: dict(p) for p in d.get("potential") or []}
+    if len(scores) != len(d.get("potential") or []) or not scores:
+        return "no usable potential rating"
+    unauthenticated = [f'{e.get("method")} {e.get("path")}' for i in d["operation_ids"] if (e := entries.get(i))
+                       and e.get("method") in WRITES and e.get("auth") in (None, "none")]
+    if unauthenticated and scores.get("security", {}).get("score", 0) > 2:
+        scores["security"] = dict(scores["security"], score=2, reason=f"Capped: {unauthenticated[0]} changes data without declared authentication.")
+    d["potential"] = list(scores.values())
+    security = scores.get("security", {}).get("score", 0)
+    others = [v for k, v in scores.items() if k != "security"]
+    d["potential_score"] = round((security * 2 + sum(v["score"] for v in others)) / (2 + len(others)), 2)
+    if security < SECURITY_MIN:
+        return f"low potential: security {security}/5 ({scores.get('security', {}).get('reason', 'not rated')})"
+    low = [v for v in others if v["score"] < POTENTIAL_MIN]
+    if low:
+        return "low potential: " + "; ".join(f"{v['criterion'].replace('_', ' ')} {v['score']}/5 ({v['reason']})" for v in low)
+    return None
+
+
 def screen(output, index, existing, prior, count):
     """Keep grounded, non-duplicate suggestions; the category follows the cited evidence, not the model's label.
 
@@ -192,6 +226,9 @@ def screen(output, index, existing, prior, count):
             hold(f"labelled {s.category} without naming what is missing"); continue
         if category != "blocked_by_missing_api" and not d["operation_ids"]:
             hold("names no supporting operation"); continue
+        weak = potential_problem(d, {e["id"]: e for e in index})
+        if weak:
+            hold(weak); continue
         if category != s.category:
             d["category_adjusted_from"] = s.category
         d["category"] = category

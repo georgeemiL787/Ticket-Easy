@@ -53,6 +53,14 @@ def spec_page(request:Request,sid:str,service:ServiceDep,store:StoreDep,batch:st
                 next_batch=next_batch,preselect=set(next_batch["operation_ids"]) if next_batch and batch=="next" else set(),saved=saved)
 
 
+@router.get("/proposals")
+def proposals_page(request:Request,store:StoreDep,stage:str=""):
+    items=queries.proposal_index(store)
+    stages=[(key,label,[i for i in items if i["stage"]==key]) for key,label in queries.STAGES]
+    return page(request,screen="proposals",stages=[s for s in stages if not stage or s[0]==stage],stage=stage,
+                counts={key:len(group) for key,_,group in stages},labels=dict(queries.STAGES))
+
+
 @router.get("/proposals/{pid}")
 def proposal_page(request:Request,pid:str,service:ServiceDep,store:StoreDep,settings:SettingsDep,version:int|None=None):
     view=service.view(pid,version)
@@ -63,11 +71,11 @@ def proposal_page(request:Request,pid:str,service:ServiceDep,store:StoreDep,sett
 
 
 @router.get("/artifacts/{aid}")
-def artifact_page(request:Request,aid:str,service:ServiceDep,store:StoreDep,settings:SettingsDep):
+def artifact_page(request:Request,aid:str,service:ServiceDep,store:StoreDep,settings:SettingsDep,edit:str=""):
     _,problems,_=service.publication_problems(aid)
     a=service.artifact(aid)
     bid=a["content"]["proposal"]["business_id"]
-    return page(request,screen="artifact",a=a,connectors=connector_choices(settings,bid),publications=service.publications(artifact_id=aid),publication_problems=problems,business=queries.business(store,bid),identity_setup=service.connectors.identity_setup(a["content"]),guidance=service.artifact_guidance(aid))
+    return page(request,screen="artifact",a=a,connectors=connector_choices(settings,bid),publications=service.publications(artifact_id=aid),publication_problems=problems,business=queries.business(store,bid),identity_setup=service.connectors.identity_setup(a["content"]),guidance=service.artifact_guidance(aid),edit_identity=edit,fix=service.latest_fix(aid))
 
 
 @router.get("/runs/{rid}")

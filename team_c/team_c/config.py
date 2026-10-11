@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     groq_api_key_2: str = ""
     groq_api_key_3: str = ""
     groq_api_key_4: str = ""
+    groq_api_key_5: str = ""
+    groq_api_key_6: str = ""
+    groq_api_key_7: str = ""
+    groq_api_key_8: str = ""
+    groq_api_key_9: str = ""
+    groq_api_key_10: str = ""
     groq_timeout: float = 120
     groq_reasoning_effort: str = "low"
     groq_input_tokens: int = 8000
@@ -46,12 +52,17 @@ class Settings(BaseSettings):
     suggestion_count: int = 3
     suggestion_max: int = 5
     capability_index_chars: int = 16000
+    # Triage starts from a smaller slice: goal ranking puts the likely operations first and further slices
+    # are retrieved when the model reports one absent. Measured on AstroCommerce, a 48-operation slice cost
+    # ~2.3K more input tokens per call without finding more than a ~22-operation one.
+    triage_index_chars: int = 8000
     dev_fast_track: bool = False
 
     @property
     def groq_api_keys(self):
         """Configured credentials in priority order; blanks and duplicate keys are skipped."""
-        return list(dict.fromkeys(key.strip() for key in (self.groq_api_key, self.groq_api_key_2, self.groq_api_key_3, self.groq_api_key_4) if key.strip()))
+        return list(dict.fromkeys(key.strip() for key in (self.groq_api_key, self.groq_api_key_2, self.groq_api_key_3, self.groq_api_key_4, self.groq_api_key_5,
+                                                                  *(getattr(self, f"groq_api_key_{n}") for n in range(6, 11))) if key.strip()))
 
     @property
     def model_secrets(self):

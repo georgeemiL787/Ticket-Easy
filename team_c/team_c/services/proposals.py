@@ -2,11 +2,32 @@ from ..compiler.semantics import capability, risks
 from ..compiler.readiness import assess
 from ..persistence.repositories import policies as policy_repo
 import json
+import re
 from ..config import AppError
 from ..grounding import response_only_fields
 from ..models import ProposalContent
 from .. import requirements
 from ..persistence.repositories import enforcement as enforcement_repo, proposals as proposals_repo
+
+API_GAP = "Not possible with this API: "
+
+
+def api_gap_fields(derived, fields):
+    """Carry a version's API gaps and the owner's acknowledgements into new fields, blocking only unacknowledged gaps.
+
+    A gap reported at generation means the tool cannot do part of what was asked; its steps can still only
+    call real operations. The owner either accepts the tool without that part (recorded, no model call) or
+    asks for a revision. Until one of those happens the gap blocks approval.
+    """
+    gaps = derived.get("generation_capability_gaps", [])
+    acknowledged = derived.get("acknowledged_gaps", [])
+    fields["generation_capability_gaps"] = gaps
+    if acknowledged:
+        fields["acknowledged_gaps"] = acknowledged
+    done = {a["index"] for a in acknowledged}
+    fields["blockers"].extend(API_GAP + g["explanation"] for i, g in enumerate(gaps) if i not in done)
+    return fields
+
 
 CLOSED = {"approved_to_build", "rejected", "changes_requested", "superseded"}
 
@@ -54,6 +75,94 @@ def change_summary(old, new, labels, supersessions):
         lines += [f"{key} added: {x!r}" for x in new[key] if x not in old[key]]
         lines += [f"{key} removed: {x!r}" for x in old[key] if x not in new[key]]
     return lines
+
+
+ACCESS_QUESTION = re.compile(r"who (may|can|should|is allowed)|authori[sz]|permission|role|owner|owns|belong|access|verif|identity|logged.in|signed.in|authenticat", re.I)
+PRINCIPALS = dict(public="anyone without signing in", end_user="signed-in users", resource_owner="signed-in users for records they own",
+                  admin="administrators", service="service accounts", guest="guest/session users")
+
+
+def policy_summary(policy):
+    """The owner's accepted access decisions in plain words, to restate where a question asks the same thing."""
+    parts = ["Decided in the accepted access policy: this tool may be used by " + ", ".join(PRINCIPALS[p] for p in policy["principals"]) + "."]
+    for c in policy.get("checks", []):
+        parts.append(f'{c["kind"].capitalize()} check: step {c["step_id"]} reads the {c["resource"]}; its field {c["resource_field"]} in the {c["response_status"]} response '
+                     f'must equal the trusted {c["identity_source"]} of the caller, otherwise access is denied.')
+    unrestricted = [sc for sc in policy.get("scopes", []) if sc["mode"] == "unrestricted"]
+    for sc in policy.get("scopes", []):
+        if sc["mode"] == "api_filtered":
+            parts.append(f'Data the caller does not select is limited to their own, as filtered by the API; sandbox tests with two identities must prove it ({sc["reason"]}).')
+    for sc in unrestricted:
+        parts.append(f'Every record is reachable for these callers ({sc["reason"]}).')
+    if not policy.get("checks") and not unrestricted:
+        # Say what the policy decides about ownership even when it decides "no per-record check",
+        # so an ownership question is answered rather than skipped.
+        parts.append("No per-record ownership check applies: access is limited to the callers above.")
+    if policy.get("roles"):
+        parts.append("Required roles (any): " + ", ".join(policy["roles"]) + ".")
+    if policy.get("permissions"):
+        parts.append("Required permissions (all): " + ", ".join(policy["permissions"]) + ".")
+    return " ".join(parts)
+
+
+def answer_suggestions(view, ops):
+    """Editable form defaults for unanswered questions, each with the evidence it comes from.
+
+    An access question is restated from the owner's own accepted policy; a configuration question
+    gets the default the API itself declares for the bound input. Nothing is saved or treated as an
+    answer until the owner submits it, and submitted answers are checked like any other.
+    """
+    result = {}
+    policy = (view.get("policy") or {}).get("content")
+    for q in view["content"]["questions"]:
+        if (view["answers"].get(q["id"]) or {}).get("text", "").strip():
+            continue
+        if q["configuration_key"]:
+            for step in view["content"]["steps"]:
+                for b in step["bindings"]:
+                    schema = (ops.get(step["operation_id"], {}).get("inputs", {}).get(b["target"]) or {}).get("schema") or {}
+                    if b["kind"] == "business_configuration" and b["reference"] == q["configuration_key"] and "default" in schema:
+                        result[q["id"]] = dict(text=json.dumps(schema["default"]) if not isinstance(schema["default"], str) else schema["default"],
+                                               source=f'The API declares {schema["default"]!r} as the default for {b["target"]}. Replace it if your business uses another value.')
+        elif policy and ACCESS_QUESTION.search(q["text"]):
+            result[q["id"]] = dict(text=policy_summary(policy), source="Restated from the access policy you accepted. Edit it if this question asks something else.")
+    return result
+
+
+def checklist(view):
+    """What is left before this version can be approved, in the order an owner resolves it.
+
+    Each item says whether it is done and whether it blocks approval. It restates the rules that
+    decide() enforces; it never relaxes them, and decide() remains the authority.
+    """
+    items = []
+    questions = view["content"]["questions"]
+    if questions:
+        missing = [q["id"] for q in questions if not (view["answers"].get(q["id"]) or {}).get("text", "").strip()]
+        items.append(dict(key="questions", label=f"Answer the AI's questions ({len(questions) - len(missing)} of {len(questions)} answered)",
+                          done=not missing, href="#questions"))
+    if view["requirements"]:
+        items.append(dict(key="access", label="Decide who may use this tool and which records it may reach",
+                          done=bool(view["policy"]) or view["lifecycle"]["requirements_confirmed"], href="#structured-policy"))
+    if view["policy_review_pending"]:
+        items.append(dict(key="policy", label="Accept the access policy for this new version", done=False, href="#structured-policy"))
+    checked = view["state"] in ("ready_for_review", "approved_to_build") or (view["answers_resolved"] and view["state"] == "needs_clarification")
+    current = next((r for r in view["reconciliations"] if r["id"] == view["reconciliation_id"]), None)
+    open_findings = [f for f in (current["result"]["findings"] if current else []) if f["status"] != "resolved"]
+    items.append(dict(key="check", label="Check the answers" + (f" ({len(open_findings)} need more detail)" if open_findings else ""),
+                      done=checked, href="#questions"))
+    accepted = {a["index"] for a in view["derived"].get("acknowledged_gaps", [])}
+    api_gaps = [i for i in range(len(view["derived"].get("generation_capability_gaps") or [])) if i not in accepted]
+    if view["derived"].get("generation_capability_gaps"):
+        items.append(dict(key="api_gaps", label="Decide about what the API cannot do (approve without it, or ask for a change)",
+                          done=not api_gaps, href=f"#api-gap-{api_gaps[0]}" if api_gaps else "#api-gap-0"))
+    if view["open_gaps"]:
+        items.append(dict(key="gaps", label="Decide about the reported missing capabilities", done=False, href="#questions"))
+    # Before the first check the rating is the generation-time one, which the check re-rates against the
+    # owner's answers; it only becomes something to act on once a current check still reports it.
+    if view["quality"] and not view["quality"]["ready"] and current:
+        items.append(dict(key="quality", label="Resolve the blocking quality findings (ask for a revision)", done=False, href="#revise-proposal"))
+    return items
 
 
 class Proposals:
@@ -108,6 +217,41 @@ class Proposals:
         suggestions = suggested_inputs(row["content"], inventory, form_policy.get("inputs", []))
         row["policy_form"] = dict(form_policy, inputs=list(form_policy.get("inputs", [])) + suggestions)
         row["policy_suggestions"] = suggestions
+        # Evidence-based ownership checks prefill the form only where the owner has decided nothing yet.
+        from ..compiler.policies import suggested_checks
+        decided = {c["requirement_id"] for c in form_policy.get("checks", []) + form_policy.get("scopes", [])}
+        checks = [] if policy else [x for x in suggested_checks(row["content"], inventory, row["requirements"]) if x["requirement_id"] not in decided]
+        row["policy_form"]["checks"] = list(form_policy.get("checks", [])) + [x["check"] for x in checks]
+        row["policy_form"]["scopes"] = list(form_policy.get("scopes", [])) + [x["scope"] for x in checks]
+        row["policy_check_suggestions"] = checks
+        from ..compiler.policies import declared_login
+        auth, labels = declared_login(row["content"], inventory)
+        row["login"] = dict(declared=bool(auth), type=(auth or {}).get("type"), operations=labels)
+        advised = self.store.all("SELECT result FROM runs WHERE business_id=? AND kind='access_suggestion' AND status='succeeded' "
+                                 "AND json_extract(result,'$.proposal_id')=? AND json_extract(result,'$.version')=? ORDER BY created_at DESC LIMIT 1",
+                                 (proposal["business_id"], pid, version))
+        row["ai_access_advice"] = json.loads(advised[0]["result"]) if advised and not policy else None
+        advice = row["ai_access_advice"]
+        if advice:
+            scoped = {"record_scope": {"checked", "unrestricted"}, "data_scope": {"api_filtered", "unrestricted"}}
+            kinds = {r["id"]: r["kind"] for r in row["requirements"]}
+            for a in advice["requirements"]:
+                if a["mode"] not in scoped.get(kinds.get(a["requirement_id"]), {"not_applicable"}):
+                    a["mode"] = "not_applicable"
+            advice["by_requirement"] = {a["requirement_id"]: a for a in advice["requirements"]}
+            if not row["login"]["declared"]:
+                # Advice stored before this rule, or a model that ignored it, cannot recommend callers the API cannot identify.
+                possible = [x for x in advice["principals"] if x in ("public", "guest")]
+                if possible != advice["principals"]:
+                    advice["principals"], advice["widens"] = possible or ["public"], True
+                    advice["principals_reason"] = ("The API declares no login, so only anonymous callers are possible; restricting this tool needs an API that declares authentication. "
+                                                   + advice["principals_reason"])
+            if not row["policy_form"].get("principals") and not advice["widens"]:
+                row["policy_form"]["principals"] = list(advice["principals"])
+            decided_scopes = {s["requirement_id"] for s in row["policy_form"].get("scopes", [])}
+            row["policy_form"]["scopes"] = list(row["policy_form"].get("scopes", [])) + [
+                dict(requirement_id=a["requirement_id"], mode=a["mode"], reason=a["reason"]) for a in advice["requirements"]
+                if a["mode"] in ("checked", "api_filtered") and a["requirement_id"] not in decided_scopes]
         row["policy_review_pending"] = bool(row["derived"].get("policy_review_required") and not policy)
         row["capability"] = capability(row["content"], inventory)
         artifact, guards = self.build_evidence(pid, version, row["policy"], row["enforcement"])
@@ -134,6 +278,16 @@ class Proposals:
         if policy:
             resolved = {(i["step_id"], i["target"]) for i in policy["inputs"]}
             row["capability"]["questions"] = [q for q in row["capability"]["questions"] if (q["step_id"], q["input"]) not in resolved]
+        row["answer_suggestions"] = answer_suggestions(row, ops)
+        # Drafts from the separate answer assistant, for questions that are still unanswered.
+        drafted = self.store.all("SELECT result FROM runs WHERE business_id=? AND kind='answer_suggestion' AND status='succeeded' "
+                                 "AND json_extract(result,'$.proposal_id')=? AND json_extract(result,'$.version')=? ORDER BY created_at DESC LIMIT 1",
+                                 (proposal["business_id"], pid, version))
+        open_ids = {q["id"] for q in row["content"]["questions"] if not (row["answers"].get(q["id"]) or {}).get("text", "").strip()}
+        row["answers_with_text"] = sorted({q["id"] for q in row["content"]["questions"]} - open_ids)
+        accepted = {f["question_id"] for f in (current["result"]["findings"] if current else []) if f["status"] == "resolved"}
+        row["ai_answer_suggestions"] = {x["question_id"]: x for x in (json.loads(drafted[0]["result"])["suggestions"] if drafted else []) if x["question_id"] not in accepted}
+        row["checklist"] = checklist(row)
         return row
 
     @staticmethod

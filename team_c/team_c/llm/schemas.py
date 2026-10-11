@@ -206,6 +206,18 @@ def output_schema(kind, payload, output_model):
         if assessed:
             defs["Finding"]["properties"]["question_id"]["enum"] = assessed
         schema["properties"]["findings"].update(minItems=len(assessed), maxItems=len(assessed))
+    if kind == "access_suggestion":
+        ids = [r["id"] for r in payload["requirements"]]
+        schema["$defs"]["RequirementAdvice"]["properties"]["requirement_id"]["enum"] = ids or ["none"]
+        schema["properties"]["requirements"].update(minItems=len(ids), maxItems=len(ids))
+    if kind == "answer_suggestion":
+        # One draft per open question, in order; evidence can cite only operations actually supplied.
+        ids = [q["id"] for q in payload["questions"]]
+        item = schema["$defs"]["SuggestedAnswer"]["properties"]
+        item["question_id"]["enum"] = ids
+        schema["properties"]["suggestions"].update(minItems=len(ids), maxItems=len(ids))
+        offered = [o["id"] for o in payload["inventory"]["operations"]] + [o["id"] for o in payload.get("related_operations", [])]
+        item["operation_ids"]["items"]["enum"] = offered
     if "operation_index" in payload:
         tools = [t["proposal_id"] for t in payload.get("existing_tools", [])]
         constrain(schema, "operation_ids", [o["id"] for o in payload["operation_index"]["operations"]])

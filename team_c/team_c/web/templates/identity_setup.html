@@ -1,23 +1,32 @@
 {% if identity_setup.managed %}
-<details {% if not connectors.get(c.connector.id, []) %}open{% endif %}><summary>Add or replace a test identity</summary>
+{% set editing = identity_setup.saved.get(edit_identity) if edit_identity else none %}
+{% if identity_setup.saved %}<p id="identity"><strong>Saved test identities:</strong> {% for n, i in identity_setup.saved.items() %}{{ n }} <span class="muted small">({{ (i.scope or '')|replace('_',' ') }}{% if i.username %}, user {{ i.username }}{% endif %})</span> <a href="?edit={{ n|urlencode }}#identity">Edit</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+<details {% if not connectors.get(c.connector.id, []) or editing %}open{% endif %}><summary>{{ 'Edit test identity "' ~ edit_identity ~ '"' if editing else 'Add a test identity' }}</summary>
 <p class="small">Use an existing test account for this API. Credentials and trusted context are stored locally in the app database and are never included in generated tools or sent to the model.</p>
+{% set g = identity_setup.guide %}
+{% if g %}<div class="next"><strong>Setup helper: next identity "{{ g.name }}"{% if g.scope %} ({{ g.scope|replace('_',' ') }} account){% endif %}</strong>
+<span>Use {{ g.why }}.{% if g.existing %} Saved so far: {{ g.existing|join(', ') }}.{% endif %}</span>
+{% if g.signup %}<span class="small">No test account yet? Create one on your sandbox with {{ g.signup|join(' or ') }}, then enter its login below.</span>{% endif %}
+{% for f, hint in g.fields.items() %}<span class="small">{{ f }}: {{ hint }}</span>{% endfor %}
+<span class="small muted">Worked out from your access policy and the API description. Credentials are never suggested or sent to any AI; you type them.</span></div>{% endif %}
 <form method="post" action="/actions/save_test_identity" autocomplete="off">{{ m.csrf_field() }}
 <input type="hidden" name="artifact_id" value="{{ a.id }}">
-<label>Test identity name<input name="identity_name" placeholder="test-customer" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required></label>
-<label>Actual account type<select name="scope" required><option value="">Choose the account type</option><option value="end_user">End user</option><option value="admin">Administrator</option><option value="service">Service account</option><option value="public">Public</option><option value="guest">Guest</option></select></label>
+{% if editing %}<p class="small">Change any field and save. Leave the password empty to keep the current one. <a href="?#identity">Cancel</a></p>{% endif %}
+<label>Test identity name<input name="identity_name" value="{{ edit_identity if editing else (g.name if g else '') }}" {% if editing %}readonly{% endif %} placeholder="test-customer" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required></label>
+<label>Actual account type<select name="scope" required><option value="">Choose the account type</option>{% for v, t in [('end_user','End user'),('admin','Administrator'),('service','Service account'),('public','Public'),('guest','Guest')] %}<option value="{{ v }}" {% if (editing and editing.scope == v) or (not editing and g and g.scope == v) %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
 {% if identity_setup.auth and identity_setup.auth.type == 'http_bearer' %}
-<label>Access token<input type="password" name="token" autocomplete="new-password" required></label>
+<label>Access token{% if editing %} <span class="why">leave empty to keep the current token</span>{% endif %}<input type="password" name="token" autocomplete="new-password" {% if not editing %}required{% endif %}></label>
 {% elif identity_setup.auth and identity_setup.auth.type == 'oauth2_password' %}
 <p class="small">The specification declares a password login at <code>{{ identity_setup.auth.token_path }}</code>. Use an account supported by that login endpoint.</p>
-<label>Username<input name="username" autocomplete="off" required></label>
-<label>Password<input type="password" name="password" autocomplete="new-password" required></label>
+<label>Username<input name="username" autocomplete="off" value="{{ editing.username if editing else '' }}" required></label>
+<label>Password{% if editing %} <span class="why">leave empty to keep the current password</span>{% endif %}<input type="password" name="password" autocomplete="new-password" {% if not editing %}required{% endif %}></label>
 {% endif %}
 {% for name in identity_setup.context_fields %}{% set prop = identity_setup.context_schemas.get(name, {'type':'string'}) %}{% set kind = field_kind(prop) %}
-<label>Trusted {{ name }}{% if kind == 'boolean' %}<select name="a:{{ name }}"><option value="">Leave unset</option><option value="true">true</option><option value="false">false</option></select>
+<label>Trusted {{ name }}{% if g and g.fields.get(name) %}<span class="why">{{ g.fields[name] }}</span>{% endif %}{% if kind == 'boolean' %}<select name="a:{{ name }}"><option value="">Leave unset</option><option value="true">true</option><option value="false">false</option></select>
 {% elif kind in ['integer','number'] %}<input type="number" name="a:{{ name }}" step="{{ 'any' if kind == 'number' else 1 }}">
 {% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value"></textarea>
 {% else %}<input type="password" name="a:{{ name }}" autocomplete="new-password">{% endif %}</label>
 {% endfor %}
 <p class="small">Saving an existing identity name replaces its credentials and context. It does not run the tool.</p>
-<button>Save test identity</button></form></details>
+<button>{{ 'Save changes' if editing else 'Save test identity' }}</button></form></details>
 {% endif %}

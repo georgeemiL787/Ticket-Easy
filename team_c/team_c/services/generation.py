@@ -9,6 +9,8 @@ from .. import capabilities
 from ..persistence.repositories import runs as runs_repo
 
 
+from .proposals import api_gap_fields
+
 class Generation:
     """Proposal generation from an inventory scope, with one grounding retry, and the area-ordered generation batches."""
 
@@ -65,8 +67,7 @@ class Generation:
                     raise
             for fields in derived:
                 fields["generation_scope"] = scope
-                fields["generation_capability_gaps"] = [g.model_dump() for g in result.capability_gaps]
-                fields["blockers"].extend("Generation capability gap: " + g.explanation for g in result.capability_gaps)
+                api_gap_fields(dict(generation_capability_gaps=[g.model_dump() for g in result.capability_gaps]), fields)
             created, duplicates = list(zip(result.proposals, derived)), []
             if request:
                 known = {}

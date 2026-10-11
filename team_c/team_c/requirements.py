@@ -13,7 +13,25 @@ TEXT = {
     "record_scope": "Which records may a caller reach through {field} in {ops} (for example only records they own)? The API does not declare ownership or data scoping.",
     "public_access": "Should {ops} be usable without authentication? No security requirement is declared, which does not prove public access.",
     "account_administration": "Do {ops} act on other users' accounts? Confirm who may use them; they may be administrative.",
+    "data_scope": "Whose records can {ops} return to each caller? The caller does not choose a record, and the API does not declare whether a caller receives only their own data.",
 }
+
+
+READS = {"GET", "HEAD"}
+
+
+def returns_records(op):
+    """Whether the success response carries records: an object with fields, or a list of them (directly or in a field)."""
+    success = next((r for c, r in sorted(op.get("responses", {}).items()) if c.startswith("2") and r.get("schema")), None)
+    schema = (success or {}).get("schema") or {}
+    record = lambda s: bool((s or {}).get("properties")) or (s or {}).get("type") == "object" and bool((s or {}).get("additionalProperties"))
+    listing = lambda s: (s or {}).get("type") == "array" and record(s.get("items"))
+    return record(schema) or listing(schema) or any(listing(p) for p in (schema.get("properties") or {}).values())
+
+
+def selects_records(op, carried):
+    """Whether the caller picks which record(s) the operation acts on: a path id, a required query filter, or a carried reference."""
+    return any(k.startswith("path.") or k in carried or (k.startswith("query.") and spec.get("required")) for k, spec in op["inputs"].items())
 
 
 def derive(steps, inventory):
@@ -46,13 +64,18 @@ def derive(steps, inventory):
             group = groups.setdefault(("record_scope", key), [])
             if label not in [existing for existing, _ in group]:
                 group.append((label, fact + "; ownership/data scoping is not declared"))
+        # A read behind a login that returns records without the caller selecting one still decides whose data
+        # the caller receives (a listing, a profile, a report). Selected records are covered by record_scope above.
+        if first and op["method"] in READS and op["declared_auth"]["status"] in ("required", "optional") \
+                and not selects_records(op, carried) and returns_records(op):
+            groups.setdefault(("data_scope", label), []).append((label, f"{label}: returns records the caller does not select; whose data they are is not declared"))
         if first and any(s["kind"] == "account_records" for s in op["exposure"]["signals"]):
             groups.setdefault(("account_administration", ""), []).append((label, f"{label}: touches user/account records (name heuristic)"))
     result = []
     for (kind, field), items in groups.items():
         labels = [label for label, _ in items]
         key = digest(dict(kind=kind, field=field, operations=sorted(labels)))
-        result.append(dict(id=f"{kind}-{key[:6]}", kind=kind, field=field or None, text=TEXT[kind].format(ops=", ".join(labels), field=field),
+        result.append(dict(id=f"{kind}-{key[:6]}", kind=kind, field=(field or None) if kind != "data_scope" else None, text=TEXT[kind].format(ops=", ".join(labels), field=field),
                            operations=labels, source_facts=[fact for _, fact in items] + ["Authorization rules are not declared by the source."]))
     return result
 

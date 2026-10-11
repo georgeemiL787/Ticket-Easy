@@ -1,3 +1,4 @@
+from .config import AppError
 from .services.capability import Capability
 from .services.connectors import Connectors
 from .services.proposals import CLOSED, change_summary, Proposals
@@ -110,11 +111,14 @@ class Service:
 
     def answers(self, pid, version, submission): return self.review.answers(pid, version, submission)
     def reconcile(self, pid, version, revision): return self.review.reconcile(pid, version, revision)
+    def suggest_answers(self, pid, version): return self.review.suggest_answers(pid, version)
+    def suggest_access(self, pid, version): return self.review.suggest_access(pid, version)
     def rejected_revision(self, result, spec, scope): return self.review.rejected_revision(result, spec, scope)
     def decide(self, pid, version, submission): return self.review.decide(pid, version, submission)
     def revise(self, pid, submission, constraint=None, actor=None, repair=False): return self.review.revise(pid, submission, constraint, actor, repair)
     def confirm_requirement(self, pid, version, requirement_id, submission): return self.review.confirm_requirement(pid, version, requirement_id, submission)
     def dismiss_gap(self, pid, version, gap_index, submission): return self.review.dismiss_gap(pid, version, gap_index, submission)
+    def accept_api_gap(self, pid, version, gap_index, submission): return self.review.accept_api_gap(pid, version, gap_index, submission)
     def supersede_question(self, pid, version, question_id, submission): return self.review.supersede_question(pid, version, question_id, submission)
 
     def approval(self, pid, version, content_sha256=None): return self.building.approval(pid, version, content_sha256)
@@ -131,6 +135,9 @@ class Service:
     def check_scenario(self, a, submission): return self.building.check_scenario(a, submission)
     def record_selectors(self, a): return self.building.record_selectors(a)
     def repair(self, test_id, submission): return self.building.repair(test_id, submission)
+    def fix_and_retest(self, aid, identity, scenario='general', record_owner=None, arguments=None, attempts=3): return self.building.fix_and_retest(aid, identity, scenario, record_owner, arguments, attempts)
+    def latest_fix(self, aid): return self.building.latest_fix(aid)
+    def retire_test(self, test_id, reason, actor=None): return self.building.retire_test(test_id, reason, actor)
 
     def publication(self, pub_id): return self.publishing.publication(pub_id)
     def publication_view(self, row): return self.publishing.publication_view(row)
@@ -143,6 +150,17 @@ class Service:
     def published_tools(self, business_id, identity): return self.publishing.published_tools(business_id, identity)
     def invoke_published(self, business_id, identity, name, arguments): return self.publishing.invoke_published(business_id, identity, name, arguments)
 
-    def accept_policy(self, pid, version, submission): return self.capability.accept(pid, version, submission)
+    def accept_policy(self, pid, version, submission):
+        view = self.capability.accept(pid, version, submission)
+        # Accepting the policy decides every access requirement. When the answers to the remaining
+        # questions were already checked and nothing they depend on changed, settle the review now
+        # without another model call; otherwise the owner checks the answers as before.
+        try:
+            if self.review.reconcile(pid, version, view["review_revision"], reuse_only=True):
+                view = self.view(pid, version)
+        except AppError:
+            # The policy is saved either way; anything unexpected here leaves the ordinary answer check.
+            pass
+        return view
     def reopen_policy(self, pid, version, submission): return self.capability.reopen(pid, version, submission)
     def run_policy_tests(self, aid): return self.capability.tests(self.artifact(aid))

@@ -233,4 +233,5 @@ class ExecutionReport(TypedDict):
     trace: list[TraceEntry]
     arguments: list[str]
     outputs_sha256: dict[str, str]
+    outputs_records: NotRequired[dict[str, dict]]  # per output: record count and sha256 fingerprints, never the records
     runtime_ready: bool

@@ -57,6 +57,18 @@ def next_steps(content, tests, executions, identities, policy_tests, published):
              "Add a second identity, let it pass its own own_record test, then add a 'cross_user' "
              "test naming that identity as record_owner and passing the first identity's record. "
              "The run must end refused.")
+    scoped = [r for r in content.get("access_requirements", []) if r["kind"] == "data_scope"]
+    if scoped:
+        runs = {e["id"]: e for e in executions}
+        returned = {(runs.get(t["execution_id"]) or {}).get("identity") for t in success
+                    if any(rec["count"] for rec in (((runs.get(t["execution_id"]) or {}).get("report") or {}).get("outputs_records") or {}).values())}
+        step("records", bool(returned), "Run a success test that returns data",
+             "An empty result only proves the login works, not that the tool returns the right data.",
+             "Make sure the test account has data (for example an order), then run the success test again.")
+        if any(r["enforcement"].get("api_filtered") for r in scoped):
+            step("isolation", len(returned) >= 2, "Show two test identities each receive only their own data",
+                 "You decided the API returns only each caller's own data; this is the proof.",
+                 "Add a second test identity with its own data and run the success test as each identity. Their results must not share any record.")
     step("guards", bool(policy_tests and policy_tests.get("passed")), "Pass the generated guard scenarios",
          "They check the compiled policy itself, before any sandbox run.",
          "" if policy_tests and policy_tests.get("passed") else "Run the generated policy tests.")
@@ -111,6 +123,30 @@ def no_write(report):
     return bool(report) and all(e.get("write_state") in (None, "not_attempted") for e in report["trace"] if e["effect"] == "write")
 
 
+def data_scope_problems(content, success, runs, identity):
+    """What a tool that returns records it does not let the caller select still has to show: that a success test
+    returned data at all, and, when the owner relies on the API to return only the caller's own data, that two
+    identities each received data and none of it was the same record."""
+    scoped = [r for r in content.get("access_requirements", []) if r["kind"] == "data_scope"]
+    if not scoped:
+        return []
+    seen = {}
+    for t in success:
+        for name, rec in (((runs.get(t["execution_id"]) or {}).get("report") or {}).get("outputs_records") or {}).items():
+            if rec["count"]:
+                seen.setdefault(identity(t), set()).update(rec["id_sha256"])
+    problems = []
+    if not seen:
+        problems.append("No passing success test returned any data. An empty result proves only that login works: add data for the test account and run it again")
+    filtered = [r["id"] for r in scoped if r["enforcement"].get("api_filtered")]
+    if filtered:
+        pairs = [(a, b) for a in seen for b in seen if a < b and seen[a] and seen[b] and not seen[a] & seen[b]]
+        if not pairs:
+            problems.append(f"Data-scope requirement(s) {', '.join(filtered)} rely on the API returning only the caller's own data. Prove it: two test identities, "
+                            "each with its own data, must each pass a success test that returns data, and no record may appear for both")
+    return problems
+
+
 def evidence(content, tests, executions):
     """Problems blocking publication, plus the passing tests of THIS artifact that justify it.
 
@@ -148,9 +184,10 @@ def evidence(content, tests, executions):
             notes.append(f"cross_user test {t['name']}: " + "; ".join(reasons))
         else:
             accepted.append(dict(test=t["name"], caller=caller, record_owner=t["record_owner"], refused_by=how))
-    problems = [f"Latest run of sandbox test {n} did not pass" for n, t in sorted(latest.items()) if t["verdict"] != "passed"]
+    problems = [f"Latest run of sandbox test {n} did not pass" for n, t in sorted(latest.items()) if t["verdict"] not in ("passed", "retired")]
     if not success:
         problems.append("No passing sandbox test of this artifact expects success")
+    problems += data_scope_problems(content, success, runs, identity)
     if record_scope and not accepted:
         problems.append(f"Record-scope requirement(s) {', '.join(record_scope)} need a passing cross_user test: a caller with its own passing own_record test, "
                         "targeting a record whose owner passed an own_record test on the same record, refused before any write")

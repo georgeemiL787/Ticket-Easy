@@ -1,7 +1,7 @@
 """A missing capability reported by the answer check can be marked not needed, with a recorded reason, to reach review."""
 from conftest import answer_reconcile, confirm_requirements, setup_proposal
 from team_c.models import CapabilityGap
-from team_c.providers import SYSTEM
+from team_c.llm.prompts import RECONCILIATION_SYSTEM
 
 
 def reporting_gaps(env, insufficient=False):
@@ -30,7 +30,8 @@ def dismiss(client, p, index=0, reason="TEST-ONLY: achievements are shown, never
 
 
 def test_reconciliation_prompt_limits_capability_gaps():
-    assert "capability_gaps item only when an owner answer requires an action that no supplied operation performs" in SYSTEM
+    # The answer check runs with its own prompt; that prompt is the one that must limit gaps.
+    assert "Report capability_gaps only for behavior explicitly required by an answer that no supplied operation supports" in RECONCILIATION_SYSTEM
 
 
 def test_dismissing_every_reported_gap_reaches_review_and_approval(env):

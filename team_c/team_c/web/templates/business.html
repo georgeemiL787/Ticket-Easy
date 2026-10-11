@@ -53,7 +53,7 @@
 </article>
 <article>
 <h3>Suggest additional tools</h3>
-<p class="small muted">Team C compares your business, earlier requests and your API with the tools you already have, and suggests a few more. Accepting one starts a normal proposal review (not build approval); dismissing one changes nothing else. Restricted operations are never used.</p>
+<p class="small muted">Team C compares your business, earlier requests and your API with the tools you already have, and suggests a few more. Only strong ideas are shown: security must score 4/5 or better and every other criterion 3/5 or better; weaker ideas are replaced by asking again (up to 3 AI rounds). Accepting one starts a normal proposal review (not build approval); dismissing one changes nothing else. Restricted operations are never used.</p>
 <form method="post" action="/actions/suggest">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><label>How many suggestions?<input name="count" type="number" min="1" max="5" value="{{ suggestion_count }}"></label><button>Suggest additional tools</button></form>
 </article>
 </div>
@@ -92,7 +92,9 @@
 <article>
 <h3>Suggestions</h3>
 {% for b in suggested.batches[:1] %}{% set reviewed = b.coverage.considered + (b.coverage.previously_considered or 0) %}
-<p class="muted small">Last review {{ b.created_at[:16]|replace('T', ' ') }}: considered {{ reviewed }} of {{ b.coverage.total_operations }} operations{% if b.coverage.area_scoped %} in your selected areas{% endif %}{% if b.coverage.omitted_ids %}; {{ b.coverage.omitted_ids|length }} not reviewed yet{% endif %}.{% for x in b.recognized %} Already covered: "{{ x.title }}" by {{ x.name }}.{% endfor %}{% for x in b.withheld %} Withheld "{{ x.title }}": {{ x.reason }}.{% endfor %}</p>
+<p class="muted small">Last review {{ b.created_at[:16]|replace('T', ' ') }}: considered {{ reviewed }} of {{ b.coverage.total_operations }} operations{% if b.coverage.area_scoped %} in your selected areas{% endif %}{% if b.coverage.omitted_ids %}; {{ b.coverage.omitted_ids|length }} not reviewed yet{% endif %}.{% for x in b.recognized %} Already covered: "{{ x.title }}" by {{ x.name }}.{% endfor %}</p>
+{% if b.coverage.suggestion_rounds %}<p class="small">{% if b.coverage.good >= b.requested %}Found {{ b.coverage.good }} strong suggestion{{ 's' if b.coverage.good != 1 }} (security 4/5 or better, every other criterion 3/5 or better){% else %}Only {{ b.coverage.good }} of the {{ b.requested }} requested suggestions met the bar (security 4/5 or better, every other criterion 3/5 or better); weaker ideas were not shown{% endif %} after {{ b.coverage.suggestion_rounds }} AI round{{ 's' if b.coverage.suggestion_rounds != 1 }}.</p>{% endif %}
+{% if b.withheld %}<details class="tech"><summary>{{ b.withheld|length }} idea{{ 's' if b.withheld|length != 1 }} withheld</summary><ul class="small">{% for x in b.withheld %}<li>"{{ x.title }}": {{ x.reason }}</li>{% endfor %}</ul></details>{% endif %}
 {% if b.coverage.omitted_ids %}<form method="post" action="/actions/suggest">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="hidden" name="next_batch" value="1"><input type="hidden" name="count" value="{{ b.requested }}"><button class="secondary">Suggest from the next batch ({{ b.coverage.omitted_ids|length }} operations left)</button></form>
 {% elif b.coverage.previously_considered %}<p class="small">All {{ b.coverage.total_operations }} operations have been reviewed. Suggest additional tools starts again from the beginning.</p>{% endif %}
 {% endfor %}
@@ -101,6 +103,8 @@
 <summary>{{ m.badge(s.category, "category") }} {{ c.title }} {{ m.badge(s.status, "suggestion") }}{% if c.revised_by_owner %} <span class="muted small">(revised by you)</span>{% endif %}</summary>
 <p>{{ c.purpose }}</p>
 <p class="small"><strong>Benefit:</strong> {{ c.benefit }}<br><strong>Why for this business:</strong> {{ c.business_reason }}<br><strong>Relationship to existing tools:</strong> {{ c.relationship }}{% for x in c.shares_operations_with or [] %}<br>Uses the same operations as "{{ x.name }}"; check that it does something different.{% endfor %}</p>
+{% if c.potential %}<p class="small"><strong>Potential:</strong> {% for x in c.potential %}{{ x.criterion|replace('_',' ') }} <strong>{{ x.score }}/5</strong>{% if not loop.last %} · {% endif %}{% endfor %}</p>
+<details class="tech"><summary>Why these scores</summary><ul class="small">{% for x in c.potential %}<li>{{ x.criterion|replace('_',' ') }} {{ x.score }}/5: {{ x.reason }}</li>{% endfor %}</ul></details>{% endif %}
 {% for mi in c.missing %}<p class="notice small">{{ mi.kind|replace('_',' ')|capitalize }}: {{ mi.description }}</p>{% endfor %}
 {% if c.category_adjusted_from %}<p class="muted small">The AI labelled this {{ c.category_adjusted_from|replace('_',' ') }}; the category shown follows the evidence.</p>{% endif %}
 {% if s.status == 'open' %}

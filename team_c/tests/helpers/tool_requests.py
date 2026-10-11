@@ -17,7 +17,7 @@ class RequestDesk(RevisingDesk):
             if kind == "request_triage":
                 return RequestTriageOutput.model_validate(self.triage.pop(0))
             if kind == "suggestion":
-                return SuggestionOutput.model_validate(dict(suggestions=self.ideas.pop(0)))
+                return SuggestionOutput.model_validate(dict(suggestions=self.ideas.pop(0) if self.ideas else []))
             return GenerationOutput.model_validate(self.generations.pop(0)(payload["inventory"], self.names))
         return super().call(kind, payload, output_model, run)
 
@@ -27,10 +27,13 @@ def triage(outcome, operation_ids=(), existing=(), questions=(), missing=()):
                 questions=list(questions), missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing])
 
 
-def idea(title, category, operation_ids=(), missing=(), related=()):
+def idea(title, category, operation_ids=(), missing=(), related=(), security=4, others=4):
+    """A substitute suggestion, rated strong by default; lower security/others to exercise the potential gate."""
+    from team_c.models import POTENTIAL
     return dict(title=title, purpose=f"TEST-ONLY purpose: {title}", benefit="TEST-ONLY benefit", business_reason="TEST-ONLY reason for this service desk",
                 category=category, operation_ids=list(operation_ids), related_proposal_ids=list(related), relationship="TEST-ONLY relationship",
-                missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing])
+                missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing],
+                potential=[dict(criterion=c, score=security if c == "security" else others, reason="TEST-ONLY rating") for c in POTENTIAL])
 
 
 def lookup_only(inv, n):

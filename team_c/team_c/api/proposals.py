@@ -40,6 +40,16 @@ def reconcile(pid:str,version:int,body:ReviewSubmission,service:ServiceDep):
     return service.reconcile(pid,version,body.expected_revision)
 
 
+@router.post("/proposals/{pid}/versions/{version}/answer-suggestions")
+def suggest_answers(pid:str,version:int,service:ServiceDep):
+    return service.suggest_answers(pid,version)
+
+
+@router.post("/proposals/{pid}/versions/{version}/access-suggestions")
+def suggest_access(pid:str,version:int,service:ServiceDep):
+    return service.suggest_access(pid,version)
+
+
 @router.post("/proposals/{pid}/versions/{version}/decisions")
 def decision(pid:str,version:int,body:DecisionSubmission,service:ServiceDep):
     return service.decide(pid,version,body)
@@ -53,6 +63,11 @@ def confirm_requirement(pid:str,version:int,rid:str,body:ReviewSubmission,servic
 @router.post("/proposals/{pid}/versions/{version}/gaps/{index}/dismiss")
 def dismiss_gap(pid:str,version:int,index:int,body:GapDismissalSubmission,service:ServiceDep):
     return service.dismiss_gap(pid,version,index,body)
+
+
+@router.post("/proposals/{pid}/versions/{version}/api-gaps/{index}/accept")
+def accept_api_gap(pid:str,version:int,index:int,body:GapDismissalSubmission,service:ServiceDep):
+    return service.accept_api_gap(pid,version,index,body)
 
 
 @router.post("/proposals/{pid}/versions/{version}/questions/{qid}/supersede")

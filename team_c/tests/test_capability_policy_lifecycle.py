@@ -24,17 +24,20 @@ def reviewed(lifecycle, tmp_path):
 def test_policy_is_version_bound_and_generated_tests_do_not_grant_publication(lifecycle, tmp_path):
     app, client, settings, pid, policy = reviewed(lifecycle, tmp_path)
     p = current(client, pid)
+    attempts = app.state.store.all("SELECT COUNT(*) AS n FROM attempts")[0]["n"]
     saved = post(client, pid, "policy", policy=policy)
     assert saved.status_code == 200, saved.text
     assert saved.json()["policy"]["sha256"]
     assert all(r["status"] == "owner_confirmed" for r in saved.json()["requirements"])
-    assert saved.json()["reconciliation_id"] is None
-    assert approve(client, pid).status_code == 422
+    # The answers were already checked and accepted on this version, so accepting the policy settles
+    # the review by reusing that check: a new reconciliation record, and no model call.
+    view = saved.json()
+    rec = next(r for r in view["reconciliations"] if r["id"] == view["reconciliation_id"])
+    assert view["state"] == "ready_for_review" and rec["result"]["reused_from"] and rec["successful"]
     old = client.post(f'/api/v1/proposals/{pid}/versions/{p["version"]}/policy', json=dict(expected_revision=p["review_revision"], policy=policy))
     assert old.status_code == 409
-    checked = post(client, pid, "reconcile")
-    assert checked.status_code == 200 and checked.json()["state"] == "ready_for_review", checked.text
     assert approve(client, pid).status_code == 200
+    assert app.state.store.all("SELECT COUNT(*) AS n FROM attempts")[0]["n"] == attempts
     build_page = client.get(f"/proposals/{pid}").text
     assert "Enforcement will be generated from the accepted structured policy" in build_page
     assert '/actions/submit_enforcement' not in build_page

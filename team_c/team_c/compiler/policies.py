@@ -33,7 +33,7 @@ class InputResolution(Contract):
 
 class ScopeDecision(Contract):
     requirement_id: str
-    mode: Literal["checked", "unrestricted"]
+    mode: Literal["checked", "unrestricted", "api_filtered"]
     reason: str = Field(min_length=1)
 
 
@@ -76,6 +76,37 @@ class PolicySubmission(Contract):
     policy: AccessPolicy
 
 
+ANONYMOUS = {"public", "guest"}
+
+
+def login_conflicts(principals, authentication, auth, operations=""):
+    """Where a policy asks for something the API's declared login cannot provide, as (code, owner-facing message).
+
+    auth is the executable login the tool's operations declare (None when they declare none). The same rules
+    decide policy acceptance, the policy form, the access advisor and the build, so they cannot disagree.
+    """
+    where = f" ({operations})" if operations else ""
+    found = []
+    if authentication == "none" and auth:
+        found.append(("policy_auth_conflict", f"The API{where} requires a login, so the policy cannot set authentication to none."))
+    if authentication == "required" and not auth:
+        found.append(("policy_auth_unresolved", f"The API{where} declares no supported login, so authentication cannot be required. Use the declared API authentication setting."))
+    signed_in = sorted(set(principals) - ANONYMOUS)
+    if not auth and signed_in:
+        found.append(("policy_identity_unresolved", f"The API{where} declares no login, so Team C cannot verify who is calling and cannot allow {', '.join(signed_in)} callers. "
+                      "Choose Public or Guest/session user, or use an API version that declares authentication (OAuth2 password or HTTP bearer)."))
+    return found
+
+
+def declared_login(content, inventory):
+    """The executable login the tool's steps declare (as the build derives it), and the operations it was read from."""
+    from ..artifacts import auth_for
+    ops = {o["id"]: o for o in inventory["operations"]}
+    labels = ", ".join(f'{ops[s["operation_id"]]["method"]} {ops[s["operation_id"]]["path"]}' for s in content["steps"] if s["operation_id"] in ops)
+    auth = next((a for a in (auth_for(ops[s["operation_id"]], []) for s in content["steps"] if s["operation_id"] in ops) if a), None)
+    return auth, labels
+
+
 def runtime_policy(record, auth, context_fields):
     p = AccessPolicy.model_validate(record["content"])
     fields = set(context_fields)
@@ -83,12 +114,8 @@ def runtime_policy(record, auth, context_fields):
     required |= {i.reference for i in p.inputs if i.source == "trusted_application_context"}
     if required - fields - {"business_id"}:
         raise AppError("policy_context_missing", "Declare policy context fields on the connector: " + ", ".join(sorted(required - fields - {"business_id"})))
-    if p.authentication == "none" and auth:
-        raise AppError("policy_auth_conflict", "The accepted policy cannot remove the API's declared authentication")
-    if p.authentication == "required" and not auth:
-        raise AppError("policy_auth_unresolved", "Required authentication has no executable declared connector scheme")
-    if not auth and set(p.principals) - {"public", "guest"}:
-        raise AppError("policy_identity_unresolved", "Authenticated principals require declared connector authentication")
+    for code, message in login_conflicts(p.principals, p.authentication, auth):
+        raise AppError(code, message)
     return dict(**p.model_dump(), id=record["id"], sha256=record["sha256"], accepted_by=record["accepted_by"],
                 authentication_required=bool(auth), evidence=[evidence("VERIFIED", "owner_policy", record["id"], "Owner accepted this structured policy.", "policy_decision")],
                 implementation_state="UNRESOLVED")
@@ -185,3 +212,40 @@ def authorize(policy, identity):
         permitted = bool(actual & set(required)) if mode == "any" else set(required) <= actual
         if not permitted:
             raise AppError("policy_denied", "Required trusted roles or permissions are missing", 403)
+
+
+# Response fields that commonly name the account a record belongs to. A match is only a form
+# suggestion for the owner to review; the compiler and sandbox tests remain the authority.
+OWNER_FIELDS = ("customer_id", "user_id", "owner_id", "account_id", "member_id", "client_id", "buyer_id", "guest_id")
+
+
+def suggested_checks(content, inventory, requirements):
+    """Ownership-check form defaults for record-scope requirements, each with the schema evidence behind it.
+
+    A suggestion is made only when a read step of the same requirement returns a required,
+    non-nullable identity-like field on success. Nothing here is accepted or compiled until the owner
+    accepts the policy, and the owner can change or clear every field.
+    """
+    ops = {o["id"]: o for o in inventory["operations"]}
+    result = []
+    for r in requirements:
+        if r["kind"] != "record_scope":
+            continue
+        for step in content["steps"]:
+            op = ops.get(step["operation_id"])
+            if not op or op["method"] != "GET" or f'{op["method"]} {op["path"]}' not in r["operations"]:
+                continue
+            match = next(((code, name) for code, response in sorted(op.get("responses", {}).items()) if code.startswith("2")
+                          for name in OWNER_FIELDS
+                          if name in ((response.get("schema") or {}).get("required") or [])
+                          and ((response.get("schema") or {}).get("properties") or {}).get(name, {}).get("type") in ("string", "integer")
+                          and not ((response.get("schema") or {}).get("properties") or {})[name].get("nullable")), None)
+            if match:
+                code, name = match
+                result.append(dict(requirement_id=r["id"],
+                                   check=dict(requirement_id=r["id"], kind="ownership", resource=op.get("business_label") or "Record", step_id=step["id"],
+                                              response_status=code, resource_field="/" + name, identity_source=name),
+                                   scope=dict(requirement_id=r["id"], mode="checked", reason=f"Callers may only reach records whose {name} is their own."),
+                                   evidence=f'{op["method"]} {op["path"]} always returns {name} (required in the {code} response schema).'))
+                break
+    return result

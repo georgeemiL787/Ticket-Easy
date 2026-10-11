@@ -46,13 +46,24 @@ class Capability:
         scoped = {c["requirement_id"] for c in policy["checks"] + policy["scopes"]}
         if scoped - set(known):
             raise AppError("policy_scope", "A policy decision refers to an unknown requirement")
-        if any(known[r]["kind"] != "record_scope" for r in scoped):
-            raise AppError("policy_scope", "Scope decisions must refer to resource-scope requirements")
+        if any(known[r]["kind"] not in ("record_scope", "data_scope") for r in scoped):
+            raise AppError("policy_scope", "Scope decisions must refer to resource-scope or list-scope requirements")
+        modes = {s["requirement_id"]: s["mode"] for s in policy["scopes"]}
+        if any(m == "api_filtered" and known[r]["kind"] != "data_scope" for r, m in modes.items()) \
+                or any(m == "checked" and known[r]["kind"] != "record_scope" for r, m in modes.items()):
+            raise AppError("policy_scope", "Data the caller does not select is either filtered by the API or unrestricted; a selected record is either checked or unrestricted")
         if problems:
             raise AppError("policy_inputs_unresolved", "Resolve the input decisions before accepting this policy", details={"blockers": problems})
-        missing = [r["id"] for r in known.values() if r["kind"] == "record_scope" and r["id"] not in scoped]
+        from ..compiler.policies import declared_login, login_conflicts
+        auth, labels = declared_login(view["content"], inventory)
+        conflicts = login_conflicts(policy["principals"], policy["authentication"], auth, labels)
+        if conflicts:
+            raise AppError(conflicts[0][0], conflicts[0][1])
+        missing = [r["id"] for r in known.values() if r["kind"] in ("record_scope", "data_scope") and r["id"] not in scoped]
         if missing:
-            raise AppError("policy_scope_unresolved", "Record scopes require a checked or unrestricted decision", details={"requirements": missing})
+            questions = "; ".join(known[r]["text"].split("?")[0] + "?" for r in missing)
+            raise AppError("policy_scope_unresolved", "Choose an answer for each scope question in the access policy (it is still \"Not decided\"): " + questions,
+                           details={"requirements": missing})
         pid_policy = uid()
         with self.store.connect(write=True) as c:
             self.proposals.check_current(c, pid, version, submission.expected_revision)

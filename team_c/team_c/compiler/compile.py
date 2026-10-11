@@ -49,11 +49,14 @@ def guards(record, content, inventory, requirements, connector, auth):
             raise AppError("policy_scope", "A scope cannot be unrestricted and checked")
         if r["kind"] == "record_scope" and not matching and not unrestricted:
             raise AppError("policy_scope_unresolved", "Every resource selector needs an explicit scope decision or check")
+        if r["kind"] == "data_scope" and r["id"] not in scopes:
+            raise AppError("policy_scope_unresolved", "Every read that returns unselected records needs an explicit decision: the API returns only the caller's own data, or any record")
         if r["kind"] == "account_administration" and not (set(policy["principals"]) <= {"admin", "service"} or policy["roles"] or policy["permissions"]):
             raise AppError("policy_scope_unresolved", "Account administration requires explicit privileged principals, roles or permissions")
         if not matching:
             result.append(dict(id=r["id"], kind=r["kind"], text=r["text"], owner_confirmed_answer="Structured policy decision",
-                               enforcement=dict(status="configured", mechanism="structured_policy", enforced_by="team_c_executor", policy_sha256=record["sha256"], unrestricted=unrestricted)))
+                               enforcement=dict(status="configured", mechanism="structured_policy", enforced_by="target_api" if scopes.get(r["id"], {}).get("mode") == "api_filtered" else "team_c_executor",
+                                                policy_sha256=record["sha256"], unrestricted=unrestricted, api_filtered=scopes.get(r["id"], {}).get("mode") == "api_filtered")))
         for check in matching:
             config = dict(mechanism="response_field_matches_context", step_id=check["step_id"], response_status=check["response_status"],
                           pointer=check["resource_field"], context_field=check["identity_source"], comparison=check["rule"], check_point="after_step")

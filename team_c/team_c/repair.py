@@ -73,6 +73,47 @@ def classify(expect, report, failure, trace, output_problems):
     return "unclassified", False, "Inspect the failure manually.", False
 
 
+def diagnose(report, artifact, identities):
+    """What to do about one failed sandbox test: ('auto', action, why), ('repair', None, why) or ('owner', where, question).
+
+    'auto' fixes only touch test setup that holds no secrets and widens nothing (choose a registered identity
+    the accepted policy allows, or register a credential-free anonymous identity when the API has no login).
+    Wiring problems go to the bounded model repair. Everything else is a question for the owner.
+    """
+    actual = report.get("actual") or {}
+    code, kind = actual.get("code"), report.get("classification")
+    policy = artifact.get("access_policy") or {}
+    allowed = set(policy.get("principals") or [])
+    if "resource_owner" in allowed:
+        allowed.add("end_user")
+    if code == "policy_denied" and allowed:
+        fitting = sorted(n for n, i in identities.items() if i.get("scope") in allowed)
+        if fitting:
+            return "auto", dict(use_identity=fitting[0]), f"The test identity's account type is not allowed by the accepted policy ({', '.join(sorted(allowed))}); retesting as {fitting[0]}, which is."
+        anonymous = sorted(allowed & {"public", "guest"})
+        if anonymous and not artifact["connector"].get("auth"):
+            return "auto", dict(create_identity=f"{anonymous[0]}-caller", scope=anonymous[0]), (
+                f"The policy allows only {', '.join(sorted(allowed))} callers and the API has no login, so a {anonymous[0]} test identity needs no credentials; creating one and retesting.")
+        return "owner", "#identity", f"Add a test identity whose account type the accepted policy allows ({', '.join(sorted(allowed))}), using a real account of that type, then press Fix and retest again."
+    if kind in ("authentication", "access_or_authentication"):
+        return "owner", "#identity", "The API refused the test identity's login or access. Check its username and password (Edit next to the identity), or use an account that may call this operation."
+    if kind == "connectivity" or kind == "destination":
+        return "owner", "#build", f"The sandbox API at {artifact['connector']['base_url']} did not answer properly. Make sure it is running and the connector address is right, then retry."
+    if kind == "approval":
+        return "owner", "proposal", "This artifact no longer matches an approved version. Approve the current proposal version and build again."
+    if kind == "test_input":
+        return "owner", "#run", "The test arguments do not fit the tool's inputs. Correct them in the test form and retry."
+    if kind in ("uncertain_write", "partial_write"):
+        return "owner", "#run", "A write may have been applied in the sandbox. Check the sandbox data yourself; Team C never retries writes automatically."
+    if kind == "expected_denial_not_observed":
+        return "owner", "proposal", "A call that should have been refused succeeded. This is an access defect: review who may use the tool and which records it reaches."
+    if report.get("repairable"):
+        if report.get("requires_verification"):
+            return "owner", "#run", "The API rejected a write. Confirm in the sandbox that nothing changed, then run the repair with that note."
+        return "repair", None, "The failure points at how the API calls are wired (inputs or output mapping); asking the AI repair to rewire them."
+    return "owner", "#run", report.get("recommended_action") or "Inspect the failure; it needs a decision Team C cannot make."
+
+
 def describe(report):
     """One line: where the test failed, how, and the wiring of the failing step (argument names only, never values)."""
     failure, step = (report["actual"] or {}).get("failure") or {}, report.get("step")

@@ -44,10 +44,18 @@ details.tech>summary{color:#526778;font-weight:500}
 .grid>article{margin:0}
 @media (max-width:800px){.grid{grid-template-columns:1fr}}
 .section-title{margin:28px 0 0}
+header a.nav{margin-left:18px;font-weight:500}
+.filters a.current{font-weight:700;text-decoration:none;color:#182b3c}
+.checklist{list-style:none;padding:0;margin:8px 0}
+.checklist li{padding:4px 0}
+.checklist li::before{content:"CB  ";color:#7a5600}
+.checklist li.done::before{content:"¹3  ";color:#2e7d4f}
+.checklist li.done{color:#526778}
+.why{font-weight:400;color:#526778;font-size:14px;display:block}
 </style>
 </head>
 <body>
-<header><a href="/">Ticket-Easy · Team C</a><span class="who">Signed in as <strong>{{ reviewer }}</strong> (local development, not real authentication) · Model: {{ provider }} / {{ model }} · Fallback: {{ fallback }}</span></header>
+<header><span><a href="/">Ticket-Easy · Team C</a> <a class="nav" href="/proposals">Proposals</a></span><span class="who">Signed in as <strong>{{ reviewer }}</strong> (local development, not real authentication) · Model: {{ provider }} / {{ model }} · Fallback: {{ fallback }}</span></header>
 <main>
 {% if ai_job and screen != 'live' %}<p class="next"><strong>The AI is busy: {{ ai_job.title }} (started {{ ai_job.minutes }} min ago).</strong> Other AI buttons wait until it finishes. <a href="/live/{{ ai_job.id }}">View progress</a></p>{% endif %}
 {% block crumbs %}{% endblock %}

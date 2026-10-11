@@ -1,11 +1,14 @@
 """Browser form actions: one handler per action, each calling the same service method as the API and returning the page to show next."""
 import json
+import re
+from urllib.parse import quote
 from fastapi import APIRouter, Request
+from pydantic import ValidationError
 from fastapi.responses import RedirectResponse
 from starlette.concurrency import run_in_threadpool
 from ..config import AppError
 from ..jobs import is_live, start
-from ..models import (AnswerSubmission, ArtifactBuildSubmission, AreaSelectionSubmission, ClarificationSubmission, DecisionSubmission, EnforcementReviewSubmission,
+from ..models import (SandboxExpectation, SandboxTestSubmission, AnswerSubmission, ArtifactBuildSubmission, AreaSelectionSubmission, ClarificationSubmission, DecisionSubmission, EnforcementReviewSubmission,
                       EnforcementSubmission, GapDismissalSubmission, PublicationDisableSubmission, PublicationSubmission, RevisionSubmission, ReviewSubmission,
                       SandboxRunSubmission, SuggestionDecisionSubmission, SuggestionRunSubmission, SupersedeSubmission, ToolRequestSubmission)
 from ..api.businesses import retired
@@ -43,15 +46,30 @@ def review_enforcement(service,settings,form):
     return "/proposals/"+e["proposal_id"]
 
 
+def build(service,pid,connector_id):
+    """Build from the approved version; a failure names the page where the owner can fix it."""
+    try:
+        return "/artifacts/"+service.build_artifact(pid,ArtifactBuildSubmission(connector_id=connector_id))["id"]
+    except AppError as exc:
+        if exc.code in ("policy_identity_unresolved","policy_auth_unresolved","policy_auth_conflict"):
+            # The approved policy asks for a login the API cannot provide; the fix is a policy review in a new version.
+            exc.message += " This version is approved, so open \"Who can use this tool\" and press \"Review input sources in a new version\" to change the policy, then approve again."
+            exc.details.setdefault("recovery_url","/proposals/"+pid+"#structured-policy")
+        exc.details.setdefault("recovery_url","/proposals/"+pid+"#build")
+        raise
+
+
 def build_artifact(service,settings,form):
-    a=service.build_artifact(str(form["proposal_id"]),ArtifactBuildSubmission(connector_id=str(form.get("connector_id",""))))
-    return "/artifacts/"+a["id"]
+    return build(service,str(form["proposal_id"]),str(form.get("connector_id","")))
 
 
 def save_connector(service, settings, form):
     pid = str(form["proposal_id"])
-    service.connectors.save(pid, str(form.get("base_url", "")), str(form.get("context_fields", "")).split(","),
-                            confirmed=form.get("sandbox") == "1")
+    cid = service.connectors.save(pid, str(form.get("base_url", "")), str(form.get("context_fields", "")).split(","),
+                                  confirmed=form.get("sandbox") == "1")
+    if form.get("then") == "build":
+        # One step for the common case: the saved connector is the one to build with.
+        return build(service, pid, cid)
     return "/proposals/" + pid + "#build"
 
 
@@ -142,6 +160,37 @@ def submit_enforcement(service,settings,form):
     return "/proposals/"+str(form["proposal_id"])
 
 
+def sandbox_test(service,settings,form):
+    """Run the artifact and record it as a judged sandbox test, the evidence publication requires.
+
+    The owner picks what should happen; the expected status follows from it (a cross-user attempt must be
+    refused), and the test is named after scenario and identity so a rerun replaces its own evidence.
+    """
+    aid=str(form["artifact_id"])
+    identity=str(form.get("identity",""))
+    scenario=str(form.get("scenario","general"))
+    if scenario not in ("general","own_record","cross_user"):
+        raise AppError("invalid_scenario","Choose what should happen")
+    record_owner=str(form.get("record_owner","")).strip() or None if scenario=="cross_user" else None
+    data=form_arguments(service.artifact(aid)["content"]["input_schema"],form)
+    name=re.sub(r"[^A-Za-z0-9_.-]","-",f"{scenario}-{identity}"+(f"-on-{record_owner}" if record_owner else ""))[:80]
+    service.run_sandbox_test(aid,SandboxTestSubmission(name=name,identity=identity,arguments=data,scenario=scenario,record_owner=record_owner,
+                                                      expect=SandboxExpectation(status="failed" if scenario=="cross_user" else "succeeded")))
+    return "/artifacts/"+aid+"#test-results"
+
+
+def retire_test(service,settings,form):
+    a=service.retire_test(str(form["test_id"]),str(form.get("reason","")))
+    return "/artifacts/"+a["id"]+"#test-results"
+
+
+def fix_and_retest(service,settings,form):
+    aid=str(form["artifact_id"])
+    data=form_arguments(service.artifact(aid)["content"]["input_schema"],form)
+    service.fix_and_retest(aid,str(form.get("identity","")),str(form.get("scenario","general")),str(form.get("record_owner","")).strip() or None,data,int(form.get("attempts") or 3))
+    return "/artifacts/"+aid+"#fix"
+
+
 def sandbox_run(service,settings,form):
     aid=str(form["artifact_id"])
     data=form_arguments(service.artifact(aid)["content"]["input_schema"],form)
@@ -168,6 +217,23 @@ def reconcile(service,form,pid,version,rev):
     service.reconcile(pid,version,rev)
 
 
+def suggest_access(service,form,pid,version,rev):
+    service.suggest_access(pid,version)
+    return "/proposals/"+pid+"#structured-policy"
+
+
+def suggest_answers(service,form,pid,version,rev):
+    service.suggest_answers(pid,version)
+    return "/proposals/"+pid+"#questions"
+
+
+def answers_and_check(service,form,pid,version,rev):
+    """Save the answers, then check them in the same step when there is something to check."""
+    view=service.answers(pid,version,AnswerSubmission(expected_revision=rev,answers={k[2:]:str(v) for k,v in form.items() if k.startswith("q:")}))
+    if view["can_check_answers"]:
+        service.reconcile(pid,version,view["review_revision"])
+
+
 def decision(service,form,pid,version,rev):
     service.decide(pid,version,DecisionSubmission(expected_revision=rev,action=str(form["decision"]),reason=str(form.get("reason","")),idempotency_key=str(form["idempotency_key"])))
 
@@ -182,6 +248,11 @@ def supersede_question(service,form,pid,version,rev):
 
 def dismiss_gap(service,form,pid,version,rev):
     service.dismiss_gap(pid,version,int(form["gap_index"]),GapDismissalSubmission(expected_revision=rev,reason=str(form.get("reason",""))))
+
+
+def accept_api_gap(service,form,pid,version,rev):
+    reason=str(form.get("reason","")).strip() or "The tool is useful without this part."
+    service.accept_api_gap(pid,version,int(form["gap_index"]),GapDismissalSubmission(expected_revision=rev,reason=reason))
 
 
 def revise(service,form,pid,version,rev):
@@ -205,7 +276,7 @@ def accept_policy(service, form, pid, version, rev):
         mode = str(form.get("scope:" + rid, ""))
         if not mode:
             continue
-        data["scopes"].append(dict(requirement_id=rid, mode=mode, reason=str(form.get("scope_reason:" + rid, ""))))
+        data["scopes"].append(dict(requirement_id=rid, mode=mode, reason=str(form.get("scope_reason:" + rid, "")).strip() or "Chosen by the owner in the access policy form."))
         if mode == "checked":
             for kind in ("ownership", "tenant", "account"):
                 prefix = f"check:{rid}:{kind}:"
@@ -219,7 +290,18 @@ def accept_policy(service, form, pid, version, rev):
     for key in ("financial", "irreversible", "external_side_effects", "idempotent"):
         value = form.get(key)
         data[key] = True if value == "yes" else False if value == "no" else None
-    service.accept_policy(pid, version, PolicySubmission(expected_revision=rev, policy=AccessPolicy.model_validate(data)))
+    try:
+        try:
+            policy = AccessPolicy.model_validate(data)
+        except ValidationError as exc:
+            # Say which choice is missing in the owner's words, not as a validation dump.
+            plain = {"principals": "tick at least one caller under \"Who may use it?\""}
+            raise AppError("policy_incomplete", "The access policy is not complete yet: " + "; ".join(
+                plain.get(str(e["loc"][0]) if e["loc"] else "", e["msg"].removeprefix("Value error, ")) for e in exc.errors()[:3]))
+        service.accept_policy(pid, version, PolicySubmission(expected_revision=rev, policy=policy))
+    except AppError as exc:
+        exc.details.setdefault("recovery_url", "/proposals/" + pid + "#structured-policy")
+        raise
 
 
 def reopen_policy(service, form, pid, version, rev):
@@ -235,9 +317,20 @@ ACTIONS=dict(business=business,upload=upload,fetch=fetch,local_project=lambda *_
              save_connector=save_connector,save_test_identity=save_test_identity,
              review_enforcement=review_enforcement,build_artifact=build_artifact,publish=publish,request_tool=request_tool,clarify_request=clarify_request,
              suggest=suggest,request_next_batch=request_next_batch,areas_organize=areas_organize,areas_select=areas_select,decide_suggestion=decide_suggestion,
-             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,
-             reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),decision=review(decision),confirm_requirement=review(confirm_requirement),
-             supersede_question=review(supersede_question),dismiss_gap=review(dismiss_gap),revise=review(revise))
+             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,fix_and_retest=fix_and_retest,retire_test=retire_test,
+             reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),answers_and_check=review(answers_and_check),suggest_answers=review(suggest_answers),suggest_access=review(suggest_access),decision=review(decision),confirm_requirement=review(confirm_requirement),
+             supersede_question=review(supersede_question),dismiss_gap=review(dismiss_gap),accept_api_gap=review(accept_api_gap),revise=review(revise))
+
+
+# Actions are form posts. Opening one as a page (a bookmark, a refresh after an error) goes where
+# that work is done instead of answering "Method Not Allowed".
+@router.get("/actions/{action}")
+def action_page(action:str,proposal_id:str="",artifact_id:str=""):
+    if artifact_id:
+        return RedirectResponse("/artifacts/"+quote(artifact_id),status_code=303)
+    if proposal_id:
+        return RedirectResponse("/proposals/"+quote(proposal_id)+("#build" if action in ("build_artifact","save_connector") else ""),status_code=303)
+    return RedirectResponse("/proposals"+("?stage=build" if action in ("build_artifact","save_connector","submit_enforcement","review_enforcement") else ""),status_code=303)
 
 
 # Handlers run in a worker thread: slow provider calls do not block the ASGI loop.

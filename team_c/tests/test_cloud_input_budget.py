@@ -9,7 +9,7 @@ import pytest
 
 from team_c.config import Settings
 from team_c.llm.budget import CLOUD_CHARS_PER_TOKEN, cloud_budget, input_ceiling, input_fits
-from team_c.llm.prompts import model_messages
+from team_c.llm.prompts import SYSTEM, model_messages
 
 
 def payload(description="x"):
@@ -36,7 +36,8 @@ def test_generation_system_prompt_alone_consumes_most_of_a_small_allowance():
     settings.max_model_chars = 10_000_000
     _, messages = model_messages("generation", dict(business=dict(description="")))
     empty = cloud_budget(messages, input_ceiling(settings, "groq"))
-    assert empty["input_chars"] > 10000
+    # The budget counts the whole system prompt, not just the payload.
+    assert empty["input_chars"] > len(SYSTEM.encode())
     # A small allowance cannot admit the fixed prompt, whatever the business supplies.
     assert not input_fits(settings, "generation", payload("x" * 100))
 

@@ -56,6 +56,8 @@ class Runs:
         character budget happens to cut off.
         """
         budget = self.settings.capability_index_chars
+        if kind == "request_triage":
+            budget = min(budget, self.settings.triage_index_chars)
         while True:
             index, coverage = capabilities.operation_index(inventory, budget, include_ids, exclude_ids, goal)
             payload = build(index, coverage)

@@ -1,0 +1,25 @@
+{
+  "id": "N07",
+  "title": "Noon: asking for a person",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "I want to talk to a human",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "customer_request",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "customer_request",
+    "trace_invariants": true
+  }
+}

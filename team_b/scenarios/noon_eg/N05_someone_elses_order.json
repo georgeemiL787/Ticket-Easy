@@ -1,0 +1,42 @@
+{
+  "id": "N05",
+  "title": "Noon: an order that is not the customer's: handoff, nothing shown",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "Where is my order ORD-30001?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01000000001",
+      "expect": {
+        "decision": "answer",
+        "text_contains": "ORD-30001"
+      }
+    },
+    {
+      "say": "what about order ORD-30002?",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "ownership_mismatch",
+        "awaiting": "human",
+        "text_not_contains": [
+          "ORD-30002"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "ownership_mismatch",
+    "trace_invariants": true
+  }
+}

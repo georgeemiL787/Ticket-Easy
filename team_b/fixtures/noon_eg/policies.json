@@ -1,0 +1,469 @@
+{
+ "tenant_id": "noon_eg",
+ "documents": [
+  {
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "effective_date": "2026-10-01",
+   "current": true,
+   "language": "en"
+  }
+ ],
+ "passages": [
+  {
+   "passage_id": "noon_return_policy@v1#s1",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Scope",
+   "language": "en",
+   "text": "The policy applies to purchases from sellers listed on noon.com or the noon mobile app (the \"Noon Platform\"), in the \"Noon\" section or the \"Minutes\" section.",
+   "superseded": false,
+   "keywords": [
+    "scope",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s2",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: return eligibility and window",
+   "language": "en",
+   "text": "Returns are accepted within 15 days of receiving the shipment, but only for eligible products. Eligible products carry the tag \"Enjoy hassle-free returns with this offer\" in the offer details. Products without the tag cannot be returned under any circumstances. A return is not accepted until noon notifies the customer that it has been accepted.",
+   "superseded": false,
+   "keywords": [
+    "eligibility",
+    "return",
+    "window",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s3",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: return and refund timeline",
+   "language": "en",
+   "text": "A returned product can take up to one week to reach noon, depending on location. After it reaches the fulfillment center, noon needs up to 2 business days to receive and process it. Once processed, the refund can take 7 to 14 business days to reach the credit card, or the noon wallet if the customer paid cash. The refund amount depends on the condition of the returned product.",
+   "superseded": false,
+   "keywords": [
+    "refund",
+    "return",
+    "timeline",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s4",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Electronics and Mobiles",
+   "language": "en",
+   "text": "- The product must be returned in its original packaging, sealed and unopened. - If the product was used, the box was opened or the seal was removed, noon declines the refund and sends the product back, unless there is a manufacturing defect. - For a product that does not work because of a manufacturing defect, the original box, information booklet and all accessories must also be returned. - Noon decides whether the item is repaired, returned to the customer or refunded.",
+   "superseded": false,
+   "keywords": [
+    "electronics",
+    "mobiles",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s5",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Beauty and Health",
+   "language": "en",
+   "text": "- Hair care and personal care products, vitamins and dietary supplements, and sports nutrition are not eligible for return. - Beauty products (cosmetics, skin care and similar), fragrances and health products that have been opened or used are not accepted.",
+   "superseded": false,
+   "keywords": [
+    "beauty",
+    "health",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s6",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Fashion",
+   "language": "en",
+   "text": "- Underwear, lingerie, swimwear, bras, socks and tights are not eligible for return. - Apparel is returnable only if it is unused, unworn, unwashed and undamaged, with all labels and tags intact, in its original packaging. - Footwear, eyewear, watches, bags and luggage must come back in original packaging with all tags intact.",
+   "superseded": false,
+   "keywords": [
+    "fashion",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s7",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Home and Kitchen",
+   "language": "en",
+   "text": "- Furniture and large home appliances are not eligible for return. - Home decor is accepted only if unopened, undamaged and in original packaging. - Unwrapped bedding is not accepted. - Products that were used, altered, assembled or installed are not accepted unless they are defective.",
+   "superseded": false,
+   "keywords": [
+    "home",
+    "kitchen",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s8",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Sports and Outdoors",
+   "language": "en",
+   "text": "Eligible products can be returned only if unused and in original packaging.",
+   "superseded": false,
+   "keywords": [
+    "outdoors",
+    "sports",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s9",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Toys and Games",
+   "language": "en",
+   "text": "- Dressing-up costumes cannot be returned. - Toys and games that were used or activated, or that have missing parts, are not accepted.",
+   "superseded": false,
+   "keywords": [
+    "games",
+    "toys",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s10",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Baby Products",
+   "language": "en",
+   "text": "- Hygiene products, feeding and training accessories, diapers and diapering accessories, bath care and medical treatment products are not eligible for return. - Eligible baby products must be returned in original packaging, sealed and unopened.",
+   "superseded": false,
+   "keywords": [
+    "baby",
+    "products",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s11",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Grocery",
+   "language": "en",
+   "text": "All grocery items are non-returnable.",
+   "superseded": false,
+   "keywords": [
+    "grocery",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s12",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Automotive",
+   "language": "en",
+   "text": "- The product must be returned in original packaging, sealed and unopened. - If the product was used, the box was opened or the seal was removed, noon declines the refund and sends the product back, unless there is a manufacturing defect. - For a product that does not work because of a manufacturing defect, the original box, information booklet and all accessories must also be returned.",
+   "superseded": false,
+   "keywords": [
+    "automotive",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s13",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Tools and Home Improvement",
+   "language": "en",
+   "text": "- The item must come back in its original condition with all packaging and materials, such as manuals and accessories. - Used or damaged items are not accepted.",
+   "superseded": false,
+   "keywords": [
+    "home",
+    "improvement",
+    "tools",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s14",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Books",
+   "language": "en",
+   "text": "Books are accepted only if unused, not torn or damaged, and in original condition.",
+   "superseded": false,
+   "keywords": [
+    "books",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s15",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Pet Supplies",
+   "language": "en",
+   "text": "- Eligible products must be unused, in original packaging, and in the same condition as when the customer received them. - Perishable goods, such as food treats and supplements, cannot be returned.",
+   "superseded": false,
+   "keywords": [
+    "supplies",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s16",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: Stationery and Office Supplies",
+   "language": "en",
+   "text": "- The item must come back in its original condition with all packaging and materials, such as manuals and accessories. - Used or damaged items are not accepted.",
+   "superseded": false,
+   "keywords": [
+    "office",
+    "stationery",
+    "supplies",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s17",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: rejected items and redelivery",
+   "language": "en",
+   "text": "Noon may decline, at its sole discretion, any returned item that does not meet the return conditions. This is called a Rejected Item, and the customer gets no refund for it. When an item is rejected at any stage after the return, noon makes 2 attempts to deliver it back to the customer. If both attempts fail, noon holds the item for 3 business days at its delivery hub. The customer can ask customer care to deliver the item within 7 business days of the last notified delivery attempt.",
+   "superseded": false,
+   "keywords": [
+    "items",
+    "redelivery",
+    "rejected",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s18",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon section: returned items that could not be redelivered",
+   "language": "en",
+   "text": "If the first 2 delivery attempts fail, noon sends 3 reminder emails and makes 3 call attempts to tell the customer about the return. If the customer replies and asks for the item within 7 calendar days of the first communication, noon makes a 3rd delivery attempt. If the customer does not respond or does not want the item, the Rejected Item is disposed of and noon is not liable for a refund.",
+   "superseded": false,
+   "keywords": [
+    "could",
+    "items",
+    "redelivered",
+    "returned",
+    "that",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s19",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon Minutes: eligible categories",
+   "language": "en",
+   "text": "In the Minutes section, products are accepted for return only if they have the \"Returnable\" tag and belong to one of these categories: Electronics and Mobiles; Beauty and Health; Home and Kitchen; Sports and Outdoors; Toys and Games; Baby Products; Automotive; Tools and Home Improvement; Pet Supplies; Stationery and Office Supplies. Products in other categories, such as perishables, grocery and food items, are not eligible.",
+   "superseded": false,
+   "keywords": [
+    "categories",
+    "eligible",
+    "minutes",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s20",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon Minutes: return conditions",
+   "language": "en",
+   "text": "- The product must be returned in original packaging, sealed and unopened. - If the product was used, the box was opened or the seal was removed, noon declines the refund and sends the product back. - Products with a warranty tag are not accepted for return by noon. For seller warranty or manufacturing defects, the customer must contact the seller's or manufacturer's service center directly. - A product is not accepted as returned until noon notifies the customer that the return is accepted.",
+   "superseded": false,
+   "keywords": [
+    "conditions",
+    "minutes",
+    "return",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s21",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon Minutes: return window",
+   "language": "en",
+   "text": "Unless stated otherwise, the return window for returnable products is 14 days for products in their original state, and 30 days for manufacturer defects. Both are counted from the date the customer receives the shipment.",
+   "superseded": false,
+   "keywords": [
+    "minutes",
+    "return",
+    "window",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s22",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon Minutes: process and refund timeline",
+   "language": "en",
+   "text": "A returned product can take up to one week to reach noon, depending on location. After it reaches the fulfillment center, noon needs up to 2 business days to process it. Once processed, the refund can take 7 to 14 business days to reach the credit card, or the noon wallet if the customer paid cash. The refund amount depends on the condition of the returned product.",
+   "superseded": false,
+   "keywords": [
+    "minutes",
+    "process",
+    "refund",
+    "timeline",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s23",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Noon Minutes: rejected items and redelivery",
+   "language": "en",
+   "text": "Noon may send back any returned product that does not meet its conditions, and the customer gets no refund for a product that is not eligible. For a declined return in the Noon section noon makes 2 delivery attempts, and in the Minutes section it makes 1 attempt. If the attempts fail, noon holds the product for 3 business days at its delivery hub. The customer can ask customer care for another delivery attempt within 3 business days of the last notified attempt, and noon then makes a final attempt within 2 business days of the request. If there is no request within 3 business days, the item is disposed of. After disposal the customer can no longer request delivery and gets no compensation, including the item's value. A returned item that is not part of the customer's purchase history is sent back to the customer.",
+   "superseded": false,
+   "keywords": [
+    "items",
+    "minutes",
+    "redelivery",
+    "rejected",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s24",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: refund destination by payment method",
+   "language": "en",
+   "text": "After noon collects the item, it is inspected. Once it passes quality control, the refund is started to the original payment source: - Credit or debit card: refunded to the same card. - Buy now pay later (BNPL): refunded to the BNPL provider. - Cash on delivery: refunded to the noon wallet or a bank account. - Noon credits or gift cards: refunded to the noon wallet.",
+   "superseded": false,
+   "keywords": [
+    "destination",
+    "method",
+    "payment",
+    "refund",
+    "refunds",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s25",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: card payments",
+   "language": "en",
+   "text": "A refund for a card payment first appears as noon credits for 24 hours. If the customer does not use it, it is transferred automatically to the source account within 14 days, depending on the bank.",
+   "superseded": false,
+   "keywords": [
+    "card",
+    "payments",
+    "refunds",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s26",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: cash payments",
+   "language": "en",
+   "text": "A refund for a cash payment is credited to the customer's noon credits. If the amount is above 50 (the page states SAR/AED 50), it can be transferred to a bank account.",
+   "superseded": false,
+   "keywords": [
+    "cash",
+    "payments",
+    "refunds",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s27",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: buy now pay later (Tabby, Tamara)",
+   "language": "en",
+   "text": "For BNPL payments, the refund shows in the customer's account within 14 to 21 days, depending on the BNPL partner.",
+   "superseded": false,
+   "keywords": [
+    "later",
+    "refunds",
+    "tabby",
+    "tamara",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s28",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: credit card EMI",
+   "language": "en",
+   "text": "A returned order paid with credit card EMI gets a full refund of the EMIs paid so far. The bank may charge refund or pre-closure fees, so customers should check their bank's policy. The refund can only go back to the same credit card, not to any other method.",
+   "superseded": false,
+   "keywords": [
+    "card",
+    "credit",
+    "refunds",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s29",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: partial refunds and non-refundable fees",
+   "language": "en",
+   "text": "Refunds are processed item by item, so a customer may see only part of the refund while the rest is still processing. The shipping fee and the cash-on-delivery (COD) fee are not refundable once the item has been delivered. Once a refund has been issued, the refund method cannot be changed.",
+   "superseded": false,
+   "keywords": [
+    "fees",
+    "partial",
+    "refundable",
+    "refunds",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s30",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Refunds: tracking status and escalation",
+   "language": "en",
+   "text": "The customer can check the refund status under My Account. If the status is not \"Approved\" or \"Declined\" after the processing time for the payment method has passed, the customer should contact noon. If the status is \"Approved\" and the standard time frame has passed without the money arriving, the customer should contact their bank.",
+   "superseded": false,
+   "keywords": [
+    "escalation",
+    "refunds",
+    "status",
+    "tracking",
+    "return"
+   ]
+  },
+  {
+   "passage_id": "noon_return_policy@v1#s31",
+   "document_id": "noon_return_policy",
+   "version": "v1",
+   "section": "Contact and support",
+   "language": "en",
+   "text": "- Help Center: https://helpegypt.noon.com/portal/en/home - Email: egypt@noon.com - Phone: 16358",
+   "superseded": false,
+   "keywords": [
+    "contact",
+    "support",
+    "return"
+   ]
+  }
+ ]
+}

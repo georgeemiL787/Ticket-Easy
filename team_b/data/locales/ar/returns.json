@@ -1,0 +1,14 @@
+{
+  "return_status_requested": "طلب الإرجاع {return_id} للأوردر {order_id} اتسجل يوم {date}. أول ما نون تستلم المنتج وتفحصه، الاسترداد هيبدأ.",
+  "return_status_refund_approved": "طلب الإرجاع {return_id} للأوردر {order_id} عدّى الفحص، واسترداد {amount} جنيه اتوافق عليه. هيتحول على {destination}.",
+  "return_status_refund_initiated": "استرداد {amount} جنيه لطلب الإرجاع {return_id} (الأوردر {order_id}) بدأ يوم {date}. هيتحول على {destination}.",
+  "return_status_refunded": "استرداد {amount} جنيه لطلب الإرجاع {return_id} (الأوردر {order_id}) خلص واتحول على {destination}.",
+  "return_status_partially_refunded": "طلب الإرجاع {return_id} (الأوردر {order_id}) اتسترد جزء منه: {amount} جنيه اتحولوا على {destination}. فيه رسوم مش بتتسترد.",
+  "return_status_rejected_in_hub": "طلب الإرجاع {return_id} للأوردر {order_id} ماعداش الفحص في المخزن، فمفيش استرداد. ممكن أحولك لزميل يبص على حالتك.",
+  "return_status_other": "طلب الإرجاع {return_id} للأوردر {order_id} حالته {status}.",
+  "return_none": "مش شايف طلب إرجاع للأوردر {order_id}. لو عايز ترجع منتج قولي وأنا أساعدك.",
+  "refund_to_original_card": "الكارت اللي دفعت بيه",
+  "refund_to_noon_wallet": "محفظة نون",
+  "refund_to_bnpl_provider": "مزوّد الدفع (تابي أو تمارا)",
+  "refund_to_unknown": "وسيلة الدفع الأصلية"
+}

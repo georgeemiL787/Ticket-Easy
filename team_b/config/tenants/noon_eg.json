@@ -1,0 +1,161 @@
+{
+  "tenant_id": "noon_eg",
+  "display_name": "Noon Egypt",
+  "default_locale": "en",
+  "history_max_turns": 12,
+  "managers": [
+    "manager"
+  ],
+  "order_id_pattern": "ORD-\\d{5}",
+  "order_id_prefix": "ORD-",
+  "identity": {
+    "verify_tool": "verify_customer",
+    "required_slots": [
+      "order_id",
+      "phone"
+    ],
+    "max_attempts": 2
+  },
+  "escalation": {
+    "max_tool_failures": 2,
+    "max_clarifications": 2,
+    "min_intent_confidence": 0.55,
+    "escalate_on_deny": true,
+    "escalate_on_high_frustration": true,
+    "sla_minutes": {
+      "urgent": 15,
+      "high": 60,
+      "normal": 240
+    },
+    "final_deny_rules": []
+  },
+  "permissions": {
+    "allowed_tools": [
+      "verify_customer",
+      "get_order",
+      "list_customer_orders",
+      "get_return_status",
+      "create_return",
+      "create_ticket"
+    ],
+    "max_risk": "high",
+    "confirm_operation_kinds": [
+      "create",
+      "update",
+      "delete"
+    ]
+  },
+  "intents": {
+    "policy_question": {
+      "kind": "knowledge",
+      "description": "A question about shop policies (returns, refunds, shipping, payment, FAQ) that needs no order data.",
+      "examples": [
+        "What is your return policy?",
+        "ممكن ارجع المنتج بعد كام يوم من الاستلام؟",
+        "emta a2dar araga3 el montag?"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "greeting": {
+      "kind": "smalltalk",
+      "description": "A greeting or thanks with no request.",
+      "examples": [
+        "Hello",
+        "السلام عليكم",
+        "ahlan, ezayak"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "order_status": {
+      "kind": "lookup",
+      "description": "Where is my order, what is its status or delivery date.",
+      "examples": [
+        "Where is my order ORD-30001?",
+        "الاوردر ORD-30001 وصل فين؟",
+        "el order ORD-30001 wasal fein?"
+      ],
+      "required_slots": [
+        "order_id"
+      ],
+      "lookup_tool": "get_order",
+      "knowledge_query": "delivery tracking",
+      "knowledge_when": "order_late",
+      "argument_map": {}
+    },
+    "return_request": {
+      "kind": "action",
+      "description": "The customer wants to return a delivered item.",
+      "examples": [
+        "I want to return my order ORD-30001",
+        "عايز ارجع الاوردر ORD-30001 لان الجهاز مش عاجبني",
+        "3ayez araga3 el order ORD-30001"
+      ],
+      "required_slots": [
+        "order_id",
+        "reason"
+      ],
+      "lookup_tool": "get_order",
+      "action_tool": "create_return",
+      "knowledge_query": "return policy window eligibility",
+      "argument_map": {
+        "order_id": "slot:order_id",
+        "reason": "slot:reason"
+      },
+      "labels": {
+        "en": "return the item",
+        "ar": "ترجيع المنتج",
+        "arabizi": "return el montag"
+      }
+    },
+    "complaint": {
+      "kind": "action",
+      "description": "The customer wants to file a complaint, which opens a support ticket.",
+      "examples": [
+        "I want to file a complaint about my order ORD-30001",
+        "عايز اقدم شكوى على الاوردر",
+        "3ayez a2adem shakwa 3an el order"
+      ],
+      "required_slots": [
+        "order_id",
+        "description"
+      ],
+      "action_tool": "create_ticket",
+      "argument_map": {
+        "subject": "const:Customer complaint",
+        "description": "slot:description",
+        "order_id": "slot:order_id"
+      },
+      "lookup_tool": "get_order"
+    },
+    "human_request": {
+      "kind": "handoff",
+      "description": "The customer asks to talk to a person.",
+      "examples": [
+        "I want to talk to a human",
+        "عايز اكلم حد من خدمة العملاء",
+        "3ayez akalem mowazaf"
+      ],
+      "required_slots": [],
+      "argument_map": {}
+    },
+    "refund_status": {
+      "kind": "lookup",
+      "description": "Where is my refund or my return: its status, the quality check, the amount and where it goes.",
+      "examples": [
+        "Where is my refund for order ORD-30027?",
+        "فين فلوسي بتاعة الاوردر ORD-30027؟",
+        "feen flousi bta3et el order ORD-30027"
+      ],
+      "required_slots": [
+        "order_id"
+      ],
+      "lookup_tool": "get_return_status",
+      "knowledge_query": "refund timeline payment method",
+      "knowledge_when": "returns",
+      "argument_map": {}
+    }
+  },
+  "conflicting_intents": []
+}

@@ -1,0 +1,34 @@
+{
+  "id": "N02",
+  "title": "Noon: order status after the phone check (English)",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "Where is my order ORD-30001?",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01000000001",
+      "expect": {
+        "decision": "answer",
+        "text_contains": [
+          "ORD-30001",
+          "2026-10-03"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

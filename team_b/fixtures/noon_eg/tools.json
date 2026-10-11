@@ -1,0 +1,419 @@
+{
+ "tenant_id": "noon_eg",
+ "tools": [
+  {
+   "name": "verify_customer",
+   "capability": "verify_customer",
+   "title": "Verify customer",
+   "description": "Check that a phone number belongs to the customer who placed an order.",
+   "operation_kind": "read",
+   "risk": "low",
+   "requires_identity": false,
+   "exposes_personal_data": true,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     },
+     "phone": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id",
+     "phone"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "verified": {
+      "type": "boolean"
+     },
+     "customer_id": {
+      "type": [
+       "string",
+       "null"
+      ]
+     }
+    },
+    "required": [
+     "verified",
+     "customer_id"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "get_order",
+   "capability": "get_order",
+   "title": "Get order",
+   "description": "Look up one order: status, dates, total, payment method and the facts of its item.",
+   "operation_kind": "read",
+   "risk": "low",
+   "requires_identity": true,
+   "exposes_personal_data": true,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     },
+     "customer_id": {
+      "type": "string"
+     },
+     "order_status": {
+      "type": "string"
+     },
+     "payment_status": {
+      "type": "string"
+     },
+     "order_total": {
+      "type": "number"
+     },
+     "placed_at": {
+      "type": "string"
+     },
+     "shipped_at": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "delivered_at": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "expected_delivery_date": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "item_name": {
+      "type": "string"
+     },
+     "product_category": {
+      "type": "string"
+     },
+     "is_clearance": {
+      "type": "boolean"
+     },
+     "item_condition": {
+      "type": "string"
+     },
+     "tracking_number": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "item_id": {
+      "type": "string"
+     },
+     "product_subcategory": {
+      "type": "string"
+     },
+     "return_eligible_tag": {
+      "type": "boolean"
+     },
+     "warranty_tag": {
+      "type": "boolean"
+     },
+     "order_section": {
+      "type": "string"
+     },
+     "payment_method": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id",
+     "customer_id",
+     "order_status",
+     "order_total",
+     "delivered_at",
+     "expected_delivery_date",
+     "product_category",
+     "is_clearance",
+     "item_condition",
+     "payment_method"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "list_customer_orders",
+   "capability": "list_customer_orders",
+   "title": "List customer orders",
+   "description": "List the orders of a verified customer.",
+   "operation_kind": "read",
+   "risk": "low",
+   "requires_identity": true,
+   "exposes_personal_data": true,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "customer_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "customer_id"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "orders": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "order_id": {
+         "type": "string"
+        },
+        "order_status": {
+         "type": "string"
+        },
+        "order_total": {
+         "type": "number"
+        },
+        "placed_at": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "order_id",
+        "order_status"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "orders"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "get_return_status",
+   "capability": "get_return_status",
+   "title": "Get return status",
+   "description": "Where a return and its refund are: status, hub quality check, refund amount and destination.",
+   "operation_kind": "read",
+   "risk": "low",
+   "requires_identity": true,
+   "exposes_personal_data": true,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "returns": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "return_id": {
+         "type": "string"
+        },
+        "status": {
+         "type": "string"
+        },
+        "requested_at": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "received_at": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "qc_result": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "refund_amount_egp": {
+         "type": [
+          "number",
+          "null"
+         ]
+        },
+        "refund_destination": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "refund_initiated_at": {
+         "type": [
+          "string",
+          "null"
+         ]
+        }
+       },
+       "required": [
+        "return_id",
+        "status"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "order_id": {
+      "type": "string"
+     },
+     "customer_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id",
+     "customer_id",
+     "returns"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "create_return",
+   "capability": "create_return",
+   "title": "Create return",
+   "description": "Open a return for a delivered order (the item is the one in the order unless item_id is given).",
+   "operation_kind": "create",
+   "risk": "medium",
+   "requires_identity": true,
+   "exposes_personal_data": true,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "order_id": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "item_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "order_id",
+     "reason"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "reference_id": {
+      "type": "string",
+      "description": "Shop reference for the change, e.g. RET-30001"
+     },
+     "order_id": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "reference_id",
+     "order_id",
+     "status"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "create_ticket",
+   "capability": "create_ticket",
+   "title": "Create ticket",
+   "description": "Open a support ticket for the customer care team.",
+   "operation_kind": "create",
+   "risk": "low",
+   "requires_identity": true,
+   "exposes_personal_data": false,
+   "human_only": false,
+   "enabled": true,
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "subject": {
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "order_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "subject",
+     "description"
+    ],
+    "additionalProperties": false
+   },
+   "output_schema": {
+    "type": "object",
+    "properties": {
+     "reference_id": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "reference_id",
+     "status"
+    ],
+    "additionalProperties": false
+   }
+  }
+ ]
+}

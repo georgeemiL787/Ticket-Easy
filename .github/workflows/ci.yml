@@ -137,7 +137,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build the image
         if: hashFiles('team_b/Dockerfile') != ''
-        run: docker build -t ticket-easy-team-b:ci team_b
+        run: docker build -f team_b/Dockerfile -t ticket-easy-team-b:ci .
       - name: No Dockerfile yet
         if: hashFiles('team_b/Dockerfile') == ''
         run: echo "team_b/Dockerfile does not exist yet (one-command startup is built by Track A); nothing to build."

@@ -74,9 +74,11 @@ def _new_steps(view: AgentView, steps: Steps, carried: str = "") -> Steps:
     order = view.entities.get("order_id", "") or carried
     own = assign_order_ids(view.message, list(view.intents), _TENANT)  # two orders in one message: each request its own
     wanted: Steps = []
-    if "order_status" in view.intents:
+    if "refund_status" in view.intents:  # where a return and its refund are (Noon)
+        wanted.append((f"refund:{order or '?'}", "open"))
+    elif "order_status" in view.intents:
         wanted.append((f"status:{own.get('order_status', order) or '?'}", "open"))
-    elif not view.intents and order and not any(t.startswith(("status:", "action:")) for t, _ in steps):
+    elif not view.intents and order and not any(t.startswith(("status:", "refund:", "action:")) for t, _ in steps):
         wanted.append((f"status:{order}", "open"))  # "and what about NS-20790?"
     pairs = [set(p) for p in _TENANT.conflicting_intents]
     asking = [i for i in view.intents if i in action_intents]
@@ -172,7 +174,7 @@ def expert(view: AgentView) -> MoveProposal:
         return MoveProposal(plan=plan, move=HandOver(reason=EscalationReason.NO_EVIDENCE, tried=tried))
 
     kind, _, rest = current.partition(":")
-    if kind in ("status", "lookup"):
+    if kind in ("status", "lookup", "refund"):
         wanted_id = (rest if rest != "?" else "") or order
         if not wanted_id and len(view.known_order_ids) == 1:
             wanted_id = view.known_order_ids[0]
@@ -181,7 +183,8 @@ def expert(view: AgentView) -> MoveProposal:
             return MoveProposal(plan=done, move=reply)
         if not wanted_id:
             return MoveProposal(plan=plan, move=AskCustomer(question_key="ask_order_id", slot="order_id"))
-        return MoveProposal(plan=plan, move=LookUp(tool="get_order", arguments={"order_id": wanted_id}, why="status"))
+        tool = "get_return_status" if kind == "refund" else "get_order"
+        return MoveProposal(plan=plan, move=LookUp(tool=tool, arguments={"order_id": wanted_id}, why="status"))
 
     if kind == "action":
         intent, _, planned_order = rest.partition(":")

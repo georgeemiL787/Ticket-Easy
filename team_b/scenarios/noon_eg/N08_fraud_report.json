@@ -1,0 +1,25 @@
+{
+  "id": "N08",
+  "title": "Noon: a fraud report goes to a person at once",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-10-08"
+  },
+  "turns": [
+    {
+      "say": "someone used my card without my permission, this is fraud",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "mandatory_risk",
+        "awaiting": "human"
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "mandatory_risk",
+    "trace_invariants": true
+  }
+}

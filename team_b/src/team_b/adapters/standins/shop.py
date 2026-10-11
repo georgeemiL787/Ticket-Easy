@@ -1,8 +1,12 @@
-"""StandinShop: the fake Nile Style shop behind the CapabilityClient plug.
+"""StandinShop: the fake shops (Nile Style, Noon Egypt) behind the CapabilityClient plug.
 
 It serves the tools of fixtures/<tenant>/tools.json over the data in backend.json (a fresh deep copy per instance, so
 tests never share state), keeps an audit log of every call, replays idempotent writes, refuses writes that carry no
 policy_request_id, and has switches to simulate every kind of failure.
+
+A tenant folder with a `seed.json` (Noon) is a SQLite shop (sql_shop.py): its data, audit log and idempotency memory
+are database rows, kept in a file under `db_dir` when one is given (else in memory). The other tenants keep the
+in-memory JSON data of shop_backend.py.
 """
 
 import copy
@@ -16,6 +20,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 
 from team_b.adapters.standins import shop_backend as backend
+from team_b.adapters.standins import sql_shop
 from team_b.adapters.standins.json_schema import validate
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
@@ -54,7 +59,8 @@ class AuditEntry(BaseModel):
 class _Tenant:
     tenant_id: str
     tools: dict[str, ToolSpec]
-    shop: backend.Backend
+    shop: Any  # backend.Backend (JSON data) or sql_shop.SqlBackend (SQLite)
+    handlers: Any = None  # tool name -> handler for this shop's data
     audit: list[AuditEntry] = field(default_factory=list)
     replay: dict[str, tuple[str, str, ToolResult]] = field(default_factory=dict)
 
@@ -76,8 +82,12 @@ def _error(code: str, message: str, *, unclear: bool = False) -> ToolResult:
 
 
 class StandinShop:
-    def __init__(self, fixtures_dir: Path, clock: Clock, tenant_ids: Iterable[str] = ()) -> None:
+    def __init__(
+        self, fixtures_dir: Path, clock: Clock, tenant_ids: Iterable[str] = (), *, db_dir: Path | None = None
+    ) -> None:
         self._dir = fixtures_dir
+        self._db_dir = db_dir  # where the SQLite shops keep their files (None: in memory)
+        self._fresh: set[str] = set()  # SQLite shops to start again from the seed on the next load
         self._clock = clock
         self._tenants: dict[str, _Tenant] = {}
         self._fail: dict[str, list[list[Any]]] = {}  # tool -> [[code, times left], ...]
@@ -126,7 +136,7 @@ class StandinShop:
         applied = False
         if write and request.tool in self._uncertain:
             if self._uncertain[request.tool]:
-                outcome = backend.HANDLERS[request.tool](t.shop, request.arguments)
+                outcome = t.handlers[request.tool](t.shop, request.arguments)
                 if isinstance(outcome, backend.Fail):
                     return self._log(t, request, _error(outcome.code, outcome.message))
                 applied = True
@@ -186,6 +196,10 @@ class StandinShop:
         self._no_audit.clear()
         self._unpublished.clear()
         loaded = list(self._tenants)
+        self._fresh = {name for name, t in self._tenants.items() if isinstance(t.shop, sql_shop.SqlBackend)}
+        for t in self._tenants.values():
+            if isinstance(t.shop, sql_shop.SqlBackend):
+                t.shop.close()  # a file in use cannot be replaced on Windows
         self._tenants.clear()
         for tenant_id in loaded:
             self._tenant(tenant_id)
@@ -216,7 +230,8 @@ class StandinShop:
 
     def records(self, tenant_id: str, kind: str) -> list[dict[str, Any]]:
         """Created returns, exchanges, refunds, vouchers, tickets or deletions."""
-        return copy.deepcopy(self._tenant(tenant_id).shop.records[kind])
+        shop = self._tenant(tenant_id).shop
+        return copy.deepcopy(shop.records(kind) if isinstance(shop, sql_shop.SqlBackend) else shop.records[kind])
 
     def order(self, tenant_id: str, order_id: str) -> dict[str, Any] | None:
         found = self._tenant(tenant_id).shop.order(order_id)
@@ -250,49 +265,72 @@ class StandinShop:
     def _tenant(self, tenant_id: str) -> _Tenant:
         if tenant_id not in self._tenants:
             folder = self._dir / tenant_id
-            if not (folder / "tools.json").is_file() or not (folder / "backend.json").is_file():
+            seed = folder / "seed.json"
+            if not (folder / "tools.json").is_file() or not (seed.is_file() or (folder / "backend.json").is_file()):
                 raise UpstreamError(SERVICE, "TENANT_NOT_FOUND", f"no shop data for tenant {tenant_id}")
             tools = {t["name"]: ToolSpec.model_validate(t) for t in _read(folder / "tools.json")["tools"]}
+            if seed.is_file():
+                self._tenants[tenant_id] = self._sql_tenant(tenant_id, tools, seed)
+                return self._tenants[tenant_id]
             data = _read(folder / "backend.json")
             shop = backend.Backend(
                 customers={c["customer_id"]: c for c in data["customers"]},
                 orders={o["order_id"]: o for o in data["orders"]},
                 today=self._clock.today,
             )
-            self._tenants[tenant_id] = _Tenant(tenant_id=tenant_id, tools=tools, shop=shop)
+            self._tenants[tenant_id] = _Tenant(tenant_id=tenant_id, tools=tools, shop=shop, handlers=backend.HANDLERS)
         return self._tenants[tenant_id]
 
+    def _sql_tenant(self, tenant_id: str, tools: dict[str, ToolSpec], seed: Path) -> _Tenant:
+        """A SQLite shop: its audit log and idempotency memory come back from the database (a restart keeps them)."""
+        path = self._db_dir / f"{tenant_id}_shop.sqlite3" if self._db_dir is not None else None
+        fresh = tenant_id in self._fresh
+        self._fresh.discard(tenant_id)
+        db = sql_shop.SqlBackend(seed, self._clock.today, path, fresh=fresh)
+        tenant = _Tenant(tenant_id=tenant_id, tools=tools, shop=db, handlers=sql_shop.HANDLERS)
+        tenant.audit = [AuditEntry.model_validate_json(e) for e in db.load_audit()]
+        tenant.replay = {
+            key: (tool, args, ToolResult.model_validate_json(result))
+            for key, (tool, args, result) in db.load_replay().items()
+        }
+        return tenant
+
     def _finish(self, t: _Tenant, request: ToolCallRequest, write: bool, key: str) -> ToolResult:
-        outcome = backend.HANDLERS[request.tool](t.shop, request.arguments)
+        outcome = t.handlers[request.tool](t.shop, request.arguments)
         if isinstance(outcome, backend.Fail):
             return self._log(t, request, _error(outcome.code, outcome.message))
         audit_id = None if request.tool in self._no_audit else f"AUD-{len(t.audit) + 1:05d}"
         result = ToolResult(status="success", data=outcome.data, audit_id=audit_id, reference_id=outcome.reference_id)
         if write:
             t.replay[request.idempotency_key] = (request.tool, key, result.model_copy(deep=True))
+            if isinstance(t.shop, sql_shop.SqlBackend):
+                t.shop.save_replay(request.idempotency_key, request.tool, key, result.model_dump_json())
+        if isinstance(t.shop, sql_shop.SqlBackend):
+            t.shop.commit()  # the change and its audit row go in together
         return self._log(t, request, result, applied=outcome.applied)
 
     def _log(
         self, t: _Tenant, request: ToolCallRequest, result: ToolResult, *, applied: bool = False, replayed: bool = False
     ) -> ToolResult:
-        t.audit.append(
-            AuditEntry(
-                seq=len(t.audit) + 1,
-                tenant_id=t.tenant_id,
-                tool=request.tool,
-                request_id=request.request_id,
-                arguments=copy.deepcopy(request.arguments),
-                actor=request.actor,
-                idempotency_key=request.idempotency_key,
-                policy_request_id=request.policy_request_id,
-                approval_id=request.approval_id,
-                status=result.status,
-                error_code=result.error_code,
-                audit_id=result.audit_id,
-                reference_id=result.reference_id,
-                applied=applied,
-                replayed=replayed,
-                at=self._clock.now(),
-            )
+        entry = AuditEntry(
+            seq=len(t.audit) + 1,
+            tenant_id=t.tenant_id,
+            tool=request.tool,
+            request_id=request.request_id,
+            arguments=copy.deepcopy(request.arguments),
+            actor=request.actor,
+            idempotency_key=request.idempotency_key,
+            policy_request_id=request.policy_request_id,
+            approval_id=request.approval_id,
+            status=result.status,
+            error_code=result.error_code,
+            audit_id=result.audit_id,
+            reference_id=result.reference_id,
+            applied=applied,
+            replayed=replayed,
+            at=self._clock.now(),
         )
+        t.audit.append(entry)
+        if isinstance(t.shop, sql_shop.SqlBackend):
+            t.shop.save_audit(entry.seq, entry.model_dump_json())
         return result

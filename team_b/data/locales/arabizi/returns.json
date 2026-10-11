@@ -1,0 +1,14 @@
+{
+  "return_status_requested": "Talab el estergaa3 {return_id} lel order {order_id} etsagel yom {date}. awel ma noon testelem el montag w tefhasou, el esterdad hayebda2.",
+  "return_status_refund_approved": "Talab el estergaa3 {return_id} lel order {order_id} 3ada el fa7s, w esterdad {amount} geneh etwafa2 3aleih. hayetwaffar 3ala {destination}.",
+  "return_status_refund_initiated": "Esterdad {amount} geneh le talab el estergaa3 {return_id} (el order {order_id}) bada2 yom {date}. hayetwaffar 3ala {destination}.",
+  "return_status_refunded": "Esterdad {amount} geneh le talab el estergaa3 {return_id} (el order {order_id}) khelos w etwaffar 3ala {destination}.",
+  "return_status_partially_refunded": "Talab el estergaa3 {return_id} (el order {order_id}) etesterad gez2 menno: {amount} geneh etwaffaro 3ala {destination}. fi rosoum mesh betetesterad.",
+  "return_status_rejected_in_hub": "Talab el estergaa3 {return_id} lel order {order_id} ma3adash el fa7s fel makhzan, fa mafish esterdad. momken a7awelak le zameel yeshoof 7altak.",
+  "return_status_other": "Talab el estergaa3 {return_id} lel order {order_id} 7aletoh {status}.",
+  "return_none": "Mesh shayef talab estergaa3 lel order {order_id}. law 3ayez targa3 montag olly w ana asa3dak.",
+  "refund_to_original_card": "el card elly dafa3t beyh",
+  "refund_to_noon_wallet": "mahfazet noon",
+  "refund_to_bnpl_provider": "moazawed el daf3 (Tabby aw Tamara)",
+  "refund_to_unknown": "wasilet el daf3 el asleya"
+}

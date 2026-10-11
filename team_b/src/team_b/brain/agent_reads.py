@@ -105,6 +105,11 @@ def _order_summary(data: dict[str, Any], facts: dict[str, Any]) -> dict[str, Any
     brief: dict[str, Any] = {k: data[k] for k in ORDER_FIELDS if k in data}
     if "days_late" in facts:
         brief["days_late"] = facts["days_late"]
+    if isinstance(data.get("returns"), list):  # a return and refund lookup: the model sees where each one is
+        keys = ("return_id", "status", "qc_result", "refund_amount_egp", "refund_destination")
+        brief["returns"] = [
+            {k: r[k] for k in keys if r.get(k) is not None} for r in data["returns"][:3] if isinstance(r, dict)
+        ]
     return brief
 
 

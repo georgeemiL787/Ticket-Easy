@@ -24,7 +24,7 @@ from team_b.domain.understanding import Locale
 
 COMPOSER = default_composer()
 FILES = {locale: load_locale(LOCALES_DIR / locale.value) for locale in Locale}
-PART_FILES = ["actions.json", "core.json", "handoff.json", "knowledge.json"]
+PART_FILES = ["actions.json", "core.json", "handoff.json", "knowledge.json", "returns.json"]
 ARABIC = re.compile(r"[؀-ۿ]")
 BRAIN = PROJECT_ROOT / "src" / "team_b" / "brain"
 
@@ -74,7 +74,7 @@ def test_every_locale_has_exactly_the_same_keys() -> None:
 
 
 def test_the_key_count_is_the_one_in_the_report() -> None:
-    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 70, "ar": 70, "arabizi": 70}
+    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 82, "ar": 82, "arabizi": 82}
 
 
 @pytest.mark.parametrize("locale", list(Locale))

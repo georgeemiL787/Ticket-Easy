@@ -255,3 +255,21 @@ async def test_a_case_without_a_waiting_action_cannot_be_decided(container: Cont
     reply = await bot(container).handle_turn(T, "plain", "I want to talk to a human")
     with pytest.raises(NothingToDecideError):
         await bot(container).human_decide(reply.handoff_case_id or "", "agent-1", True)
+
+
+# ---- what the person said is in the memory the assistant reads when the case comes back ----
+
+
+async def test_a_persons_replies_and_closing_note_are_in_the_history_when_the_case_is_handed_back(
+    container: Container,
+) -> None:
+    reply = await bot(container).handle_turn(T, "plain-2", "I want to talk to a human")
+    case_id = reply.handoff_case_id or ""
+    await bot(container).claim(case_id, "agent-1")
+    await bot(container).human_reply(case_id, "agent-1", "We can exchange it, you pay the difference")
+    await bot(container).return_to_agent(case_id, "agent-1", "customer wants an exchange for the cotton jacket")
+    session = await container.sessions.load(T, "plain-2")
+    assert session is not None and session.status == "active"
+    told = [(m.role, m.text) for m in session.history]
+    assert ("human_agent", "We can exchange it, you pay the difference") in told
+    assert any(role == "system" and "exchange for the cotton jacket" in text for role, text in told)

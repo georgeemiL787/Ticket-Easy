@@ -285,3 +285,14 @@ async def test_the_api_key_never_appears_in_an_error() -> None:
     with pytest.raises(UpstreamError) as raised:
         await ask(registry(server).llm_for("reader"))
     assert "gsk-general" not in str(raised.value)
+
+
+def test_several_keys_add_up_their_per_minute_budgets() -> None:
+    env = {"TEAM_B_LLM_RPM_WRITER": "30", "TEAM_B_LLM_TPM_WRITER": "8000"}
+    one = LLMRegistry(settings(**env))
+    three = LLMRegistry(settings(TEAM_B_LLM_API_KEY="gsk-a,gsk-b, gsk-c", **env))
+    url, model = GROQ["TEAM_B_LLM_BASE_URL"], GROQ["TEAM_B_LLM_MODEL"]
+    first, sum_of_three = one._limiters.get(url, model), three._limiters.get(url, model)
+    assert first is not None and sum_of_three is not None
+    assert (first.rpm, first.tpm) == (30, 8000)
+    assert (sum_of_three.rpm, sum_of_three.tpm) == (90, 24000)

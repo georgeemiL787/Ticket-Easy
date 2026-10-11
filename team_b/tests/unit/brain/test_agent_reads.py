@@ -381,3 +381,61 @@ async def test_no_write_reaches_the_shop_whatever_the_picker_proposes(c: Contain
     picker = ScriptedMovePicker(*attempts, Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
     await orch(c, picker).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
     assert writes(c) == []
+
+
+# ---- the agent does not ask again for what it was told ----
+
+
+async def test_a_phone_the_customer_already_gave_is_not_asked_for_again(c: Container) -> None:
+    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    again = AskCustomer(question_key="ask_phone", slot="phone")
+    handover = HandOver(reason=EscalationReason.UNSUPPORTED, tried=["read the order"], why="not covered")
+    await orch(c, ScriptedMovePicker(again, handover)).handle_turn(T, C, "and the other thing?")
+    trace = await trace_of(c)
+    first = trace.agent_steps[0]
+    assert first.refused and "slot_not_already_known" in [ch.name for ch in first.checks if not ch.passed]
+
+
+async def test_the_same_open_question_is_not_asked_a_third_time(c: Container) -> None:
+    ask = AskCustomer(question_key="ask_rephrase")
+    for text in ("hmm", "ok"):
+        reply = await orch(c, ScriptedMovePicker(ask)).handle_turn(T, C, text)
+        assert reply.decision is Decision.CLARIFY and reply.awaiting == "detail"
+    handover = HandOver(reason=EscalationReason.LOW_CONFIDENCE, tried=["asked twice"], why="still unclear")
+    reply = await orch(c, ScriptedMovePicker(ask, handover)).handle_turn(T, C, "so")
+    first = (await trace_of(c)).agent_steps[0]
+    assert first.refused and "not_asking_the_same_again" in [ch.name for ch in first.checks if not ch.passed]
+    assert reply.decision is Decision.HANDOFF
+
+
+async def test_asking_for_a_detail_keeps_the_request_so_the_usual_stages_can_continue_it(c: Container) -> None:
+    ask = AskCustomer(question_key="ask_phone", slot="phone")
+    await orch(c, ScriptedMovePicker(ask)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
+    session = await c.sessions.load(T, C)
+    assert session is not None and session.active_intent == "exchange_request" and session.awaiting == "slot:phone"
+    # the AI is unavailable on the next turn: the usual stages take the phone number as the answer and go on to the
+    # next detail the exchange needs, not back to "tell me more"
+    reply = await orch(c, ScriptedMovePicker()).handle_turn(T, C, "01123456702")
+    assert reply.decision is Decision.CLARIFY and reply.awaiting == "slot:reason"
+
+
+async def test_the_agent_is_told_what_was_asked_and_cannot_forget_it_when_the_history_has_moved_on(
+    c: Container,
+) -> None:
+    seen: list[Any] = []
+
+    def decide(view: Any) -> Any:
+        seen.append(view)
+        return AskCustomer(question_key="ask_phone", slot="phone")
+
+    await orch(c, FunctionPicker(decide)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
+    assert seen[-1].requests_so_far == ["exchange_request"] and seen[-1].details_given.get("order_id")
+    # the customer answers with something that says nothing by itself; the agent must not ask "what do you need?"
+    forget = AskCustomer(question_key="ask_rephrase")
+    carry_on = AskCustomer(question_key="ask_reason", slot="reason")
+    await orch(c, ScriptedMovePicker(forget, carry_on)).handle_turn(T, C, "ok")
+    first = (await trace_of(c)).agent_steps[0]
+    assert first.refused and "not_forgetting_the_request" in [ch.name for ch in first.checks if not ch.passed]
+    # and the next ask shows it the request the shop kept
+    await orch(c, FunctionPicker(decide)).handle_turn(T, C, "hmm")
+    assert seen[-1].active_request == "exchange_request"

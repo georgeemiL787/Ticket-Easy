@@ -1,0 +1,73 @@
+{
+  "id": "S39",
+  "title": "Handoff: a person claims, replies and gives the chat back, and the agent carries on",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "How many days do I have to return an item?",
+      "expect": {
+        "decision": "answer",
+        "citations_include": [
+          "return_policy@v2#s2"
+        ]
+      }
+    },
+    {
+      "say": "I want to talk to a human agent",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "customer_request",
+        "awaiting": "human"
+      }
+    },
+    {
+      "say": "hello? are you there",
+      "expect": {
+        "decision": "handoff",
+        "escalation": "customer_request",
+        "awaiting": "human",
+        "text_contains": "colleague"
+      }
+    },
+    {
+      "human": {
+        "action": "claim"
+      },
+      "expect": {}
+    },
+    {
+      "human": {
+        "action": "reply",
+        "text": "Hello, I am here to help."
+      },
+      "expect": {}
+    },
+    {
+      "human": {
+        "action": "return_to_agent",
+        "text": "Back to the assistant."
+      },
+      "expect": {}
+    },
+    {
+      "say": "ok, how many days do I have to return an item again?",
+      "expect": {
+        "decision": "answer",
+        "awaiting": null,
+        "citations_include": [
+          "return_policy@v2#s2"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": "customer_request",
+    "trace_invariants": true
+  }
+}

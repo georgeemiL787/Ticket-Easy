@@ -1,0 +1,29 @@
+{
+  "id": "S53",
+  "title": "Good morning (Egyptian Arabic): the greeting, no question back, no case",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "صباح الخير",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "locale": "ar",
+        "text_contains_any": [
+          "أهلاً",
+          "أهلا"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

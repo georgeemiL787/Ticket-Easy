@@ -1,0 +1,201 @@
+/* The customer chat, in the aurora look (shared tokens and glass in /ui/aurora.css). */
+body {
+  padding: 24px 16px;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  max-width: 760px;
+  height: calc(100vh - 48px);
+  min-height: 420px;
+  margin: 0 auto;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 15, 20, 0.35);
+}
+
+.chat-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.dev-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.dev-toggle input {
+  accent-color: var(--aqua);
+}
+
+.messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 20px;
+  overflow-y: auto;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.message {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.55;
+}
+
+.message.customer {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(56, 189, 248, 0.14));
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  border-end-end-radius: 6px;
+}
+
+.message.agent {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-end-start-radius: 6px;
+}
+
+.message.human_agent {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(232, 121, 249, 0.2), rgba(232, 121, 249, 0.08));
+  border: 1px solid rgba(232, 121, 249, 0.32);
+  border-end-start-radius: 6px;
+}
+
+.message .who {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.message .chip {
+  direction: ltr;
+  font-size: 11px;
+  color: rgba(230, 237, 243, 0.8);
+}
+
+.dev {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+  color: var(--muted);
+  font-size: 12px;
+  direction: ltr;
+  text-align: left;
+}
+
+.show-dev .dev {
+  display: block;
+}
+
+.status {
+  margin: 0;
+  padding: 6px 20px;
+  color: var(--bad);
+  font-size: 0.85rem;
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 15, 20, 0.35);
+}
+
+.composer input {
+  flex: 1;
+  padding: 12px 14px;
+}
+
+.composer button {
+  padding: 12px 22px;
+  border-radius: 12px;
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 8px;
+  }
+
+  .chat {
+    height: calc(100vh - 16px);
+    border-radius: 18px;
+  }
+
+  .message {
+    max-width: 92%;
+  }
+}
+
+/* The "agent is working" bubble: moving dots and a short line about what is happening. */
+.message.pending {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--aqua);
+  opacity: 0.35;
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i { animation: none; opacity: 0.7; }
+}

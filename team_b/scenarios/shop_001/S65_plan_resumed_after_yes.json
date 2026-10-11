@@ -1,0 +1,52 @@
+{
+  "id": "S65",
+  "title": "A refund and a complaint in one message: the first is confirmed, the second resumes after the yes",
+  "status": "active",
+  "owner": "B",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "I want a refund for order NS-20745 and I have a complaint about order NS-20877, the parcel arrived late",
+      "expect": {
+        "decision": "verify_identity",
+        "awaiting": "slot:phone"
+      }
+    },
+    {
+      "say": "01012345601",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "text_contains": "NS-20745"
+      }
+    },
+    {
+      "say": "yes",
+      "expect": {
+        "decision": "confirm",
+        "awaiting": "confirmation",
+        "text_contains": [
+          "REF-",
+          "NS-20877"
+        ]
+      }
+    },
+    {
+      "say": "yes",
+      "expect": {
+        "decision": "execute",
+        "text_contains": "TKT-"
+      }
+    }
+  ],
+  "final": {
+    "executed_tools": [
+      "create_refund",
+      "create_ticket"
+    ],
+    "audit_count": 2,
+    "trace_invariants": true
+  }
+}

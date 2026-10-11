@@ -56,11 +56,60 @@ def risk_canonical(text: str) -> str:
     return " ".join(_canonical_token(t) for t in tokens)
 
 
+# A term matches as a whole word or phrase, never inside a longer word ("rash" is not in "crashed",
+# "court" is not in "courtesy"). What may still be attached is small and explicit:
+#   - Arabic: one article/particle in front (ال, و, ب, ل, ف, وال, بال, لل ...) and a possessive, plural
+#     or verb ending behind (محاميك, المحكمة, اتسرقت, تسمموا);
+#   - Latin (English, Arabizi): an inflection ending (lawyers, hacked, burning), the extra endings listed in
+#     _TERM_ENDINGS for the few terms whose real-risk forms need more, and the terms in STEM_TERMS,
+#     which were written as word stems on purpose and keep matching as the start of a longer word.
+# Terms are compared in their canonical spelling (see risk_canonical).
+_ARABIC_PREFIX = "(?:[وف]?[بكل]?ال|[وف]?لل|[وفبكسل])?"
+_ARABIC_SUFFIX = "(?:ات|ين|ون|ان|وا|توا|تي|ني|نا|كم|هم|ها|ه|ك|ي|ت)?"
+_LATIN_SUFFIX = "(?:s|es|ed|d|ing)?"
+
+# Written as stems in keywords.json: these match as the start of a longer word.
+STEM_TERMS = frozenset(
+    {
+        "impersonat",  # impersonate / impersonation / impersonating
+        "poison",  # poisoned / poisoning / poisonous
+        "burn",  # burnt / burned / burning
+        "hesaby et",  # "7esaby et7aked": the verb is cut off on purpose
+    }
+)
+
+# Extra endings (regex) for terms whose real-risk word forms go beyond the plain inflections.
+_TERM_ENDINGS = {
+    "fraud": r"(?:s|ulent\w*|ster|sters)?",  # fraudulent, fraudster
+    "scam": r"(?:s|ed|ing|er|ers)?",  # scammer (scamming / scammed after doubled letters are collapsed)
+    "hospital": r"(?:s|ized|ised|ization|isation)?",  # hospitalized, but not hospitality
+    "court": r"(?:s|rom|roms)?",  # courtroom (the doubled o is collapsed), but not courtesy
+}
+# Arabic terms that are a verb stem: the verb prefix may sit in front (اتسممت, يتسمم, متسمم).
+_ARABIC_VERB_PREFIX_TERMS = {"تسمم": "[اينم]?"}
+# Compound words where the term is the second half and a letter directly before it is fine.
+_TERM_PREFIXES = {"burn": "(?:sun|heart|freezer)?"}  # sunburn, heartburn
+
+
+@lru_cache(maxsize=4096)
+def _term_regex(canonical: str) -> re.Pattern[str]:
+    escaped = re.escape(canonical)
+    if "ء" <= canonical[0] <= "ي":
+        # A term that starts with the article (المحكمة) also matches with another particle (للمحكمة).
+        bare = canonical[2:] if canonical.startswith("ال") and len(canonical) > 4 else canonical
+        verb_prefix = _ARABIC_VERB_PREFIX_TERMS.get(bare, "")
+        return re.compile(rf"(?<!\w){_ARABIC_PREFIX}{verb_prefix}{re.escape(bare)}{_ARABIC_SUFFIX}(?!\w)")
+    start = rf"(?<!\w){_TERM_PREFIXES.get(canonical, '')}{escaped}"
+    if canonical in STEM_TERMS:
+        return re.compile(start)
+    return re.compile(rf"{start}{_TERM_ENDINGS.get(canonical, _LATIN_SUFFIX)}(?!\w)")
+
+
 @lru_cache(maxsize=1)
 def _keywords() -> dict[str, list[tuple[str, str]]]:
     raw = json.loads((settings.shared_dir / "risk_keywords.json").read_text(encoding="utf-8"))
     return {
-        cat: [(risk_canonical(t), normalize(t)) for t in terms]
+        cat: [(_term_regex(risk_canonical(t)), normalize(t)) for t in terms]
         for cat, terms in raw["categories"].items()
     }
 
@@ -69,8 +118,8 @@ def keyword_scan(message: str) -> tuple[set[str], list[str]]:
     text = risk_canonical(message)
     categories, matched = set(), []
     for category, terms in _keywords().items():
-        for canonical, term in terms:
-            if canonical in text:
+        for pattern, term in terms:
+            if pattern.search(text):
                 categories.add(category)
                 matched.append(term)
     return categories, matched

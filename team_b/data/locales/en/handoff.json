@@ -1,0 +1,18 @@
+{
+  "human_will_reply": "A colleague will reply to you here shortly.",
+  "handoff_generic": "I'm connecting you with a colleague who can help you with this.",
+  "handoff_customer_request": "Of course. I'm connecting you with a colleague from our customer care team now.",
+  "handoff_mandatory_risk": "I'm passing this to our customer care team right away so a colleague can look into it personally.",
+  "handoff_policy_denied": "I can't go ahead with this one, but I'm passing it to a colleague who can look at your case.",
+  "handoff_approval_required": "This needs approval from our customer care team, so I've passed your request to a colleague.",
+  "handoff_repeated_tool_failure": "I could not get the information I need right now, so I'm connecting you with a colleague.",
+  "handoff_unverified_result": "I could not confirm that this went through, so I will not say it is done. A colleague will check and get back to you.",
+  "handoff_no_evidence": "I could not find a reliable answer to that, so I'm connecting you with a colleague who can help.",
+  "handoff_dependency_unavailable": "Part of our system is not available right now, so I'm handing this to a colleague.",
+  "handoff_low_confidence": "I'm having trouble understanding the request, so I'll connect you with a colleague who can help.",
+  "handoff_identity_failed": "I could not verify your details, so for your security I'm connecting you with a colleague.",
+  "handoff_ownership_mismatch": "I can't share details about that order here. I'm connecting you with a colleague who can check it with you.",
+  "handoff_high_frustration": "I'm sorry for the trouble. I'm connecting you with a colleague right away to sort this out.",
+  "handoff_capability_missing": "I can't do that myself yet, so I'm passing it to a colleague.",
+  "handoff_unsupported": "That is something only a colleague can handle, so I'm connecting you now."
+}

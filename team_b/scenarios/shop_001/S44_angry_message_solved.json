@@ -1,0 +1,28 @@
+{
+  "id": "S44",
+  "title": "One very angry message is apologised to and still solved: the order status is given, no handoff",
+  "status": "active",
+  "owner": "A",
+  "setup": {
+    "today": "2026-09-28"
+  },
+  "turns": [
+    {
+      "say": "This is ridiculous!!! Worst service ever, I am so angry, stop asking me questions!!! Where is my order NS-20877? My phone is 01012345601",
+      "expect": {
+        "decision": "answer",
+        "escalation": null,
+        "text_contains": [
+          "sorry about the trouble",
+          "NS-20877"
+        ]
+      }
+    }
+  ],
+  "final": {
+    "no_writes": true,
+    "audit_count": 0,
+    "case_reason": null,
+    "trace_invariants": true
+  }
+}

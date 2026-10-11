@@ -1,0 +1,136 @@
+{
+  "$defs": {
+    "CaseStatus": {
+      "enum": [
+        "open",
+        "claimed",
+        "resolved",
+        "returned_to_agent"
+      ],
+      "title": "CaseStatus",
+      "type": "string"
+    },
+    "DashboardQueueRow": {
+      "properties": {
+        "age_seconds": {
+          "title": "Age Seconds",
+          "type": "integer"
+        },
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "claimed_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Claimed By"
+        },
+        "conversation_id": {
+          "title": "Conversation Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "has_pending_approval": {
+          "title": "Has Pending Approval",
+          "type": "boolean"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Language"
+        },
+        "overdue": {
+          "title": "Overdue",
+          "type": "boolean"
+        },
+        "priority": {
+          "title": "Priority",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "remaining_seconds": {
+          "title": "Remaining Seconds",
+          "type": "integer"
+        },
+        "sla_seconds": {
+          "title": "Sla Seconds",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/CaseStatus"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "conversation_id",
+        "status",
+        "claimed_by",
+        "reason",
+        "priority",
+        "language",
+        "summary",
+        "has_pending_approval",
+        "created_at",
+        "age_seconds",
+        "sla_seconds",
+        "remaining_seconds",
+        "overdue"
+      ],
+      "title": "DashboardQueueRow",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "now": {
+      "format": "date-time",
+      "title": "Now",
+      "type": "string"
+    },
+    "overdue": {
+      "title": "Overdue",
+      "type": "integer"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/DashboardQueueRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "now",
+    "overdue",
+    "rows"
+  ],
+  "title": "DashboardQueue",
+  "type": "object"
+}

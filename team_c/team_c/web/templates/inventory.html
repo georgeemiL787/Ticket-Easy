@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% set inv = spec.inventory %}
+{% block crumbs %}{{ m.crumbs([(business.name, "/businesses/" ~ spec.business_id), ("API operations", None)]) }}{% endblock %}
+{% block steps %}{{ m.steps("connect") }}{% endblock %}
+{% block content %}
+<h1>Capability inventory</h1>
+<p>{{ spec.filename }} · {{ inv.operations|length }} operations · {% if inv.source_kind == "code" %}Legacy local Python/FastAPI project (read-only){% else %}OpenAPI {{ inv.openapi_version }}{% endif %}</p>
+{% if inv.summary %}<p>{{ inv.summary.proposal_eligible }} can be used for tools · {{ inv.summary.restricted }} restricted · {{ inv.summary.operations - inv.summary.technically_supported }} not supported</p>{% endif %}
+
+{% if inv.source_kind == 'code' %}{{ m.next("nothing to do here", "Local-code discovery is retired. This record is kept read-only; connect an OpenAPI description instead.") }}
+{% elif inv.proposal_generation_ready and areas and not areas.selected and areas.fits < areas.in_scope %}{{ m.next("choose the business areas to use", "The AI can review about " ~ areas.fits ~ " of your " ~ areas.in_scope ~ " operations at once. Tick the areas this business needs under Business areas below and press Use these areas. Requests and suggestions then look only there, one batch at a time.") }}
+{% elif inv.proposal_generation_ready %}{{ m.next("go back and ask for a tool", "Return to the business page and use Request a tool or Suggest additional tools. Advanced users can generate proposals from selected operations at the bottom of this page.") }}
+{% else %}{% set blocking = inv.diagnostics|selectattr("severity", "equalto", "error")|selectattr("scope", "equalto", "document")|list %}
+{{ m.next("fix the API description", "No operation can be used for tools" ~ (" because the whole document was rejected: " ~ blocking|map(attribute="message")|join("; ") if blocking else "") ~ "." ~ (" Raise MAX_OPERATIONS in .env, restart Team C and add the description again." if blocking|selectattr("code", "equalto", "operation_limit")|list else "") ~ " Details are under Warnings from discovery below.") }}{% endif %}
+
+{% macro op_row(op) %}
+<tr><td><code>{{ op.method }} {{ op.path }}</code></td>
+<td>{{ op.summary or op.description }}{% if reasons[op.id] %}<br><span class="small muted">Why: {{ reasons[op.id] }}</span>{% endif %}
+<details class="tech"><summary>Details</summary>
+<p class="small">{{ op.description }}</p>
+<p class="small">Supported: {{ op.supported }}</p>
+{% if op.exposure and op.exposure.classification %}<p class="small">Technical support: {{ op.binding.status if op.binding else 'unsupported' }} · Declared authentication: {{ op.declared_auth.status }} · Authorization: {{ op.authorization.status }} · Exposure: {{ op.exposure.classification }} · Owner approval: {{ op.owner_approval.state }}</p>
+{% for e in op.binding.errors if op.binding %}<p class="small">Blocked: {{ e }}</p>{% endfor %}
+{% for s in op.exposure.signals %}<p class="small">{{ 'Restricted' if s.effect == 'restricts' else 'Review' }} ({{ s.basis }}): {{ s.detail }}</p>{% endfor %}
+{% for r in op.authorization.unresolved_requirements %}<p class="small">Unresolved: {{ r }}</p>{% endfor %}{% endif %}
+{% if op.discovery %}<p class="small">Route: {{ op.discovery.route.status }} ({{ op.discovery.route.registration }}{% if op.discovery.route.template %}, {{ op.discovery.route.template }}{% endif %}) · Bindings: {{ op.discovery.bindings.status }} · Schemas: {{ op.discovery.schemas.status }} · Authentication: {{ op.access.authentication }} · Exposure: {{ op.exposure.status }}</p>
+{% for r in op.unresolved %}<p class="small">Unresolved: {{ r }}</p>{% endfor %}{% for r in op.exposure.restrictions %}<p class="small">Restricted: {{ r }}</p>{% endfor %}{% endif %}
+<pre>{{ op|tojson(indent=2) }}</pre>
+</details></td>
+<td>{% if op.get('proposal_eligible', op.supported) %}{{ m.badge("eligible", "operation") }}{% elif op.exposure and op.exposure.classification == 'restricted' %}{{ m.badge("restricted", "operation") }}{% else %}{{ m.badge("unsupported", "operation") }}{% endif %}</td></tr>
+{% endmacro %}
+
+{% if areas %}
+<article id="areas">
+<h2>Business areas</h2>
+{% if saved == 'areas' and areas.selected %}<p class="notice">Saved. Requests and suggestions now look only at: {{ areas.areas|selectattr('id', 'in', areas.selected)|map(attribute='name')|join(', ') }}.</p>{% endif %}
+<p class="small muted">{% if areas.source == 'ai' %}Organized by the AI from your API's groups and the business description, listed from most to least useful for tools serving your customers.{% if areas.suggested %} The top areas that fit one AI batch are ticked.{% endif %}{% else %}Taken from your API's own tags, or from the path when an operation has no tag.{% endif %} Areas only choose what the AI looks at together; they never make an operation usable or restricted.</p>
+{% if areas.error %}<p class="notice small">The AI could not organize the areas ({{ areas.error.message }}). Your API's own groups are shown instead.</p>{% endif %}
+<p>{% if areas.selected %}Using {{ areas.selected|length }} of {{ areas.areas|length }} areas: {{ areas.in_scope }} operations, about {{ areas.fits }} reviewed per batch.{% else %}No areas chosen yet, so all {{ areas.in_scope }} operations are used; about {{ areas.fits }} are reviewed per batch.{% endif %}</p>
+<form method="post" action="/actions/areas_select">{{ m.csrf_field() }}<input type="hidden" name="spec_id" value="{{ spec.id }}">
+<table><tr><th>Use</th><th>Area</th><th>Operations</th><th>Mainly serves</th></tr>
+{% for a in areas.areas %}
+<tr><td><input type="checkbox" name="area_ids" value="{{ a.id }}" {% if not a.counts.eligible %}disabled{% elif areas.selected %}{% if a.id in areas.selected %}checked{% endif %}{% elif areas.source != 'ai' or a.id in areas.suggested %}checked{% endif %}></td>
+<td><strong>{% if areas.source == 'ai' %}{{ loop.index }}. {% endif %}{{ a.name }}</strong>{% if a.description %}<br><span class="small">{{ a.description }}</span>{% endif %}{% if areas.source == 'ai' %}<br><span class="small muted">API groups: {{ a.groups|join(', ') }} · Why: {{ a.reason }}</span>{% endif %}</td>
+<td class="small">{{ a.counts.eligible }} usable · {{ a.counts.restricted }} restricted · {{ a.counts.unsupported }} not supported</td>
+<td class="small">{{ a.audience if a.audience != 'unknown' else '-' }}</td></tr>
+{% endfor %}</table>
+<button>Use these areas</button></form>
+<form method="post" action="/actions/areas_organize" onsubmit="this.querySelector('button').disabled=true">{{ m.csrf_field() }}<input type="hidden" name="spec_id" value="{{ spec.id }}"><button class="secondary">{{ 'Organize again with AI' if areas.source == 'ai' else 'Organize by business area (AI)' }}</button> <span class="small muted">The AI names business areas for this business and ranks them by usefulness to your customers, then places each of your API's groups in one area. This can take a few minutes. Clears the current area choice.</span></form>
+</article>
+
+<article>
+<h2>Operations by area</h2>
+<p class="small muted">Declared API security is metadata only: access and authorization are unverified. Being technically supported is not permission.</p>
+{% for a in areas.areas %}
+<details><summary><strong>{{ a.name }}</strong> <span class="small muted">{{ a.operation_ids|length }} operations · {{ a.counts.eligible }} usable · {{ a.counts.restricted }} restricted · {{ a.counts.unsupported }} not supported{% if areas.selected and a.id not in areas.selected %} · not used{% endif %}</span></summary>
+<table><tr><th>Operation</th><th>What it does</th><th>Status</th></tr>
+{% for i in a.operation_ids %}{{ op_row(ops[i]) }}{% endfor %}</table>
+</details>
+{% endfor %}
+</article>
+{% else %}
+<article>
+<h2>Operations</h2>
+<p class="small muted">Declared API security is metadata only: access and authorization are unverified. Being technically supported is not permission.</p>
+<table><tr><th>Operation</th><th>What it does</th><th>Status</th></tr>
+{% for op in inv.operations %}{{ op_row(op) }}{% endfor %}</table>
+</article>
+{% endif %}
+
+{% if inv.diagnostics %}
+<details><summary>Warnings from discovery ({{ inv.diagnostics|length }})</summary>
+{% for d in inv.diagnostics %}<p class="small"><strong>{{ d.severity }} · {{ d.code }}</strong>: {{ d.message }} <code>{{ d.pointer }}</code></p>{% endfor %}
+</details>
+{% endif %}
+
+{% if inv.source_kind == 'code' %}
+<article>
+<p>{{ inv.limitations|join(' ') }}</p>
+{% if inv.discovery_summary %}<p>Discovery summary: {{ inv.discovery_summary.detected_routes }} routes detected · {{ inv.discovery_summary.route_resolved }} paths resolved · {{ inv.discovery_summary.fully_resolved }} fully resolved · {{ inv.discovery_summary.restricted }} restricted · {{ inv.discovery_summary.eligible_for_proposal }} eligible for proposals</p>{% endif %}
+{% for s in inv.route_settings %}<p class="small"><strong>Route setting {{ s.setting }} · {{ s.value_source }}</strong>: {% if s.confirmed_value is not none %}Confirmed value: {{ s.confirmed_value }}{% else %}Unresolved.{% endif %}{% if s.code_default is not none %} · Code default (not proof of the runtime value): {{ s.code_default }}{% endif %} · Runtime verified: {{ s.runtime_verified }} <code>{{ s.file }}:{{ s.line }}</code></p>{% endfor %}
+<p class="notice">Local-code discovery is retired. This record is kept read-only; generate proposals from an OpenAPI description instead.</p>
+{% if inv.analysis_coverage %}<p class="small">AI analysis coverage: {{ inv.analysis_coverage|tojson }}</p>{% endif %}
+{% for interpretation in inv.interpretations %}<details><summary>AI interpretation</summary><p>{{ interpretation.explanation }}</p><pre>{{ interpretation|tojson(indent=2) }}</pre></details>{% endfor %}
+<details><summary>Inspectable code evidence</summary>{% for eid,e in inv.evidence.items() %}<h3>{{ e.file }} | {{ e.symbol }} | lines {{ e.line_start }}-{{ e.line_end }}</h3><p>Source hash: {{ e.source_hash }}</p><p><a href="/api/v1/specifications/{{ spec.id }}/evidence/{{ eid }}">Evidence record</a></p><pre>{{ e.sanitized_code }}</pre>{% endfor %}</details>
+</article>
+{% else %}
+<details id="advanced" {% if preselect %}open{% endif %}><summary>Advanced: generate proposals from selected operations</summary>
+<form method="post" action="/actions/generate">{{ m.csrf_field() }}<input type="hidden" name="spec_id" value="{{ spec.id }}">
+<p class="small muted">The AI designs up to three tools from the operations you tick. Too many operations exceed the local model's limit, so work in batches.</p>
+{% if next_batch %}{% if next_batch.operation_ids %}<p><a href="/specifications/{{ spec.id }}?batch=next#advanced">Select the next batch that fits ({{ next_batch.operation_ids|length }} operations{% if next_batch.remaining %}, {{ next_batch.remaining }} more after it{% endif %})</a></p>
+{% else %}<p class="small">Every usable operation in the selected areas has already been sent to the AI.</p>{% endif %}{% endif %}
+{% for a in areas.areas if a.counts.eligible and (not areas.selected or a.id in areas.selected) %}
+<fieldset><legend>{{ a.name }}</legend>
+{% for i in a.operation_ids if not reasons[i] %}<label><input type="checkbox" name="operation_ids" value="{{ i }}" {% if i in preselect %}checked{% endif %}> {{ ops[i].method }} {{ ops[i].path }}{% if i in used %} <span class="badge b-muted">sent to AI before</span>{% endif %}</label>{% endfor %}
+</fieldset>
+{% endfor %}
+<button {% if not inv.proposal_generation_ready %}disabled{% endif %}>Generate proposals with live model</button></form>
+{% if not inv.proposal_generation_ready %}<p>Generation blocked: the document has errors or no operation is eligible for proposals.</p>{% endif %}
+</details>
+{% endif %}
+
+<details class="tech"><summary>Technical details</summary>
+{% if inv.source %}<p class="small">Source: {{ inv.source.kind }}{% if inv.source.url %} · {{ inv.source.url }} · fetched {{ inv.source.fetched_at }} · {{ inv.source.note }}{% endif %} · SHA-256 {{ inv.source.sha256 }}</p>{% endif %}
+<p class="small">Document valid: {{ inv.document_valid }} | Eligible operations: {{ inv.eligible_operation_count }} | Proposal generation ready: {{ inv.proposal_generation_ready }}{% if inv.summary %} | {{ inv.summary.requires_clarification }} require clarification{% endif %}{% if inv.coverage %} | Coverage: {{ inv.coverage }}{% endif %}</p>
+</details>
+{% endblock %}

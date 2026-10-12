@@ -1,8 +1,62 @@
 import json
+import re
 import pytest
 from conftest import setup_proposal,answer_reconcile
 from team_c.config import AppError
 from team_c.models import ReconciliationOutput
+
+
+def test_compact_check_prompt_preserves_all_answers_and_grounding_evidence():
+    from team_c.llm.prompts import SYSTEM, RECONCILIATION_SYSTEM, model_messages
+    payload = dict(proposal=dict(content=dict(questions=[dict(id="q1", text="Which setting?")]),
+                                 answers={"q1": dict(id=7, text="explicit correction")}),
+                   earlier_answers=[dict(id=3, question_id="q1", text="earlier contradictory value")],
+                   grounding_feedback=dict(errors=["A binding is invalid"]))
+    data, messages = model_messages("reconciliation", payload)
+    assert json.loads(data) == payload
+    assert messages[0]["content"] == RECONCILIATION_SYSTEM
+    # A dedicated, shorter prompt: none of the proposal-writing rules travel with an answer check.
+    assert len(RECONCILIATION_SYSTEM) < len(SYSTEM) and "For generation:" not in RECONCILIATION_SYSTEM
+    assert "latest nonempty answer" in RECONCILIATION_SYSTEM and "UNTRUSTED_DATA" in messages[1]["content"]
+
+
+@pytest.mark.parametrize("answer", [None, "", "   ", "cleared"])
+def test_no_saved_nonempty_answers_blocks_reconciliation_before_any_model_call(env, answer):
+    app, client, _ = env
+    pid = setup_proposal(env)[2]["proposal_ids"][0]
+    view = app.state.service.view(pid)
+    if answer == "cleared":
+        saved = client.post(f'/api/v1/proposals/{pid}/versions/1/answers', json=dict(expected_revision=view["review_revision"], answers={"q1": "Earlier answer"}))
+        assert saved.status_code == 200
+        view = saved.json()
+        answer = ""
+    if answer is not None:
+        saved = client.post(f'/api/v1/proposals/{pid}/versions/1/answers', json=dict(expected_revision=view["review_revision"], answers={"q1": answer}))
+        assert saved.status_code == 200
+        view = saved.json()
+    assert not view["can_check_answers"]
+    before = app.state.store.all("SELECT id FROM runs")
+    app.state.service.providers.call = lambda *args, **kwargs: pytest.fail("must not contact a model without saved answers")
+    response = client.post(f'/api/v1/proposals/{pid}/versions/1/reconcile', json=dict(expected_revision=view["review_revision"]))
+    assert response.status_code == 422 and response.json()["code"] == "answers_required"
+    assert "Save answers" in response.json()["message"]
+    assert app.state.store.all("SELECT id FROM runs") == before
+    assert app.state.service.view(pid)["review_revision"] == view["review_revision"]
+    page = client.get(f"/proposals/{pid}").text
+    assert "No answers have been saved yet" in page
+    assert re.search(r'<button\s+disabled[^>]*>Check answers</button>', page)
+
+
+def test_partial_saved_answers_can_still_be_checked(env):
+    app, client, _ = env
+    pid = setup_proposal(env)[2]["proposal_ids"][0]
+    view = app.state.service.view(pid)
+    saved = client.post(f'/api/v1/proposals/{pid}/versions/1/answers', json=dict(expected_revision=view["review_revision"], answers={"q1": "yes"})).json()
+    assert saved["can_check_answers"]
+    page = client.get(f"/proposals/{pid}").text
+    assert not re.search(r'<button\s+disabled[^>]*>Check answers</button>', page)
+    response = client.post(f'/api/v1/proposals/{pid}/versions/1/reconcile', json=dict(expected_revision=saved["review_revision"]))
+    assert response.status_code == 200 and response.json()["state"] == "needs_clarification"
 
 
 @pytest.mark.parametrize("mode",["omit_question","invent_evidence","no_evidence","invent_operation","remove_question","provider_failure"])

@@ -12,7 +12,7 @@ PAYLOAD = dict(business=dict(description='quoted "text"\n' * 400))
 
 
 def input_bound(payload, kind="generation"):
-    user = f"Task: {kind}\nUNTRUSTED_DATA\n{json.dumps(payload, ensure_ascii=False)}\nEND_UNTRUSTED_DATA"
+    user = f"Task: {kind}\nUNTRUSTED_DATA\n{json.dumps(payload, ensure_ascii=False, separators=(',', ':'))}\nEND_UNTRUSTED_DATA"
     return len(SYSTEM.encode()) + len(user.encode()) + OLLAMA_TEMPLATE_BYTES
 
 

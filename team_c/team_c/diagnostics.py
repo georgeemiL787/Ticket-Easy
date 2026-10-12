@@ -39,6 +39,11 @@ def output_diagnostic(value, secrets=()):
     if not isinstance(value, dict):
         return {"invalid_root": True}
     result = {"proposals": [proposal(p) for p in rows(value, "proposals")]}
+    if "findings" in value:
+        result["findings"] = [dict(question_id=identifier(f.get("question_id"), secrets),
+                                  status=f.get("status") if f.get("status") in ("resolved", "insufficient", "contradictory") else None,
+                                  answer_revision_ids=[i for i in f.get("answer_revision_ids", [])[:64] if type(i) is int]
+                                  if isinstance(f.get("answer_revision_ids"), list) else []) for f in rows(value, "findings")]
     if "interpretations" in value:
         result["interpretations"]=[dict(operation_id=identifier(i.get("operation_id"), secrets), evidence_ids=[identifier(e,secrets) for e in i.get("evidence_ids",[])[:64]] if isinstance(i.get("evidence_ids"),list) else []) for i in rows(value,"interpretations")]
     if isinstance(value.get("revised_proposal"), dict):

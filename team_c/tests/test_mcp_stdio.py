@@ -26,8 +26,8 @@ from fixtures.service_desk.app import VARIANTS
 from team_c import publishing
 from team_c.config import Settings
 from team_c.web import create_app
-from test_publication import RevisingDesk, publish, revise, with_evidence
-from test_second_domain import KEY, LABEL, arguments, current, generated, review_and_build
+from helpers.desk import KEY, LABEL, arguments, current, generated, review_and_build
+from helpers.publication import RevisingDesk, publish, revise, with_evidence
 
 
 def free_port():
@@ -53,7 +53,7 @@ def desk(request, tmp_path):
     ctx = n["holder_id"]
     people = {name: backend.post("/_harness/accounts", json=dict(name=name), headers=h).json() for name in ("alice", "bob")}
     booking = {name: backend.post("/_harness/bookings", json=dict(account_id=a["id"]), headers=h).json() for name, a in people.items()}
-    settings = Settings(_env_file=None, database_path=str(tmp_path / "mcp.db"), session_secret="test-secret", openrouter_api_key="",
+    settings = Settings(_env_file=None, database_path=str(tmp_path / "mcp.db"), session_secret="test-secret",
                         connectors_file=str(tmp_path / "connectors.json"), sandbox_hosts=f"127.0.0.1:{port}")
     app = create_app(settings, RevisingDesk)
     app.state.service.providers.names = n

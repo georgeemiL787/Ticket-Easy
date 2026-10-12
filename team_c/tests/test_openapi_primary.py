@@ -4,18 +4,14 @@ import copy
 import hashlib
 import json
 import re
-import uuid
 import httpx
 import pytest
-from fastapi import Depends, FastAPI
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
-from fastapi.responses import HTMLResponse
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.testclient import TestClient
-from pydantic import BaseModel, Field
 from conftest import ROOT, DeterministicModelSubstitute
+from helpers.openapi import inventory, op, proposal, target_spec
 from team_c.config import AppError, Settings
-from team_c.discovery import Normalizer, Scope, discover
+from team_c.discovery import Normalizer, Scope
 from team_c.grounding import validate_proposal
 from team_c.models import GenerationOutput, ProposalContent
 from team_c.providers import Providers
@@ -24,52 +20,6 @@ from team_c.storage import Store, now, uid
 from team_c.web import create_app
 
 URL = "http://127.0.0.1:8001/api/v1/openapi.json"
-
-
-def target_spec():
-    """Small FastAPI app shaped like the observed target; FastAPI itself emits the OpenAPI 3.1 document."""
-    app = FastAPI()
-    token = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
-    class Token(BaseModel):
-        access_token: str
-        token_type: str = "bearer"
-    class ItemUpdate(BaseModel):
-        title: str | None = Field(default=None, min_length=1, max_length=255)
-        description: str | None = Field(default=None, max_length=255)
-    class ItemPublic(BaseModel):
-        title: str = Field(min_length=1, max_length=255)
-        description: str | None = None
-        id: uuid.UUID
-        owner_id: uuid.UUID
-    class ItemsPublic(BaseModel):
-        data: list[ItemPublic]
-        count: int
-    class UserRegister(BaseModel):
-        email: str
-        password: str = Field(min_length=8)
-    @app.post("/api/v1/login/access-token", tags=["login"])
-    def login_access_token(form: OAuth2PasswordRequestForm = Depends()) -> Token: ...
-    @app.get("/api/v1/items/", tags=["items"])
-    def read_items(t: str = Depends(token), skip: int = 0, limit: int = 100) -> ItemsPublic: ...
-    @app.get("/api/v1/items/{id}", tags=["items"])
-    def read_item(id: uuid.UUID, t: str = Depends(token)) -> ItemPublic: ...
-    @app.put("/api/v1/items/{id}", tags=["items"])
-    def update_item(id: uuid.UUID, item: ItemUpdate, t: str = Depends(token)) -> ItemPublic: ...
-    @app.post("/api/v1/password-recovery-html-content/{email}", response_class=HTMLResponse, tags=["login"])
-    def recover_password_html_content(email: str, t: str = Depends(token)): ...
-    @app.post("/api/v1/users/signup", tags=["users"])
-    def register_user(user: UserRegister): ...
-    @app.get("/api/v1/utils/health-check/", tags=["utils"])
-    def health_check() -> bool: ...
-    return app.openapi()
-
-
-def inventory(doc=None):
-    return discover(json.dumps(doc or target_spec()).encode(), "openapi.json", "biz")[1]
-
-
-def op(inv, method, path):
-    return next(o for o in inv["operations"] if o["method"] == method and o["path"] == path)
 
 
 def labels(inv, supported):
@@ -180,13 +130,6 @@ def test_31_subset_normalizes_only_semantics_preserving_forms():
         assert result is None and scope.problems[0]["code"] == code, schema
 
 
-def proposal(step_op, output):
-    return dict(name="Item lookup", description="Look up an item", business_purpose="Help owners review items", configuration=[],
-                questions=[dict(id="q1", text="Which callers may read items?", configuration_key=None)],
-                steps=[dict(id="s1", operation_id=step_op["id"], purpose="Read item", bindings=[dict(target="path.id", kind="runtime_argument", reference="item_id", step_id=None, response_status=None)])],
-                outputs=[output], expected_reads=["Item"], expected_writes=[], assumptions=[], limitations=["Authorization unverified"], risk="low", risk_rationale="Reads one item")
-
-
 def test_output_pointers_are_per_operation_and_echo_mismatch_is_rejected(tmp_path):
     inv = inventory()
     items, item = op(inv, "GET", "/api/v1/items/"), op(inv, "GET", "/api/v1/items/{id}")
@@ -291,6 +234,42 @@ def test_url_fetch_does_not_follow_redirects_or_exceed_limits(fetch_app, respons
         bid = client.post("/api/v1/businesses", json=dict(name="Target", description="Items")).json()["id"]
         assert client.post(f"/api/v1/businesses/{bid}/specifications/fetch", json=dict(url=URL)).json()["code"] == code
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize("url", ["http://localhost:8080/docs", "http://localhost:9123/docs",
+                                     "http://127.0.0.1:5678/docs", "http://127.0.0.2:8765/docs",
+                                     "http://[::1]:9000/docs", "http://LOCALHOST:8081/docs"])
+def test_loopback_rule_fetches_docs_on_any_local_port(fetch_app, url):
+    seen = []
+    def handler(request):
+        seen.append(str(request.url))
+        if request.url.path == "/docs":
+            return httpx.Response(200, content=get_swagger_ui_html(openapi_url="/api/v1/openapi.json", title="Docs").body,
+                                  headers={"content-type": "text/html"})
+        return httpx.Response(200, json=target_spec())
+    with TestClient(fetch_app(handler, openapi_fetch_hosts="loopback:*")) as client:
+        bid = client.post("/api/v1/businesses", json=dict(name="Target", description="Items")).json()["id"]
+        result = client.post(f"/api/v1/businesses/{bid}/specifications/fetch", json=dict(url=url))
+        assert result.status_code == 200, result.text
+        assert len(seen) == 2 and seen[1].endswith("/api/v1/openapi.json")
+        page = client.get(f"/businesses/{bid}").text
+        assert "Local services (any port)" in page and 'placeholder="http://localhost:8080/docs"' in page
+
+
+@pytest.mark.parametrize("host", ["example.com", "localhost.example.com", "127.0.0.1.example.com", "192.168.1.2", "0.0.0.0"])
+def test_loopback_rule_rejects_remote_hosts_and_docs_links(fetch_app, host):
+    seen = []
+    def handler(request):
+        seen.append(str(request.url))
+        return httpx.Response(200, content=f'<script>SwaggerUIBundle({{url: "http://{host}:8080/openapi.json"}})</script>',
+                              headers={"content-type": "text/html"})
+    with TestClient(fetch_app(handler, openapi_fetch_hosts="loopback:*")) as client:
+        bid = client.post("/api/v1/businesses", json=dict(name="Target", description="Items")).json()["id"]
+        endpoint = f"/api/v1/businesses/{bid}/specifications/fetch"
+        assert client.post(endpoint, json=dict(url=f"http://{host}:8080/docs")).json()["code"] == "fetch_host"
+        assert not seen
+        assert client.post(endpoint, json=dict(url="http://localhost:8080/docs")).json()["code"] == "fetch_host"
+        assert seen == ["http://localhost:8080/docs"]
 
 
 @pytest.mark.parametrize("page", [get_swagger_ui_html(openapi_url="/openapi.json", title="Docs"), get_redoc_html(openapi_url="/openapi.json", title="Docs")])

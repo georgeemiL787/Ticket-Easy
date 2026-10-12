@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "macros.html" as m with context %}
+{% block crumbs %}{{ m.crumbs([(business.name, "/businesses/" ~ run.business_id), ("AI run", None)]) }}{% endblock %}
+{% block content %}
+<h1>AI run: {{ run.kind|replace('_', ' ') }} {{ m.badge(run.status, "run") }}</h1>
+<p class="muted small">Started {{ run.created_at[:19]|replace('T', ' ') }}{% if run.completed_at %} · finished {{ run.completed_at[:19]|replace('T', ' ') }}{% endif %}</p>
+{% if run.result %}
+{% set pids = run.result.proposal_ids or [] %}
+{% if pids %}{{ m.next("review the new proposal", "Open it below and answer its questions.") }}{% endif %}
+{% for pid in pids %}<p><a href="/proposals/{{ pid }}">Review proposal</a></p>{% endfor %}
+{% for pid in run.result.duplicates or [] %}<p>Matches an existing tool: <a href="/proposals/{{ pid }}">open it</a></p>{% endfor %}
+{% for gap in run.result.capability_gaps or [] %}<p class="notice">{{ gap.requested_capability }}: {{ gap.explanation }}</p>{% endfor %}
+{% endif %}
+{% if run.error %}<p class="notice">This run failed: {{ run.error.message }}</p>{% endif %}
+<details><summary>Provider attempts ({{ run.attempts|length }})</summary>
+{% for attempt in run.attempts %}<p class="small"><strong>{{ attempt.provider }} · {{ attempt.model }} · {{ attempt.status }}</strong></p>{% if attempt.error %}<pre>{{ attempt.error }}</pre>{% endif %}{% endfor %}
+</details>
+{% if run.diagnostics %}<details class="tech"><summary>Sanitized output diagnostics</summary><p class="small">Structural identifiers only. Text, values and credentials are omitted.</p>{% for d in run.diagnostics %}<h3>{{ d.stage }}</h3><pre>{{ d.payload|tojson(indent=2) }}</pre>{% endfor %}</details>{% endif %}
+{% if run.error %}<details class="tech"><summary>Error details</summary><pre>{{ run.error|tojson(indent=2) }}</pre></details>{% endif %}
+{% if run.result %}<details class="tech"><summary>Full result</summary><pre>{{ run.result|tojson(indent=2) }}</pre></details>{% endif %}
+{% endblock %}

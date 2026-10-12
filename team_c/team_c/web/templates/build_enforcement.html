@@ -1,0 +1,53 @@
+<h3>Access enforcement</h3>
+{% if p.policy %}
+<p>Enforcement will be generated from the accepted structured policy when you build. No separate mechanism configuration is needed.</p>
+{% elif p.requirements %}
+<p>This version was approved through the earlier review flow. Select runtime mechanisms below and submit them for owner review. An answer or approval alone does not enforce access.</p>
+<p class="small">To use structured policy generation instead, <a href="#revise-proposal">create a new version</a>, accept its policy, and review that version.</p>
+{% else %}
+<p>This proposal has no access requirements to configure. Other build and execution checks still apply.</p>
+{% endif %}
+
+{% if p.enforcement %}
+<p>Configuration {{ p.enforcement.id[:8] }} for connector {{ p.enforcement.connector_id }}: {{ m.badge(p.enforcement.status, "enforcement") }} <span class="muted small">({{ p.enforcement.status }}; submitted by {{ p.enforcement.submitted_by }}{% if p.enforcement.reviewed_at %}, reviewed by {{ p.enforcement.reviewed_by }}: {{ p.enforcement.review_note }}{% endif %})</span></p>
+<details class="tech"><summary>Enforcement configuration</summary><pre>{{ p.enforcement.content.enforcement|tojson(indent=2) }}</pre></details>
+{% if p.enforcement.status == 'awaiting_review' and current %}<form method="post" action="/actions/review_enforcement">{{ m.csrf_field() }}<input type="hidden" name="enforcement_id" value="{{ p.enforcement.id }}"><label>Review note<input name="note" required></label><button>Approve this enforcement configuration</button></form>{% endif %}
+{% endif %}
+
+{% if p.state == 'approved_to_build' and current %}
+{% if p.interface_preview.blockers %}<p class="notice">Building is blocked by unresolved input sources. <a href="#structured-policy">Review input sources in a new version</a> to supply protected values from trusted context.</p>{% endif %}
+{% include "connector_setup.html" %}
+{% if not connectors %}
+<p class="notice"><strong>No sandbox connector is configured for this business.</strong> Save the prepared connector above to continue. No configuration file or restart is needed.</p>
+<button disabled>Build artifact</button>
+{% else %}
+{% if not p.policy and p.requirements %}
+{% set unsupported = p.requirements|rejectattr('kind','in',['caller_access','record_scope'])|list %}
+{% if unsupported %}<p class="notice">Some access rules require a structured policy: {{ unsupported|map(attribute='kind')|join(', ') }}. Create a new version and accept a structured policy before building an executable tool.</p>
+{% else %}
+<details {% if not p.enforcement %}open{% endif %}><summary>{{ 'Change runtime enforcement' if p.enforcement else 'Configure runtime enforcement' }}</summary>
+<form method="post" action="/actions/submit_enforcement">{{ m.csrf_field() }}<input type="hidden" name="proposal_id" value="{{ p.proposal_id }}">
+<label>Sandbox connector<select name="connector_id" required>{% for cid in connectors %}<option value="{{ cid }}">{{ connector_labels[cid] }}</option>{% endfor %}</select></label>
+{% for r in p.requirements %}
+{% set config = p.enforcement.content.enforcement.get(r.id,{}) if p.enforcement else {} %}
+<fieldset><legend>{{ 'Caller access' if r.kind == 'caller_access' else 'Resource scope' }}</legend>
+<p class="small">{{ r.text }}</p>
+<label>Enforcement method<select name="mechanism:{{ r.id }}" required><option value="">Choose a mechanism</option>
+{% if r.kind == 'caller_access' %}<option value="delegated_user_credential" {% if config.get('mechanism') == 'delegated_user_credential' %}selected{% endif %}>Use each registered end user's own credential</option>
+{% else %}<option value="response_field_matches_context" {% if config.get('mechanism') == 'response_field_matches_context' %}selected{% endif %}>Compare the resource with trusted identity context</option>{% endif %}</select></label>
+{% if r.kind == 'caller_access' %}<p class="small">The target API checks the user's credential. Service and administrator identities are refused by this mechanism. It does not itself implement roles, ownership or tenant checks.</p>
+{% else %}
+<label>Read operation<select name="{{ r.id }}:step_id" required><option value="">Choose a read</option>{% for step in p.content.steps if operations[step.operation_id].method in ['GET','HEAD','OPTIONS'] %}<option value="{{ step.id }}" {% if config.get('step_id') == step.id %}selected{% endif %}>{{ operations[step.operation_id].business_label }}</option>{% endfor %}</select></label>
+<label>Success response status<input name="{{ r.id }}:response_status" value="{{ config.get('response_status','') }}" placeholder="200" required></label>
+<label>Resource field (JSON pointer)<input name="{{ r.id }}:pointer" value="{{ config.get('pointer','') }}" placeholder="Leave empty to compare the whole response"></label>
+<label>Trusted identity field declared by the connector<input name="{{ r.id }}:context_field" value="{{ config.get('context_field','') }}" required></label>
+<p class="small">The response value must equal the trusted identity value. A mismatch stops later steps and suppresses output. Building validates that the check protects the selected resource.</p>
+{% endif %}</fieldset>
+{% endfor %}
+<button>Submit enforcement for review</button></form></details>
+{% endif %}
+{% endif %}
+<form method="post" action="/actions/build_artifact">{{ m.csrf_field() }}<input type="hidden" name="proposal_id" value="{{ p.proposal_id }}"><label>Sandbox connector<select name="connector_id" required>{% for cid in connectors %}<option value="{{ cid }}">{{ connector_labels[cid] }}</option>{% endfor %}</select></label><button {% if p.interface_preview.blockers or not p.policy and p.requirements and (not p.enforcement or p.enforcement.status != 'approved') or p.enforcement and p.enforcement.status != 'approved' %}disabled{% endif %}>Build artifact</button></form>
+{% if not p.policy and p.requirements and not p.enforcement %}<p>Submit and review the enforcement methods to enable building.</p>{% endif %}
+{% endif %}
+{% endif %}

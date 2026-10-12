@@ -2,12 +2,13 @@ import json
 import re
 from openapi_schema_validator import OAS30Validator
 from .config import AppError
+from .contracts import Grounding, Inventory, Operation, Schema
 from .models import ProposalContent
 
 CONTEXT = {"business_id": {"type": "string"}}
 
 
-def response_field(step, operations, status, path):
+def response_field(step, operations: dict[str, Operation], status, path) -> tuple[Schema, bool]:
     if not status or not status.startswith("2") or status not in operations[step.operation_id]["responses"]:
         raise ValueError("Output must select a declared success response")
     schema = operations[step.operation_id]["responses"][status]["schema"]
@@ -27,14 +28,14 @@ def response_field(step, operations, status, path):
     return schema, guaranteed and not schema.get("nullable", False)
 
 
-def compatible(source, target):
+def compatible(source: Schema, target: Schema) -> bool:
     # Conservative schema subsumption: reject uncertain constraints rather than guessing.
     st, tt = source.get("type"), target.get("type")
     if not st or not tt or (st != tt and (st, tt) != ("integer", "number")):
         return False
     if source.get("nullable") and not target.get("nullable"):
         return False
-    if "enum" in target and ("enum" not in source or not set(map(str, source["enum"])).issubset(set(map(str, target["enum"])))):
+    if "enum" in target and ("enum" not in source or not set(map(canonical, source["enum"])).issubset(set(map(canonical, target["enum"])))):
         return False
     for key in ("minimum", "minLength", "minItems", "minProperties"):
         if key in target and (key not in source or source[key] < target[key]):
@@ -48,22 +49,38 @@ def compatible(source, target):
     if tt == "array":
         return compatible(source.get("items", {}), target.get("items", {}))
     if tt == "object":
-        for key, child in source.get("properties", {}).items():
-            target_child = target.get("properties", {}).get(key)
-            if target_child is not None and not compatible(child, target_child):
+        if "patternProperties" in source or "patternProperties" in target:
+            return False
+        sp, tp = source.get("properties", {}), target.get("properties", {})
+        s_extra, t_extra = extra_properties(source), extra_properties(target)
+        for key, child in sp.items():
+            limit = tp.get(key, t_extra)
+            if limit is False or (isinstance(limit, dict) and not compatible(child, limit)):
                 return False
-            additional = target.get("additionalProperties", True)
-            if target_child is None and isinstance(additional, dict) and not compatible(child, additional):
+        # Undeclared names the source allows may carry any value its policy permits, including names the target constrains.
+        if s_extra is not False:
+            if any(key not in sp and (s_extra is True or not compatible(s_extra, child)) for key, child in tp.items()):
+                return False
+            if t_extra is False or (isinstance(t_extra, dict) and (s_extra is True or not compatible(s_extra, t_extra))):
                 return False
         for key in target.get("required", []):
-            if key not in source.get("required", []) or not compatible(source.get("properties", {}).get(key, {}), target.get("properties", {}).get(key, {})):
+            if key not in source.get("required", []) or not compatible(sp.get(key, {}), tp.get(key, {})):
                 return False
-        if target.get("additionalProperties") is False and (source.get("additionalProperties", True) is not False or not set(source.get("properties", {})) <= set(target.get("properties", {}))):
-            return False
     return True
 
 
-def response_only_fields(content, ops):
+def canonical(value):
+    # Values compare as JSON: str() would equate None with "None".
+    return json.dumps(value, sort_keys=True)
+
+
+def extra_properties(schema):
+    """additionalProperties as True (anything), False (nothing) or a constraining schema; omitted and {} mean anything."""
+    value = schema.get("additionalProperties", True)
+    return True if value is True or value == {} else value
+
+
+def response_only_fields(content, ops: dict[str, Operation]):
     """Question review: names a question uses that the steps only return, never accept or configure."""
     inputs, returned = set(), {}
     for step in content.steps:
@@ -100,7 +117,7 @@ def drop_stale_configuration(content: ProposalContent):
         questions=[q.model_copy(update=dict(configuration_key=None)) if q.configuration_key in stale else q for q in content.questions])), stale
 
 
-def validate_proposal(content: ProposalContent, inventory, scope=None):
+def validate_proposal(content: ProposalContent, inventory: Inventory, scope=None, trusted_context=None) -> Grounding:
     # Per-step eligibility is checked below; this gate only needs the document itself to be valid.
     if not inventory.get("document_valid", inventory["valid"]):
         raise AppError("inventory_blocked", "This specification has document-level discovery errors")
@@ -147,7 +164,7 @@ def validate_proposal(content: ProposalContent, inventory, scope=None):
             errors.append(f"{step.id}: Operation {op['method']} {op['path']} is outside the selected generation scope")
             continue
         if inventory.get("source_kind") == "code":
-            from .code_discovery import validate_code_provenance
+            from .legacy.code_discovery import validate_code_provenance
             try:
                 validate_code_provenance(op, inventory)
             except (ValueError, KeyError, TypeError) as exc:
@@ -191,9 +208,9 @@ def validate_proposal(content: ProposalContent, inventory, scope=None):
                             raise ValueError(f"The value of configuration {conf.key} is not valid JSON; value_json must be JSON-encoded, so text needs quotes, e.g. '\"knee\"'") from None
                         OAS30Validator(target).validate(value)
                 elif b.kind == "trusted_application_context":
-                    if b.reference not in CONTEXT:
+                    if b.reference not in {**CONTEXT, **(trusted_context or {})}:
                         raise ValueError("No trusted context contract exists for this key (customer identity is not verified)")
-                    if not compatible(CONTEXT[b.reference], target):
+                    if not compatible({**CONTEXT, **(trusted_context or {})}[b.reference], target):
                         raise ValueError("Context schema incompatible with target")
                 else:
                     if b.reference in schemas and schemas[b.reference]["schema"] != target:

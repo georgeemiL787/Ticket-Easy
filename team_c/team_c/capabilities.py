@@ -1,15 +1,56 @@
 """Compact operation index and deterministic checks for owner tool requests and capability suggestions."""
 import json
 import re
+import unicodedata
+from collections import Counter
 from .config import AppError
 
+# Suggestion potential gate: security decides first, the other criteria must still be usable.
+SECURITY_MIN, POTENTIAL_MIN = 4, 3
+WRITES = {"POST", "PUT", "PATCH", "DELETE"}
 BLOCKING = {"absent_operation", "unsupported_operation", "restricted_operation"}
+
+# A retrieval round shows the model one budget-sized slice of the catalog. Absence is only a claim
+# about the API once the searchable catalog has actually been searched, so a request keeps asking for
+# further slices until it runs out of operations. This cap is a runaway guard for catalogs so large
+# that exhausting them would cost more than the answer is worth; while it binds, the coverage says
+# partial_search=true and the owner is told "not found in the searched subset", never "unsupported".
+RETRIEVAL_ROUNDS_CAP = 10
 
 
 def status(op):
     if op.get("proposal_eligible", op.get("supported", False)):
         return "eligible"
     return "restricted" if op.get("exposure", {}).get("classification") == "restricted" else "unsupported"
+
+
+def relevance(goal):
+    """Score how well one index entry serves the owner's request, from the request's own words.
+
+    The goal is the only evidence of what the owner wants, so operations are ranked by how much of
+    it they can plausibly serve. This is a ranking heuristic, not a claim about the API: it never
+    decides eligibility, and it never drops an operation the budget can hold.
+    """
+    # Suggestions rank against the owner's recent goals, which arrive as a list.
+    text = " ".join(goal) if isinstance(goal, (list, tuple)) else (goal or "")
+    words = [w for w in re.split(r"[^a-z0-9]+", text.lower()) if len(w) > 2]
+    if not words:
+        return lambda entry: 0
+    counts = Counter(words)
+    # A word the owner repeats is a stronger signal than one mentioned once.
+    weight = {w: 1 + 0.5 * (n - 1) for w, n in counts.items()}
+    # Longer words carry more meaning than short ones like "get" or "show".
+    weight = {w: v * (1 + min(len(w), 12) / 12) for w, v in weight.items()}
+
+    def score(entry):
+        text = " ".join(str(entry.get(k) or "") for k in ("path", "summary")).lower()
+        hits = sum(weight[w] for w in weight if w in text)
+        # A path segment match is stronger than a word appearing in a description.
+        segments = [s for s in re.split(r"[^a-z0-9]+", entry.get("path", "").lower()) if s]
+        hits += sum(weight[w] * 2 for w in weight if w in segments)
+        return hits
+
+    return score
 
 
 def reason(op):
@@ -32,24 +73,40 @@ def reason(op):
     return errors[0].split(":", 1)[0].replace("_", " ")
 
 
+# Top-level success-response fields shown per index entry. Triage judges whether an operation returns
+# what the goal needs from this list alone, so a short cut-off reads as "this field does not exist":
+# at 12, an order lookup lost items, status and totals and requests for them were declared unavailable.
+RETURNS_SHOWN = 32
+
+
 def entry(op):
     success = next((r for c, r in sorted(op.get("responses", {}).items()) if c.startswith("2") and r.get("schema")), None)
-    returns = sorted((success or {}).get("schema", {}).get("properties", {}))[:12] if success else []
+    returns = sorted((success or {}).get("schema", {}).get("properties", {}))[:RETURNS_SHOWN] if success else []
     return dict(id=op["id"], method=op["method"], path=op["path"], summary=(op.get("summary") or op.get("description") or "")[:160],
                 status=status(op), auth=op.get("declared_auth", {}).get("status"), inputs=sorted(op.get("inputs", {}))[:16], returns=returns)
 
 
-def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=()):
+def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=(), goal=""):
     """Eligible operations first, then restricted and unsupported ones, until the character budget is spent
     (always at least one, so batches make progress).
 
     include_ids limits the index to the owner's selected business areas (None: every operation);
     exclude_ids are operations an earlier batch already considered.
+
+    goal ranks operations by relevance to the request before the budget is spent. Filling the index in
+    inventory order and truncating silently discards whatever sorts last, so a request for orders on a
+    large API was told the orders endpoints did not exist. Relevance only reorders; it never drops an
+    eligible operation that the budget can hold.
     """
     order = {"eligible": 0, "restricted": 1, "unsupported": 2}
     scoped = [o for o in inventory["operations"] if include_ids is None or o["id"] in include_ids]
     excluded = set(exclude_ids) & {o["id"] for o in scoped}
-    entries = sorted((entry(o) for o in scoped if o["id"] not in excluded), key=lambda e: order[e["status"]])
+    entries = [entry(o) for o in scoped if o["id"] not in excluded]
+    if goal:
+        wanted = relevance(goal)
+        entries.sort(key=lambda e: (order[e["status"]], -wanted(e)))
+    else:
+        entries.sort(key=lambda e: order[e["status"]])
     index, used = [], 0
     for e in entries:
         size = len(json.dumps(e, ensure_ascii=False))
@@ -58,9 +115,17 @@ def operation_index(inventory, budget_chars, include_ids=None, exclude_ids=()):
         index.append(e)
         used += size
     omitted = [e["id"] for e in entries[len(index):]]
+    # searched_operations/partial_search are cumulative over every earlier batch: excluded operations
+    # were searched, they are simply not in this round's slice. partial is the same question asked of
+    # the whole catalog (is anything still unsearched?) rather than of this one slice, so a request
+    # that has now searched everything does not keep reporting "partial" just because one slice is
+    # smaller than the catalog.
+    searched = len(scoped) - len(omitted)
     coverage = dict(total_operations=len(scoped), considered=len(index), considered_ids=[e["id"] for e in index],
-                    omitted_ids=omitted, previously_considered=len(excluded), partial=len(index) < len(scoped),
-                    area_scoped=include_ids is not None, budget_chars=budget_chars, used_chars=used)
+                    omitted_ids=omitted, previously_considered=len(excluded), partial=bool(omitted),
+                    searched_operations=searched, partial_search=bool(omitted),
+                    area_scoped=include_ids is not None, budget_chars=budget_chars, used_chars=used,
+                    goal_ranked=bool(goal))
     return index, coverage
 
 
@@ -98,16 +163,46 @@ def check_triage(t, index, existing):
 
 
 def title_key(text):
-    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    # Preserve letters and numbers in every script, including Arabic combining marks.
+    return " ".join("".join(c if c.isalnum() or unicodedata.category(c).startswith("M") else " " for c in normalized).split())
+
+
+def potential_problem(d, entries):
+    """Why a suggestion's potential is too weak to show, or None. Also records the scores the gate used on d.
+
+    The model's own ratings are capped by what the index proves: a write that declares no authentication
+    cannot be rated secure, whatever the model says.
+    """
+    scores = {p["criterion"]: dict(p) for p in d.get("potential") or []}
+    if len(scores) != len(d.get("potential") or []) or not scores:
+        return "no usable potential rating"
+    unauthenticated = [f'{e.get("method")} {e.get("path")}' for i in d["operation_ids"] if (e := entries.get(i))
+                       and e.get("method") in WRITES and e.get("auth") in (None, "none")]
+    if unauthenticated and scores.get("security", {}).get("score", 0) > 2:
+        scores["security"] = dict(scores["security"], score=2, reason=f"Capped: {unauthenticated[0]} changes data without declared authentication.")
+    d["potential"] = list(scores.values())
+    security = scores.get("security", {}).get("score", 0)
+    others = [v for k, v in scores.items() if k != "security"]
+    d["potential_score"] = round((security * 2 + sum(v["score"] for v in others)) / (2 + len(others)), 2)
+    if security < SECURITY_MIN:
+        return f"low potential: security {security}/5 ({scores.get('security', {}).get('reason', 'not rated')})"
+    low = [v for v in others if v["score"] < POTENTIAL_MIN]
+    if low:
+        return "low potential: " + "; ".join(f"{v['criterion'].replace('_', ' ')} {v['score']}/5 ({v['reason']})" for v in low)
+    return None
 
 
 def screen(output, index, existing, prior, count):
-    """Keep grounded, non-duplicate suggestions; the category follows the cited evidence, not the model's label."""
+    """Keep grounded, non-duplicate suggestions; the category follows the cited evidence, not the model's label.
+
+    A suggestion names operations, not executable behavior, so sharing operations with an existing tool only
+    relates them (one endpoint can serve several tools). It is recognized as that tool only when the name
+    matches as well; among suggestions, only a repeated title is a duplicate."""
     states = {e["id"]: e["status"] for e in index}
     tools = {x["proposal_id"]: x for x in existing}
-    active = {frozenset(x["operation_ids"]): x["proposal_id"] for x in existing if x["state"] != "rejected"}
-    seen_titles = {title_key(p["title"]) for p in prior}
-    seen_sets = {(frozenset(p["operation_ids"]), p["category"]) for p in prior if p["operation_ids"]}
+    active = [x for x in existing if x["state"] != "rejected"]
+    seen_titles = {key for p in prior if (key := title_key(p["title"]))}
     kept, withheld, recognized = [], [], []
     for s in output.suggestions:
         d = s.model_dump()
@@ -131,23 +226,61 @@ def screen(output, index, existing, prior, count):
             hold(f"labelled {s.category} without naming what is missing"); continue
         if category != "blocked_by_missing_api" and not d["operation_ids"]:
             hold("names no supporting operation"); continue
+        weak = potential_problem(d, {e["id"]: e for e in index})
+        if weak:
+            hold(weak); continue
         if category != s.category:
             d["category_adjusted_from"] = s.category
         d["category"] = category
         key = frozenset(d["operation_ids"])
-        if category != "blocked_by_missing_api" and key in active:
-            recognized.append(dict(title=d["title"], proposal_id=active[key], name=tools[active[key]]["name"])); continue
-        if title_key(d["title"]) in seen_titles or (key and (key, category) in seen_sets):
+        sharing = [x for x in active if key and frozenset(x["operation_ids"]) == key] if category != "blocked_by_missing_api" else []
+        normalized_title = title_key(d["title"])
+        same = next((x for x in sharing if normalized_title and title_key(x["name"]) == normalized_title), None)
+        if same:
+            recognized.append(dict(title=d["title"], proposal_id=same["proposal_id"], name=same["name"])); continue
+        if normalized_title and normalized_title in seen_titles:
             hold("duplicates an earlier suggestion"); continue
         if len(kept) >= count:
             hold("over the requested number of suggestions"); continue
-        seen_titles.add(title_key(d["title"]))
-        if key:
-            seen_sets.add((key, category))
+        for x in sharing:
+            if x["proposal_id"] not in d["related_proposal_ids"]:
+                d["related_proposal_ids"].append(x["proposal_id"])
+        if sharing:
+            d["shares_operations_with"] = [dict(proposal_id=x["proposal_id"], name=x["name"]) for x in sharing]
+        if normalized_title:
+            seen_titles.add(normalized_title)
         kept.append(d)
     return kept, withheld, recognized
 
 
-def signature(content):
-    """Steps with their operations and binding kinds; equal signatures describe the same tool behavior."""
-    return [[s["operation_id"], sorted(f'{b["target"]}<-{b["kind"]}' for b in s["bindings"])] for s in content["steps"]]
+def behavior(content):
+    """The executable behavior of a proposal with its labels normalized; equal values describe the same tool.
+
+    Ordered steps with each binding's target and source; previous-step references by step position and
+    response status; configuration bindings by their value rather than their key; runtime arguments by
+    order of first use, so renaming an argument changes nothing but feeding one argument to two inputs
+    does; output mappings without their names. None when an unset or unreadable configuration value
+    leaves the behavior undetermined: such a tool is never treated as a duplicate.
+    """
+    position = {s["id"]: i for i, s in enumerate(content["steps"])}
+    values = {c["key"]: c.get("value_json") for c in content.get("configuration") or []}
+    arguments, steps = {}, []
+    for s in content["steps"]:
+        bindings = []
+        for b in sorted(s["bindings"], key=lambda b: b["target"]):
+            kind, source = b["kind"], b["reference"]
+            if kind == "business_configuration":
+                if values.get(source) is None:
+                    return None
+                try:
+                    source = json.dumps(json.loads(values[source]), sort_keys=True)
+                except ValueError:
+                    return None
+            elif kind == "runtime_argument":
+                source = arguments.setdefault(source, len(arguments))
+            elif kind == "previous_operation_output":
+                source = [position.get(b["step_id"], -1), b["response_status"], source]
+            bindings.append([b["target"], kind, source])
+        steps.append([s["operation_id"], bindings])
+    outputs = sorted([position.get(o["step_id"], -1), o["response_status"], o["pointer"]] for o in content["outputs"])
+    return [steps, outputs]

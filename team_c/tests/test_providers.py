@@ -22,24 +22,25 @@ def success(request):
         assert request.headers.get("authorization") is None
         assert json.loads(request.content)["format"]["type"]=="object"
         return httpx.Response(200,json={"message":{"content":result},"done":True})
-    assert json.loads(request.content)["provider"]["require_parameters"]
+    assert json.loads(request.content)["response_format"]["type"] == "json_schema"
+    assert request.headers["authorization"] == "Bearer test"
     return httpx.Response(200,json={"choices":[{"finish_reason":"stop","message":{"content":result}}]})
 
 
-@pytest.mark.parametrize("primary",["ollama","openrouter"])
+@pytest.mark.parametrize("primary",["ollama","groq"])
 def test_independent_primary(tmp_path,primary):
-    p,s,r=provider(tmp_path,success,llm_primary=primary,openrouter_api_key="test" if primary=="openrouter" else "",openrouter_model="test" if primary=="openrouter" else "")
+    p,s,r=provider(tmp_path,success,llm_primary=primary,groq_api_key="test" if primary=="groq" else "",groq_model="test" if primary=="groq" else "")
     assert p.call("generation",{},GenerationOutput,r).capability_gaps
     assert len(s.all("SELECT * FROM attempts"))==1
 
 
-@pytest.mark.parametrize("primary,fallback",[("openrouter","ollama"),("ollama","openrouter")])
+@pytest.mark.parametrize("primary,fallback",[("groq","ollama"),("ollama","groq")])
 def test_service_fallback_both_directions(tmp_path,primary,fallback):
     calls=[]
     def transport(req):
         calls.append(req)
         return httpx.Response(503) if len(calls)==1 else success(req)
-    p,s,r=provider(tmp_path,transport,llm_primary=primary,llm_fallback=fallback,openrouter_api_key="test",openrouter_model="test")
+    p,s,r=provider(tmp_path,transport,llm_primary=primary,llm_fallback=fallback,groq_api_key="test",groq_model="test")
     p.call("generation",{},GenerationOutput,r)
     assert [a["status"] for a in s.all("SELECT * FROM attempts ORDER BY id")]==["failed","succeeded"]
 
@@ -50,13 +51,13 @@ def test_nonservice_errors_no_fallback(tmp_path,status):
     def transport(req):
         calls.append(req)
         return httpx.Response(status,json={"message":{"content":"not json"}})
-    p,s,r=provider(tmp_path,transport,llm_fallback="openrouter",openrouter_api_key="test",openrouter_model="test")
+    p,s,r=provider(tmp_path,transport,llm_fallback="groq",groq_api_key="test",groq_model="test")
     with pytest.raises(AppError):p.call("generation",{},GenerationOutput,r)
     assert len(calls)==1
 
 
 def test_missing_config_no_fallback(tmp_path):
-    p,s,r=provider(tmp_path,lambda req:pytest.fail("must not contact provider"),llm_primary="openrouter",llm_fallback="ollama",openrouter_api_key="",openrouter_model="test")
+    p,s,r=provider(tmp_path,lambda req:pytest.fail("must not contact provider"),llm_primary="groq",llm_fallback="ollama",groq_api_key="",groq_model="test")
     with pytest.raises(AppError,match="API key"):p.call("generation",{},GenerationOutput,r)
 
 
@@ -71,7 +72,7 @@ def test_disabled_fallback_and_timeout(tmp_path):
 
 
 def test_both_fail_and_secret_not_logged(tmp_path):
-    p,s,r=provider(tmp_path,lambda req:httpx.Response(503,text="SECRET"),llm_fallback="openrouter",openrouter_api_key="SECRET",openrouter_model="test")
+    p,s,r=provider(tmp_path,lambda req:httpx.Response(503,text="SECRET"),llm_fallback="groq",groq_api_key="SECRET",groq_model="test")
     with pytest.raises(AppError):p.call("generation",{},GenerationOutput,r)
     records=s.all("SELECT * FROM attempts")
     assert len(records)==2 and "SECRET" not in json.dumps(records)

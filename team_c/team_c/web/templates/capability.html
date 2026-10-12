@@ -1,0 +1,82 @@
+<article>
+<h2 id="structured-policy">Who can use this tool</h2>
+<p class="small muted">Structured access and input policy. These decisions record your intent; building turns them into runtime enforcement and generated security tests. Prose answers never enforce access.</p>
+<h3>Access and identity requirements</h3>
+<p class="small muted">Found by Team C in the operations this tool uses, whether or not the AI asked. Accepting the policy below decides all of them at once.</p>
+<ul>{% for r in p.requirements %}<li>{{ r.text }} {{ m.badge(r.status, "requirement") }}{% if r.answer and not p.policy and r.answer.text %}<br><span class="small muted">Earlier written answer: {{ r.answer.text }}</span>{% endif %}
+<details class="tech"><summary>Evidence</summary><p class="small">Source-documented: {{ r.evidence.source_documented|join('; ') }}<br>Owner-confirmed: {{ 'by the accepted policy' if p.policy and r.status == 'owner_confirmed' else (r.evidence.owner_confirmed or 'not confirmed') }} | Verified by a test: none | Runtime implementation: awaiting implementation</p></details></li>
+{% else %}<li class="muted">No access requirements for these operations.</li>{% endfor %}</ul>
+{% if p.policy %}<p>Accepted by {{ p.policy.accepted_by }}: {{ p.policy.content.principals|join(', ') }}. Changes require renewed review.</p><details class="tech"><summary>Accepted policy</summary><pre>{{ p.policy.content|tojson(indent=2) }}</pre></details>{% endif %}
+{% if current and not open %}
+<p>This version is closed. Open a new policy review to change trusted input sources. Your operations and saved answers will be preserved; the new version requires policy acceptance and renewed approval.</p>
+<form method="post" action="/actions/reopen_policy">{{ m.hidden(p) }}<button>Review input sources in a new version</button></form>
+{% endif %}
+{% if open and current %}
+{% set policy = p.policy_form %}
+{% if p.policy_review_pending %}<p class="notice">Your operations and answers were copied into this version. Complete and accept the policy below before checking answers and approving again.</p>{% endif %}
+<form method="post" action="/actions/suggest_access">{{ m.hidden(p) }}<button class="secondary">{{ 'Ask the AI access advisor again' if p.ai_access_advice else 'Suggest access settings with the AI advisor' }}</button> <span class="small muted">A separate AI recommends least-privilege settings with reasons. Safer choices are prefilled below; anything that widens access is shown but never preselected. Nothing applies until you accept.</span></form>
+{% set adv = p.ai_access_advice %}
+{% if adv %}<div class="{{ 'notice' if adv.widens or adv.requirements|selectattr('owner_decision')|list else 'next' }}"><strong>AI advisor recommends: {{ adv.principals|map('replace','_',' ')|join(', ') }}</strong>
+<span class="small">{{ adv.principals_reason }} ({{ adv.principals_confidence }} confidence){% if adv.widens %} <strong>This widens access, so it is not preselected; tick it yourself if you agree.</strong>{% endif %}</span>
+{% for a in adv.requirements %}{% set req = p.requirements|selectattr('id','equalto',a.requirement_id)|first %}<span class="small">{{ (req.kind if req else a.requirement_id)|replace('_',' ') }}: {% if a.owner_decision %}<strong>your decision</strong> — {% elif a.mode != 'not_applicable' %}<strong>{{ {'checked':'only the caller\'s own records (checked)','api_filtered':'only the caller\'s own data (API filters)','unrestricted':'any record'}[a.mode] }}</strong>{% if a.widens %} (widens access, not preselected){% endif %} — {% endif %}{{ a.reason }} ({{ a.confidence }} confidence)</span>{% endfor %}
+</div>{% endif %}
+{% if p.policy_check_suggestions or p.policy_suggestions %}<p class="notice small">Some fields below are <strong>prefilled suggestions</strong> drawn from the API description. They take effect only when you accept the policy: check them, change them, or clear them.</p>{% endif %}
+<form method="post" action="/actions/accept_policy">{{ m.hidden(p) }}
+<fieldset><legend>Who may use it?</legend>
+{% if p.ai_access_advice %}{% set adv = p.ai_access_advice %}<p class="small"><strong>AI advisor recommends: {{ adv.principals|map('replace','_',' ')|join(', ') }}</strong> ({{ adv.principals_confidence }} confidence). {{ adv.principals_reason }}{% if adv.principals|sort != policy.get('principals',[])|sort %} <em>Your current ticks differ; change them below if you agree.</em>{% endif %}</p>{% endif %}
+<p class="small muted">Tick every kind of caller this tool is for. A resource owner is a signed-in user limited to their own records (an ownership check below is required).</p>
+{% for key,title,why in [('public','Public','anyone, without signing in'),('end_user','Authenticated user','any signed-in customer or user'),('resource_owner','Resource owner','a signed-in user, only for records they own'),('admin','Administrator','staff with administrative rights'),('service','Service account','another system, not a person'),('guest','Guest/session user','an anonymous session such as a guest cart')] %}
+{% set impossible = not p.login.declared and key not in ['public','guest'] %}
+<label{% if impossible %} class="muted"{% endif %}><input type="checkbox" name="principals" value="{{ key }}" {% if key in policy.get('principals',[]) and not impossible %}checked{% endif %} {% if impossible %}disabled{% endif %}>{{ title }} <span class="why">{{ why }}{% if impossible %} — not possible: the API declares no login{% endif %}</span></label>{% endfor %}
+{% if not p.login.declared %}<p class="notice small">{{ p.login.operations }} declares no login, so Team C cannot verify who is calling. Only Public or Guest/session user can be chosen. To restrict this tool to signed-in users, staff or services, the API must declare authentication (OAuth2 password or HTTP bearer); then import the updated specification.</p>{% endif %}
+</fieldset>
+{% for r in p.requirements if r.kind == 'record_scope' %}
+{% set scope = policy.get('scopes',[])|selectattr('requirement_id','equalto',r.id)|first|default({}) %}
+{% set suggestion = p.policy_check_suggestions|selectattr('requirement_id','equalto',r.id)|first|default(none) %}
+<fieldset><legend>Which records may a caller reach through {{ r.field.split('.',1)[-1]|replace('_',' ') }}?</legend>
+{% set a = (p.ai_access_advice.by_requirement or {}).get(r.id) if p.ai_access_advice else none %}
+{% if suggestion %}<p class="small">Suggested from evidence: {{ suggestion.evidence }} Comparing it with the caller's own identity limits callers to their own records.</p>{% endif %}
+<label>Scope<select name="scope:{{ r.id }}"><option value="">Not decided</option><option value="checked" {% if scope.get('mode') == 'checked' %}selected{% endif %}>Only records that belong to the caller (checked){% if a and a.mode == 'checked' %} (AI recommended){% endif %}</option><option value="unrestricted" {% if scope.get('mode') == 'unrestricted' %}selected{% endif %}>Every record, for the callers chosen above{% if a and a.mode == 'unrestricted' %} (AI recommended){% endif %}</option></select></label>
+{% if a %}<p class="small"><strong>Scope:</strong> {% if a.mode == 'not_applicable' %}your decision — the AI could not settle it{% else %}{{ {'checked':'Only records that belong to the caller','unrestricted':'Every record, for the callers chosen above'}[a.mode] }} — <em>AI recommended, {{ a.confidence }} confidence</em>{% endif %}<br><strong>Why:</strong> {{ a.reason }}{% if a.widens %}<br><span class="muted">This choice widens access, so it is not selected for you; pick it in the list above if you agree.</span>{% endif %}</p>{% endif %}
+<label>Reason<input name="scope_reason:{{ r.id }}" value="{{ scope.get('reason','') }}"></label>
+{% for kind in ['ownership','tenant','account'] %}{% set check = policy.get('checks',[])|selectattr('requirement_id','equalto',r.id)|selectattr('kind','equalto',kind)|first|default({}) %}
+{% if kind != 'ownership' %}{% if loop.index0 == 1 %}<details><summary>More checks (tenant, account)</summary><p class="small">Multiple checks all have to pass.</p>{% endif %}{% endif %}
+<fieldset><legend>{{ kind|capitalize }} check{% if kind == 'ownership' %} <span class="why">used when the scope is "only records that belong to the caller": read the record first and compare one of its fields with the caller's trusted identity</span>{% endif %}</legend>
+<label>Resource description<input name="check:{{ r.id }}:{{ kind }}:resource" value="{{ check.get('resource','') }}"></label>
+<label>Read operation<select name="check:{{ r.id }}:{{ kind }}:step_id"><option value="">No check selected</option>{% for step in p.content.steps if operations[step.operation_id].method in ['GET','HEAD','OPTIONS'] %}<option value="{{ step.id }}" {% if check.get('step_id') == step.id %}selected{% endif %}>{{ operations[step.operation_id].business_label }}</option>{% endfor %}</select></label>
+<div class="grid"><label>Success response status<input name="check:{{ r.id }}:{{ kind }}:response_status" value="{{ check.get('response_status','') }}" placeholder="200"></label>
+<label>Resource field (JSON pointer)<input name="check:{{ r.id }}:{{ kind }}:resource_field" value="{{ check.get('resource_field','') }}"></label></div>
+<label>Trusted identity context field<input name="check:{{ r.id }}:{{ kind }}:identity_source" value="{{ check.get('identity_source','') }}"></label>
+</fieldset>{% if kind == 'account' %}</details>{% endif %}{% endfor %}</fieldset>{% endfor %}
+{% for r in p.requirements if r.kind == 'data_scope' %}
+{% set scope = policy.get('scopes',[])|selectattr('requirement_id','equalto',r.id)|first|default({}) %}
+<fieldset><legend>Whose data does {{ r.operations|join(', ') }} return?</legend>
+{% set a = (p.ai_access_advice.by_requirement or {}).get(r.id) if p.ai_access_advice else none %}
+<p class="small">The caller does not choose a record here, so the API decides what comes back. Say what each caller should receive; publishing then requires sandbox proof.</p>
+<label>Each caller receives<select name="scope:{{ r.id }}"><option value="">Not decided</option>
+<option value="api_filtered" {% if scope.get('mode') == 'api_filtered' %}selected{% endif %}>Only their own data (the API filters it; proven with two test identities){% if a and a.mode == 'api_filtered' %} (AI recommended){% endif %}</option>
+<option value="unrestricted" {% if scope.get('mode') == 'unrestricted' %}selected{% endif %}>Any record (for the callers chosen above, e.g. staff reporting){% if a and a.mode == 'unrestricted' %} (AI recommended){% endif %}</option></select></label>
+{% if a %}<p class="small"><strong>Each caller receives:</strong> {% if a.mode == 'not_applicable' %}your decision — the AI could not settle it{% else %}{{ {'api_filtered':'Only their own data','unrestricted':'Any record'}[a.mode] }} — <em>AI recommended, {{ a.confidence }} confidence</em>{% endif %}<br><strong>Why:</strong> {{ a.reason }}{% if a.widens %}<br><span class="muted">This choice widens access, so it is not selected for you; pick it in the list above if you agree.</span>{% endif %}</p>{% endif %}
+<label>Reason<input name="scope_reason:{{ r.id }}" value="{{ scope.get('reason','') }}"></label>
+</fieldset>{% endfor %}
+{% if p.capability.writes %}<fieldset><legend>Effects of this tool</legend><p class="small muted">Unknown is allowed; answer what you know.</p>{% for key,title in [('financial','Has financial effects'),('irreversible','Has irreversible effects'),('external_side_effects','Affects external systems'),('idempotent','Repeated requests have the same effect')] %}<label>{{ title }}<select name="{{ key }}"><option value="">Unknown</option><option value="yes" {% if policy.get(key) == true %}selected{% endif %}>Yes</option><option value="no" {% if policy.get(key) == false %}selected{% endif %}>No</option></select></label>{% endfor %}</fieldset>{% endif %}
+<details {% if p.interface_preview.blockers %}open{% endif %}><summary>Advanced: authentication, roles, permissions and input sources{% if p.interface_preview.blockers %} (needs a decision){% endif %}</summary>
+<label>Authentication<select name="authentication">{% for key,title in [('declared','Use declared API authentication'),('required','Required'),('none','No authentication')] %}<option value="{{ key }}" {% if policy.get('authentication','declared') == key %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label>
+<div class="grid"><label>Trusted role context field<input name="role_source" value="{{ policy.get('role_source') or '' }}"></label><label>Allowed roles (comma separated)<input name="roles" value="{{ policy.get('roles',[])|join(', ') }}"></label></div>
+<div class="grid"><label>Trusted permission context field<input name="permission_source" value="{{ policy.get('permission_source') or '' }}"></label><label>Required permissions (comma separated)<input name="permissions" value="{{ policy.get('permissions',[])|join(', ') }}"></label></div>
+<h3>Input source decisions</h3>
+<p class="small">Keep an established source, or explicitly map an input. Context references are field names, never credential values. Unsupported transformations remain blocked.</p>
+{% if p.policy_suggestions %}<ul class="small">{% for suggestion in p.policy_suggestions %}<li>Suggested: <code>{{ suggestion.target }}</code> in {{ suggestion.step_id }} from trusted runtime context <code>{{ suggestion.reference }}</code>.</li>{% endfor %}</ul>{% endif %}
+{% for item in p.capability.inputs %}{% set n = loop.index0 %}{% if item.input in operations[item.operation_id].inputs %}
+{% set decision = policy.get('inputs',[])|selectattr('step_id','equalto',item.step_id)|selectattr('target','equalto',item.input)|first|default({}) %}
+<fieldset><legend>How should {{ item.label }} participate in {{ operations[item.operation_id].business_label }}?</legend>
+<p class="small">{{ item.reason }} ({{ item.state }})</p>
+<label>Source<select name="input:{{ n }}:source">{% for key,title in [('', 'Keep established binding / unresolved'),('trusted_application_context','Trusted runtime context'),('runtime_argument','Explicit tool input'),('business_configuration','Business configuration'),('omit','Not required / server supplies it')] %}<option value="{{ key }}" {% if decision.get('source','') == key %}selected{% endif %}>{{ title }}</option>{% endfor %}</select></label>
+<label>Meaning<select name="input:{{ n }}:category">{% for category in ['business_input','identity_context','runtime_context','server_derived','resource_selector','configuration','sensitive_internal','unknown'] %}<option {% if decision.get('category',item.category) == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select></label>
+<label>Source reference<input name="input:{{ n }}:reference" value="{{ decision.get('reference','') }}"></label><label>Reason<input name="input:{{ n }}:reason" value="{{ decision.get('reason','') }}"></label>
+</fieldset>{% endif %}{% endfor %}
+<label>Supporting explanation (optional)<textarea name="explanation">{{ policy.get('explanation','') }}</textarea></label>
+</details>
+<button>Accept access policy</button> <span class="small muted">Accepting decides every access requirement above. If your answers were already checked, the review settles without another AI check.</span>
+</form>{% endif %}
+</article>

@@ -1,7 +1,17 @@
 """Diagnostic redaction checks; no live model calls."""
 import json
 from team_c.diagnostics import response_diagnostic
-from test_nilestay import candidate, inventory, run_with_transport
+
+
+def test_reconciliation_diagnostics_show_evidence_ids_without_answer_text():
+    raw = json.dumps(dict(findings=[dict(question_id="q1", status="resolved", answer_revision_ids=[8, 9], explanation="PRIVATE_EXPLANATION"),
+                                    dict(question_id="KNOWN_SECRET", status="PRIVATE_STATUS", answer_revision_ids=["PRIVATE_ANSWER", True])],
+                          revised_proposal=None, capability_gaps=[], answers="PRIVATE_ANSWER"))
+    diagnostic = response_diagnostic(raw, ("KNOWN_SECRET",))
+    assert diagnostic["structure"]["findings"] == [dict(question_id="q1", status="resolved", answer_revision_ids=[8, 9]),
+                                                     dict(question_id="[redacted]", status=None, answer_revision_ids=[])]
+    assert not any(secret in json.dumps(diagnostic) for secret in ("PRIVATE_EXPLANATION", "PRIVATE_STATUS", "PRIVATE_ANSWER", "KNOWN_SECRET"))
+from helpers.nilestay import candidate, inventory, run_with_transport
 
 
 def test_projection_drops_values_prose_unknown_fields_and_known_secrets():

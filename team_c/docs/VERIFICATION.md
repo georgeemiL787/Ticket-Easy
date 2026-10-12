@@ -51,7 +51,6 @@ The final default is qwen3:8b, reasoning disabled, with no provider fallback. Th
 
 ## Unverified and bounded scope
 
-- **OpenRouter live inference was not run:** no key/model was configured. Its structured-output request, primary selection, missing-key behavior, fallback and error handling are covered by mock transport tests only.
 - No live cross-provider fallback is claimed. Automated tests simulate both provider directions.
 - Model choice does not guarantee semantic quality; schema validators cannot prove arbitrary business meaning or authorization.
 - The server is for a single local development process, with a server-configured development reviewer label rather than authenticated ownership. SQLite persistence is verified, not distributed/multiworker deployment.

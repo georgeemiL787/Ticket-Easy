@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, apiPost, withQuery } from "../api/client";
-import type { DashboardBusinessTools, TeamCPublication } from "../api/types/DashboardBusinessTools";
+import type { DashboardBusinessTools, TeamCConnector, TeamCPublication } from "../api/types/DashboardBusinessTools";
 import { useApi } from "../api/useApi";
 import { Async } from "../components/Async";
 import { useI18n } from "../i18n";
@@ -55,6 +55,73 @@ function DisableForm({ tenant, publication, onDone }: { tenant: string; publicat
   );
 }
 
+/** SANDBOX or LIVE DEMO, exactly as Team C reports the environment; never "production". */
+function EnvBadge({ environment }: { environment: string | null | undefined }) {
+  const { t } = useI18n();
+  if (environment === "live_demo") return <span className="badge env-live">{t("bt.env.live_demo")}</span>;
+  if (environment === "sandbox") return <span className="badge env-sandbox">{t("bt.env.sandbox")}</span>;
+  return null;
+}
+
+/** One Team C connector: its environment, host, the steps of its last real check, and a button to check it again. */
+function ConnectorCard({ tenant, connector, onDone }: { tenant: string; connector: TeamCConnector; onDone: () => void }) {
+  const { t, lang } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function check() {
+    setBusy(true);
+    setError(null);
+    try {
+      await apiPost<DashboardBusinessTools>(withQuery(`${BASE}/connectors/${connector.id}/check`, { tenant_id: tenant }), {});
+      onDone();
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : t("common.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li className="connector">
+      <div className="actions-row">
+        <EnvBadge environment={connector.environment} /> <code>{connector.host}</code>
+        <span className="muted small">
+          {t("bt.identities")}: {connector.identities}
+        </span>
+        <button type="button" onClick={() => void check()} disabled={busy}>
+          {busy ? t("common.loading") : t("bt.checkConnection")}
+        </button>
+        {error ? (
+          <span role="alert" className="badge problem">
+            {error}
+          </span>
+        ) : null}
+      </div>
+      {connector.checked_at ? (
+        <>
+          <p className="muted small">
+            {t("bt.checkedAt")} {formatDateTime(connector.checked_at, lang)} ·{" "}
+            {connector.ready ? t("bt.checkReady") : t("bt.checkNotReady")}
+          </p>
+          <ul className="plain checks">
+            {(connector.checks ?? []).map((c) => (
+              <li key={c.check}>
+                <span className={`badge ${c.status === "ok" ? "ok" : c.status === "failed" ? "problem" : "decision-handoff"}`}>
+                  {label(t, "bt.checkStatus", c.status)}
+                </span>{" "}
+                <strong>{label(t, "bt.check", c.check)}</strong> <span className="small">{c.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="muted small">{t("bt.notChecked")}</p>
+      )}
+    </li>
+  );
+}
+
 export default function BusinessTools() {
   const { t, lang } = useI18n();
   const filters = useFilters();
@@ -78,12 +145,18 @@ export default function BusinessTools() {
   return (
     <>
       <h1>{t("bt.title")}</h1>
-      <p className="notice" role="note">
-        <strong>{t("bt.testOnly")}</strong> {t("bt.testOnlyHint")}
-      </p>
       <Async state={state}>
         {(d) => (
           <>
+            {d.live_tools ? (
+              <p className="notice live" role="note">
+                <strong>{t("bt.liveNotice", { n: d.live_tools })}</strong> {t("bt.liveNoticeHint")}
+              </p>
+            ) : (
+              <p className="notice" role="note">
+                <strong>{t("bt.testOnly")}</strong> {t("bt.testOnlyHint")}
+              </p>
+            )}
             <section className="chart-card" aria-labelledby="bt-connection">
               <h2 id="bt-connection">{t("bt.connection")}</h2>
               {d.configured ? (
@@ -145,7 +218,9 @@ export default function BusinessTools() {
                       </td>
                       <td>{tool.used_by.join(", ") || t("common.noData")}</td>
                       <td>
-                        <span className="chip">{t(tool.source === "team_c" ? "bt.sourceTeamC" : "bt.sourceStandin")}</span>
+                        <span className="chip">{t(tool.source === "team_c" ? "bt.sourceTeamC" : "bt.sourceStandin")}</span>{" "}
+                        <EnvBadge environment={tool.source === "team_c" ? tool.environment : null} />
+                        {tool.api_host ? <div className="muted small">{t("bt.callsApi", { host: tool.api_host })}</div> : null}
                       </td>
                       <td>
                         <span className={`badge ${STATUS_BADGE[tool.status] ?? ""}`}>{label(t, "bt.status", tool.status)}</span>
@@ -197,7 +272,7 @@ export default function BusinessTools() {
                               {p.problem ? <div className="muted small">{p.problem}</div> : null}
                             </td>
                             <td>
-                              {p.environment} · {p.production_ready ? t("bt.productionReady") : t("bt.notProduction")}
+                              <EnvBadge environment={p.environment} /> {p.production_ready ? t("bt.productionReady") : t("bt.notProduction")}
                             </td>
                             <td>{p.published_at ? formatDateTime(p.published_at, lang) : t("common.noData")}</td>
                             <td>{p.status === "published" ? <DisableForm tenant={filters.tenant} publication={p} onDone={state.reload} /> : p.disabled_at ? `${t("bt.disabledAt")} ${formatDateTime(p.disabled_at, lang)}` : ""}</td>
@@ -208,6 +283,18 @@ export default function BusinessTools() {
                   </div>
                 ) : null}
                 <p className="muted small">{t("bt.disableHint")}</p>
+
+                <h2>{t("bt.connectors")}</h2>
+                {(d.connectors ?? []).length === 0 ? (
+                  <p className="muted">{t("bt.noConnectors")}</p>
+                ) : (
+                  <ul className="plain connectors">
+                    {(d.connectors ?? []).map((c) => (
+                      <ConnectorCard key={c.id} tenant={filters.tenant} connector={c} onDone={state.reload} />
+                    ))}
+                  </ul>
+                )}
+                <p className="muted small">{t("bt.checkHint")}</p>
 
                 <h2>{t("bt.proposals")}</h2>
                 {(d.proposals ?? []).length === 0 ? (

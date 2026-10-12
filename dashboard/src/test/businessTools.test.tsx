@@ -15,7 +15,7 @@ const page = (published: boolean) => ({
   tenant_id: T, configured: true, test_only: true, business_id: "biz-1", builder_url: "http://127.0.0.1:8101/businesses/biz-1",
   builder_base: "http://127.0.0.1:8101", listed_at: "2026-10-12T08:05:00Z", team_c_error: null, mapped_customers: 2,
   tools: [
-    { name: "get_order", used_by: ["order_status"], source: "team_c", status: published ? "available" : "missing",
+    { name: "get_order", used_by: ["order_status"], source: "team_c", environment: "sandbox", api_host: null, status: published ? "available" : "missing",
       reason: published ? null : "not_published", detail: published ? "" : "no sandbox publication of this tool is active in Team C",
       operation_kind: published ? "read" : null, team_c_tool: published ? publication.tool_name : null, publication_id: null,
       proposal_id: "prop-1", proposal_version: 1, artifact_sha256: null },
@@ -55,11 +55,14 @@ describe("business tools", () => {
     render(<MemoryRouter initialEntries={["/tools"]}><App /></MemoryRouter>);
 
     expect(await screen.findByRole("heading", { name: "Business tools", level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("note")).toHaveTextContent("TEST-ONLY");
+    expect(await screen.findByRole("note")).toHaveTextContent("TEST-ONLY");
     const tools = (await screen.findAllByRole("table"))[0]!;
-    expect(within(tools).getByText("Team C · sandbox")).toBeInTheDocument();
+    expect(within(tools).getByText("Team C")).toBeInTheDocument();
+    expect(within(tools).getByText("SANDBOX")).toBeInTheDocument();
     expect(within(tools).getByText("Stand-in shop")).toBeInTheDocument();
-    expect(screen.getByText("sandbox · not production")).toBeInTheDocument();
+    const publications = screen.getAllByRole("table")[1]!;
+    expect(within(publications).getByText("SANDBOX")).toBeInTheDocument();
+    expect(within(publications).getByText(/not production/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the tool builder (Team C)" })).toHaveAttribute("href", "http://127.0.0.1:8101/businesses/biz-1");
     expect(screen.getByText("Ready for your decision")).toBeInTheDocument();
 
@@ -87,5 +90,54 @@ describe("business tools", () => {
     );
     render(<MemoryRouter initialEntries={["/tools"]}><App /></MemoryRouter>);
     expect(await screen.findByRole("alert")).toHaveTextContent("this needs the role manager");
+  });
+});
+
+describe("business tools in Live Demo", () => {
+  it("labels a live tool truthfully and checks a connector through the service", async () => {
+    const posted: string[] = [];
+    let checked = false;
+    const live = () => {
+      const base = page(true);
+      return {
+        ...base,
+        live_tools: 1,
+        test_only: false,
+        tools: base.tools.map((tool) => (tool.name === "get_order" ? { ...tool, environment: "live_demo", api_host: "api.example.com" } : tool)),
+        publications: base.publications.map((p) => ({ ...p, environment: "live_demo", execution_enabled: true })),
+        connectors: [
+          {
+            id: "live-abc", environment: "live_demo", host: "api.example.com:443", identities: 1,
+            checked_at: checked ? "2026-10-12T09:00:00Z" : null, ready: checked ? false : null,
+            checks: checked ? [{ check: "reachable", status: "ok", detail: "The API answered HTTP 200" }, { check: "authentication", status: "unknown", detail: "run a read test" }] : [],
+          },
+        ],
+      };
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = new URL(String(input), "http://test");
+        if (url.pathname === "/v1/auth/me") return respond({ auth_required: false, user: null, csrf_token: null });
+        if (url.pathname === "/v1/dashboard/tenants") return respond(tenants);
+        if (init?.method === "POST") {
+          posted.push(url.pathname);
+          checked = true;
+          return respond(live());
+        }
+        if (url.pathname === "/v1/dashboard/business-tools") return respond(live());
+        return respond({ error: { code: "NOT_FOUND", message: "not found" } }, 404);
+      }),
+    );
+    render(<MemoryRouter initialEntries={["/tools"]}><App /></MemoryRouter>);
+    expect(await screen.findByText(/LIVE DEMO: 1 tool\(s\) call the owner-configured real API/)).toBeInTheDocument();
+    expect(screen.queryByText("TEST-ONLY.")).toBeNull();
+    expect(screen.getByText("calls the real API at api.example.com")).toBeInTheDocument();
+    expect(screen.getAllByText("LIVE DEMO").length).toBeGreaterThanOrEqual(3); // tool, publication, connector
+    expect(screen.getByText("Not checked yet.")).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Check connection" }));
+    await waitFor(() => expect(posted).toEqual(["/v1/dashboard/business-tools/connectors/live-abc/check"]));
+    expect(await screen.findByText("Endpoint reachable")).toBeInTheDocument();
+    expect(screen.getByText("Not proven")).toBeInTheDocument();
   });
 });

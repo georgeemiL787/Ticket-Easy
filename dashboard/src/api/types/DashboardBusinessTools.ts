@@ -5,9 +5,21 @@ export type BuilderBase = string | null;
 export type BuilderUrl = string | null;
 export type BusinessId = string | null;
 export type Configured = boolean;
-export type ListedAt = string | null;
-export type MappedCustomers = number;
+export type CheckedAt = string | null;
+export type Check = string;
+export type Detail = string;
+export type Status = string;
+export type Checks = ConnectorCheck[];
+export type Environment = string | null;
+export type Host = string;
 export type Id = string;
+export type Identities = number;
+export type Ready = boolean | null;
+export type Connectors = TeamCConnector[];
+export type ListedAt = string | null;
+export type LiveTools = number;
+export type MappedCustomers = number;
+export type Id1 = string;
 export type Name = string;
 export type State = string;
 export type Version = number;
@@ -15,13 +27,14 @@ export type Proposals = TeamCProposal[];
 export type BoundTo = string | null;
 export type DisabledAt = string | null;
 export type EffectiveStatus = string;
-export type Environment = string;
-export type Id1 = string;
+export type Environment1 = string;
+export type ExecutionEnabled = boolean;
+export type Id2 = string;
 export type Problem = string | null;
 export type ProductionReady = boolean;
 export type ProposalId = string;
 export type PublishedAt = string | null;
-export type Status = string;
+export type Status1 = string;
 export type ToolName = string;
 export type Version1 = number;
 export type Publications = TeamCPublication[];
@@ -29,8 +42,10 @@ export type PublicationsError = string | null;
 export type TeamCError = string | null;
 export type TenantId = string;
 export type TestOnly = boolean;
+export type ApiHost = string | null;
 export type ArtifactSha256 = string | null;
-export type Detail = string;
+export type Detail1 = string;
+export type Environment2 = string | null;
 export type Name1 = string;
 export type OperationKind = string | null;
 export type ProposalId1 = string | null;
@@ -38,7 +53,7 @@ export type ProposalVersion = number | null;
 export type PublicationId = string | null;
 export type Reason = string | null;
 export type Source = "team_c" | "standin";
-export type Status1 = "available" | "missing" | "blocked";
+export type Status2 = "available" | "missing" | "blocked";
 export type TeamCTool = string | null;
 export type UsedBy = string[];
 export type Tools = BusinessTool[];
@@ -48,7 +63,9 @@ export interface DashboardBusinessTools {
   builder_url?: BuilderUrl;
   business_id?: BusinessId;
   configured: Configured;
+  connectors?: Connectors;
   listed_at?: ListedAt;
+  live_tools?: LiveTools;
   mapped_customers?: MappedCustomers;
   proposals?: Proposals;
   publications?: Publications;
@@ -58,8 +75,22 @@ export interface DashboardBusinessTools {
   test_only?: TestOnly;
   tools: Tools;
 }
-export interface TeamCProposal {
+export interface TeamCConnector {
+  checked_at?: CheckedAt;
+  checks?: Checks;
+  environment: Environment;
+  host: Host;
   id: Id;
+  identities: Identities;
+  ready?: Ready;
+}
+export interface ConnectorCheck {
+  check: Check;
+  detail?: Detail;
+  status: Status;
+}
+export interface TeamCProposal {
+  id: Id1;
   name: Name;
   state: State;
   version: Version;
@@ -68,19 +99,22 @@ export interface TeamCPublication {
   bound_to?: BoundTo;
   disabled_at?: DisabledAt;
   effective_status: EffectiveStatus;
-  environment: Environment;
-  id: Id1;
+  environment: Environment1;
+  execution_enabled?: ExecutionEnabled;
+  id: Id2;
   problem?: Problem;
   production_ready: ProductionReady;
   proposal_id: ProposalId;
   published_at?: PublishedAt;
-  status: Status;
+  status: Status1;
   tool_name: ToolName;
   version: Version1;
 }
 export interface BusinessTool {
+  api_host?: ApiHost;
   artifact_sha256?: ArtifactSha256;
-  detail?: Detail;
+  detail?: Detail1;
+  environment?: Environment2;
   name: Name1;
   operation_kind?: OperationKind;
   proposal_id?: ProposalId1;
@@ -88,7 +122,7 @@ export interface BusinessTool {
   publication_id?: PublicationId;
   reason?: Reason;
   source: Source;
-  status: Status1;
+  status: Status2;
   team_c_tool?: TeamCTool;
   used_by: UsedBy;
 }

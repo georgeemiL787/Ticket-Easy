@@ -754,3 +754,26 @@ a.button-link {
 .table-wrap .inline-form input {
   inline-size: 160px;
 }
+
+.notice.live {
+  border-color: var(--magenta);
+}
+
+.badge.env-live {
+  color: var(--magenta);
+  border-color: var(--magenta);
+}
+
+.badge.env-sandbox {
+  color: var(--muted);
+}
+
+ul.connectors {
+  list-style: none;
+  padding: 0;
+}
+
+li.connector {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}

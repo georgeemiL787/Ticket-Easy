@@ -26,7 +26,9 @@ The demo shop is "Nile Style". It speaks English, Egyptian Arabic and Arabizi (A
 This version answers by rules and needs no internet. For the version where an AI model also helps to understand messages, run
 `make demo-full` instead (it downloads a model of about 5 GB the first time and needs a computer with 8 GB of free memory).
 
-To run Team B against the real Team A service (policy search, safety screen, rule checker) use `make demo-live`. It needs Ollama on your computer with `ollama pull bge-m3` done once; without it Team A falls back to keyword-only search. The shop is still the stand-in until Team C is connected.
+To run Team B against the real Team A service (policy search, safety screen, rule checker) use `make demo-live`. It needs Ollama on your computer with `ollama pull bge-m3` done once; without it Team A falls back to keyword-only search. The Docker demos use the stand-in shop.
+
+To run all three teams together locally, with business tools that Team C generated, tested in a sandbox and published (TEST-ONLY, never production), follow [Docs/INTEGRATION.md](Docs/INTEGRATION.md): `python integration/serve.py sandbox|team-c|team-a|team-b`, the tool lifecycle `integration/team_c_lifecycle.py`, and the end-to-end check `integration/e2e_chat.py`. Managers see and control those tools on the dashboard's **Business tools** page.
 
 Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
 delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.

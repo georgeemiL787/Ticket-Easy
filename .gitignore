@@ -180,3 +180,5 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+# integrated local run (integration/serve.py): generated keys, Team B database, the Team C binding
+integration/var/

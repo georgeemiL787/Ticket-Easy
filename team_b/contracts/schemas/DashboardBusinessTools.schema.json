@@ -2,6 +2,18 @@
   "$defs": {
     "BusinessTool": {
       "properties": {
+        "api_host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Host"
+        },
         "artifact_sha256": {
           "anyOf": [
             {
@@ -18,6 +30,18 @@
           "default": "",
           "title": "Detail",
           "type": "string"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environment"
         },
         "name": {
           "title": "Name",
@@ -129,6 +153,96 @@
       "title": "BusinessTool",
       "type": "object"
     },
+    "ConnectorCheck": {
+      "properties": {
+        "check": {
+          "title": "Check",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "status"
+      ],
+      "title": "ConnectorCheck",
+      "type": "object"
+    },
+    "TeamCConnector": {
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ConnectorCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Environment"
+        },
+        "host": {
+          "title": "Host",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "identities": {
+          "title": "Identities",
+          "type": "integer"
+        },
+        "ready": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ready"
+        }
+      },
+      "required": [
+        "id",
+        "environment",
+        "host",
+        "identities"
+      ],
+      "title": "TeamCConnector",
+      "type": "object"
+    },
     "TeamCProposal": {
       "properties": {
         "id": {
@@ -190,6 +304,11 @@
         "environment": {
           "title": "Environment",
           "type": "string"
+        },
+        "execution_enabled": {
+          "default": false,
+          "title": "Execution Enabled",
+          "type": "boolean"
         },
         "id": {
           "title": "Id",
@@ -295,6 +414,14 @@
       "title": "Configured",
       "type": "boolean"
     },
+    "connectors": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCConnector"
+      },
+      "title": "Connectors",
+      "type": "array"
+    },
     "listed_at": {
       "anyOf": [
         {
@@ -307,6 +434,11 @@
       ],
       "default": null,
       "title": "Listed At"
+    },
+    "live_tools": {
+      "default": 0,
+      "title": "Live Tools",
+      "type": "integer"
     },
     "mapped_customers": {
       "default": 0,

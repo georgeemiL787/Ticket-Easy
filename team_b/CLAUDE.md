@@ -242,16 +242,21 @@ team_b/
                  team_c_mcp (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
                            McpUnavailable = not sent, McpLost = sent and no answer (outcome unknown), McpRemoteError = JSON-RPC error)
                  team_c_tools (TeamCCapabilities, the CapabilityClient when TEAM_B_TEAM_C_CONFIG is set (config/team_c.example.json): wraps the
-                           stand-in; tools the config binds (by Team C proposal_id, newest published version; ambiguous/kind mismatch/not sandbox = not used)
-                           are served ONLY by Team C's TEST-ONLY sandbox MCP server, never by the stand-in; the ToolSpec stays the business's own; identity =
+                           stand-in; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
+                           mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the stand-in; a binding's
+                           `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API); two allowed
+                           environments published at once = ambiguous (no silent fallback); a result from another environment or claiming production
+                           is not trusted; errors carry Team C's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
                            ToolCallRequest.acting_customer_id (the verified customer, set by code in shopcalls/actions/stages) -> the operator's identities map,
                            one server process per (business, identity), never an argument; IDENTITY_NOT_MAPPED = not sent. Results: only succeeded = success
                            (audit_id team-c:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
                            rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
                            (registry drops its list). Team C sends no list_changed: re-listed every TEAM_B_CAPABILITY_TTL_S and on refresh)
-                 team_c_admin (TeamCAdmin: Team C's REST API for the Business tools page: publications, proposals, disable)
-    api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}: manager; the
-                 publication must belong to the tenant's Team C business else 404; dashboard page /dashboard/tools; DashboardBusinessTools schema),
+                 team_c_admin (TeamCAdmin: Team C's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
+    api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}, POST
+                 .../connectors/{id}/check: manager; the publication or connector must belong to the tenant's Team C business else 404;
+                 environment per tool and publication (SANDBOX / LIVE DEMO), live_tools, connectors with their last check;
+                 dashboard page /dashboard/tools; DashboardBusinessTools schema),
                  capabilities (GET /v1/capabilities?tenant_id=&refresh=: each configured tool available/missing/blocked), app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
                  chat (POST /v1/conversations/{id}/messages, GET .../{id}, .../outbox, .../events SSE, GET /v1/tenants/{t}/welcome),
                  traces (GET /v1/traces/{id}, GET .../{id}/traces), ratelimit (per-conversation sliding window, TEAM_B_RATE_LIMIT_PER_MIN)

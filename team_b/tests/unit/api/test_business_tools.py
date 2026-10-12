@@ -32,6 +32,11 @@ class TeamCRest:
     def __init__(self) -> None:
         self.publications: dict[str, dict[str, Any]] = {}
         self.posts: list[tuple[str, Any]] = []
+        self.connectors: dict[str, list[dict[str, Any]]] = {
+            BUSINESS: [{"id": "live-abc", "environment": "live_demo", "host": "api.example.com:443",
+                        "identities": [{"name": "alice", "scope": "end_user"}], "last_check": None}],
+            "biz-someone-else": [{"id": "live-other", "environment": "live_demo", "host": "x.test", "identities": []}],
+        }  # fmt: skip
 
     def add(self, pub_id: str, business_id: str, tool: str) -> None:
         self.publications[pub_id] = {
@@ -54,6 +59,19 @@ class TeamCRest:
             pub = self.publications[path.split("/")[2]]
             pub.update(status="disabled", effective_status="disabled", disabled_at="2026-10-12T09:00:00")
             return httpx.Response(200, json=pub)
+        if request.method == "GET" and path.startswith("/businesses/") and path.endswith("/connectors"):
+            return httpx.Response(200, json=self.connectors.get(path.split("/")[2], []))
+        if request.method == "POST" and path.startswith("/connectors/") and path.endswith("/check"):
+            self.posts.append((path, None))
+            cid = path.split("/")[2]
+            check = {"checked_at": "2026-10-12T09:00:00+00:00", "ready": False, "checks": [
+                {"check": "configuration", "status": "ok", "detail": "live_demo connector to api.example.com:443"},
+                {"check": "reachable", "status": "ok", "detail": "The API answered HTTP 200"},
+                {"check": "authentication", "status": "unknown", "detail": "run a read test"}]}  # fmt: skip
+            for c in self.connectors[BUSINESS]:
+                if c["id"] == cid:
+                    c["last_check"] = check
+            return httpx.Response(200, json=check)
         if request.method == "GET" and path == f"/businesses/{BUSINESS}/proposals":
             view = {"proposal_id": "prop-2", "id": None, "version": 1, "state": "ready_for_review",
                     "content": {"name": "Open a ticket", "questions": []}}  # fmt: skip
@@ -184,3 +202,47 @@ async def test_only_a_signed_in_manager_may_see_refresh_or_disable(tmp_path: Pat
         assert rest.posts == [
             ("/publications/pub-get_order_v1_aa/disable", {"note": "Disabled in Ticket-Easy by Mona: stop it"})
         ]
+        await http.post("/v1/auth/logout", headers=csrf)
+        login = await http.post("/v1/auth/login", json={"email": "agent@example.com", "password": PASSWORD})
+        agent_csrf = {"X-CSRF-Token": login.json()["csrf_token"]}
+        check = await http.post(f"{URL}/connectors/live-abc/check", params={"tenant_id": T}, headers=agent_csrf)
+        assert check.status_code == 403  # an agent may not make Team C call the API
+
+
+async def test_a_manager_checks_this_businesss_connector_and_sees_each_step(
+    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+) -> None:
+    http, _, rest = open_client
+    body = (await http.get(URL, params={"tenant_id": T})).json()
+    assert body["connectors"] == [{"id": "live-abc", "environment": "live_demo", "host": "api.example.com:443",
+                                   "identities": 1, "checked_at": None, "ready": None, "checks": []}]  # fmt: skip
+    reply = await http.post(f"{URL}/connectors/live-abc/check", params={"tenant_id": T})
+    assert reply.status_code == 200, reply.text
+    [connector] = reply.json()["connectors"]
+    assert connector["ready"] is False and [c["status"] for c in connector["checks"]] == ["ok", "ok", "unknown"]
+    assert rest.posts == [("/connectors/live-abc/check", None)]
+    other = await http.post(f"{URL}/connectors/live-other/check", params={"tenant_id": T})
+    assert other.status_code == 404 and len(rest.posts) == 1  # another business's connector is never checked from here
+
+
+async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path, rest: TeamCRest) -> None:
+    fake = Fake(tmp_path)
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL, live=True), get_order_v1_aa=ORDER_OK)
+    rest.add("pub-get_order_v1_aa", BUSINESS, "get_order_v1_aa")
+    config = fake.config()
+    config["tenants"][T]["tools"]["get_order"]["environments"] = ["sandbox", "live_demo"]
+    config.update(api_url="http://127.0.0.1:9")
+    path = tmp_path / "team_c.json"
+    path.write_text(json.dumps(config), encoding="utf-8")
+    container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, team_c_config=path))
+    assert container.team_c is not None
+    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
+    async for http in serve(container):
+        body = (await http.get(URL, params={"tenant_id": T})).json()
+        tool = {t["name"]: t for t in body["tools"]}["get_order"]
+        assert (
+            tool["environment"] == "live_demo"
+            and tool["api_host"] == "api.example.com"
+            and tool["status"] == "available"
+        )
+        assert body["live_tools"] == 1 and body["test_only"] is False

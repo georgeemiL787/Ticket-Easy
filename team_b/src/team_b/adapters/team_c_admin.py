@@ -1,4 +1,5 @@
-"""Team C's REST API (/api/v1), read for the Business tools page and used for one owner action: disabling a publication.
+"""Team C's REST API (/api/v1), read for the Business tools page and used for two owner actions: disabling a publication
+and checking a connector's connection.
 
 Team C's own pages stay the place where an owner requests tools, answers questions, approves, builds, tests and
 publishes (TeamCConfig.builder_url links there); nothing of that workflow is repeated in Team B. This client only reads
@@ -32,6 +33,16 @@ class TeamCAdmin:
 
     async def disable(self, publication_id: str, note: str) -> dict[str, Any]:
         found = await self._call("POST", f"/publications/{publication_id}/disable", body={"note": note})
+        return found if isinstance(found, dict) else {}
+
+    async def connectors(self, business_id: str) -> list[dict[str, Any]]:
+        """Team C's connectors of a business (environment, host, identity names, last check); never credentials."""
+        found = await self._call("GET", f"/businesses/{business_id}/connectors")
+        return [c for c in found if isinstance(c, dict)] if isinstance(found, list) else []
+
+    async def check_connector(self, connector_id: str) -> dict[str, Any]:
+        """Team C's real connection check of one connector (it may send one GET and logins to that API)."""
+        found = await self._call("POST", f"/connectors/{connector_id}/check")
         return found if isinstance(found, dict) else {}
 
     async def proposals(self, business_id: str) -> list[dict[str, Any]]:

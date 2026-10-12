@@ -1,4 +1,4 @@
-"""Team C's sandbox-published business tools behind Team B's CapabilityClient plug (TEST-ONLY).
+"""Team C's published business tools behind Team B's CapabilityClient plug (sandbox, or Live Demo when allowed).
 
 TeamCCapabilities wraps the existing shop client (the stand-in) and sends the tools a business BINDS to Team C over MCP
 instead. Everything else in the brain is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
@@ -8,6 +8,9 @@ Binding (an operator file, TEAM_B_TEAM_C_CONFIG, see config/team_c.example.json)
 - A Team B tool name is bound to a Team C proposal (`proposal_id`, stable across versions and rebuilds) or to one exact
   published tool name. On every listing the published tool of that proposal with the highest version is used; two
   published artifacts of the same version are ambiguous and nothing is used (disable one in Team C).
+- Environments: a binding accepts sandbox publications; a Live Demo publication (Team C calls the owner-configured REAL
+  API) is used only when the operator lists "live_demo" in that binding's `environments`. A publication that claims
+  production readiness is never used (no production release process exists).
 - A bound tool is NEVER served by the stand-in: when Team C does not list it (not published, disabled, blocked, Team C
   down), the brain sees it as not published and says so or hands over.
 - The ToolSpec the brain sees is the business's own declaration (the stand-in's spec of that name, or `spec` in the
@@ -21,6 +24,8 @@ sent (IDENTITY_NOT_MAPPED), except a tool that needs no identity may use `anonym
 
 Results (only `succeeded` is a success; nothing is retried here):
 - succeeded -> success, audit_id "team-c:<execution_id>", reference_id from `reference_field` for creates
+- every error message starts with Team C's category (invalid_arguments, authentication_failed, permission_denied,
+  not_found, rate_limited, api_unreachable, timeout, ...); a read Team C answered not_found is NOT_FOUND for the brain
 - rejected (refused before any request) -> error TEAM_C_REJECTED, nothing applied
 - failed -> error TEAM_C_FAILED; when the API refused a write (write_state rejected_unverified) Team C does not assert
   that nothing changed, so write_may_have_applied (the brain escalates as unverified_result, never says "not done")
@@ -37,7 +42,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -55,6 +60,13 @@ START_RETRY_S = 5.0  # after a failed start the process is not tried again for t
 log = get_logger(__name__)
 
 
+Environment = Literal["sandbox", "live_demo"]
+
+
+def _sandbox_only() -> list[Environment]:
+    return ["sandbox"]
+
+
 class ToolBinding(BaseModel):
     """One Team B tool served by a Team C publication."""
 
@@ -66,6 +78,9 @@ class ToolBinding(BaseModel):
     fields: dict[str, str] = Field(default_factory=dict)  # Team B output field -> Team C output name or /json/pointer
     reference_field: str | None = None  # for a create: the (Team B) output field that is the new record's reference
     spec: dict[str, Any] | None = None  # the ToolSpec when the stand-in has none of this name (capability, kind, ...)
+    # Which Team C environments this tool may use. live_demo = calls reach the owner-configured REAL API: the operator
+    # opts in per tool. Never "production": no production release process exists.
+    environments: list[Environment] = Field(default_factory=_sandbox_only, min_length=1)
 
     @model_validator(mode="after")
     def _names_one_tool(self) -> "ToolBinding":
@@ -138,7 +153,11 @@ class ResolvedTool:
     proposal_id: str | None = None
     proposal_version: int | None = None
     read_only: bool | None = None
-    problem: str | None = None  # not_published | ambiguous | kind_mismatch | no_spec | team_c_unavailable
+    environment: str | None = None  # sandbox | live_demo (Team C's _meta.team_c.environment)
+    api_host: str | None = None  # live_demo: the real API's host
+    problem: str | None = (
+        None  # not_published | ambiguous | kind_mismatch | environment_not_allowed | no_spec | team_c_unavailable
+    )
 
 
 @dataclass
@@ -322,9 +341,20 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
     ]
     if not candidates:
         return ResolvedTool(name, problem="not_published")
+    # Only the environments the operator allows count; a publication elsewhere is never a silent fallback.
+    allowed = [
+        t
+        for t in candidates
+        if _meta(t).get("environment") in bound.environments and _meta(t).get("production_ready") is False
+    ]
+    if not allowed:
+        return ResolvedTool(
+            name, problem="environment_not_allowed", environment=_meta(candidates[0]).get("environment")
+        )
+    candidates = allowed
     newest = max(int(_meta(t).get("proposal_version") or 0) for t in candidates)
     top = [t for t in candidates if int(_meta(t).get("proposal_version") or 0) == newest]
-    if len(top) > 1:
+    if len(top) > 1:  # two artifacts, or a sandbox and a Live Demo publication both allowed: never guess
         return ResolvedTool(name, problem="ambiguous")
     tool, meta = top[0], _meta(top[0])
     annotations = tool.get("annotations") or {}
@@ -339,8 +369,9 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
         proposal_version=meta.get("proposal_version"),
         read_only=read_only if isinstance(read_only, bool) else None,
     )
-    if meta.get("production_ready") is not False or meta.get("environment") != "sandbox":
-        resolved.problem = "not_sandbox"  # this integration only ever serves TEST-ONLY sandbox publications
+    resolved.environment, resolved.api_host = meta.get("environment"), meta.get("api_host")
+    if meta.get("production_ready") is not False or meta.get("environment") not in bound.environments:
+        resolved.problem = "environment_not_allowed"  # e.g. a Live Demo publication the operator has not allowed
     elif resolved.read_only is None or resolved.read_only != (spec.operation_kind == "read"):
         resolved.problem = "kind_mismatch"  # a tool that writes is never served as a read (or the reverse)
     return resolved
@@ -387,13 +418,20 @@ def _envelope(raw: dict[str, Any]) -> dict[str, Any] | None:
 def _result(raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, writes: bool) -> ToolResult:
     envelope = _envelope(raw)
     if envelope is None or envelope.get("production_ready") is not False:
-        return _error("TEAM_C_BAD_RESULT", "Team C's answer is not a TEST-ONLY execution result", unclear=writes)
+        return _error(
+            "TEAM_C_BAD_RESULT", "Team C's answer is not a sandbox or Live Demo execution result", unclear=writes
+        )
+    if envelope.get("environment", "sandbox") != (resolved.environment or "sandbox"):
+        return _error(
+            "TEAM_C_BAD_RESULT", "Team C answered from another environment than the tool was listed in", unclear=writes
+        )
     status = envelope.get("status")
     execution = envelope.get("execution_id")
     audit = f"{AUDIT_PREFIX}{execution}" if execution else None
     found_error = envelope.get("error")
     error: dict[str, Any] = found_error if isinstance(found_error, dict) else {}
-    detail = f"{error.get('code') or status}: {str(envelope.get('message') or '')[:200]}"
+    category = str(error.get("category") or "")
+    detail = f"{category or error.get('code') or status}: {str(envelope.get('message') or '')[:200]}"
     if status == "succeeded" and raw.get("isError") is not True:
         if envelope.get("publication_id") not in (None, resolved.publication_id):
             return _error("TEAM_C_BAD_RESULT", "Team C answered for another publication", unclear=writes)
@@ -412,7 +450,7 @@ def _result(raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, wri
     if status == "failed":
         return ToolResult(
             status="error",
-            error_code="TEAM_C_FAILED",
+            error_code="NOT_FOUND" if category == "not_found" and not writes else "TEAM_C_FAILED",
             error_message=detail,
             audit_id=audit,
             write_may_have_applied=touched,

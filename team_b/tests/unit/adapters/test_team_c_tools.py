@@ -39,13 +39,15 @@ Made = Callable[..., TeamCCapabilities]
 
 
 def tool_def(
-    name: str, proposal: str, version: int = 1, *, read_only: bool = True, sandbox: bool = True
+    name: str, proposal: str, version: int = 1, *, read_only: bool = True, sandbox: bool = True, live: bool = False
 ) -> dict[str, Any]:
     meta = {
         "publication_id": f"pub-{name}", "artifact_id": f"art-{name}", "artifact_sha256": "ab" * 32,
         "proposal_id": proposal, "proposal_version": version, "activated": False,
-        "environment": "sandbox" if sandbox else "production", "production_ready": not sandbox,
+        "environment": "live_demo" if live else "sandbox" if sandbox else "production", "production_ready": not sandbox,
     }  # fmt: skip
+    if live:
+        meta["api_host"] = "api.example.com"
     schema = {"type": "object", "properties": {"order_id": {"type": "string"}}, "additionalProperties": False}
     return {
         "name": name, "title": name, "description": "TEST-ONLY", "annotations": {"readOnlyHint": read_only},
@@ -154,7 +156,7 @@ async def test_a_published_tool_is_served_with_the_businesss_own_spec_and_unboun
     [
         ([tool_def("a_v1_1", GET_ORDER_PROPOSAL), tool_def("a_v1_2", GET_ORDER_PROPOSAL)], "ambiguous"),
         ([tool_def("a_v1_1", GET_ORDER_PROPOSAL, read_only=False)], "kind_mismatch"),
-        ([tool_def("a_v1_1", GET_ORDER_PROPOSAL, sandbox=False)], "not_sandbox"),
+        ([tool_def("a_v1_1", GET_ORDER_PROPOSAL, sandbox=False)], "environment_not_allowed"),
     ],
     ids=["two-artifacts-same-version", "a-write-declared-as-read", "not-a-sandbox-publication"],
 )
@@ -330,6 +332,59 @@ def test_the_example_config_is_valid_and_its_paths_are_relative_to_the_file() ->
     command = config.server_command("biz", "alice")
     assert command[3:7] == ["--business-id", "biz", "--identity", "alice"]
     assert ["--sandbox-hosts", "127.0.0.1:8102"] == command[-2:]
+
+
+async def test_a_live_demo_publication_is_used_only_where_the_operator_allows_it(fake: Fake, made: Made) -> None:
+    live_ok = envelope("get_order_v1_aa", "succeeded", ORDER, environment="live_demo")
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL, live=True), get_order_v1_aa=live_ok)
+    default = made()
+    assert "get_order" not in {t.name for t in await default.list_tools(T)}
+    state = default.status(T)
+    assert state is not None and state.resolved["get_order"].problem == "environment_not_allowed"
+    allowed = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["sandbox", "live_demo"]}})
+    assert "get_order" in {t.name for t in await allowed.list_tools(T)}
+    resolved = allowed.status(T).resolved["get_order"]  # type: ignore[union-attr]
+    assert resolved.environment == "live_demo" and resolved.api_host == "api.example.com"
+    result = await allowed.call_tool(T, request("get_order"))
+    assert result.status == "success" and result.data["order_status"] == "shipped"
+
+
+async def test_only_the_allowed_environment_is_used_and_two_allowed_ones_are_ambiguous(fake: Fake, made: Made) -> None:
+    sandbox, live = (
+        tool_def("order_sbx_v1_aa", GET_ORDER_PROPOSAL),
+        tool_def("order_live_v1_bb", GET_ORDER_PROPOSAL, live=True),
+    )
+    fake.publish(sandbox, live)
+    live_only = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["live_demo"]}})
+    await live_only.list_tools(T)
+    assert live_only.status(T).resolved["get_order"].team_c_tool == "order_live_v1_bb"  # type: ignore[union-attr]
+    sandbox_only = made()
+    await sandbox_only.list_tools(T)
+    assert sandbox_only.status(T).resolved["get_order"].team_c_tool == "order_sbx_v1_aa"  # type: ignore[union-attr]
+    both = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["sandbox", "live_demo"]}})
+    assert "get_order" not in {t.name for t in await both.list_tools(T)}
+    assert both.status(T).resolved["get_order"].problem == "ambiguous"  # type: ignore[union-attr]
+
+
+async def test_a_result_from_another_environment_is_not_trusted(fake: Fake, made: Made) -> None:
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL, live=True), get_order_v1_aa=ORDER_OK)  # says sandbox
+    client = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["live_demo"]}})
+    await client.list_tools(T)
+    assert (await client.call_tool(T, request("get_order"))).error_code == "TEAM_C_BAD_RESULT"
+
+
+@pytest.mark.parametrize(
+    ("category", "code"),
+    [("not_found", "NOT_FOUND"), ("rate_limited", "TEAM_C_FAILED"), ("authentication_failed", "TEAM_C_FAILED")],
+)
+async def test_a_read_failure_keeps_team_cs_category(fake: Fake, made: Made, category: str, code: str) -> None:
+    failed = envelope("get_order_v1_aa", "failed") | {"error": {"code": "rejected_by_api", "category": category}}
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=failed)
+    client = made()
+    await client.list_tools(T)
+    result = await client.call_tool(T, request("get_order"))
+    assert result.error_code == code and result.error_message is not None and result.error_message.startswith(category)
+    assert not result.write_may_have_applied and not result.retryable
 
 
 def test_a_binding_names_exactly_one_tool() -> None:

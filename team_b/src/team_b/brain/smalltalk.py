@@ -79,9 +79,15 @@ class SmallTalkWriter:
         return SmallTalkResult(candidate, "used", "written")
 
 
+# "How are you today?" promises nothing; only a word about another day ("tomorrow") could pass for a commitment.
+TODAY_WORDS = frozenset({"today", "اليوم", "النهارده", "النهاردة", "enharda", "elnaharda"})
+
+
 def problems_with(candidate: str, template: str, shop: str) -> list[str]:
     """Why a small-talk reply must not be sent; empty means it may."""
-    problems = check_grounded(candidate, [template, shop])
+    problems = [
+        p for p in check_grounded(candidate, [template, shop]) if p.removeprefix("new time word ") not in TODAY_WORDS
+    ]
     if len(candidate) > MAX_CHARS:
         problems.append("too long for small talk")
     if (found := OFF_LIMITS.search(candidate)) is not None:

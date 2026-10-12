@@ -343,3 +343,28 @@ async def test_a_move_given_as_a_dict_is_parsed_and_checked_the_same_way(c: Cont
 async def test_a_plan_with_more_than_five_steps_is_not_accepted() -> None:
     with pytest.raises(Exception):  # noqa: B017
         AgentPlan(steps=[PlanStep(text=f"step {i}") for i in range(50)])
+
+
+# ---- the agent must not stall (the "كده" conversation) ----
+
+
+async def test_a_vague_answer_to_the_question_is_kept_as_the_detail_and_not_asked_again(c: Container) -> None:
+    ask = AskCustomer(why="need the reason", question_key="ask_reason", slot="reason")
+    picker = ScriptedMovePicker(ask, ask)
+    first = await orch(c, picker).handle_turn(T, C, "I want to return my order")
+    assert first.awaiting == "slot:reason"
+    second = await orch(c, picker).handle_turn(T, C, "just because")
+    session = await c.sessions.load(T, C)
+    assert session is not None and session.slots.get("reason") == "just because"
+    refused = [s for s in (await trace_of(c)).agent_steps if "already have" in s.result]
+    assert refused, "asking for the reason again must be refused: the customer already answered"
+    assert second.decision is not Decision.CLARIFY or "reason" not in (second.awaiting or "")
+
+
+async def test_an_acknowledgement_is_closed_kindly_without_calling_the_orchestrator(c: Container) -> None:
+    picker = ScriptedMovePicker()
+    reply = await orch(c, picker).handle_turn(T, C, "ok")
+    assert picker.views == [] and reply.decision is Decision.ANSWER
+    assert (await trace_of(c)).decision_reason == "small talk (acknowledgement)"
+    arabic = await orch(c, picker).handle_turn(T, "conv-ack-ar", "ماشي")
+    assert picker.views == [] and arabic.decision is Decision.ANSWER

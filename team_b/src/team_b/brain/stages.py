@@ -58,6 +58,14 @@ THANKS_TERMS = tuple(
         "tslm",
     )
 )
+# "ok" / "ماشي" after a reply: nothing is being asked, so no request is hiding in it (see acknowledges)
+ACK_WORDS = frozenset(
+    normalize(w)
+    for w in (
+        "ok", "okay", "okey", "oki", "fine", "alright", "got it", "mashi", "mashy", "tamam", "tmam",
+        "ماشي", "تمام", "اوكي", "اوك", "أوكي", "طيب", "خلاص", "حاضر", "فهمت", "اوكيه",
+    )
+)  # fmt: skip
 FINISHED_CASES = (CaseStatus.RESOLVED, CaseStatus.RETURNED_TO_AGENT)
 
 
@@ -204,10 +212,28 @@ async def pending_confirmation(ctx: TurnContext) -> str:
 
 
 def store_details(ctx: TurnContext) -> None:
-    if ctx.understanding is not None:
-        for key, value in ctx.understanding.entities.items():
+    session, reading = ctx.session, ctx.understanding
+    if reading is not None:
+        for key, value in reading.entities.items():
             if key in SLOT_KEYS:
-                ctx.session.slots[key] = value
+                session.slots[key] = value
+    asked = (session.agent_pending or "").removeprefix("slot:")
+    if session.agent_pending and session.agent_pending.startswith("slot:") and asked in freetext.FREE_TEXT_SLOTS:
+        # The agent asked for this detail last turn: the customer's plain answer is the value, whatever it is ("كده"),
+        # exactly as the usual flow takes it. Otherwise a vague answer leaves the slot empty and the question repeats.
+        other = reading is not None and any(
+            i.name != session.active_intent and _kind(ctx, i.name) != "smalltalk" for i in reading.intents
+        )
+        found = freetext.capture(
+            ctx.text, {asked}, session.agent_pending, other_intent=other, entities=reading.entities if reading else {}
+        )
+        session.slots.update({k: v for k, v in found.items() if not session.slots.get(k)})
+
+
+def acknowledges(ctx: TurnContext) -> bool:
+    """Is the message only "ok" / "ماشي" / "تمام"? Short enough that nothing else can be in it."""
+    words = normalize(ctx.text).replace("!", " ").replace(".", " ").replace("،", " ").split()
+    return 0 < len(words) <= 3 and all(w in ACK_WORDS or " ".join(words) in ACK_WORDS for w in words)
 
 
 def _wanted_names(ctx: TurnContext, intents: tuple[IntentCandidate, ...]) -> list[str]:
@@ -443,7 +469,20 @@ def small_talk_only(ctx: TurnContext) -> PlannedIntent | None:
     """The plan for a message that is only a greeting, a check-in or thanks (agent mode answers it without the
     orchestrator: no request is hiding in it, so a small, checked wording is all it needs). None for anything else."""
     reading = ctx.understanding
-    if reading is None or not reading.intents or ctx.session.agent_pending is not None:
+    session = ctx.session
+    if (
+        reading is not None
+        and not reading.intents
+        and session.agent_pending is None
+        and session.awaiting is None
+        and session.pending_action_id is None  # nothing waits for a yes, so "ok" is not an answer to anything
+        and not reading.wants_human
+        and not reading.safety_flags
+        and reading.frustration != "high"
+        and acknowledges(ctx)
+    ):
+        return PlannedIntent("acknowledgement", "smalltalk")  # "ok" after a refusal: close kindly, start nothing
+    if reading is None or not reading.intents or session.agent_pending is not None:
         return None
     names = [i.name for i in reading.intents]
     if any(_kind(ctx, n) != "smalltalk" for n in names) or reading.wants_human or reading.affirmation is not None:
@@ -458,7 +497,8 @@ async def smalltalk_handler(ctx: TurnContext, planned: PlannedIntent) -> Step:
     an AI model is configured: then it writes a natural answer ("I'm doing well, thanks for asking!") that code has
     checked (brain/smalltalk.py); on any problem the template is sent."""
     text = normalize(ctx.text)
-    key = "thanks" if any(find_spans(text, term) for term in THANKS_TERMS) else "greeting"
+    thanked = any(find_spans(text, term) for term in THANKS_TERMS) or planned.name == "acknowledgement"
+    key = "thanks" if thanked else "greeting"
     step = Step(Decision.ANSWER, reason=f"small talk ({planned.name})", reply_key=key)
     writer = ctx.deps.smalltalk
     if writer is None:

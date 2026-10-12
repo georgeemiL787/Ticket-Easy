@@ -326,8 +326,9 @@ def _give_up(ctx: TurnContext, reason: str) -> Step:
     """The loop cannot go on. Normally the usual stages take over (AgentFallback), but not once the shop was asked to
     change something this turn: running the whole message again could do it twice. Then the turn ends with what was
     already settled (the outcome of the action), and the trace says the loop stopped."""
-    if not ctx.agent_wrote:
+    if not ctx.agent_wrote and not ctx.earlier:
         raise AgentFallback(reason)
+    # A reply the customer already has (nothing written) beats running the whole message again.
     ctx.errors.append(f"agent stopped early: {reason}")
     ctx.earlier.extend(ctx.agent_outcomes)
     ctx.agent_outcomes.clear()

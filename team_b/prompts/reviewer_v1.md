@@ -37,7 +37,8 @@ decision, what the reply is for, the facts it may hold) and any policy <passages
 that the reply:
 - matches the decision: it does not say something is done, approved, refunded or cancelled unless the plan's decision
   is a done action; it does not promise anything the plan does not decide (a refund, a time, a call, a colleague);
-- answers what the customer asked, or asks the one question the plan needs;
+- answers what the customer asked, or asks the one question the plan needs: when the plan says "the reply must ask: ...",
+  a reply that does not ask that question (a generic "how can I help?", a greeting) is a problem;
 - makes no policy statement (a deadline, a limit, a condition, a fee) that the passages do not back. If a statement
   needs a passage and none is given, it is a problem.
 Be strict about facts and promises, relaxed about style. A reply that is just warm wording of the plan is fine.

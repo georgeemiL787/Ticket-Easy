@@ -25,6 +25,7 @@ from team_b.brain.llm_nlu import PromptTemplate
 from team_b.brain.redaction import redact
 from team_b.brain.reviewer import Reviewer
 from team_b.brain.rewrite import MAX_GROWTH, MAX_PROBLEMS_SHOWN, REGISTER
+from team_b.brain.smalltalk import TODAY_WORDS
 from team_b.brain.smalltalk import problems_with as small_talk_problems
 from team_b.contracts.evidence import Passage
 from team_b.domain.agent import ReplyPlan
@@ -149,6 +150,8 @@ def problems_in(plan: ReplyPlan, template: str, candidate: str, shop: str) -> li
     if len(candidate) > MAX_GROWTH * len(template) + 80 and not plan.free:
         return ["the reply is much longer than the plan needs"]
     problems = check_grounded(candidate, [template, *plan.facts.values()], keep=[template])
+    if plan.free or plan.reply_key == "free_reply":  # a chat with no facts in it: "today" promises nothing
+        problems = [p for p in problems if p.removeprefix("new time word ") not in TODAY_WORDS]
     if promises_handover(candidate) and not promises_handover(template) and plan.decision is not Decision.HANDOFF:
         problems.append("promises a colleague the plan does not")
     if plan.must_ask is not None and not _asks(candidate):
@@ -252,7 +255,10 @@ class ReplyWriter:
                 return WriteResult(template, "template", "the model failed or answered without text", review)
             problems = problems_in(plan, template, candidate, shop)
             if not problems and self._reviewer is not None:
-                verdict = await self._reviewer.review_reply(plan, candidate, message, passages)
+                seen = plan
+                if plan.must_ask is not None:  # the reviewer must know WHICH question the reply has to ask
+                    seen = plan.model_copy(update={"intent": f"{plan.intent}; the reply must ask: {template}"[:400]})
+                verdict = await self._reviewer.review_reply(seen, candidate, message, passages)
                 review = "failed" if verdict.failed else ("ok" if verdict.ok else f"blocked: {verdict.detail}")
                 if verdict.failed:
                     return WriteResult(template, "template", "the reviewer could not answer", review)

@@ -285,3 +285,14 @@ async def test_a_free_reply_that_talks_business_falls_back_to_the_template(c: Co
     bot = orch(c, writer=ReplyWriter(FakeLLM(bad, bad)), move_picker=FunctionPicker(lambda v: FREE))
     reply = await bot.handle_turn(T, C, "tell me a joke about cats")
     assert reply.text == "Could you tell me a little more about what you need help with?"
+
+
+def test_today_word_passes_in_a_free_reply_but_not_in_a_fact_reply() -> None:
+    from team_b.brain.writer import problems_in
+    from team_b.domain.agent import ReplyPlan
+    from team_b.domain.decision import Decision
+
+    free = ReplyPlan(decision=Decision.ANSWER, free=True, reply_key="free_reply")
+    assert problems_in(free, "How can I help?", "I am the assistant, how can I help today?", "Nile Style") == []
+    fact = ReplyPlan(decision=Decision.ANSWER, reply_key="order_status")
+    assert problems_in(fact, "Your order is on the way.", "Your order arrives today.", "Nile Style")

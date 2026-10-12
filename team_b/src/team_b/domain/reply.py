@@ -15,6 +15,7 @@ class AgentReply(FrozenModel):
     locale: Locale
     decision: Decision
     citations: tuple[str, ...] = ()
+    policy_quotes: tuple[str, ...] = ()  # the quoted policy, for the human agent only (developer view)
     trace_id: str = Field(min_length=1)
     handoff_case_id: str | None = None
     awaiting: str | None = None  # what the agent waits for next: a detail, a yes/no, a human

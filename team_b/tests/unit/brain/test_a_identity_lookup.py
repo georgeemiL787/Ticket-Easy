@@ -232,7 +232,9 @@ def passage() -> Passage:
     )  # fmt: skip
 
 
-async def test_a_late_order_also_quotes_the_policy(container: Container, monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_a_late_order_keeps_the_policy_quote_for_the_human_agent(
+    container: Container, monkeypatch: pytest.MonkeyPatch
+) -> None:
     asked: list[str] = []
 
     async def quote(ctx: Any, query: str) -> list[Passage]:
@@ -242,7 +244,9 @@ async def test_a_late_order_also_quotes_the_policy(container: Container, monkeyp
     monkeypatch.setattr(knowledge, "quote_for", quote)
     reply = await say(container, f"Where is my order NS-20877? My phone is {PHONE}")
     assert asked == ["late delivery shipping"] and reply.citations == ("shipping_policy@v1#s6",)
-    assert "A late order earns a voucher." in reply.text
+    # the customer did not ask about the policy: the quote is for the human agent (developer view) only
+    assert "A late order earns a voucher." not in reply.text
+    assert any("A late order earns a voucher." in q for q in reply.policy_quotes)
 
 
 async def test_an_order_on_time_quotes_nothing(container: Container, monkeypatch: pytest.MonkeyPatch) -> None:

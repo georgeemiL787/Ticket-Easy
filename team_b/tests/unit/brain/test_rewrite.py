@@ -290,7 +290,11 @@ async def test_policy_passages_are_appended_after_the_rewrite_and_never_sent_to_
 
     async def knowledge(ctx: TurnContext, planned: PlannedIntent) -> Step:
         return Step(
-            Decision.ANSWER, reason="found it", reply_key="thanks", citations=(passage.citation,), passages=(passage,)
+            Decision.ANSWER,
+            reason="found it",
+            reply_key="policy_answer",
+            citations=(passage.citation,),
+            passages=(passage,),
         )
 
     llm = FakeLLM({"text": "You are welcome! Anything else?"})
@@ -308,7 +312,7 @@ async def test_the_passage_is_quoted_verbatim_even_when_the_rewrite_is_rejected(
     )  # fmt: skip
 
     async def knowledge(ctx: TurnContext, planned: PlannedIntent) -> Step:
-        return Step(Decision.ANSWER, reason="found it", reply_key="thanks", passages=(passage,))
+        return Step(Decision.ANSWER, reason="found it", reply_key="policy_answer", passages=(passage,))
 
     llm = FakeLLM({"text": "You are welcome, 99 times over!"})
     reply = await orch(c, llm, handlers={"knowledge": knowledge}).handle_turn(T, C, "What is your return policy?")

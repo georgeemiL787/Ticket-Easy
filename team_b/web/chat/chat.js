@@ -44,6 +44,19 @@
     }
     item.appendChild(body);
 
+    // Policy the customer did not ask about is for the human agent: developer view only, never in the customer's text.
+    if (extra && extra.policy_quotes && extra.policy_quotes.length) {
+      var quotes = document.createElement("div");
+      quotes.className = "dev policy-quotes";
+      extra.policy_quotes.forEach(function (quote) {
+        var line = document.createElement("p");
+        line.setAttribute("dir", "auto");
+        line.textContent = quote;
+        quotes.appendChild(line);
+      });
+      item.appendChild(quotes);
+    }
+
     if (extra && extra.citations && extra.citations.length) {
       var chips = document.createElement("div");
       chips.className = "chips";

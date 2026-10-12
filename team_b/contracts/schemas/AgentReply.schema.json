@@ -70,6 +70,14 @@
     "locale": {
       "$ref": "#/$defs/Locale"
     },
+    "policy_quotes": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Policy Quotes",
+      "type": "array"
+    },
     "request_id": {
       "minLength": 1,
       "title": "Request Id",

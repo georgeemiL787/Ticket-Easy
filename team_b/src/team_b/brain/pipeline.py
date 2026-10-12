@@ -244,9 +244,9 @@ async def say_step(ctx: TurnContext, step: Step, locale: Locale) -> str:
         ctx.steps.append(TraceStep(stage="rewrite", status=result.status, duration_ms=elapsed, detail=result.detail))
         ctx.versions["rewrite_prompt"] = getattr(rewriter, "prompt_version", "unknown")
         text = result.text
-    if step.passages:
+    if step.passages and asked_about_policy(step):
         text = f"{text}\n\n{composer.passage_block(step.passages)}"
-    return text
+    return text  # passages nobody asked for are not in the customer's text: see policy_quotes
 
 
 async def compose(ctx: TurnContext, locale: Locale) -> str:
@@ -259,6 +259,22 @@ async def compose(ctx: TurnContext, locale: Locale) -> str:
     if ctx.apologise and ctx.step.decision is not Decision.HANDOFF and not ctx.step.silent:
         texts.insert(0, default_composer().t(locale, "frustration_ack"))  # a fixed sentence: never reworded
     return "\n\n".join(texts)
+
+
+def asked_about_policy(step: Step) -> bool:
+    """The step answers a policy question (asked directly or inside another request), so the quote is the answer."""
+    return step.reply_key == "policy_answer"
+
+
+def policy_quotes(ctx: TurnContext) -> tuple[str, ...]:
+    """The policy passages used this turn that the customer did not ask about, word for word with their citation.
+    For the human agent (developer view), never shown to the customer."""
+    assert ctx.step is not None
+    seen: dict[str, str] = {}
+    for step in (*ctx.earlier, ctx.step):
+        for p in () if asked_about_policy(step) else step.passages:
+            seen.setdefault(p.citation, f"“{p.text}” [{p.citation}]")
+    return tuple(seen.values())
 
 
 def understanding_fields(result: NLUResult | None) -> dict[str, Any]:
@@ -400,6 +416,7 @@ async def finish(ctx: TurnContext) -> AgentReply:
         locale=locale,
         decision=step.decision,
         citations=citations,
+        policy_quotes=policy_quotes(ctx),
         trace_id=ctx.trace_id,
         handoff_case_id=trace.handoff_case_id,
         awaiting=step.awaiting,

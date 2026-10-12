@@ -125,6 +125,11 @@ body {
   display: block;
 }
 
+.policy-quotes p {
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+}
+
 .status {
   margin: 0;
   padding: 6px 20px;

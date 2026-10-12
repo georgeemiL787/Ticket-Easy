@@ -28,7 +28,7 @@ This version answers by rules and needs no internet. For the version where an AI
 
 To run Team B against the real Team A service (policy search, safety screen, rule checker) use `make demo-live`. It needs Ollama on your computer with `ollama pull bge-m3` done once; without it Team A falls back to keyword-only search. The Docker demos use the stand-in shop.
 
-To run all three teams together locally, with business tools that Team C generated, tested in a sandbox and published (TEST-ONLY, never production), follow [Docs/INTEGRATION.md](Docs/INTEGRATION.md): `python integration/serve.py sandbox|team-c|team-a|team-b`, the tool lifecycle `integration/team_c_lifecycle.py`, and the end-to-end check `integration/e2e_chat.py`. Managers see and control those tools on the dashboard's **Business tools** page.
+To run all three teams together locally, with business tools that Team C generated and published as TEST-ONLY **Sandbox** tools or as **Live Demo** tools that call an owner-configured real API (never a production release), follow [Docs/INTEGRATION.md](Docs/INTEGRATION.md): `python integration/serve.py up`, the tool lifecycle `integration/team_c_lifecycle.py`, the real-API check `integration/live_demo_check.py`, and the end-to-end checks `integration/e2e_chat.py` / `e2e_live_chat.py`. Managers see each tool's environment, check API connections and disable tools on the dashboard's **Business tools** page.
 
 Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
 delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.

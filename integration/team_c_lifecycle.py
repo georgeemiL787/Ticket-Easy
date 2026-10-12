@@ -33,6 +33,7 @@ VAR = ROOT / "integration" / "var"
 TEAM_C = "http://127.0.0.1:8101"
 API = TEAM_C + "/api/v1"
 SANDBOX = "http://127.0.0.1:8102"
+DEMO_SHOP = "http://127.0.0.1:8103"  # a second, separate deployment of the shop API (integration/serve.py demo-shop)
 LABEL = "TEST-ONLY integration run (integration/team_c_lifecycle.py):"
 # Team B's own customers (team_b/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
 IDENTITIES = {"alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790")}
@@ -220,14 +221,18 @@ def review_enforcement_if_needed(owner: Owner, pid: str, aid: str) -> str:
     return aid
 
 
-def add_identities(owner: Owner, aid: str) -> None:
-    key = harness_key()
-    with httpx.Client(base_url=SANDBOX, trust_env=False) as sandbox:
+def add_identities(owner: Owner, aid: str, base: str = SANDBOX, key_file: str = "sandbox_harness.key") -> None:
+    """alice / bob with the API's own tokens for C-100 / C-101: each deployment issues its own (separate credentials)."""
+    path = VAR / key_file
+    if not path.exists():
+        raise SystemExit(f"integration/var/{key_file} is missing: start that API with integration/serve.py")
+    key = path.read_text(encoding="utf-8").strip()
+    with httpx.Client(base_url=base, trust_env=False) as api:
         for name, (customer, _) in IDENTITIES.items():
-            token = sandbox.post("/_harness/tokens", json={"customer_id": customer}, headers={"x-harness-key": key}).json()["token"]
+            token = api.post("/_harness/tokens", json={"customer_id": customer}, headers={"x-harness-key": key}).json()["token"]
             owner.form(f"/artifacts/{aid}", "/actions/save_test_identity",
                        {"artifact_id": aid, "identity_name": name, "scope": "end_user", "token": token, "a:customer_id": customer})
-            print(f"identity {name} = sandbox customer {customer} (token stored in Team C only)")
+            print(f"identity {name} = customer {customer} at {base} (token stored in Team C only)")
 
 
 def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[str, Any]:
@@ -262,8 +267,9 @@ def sandbox_tests(owner: Owner, aid: str, write: bool) -> None:
     test("bob_cannot_use_alices_order", "bob", alice_order, "failed", "cross_user", "alice")
 
 
-def publish(owner: Owner, aid: str) -> dict[str, Any]:
-    r = owner.http.post(f"/api/v1/artifacts/{aid}/publications", json={"note": f"{LABEL} sandbox publication for Team B"})
+def publish(owner: Owner, aid: str, environment: str = "sandbox") -> dict[str, Any]:
+    note = f"{LABEL} sandbox publication for Team B" if environment == "sandbox" else "Live Demo publication for Team B (integration/team_c_lifecycle.py)"
+    r = owner.http.post(f"/api/v1/artifacts/{aid}/publications", json={"note": note, "environment": environment})
     if r.status_code == 409:
         problems = (r.json().get("details") or {}).get("problems") or [r.text]
         raise SystemExit("publication refused by Team C:\n- " + "\n- ".join(problems))
@@ -288,7 +294,7 @@ def output_fields(content: dict[str, Any], wanted: list[str]) -> dict[str, str]:
     return fields
 
 
-def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any]) -> Path:
+def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], environment: str = "sandbox") -> Path:
     path = VAR / "team_c.json"
     config = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     team_c_dir = ROOT / "team_c"
@@ -306,7 +312,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any]) -> 
     declared = next(t for t in spec["tools"] if t["name"] == TOOLS[tool]["team_b"])
     wanted = list(declared["output_schema"].get("properties") or {})
     inputs = list((content.get("input_schema") or {}).get("properties") or {})
-    binding: dict[str, Any] = {"proposal_id": state["proposal_id"], "fields": output_fields(content, wanted)}
+    binding: dict[str, Any] = {"proposal_id": state["proposal_id"], "fields": output_fields(content, wanted), "environments": [environment]}
     renames = {b: c for b in declared["input_schema"].get("properties", {}) for c in inputs if b != c and b.split("_")[0] in c}
     if renames:
         binding["arguments"] = renames
@@ -322,12 +328,54 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any]) -> 
     return path
 
 
+def live_main(tool: str) -> int:
+    """Live Demo for an already approved proposal: a Live Demo connector to the separate demo-shop deployment, a build,
+    that deployment's own credentials, tests against it, a live_demo publication, and Team B's binding switched to
+    live_demo for this tool. The demo shop runs on this machine, so LIVE_DEMO_PRIVATE_HOSTS must list it explicitly."""
+    write = TOOLS[tool]["method"] == "POST"
+    base = load_state(False, tool)
+    if "proposal_id" not in base:
+        raise SystemExit(f"run the sandbox lifecycle for --tool {tool} first: the Live Demo reuses its approved proposal")
+    state = load_state(False, f"{tool}_live")
+    state.update(business_id=base["business_id"], proposal_id=base["proposal_id"])
+    owner, pid = Owner(), base["proposal_id"]
+    if "artifact_id" not in state:
+        step(f"Live Demo connector to {DEMO_SHOP} and a build on it")
+        r = owner.http.post(f"/api/v1/proposals/{pid}/connectors", json=dict(base_url=DEMO_SHOP, context_fields=["customer_id"], environment="live_demo", confirmed=True))
+        if r.status_code != 200:
+            raise SystemExit("the Live Demo connector was refused: " + r.text[:400] + "\nList 127.0.0.1:8103 in LIVE_DEMO_HOSTS and "
+                             "LIVE_DEMO_PRIVATE_HOSTS (integration/live_demo.env) and restart Team C.")
+        connector = r.json()["id"]
+        aid = owner.post(f"/proposals/{pid}/artifacts", {"connector_id": connector})["id"]
+        state.update(connector_id=connector, artifact_id=review_enforcement_if_needed(owner, pid, aid))
+        save_state(state, f"{tool}_live")
+    aid = state["artifact_id"]
+    if "publication_id" not in state:
+        step("The demo shop's own credentials, live tests, publish as live_demo")
+        add_identities(owner, aid, DEMO_SHOP, "demo_shop_harness.key")
+        sandbox_tests(owner, aid, write)
+        pub = publish(owner, aid, "live_demo")
+        assert pub["environment"] == "live_demo" and pub["production_ready"] is False and pub["production_activation"] is False
+        state.update(publication_id=pub["id"], tool_name=pub["tool_name"])
+        save_state(state, f"{tool}_live")
+    print(f"published {state['tool_name']} (publication {state['publication_id']}, environment live_demo, not production)")
+    content = owner.get(f"/artifacts/{aid}")["content"]
+    path = write_binding(state, tool, content, "live_demo")
+    print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]['team_b']} -> proposal {pid}, environments [live_demo]")
+    print("\nLIVE DEMO PUBLICATION COMPLETE (restart Team B to load the binding)")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--fresh", action="store_true", help="start over (a new business in Team C)")
     parser.add_argument("--tool", choices=sorted(TOOLS), default="order")
     parser.add_argument("--refresh-identities", action="store_true", help="only re-save alice/bob on the built artifact")
+    parser.add_argument("--environment", choices=["sandbox", "live_demo"], default="sandbox",
+                        help="live_demo: publish the approved tool again on the separate demo-shop deployment (Live Demo)")
     args = parser.parse_args()
+    if args.environment == "live_demo":
+        return live_main(args.tool)
     tool, write = args.tool, TOOLS[args.tool]["method"] == "POST"
     state = load_state(args.fresh, tool)
     shared = load_state(False, "order") if tool != "order" else {}

@@ -1,34 +1,51 @@
-"""Start one TicketEasy service for the integrated local run (Team A, Team B, Team C, the Nile sandbox API).
+"""Start TicketEasy for a local run: Team A, Team B, Team C and the APIs they call.
 
-    python integration/serve.py sandbox     # Nile Style sandbox shop API      http://127.0.0.1:8102  (Team B's venv)
-    python integration/serve.py team-c      # Team C tool builder + REST API   http://127.0.0.1:8101  (team_c/.venv)
-    python integration/serve.py team-a      # Team A safety + RAG              http://127.0.0.1:8001  (team_a/.venv)
-    python integration/serve.py team-b      # Team B: chat, inbox, dashboard   http://127.0.0.1:8010  (team_b/.venv)
+    python integration/serve.py up          # check the setup, start everything in order, wait for health, report
+    python integration/serve.py status      # which services answer, and the Live Demo settings
+    python integration/serve.py <service>   # one service in the foreground: sandbox | demo-shop | team-c | team-a | team-b
 
-Each runs with its own team's virtualenv, working directory and an isolated database, so nothing here touches another
-Team C instance (for example one on port 8000 with data/team_c.sqlite3). Local secrets this needs (the sandbox harness
-key, Team C's session secret, Team B's cookie key) are generated once into integration/var/ (git-ignored). Team B
-reads its Team C binding from integration/var/team_c.json, written by integration/team_c_lifecycle.py; without that
-file Team B runs on its stand-in shop only. TEAM_B_MODE=live (the real Team A) unless --standin is given.
+Services (each with its own team's virtualenv, working directory, port and an isolated database):
+    sandbox    Nile Style sandbox shop API (test data, TEST-ONLY)        http://127.0.0.1:8102
+    demo-shop  a second, separate Nile shop API with its own credentials  http://127.0.0.1:8103
+               (synthetic data on THIS machine; usable as a Live Demo target only through LIVE_DEMO_PRIVATE_HOSTS)
+    team-c     Team C tool builder + REST API (+ its MCP server, started by Team B)  http://127.0.0.1:8101
+    team-a     Team A safety + RAG                                       http://127.0.0.1:8001
+    team-b     Team B: chat, inbox, dashboard                            http://127.0.0.1:8010
+
+Configuration without editing source files:
+- integration/live_demo.env (git-ignored; copy integration/live_demo.example.env): LIVE_DEMO_* settings for Team C
+  and the credentials the Live Demo scripts store into Team C (never printed, never committed).
+- integration/var/ (git-ignored): generated local keys, Team B's database, Team B's Team C binding (team_c.json,
+  written by integration/team_c_lifecycle.py / live_demo_check.py). Without a binding Team B uses its stand-in shop.
+Nothing here touches another Team C instance (for example one on port 8000 with data/team_c.sqlite3).
 """
 
 import argparse
+import json
 import os
 import secrets
+import socket
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VAR = ROOT / "integration" / "var"
-PORTS = {"sandbox": 8102, "team-c": 8101, "team-a": 8001, "team-b": 8010}
+LIVE_ENV = ROOT / "integration" / "live_demo.env"
+PORTS = {"sandbox": 8102, "demo-shop": 8103, "team-c": 8101, "team-a": 8001, "team-b": 8010}
+ORDER = ("sandbox", "demo-shop", "team-c", "team-a", "team-b")
+TEAMS = {"sandbox": "team_b", "demo-shop": "team_b", "team-c": "team_c", "team-a": "team_a", "team-b": "team_b"}
+LIVE_KEYS = ("LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")
 
 
-def venv_python(team: str) -> str:
+def venv_python(team: str) -> str | None:
     for candidate in (ROOT / team / ".venv" / "Scripts" / "python.exe", ROOT / team / ".venv" / "bin" / "python"):
         if candidate.exists():
             return str(candidate)
-    raise SystemExit(f"{team}/.venv is missing: create it first (see Docs/INTEGRATION.md)")
+    return None
 
 
 def secret(name: str) -> str:
@@ -40,27 +57,46 @@ def secret(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def command(service: str, standin: bool, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
+def live_settings() -> dict[str, str]:
+    """KEY=VALUE lines of integration/live_demo.env (blank lines and # comments ignored)."""
+    if not LIVE_ENV.exists():
+        return {}
+    values = {}
+    for line in LIVE_ENV.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip()
+    return values
+
+
+def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
+    python = venv_python(TEAMS[service])
+    if python is None:
+        raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (Docs/INTEGRATION.md, 'Run it locally')")
     env = dict(os.environ)
     port = str(PORTS[service])
-    if service == "sandbox":
-        env["NILE_SANDBOX_HARNESS_KEY"] = secret("sandbox_harness.key")
+    if service in ("sandbox", "demo-shop"):
+        env["NILE_SANDBOX_HARNESS_KEY"] = secret("sandbox_harness.key" if service == "sandbox" else "demo_shop_harness.key")
+        if service == "demo-shop":
+            env["NILE_SANDBOX_TITLE"] = "Nile Style demo shop (local deployment, synthetic data)"
         args = ["-m", "uvicorn", "integration.nile_sandbox.app:create_app", "--factory", "--host", "127.0.0.1"]
-        return [venv_python("team_b"), *args, "--port", port], ROOT, env
+        return [python, *args, "--port", port], ROOT, env
     if service == "team-c":
         env.update(
             DATABASE_PATH="data/integration.sqlite3",  # its own database, next to Team C's others (git-ignored)
             SANDBOX_HOSTS=f"127.0.0.1:{PORTS['sandbox']}",
-            OPENAPI_FETCH_HOSTS=f"127.0.0.1:{PORTS['sandbox']}",
+            OPENAPI_FETCH_HOSTS=f"127.0.0.1:{PORTS['sandbox']},127.0.0.1:{PORTS['demo-shop']}",
             SESSION_SECRET=secret("team_c_session.key"),
             PYTHONPATH=".",
         )
+        env.update({k: v for k, v in live_settings().items() if k in LIVE_KEYS})
         args = ["-m", "uvicorn", "team_c.web:create_app", "--factory", "--host", "127.0.0.1"]
-        return [venv_python("team_c"), *args, "--port", port], ROOT / "team_c", env
+        return [python, *args, "--port", port], ROOT / "team_c", env
     if service == "team-a":
         env["PYTHONPATH"] = "src"
         args = ["-m", "uvicorn", "team_a.service:app", "--app-dir", "src", "--host", "127.0.0.1"]
-        return [venv_python("team_a"), *args, "--port", port], ROOT / "team_a", env
+        return [python, *args, "--port", port], ROOT / "team_a", env
     env.update(
         TEAM_B_MODE="standin" if standin else "live",
         TEAM_B_TEAM_A_URL=f"http://127.0.0.1:{PORTS['team-a']}",
@@ -73,18 +109,168 @@ def command(service: str, standin: bool, no_auth: bool = False) -> tuple[list[st
     )
     binding = VAR / "team_c.json"
     if binding.exists():
+        sync_live_settings(binding)
         env["TEAM_B_TEAM_C_CONFIG"] = str(binding)
     args = ["-m", "uvicorn", "team_b.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
-    return [venv_python("team_b"), *args, "--port", port], ROOT / "team_b", env
+    return [python, *args, "--port", port], ROOT / "team_b", env
+
+
+def sync_live_settings(binding: Path) -> None:
+    """Team B starts Team C's MCP server itself; give that process the same LIVE_DEMO_* settings as Team C's web app
+    (integration/live_demo.env is the one source). Without them Team C keeps every Live Demo tool switched off."""
+    config = json.loads(binding.read_text(encoding="utf-8"))
+    env = {k: v for k, v in (config.get("env") or {}).items() if k not in LIVE_KEYS}
+    env.update({k: v for k, v in live_settings().items() if k in LIVE_KEYS})
+    if env != config.get("env"):
+        config["env"] = env
+        binding.write_text(json.dumps(config, indent=2), encoding="utf-8")
+
+
+def health(service: str) -> dict | None:
+    """The service's /health answer, or None when nothing answers there."""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{PORTS[service]}/health", timeout=2) as r:
+            return json.loads(r.read() or b"{}")
+    except (urllib.error.URLError, OSError, ValueError):
+        return None
+
+
+TITLES = {"sandbox": "Nile Style sandbox shop", "demo-shop": "Nile Style demo shop", "team-c": "Ticket-Easy Team C",
+          "team-a": "Ticket-Easy Team A"}
+
+
+def ours(service: str) -> bool:
+    """Is the program answering on this service's port really that TicketEasy service (not another program)?"""
+    answer = health(service)
+    if answer is None:
+        return False
+    if service == "team-b":
+        return "mode" in answer and "tenants" in answer
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{PORTS[service]}/openapi.json", timeout=2) as r:
+            return str(json.loads(r.read()).get("info", {}).get("title", "")).startswith(TITLES[service])
+    except (urllib.error.URLError, OSError, ValueError):
+        return False
+
+
+def port_taken(port: int) -> bool:
+    with socket.socket() as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def preflight() -> list[str]:
+    """Problems that stop a service, and warnings that limit what works; nothing secret is printed."""
+    problems = []
+    for team in ("team_a", "team_b", "team_c"):
+        if venv_python(team) is None:
+            problems.append(f"ERROR   {team}/.venv is missing (Docs/INTEGRATION.md, 'Run it locally')")
+    if not (ROOT / "team_a" / "var" / "index" / "shop_001").exists():
+        problems.append("ERROR   Team A has no index for shop_001: cd team_a; PYTHONPATH=src .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings")
+    if not (ROOT / "team_b" / "web" / "dashboard" / "index.html").exists():
+        problems.append("WARNING the dashboard is not built (cd dashboard; npm ci; npm run build): /dashboard will say so")
+    if not (ROOT / "team_c" / ".env").exists():
+        problems.append("WARNING team_c/.env is missing: Team C runs, but proposal generation needs a model provider (team_c/.env.example)")
+    if not (VAR / "team_c.json").exists():
+        problems.append("WARNING no Team C binding (integration/var/team_c.json): Team B serves every tool from its stand-in shop")
+    live = live_settings()
+    if live.get("LIVE_DEMO_ENABLED", "").lower() in ("1", "true", "yes") and not live.get("LIVE_DEMO_HOSTS"):
+        problems.append("WARNING LIVE_DEMO_ENABLED is on but LIVE_DEMO_HOSTS is empty: no live connector can be saved")
+    return problems
+
+
+def up(standin: bool) -> int:
+    issues = preflight()
+    for line in issues:
+        print(line)
+    if any(line.startswith("ERROR") for line in issues):
+        return 1
+    children: list[tuple[str, subprocess.Popen]] = []
+    logs = VAR / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    for service in ORDER:
+        port = PORTS[service]
+        if ours(service):
+            print(f"ok      {service:<9} already running on http://127.0.0.1:{port} (reused, not started twice)")
+            continue
+        if port_taken(port):
+            print(f"ERROR   {service:<9} port {port} is used by another program (not TicketEasy's {service}); stop it or free the port")
+            stop(children)
+            return 1
+        cmd, cwd, env = command(service, standin)
+        log = open(logs / f"{service}.log", "ab")  # noqa: SIM115 - kept open for the child's lifetime
+        children.append((service, subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT)))
+        deadline = time.monotonic() + 90
+        while time.monotonic() < deadline and health(service) is None:
+            if children[-1][1].poll() is not None:
+                print(f"ERROR   {service:<9} exited at start; see integration/var/logs/{service}.log")
+                stop(children)
+                return 1
+            time.sleep(0.5)
+        if health(service) is None:
+            print(f"ERROR   {service:<9} did not become healthy in 90 s; see integration/var/logs/{service}.log")
+            stop(children)
+            return 1
+        print(f"ok      {service:<9} http://127.0.0.1:{port}   (log: integration/var/logs/{service}.log)")
+    report()
+    if not children:
+        return 0
+    print("\nRunning. Press Ctrl+C to stop the services started here.")
+    try:
+        while all(p.poll() is None for _, p in children):
+            time.sleep(1)
+        print("A service stopped: " + ", ".join(s for s, p in children if p.poll() is not None) + "; stopping the rest.")
+    except KeyboardInterrupt:
+        pass
+    stop(children)
+    return 0
+
+
+def stop(children: list[tuple[str, subprocess.Popen]]) -> None:
+    for _, p in reversed(children):
+        if p.poll() is None:
+            p.terminate()
+    for _, p in children:
+        try:
+            p.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            p.kill()
+
+
+def report() -> None:
+    b = health("team-b") or {}
+    live = live_settings()
+    print("\nTicketEasy")
+    print(f"  Customer chat      http://127.0.0.1:{PORTS['team-b']}/chat?tenant_id=shop_001   (Team B mode: {b.get('mode', 'down')})")
+    print(f"  Support inbox      http://127.0.0.1:{PORTS['team-b']}/inbox")
+    print(f"  Business tools     http://127.0.0.1:{PORTS['team-b']}/dashboard/tools")
+    print(f"  Tool builder       http://127.0.0.1:{PORTS['team-c']}/   (Team C)")
+    enabled = live.get("LIVE_DEMO_ENABLED", "false").lower() in ("1", "true", "yes")
+    print(f"  Live Demo          {'ON' if enabled else 'off'}; allowed hosts: {live.get('LIVE_DEMO_HOSTS') or 'none'}"
+          f"; private-network exception: {live.get('LIVE_DEMO_PRIVATE_HOSTS') or 'none'}")
+
+
+def status() -> int:
+    for service in ORDER:
+        state = "ok" if ours(service) else "other" if port_taken(PORTS[service]) else "down"
+        print(f"{state:<7} {service:<9} http://127.0.0.1:{PORTS[service]}" + ("   (another program holds this port)" if state == "other" else ""))
+    report()
+    for line in preflight():
+        print(line)
+    return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("service", choices=sorted(PORTS))
+    parser.add_argument("service", choices=["up", "status", *ORDER])
     parser.add_argument("--standin", action="store_true", help="team-b: use Team B's stand-in safety/RAG, not Team A")
     parser.add_argument("--port", type=int, help="another port (e.g. a second team-b for looking at the pages)")
     parser.add_argument("--no-auth", action="store_true", help="team-b: sign-in off (TEAM_B_AUTH_REQUIRED=0); local only")
     args = parser.parse_args()
+    if args.service == "up":
+        return up(args.standin)
+    if args.service == "status":
+        return status()
     if args.port:
         PORTS[args.service] = args.port
     cmd, cwd, env = command(args.service, args.standin, args.no_auth)

@@ -76,7 +76,7 @@ def create_app(data_path: str | None = None, harness_key: str | None = None) -> 
     switches = {"fail_next_ticket_after_commit": False}
     bearer = HTTPBearer(auto_error=False)
     app = FastAPI(
-        title="Nile Style sandbox shop",
+        title=os.environ.get("NILE_SANDBOX_TITLE") or "Nile Style sandbox shop",
         version="1.0.0",
         description="TEST-ONLY sandbox of the Nile Style shop API. Synthetic data; no real customer or payment.",
     )

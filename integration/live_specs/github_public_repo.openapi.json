@@ -1,0 +1,60 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GitHub REST API - public repository lookup (subset)",
+    "version": "2022-11-28",
+    "description": "A subset of GitHub's public REST API (https://docs.github.com/rest/repos/repos#get-a-repository), written by the business owner to expose exactly one read operation. Unauthenticated calls return public repositories only and are rate-limited by GitHub."
+  },
+  "servers": [{"url": "https://api.github.com"}],
+  "paths": {
+    "/repos/{owner}/{repo}": {
+      "get": {
+        "operationId": "repos_get",
+        "tags": ["repos"],
+        "summary": "Get a public repository",
+        "description": "Returns public facts about one repository: names, description, stars, forks, open issues and default branch.",
+        "parameters": [
+          {"name": "owner", "in": "path", "required": true, "description": "The account owner of the repository (not case sensitive)", "schema": {"type": "string", "minLength": 1, "maxLength": 39}},
+          {"name": "repo", "in": "path", "required": true, "description": "The name of the repository without the .git extension (not case sensitive)", "schema": {"type": "string", "minLength": 1, "maxLength": 100}}
+        ],
+        "responses": {
+          "200": {
+            "description": "The repository",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Repository"}
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found (also returned for private repositories without access)",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BasicError"}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Repository": {
+        "type": "object",
+        "required": ["id", "name", "full_name", "html_url", "stargazers_count", "forks_count", "open_issues_count", "default_branch"],
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "full_name": {"type": "string"},
+          "description": {"type": "string", "nullable": true},
+          "html_url": {"type": "string"},
+          "stargazers_count": {"type": "integer"},
+          "forks_count": {"type": "integer"},
+          "open_issues_count": {"type": "integer"},
+          "default_branch": {"type": "string"}
+        }
+      },
+      "BasicError": {
+        "type": "object",
+        "properties": {"message": {"type": "string"}, "documentation_url": {"type": "string"}}
+      }
+    }
+  }
+}

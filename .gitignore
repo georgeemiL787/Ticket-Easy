@@ -182,3 +182,5 @@ cython_debug/
 .cursorindexingignore
 # integrated local run (integration/serve.py): generated keys, Team B database, the Team C binding
 integration/var/
+# Live Demo settings and credentials (copy integration/live_demo.example.env)
+integration/live_demo.env

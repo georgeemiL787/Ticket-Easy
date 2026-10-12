@@ -57,6 +57,7 @@ ROLES: tuple[tuple[frozenset[str], re.Pattern[str], str], ...] = tuple(
         (("GET",), r"^/v1/capabilities$", "manager"),
         (("GET",), r"^/v1/dashboard/.*$", "manager"),
         (("POST",), r"^/v1/dashboard/alerts/[^/]+/ack$", "manager"),
+        (("POST",), r"^/v1/dashboard/business-tools/(refresh|publications/[^/]+/disable)$", "manager"),
     )
 )
 

@@ -1,0 +1,380 @@
+{
+  "$defs": {
+    "BusinessTool": {
+      "properties": {
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Sha256"
+        },
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Kind"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposal Id"
+        },
+        "proposal_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposal Version"
+        },
+        "publication_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Id"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "enum": [
+            "team_c",
+            "standin"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "available",
+            "missing",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "team_c_tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Team C Tool"
+        },
+        "used_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "used_by",
+        "source",
+        "status"
+      ],
+      "title": "BusinessTool",
+      "type": "object"
+    },
+    "TeamCProposal": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "state"
+      ],
+      "title": "TeamCProposal",
+      "type": "object"
+    },
+    "TeamCPublication": {
+      "properties": {
+        "bound_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bound To"
+        },
+        "disabled_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Disabled At"
+        },
+        "effective_status": {
+          "title": "Effective Status",
+          "type": "string"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "problem": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Problem"
+        },
+        "production_ready": {
+          "title": "Production Ready",
+          "type": "boolean"
+        },
+        "proposal_id": {
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "tool_name",
+        "status",
+        "effective_status",
+        "environment",
+        "production_ready",
+        "proposal_id",
+        "version"
+      ],
+      "title": "TeamCPublication",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "builder_base": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Builder Base"
+    },
+    "builder_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Builder Url"
+    },
+    "business_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Business Id"
+    },
+    "configured": {
+      "title": "Configured",
+      "type": "boolean"
+    },
+    "listed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Listed At"
+    },
+    "mapped_customers": {
+      "default": 0,
+      "title": "Mapped Customers",
+      "type": "integer"
+    },
+    "proposals": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCProposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "publications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCPublication"
+      },
+      "title": "Publications",
+      "type": "array"
+    },
+    "publications_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Publications Error"
+    },
+    "team_c_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Team C Error"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "test_only": {
+      "default": true,
+      "title": "Test Only",
+      "type": "boolean"
+    },
+    "tools": {
+      "items": {
+        "$ref": "#/$defs/BusinessTool"
+      },
+      "title": "Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "configured",
+    "tools"
+  ],
+  "title": "DashboardBusinessTools",
+  "type": "object"
+}

@@ -17,7 +17,8 @@ load memory → understand (language, intents, entities, yes/no, wants human, fr
 8. The brain imports only team_b.ports interfaces and team_b.domain / team_b.contracts models. Implementations live in team_b.adapters; container.py wires them from settings.
 
 ## Stand-ins
-Team A (policy search, rule checker, risk screen) and Team C (shop actions) are unfinished. Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from team_a/ or team_c/, and never make a test depend on their services. You may READ team_a/contracts/schemas and team_a/data/e-commerce/*/corpus as reference for data formats and policy texts.
+Team A is reachable over HTTP (TEAM_B_MODE=live) and Team C's sandbox tools over MCP (TEAM_B_TEAM_C_CONFIG, TEST-ONLY; see
+../Docs/INTEGRATION.md); without them Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from team_a/ or team_c/, and never make a test depend on their services. You may READ team_a/contracts/schemas and team_a/data/e-commerce/*/corpus as reference for data formats and policy texts.
 
 ## Layout
 Paths are relative to team_b/ unless noted. "(planned)" marks anything not created yet; remove it when a prompt creates the item, and add new modules here.
@@ -237,8 +238,21 @@ team_b/
                  llm_policy_gate (LLMPolicyGate, TEAM_B_LLM_POLICY=1: wraps the PolicyGate; for a write the model reads the retrieved policy passages (prompts/policy_agent_v2.md; v1 kept: v2 asks a person only for a missing fact, an exception a person may grant, or an amount above the chat limit)
                            and picks allow/require_human/deny; the STRICTER of its route and the rule checker's wins, it never loosens; uncited allow/deny -> require_human; model or
                            search failure -> an allowed write becomes require_human POLICY_AGENT_UNAVAILABLE; deny and reads pass through; a human approval still turns its require_human into allow)
-                 Phase 6 adds team_a_http and mcp_client                                   (planned)
-    api/         capabilities (GET /v1/capabilities?tenant_id=&refresh=: each configured tool available/missing/blocked), app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
+                 team_a_http (HttpEvidenceProvider + HttpPolicyGate: the real Team A, TEAM_B_MODE=live)
+                 team_c_mcp (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
+                           McpUnavailable = not sent, McpLost = sent and no answer (outcome unknown), McpRemoteError = JSON-RPC error)
+                 team_c_tools (TeamCCapabilities, the CapabilityClient when TEAM_B_TEAM_C_CONFIG is set (config/team_c.example.json): wraps the
+                           stand-in; tools the config binds (by Team C proposal_id, newest published version; ambiguous/kind mismatch/not sandbox = not used)
+                           are served ONLY by Team C's TEST-ONLY sandbox MCP server, never by the stand-in; the ToolSpec stays the business's own; identity =
+                           ToolCallRequest.acting_customer_id (the verified customer, set by code in shopcalls/actions/stages) -> the operator's identities map,
+                           one server process per (business, identity), never an argument; IDENTITY_NOT_MAPPED = not sent. Results: only succeeded = success
+                           (audit_id team-c:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
+                           rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
+                           (registry drops its list). Team C sends no list_changed: re-listed every TEAM_B_CAPABILITY_TTL_S and on refresh)
+                 team_c_admin (TeamCAdmin: Team C's REST API for the Business tools page: publications, proposals, disable)
+    api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}: manager; the
+                 publication must belong to the tenant's Team C business else 404; dashboard page /dashboard/tools; DashboardBusinessTools schema),
+                 capabilities (GET /v1/capabilities?tenant_id=&refresh=: each configured tool available/missing/blocked), app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
                  chat (POST /v1/conversations/{id}/messages, GET .../{id}, .../outbox, .../events SSE, GET /v1/tenants/{t}/welcome),
                  traces (GET /v1/traces/{id}, GET .../{id}/traces), ratelimit (per-conversation sliding window, TEAM_B_RATE_LIMIT_PER_MIN)
                  inbox (GET /v1/handoff/cases?tenant_id=&status=&reason=&priority=&claimed_by=&limit=&cursor= sorted priority then age;
@@ -272,6 +286,7 @@ team_b/
                       success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-brain self-tests),
                       test_a_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
+  tests/fake_team_c_mcp.py  a scripted stand-in for Team C's MCP server (tests/unit/adapters/test_team_c_tools.py, tests/unit/api/test_business_tools.py)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial/  prompt injection, fake approvals, amounts, identity and data theft, obfuscated threats, confirmation tricks and floods, hostile AI/shop answers, one conversation per rules.json rule (judged by the shop audit log + reply text)
   ../.github/  workflows ci.yml (lint, tests on memory+sqlite, scenario report, schema drift, dashboard, docker), safety.yml (adversarial + property test, 5 seeds),

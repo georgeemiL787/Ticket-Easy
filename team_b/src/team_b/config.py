@@ -30,6 +30,7 @@ ENV_VARS: dict[str, str] = {
     "openrouter_api_key": "OPENROUTER_API_KEY",
     "team_a_url": "TEAM_B_TEAM_A_URL",
     "team_a_timeout_s": "TEAM_B_TEAM_A_TIMEOUT_S",
+    "team_c_config": "TEAM_B_TEAM_C_CONFIG",
     "llm_base_url": "TEAM_B_LLM_BASE_URL",
     "llm_api_key": "TEAM_B_LLM_API_KEY",
     "llm_model": "TEAM_B_LLM_MODEL",
@@ -105,6 +106,9 @@ class Settings(BaseModel):
     mode: Mode = "standin"  # standin: Team B own fake services. live: the real Team A (policy search, safety, rules)
     team_a_url: str = "http://127.0.0.1:8001"  # TEAM_B_MODE=live: where Team A's service listens
     team_a_timeout_s: float = Field(default=10.0, gt=0)
+    # Team C's TEST-ONLY sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
+    # stand-in shop serves every tool. Set: the tools it binds are served by Team C, the rest by the stand-in.
+    team_c_config: Path | None = None
     config_dir: Path = PROJECT_ROOT / "config" / "tenants"
     data_dir: Path = PROJECT_ROOT / "data"
     fixtures_dir: Path = PROJECT_ROOT / "fixtures"

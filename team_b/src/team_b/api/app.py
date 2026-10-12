@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from team_b.api import alerts as alerts_api
 from team_b.api import auth as auth_api
-from team_b.api import capabilities, chat, dashboard, inbox, testadmin, traces
+from team_b.api import business_tools, capabilities, chat, dashboard, inbox, testadmin, traces
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
 from team_b.brain.alerts import alert_loop
@@ -103,6 +103,8 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
+            if built.team_c is not None:
+                await built.team_c.aclose()  # stop the Team C MCP server processes
 
     app = FastAPI(title="Ticket-Easy Team B", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
@@ -116,6 +118,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
         testadmin.install(app)
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
+    app.include_router(business_tools.router)
     mount_chat_page(app)
     mount_shared_ui(app)
     mount_inbox_page(app)

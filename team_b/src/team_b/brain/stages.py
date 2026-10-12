@@ -27,7 +27,7 @@ from team_b.brain.injection import looks_like_override
 from team_b.brain.language import LANGUAGE_TRUST
 from team_b.brain.lexicon import default_lexicon
 from team_b.brain.redaction import redact
-from team_b.brain.shopcalls import record_retry
+from team_b.brain.shopcalls import acting_customer, record_retry
 from team_b.brain.slots import next_question, order_questions, required_slots, resolve_arguments
 from team_b.brain.text import find_spans, normalize
 from team_b.brain.turn import COMPLETED, PlannedIntent, Step, TurnContext, locale_of
@@ -540,6 +540,7 @@ async def _list_orders(ctx: TurnContext) -> list[dict[str, str]] | None:
         tool="list_customer_orders",
         arguments={"customer_id": session.identity.customer_id},
         idempotency_key=uuid.uuid4().hex,
+        acting_customer_id=acting_customer(ctx),
     )
     started = time.perf_counter()
     try:

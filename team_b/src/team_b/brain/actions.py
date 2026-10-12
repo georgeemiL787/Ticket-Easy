@@ -35,7 +35,7 @@ from team_b.brain.choices import label_of
 from team_b.brain.composer import PLACEHOLDERS, default_composer, promises_handover
 from team_b.brain.lookup import load_own_order
 from team_b.brain.redaction import redact
-from team_b.brain.shopcalls import record_retry
+from team_b.brain.shopcalls import acting_customer, record_retry
 from team_b.brain.slots import resolve_arguments
 from team_b.brain.turn import PlannedIntent, Step, TurnContext, locale_of
 from team_b.contracts.base import OperationKind
@@ -555,6 +555,7 @@ class ActionCoordinator:
                 policy_request_id=decision.request_id,
                 approval_id=approval_id,
                 actor=actor,
+                acting_customer_id=acting_customer(ctx),
             )
             started = time.perf_counter()
             try:

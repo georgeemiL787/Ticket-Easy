@@ -38,6 +38,13 @@ class ReadOutcome:
         return self.result.data if self.result is not None and self.result.status == "success" else {}
 
 
+def acting_customer(ctx: TurnContext) -> str | None:
+    """The customer this conversation verified (identity.ensure_verified), or None. Only code sets it; it travels with
+    each tool call so a shop that acts with the customer's own credential can choose it (never a tool argument)."""
+    identity = ctx.session.identity
+    return identity.customer_id if identity.verified and identity.customer_id else None
+
+
 def record_retry(ctx: TurnContext, service: str, code: str) -> None:
     """Note in the trace that a dependency failed and was asked once more in the same turn (writes never come here)."""
     ctx.steps.append(TraceStep(stage="retry", status="ok", duration_ms=0.001, detail=f"{service}: {code}, asked again"))
@@ -68,7 +75,11 @@ async def call_read(ctx: TurnContext, tool: str, arguments: dict[str, Any]) -> R
     outcome = ReadOutcome(None, "NO_ATTEMPT")
     for _ in range(ATTEMPTS):
         request = ToolCallRequest(
-            request_id=uuid.uuid4().hex, tool=tool, arguments=arguments, idempotency_key=uuid.uuid4().hex
+            request_id=uuid.uuid4().hex,
+            tool=tool,
+            arguments=arguments,
+            idempotency_key=uuid.uuid4().hex,
+            acting_customer_id=acting_customer(ctx),
         )
         started = time.perf_counter()
         retryable = False

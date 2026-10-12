@@ -22,6 +22,7 @@ from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
 from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
+from team_b.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
 from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
 from team_b.auth import AuthService
 from team_b.brain.alerts import AlertEngine, WebhookNotifier
@@ -70,6 +71,7 @@ class Container:
     traces: TraceStore
     cases: CaseStore
     shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
+    team_c: TeamCCapabilities | None = None  # Team C's sandbox tools (TEAM_B_TEAM_C_CONFIG), wrapping `shop`
     policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
     rule_checker: RuleCheckerStandin | None = None  # the rule checker behind `policy`, same purpose
     safety_screen: SafetyScreenStandin | None = None  # the safety screen behind `evidence`, same purpose
@@ -97,7 +99,10 @@ def build_container(
     sessions, traces, cases = build_stores(settings, clock)
     shops_dir = settings.db_path.parent / "shops" if settings.store == "sqlite" else None  # SQLite shops keep files
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
-    live = settings.mode == "live"  # Team A is real; the shop stays a stand-in until Team C's tools are connected
+    # Team C serves the tools its config binds (TEST-ONLY sandbox publications over MCP); the stand-in serves the rest.
+    team_c = TeamCCapabilities(shop, TeamCConfig.load(settings.team_c_config)) if settings.team_c_config else None
+    capabilities: CapabilityClient = team_c if team_c is not None else shop
+    live = settings.mode == "live"  # Team A is real (policy search, safety screen, rule checker)
     policy_search = None if live else PolicySearchStandin(settings.fixtures_dir)
     rule_checker = None if live else RuleCheckerStandin(settings.fixtures_dir)
     safety_screen = None if live else SafetyScreenStandin(settings.fixtures_dir)
@@ -127,13 +132,14 @@ def build_container(
         tenants=tenants,
         evidence=evidence,
         policy=policy,
-        capabilities=shop,
+        capabilities=capabilities,
         llm=llm,
         llms=llms,
         sessions=sessions,
         traces=traces,
         cases=cases,
         shop=shop,
+        team_c=team_c,
         policy_search=policy_search,
         rule_checker=rule_checker,
         safety_screen=safety_screen,

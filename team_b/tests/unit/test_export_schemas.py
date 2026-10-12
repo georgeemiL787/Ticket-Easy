@@ -16,6 +16,7 @@ NAMES = (
     "DashboardConversation",
     "DashboardEscalations",
     "DashboardTools",
+    "DashboardBusinessTools",
     "DashboardQueue",
     "DashboardPassage",
     "DashboardKnowledgeGaps",

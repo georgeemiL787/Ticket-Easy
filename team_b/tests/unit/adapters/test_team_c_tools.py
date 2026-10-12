@@ -448,3 +448,23 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
     writes = [x for x in fake.calls() if x["tool"] == name]
     assert len(writes) == 1 and writes[0]["identity"] == "alice"  # exactly once, never retried, as the verified C-100
     assert c.shop is not None and not any(e.tool == "apply_voucher" for e in c.shop.audit_log(T))  # not the stand-in
+
+
+def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_success() -> None:
+    from team_b.adapters.team_c_tools import ResolvedTool, ToolBinding, _result
+
+    envelope = {
+        "status": "succeeded", "execution_id": "e1", "production_ready": False, "environment": "sandbox",
+        "output": {"ref": "RET-30001"},
+    }  # fmt: skip
+    raw = {"structuredContent": envelope}
+    bound = ToolBinding(
+        proposal_id="p", fields={"reference_id": "ref"}, reference_field="reference_id", echo=["order_id"],
+        constants={"status": "created"},
+    )  # fmt: skip
+    resolved = ResolvedTool(name="create_return", environment="sandbox")
+    result = _result(raw, bound, resolved, True, {"order_id": "NS-1"})
+    assert result.status == "success"
+    assert result.data == {"reference_id": "RET-30001", "order_id": "NS-1", "status": "created"}
+    failed = _result({"structuredContent": {**envelope, "status": "failed"}}, bound, resolved, True, {"order_id": "NS-1"})
+    assert failed.status == "error" and not failed.data

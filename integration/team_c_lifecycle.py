@@ -36,7 +36,10 @@ SANDBOX = "http://127.0.0.1:8102"
 DEMO_SHOP = "http://127.0.0.1:8103"  # a second, separate deployment of the shop API (integration/serve.py demo-shop)
 LABEL = "TEST-ONLY integration run (integration/team_c_lifecycle.py):"
 # Team B's own customers (team_b/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
-IDENTITIES = {"alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790")}
+IDENTITIES = {
+    "alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790"),
+    "carol": ("C-105", "NS-20955"), "dan": ("C-104", "NS-20960"),  # carol: a processing order, dan: a pending one
+}
 
 TOOLS = {
     "order": dict(
@@ -55,6 +58,68 @@ TOOLS = {
         method="POST",
     ),
 }
+_OWN = "Only the caller's own order; another customer's order must be refused."
+# tests: (name, identity, order, expected status, scenario, record owner). Orders are chosen so the shop accepts the
+# change (delivered for after-sales, not yet shipped for cancel / address); the last one is another customer's order.
+_AFTER_SALES = [("alice_own_order", "alice", "NS-20512", "succeeded", "own_record", None),
+                ("bob_own_order", "bob", "NS-20790", "succeeded", "own_record", None),
+                ("bob_cannot_use_alices_order", "bob", "NS-20512", "failed", "cross_user", "alice")]
+# cancel changes an order's status, so run address before cancel (or restart the sandbox in between)
+_UNSHIPPED = [("carol_own_order", "carol", "NS-20955", "succeeded", "own_record", None),
+              ("dan_own_order", "dan", "NS-20960", "succeeded", "own_record", None),
+              ("dan_cannot_use_carols_order", "dan", "NS-20955", "failed", "cross_user", "carol")]
+TOOLS.update(
+    orders=dict(
+        team_b="list_customer_orders", method="GET", financial=False, irreversible=False,
+        goal="TEST ONLY: let a logged-in customer list all of their own orders (GET /api/orders): for each the order "
+        "id, status, total and placement date. Read only; change nothing.",
+        tests=[("alice_orders", "alice", None, "succeeded", "own_record", None),
+               ("bob_orders", "bob", None, "succeeded", "own_record", None)],
+    ),
+    return_=dict(
+        team_b="create_return", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
+        goal="TEST ONLY: let a logged-in customer request a return for one of their own delivered orders. First look up "
+        "the order by its order id (GET /api/orders/{order_id}) to confirm it belongs to the caller, then request the "
+        "return (POST /api/returns) for that order with a reason, and return the return reference and status.",
+    ),
+    exchange=dict(
+        team_b="create_exchange", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
+        goal="TEST ONLY: let a logged-in customer request an exchange (optionally for another size) for one of their own "
+        "delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
+        "request the exchange (POST /api/exchanges) with a reason and the new size, and return the exchange reference "
+        "and status.",
+    ),
+    refund=dict(
+        team_b="create_refund", method="POST", financial=True, irreversible=True, tests=_AFTER_SALES,
+        goal="TEST ONLY: let a logged-in customer request a refund of an amount (at most the order total) for one of "
+        "their own paid, delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to "
+        "the caller, then request the refund (POST /api/refunds) with the order id, the amount and a reason, and return "
+        "the refund reference, status and amount.",
+    ),
+    cancel=dict(
+        team_b="cancel_order", method="POST", financial=False, irreversible=True,
+        tests=_UNSHIPPED,
+        goal="TEST ONLY: let a logged-in customer cancel one of their own orders that has not shipped yet. First look up "
+        "the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then cancel it "
+        "(POST /api/orders/{order_id}/cancel), and return the cancellation reference and status.",
+    ),
+    address=dict(
+        team_b="update_delivery_address", method="POST", financial=False, irreversible=False,
+        tests=_UNSHIPPED,
+        goal="TEST ONLY: let a logged-in customer change the delivery address of one of their own orders that has not "
+        "shipped yet. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
+        "change the address (PATCH /api/orders/{order_id}/delivery-address) with the new address, and return the "
+        "reference and status.",
+    ),
+    voucher=dict(
+        team_b="apply_voucher", method="POST", financial=True, irreversible=False, tests=_AFTER_SALES,
+        goal="TEST ONLY: let a logged-in customer be issued a goodwill voucher (up to 1000 EGP) about one of their own "
+        "orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then issue the "
+        "voucher (POST /api/vouchers) with the order id, amount and reason, and return the reference, voucher code and "
+        "amount.",
+    ),
+)
+
 OWNER_POLICY = (
     f"{LABEL} the caller is a logged-in customer (end_user) authenticated with their own bearer token issued by the "
     "Nile Style sandbox. A customer may only use their own orders: the order's customer_id must equal the "
@@ -137,7 +202,7 @@ def answer_everything(owner: Owner, pid: str) -> None:
     print(f"answered {len(answers)} questions/requirements")
 
 
-def accept_policy(owner: Owner, pid: str, sid: str, write: bool) -> None:
+def accept_policy(owner: Owner, pid: str, sid: str, write: bool, financial: bool = False, irreversible: bool = False) -> None:
     p = owner.get(f"/proposals/{pid}")
     if p.get("policy") and p["policy"].get("accepted_at"):
         return
@@ -157,12 +222,15 @@ def accept_policy(owner: Owner, pid: str, sid: str, write: bool) -> None:
         checks.append({"requirement_id": req["id"], "kind": "ownership", "resource": "Order record", "step_id": step_for["id"],
                        "response_status": "200", "resource_field": "/customer_id", "identity_source": "customer_id"})
         scopes.append({"requirement_id": req["id"], "mode": "checked", "reason": "A customer may only read their own orders."})
+    for req in [r for r in p["requirements"] if r["kind"] == "data_scope"]:
+        scopes.append({"requirement_id": req["id"], "mode": "api_filtered",
+                       "reason": f"{LABEL} the sandbox API returns only the authenticated customer's own orders."})
     policy = {
-        "principals": ["end_user", "resource_owner"], "authentication": "required", "role_source": None, "roles": [],
+        "principals": ["end_user", "resource_owner"] if checks else ["end_user"], "authentication": "required", "role_source": None, "roles": [],
         "permission_source": None, "permissions": [], "scopes": scopes, "checks": checks,
-        "inputs": (p.get("policy_form") or {}).get("inputs", []), "financial": False, "irreversible": False,
+        "inputs": (p.get("policy_form") or {}).get("inputs", []), "financial": financial, "irreversible": irreversible,
         "external_side_effects": write, "idempotent": not write,
-        "explanation": f"{LABEL} {'opens a ticket' if write else 'read-only order lookup'} for the authenticated customer's own order.",
+        "explanation": f"{LABEL} {'changes the customer own order' if write else 'read-only lookup'} for the authenticated customer's own order.",
     }
     owner.post(f"/proposals/{pid}/versions/{p['version']}/policy", {"expected_revision": p["review_revision"], "policy": policy})
     print(f"policy accepted: {len(checks)} ownership check(s), scopes {[s['mode'] for s in scopes]}")
@@ -242,6 +310,12 @@ def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[s
         lowered = name.lower()
         if "order" in lowered:
             args[name] = order_id
+        elif schema.get("type") in ("number", "integer"):
+            args[name] = 10
+        elif "address" in lowered:
+            args[name] = "TEST-ONLY 1 Example Street, Cairo"
+        elif "size" in lowered:
+            args[name] = "L"
         elif write and "subject" in lowered:
             args[name] = "TEST-ONLY sandbox ticket"
         elif write and ("description" in lowered or "body" in lowered or "detail" in lowered or "message" in lowered):
@@ -251,7 +325,10 @@ def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[s
     return args
 
 
-def sandbox_tests(owner: Owner, aid: str, write: bool) -> None:
+def sandbox_tests(owner: Owner, aid: str, write: bool, tests: list | None = None) -> None:
+    tests = tests or [("alice_own_order", "alice", IDENTITIES["alice"][1], "succeeded", "own_record", None),
+                      ("bob_own_order", "bob", IDENTITIES["bob"][1], "succeeded", "own_record", None),
+                      ("bob_cannot_use_alices_order", "bob", IDENTITIES["alice"][1], "failed", "cross_user", "alice")]
     content = owner.get(f"/artifacts/{aid}")["content"]
     owner.post(f"/artifacts/{aid}/policy-tests", {})
 
@@ -261,10 +338,8 @@ def sandbox_tests(owner: Owner, aid: str, write: bool) -> None:
         result = owner.post(f"/artifacts/{aid}/sandbox-tests", body)
         print(f"  {name}: verdict={result['verdict']} status={result['status']}")
 
-    alice_order, bob_order = IDENTITIES["alice"][1], IDENTITIES["bob"][1]
-    test("alice_own_order", "alice", alice_order, "succeeded", "own_record")
-    test("bob_own_order", "bob", bob_order, "succeeded", "own_record")
-    test("bob_cannot_use_alices_order", "bob", alice_order, "failed", "cross_user", "alice")
+    for name, identity, order, status, scenario, record_owner in tests:
+        test(name, identity, order, status, scenario, record_owner)
 
 
 def publish(owner: Owner, aid: str, environment: str = "sandbox") -> dict[str, Any]:
@@ -292,6 +367,19 @@ def output_fields(content: dict[str, Any], wanted: list[str]) -> dict[str, str]:
             elif o["name"] in wanted:
                 fields[o["name"]] = o["name"]
     return fields
+
+
+def fill_missing_outputs(binding: dict[str, Any], declared: dict[str, Any]) -> None:
+    """Team B requires some output fields the model-written Team C tool may not return: an input it was given
+    (order_id) is echoed from the call, a plain status becomes a fixed value. Applied only after Team C reports success."""
+    inputs = set(declared["input_schema"].get("properties") or {})
+    for name in declared["output_schema"].get("required") or []:
+        if name in binding["fields"]:
+            continue
+        if name in inputs:
+            binding.setdefault("echo", []).append(name)
+        elif name == "status":
+            binding.setdefault("constants", {})["status"] = "created" if declared["operation_kind"] == "create" else "done"
 
 
 def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], environment: str = "sandbox") -> Path:
@@ -323,6 +411,9 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
         if created and "reference_id" not in binding["fields"]:
             binding["fields"]["reference_id"] = created[0]["name"]
         binding["reference_field"] = "reference_id"
+    if "reference_id" in binding["fields"]:
+        binding["reference_field"] = "reference_id"  # also for cancel / address changes: the customer is told the reference
+    fill_missing_outputs(binding, declared)
     tenant.setdefault("tools", {})[TOOLS[tool]["team_b"]] = binding
     path.write_text(json.dumps(config, indent=2), encoding="utf-8")
     return path
@@ -353,7 +444,7 @@ def live_main(tool: str) -> int:
     if "publication_id" not in state:
         step("The demo shop's own credentials, live tests, publish as live_demo")
         add_identities(owner, aid, DEMO_SHOP, "demo_shop_harness.key")
-        sandbox_tests(owner, aid, write)
+        sandbox_tests(owner, aid, write, TOOLS[tool].get("tests"))
         pub = publish(owner, aid, "live_demo")
         assert pub["environment"] == "live_demo" and pub["production_ready"] is False and pub["production_activation"] is False
         state.update(publication_id=pub["id"], tool_name=pub["tool_name"])
@@ -425,7 +516,7 @@ def main() -> int:
         step("Owner review: answers, access policy, reconciliation (model), requirement confirmation, approval")
         answer_everything(owner, pid)
         owner.post(f"/proposals/{pid}/versions/{p['version']}/reconcile", {"expected_revision": owner.get(f"/proposals/{pid}")["review_revision"]})
-        accept_policy(owner, pid, state["spec_id"], write)
+        accept_policy(owner, pid, state["spec_id"], write, TOOLS[tool].get("financial", False), TOOLS[tool].get("irreversible", False))
         p = reconcile_until_ready(owner, pid)
         for req in p.get("requirements", []):
             if req.get("status") == "answer_sufficient":
@@ -448,7 +539,7 @@ def main() -> int:
     if "publication_id" not in state:
         step("Sandbox identities and tests")
         add_identities(owner, aid)
-        sandbox_tests(owner, aid, write)
+        sandbox_tests(owner, aid, write, TOOLS[tool].get("tests"))
         step("Publish to the TEST-ONLY sandbox MCP")
         pub = publish(owner, aid)
         assert pub["environment"] == "sandbox" and pub["production_ready"] is False and pub["production_activation"] is False

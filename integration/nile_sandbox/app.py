@@ -7,6 +7,8 @@ Behavior and access rules, fixed before any tool is generated:
 - Every business operation needs a bearer token; each token belongs to exactly one customer.
 - GET /api/orders/{order_id} returns one order with its customer_id. Another customer's order is 403, an unknown one 404.
 - POST /api/tickets opens a support ticket about one of the caller's own orders (201); another customer's order is 403.
+- The after-sales operations (list orders, return, exchange, refund, cancel, delivery address, voucher) follow the same
+  ownership rule and check order facts (delivered, not yet shipped, amount <= total) with 409/422; the shop POLICY is not here.
 - Harness routes (hidden from the OpenAPI document, protected by the x-harness-key header) issue tokens, read state for
   independent verification, and make the next ticket answer 500 AFTER storing it (an outcome the caller cannot know).
 - A customer's token is derived from the harness key (HMAC), so it stays valid when the sandbox restarts.
@@ -59,6 +61,61 @@ class Ticket(BaseModel):
     ticket_id: str
     order_id: str
     status: str
+
+
+class OrderSummary(BaseModel):
+    order_id: str
+    order_status: str
+    order_total: float
+    placed_at: str
+
+
+class OrderList(BaseModel):
+    orders: list[OrderSummary]
+
+
+class ChangeRequest(BaseModel):
+    order_id: str = Field(min_length=1, max_length=32, description="The caller's order the request is about")
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class ExchangeCreate(ChangeRequest):
+    new_size: str | None = Field(default=None, max_length=16, description="The size the customer wants instead")
+
+
+class RefundCreate(BaseModel):
+    order_id: str = Field(min_length=1, max_length=32)
+    amount: float = Field(gt=0, description="EGP to refund; at most the order total")
+    reason: str | None = Field(default=None, max_length=500)
+
+
+class AddressChange(BaseModel):
+    new_address: str = Field(min_length=1, max_length=300, description="The full new delivery address")
+
+
+class VoucherCreate(BaseModel):
+    order_id: str = Field(min_length=1, max_length=32, description="The order the goodwill voucher is about")
+    amount: float = Field(gt=0, le=1000, description="EGP value of the voucher")
+    reason: str = Field(min_length=1, max_length=500)
+
+
+class OrderChange(BaseModel):
+    """What the shop records for a return, exchange, refund, cancellation or address change."""
+
+    reference_id: str = Field(description="The shop's reference for the change, e.g. RET-30001")
+    order_id: str
+    status: str
+
+
+class Refund(OrderChange):
+    amount: float
+
+
+class Voucher(BaseModel):
+    reference_id: str
+    voucher_code: str
+    amount: float
+    order_id: str
 
 
 def create_app(data_path: str | None = None, harness_key: str | None = None) -> FastAPI:
@@ -123,6 +180,85 @@ def create_app(data_path: str | None = None, harness_key: str | None = None) -> 
             raise HTTPException(500, "The ticket was stored, then the server failed before answering")
         return ticket
 
+    # ---- the rest of what the shop does for a customer. The shop checks facts about the order (whose it is, whether
+    # it was delivered or shipped, the total); the shop's POLICY (14-day window, exclusions, approvals) is not here.
+    changes: list[dict] = []
+
+    def record(kind: str, prefix: str, customer: str, order_id: str, status: str, **extra: object) -> dict:
+        with lock:
+            row = {"kind": kind, "reference_id": f"{prefix}-{30001 + sum(c['kind'] == kind for c in changes)}",
+                   "order_id": order_id, "status": status, "customer_id": customer, **extra}  # fmt: skip
+            changes.append(row)
+        return row
+
+    def delivered(order: dict) -> dict:
+        if order["order_status"] not in ("delivered", "returned") or not order.get("delivered_at"):
+            raise HTTPException(409, "The order has not been delivered")
+        return order
+
+    def not_shipped(order: dict) -> dict:
+        if order["order_status"] not in ("pending", "processing"):
+            raise HTTPException(409, f"The order is {order['order_status']} and can no longer be changed")
+        return order
+
+    @app.get("/api/orders", response_model=OrderList, tags=["orders"], operation_id="list_my_orders",
+             summary="List all of the caller's orders")  # fmt: skip
+    def list_orders(customer: str = Depends(caller)) -> dict:
+        """Order id, status, total and placement date of every order the caller placed, newest first."""
+        mine = [o for o in orders.values() if o["customer_id"] == customer]
+        return {"orders": sorted(mine, key=lambda o: o["placed_at"], reverse=True)}
+
+    @app.post("/api/returns", response_model=OrderChange, status_code=201, tags=["after-sales"],
+              operation_id="create_return", summary="Request a return of a delivered order")  # fmt: skip
+    def create_return(body: ChangeRequest, customer: str = Depends(caller)) -> dict:
+        """Opens a return for one of the caller's delivered orders. Returns the return reference (RET-...)."""
+        delivered(own_order(body.order_id, customer))
+        return record("return", "RET", customer, body.order_id, "requested", reason=body.reason)
+
+    @app.post("/api/exchanges", response_model=OrderChange, status_code=201, tags=["after-sales"],
+              operation_id="create_exchange", summary="Request an exchange of a delivered order")  # fmt: skip
+    def create_exchange(body: ExchangeCreate, customer: str = Depends(caller)) -> dict:
+        """Opens an exchange (optionally for another size) for one of the caller's delivered orders (EXC-...)."""
+        delivered(own_order(body.order_id, customer))
+        return record("exchange", "EXC", customer, body.order_id, "requested", reason=body.reason, new_size=body.new_size)
+
+    @app.post("/api/refunds", response_model=Refund, status_code=201, tags=["payments"],
+              operation_id="create_refund", summary="Refund money for a paid order")  # fmt: skip
+    def create_refund(body: RefundCreate, customer: str = Depends(caller)) -> dict:
+        """Refunds an amount (EGP, at most the order total) of a paid, delivered or returned order (REF-...)."""
+        order = delivered(own_order(body.order_id, customer))
+        if order["payment_status"] != "paid":
+            raise HTTPException(409, "Nothing was paid for this order")
+        if body.amount > order["order_total"]:
+            raise HTTPException(422, "The amount is higher than the order total")
+        return record("refund", "REF", customer, body.order_id, "pending", amount=body.amount, reason=body.reason)
+
+    @app.post("/api/orders/{order_id}/cancel", response_model=OrderChange, tags=["orders"],
+              operation_id="cancel_order", summary="Cancel an order that has not shipped")  # fmt: skip
+    def cancel_order(order_id: str, customer: str = Depends(caller)) -> dict:
+        """Cancels one of the caller's orders while it is still pending or processing (CAN-...)."""
+        order = not_shipped(own_order(order_id, customer))
+        row = record("cancel", "CAN", customer, order_id, "cancelled")
+        order["order_status"] = "cancelled"
+        return row
+
+    @app.patch("/api/orders/{order_id}/delivery-address", response_model=OrderChange, tags=["orders"],
+               operation_id="update_delivery_address", summary="Change the delivery address of an unshipped order")  # fmt: skip
+    def update_delivery_address(order_id: str, body: AddressChange, customer: str = Depends(caller)) -> dict:
+        """Replaces the delivery address of one of the caller's orders while it is still pending or processing (ADR-...)."""
+        order = not_shipped(own_order(order_id, customer))
+        row = record("address", "ADR", customer, order_id, "updated", new_address=body.new_address)
+        order["delivery_address"] = {"street": body.new_address}
+        return row
+
+    @app.post("/api/vouchers", response_model=Voucher, status_code=201, tags=["payments"],
+              operation_id="apply_voucher", summary="Issue a goodwill voucher for an order")  # fmt: skip
+    def apply_voucher(body: VoucherCreate, customer: str = Depends(caller)) -> dict:
+        """Issues a goodwill voucher (EGP, up to 1000) to the caller about one of their orders (VCH-...)."""
+        own_order(body.order_id, customer)
+        row = record("voucher", "VCH", customer, body.order_id, "issued", amount=body.amount, reason=body.reason)
+        return {**row, "voucher_code": f"NILE-{row['reference_id'][-5:]}"}
+
     @app.post("/_harness/tokens", include_in_schema=False, dependencies=[Depends(harness)])
     def issue_token(body: dict) -> dict:
         customer = str(body.get("customer_id", ""))
@@ -139,6 +275,6 @@ def create_app(data_path: str | None = None, harness_key: str | None = None) -> 
     @app.get("/_harness/state", include_in_schema=False, dependencies=[Depends(harness)])
     def state() -> dict:
         with lock:
-            return {"tickets": copy.deepcopy(tickets), "switches": dict(switches)}
+            return {"tickets": copy.deepcopy(tickets), "changes": copy.deepcopy(changes), "switches": dict(switches)}
 
     return app

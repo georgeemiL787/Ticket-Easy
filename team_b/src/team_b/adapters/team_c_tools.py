@@ -77,6 +77,9 @@ class ToolBinding(BaseModel):
     arguments: dict[str, str] = Field(default_factory=dict)  # Team B argument name -> Team C input name
     fields: dict[str, str] = Field(default_factory=dict)  # Team B output field -> Team C output name or /json/pointer
     reference_field: str | None = None  # for a create: the (Team B) output field that is the new record's reference
+    # Output fields Team B requires that the Team C tool does not return, filled only after Team C reports success:
+    echo: list[str] = Field(default_factory=list)  # taken from the call's own arguments (e.g. order_id)
+    constants: dict[str, str] = Field(default_factory=dict)  # a fixed value (e.g. status "created")
     spec: dict[str, Any] | None = None  # the ToolSpec when the stand-in has none of this name (capability, kind, ...)
     # Which Team C environments this tool may use. live_demo = calls reach the owner-configured REAL API: the operator
     # opts in per tool. Never "production": no production release process exists.
@@ -227,7 +230,7 @@ class TeamCCapabilities:
             raise UpstreamError(SERVICE, code, f"{exc}; the outcome is unknown", retryable=not writes) from None
         except McpRemoteError as exc:
             return self._remote_error(tenant_id, request.tool, exc, writes)
-        return _result(raw, bound, resolved, writes)
+        return _result(raw, bound, resolved, writes, request.arguments)
 
     # ---- discovery ----
 
@@ -415,7 +418,9 @@ def _envelope(raw: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _result(raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, writes: bool) -> ToolResult:
+def _result(
+    raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, writes: bool, arguments: dict[str, Any] | None = None
+) -> ToolResult:
     envelope = _envelope(raw)
     if envelope is None or envelope.get("production_ready") is not False:
         return _error(
@@ -439,6 +444,11 @@ def _result(raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, wri
         output: dict[str, Any] = found_output if isinstance(found_output, dict) else {}
         picked = {mine: _pick(output, theirs) for mine, theirs in bound.fields.items()}
         data = {k: v for k, v in picked.items() if v is not _MISSING} if bound.fields else dict(output)
+        for name in bound.echo:  # the order the customer named is the order Team C acted on (it checked ownership)
+            if name not in data and arguments and name in arguments:
+                data[name] = arguments[name]
+        for name, value in bound.constants.items():
+            data.setdefault(name, value)
         reference = data.get(bound.reference_field) if bound.reference_field else None
         return ToolResult(
             status="success", data=data, audit_id=audit, reference_id=str(reference) if reference else None

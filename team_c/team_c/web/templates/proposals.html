@@ -16,8 +16,8 @@
 <td>{{ m.badge(p.state) }}</td>
 <td class="small">{% if key == 'review' %}{% if p.state == 'ready_for_review' %}Approve, reject or request changes{% elif p.state == 'needs_reconciliation' %}Check the answers{% else %}Answer the questions and decide access{% endif %}
 {% elif key == 'build' %}<a href="/proposals/{{ p.proposal_id }}#build">Build the tool</a>
-{% elif key == 'test' %}Run sandbox tests, then publish (test only)
-{% elif key == 'published' %}Available on the sandbox MCP server only
+{% elif key == 'test' %}Run tests, then publish (sandbox or Live Demo)
+{% elif key == 'published' %}Published to the MCP server (see its environment on the artifact page)
 {% else %}No action: this version is closed{% endif %}</td>
 </tr>{% endfor %}</table>
 {% else %}<p class="muted">Nothing here.</p>{% endif %}

@@ -1,6 +1,8 @@
-"""Generic sandbox executor for compiled tool artifacts.
+"""Generic executor for compiled tool artifacts, in the connector's environment (sandbox or Live Demo).
 
-Destinations come only from operator connector configuration, never from arguments or models.
+Destinations come only from operator connector configuration, never from arguments or models. A Live Demo connector
+calls the owner-configured real API: the same requests, checks and truthful report as a sandbox run, behind the live
+gates of connectors.live_destination_problem (re-checked before every run, right before the request is sent).
 Credentials come from the trusted execution context and never enter reports. Execution stops at
 the first failure, and the report says truthfully whether each write was applied, rejected or unknown.
 """
@@ -11,7 +13,7 @@ import httpx
 from jsonschema.exceptions import ValidationError
 from openapi_schema_validator import OAS30Validator, OAS30WriteValidator, oas30_format_checker
 from .config import AppError
-from .connectors import load_connectors, confirmed_destination
+from .connectors import LIVE_DEMO, SANDBOX, confirmed_destination, environment_of, external_connectors, live_destination_problem, load_connectors
 from .contracts import Artifact, CompiledStep, ExecutionReport
 from .persistence.util import digest
 
@@ -67,14 +69,34 @@ def origin(url):
     return f"{parsed.scheme}://{parsed.hostname.lower()}:{parsed.port or (443 if parsed.scheme == 'https' else 80)}", parsed.path.rstrip("/")
 
 
+def artifact_environment(artifact: Artifact):
+    """The environment an artifact was built for: recorded in its (hashed) connector; older artifacts are sandbox."""
+    return artifact["connector"].get("environment", SANDBOX)
+
+
 def destination(connector, artifact: Artifact, settings):
     base = connector["base_url"].rstrip("/")
     host, _ = origin(base)
-    allowed = {h.strip().lower() for h in settings.sandbox_hosts.split(",") if h.strip()}
-    if host.split("://", 1)[1] not in allowed and not confirmed_destination(settings, connector, artifact):
-        raise AppError("destination_not_allowed", f"{host} is not listed in SANDBOX_HOSTS", 403)
-    if not connector.get("sandbox"):
-        raise AppError("not_sandbox", "Only connectors explicitly marked sandbox may execute in this milestone", 403)
+    environment = environment_of(connector)
+    if environment == LIVE_DEMO:
+        if artifact_environment(artifact) != LIVE_DEMO:
+            raise AppError("environment_mismatch", "This artifact was built for the sandbox; build it again on the Live Demo connector", 409)
+        problem = live_destination_problem(settings, base)
+        if problem:
+            raise problem
+        # an owner-saved live connector carries its confirmation; an operator's connectors file is trusted configuration
+        if not (connector.get("confirmed_by") or artifact["connector"]["id"] in external_connectors(settings)):
+            raise AppError("destination_not_confirmed", "The owner has not confirmed this Live Demo destination", 403)
+        if connector.get("business_id") != artifact["proposal"]["business_id"]:
+            raise AppError("connector_scope", "This Live Demo connector belongs to another business", 403)
+    else:
+        allowed = {h.strip().lower() for h in settings.sandbox_hosts.split(",") if h.strip()}
+        if host.split("://", 1)[1] not in allowed and not confirmed_destination(settings, connector, artifact):
+            raise AppError("destination_not_allowed", f"{host} is not listed in SANDBOX_HOSTS", 403)
+        if environment != SANDBOX:
+            raise AppError("not_sandbox", "Only connectors marked sandbox or explicitly configured for Live Demo may execute", 403)
+        if artifact_environment(artifact) != SANDBOX:
+            raise AppError("environment_mismatch", "This artifact was built for Live Demo; it cannot run on a sandbox connector", 409)
     if base != artifact["connector"]["base_url"].rstrip("/"):
         raise AppError("connector_changed", "The connector destination differs from the one recorded in the artifact; rebuild the artifact", 409)
     return base
@@ -87,7 +109,7 @@ def credentials(identity, artifact: Artifact):
     auth = artifact["connector"]["auth"]
     mechanisms = {a["enforcement"].get("mechanism") for a in artifact["access_requirements"]}
     if identity is None:
-        raise AppError("identity_unknown", "The sandbox identity is not configured for this connector", 404)
+        raise AppError("identity_unknown", "The identity is not configured for this connector", 404)
     if auth and not (identity.get("token") if auth["type"] == "http_bearer" else identity.get("username") and identity.get("password")):
         raise AppError("credential_missing", "The trusted execution context has no credential for this connector; no request was sent")
     if "delegated_user_credential" in mechanisms and identity.get("scope") != "end_user":
@@ -139,7 +161,7 @@ class Run:
         self.limits = artifact["limits"]
         self.context = dict(identity.get("context") or {}, business_id=artifact["proposal"]["business_id"])
         self.identity_context = identity.get("context") or {}
-        self.results, self.trace = {}, []
+        self.results, self.trace, self.retry_after = {}, [], None
         self.client = httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.limits["timeout_seconds"])
 
     def value(self, source):
@@ -250,6 +272,7 @@ class Run:
                         if 200 <= response.status_code < 300:
                             raise StepFailure("invalid_response", "Response exceeds the artifact size limit", "applied" if write else "not_applied")
                         break
+                self.retry_after = response.headers.get("retry-after") if response.status_code == 429 else None
                 return response.status_code, response.headers.get("content-type", ""), bytes(data)
         except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout) as exc:
             raise StepFailure("not_sent", f"Connection failed before sending ({type(exc).__name__})")
@@ -285,6 +308,8 @@ class Run:
             url, content = self.request(step)
             status, ctype, data = self.send(step["method"], url, content, write=write, headers=self.transport_headers(step, headers))
             entry.update(http_status=status, response_bytes=len(data))
+            if self.retry_after:
+                entry["retry_after"] = self.retry_after[:40]  # the API's own rate-limit guidance, reported to the caller
             if not 200 <= status < 300:
                 # An HTTP rejection is observed; absence of side effects is not. A server error may follow a committed change.
                 raise StepFailure("rejected_by_api", f"HTTP {status}", ("unknown" if status >= 500 else "rejected_unverified") if write else "not_applied")

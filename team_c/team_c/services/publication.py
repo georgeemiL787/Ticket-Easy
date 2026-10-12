@@ -2,13 +2,15 @@ import json
 from ..config import AppError
 from ..models import SandboxRunSubmission
 from ..persistence.util import uid, now, dump
-from ..executor import destination, load_connectors
+from ..connectors import LIVE_DEMO
+from ..executor import artifact_environment, destination, load_connectors
 from .. import publishing
 from ..persistence.repositories import publications as publications_repo
 
 
 class Publication:
-    """TEST-ONLY sandbox publication of tested artifacts and the MCP tool calls it allows, re-checked on every list and call."""
+    """Publication of tested artifacts (sandbox or Live Demo) and the MCP tool calls it allows, re-checked on every list
+    and call. No publication is a production release: production_ready and production_activation are always false."""
 
     def __init__(self, settings, store, providers, building):
         self.settings, self.store, self.providers = settings, store, providers
@@ -19,7 +21,12 @@ class Publication:
         return self.publication_view(row)
 
     def publication_view(self, row):
-        row = dict(row, evidence=json.loads(row["evidence"]), production_activation=False, production_ready=False)
+        """The record plus what it means now. Separate facts, never merged into one flag:
+        status (published/disabled: does the publication exist and is it switched on), effective_status (blocked when a
+        re-check fails), execution_enabled (would a call run right now), environment (sandbox or live_demo: where calls
+        go), production_ready / production_activation (always false: no production release process exists)."""
+        row = dict(row, evidence=json.loads(row["evidence"]), production_activation=False, production_ready=False,
+                   production_assessment="not_assessed")
         problem = None
         if row["status"] == "published":
             try:
@@ -28,6 +35,7 @@ class Publication:
                 problem = dict(code=exc.code, message=exc.message)
         row["effective_status"] = row["status"] if not problem else "blocked"
         row["problem"] = problem
+        row["execution_enabled"] = row["status"] == "published" and problem is None
         return row
 
     def publications(self, business_id=None, artifact_id=None):
@@ -73,7 +81,11 @@ class Publication:
         return a, problems + missing, evidence
 
     def publish(self, aid, submission):
-        """Explicit TEST-ONLY sandbox publication of one exact, approved and tested artifact (idempotent while active)."""
+        """Explicit publication of one exact, approved and tested artifact in the environment it was built for
+        (sandbox or Live Demo); idempotent while active. Never a production release."""
+        built_for = artifact_environment(self.building.artifact(aid)["content"])
+        if submission.environment != built_for:
+            raise AppError("environment_mismatch", f"This artifact was built for {built_for}; it can only be published to {built_for}", 409)
         a, problems, evidence = self.publication_problems(aid)
         if problems:
             raise AppError("publication_not_allowed", "This artifact cannot be published: " + "; ".join(problems), 409, {"problems": problems})
@@ -97,14 +109,19 @@ class Publication:
         return self.publication(pub_id)
 
     def check_publication(self, pub):
-        """Re-read on every list and call: still published, same artifact bytes, same approval, same enforcement, evidence intact."""
+        """Re-read on every list and call: still published, same artifact bytes, same environment, Live Demo still switched
+        on, same approval, same enforcement, evidence intact. (The destination itself is re-checked by the executor.)"""
         row = publications_repo.get(self.store, pub["id"])
         if row["status"] != "published":
-            raise AppError("publication_disabled", "This tool's sandbox publication was disabled", 409)
+            raise AppError("publication_disabled", "This tool's publication was disabled", 409)
         a = self.building.artifact(row["artifact_id"])
         c = a["content"]
         if a["sha256"] != row["artifact_sha256"]:
             raise AppError("artifact_integrity", "The artifact differs from the one that was published", 409)
+        if row["environment"] != artifact_environment(c):
+            raise AppError("environment_mismatch", "The publication's environment differs from the artifact's", 409)
+        if row["environment"] == LIVE_DEMO and not self.settings.live_demo_enabled:
+            raise AppError("live_demo_disabled", "Live Demo execution is switched off (LIVE_DEMO_ENABLED)", 409)
         publishing.tool_schemas(c)
         _, _, _, decision = self.building.approval(c["proposal"]["id"], c["proposal"]["version"], c["proposal"]["content_sha256"])
         if decision["id"] != row["decision_id"]:
@@ -140,6 +157,7 @@ class Publication:
             raise AppError("tool_not_published", "No sandbox-published tool with this name is available to this server", 404)
         audit = dict(channel="mcp_stdio", publication_id=pub["id"], tool_name=name)
         try:
+            # run_sandbox records it as mcp_live_demo when the artifact is a Live Demo one
             result = self.building.run_sandbox(pub["artifact_id"], SandboxRunSubmission(identity=identity, arguments=arguments or {}), "mcp_sandbox", audit, lambda: self.check_publication(pub))
         except AppError as exc:
             if "execution_id" not in exc.details:

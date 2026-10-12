@@ -3,6 +3,7 @@ import secrets
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from .. import jobs
+from ..connectors import listed
 from .forms import field_kind
 
 TEMPLATES=Path(__file__).parent/"templates"
@@ -19,4 +20,5 @@ def page(request,**context):
         request.session["csrf"]=secrets.token_urlsafe(32)
     state=request.app.state
     settings=state.settings
-    return state.templates.TemplateResponse(request=request,name=context["screen"]+".html",context=dict(csrf=request.session["csrf"],reviewer=settings.dev_reviewer_id,provider=settings.llm_primary,model=getattr(settings,settings.llm_primary+"_model",""),fallback=settings.llm_fallback,ai_job=jobs.banner(state.jobs),**context))
+    return state.templates.TemplateResponse(request=request,name=context["screen"]+".html",context=dict(csrf=request.session["csrf"],reviewer=settings.dev_reviewer_id,provider=settings.llm_primary,model=getattr(settings,settings.llm_primary+"_model",""),fallback=settings.llm_fallback,ai_job=jobs.banner(state.jobs),
+                                                                                                  live_demo=dict(enabled=settings.live_demo_enabled,hosts=sorted(listed(settings.live_demo_hosts))),**context))

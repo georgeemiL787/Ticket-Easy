@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 from .. import capabilities
 from ..config import AppError
+from ..connectors import environment_of
 from ..executor import load_connectors
 from ..jobs import cancel, live_view, title
 from ..api import queries
@@ -19,7 +20,8 @@ def connector_choices(settings,business_id):
 
 
 def connector_labels(settings, business_id):
-    return {cid: c["base_url"] + " (" + cid + ")" for cid, c in load_connectors(settings).items() if c.get("business_id") == business_id}
+    label = lambda c: "LIVE DEMO " if environment_of(c) == "live_demo" else "SANDBOX "
+    return {cid: label(c) + c["base_url"] + " (" + cid + ")" for cid, c in load_connectors(settings).items() if c.get("business_id") == business_id}
 
 
 def active_areas(service,bid):
@@ -75,7 +77,8 @@ def artifact_page(request:Request,aid:str,service:ServiceDep,store:StoreDep,sett
     _,problems,_=service.publication_problems(aid)
     a=service.artifact(aid)
     bid=a["content"]["proposal"]["business_id"]
-    return page(request,screen="artifact",a=a,connectors=connector_choices(settings,bid),publications=service.publications(artifact_id=aid),publication_problems=problems,business=queries.business(store,bid),identity_setup=service.connectors.identity_setup(a["content"]),guidance=service.artifact_guidance(aid),edit_identity=edit,fix=service.latest_fix(aid),draft=service.latest_test_suggestion(aid) if prefill else None)
+    return page(request,screen="artifact",a=a,connectors=connector_choices(settings,bid),publications=service.publications(artifact_id=aid),publication_problems=problems,business=queries.business(store,bid),identity_setup=service.connectors.identity_setup(a["content"]),guidance=service.artifact_guidance(aid),edit_identity=edit,fix=service.latest_fix(aid),draft=service.latest_test_suggestion(aid) if prefill else None,
+                connector_status=next((c for c in service.connectors_of(bid) if c["id"]==a["content"]["connector"]["id"]),None))
 
 
 @router.get("/runs/{rid}")

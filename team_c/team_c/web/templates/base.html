@@ -38,7 +38,7 @@ details.tech>summary{color:#526778;font-weight:500}
 .next{background:#e6f3ea;border-left:5px solid #2e7d4f;padding:12px 16px;border-radius:6px;margin:14px 0}
 .next strong{display:block}
 .badge{display:inline-block;border-radius:20px;padding:2px 10px;font-size:13px;font-weight:600;white-space:nowrap}
-.b-ok{background:#d8f0df;color:#1d5e36}.b-warn{background:#fff1ce;color:#7a5600}.b-bad{background:#fbe0de;color:#8f2a22}
+.b-live{background:#ffe2c4;color:#8a3b00;border:1px solid #d9772b}.badge.live{background:#ffe2c4;color:#8a3b00}.b-ok{background:#d8f0df;color:#1d5e36}.b-warn{background:#fff1ce;color:#7a5600}.b-bad{background:#fbe0de;color:#8f2a22}
 .b-info{background:#dceaf5;color:#14496f}.b-muted{background:#e6eaee;color:#526778}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid>article{margin:0}
@@ -60,7 +60,7 @@ header a.nav{margin-left:18px;font-weight:500}
 {% if ai_job and screen != 'live' %}<p class="next"><strong>The AI is busy: {{ ai_job.title }} (started {{ ai_job.minutes }} min ago).</strong> Other AI buttons wait until it finishes. <a href="/live/{{ ai_job.id }}">View progress</a></p>{% endif %}
 {% block crumbs %}{% endblock %}
 {% block steps %}{% endblock %}
-<p class="notice small">Approval means <strong>approved to build</strong>; sandbox publication is a separate TEST-ONLY decision and nothing runs in production.</p>
+<p class="notice small">Approval means <strong>approved to build</strong>. Publishing is a separate decision: a <strong>sandbox</strong> publication is TEST-ONLY; a <strong>Live Demo</strong> publication{% if live_demo.enabled %} (switched on here){% else %} (switched off here){% endif %} calls the owner-configured real API. Neither is a production release.</p>
 {% block content %}{% endblock %}
 </main>
 </body>

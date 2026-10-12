@@ -1,15 +1,28 @@
-"""Sandbox publication: evidence rules, MCP tool definitions and the structured call result.
+"""Publication: evidence rules, MCP tool definitions and the structured call result.
 
-Publication is a separate decision from approve-to-build. It exposes one exact artifact to local
-test clients; it never activates anything in production.
+Publication is a separate decision from approve-to-build. It exposes one exact artifact to MCP clients in the
+environment the artifact was built for: sandbox (test destinations and identities) or live_demo (the owner-configured
+real API). Neither is a production release: production_ready and activated (production activation) stay false.
 """
 import re
+from urllib.parse import urlparse
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import SchemaError
 from .config import AppError
 
-ENVIRONMENT = "sandbox"
+ENVIRONMENT = "sandbox"  # the default; live_demo publications record their own
 STATUSES = ["succeeded", "failed", "rejected", "partial", "outcome_unknown", "error"]
+# Why a call did not succeed, in terms a caller can act on (error.category of every non-succeeded result).
+CATEGORIES = ["invalid_arguments", "authentication_failed", "permission_denied", "not_found", "conflict", "validation_error",
+              "rate_limited", "api_unavailable", "api_unreachable", "timeout", "invalid_response", "partial_write",
+              "unknown_outcome", "publication_unavailable", "configuration_error", "internal_error"]
+REJECTED_CATEGORIES = {
+    "invalid_arguments": "invalid_arguments", "rate_limited": "rate_limited",
+    "publication_disabled": "publication_unavailable", "live_demo_disabled": "publication_unavailable",
+    "approval_not_current": "publication_unavailable", "enforcement_not_current": "publication_unavailable",
+    "publication_evidence": "publication_unavailable", "artifact_integrity": "publication_unavailable",
+    "environment_mismatch": "publication_unavailable", "credential_scope": "permission_denied",
+}
 
 
 def tool_name(artifact_id, content):
@@ -232,7 +245,8 @@ def result_schema(content):
             "properties": {"status": {"enum": STATUSES}, "output": {"anyOf": [json_schema(content["output_schema"]), {"type": "null"}]},
                            "error": {"anyOf": [{"type": "object"}, {"type": "null"}]}, "message": nullable("string"),
                            "execution_id": nullable("string"), "writes": {"type": "array"}, "tool": nullable("string"),
-                           "publication_id": nullable("string"), "artifact": nullable("object"), "production_ready": {"const": False}}}
+                           "publication_id": nullable("string"), "artifact": nullable("object"),
+                           "environment": {"enum": ["sandbox", "live_demo", None]}, "production_ready": {"const": False}}}
 
 
 def tool_schemas(content):
@@ -251,21 +265,57 @@ def tool_schemas(content):
 
 def tool(pub, content):
     writes = [f'{s["method"]} {s["path"]}' for s in content["steps"] if s["effect"] == "write"]
+    live = pub["environment"] == "live_demo"
+    where = (f'LIVE DEMO publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}): calls the owner-configured '
+             f'real API at {api_host(content)}; not a production release. ' if live else
+             f'TEST-ONLY sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. ')
     description = (f'{content["purpose"]}. {content["description"]}. '
                    + (f'Writes: {", ".join(writes)}. ' if writes else "Read-only. ")
-                   + f'TEST-ONLY sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. '
-                   "The caller identity is fixed by the server; arguments cannot select a user or credential.")
+                   + where + "The caller identity is fixed by the server; arguments cannot select a user or credential.")
+    meta = dict(publication_id=pub["id"], artifact_id=pub["artifact_id"], artifact_sha256=pub["artifact_sha256"],
+                proposal_id=pub["proposal_id"], proposal_version=pub["version"], environment=pub["environment"],
+                execution_enabled=True,  # only publications that pass every re-check are listed
+                production_ready=False, activated=False)  # activated = production activation, which does not exist
+    if live:
+        meta["api_host"] = api_host(content)
     return dict(name=pub["tool_name"], title=content["name"], description=description, **tool_schemas(content), annotations=dict(read_only_hint=not writes),
-                meta={"team_c": dict(publication_id=pub["id"], artifact_id=pub["artifact_id"], artifact_sha256=pub["artifact_sha256"],
-                                     proposal_id=pub["proposal_id"], proposal_version=pub["version"], environment=pub["environment"],
-                                     production_ready=False, activated=False)})
+                meta={"team_c": meta})
+
+
+def api_host(content):
+    """The real API's host[:port] for a live tool (never a path, query or credential)."""
+    return urlparse(content["connector"]["base_url"]).netloc.rsplit("@", 1)[-1]
 
 
 def envelope(pub, status, execution_id=None, output=None, error=None, message=None, writes=None):
     return dict(status=status, output=output if status == "succeeded" else None, error=error, message=message, execution_id=execution_id,
                 writes=writes or [], tool=pub["tool_name"] if pub else None, publication_id=pub["id"] if pub else None,
                 artifact=dict(id=pub["artifact_id"], sha256=pub["artifact_sha256"], proposal_id=pub["proposal_id"], proposal_version=pub["version"]) if pub else None,
-                production_ready=False)
+                environment=pub.get("environment", ENVIRONMENT) if pub else None, production_ready=False)
+
+
+def failure_category(report):
+    """What kind of failure an executed (not rejected) run was, from its own report: the status, the failing step's
+    outcome and the HTTP status the API answered. Never guessed beyond that."""
+    if report["status"] == "partial":
+        return "partial_write"
+    if report["status"] == "outcome_unknown":
+        return "unknown_outcome"
+    failure = report["failure"] or {}
+    step = next((e for e in report["trace"] if e["step_id"] == failure.get("step_id")), {})
+    http = step.get("http_status")
+    outcome = failure.get("outcome")
+    if failure.get("step_id") == "connector_auth" or outcome == "connector_auth_failed" or http == 401:
+        return "authentication_failed"
+    if outcome == "blocked_by_access_check" or http == 403:
+        return "permission_denied"
+    by_status = {404: "not_found", 409: "conflict", 400: "validation_error", 422: "validation_error", 429: "rate_limited"}
+    if http in by_status:
+        return by_status[http]
+    if isinstance(http, int) and http >= 500:
+        return "api_unavailable"
+    return {"not_sent": "api_unreachable", "no_response": "timeout", "invalid_response": "invalid_response",
+            "redirect_rejected": "invalid_response", "invalid_request": "invalid_arguments"}.get(outcome, "internal_error")
 
 
 def executed(pub, result):
@@ -276,10 +326,13 @@ def executed(pub, result):
     error = None
     if report["status"] != "succeeded":
         code = {"partial": "partial_write", "outcome_unknown": "outcome_unknown"}.get(report["status"], failure["outcome"])
-        error = dict(code=code, message=report["message"], step_id=failure["step_id"], outcome=failure["outcome"])
+        step = next((e for e in report["trace"] if e["step_id"] == failure["step_id"]), {})
+        error = dict(code=code, category=failure_category(report), message=report["message"], step_id=failure["step_id"], outcome=failure["outcome"],
+                     **{k: step[k] for k in ("http_status", "retry_after") if k in step})
     return envelope(pub, report["status"], result["execution_id"], result["outputs"], error, report["message"], writes)
 
 
 def rejected(pub, exc):
-    error = dict(code=exc.code, message=exc.message, **({"errors": exc.details["errors"]} if exc.details.get("errors") else {}))
+    category = REJECTED_CATEGORIES.get(exc.code, "configuration_error")
+    error = dict(code=exc.code, category=category, message=exc.message, **({"errors": exc.details["errors"]} if exc.details.get("errors") else {}))
     return envelope(pub, "rejected", exc.details.get("execution_id"), error=error, message=exc.message + " No request was sent.")

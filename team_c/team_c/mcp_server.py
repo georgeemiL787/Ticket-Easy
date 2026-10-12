@@ -1,4 +1,5 @@
-"""Local sandbox MCP server (stdio) for TEST-ONLY published artifacts.
+"""Local MCP server (stdio) for published artifacts: TEST-ONLY sandbox publications and Live Demo publications that call
+the owner-configured real API (never a production release).
 
 LOCAL DEVELOPMENT ONLY, not production authentication: each process is bound at startup to one
 test business and one test identity taken from the trusted connector configuration. Tool arguments
@@ -44,13 +45,14 @@ def build_server(service, business_id, identity):
             envelope = publishing.rejected(None, exc)
         except Exception:
             log.exception("tool call failed unexpectedly: %s", params.name)
-            envelope = publishing.envelope(None, "error", error=dict(code="internal_error", message="The server failed while handling this call"),
+            envelope = publishing.envelope(None, "error", error=dict(code="internal_error", category="internal_error", message="The server failed while handling this call"),
                                            message="The server failed while handling this call; a write may or may not have been applied. Check the target before retrying.")
         log.info("call %s -> %s (execution %s)", params.name, envelope["status"], envelope["execution_id"])
         return result(envelope)
 
     return Server("team-c-sandbox", version="0.1.0", on_list_tools=list_tools, on_call_tool=call_tool,
-                  instructions="TEST-ONLY sandbox tools compiled from owner-reviewed artifacts. The caller identity is fixed by this server; "
+                  instructions="Tools compiled from owner-reviewed artifacts: sandbox publications are TEST-ONLY; live_demo publications (see _meta.team_c.environment) "
+                               "call the owner-configured real API and are not a production release. The caller identity is fixed by this server; "
                                "results with is_error=true include partial and outcome_unknown executions, which must not be treated as success or retried blindly.")
 
 

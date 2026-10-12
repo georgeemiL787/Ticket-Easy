@@ -1,10 +1,17 @@
-"""Prepare connector setup from source facts and save explicit local-owner choices."""
+"""Prepare connector setup from source facts, save explicit local-owner choices, and check a connector for real.
+
+A connector is either a sandbox (test destination, test identities) or a Live Demo connector (the owner-configured real
+API, its own credentials). Credentials stay in the local database and never leave this module except to the API itself.
+"""
 import json
 import re
 from urllib.parse import urljoin
 
+import httpx
+
 from ..config import AppError
-from ..connectors import base_url, external_connectors, load_connectors
+from ..connectors import (LIVE_DEMO, SANDBOX, base_url, environment_of, external_connectors, host_port, listed,
+                          live_destination_problem, load_connectors)
 from ..persistence.util import digest, dump, now
 
 
@@ -73,19 +80,34 @@ class Connectors:
         return dict(base_url=urls[0] if len(urls) == 1 else "", candidates=urls,
                     context_fields=sorted(fields), business_id=view["business_id"])
 
-    def save(self, pid, url, context_fields, confirmed=False):
+    def save(self, pid, url, context_fields, confirmed=False, environment=SANDBOX):
+        """Save the owner's destination for this business. A sandbox needs the sandbox confirmation; a Live Demo
+        connector needs the owner's confirmation that it is the real API they may call, Live Demo switched on and the
+        host in the operator's LIVE_DEMO_HOSTS (checked again before every call). Each environment keeps its own
+        connector and credentials."""
         view = self.proposals.view(pid)
+        if environment not in (SANDBOX, LIVE_DEMO):
+            raise AppError("connector_environment", "Choose sandbox or live_demo")
         if not confirmed:
+            if environment == LIVE_DEMO:
+                raise AppError("live_confirmation", "Confirm that this is the real API you are authorized to call for this demo")
             raise AppError("sandbox_confirmation", "Confirm that this destination is a sandbox you want to use for tests")
         url = base_url(url)
+        if environment == LIVE_DEMO:
+            problem = live_destination_problem(self.settings, url)
+            if problem:
+                raise problem
         fields = sorted(set(x.strip() for x in context_fields if x.strip()))
         if len(fields) > 100 or any(not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]{0,127}", x) for x in fields):
             raise AppError("connector_context", "Use field names separated by commas (letters, numbers, dots, underscores or hyphens)")
-        cid = "sandbox-" + digest([view["business_id"], url, fields])[:20]
+        prefix = "live-" if environment == LIVE_DEMO else "sandbox-"
+        cid = prefix + digest([view["business_id"], url, fields] + ([LIVE_DEMO] if environment == LIVE_DEMO else []))[:20]
         if cid in external_connectors(self.settings):
             raise AppError("connector_conflict", "This connector ID is already managed by the external configuration", 409)
-        content = dict(business_id=view["business_id"], base_url=url, sandbox=True, context_fields=fields,
+        content = dict(business_id=view["business_id"], base_url=url, sandbox=environment == SANDBOX, context_fields=fields,
                        identities={}, confirmed_by=self.settings.dev_reviewer_id, confirmed_at=now())
+        if environment == LIVE_DEMO:
+            content["environment"] = LIVE_DEMO
         with self.store.connect(write=True) as conn:
             # Repeating setup is idempotent and never erases existing credentials.
             conn.execute("INSERT OR IGNORE INTO sandbox_connectors(id,business_id,content,created_at) VALUES(?,?,?,?)",
@@ -174,3 +196,104 @@ class Connectors:
                 raise AppError("connector_context", "The identity contains undeclared context fields")
             saved["identities"][name] = dict(scope=scope, context=context, **{k: credential[k] for k in keys})
             conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+
+    # ---- listing and checking connectors (never returns a credential) ----
+
+    def listing(self, business_id):
+        """This business's connectors with their environment and last check; identity names and account types only."""
+        external = external_connectors(self.settings)
+        out = []
+        for cid, c in sorted(load_connectors(self.settings).items()):
+            if c.get("business_id") != business_id:
+                continue
+            out.append(dict(id=cid, environment=environment_of(c), base_url=c.get("base_url", ""), host=host_port(c.get("base_url", "")),
+                            context_fields=c.get("context_fields") or [], external=cid in external,
+                            identities=[dict(name=n, scope=i.get("scope")) for n, i in sorted((c.get("identities") or {}).items())],
+                            confirmed_by=c.get("confirmed_by"), confirmed_at=c.get("confirmed_at"), last_check=c.get("last_check")))
+        return out
+
+    def check(self, cid, artifacts=(), publications=(), transport=None):
+        """A real connection check, step by step, each with its own result (ok / failed / unknown / skipped):
+
+        configuration  the connector is complete and allowed in its environment (Live Demo: switched on, host listed,
+                       public addresses) - no request is sent if this fails;
+        reachable      one GET to the base URL, no credentials, no redirects: any HTTP answer proves the API answers;
+        authentication OAuth2 password APIs: each identity's credentials obtain a token (the API's own token endpoint);
+                       bearer tokens cannot be verified without calling an operation, so they stay unknown until a test;
+        permissions    only what passing tests of this connector's artifacts proved, per identity;
+        executable     published tools of this connector that pass every re-check now.
+        A passing check never claims that every operation will succeed. The result is kept on the connector."""
+        connector = load_connectors(self.settings).get(cid)
+        if not connector:
+            raise AppError("connector_unknown", "No configured connector with this id", 404)
+        environment = environment_of(connector)
+        checks = []
+
+        def add(name, status, detail):
+            checks.append(dict(check=name, status=status, detail=detail))
+
+        problem = None
+        if environment is None:
+            problem = AppError("not_sandbox", "The connector is neither a sandbox nor a Live Demo connector")
+        elif environment == LIVE_DEMO:
+            problem = live_destination_problem(self.settings, connector["base_url"])
+        elif host_port(connector["base_url"]) not in listed(self.settings.sandbox_hosts) and not connector.get("confirmed_by"):
+            problem = AppError("destination_not_allowed", "The sandbox host is neither in SANDBOX_HOSTS nor confirmed by the owner")
+        add("configuration", "failed" if problem else "ok", f"{problem.code}: {problem.message}" if problem else
+            f"{environment} connector to {host_port(connector['base_url'])}")
+        reachable = False
+        if problem:
+            add("reachable", "skipped", "No request was sent because the configuration check failed")
+        else:
+            try:
+                with httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.settings.connection_check_timeout) as client:
+                    answer = client.get(connector["base_url"] + "/", headers={"Accept": "application/json"})
+                reachable = True
+                add("reachable", "ok", f"The API answered HTTP {answer.status_code} at its base URL")
+            except httpx.TimeoutException:
+                add("reachable", "failed", f"No answer within {self.settings.connection_check_timeout:g} s")
+            except httpx.HTTPError as exc:
+                add("reachable", "failed", f"Could not connect ({type(exc).__name__})")
+        auth = next((a["content"]["connector"].get("auth") for a in artifacts if a["content"]["connector"]["id"] == cid), "unknown")
+        identities = connector.get("identities") or {}
+        if not reachable:
+            add("authentication", "skipped", "The API was not reached")
+        elif auth == "unknown":
+            add("authentication", "unknown", "Build a tool on this connector first: the login method comes from the API's specification")
+        elif auth is None:
+            add("authentication", "ok", "The specification declares no authentication for these operations")
+        elif not identities:
+            add("authentication", "failed", "No identity (credential) is configured for this connector")
+        elif auth["type"] == "oauth2_password":
+            results = {}
+            with httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.settings.connection_check_timeout) as client:
+                for name, identity in sorted(identities.items()):
+                    form = dict(grant_type="password", username=identity.get("username", ""), password=identity.get("password", ""))
+                    try:
+                        r = client.post(connector["base_url"] + auth["token_path"], data=form)
+                        body = r.json() if r.status_code == 200 else {}
+                        results[name] = "ok" if isinstance(body, dict) and isinstance(body.get("access_token"), str) else f"refused (HTTP {r.status_code})"
+                    except (httpx.HTTPError, ValueError) as exc:
+                        results[name] = f"failed ({type(exc).__name__})"
+            bad = {n: r for n, r in results.items() if r != "ok"}
+            add("authentication", "failed" if bad else "ok", "; ".join(f"{n}: {r}" for n, r in results.items()))
+        else:
+            add("authentication", "unknown", f"{len(identities)} bearer credential(s) configured; a bearer token is only proven by calling an "
+                "operation: run a read test")
+        proven = sorted({e["identity"] for a in artifacts if a["content"]["connector"]["id"] == cid
+                         for t in a["tests"] if t["verdict"] == "passed" and t["expectation"]["status"] == "succeeded"
+                         for e in a["executions"] if e["id"] == t["execution_id"]})
+        add("permissions", "ok" if proven else "unknown", f"Passing tests proved access for: {', '.join(proven)}" if proven else
+            "No passing test on this connector yet: run a read test to prove what each identity may do")
+        live = [p["tool_name"] for p in publications if p.get("execution_enabled")]
+        add("executable", "ok" if live else "unknown", f"Published and executable now: {', '.join(live)}" if live else "No executable publication on this connector")
+        result = dict(connector_id=cid, environment=environment, host=host_port(connector["base_url"]), checked_at=now(), checks=checks,
+                      ready=all(c["status"] == "ok" for c in checks))
+        if cid not in external_connectors(self.settings):
+            with self.store.connect(write=True) as conn:
+                row = conn.execute("SELECT content FROM sandbox_connectors WHERE id=?", (cid,)).fetchone()
+                if row:
+                    saved = json.loads(row[0])
+                    saved["last_check"] = result
+                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+        return result

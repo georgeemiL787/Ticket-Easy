@@ -65,8 +65,10 @@ def build_artifact(service,settings,form):
 
 def save_connector(service, settings, form):
     pid = str(form["proposal_id"])
+    environment = str(form.get("environment", "sandbox"))
+    confirmed = form.get("confirm_live") == "1" if environment == "live_demo" else form.get("sandbox") == "1"
     cid = service.connectors.save(pid, str(form.get("base_url", "")), str(form.get("context_fields", "")).split(","),
-                                  confirmed=form.get("sandbox") == "1")
+                                  confirmed=confirmed, environment=environment)
     if form.get("then") == "build":
         # One step for the common case: the saved connector is the one to build with.
         return build(service, pid, cid)
@@ -85,8 +87,17 @@ def save_test_identity(service, settings, form):
 
 
 def publish(service,settings,form):
-    service.publish(str(form["artifact_id"]),PublicationSubmission(note=str(form.get("note",""))))
-    return "/artifacts/"+str(form["artifact_id"])
+    aid=str(form["artifact_id"])
+    # The environment is the one the artifact was built for (its connector's); the service refuses any other.
+    environment=service.artifact(aid)["content"]["connector"].get("environment","sandbox")
+    service.publish(aid,PublicationSubmission(note=str(form.get("note","")),environment=environment))
+    return "/artifacts/"+aid
+
+
+def check_connector(service,settings,form):
+    service.check_connector(str(form["connector_id"]))
+    back=str(form.get("back",""))
+    return back if back.startswith("/") and not back.startswith("//") else "/"
 
 
 def request_tool(service,settings,form):
@@ -322,7 +333,7 @@ def unknown(service,form,pid,version,rev):
 
 
 ACTIONS=dict(business=business,upload=upload,fetch=fetch,local_project=lambda *_:retired(),code_analysis=lambda *_:retired(),generate=generate,
-             save_connector=save_connector,save_test_identity=save_test_identity,
+             save_connector=save_connector,save_test_identity=save_test_identity,check_connector=check_connector,
              review_enforcement=review_enforcement,build_artifact=build_artifact,publish=publish,request_tool=request_tool,clarify_request=clarify_request,
              suggest=suggest,request_next_batch=request_next_batch,areas_organize=areas_organize,areas_select=areas_select,decide_suggestion=decide_suggestion,
              disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,retire_test=retire_test,

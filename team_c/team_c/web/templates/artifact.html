@@ -1,17 +1,30 @@
 {% extends "base.html" %}
 {% import "macros.html" as m with context %}
 {% set c = a.content %}
+{% set env = c.connector.environment or "sandbox" %}
+{% set is_live = env == "live_demo" %}
 {% set live = publications|selectattr("status", "equalto", "published")|list %}
 {% block crumbs %}{{ m.crumbs([(business.name, "/businesses/" ~ c.proposal.business_id), (c.name, "/proposals/" ~ c.proposal.id), ("Artifact v" ~ c.proposal.version, None)]) }}{% endblock %}
 {% block steps %}{{ m.steps("publish" if live or not publication_problems else "build") }}{% endblock %}
 {% block content %}
 <h1>{{ c.name }}</h1>
 <p>{{ c.purpose }}</p>
-<p class="small">Built from proposal v{{ c.proposal.version }} · Runtime-ready: no · Activated: no</p>
+<p class="small">Built from proposal v{{ c.proposal.version }} · Environment: {% if is_live %}<strong class="badge live">LIVE DEMO</strong> calls the real API at <code>{{ c.connector.base_url }}</code>{% else %}<strong class="badge">SANDBOX</strong> (TEST-ONLY){% endif %} · Runtime-ready: no · Production-ready: no (not assessed) · Production activation: no</p>
+{% set conn = connector_status %}
+{% if conn %}<article>
+<h2>Connection</h2>
+<p class="small">Connector <code>{{ c.connector.id }}</code>{% if conn.last_check %} · last checked {{ conn.last_check.checked_at }}{% endif %}</p>
+{% if conn.last_check %}<ul>{% for chk in conn.last_check.checks %}<li>{{ m.badge(chk.status, "check") }} <strong>{{ chk.check }}</strong> <span class="small">{{ chk.detail }}</span></li>{% endfor %}</ul>
+{% else %}<p class="muted small">Not checked yet.</p>{% endif %}
+<form method="post" action="/actions/check_connector">{{ m.csrf_field() }}<input type="hidden" name="connector_id" value="{{ c.connector.id }}"><input type="hidden" name="back" value="/artifacts/{{ a.id }}">
+<button>Check connection</button> <span class="small muted">{% if is_live %}Sends one GET to the real API's base URL{% if c.connector.auth and c.connector.auth.type == 'oauth2_password' %} and one login per identity{% endif %}. It does not run any operation.{% else %}Sends one GET to the sandbox base URL.{% endif %}</span></form>
+</article>{% endif %}
 
 {% if c.execution_blockers %}{{ m.next("fix access enforcement", "This artifact cannot run until every access requirement has a reviewed enforcement mechanism. Go back to the proposal.") }}
+{% elif live and is_live %}{{ m.next("published as LIVE DEMO", "The assistant can call this tool now; each call reaches the real API. Disable it below at any time.") }}
 {% elif live %}{{ m.next("published for testing", "Sandbox MCP clients can call this tool now. Disable it below at any time.") }}
 {% elif publication_problems %}{{ m.next("finish the steps above", "Work through the remaining steps under Before this tool can run; this artifact may then be published.") }}
+{% elif is_live %}{{ m.next("publish as Live Demo", "All checks pass. Add a note and press Publish as Live Demo.") }}
 {% else %}{{ m.next("publish to the test-only MCP server", "All checks pass. Add a note and press Publish to sandbox MCP.") }}{% endif %}
 {% for b in c.execution_blockers %}<p class="notice">Execution blocked: {{ b }}</p>{% endfor %}
 
@@ -29,8 +42,9 @@
 {% endif %}
 
 <article>
-<h2 id="run-test">Run a sandbox test</h2>
-<p class="small muted">Runs against the sandbox connector as the chosen test identity. The identity is never a tool argument.</p>
+<h2 id="run-test">{% if is_live %}Run a live test{% else %}Run a sandbox test{% endif %}</h2>
+{% if is_live %}<p class="notice">Live Demo: this test calls the REAL API at <code>{{ c.connector.base_url }}</code> as the chosen identity. A write test changes real data in that account.</p>{% endif %}
+<p class="small muted">Runs against this artifact's connector as the chosen identity. The identity is never a tool argument.</p>
 {% include "identity_setup.html" %}
 {% if not connectors.get(c.connector.id, []) %}<p class="notice">Add a test identity below before running this artifact.{% if not identity_setup.managed %} This connector's identities are managed in its external configuration.{% endif %}</p>{% endif %}
 {% set d = draft or {} %}
@@ -51,7 +65,7 @@
 {% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value" {% if req %}required{% endif %}>{{ (d.arguments or {}).get(name, '') }}</textarea>
 {% else %}<input name="a:{{ name }}" value="{{ (d.arguments or {}).get(name, '') }}" {% if prop.maxLength %}maxlength="{{ prop.maxLength }}"{% endif %} {% if req %}required{% endif %}>{% endif %}</label>
 {% else %}<p class="muted small">This tool takes no inputs.</p>{% endfor %}
-<button {% if c.execution_blockers or not connectors.get(c.connector.id, []) %}disabled{% endif %}>Run sandbox test</button>
+<button {% if c.execution_blockers or not connectors.get(c.connector.id, []) %}disabled{% endif %}>{{ "Run live test" if is_live else "Run sandbox test" }}</button>
 <button type="submit" class="secondary" formaction="/actions/suggest_test_inputs" formnovalidate {% if not connectors.get(c.connector.id, []) %}disabled{% endif %}>Fill in with AI</button> <span class="muted small">Pick what should happen first if you like; the AI chooses the identity and example values. It never sees credentials and runs nothing.</span>
 <p class="small muted">The result is judged against what you chose and recorded under Test results; a passing success test is what publishing needs.</p></form>
 </article>
@@ -84,12 +98,14 @@
 </article>
 
 <article>
-<h2>Publish (TEST-ONLY sandbox MCP)</h2>
-<p class="small muted">Publishing exposes this exact artifact to local sandbox MCP clients. It is a TEST-ONLY step, separate from approval and separate from production activation, which this product does not implement: permitted uses are artifact creation and sandbox testing, runtime-ready and activated stay false, and there is no production environment to activate. Disabling blocks later calls but cannot undo writes already completed or in flight.</p>
+{% if is_live %}<h2>Publish (LIVE DEMO)</h2>
+<p class="small muted">Publishing exposes this exact artifact to the assistant's MCP client. Each call then reaches the owner-configured real API at <code>{{ c.connector.base_url }}</code> with the connector's credentials, every call re-checked (publication, approval, enforcement, evidence, Live Demo switched on, allowed host). This is a Live Demo, not a production release: production readiness is not assessed and production activation does not exist. Disabling blocks later calls but cannot undo writes already completed or in flight.</p>
+{% else %}<h2>Publish (TEST-ONLY sandbox MCP)</h2>
+<p class="small muted">Publishing exposes this exact artifact to local sandbox MCP clients. It is a TEST-ONLY step, separate from approval and separate from production activation, which this product does not implement: permitted uses are artifact creation and sandbox testing, runtime-ready and activated stay false, and there is no production environment to activate. Disabling blocks later calls but cannot undo writes already completed or in flight.</p>{% endif %}
 {% if publication_problems %}<p>Cannot publish yet:</p><ul>{% for pr in publication_problems %}<li>{{ pr }}</li>{% endfor %}</ul>{% endif %}
-<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="TEST-ONLY sandbox publication"></label><button {% if publication_problems %}disabled{% endif %}>Publish to sandbox MCP</button></form>
+<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="{{ 'Live Demo publication' if is_live else 'TEST-ONLY sandbox publication' }}"></label><button {% if publication_problems %}disabled{% endif %}>{{ 'Publish as Live Demo' if is_live else 'Publish to sandbox MCP' }}</button></form>
 {% for pub in publications %}
-<details {% if pub.status == 'published' %}open{% endif %}><summary>{{ m.badge(pub.effective_status, "publication") }} tool <code>{{ pub.tool_name }}</code>{% if pub.problem %} <span class="muted small">({{ pub.problem.code }})</span>{% endif %}</summary>
+<details {% if pub.status == 'published' %}open{% endif %}><summary>{{ m.badge(pub.environment, "environment") }} {{ m.badge(pub.effective_status, "publication") }} tool <code>{{ pub.tool_name }}</code>{% if pub.problem %} <span class="muted small">({{ pub.problem.code }})</span>{% endif %}</summary>
 <p class="small">Published {{ pub.published_at }} by {{ pub.publisher }} · Note: {{ pub.note }}{% if pub.disabled_at %} · Disabled {{ pub.disabled_at }} by {{ pub.disabled_by }}: {{ pub.disable_note }}{% endif %}</p>
 <p class="small">Evidence (this artifact only): success {{ pub.evidence.success_tests|join(', ') }}; access denial {{ pub.evidence.access_denial_tests|join(', ') or 'n/a' }}</p>
 {% if pub.status == 'published' %}<form method="post" action="/actions/disable_publication">{{ m.csrf_field() }}<input type="hidden" name="publication_id" value="{{ pub.id }}"><label>Reason for disabling<input name="note" required></label><button>Disable publication</button></form>{% endif %}

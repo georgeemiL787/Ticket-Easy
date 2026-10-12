@@ -1,6 +1,6 @@
   # Ticket-Easy — Team C
 
-Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run only against sandbox connectors and can be published only to a local TEST-ONLY sandbox MCP server; nothing is active in production.
+Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as TEST-ONLY sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). Nothing is a production release: production readiness is not assessed and production activation does not exist.
 
 ## Quick start (Windows PowerShell)
 
@@ -356,7 +356,9 @@ Client configuration (Cursor / Claude Desktop style; paths are examples):
 
 **Team B integration contract.** Discover tools with `tools/list` and call them with `tools/call`, sending only the arguments in `inputSchema` (`additionalProperties: false`). Every call result has `structuredContent` (mirrored as JSON text in `content[0]`):
 
-`{status, output, error{code, message, step_id?, outcome?, errors?}, message, execution_id, writes[{step_id, write_state}], tool, publication_id, artifact{id, sha256, proposal_id, proposal_version}, production_ready: false}`
+`{status, output, error{code, category, message, step_id?, outcome?, http_status?, retry_after?, errors?}, message, execution_id, writes[{step_id, write_state}], tool, publication_id, artifact{id, sha256, proposal_id, proposal_version}, environment, production_ready: false}`
+
+`environment` is `sandbox` or `live_demo` (see "Live Demo"). `error.category` says what kind of failure it was, from the run's own report: `invalid_arguments`, `authentication_failed`, `permission_denied`, `not_found`, `conflict`, `validation_error`, `rate_limited` (with the API's `retry_after` when it sent one), `api_unavailable`, `api_unreachable`, `timeout`, `invalid_response`, `partial_write`, `unknown_outcome`, `publication_unavailable`, `configuration_error`, `internal_error`.
 
 | status | isError | meaning | may the agent retry? |
 |---|---|---|---|
@@ -374,6 +376,29 @@ Evidence:
 - **Mocked, in process** (authored substitute, mock transport): `tests/test_publication.py`.
 - **Real SDK client and real server process** (fixture over HTTP; authored proposals, no model calls; both service-desk variants): `tests/test_mcp_stdio.py`.
 - **Real smoke run on both domains** (running item target and fixture process; reuses saved artifacts from copies of the TEST-ONLY databases; disposable accounts; isolated `data/mcp-*.sqlite3`): `$env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/mcp_smoke.py > data/mcp-smoke.log.json`.
+
+#### Live Demo: tools that call the owner's real API
+
+A sandbox publication stays TEST-ONLY. A **Live Demo** publication runs the same reviewed artifact against an owner-configured **real** API with real credentials and returns its real responses. It is not a production release: `production_ready` stays false (`production_assessment: "not_assessed"`), and `activated` keeps meaning production activation, which does not exist.
+
+What separates the two, everywhere:
+
+| | Sandbox | Live Demo |
+|---|---|---|
+| Connector | `"sandbox": true` (records without `environment` keep meaning this) | `"environment": "live_demo"`, id `live-…`, its own identities and credentials |
+| Destination | `SANDBOX_HOSTS` or an owner-confirmed sandbox URL | `LIVE_DEMO_ENABLED=true`, the exact `host:port` in `LIVE_DEMO_HOSTS`, the owner's confirmation, the connector's business, and every resolved address public unless the host is in `LIVE_DEMO_PRIVATE_HOSTS` (development networks only) |
+| Artifact | unchanged content and hash | `connector.environment: "live_demo"` (part of the hash), `activation.permitted_uses` = creation, live testing, live execution |
+| Tests and calls | executions `sandbox` / `mcp_sandbox` | `live_demo` / `mcp_live_demo`, at most `LIVE_DEMO_CALLS_PER_MINUTE` per connector (counted in the shared database) |
+| Publication | `environment: "sandbox"` | `environment: "live_demo"`: must equal the artifact's; refused otherwise |
+| MCP `_meta.team_c` | `environment: sandbox` | `environment: live_demo`, `api_host`, the description says it calls the real API |
+
+Every gate is checked again before each run, right before the request: switching `LIVE_DEMO_ENABLED` off or removing the host blocks the next call and hides the tool from `tools/list` (`effective_status: blocked`, `problem.code: live_demo_disabled`). A sandbox artifact never runs on a live connector, nor the reverse (`environment_mismatch`). The URL in an uploaded specification is only a suggestion: calls go only to the URL the owner confirms on the connector.
+
+Owner workflow (Team C pages or `/api/v1`): upload the API's OpenAPI → request a tool → answer, accept the access policy, approve → under **Set up the API connector** choose **Live Demo**, confirm it is the real API you may call (`POST /proposals/{id}/connectors` `{base_url, environment: "live_demo", confirmed: true}`) → build → add the demo account's identity on the artifact page → **Check connection** (`POST /connectors/{id}/check`) → **Run live test** → **Publish as Live Demo** (`POST /artifacts/{id}/publications` `{environment: "live_demo", note}`) → disable any time.
+
+The connection check reports each step separately: `configuration` (allowed in its environment; nothing is sent if not), `reachable` (one GET to the base URL, no credentials, no redirects), `authentication` (OAuth2 password: each identity obtains a token; bearer tokens stay `unknown` until an operation proves them), `permissions` (only what passing tests proved, per identity) and `executable` (published tools that pass every re-check). A passing check never claims every operation will succeed. `GET /businesses/{id}/connectors` lists connectors with environment, host, identity names and the last check, never credentials.
+
+Live Demo configuration lives in `.env` (or the environment): `LIVE_DEMO_ENABLED`, `LIVE_DEMO_HOSTS`, `LIVE_DEMO_PRIVATE_HOSTS`, `LIVE_DEMO_CALLS_PER_MINUTE` (see `.env.example`). Credentials are entered on the artifact page and stored in the local database, never in artifacts, tool definitions, prompts or logs. Tests: `tests/test_live_demo.py` (mocked target; the address guard with a patched resolver). A real external API run: `integration/live_demo_check.py` at the repository root.
 
 ### Owner-requested tools and suggestions
 

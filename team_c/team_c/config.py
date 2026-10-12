@@ -41,6 +41,14 @@ class Settings(BaseSettings):
     openapi_fetch_timeout: float = 15
     connectors_file: str = ""
     sandbox_hosts: str = ""
+    # Live Demo execution against an owner-configured real API (see README "Live Demo"). Off unless the operator turns it
+    # on; then only hosts listed here (exact host:port) may be live connectors, and each must resolve to public addresses
+    # unless it is also in live_demo_private_hosts (a narrow, explicit exception for a development network).
+    live_demo_enabled: bool = False
+    live_demo_hosts: str = ""
+    live_demo_private_hosts: str = ""
+    live_demo_calls_per_minute: int = 30  # per live connector, across every tool and identity (MCP calls and live tests)
+    connection_check_timeout: float = 10
     allowed_project_directory: str = ""
     code_max_files: int = 200
     code_max_entries: int = 3000

@@ -110,7 +110,7 @@ def test_invocation_returns_permitted_output_and_keeps_the_audit_sanitized(desk)
     [tool] = d.service.published_tools(pub["business_id"], "alice")
     assert tool["input_schema"] == publishing.json_schema(a["content"]["input_schema"]) and tool["input_schema"]["additionalProperties"] is False
     assert tool["meta"]["team_c"] == dict(publication_id=pub["id"], artifact_id=a["id"], artifact_sha256=a["sha256"], proposal_id=a["proposal_id"],
-                                          proposal_version=1, environment="sandbox", production_ready=False, activated=False)
+                                          proposal_version=1, environment="sandbox", execution_enabled=True, production_ready=False, activated=False)
     assert d.service.published_tools(pub["business_id"], "nobody") == [] and d.service.published_tools("other-business", "alice") == []
     before = len(d.state()["requests"])
     out = d.service.invoke_published(pub["business_id"], "alice", pub["tool_name"], arguments(d))

@@ -1,12 +1,14 @@
 from ..persistence.repositories import policies as policy_repo
 import json
+from datetime import datetime, timedelta, timezone
 from ..config import AppError
 from ..grounding import validate_proposal
 from ..models import ProposalContent, RevisionSubmission, SandboxRunSubmission
 from ..persistence.recovery import INTERRUPTED, OWNER
 from ..persistence.util import uid, now, dump, digest
 from ..artifacts import compile_artifact, validate_enforcement
-from ..executor import Run, credentials, destination, load_connectors, validate_arguments
+from ..connectors import LIVE_DEMO, environment_of
+from ..executor import Run, artifact_environment, credentials, destination, load_connectors, validate_arguments
 from .. import repair as repairs
 from ..persistence.repositories import enforcement as enforcement_repo, proposals as proposals_repo
 
@@ -45,7 +47,10 @@ class Building:
             from .connectors import Connectors
             Connectors(self.settings, self.store, self.proposals, self.discovery).apply_policy_context(connector_id, row["business_id"], view["policy"]["content"])
             connector = load_connectors(self.settings)[connector_id]
+        live = environment_of(connector) == LIVE_DEMO
         connector = dict(id=connector_id, base_url=connector["base_url"].rstrip("/"), context_fields=sorted(connector.get("context_fields") or []))
+        if live:  # recorded in the artifact (and its hash); sandbox connectors keep their earlier exact shape
+            connector["environment"] = LIVE_DEMO
         return view, row, content, spec, decision, connector, view["derived"].get("generation_scope")
 
     def enforcement(self, eid):
@@ -162,11 +167,16 @@ class Building:
         return row
 
     def run_sandbox(self, aid, submission, mode="sandbox", audit=None, precheck=None):
-        """One sandbox execution; pre-flight rejections are recorded and send no request."""
+        """One execution in the artifact's environment (sandbox, or Live Demo against the configured real API);
+        pre-flight rejections are recorded and send no request. Live executions are recorded as such."""
         eid = uid()
         audit = audit or {}
-        record = lambda status, report, done=True: dict(id=eid, owner=OWNER, artifact_id=aid, mode=mode, identity=submission.identity, status=status, report=dump(dict(report, **audit)) if report else None, created_at=now(), completed_at=now() if done else None)
         artifact = self.artifact(aid)["content"]
+        live = artifact_environment(artifact) == LIVE_DEMO
+        if live:
+            mode = {"sandbox": "live_demo", "mcp_sandbox": "mcp_live_demo"}.get(mode, mode)
+            audit = dict(audit, environment=LIVE_DEMO)
+        record = lambda status, report, done=True: dict(id=eid, owner=OWNER, artifact_id=aid, mode=mode, identity=submission.identity, status=status, report=dump(dict(report, **audit)) if report else None, created_at=now(), completed_at=now() if done else None)
         try:
             if precheck:
                 precheck()
@@ -178,6 +188,8 @@ class Building:
             if not connector:
                 raise AppError("connector_unknown", "The artifact's connector is not configured", 404)
             base = destination(connector, artifact, self.settings)
+            if live:
+                self.check_live_budget(artifact["connector"]["id"])
             identity = (connector.get("identities") or {}).get(submission.identity)
             credentials(identity, artifact)
             validate_arguments(artifact["input_schema"], submission.arguments)
@@ -198,6 +210,15 @@ class Building:
         with self.store.connect(write=True) as c:
             c.execute("UPDATE executions SET status=?,report=?,completed_at=? WHERE id=?", (report["status"], dump(dict(report, **audit)), now(), eid))
         return dict(execution_id=eid, artifact_id=aid, report=report, outputs=outputs)
+
+    def check_live_budget(self, connector_id):
+        """LIVE_DEMO_CALLS_PER_MINUTE across every artifact and identity of one live connector (read from the shared
+        database, so separate MCP processes count together). Over the budget nothing is sent; the caller may try later."""
+        since = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
+        used = self.store.one("SELECT COUNT(*) AS n FROM executions e JOIN artifacts a ON a.id=e.artifact_id WHERE json_extract(a.content,'$.connector.id')=? "
+                              "AND e.created_at>=? AND e.status!='rejected'", (connector_id, since))["n"]
+        if used >= self.settings.live_demo_calls_per_minute:
+            raise AppError("rate_limited", f"This Live Demo connector already made {used} calls in the last minute (LIVE_DEMO_CALLS_PER_MINUTE); try again shortly", 429)
 
     def run_sandbox_test(self, aid, submission):
         """One sandbox run judged against an operator-authored expectation; failures get a structured report."""

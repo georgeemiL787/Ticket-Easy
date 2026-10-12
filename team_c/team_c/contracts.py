@@ -176,6 +176,7 @@ class ArtifactConnector(TypedDict):
     id: str
     base_url: str
     auth: dict[str, Any] | None
+    environment: NotRequired[Literal["live_demo"]]  # absent: a sandbox artifact (every artifact built before Live Demo)
 
 
 class Artifact(TypedDict):
@@ -217,6 +218,7 @@ class TraceEntry(TypedDict):
     response_bytes: NotRequired[int]
     detail: NotRequired[str]
     duration_ms: NotRequired[int]
+    retry_after: NotRequired[str]  # an HTTP 429's Retry-After, as the API sent it
 
 
 class Failure(TypedDict):

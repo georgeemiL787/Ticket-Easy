@@ -21,6 +21,10 @@ FAILURE = dict(on_step_failure="Stop. Later steps, including dependent writes, a
                retries="None. Writes are never retried.")
 ACTIVATION = dict(permitted_uses=["artifact_creation", "sandbox_testing"], runtime_ready=False, activated=False,
                   note="Approval to build permits artifact creation and configured sandbox tests only; nothing is published or activated.")
+# A Live Demo artifact (built on an owner-confirmed live connector) may be tested and, once published, executed against
+# that real API. It is still not production: runtime_ready and activated (production activation) stay false.
+LIVE_ACTIVATION = dict(permitted_uses=["artifact_creation", "live_demo_testing", "live_demo_execution"], runtime_ready=False, activated=False,
+                       note="Built for Live Demo: tests and published calls reach the owner-configured real API. Not a production release.")
 # Supported mechanisms; anything else leaves the requirement unenforced and blocks execution.
 MECHANISMS = {"caller_access": {"delegated_user_credential"}, "record_scope": {"response_field_matches_context"}}
 COMPARISONS = {"equals"}
@@ -198,6 +202,7 @@ def compile_artifact(content, derived: Grounding, inventory: Inventory, requirem
         compiled_policy, access = guards(policy, content, inventory, requirements, connector, auth)
     runtime = derived["runtime_inputs"]
     configuration = {c["key"]: c["value_json"] for c in content["configuration"]}
+    live = connector.get("environment") == "live_demo"  # absent for sandbox: those artifacts keep their exact content
     artifact = dict(
         format=FORMAT, name=content["name"], purpose=content["business_purpose"], description=content["description"],
         proposal=proposal, source=dict(source, operations=[dict(id=s["operation_id"], method=s["method"], path=s["path"], source_pointer=s["source_pointer"]) for s in steps]),
@@ -205,9 +210,9 @@ def compile_artifact(content, derived: Grounding, inventory: Inventory, requirem
         output_schema=dict(type="object", properties={k: v["schema"] for k, v in sorted(derived["outputs"].items())}, required=sorted(k for k, v in derived["outputs"].items() if v["guaranteed"]), additionalProperties=False),
         configuration=configuration, steps=steps,
         outputs=[dict(name=o["name"], step_id=o["step_id"], response_status=o["response_status"], media_type="application/json", pointer=o["pointer"]) for o in content["outputs"]],
-        connector=dict(id=connector["id"], base_url=connector["base_url"], auth=auth), access_requirements=access,
+        connector=dict(id=connector["id"], base_url=connector["base_url"], auth=auth, **({"environment": "live_demo"} if live else {})), access_requirements=access,
         enforcement_config={k: enforcement[k] for k in ("id", "sha256", "submitted_by", "submitted_at", "reviewed_by", "reviewed_at")} if enforcement else None,
-        limits=LIMITS, failure_behavior=FAILURE, activation=ACTIVATION)
+        limits=LIMITS, failure_behavior=FAILURE, activation=LIVE_ACTIVATION if live else ACTIVATION)
     blocked = [f'{a["id"]}: {a["enforcement"]["reason"]}' for a in access if a["enforcement"]["status"] != "configured"]
     artifact["execution_blockers"] = blocked
     artifact["compiler"] = manifest(content, inventory, compiled_policy, protected, context)

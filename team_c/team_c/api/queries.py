@@ -39,7 +39,7 @@ def run(store,rid):
 
 # The owner's next step for a proposal, from its current version's state and build evidence alone.
 STAGES = (("review", "Needs your review"), ("build", "Approved: build and test"), ("test", "Built: test and publish"),
-          ("published", "Published (test only)"), ("closed", "Closed"))
+          ("published", "Published"), ("closed", "Closed"))
 
 
 def proposal_index(store):

@@ -130,6 +130,15 @@ class Service:
     def check_enforcement(self, content): return self.building.check_enforcement(content)
     def build_artifact(self, pid, submission): return self.building.build_artifact(pid, submission)
     def artifact(self, aid): return self.building.artifact(aid)
+
+    def check_connector(self, cid):
+        """A real connection check (services/connectors.py Connectors.check) with this connector's artifacts and publications."""
+        rows = self.store.all("SELECT id FROM artifacts WHERE json_extract(content,'$.connector.id')=? ORDER BY created_at DESC LIMIT 20", (cid,))
+        artifacts = [self.building.artifact(r["id"]) for r in rows]
+        publications = [p for a in artifacts for p in self.publications(artifact_id=a["id"])]
+        return self.connectors.check(cid, artifacts, publications, transport=self.building.execution_transport)
+
+    def connectors_of(self, business_id): return self.connectors.listing(business_id)
     def run_sandbox(self, aid, submission, mode="sandbox", audit=None, precheck=None): return self.building.run_sandbox(aid, submission, mode, audit, precheck)
     def run_sandbox_test(self, aid, submission): return self.building.run_sandbox_test(aid, submission)
     def check_scenario(self, a, submission): return self.building.check_scenario(a, submission)

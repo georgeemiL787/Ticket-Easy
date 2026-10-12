@@ -1,5 +1,7 @@
 """Artifacts, sandbox runs and tests, repairs and sandbox publications."""
+from typing import Literal
 from fastapi import APIRouter
+from pydantic import BaseModel, ConfigDict
 from ..models import ArtifactBuildSubmission, PublicationDisableSubmission, PublicationSubmission, RepairSubmission, SandboxRunSubmission, SandboxTestSubmission
 from .deps import ServiceDep
 
@@ -59,3 +61,29 @@ def repair(tid:str,body:RepairSubmission,service:ServiceDep):
 @router.post("/artifacts/{aid}/policy-tests")
 def policy_tests(aid: str, service: ServiceDep):
     return service.run_policy_tests(aid)
+
+
+class ConnectorInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    base_url: str
+    context_fields: list[str] = []
+    environment: Literal["sandbox", "live_demo"] = "sandbox"
+    confirmed: bool = False  # the owner's confirmation: a sandbox for tests, or the real API they may call (live_demo)
+
+
+@router.get("/businesses/{bid}/connectors")
+def connectors(bid: str, service: ServiceDep):
+    """This business's sandbox and Live Demo connectors: environment, host, identity names, last check. No credentials."""
+    return service.connectors_of(bid)
+
+
+@router.post("/proposals/{pid}/connectors")
+def save_connector(pid: str, body: ConnectorInput, service: ServiceDep):
+    cid = service.connectors.save(pid, body.base_url, body.context_fields, confirmed=body.confirmed, environment=body.environment)
+    return next(c for c in service.connectors_of(service.view(pid)["business_id"]) if c["id"] == cid)
+
+
+@router.post("/connectors/{cid}/check")
+def check_connector(cid: str, service: ServiceDep):
+    """A real connection check: configuration, reachability, authentication, proven permissions, executable tools."""
+    return service.check_connector(cid)

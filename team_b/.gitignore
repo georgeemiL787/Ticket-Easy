@@ -9,5 +9,4 @@ htmlcov/
 .env
 *.sqlite3
 var/
-web/dashboard/
 reports/

@@ -32,7 +32,9 @@ def active_areas(service,bid):
 
 
 @router.get("/")
-def home(request:Request,store:StoreDep):
+def home(request:Request,store:StoreDep,settings:SettingsDep,advanced:bool=False):
+    if settings.product_url and not advanced:  # the guided flow lives in the product; ?advanced=1 keeps this view reachable
+        return RedirectResponse(settings.product_url.rstrip("/")+"/dashboard/tools/connect",302)
     return page(request,screen="home",businesses=queries.businesses(store))
 
 

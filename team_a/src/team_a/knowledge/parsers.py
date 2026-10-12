@@ -6,6 +6,7 @@ be stable across re-ingestion: numbered headings use their number ("s2"), FAQ ro
 
 import re
 from dataclasses import dataclass
+from html.parser import HTMLParser
 from pathlib import Path
 
 from docx import Document
@@ -119,7 +120,83 @@ def parse_xlsx(path: Path) -> list[Section]:
     return sections
 
 
+def parse_text(path: Path) -> list[Section]:
+    """Plain text: a line like "2. Returns" starts a section, otherwise blank lines separate sections."""
+    raw = path.read_text(encoding="utf-8-sig", errors="replace")
+    blocks: list[tuple[str, list[str]]] = [("", [])]
+    numbered = any(_NUMBERED.match(line) for line in raw.splitlines())
+    for line in raw.splitlines():
+        if numbered and _NUMBERED.match(line) and len(line) < 100:
+            blocks.append((line.strip(), []))
+        elif not numbered and not line.strip() and blocks[-1][1]:
+            blocks.append(("", []))
+        else:
+            blocks[-1][1].append(line.strip())
+    if not numbered:  # untitled paragraphs: the first line of each stands in for the title
+        blocks = [((lines[0][:80] if lines else ""), lines) for _, lines in blocks]
+    return _build(blocks)
+
+
+class _HtmlSections(HTMLParser):
+    """Headings (h1-h6) start sections; text of paragraphs, list items and table cells fills them. Scripts and styles are skipped."""
+
+    SKIP = {"script", "style", "noscript", "template"}
+    BLOCK = {"p", "li", "tr", "br", "div", "section", "article", "td", "th", "dd", "dt"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[tuple[str, list[str]]] = [("", [])]
+        self.skip = 0
+        self.heading: int | None = None
+        self.buffer = ""
+
+    def _flush(self) -> None:
+        text = re.sub(r"\s+", " ", self.buffer).strip()
+        self.buffer = ""
+        if not text:
+            return
+        if self.heading is not None:
+            if self.heading == 1:
+                self.blocks[0] = (text, self.blocks[0][1])
+            else:
+                self.blocks.append((text, []))
+        else:
+            self.blocks[-1][1].append(text)
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.SKIP:
+            self.skip += 1
+        elif re.fullmatch(r"h[1-6]", tag):
+            self._flush()
+            self.heading = int(tag[1])
+        elif tag in self.BLOCK:
+            self._flush()
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP:
+            self.skip = max(0, self.skip - 1)
+        elif re.fullmatch(r"h[1-6]", tag):
+            self._flush()
+            self.heading = None
+        elif tag in self.BLOCK:
+            self._flush()
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.buffer += data
+
+
+def parse_html(path: Path) -> list[Section]:
+    reader = _HtmlSections()
+    reader.feed(path.read_text(encoding="utf-8-sig", errors="replace"))
+    reader._flush()
+    return _build(reader.blocks)
+
+
 PARSERS = {
+    ".txt": parse_text,
+    ".html": parse_html,
+    ".htm": parse_html,
     ".md": parse_markdown,
     ".markdown": parse_markdown,
     ".docx": parse_docx,

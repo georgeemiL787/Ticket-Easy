@@ -109,11 +109,15 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         return [python, *args, "--port", port], ROOT / "team_c", env
     if service == "team-a":
         env["PYTHONPATH"] = "src"
+        env["ADMIN_API_KEY"] = secret("team_a_admin.key")  # the knowledge pages (documents, index, rules) go through it
+        env["SERVICE_API_KEY"] = secret("team_a_service.key")  # only a caller that sends it may search or check actions
         args = ["-m", "uvicorn", "team_a.service:app", "--app-dir", "src", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "team_a", env
     env.update(
         TEAM_B_MODE="standin" if standin else "live",
         TEAM_B_TEAM_A_URL=f"http://127.0.0.1:{PORTS['team-a']}",
+        TEAM_B_TEAM_A_KEY=secret("team_a_service.key"),
+        TEAM_B_TEAM_A_ADMIN_KEY=secret("team_a_admin.key"),
         TEAM_B_STORE="sqlite",
         TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"),
         TEAM_B_FIXED_TODAY="2026-09-28",  # the demo orders are dated against this day

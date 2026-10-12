@@ -14,10 +14,10 @@
 {% if editing %}<p class="small">Change any field and save. Leave the password empty to keep the current one. <a href="?#identity">Cancel</a></p>{% endif %}
 <label>Test identity name<input name="identity_name" value="{{ edit_identity if editing else (g.name if g else '') }}" {% if editing %}readonly{% endif %} placeholder="test-customer" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{0,63}" required></label>
 <label>Actual account type<select name="scope" required><option value="">Choose the account type</option>{% for v, t in [('end_user','End user'),('admin','Administrator'),('service','Service account'),('public','Public'),('guest','Guest')] %}<option value="{{ v }}" {% if (editing and editing.scope == v) or (not editing and g and g.scope == v) %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
-{% if identity_setup.auth and identity_setup.auth.type == 'http_bearer' %}
-<label>Access token{% if editing %} <span class="why">leave empty to keep the current token</span>{% endif %}<input type="password" name="token" autocomplete="new-password" {% if not editing %}required{% endif %}></label>
-{% elif identity_setup.auth and identity_setup.auth.type == 'oauth2_password' %}
-<p class="small">The specification declares a password login at <code>{{ identity_setup.auth.token_path }}</code>. Use an account supported by that login endpoint.</p>
+{% if identity_setup.auth and identity_setup.auth.type in ['http_bearer', 'api_key'] %}
+<label>{{ 'API key' if identity_setup.auth.type == 'api_key' else 'Access token' }}{% if editing %} <span class="why">leave empty to keep the current token</span>{% endif %}<input type="password" name="token" autocomplete="new-password" {% if not editing %}required{% endif %}></label>
+{% elif identity_setup.auth and identity_setup.auth.type in ['oauth2_password', 'http_basic'] %}
+{% if identity_setup.auth.type == 'oauth2_password' %}<p class="small">The specification declares a password login at <code>{{ identity_setup.auth.token_path }}</code>. Use an account supported by that login endpoint.</p>{% else %}<p class="small">The specification declares HTTP basic authentication: use the account's username and password.</p>{% endif %}
 <label>Username<input name="username" autocomplete="off" value="{{ editing.username if editing else '' }}" required></label>
 <label>Password{% if editing %} <span class="why">leave empty to keep the current password</span>{% endif %}<input type="password" name="password" autocomplete="new-password" {% if not editing %}required{% endif %}></label>
 {% endif %}

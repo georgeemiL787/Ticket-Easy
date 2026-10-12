@@ -86,6 +86,8 @@ services:
       <<: *team-b-env
       TEAM_B_MODE: live
       TEAM_B_TEAM_A_URL: http://team-a:8001
+      TEAM_B_TEAM_A_KEY: ${TEAM_A_SERVICE_API_KEY:-}
+      TEAM_B_TEAM_A_ADMIN_KEY: ${TEAM_A_ADMIN_API_KEY:-}
     depends_on:
       team-a:
         condition: service_healthy
@@ -105,6 +107,8 @@ services:
       OLLAMA_URL: ${TEAM_A_OLLAMA_URL:-http://host.docker.internal:11434}
       EMBED_MODEL: ${TEAM_A_EMBED_MODEL:-bge-m3}
       ADMIN_API_KEY: ${TEAM_A_ADMIN_API_KEY:-}
+      # set both and Team A answers only callers that send this key (Team B does); empty: anybody can search (local use only)
+      SERVICE_API_KEY: ${TEAM_A_SERVICE_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

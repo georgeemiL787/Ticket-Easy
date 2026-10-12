@@ -470,3 +470,45 @@ def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_suc
         {"structuredContent": {**envelope, "status": "failed"}}, bound, resolved, True, {"order_id": "NS-1"}
     )
     assert failed.status == "error" and not failed.data
+
+
+# ---- a business's active bundle rebinds its tools ----
+
+
+def bundle_with(tool: str, proposal: str, business: str = BUSINESS) -> Any:
+    from datetime import UTC, datetime
+
+    from team_b.bundles import tools_from_config
+    from team_b.domain.bundle import BundleProfile, BundleTool, TenantBundle, ToolBindingRef
+    from team_b.domain.tenant import TenantRegistry
+
+    config = TenantRegistry.from_dir(PROJECT_ROOT / "config" / "tenants").get(T)
+    others = tuple(t for t in tools_from_config(config) if t.name != tool)
+    bound = BundleTool(name=tool, source="team_c", binding=ToolBindingRef(business_id=business, proposal_id=proposal))
+    return TenantBundle(
+        tenant_id=T, version=2, status="active", created_at=datetime(2026, 9, 28, tzinfo=UTC), created_by="test",
+        config=config, profile=BundleProfile(display_name=config.display_name), tools=(*others, bound),
+    )  # fmt: skip
+
+
+async def test_an_active_bundle_replaces_the_files_tool_bindings_and_keeps_its_identities(
+    fake: Fake, made: Made
+) -> None:
+    fake.publish(tool_def("order_v1_aa", GET_ORDER_PROPOSAL), tool_def("ret_v1_bb", "prop-return"))
+    client = made()
+    await client.refresh(T)
+    assert set(client.config.tenants[T].tools) == {"get_order", "apply_voucher"}
+    await client.on_bundle_change(bundle_with("create_return", "prop-return"), T)
+    binding = client.config.tenants[T]
+    assert set(binding.tools) == {"create_return"} and binding.tools["create_return"].proposal_id == "prop-return"
+    assert binding.identities == {"C-100": "alice", "C-101": "bob"}  # the operator's mapping carries over
+    assert client.status(T) is None  # its cached listing was dropped
+    await client.on_bundle_change(None, T)  # rolled back to the file
+    assert set(client.config.tenants[T].tools) == {"get_order", "apply_voucher"}
+
+
+async def test_a_bundle_without_tools_service_tools_leaves_the_file_binding_alone(fake: Fake, made: Made) -> None:
+    client = made()
+    bundle = bundle_with("create_return", "prop-return").model_copy(update={"tools": ()})
+    await client.on_bundle_change(bundle, T)
+    assert set(client.config.tenants[T].tools) == {"get_order", "apply_voucher"}

@@ -55,8 +55,19 @@ ROLES: tuple[tuple[frozenset[str], re.Pattern[str], str], ...] = tuple(
         (("GET",), r"^/v1/traces/[^/]+$", "agent"),
         (("GET",), r"^/v1/conversations/[^/]+(/traces)?$", "agent"),
         (("GET",), r"^/v1/capabilities$", "manager"),
+        (("GET",), r"^/v1/admin/tenants/[^/]+/bundles(/[^/]+)?$", "manager"),  # reading; every change needs admin
         (("GET",), r"^/v1/dashboard/.*$", "manager"),
         (("POST",), r"^/v1/dashboard/alerts/[^/]+/ack$", "manager"),
+        (
+            ("POST", "DELETE"),
+            r"^/v1/dashboard/(knowledge/(documents(/[^/]+)?|reindex)|guardrails/(extract|[^/]+/(approve|reject|edit)))$",
+            "manager",
+        ),
+        (
+            ("POST",),
+            r"^/v1/dashboard/tool-setup/(import|connection-check|batches(/[^/]+/(approve|publish|activate|retry/[^/]+))?)$",
+            "manager",
+        ),
         (
             ("POST",),
             r"^/v1/dashboard/business-tools/(refresh|publications/[^/]+/disable|connectors/[^/]+/check|artifacts/[^/]+/auto-test)$",

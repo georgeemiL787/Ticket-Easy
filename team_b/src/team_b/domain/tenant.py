@@ -173,6 +173,10 @@ class TenantConfig(FrozenModel):
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
     agent_mode: AgentMode | None = None  # on | off | shadow; unset: the service setting TEAM_B_AGENT_MODE
     managers: tuple[str, ...] = ()  # names that may reassign cases, until logins give people roles
+    # Set by a bundle (domain/bundle.py) when this configuration comes from one; never part of the file or its hash.
+    bundle_version: int | None = Field(default=None, exclude=True)
+    bundle_sha256: str | None = Field(default=None, exclude=True)
+    preview: bool = Field(default=False, exclude=True)  # a draft being tried by staff: its traces say so
 
     @model_validator(mode="after")
     def _alternatives_are_other_actions(self) -> Self:

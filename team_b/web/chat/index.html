@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="aurora-light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ticket-Easy chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/ui/aurora.css">
   <link rel="stylesheet" href="/chat/static/style.css">
 </head>
@@ -16,10 +16,13 @@
   <div class="vignette" aria-hidden="true"></div>
   <main class="chat glass page" id="chat">
     <header class="chat-header">
-      <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> <span id="title">Chat</span></h1>
-      <label class="dev-toggle chip" title="Show how the agent decided">
-        <input type="checkbox" id="dev-toggle"> developer
-      </label>
+      <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> <span id="title" data-i18n="Chat">Chat</span></h1>
+      <div class="header-end">
+        <select id="lang" aria-label="Language" data-i18n-aria="Language"><option value="en">English</option><option value="ar">العربية</option></select>
+        <label class="dev-toggle chip" title="Show how the agent decided" data-i18n-title="Show how the agent decided">
+          <input type="checkbox" id="dev-toggle"> <span data-i18n="developer">developer</span>
+        </label>
+      </div>
     </header>
 
     <ol class="messages" id="messages" aria-live="polite"></ol>
@@ -27,10 +30,11 @@
 
     <form class="composer" id="composer" autocomplete="off">
       <input id="input" class="field" name="text" type="text" dir="auto" maxlength="2000"
-             placeholder="Type a message" aria-label="Message" required>
-      <button type="submit" id="send" class="btn-glow">Send</button>
+             placeholder="Type a message" aria-label="Message" data-i18n-placeholder="Type a message" data-i18n-aria="Message" required>
+      <button type="submit" id="send" class="btn-glow" data-i18n="Send">Send</button>
     </form>
   </main>
+  <script src="/ui/i18n.js"></script>
   <script src="/chat/static/chat.js"></script>
 </body>
 </html>

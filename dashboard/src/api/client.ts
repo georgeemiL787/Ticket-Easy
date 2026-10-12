@@ -78,3 +78,42 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   }
   return (await response.json()) as T;
 }
+
+export async function apiPut<T>(path: string, body: unknown): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK", "Cannot reach the server. Check the connection and try again.");
+  }
+  if (!response.ok) {
+    sessionGone(response.status, path);
+    throw await failure(response);
+  }
+  return (await response.json()) as T;
+}
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method: "DELETE",
+      headers: { Accept: "application/json", ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}) },
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK", "Cannot reach the server. Check the connection and try again.");
+  }
+  if (!response.ok) {
+    sessionGone(response.status, path);
+    throw await failure(response);
+  }
+  return (await response.json()) as T;
+}

@@ -95,6 +95,72 @@ class TeamCAdmin:
         found = await self._call("GET", f"/auto-test-runs/{run_id}", missing_ok=True)
         return found if isinstance(found, dict) else None
 
+    # ---- the guided tool setup: import a description, choose operations, batches (Team C api/batches.py) ----
+
+    async def businesses(self) -> list[dict[str, Any]]:
+        found = await self._call("GET", "/businesses")
+        return [b for b in found if isinstance(b, dict)] if isinstance(found, list) else []
+
+    async def specifications(self, business_id: str) -> list[dict[str, Any]]:
+        found = await self._call("GET", f"/businesses/{business_id}/specifications")
+        return [x for x in found if isinstance(x, dict)] if isinstance(found, list) else []
+
+    async def batches(self, business_id: str) -> list[dict[str, Any]]:
+        found = await self._call("GET", f"/businesses/{business_id}/tool-batches")
+        return [x for x in found if isinstance(x, dict)] if isinstance(found, list) else []
+
+    async def create_business(self, name: str, description: str) -> dict[str, Any]:
+        found = await self._call("POST", "/businesses", body={"name": name, "description": description})
+        return found if isinstance(found, dict) else {}
+
+    async def upload_spec(self, business_id: str, filename: str, content: bytes) -> dict[str, Any]:
+        """Hand over an OpenAPI/Swagger file. Team C reads it offline; nothing it describes is called."""
+        found = await self._call(
+            "POST", f"/businesses/{business_id}/specifications", files={"file": (filename, content)}, long=True
+        )
+        return found if isinstance(found, dict) else {}
+
+    async def fetch_spec(self, business_id: str, url: str) -> dict[str, Any]:
+        found = await self._call(
+            "POST", f"/businesses/{business_id}/specifications/fetch", body={"url": url}, long=True
+        )
+        return found if isinstance(found, dict) else {}
+
+    async def operations(self, spec_id: str, *, offset: int, limit: int, klass: str | None, q: str) -> dict[str, Any]:
+        params = {"offset": str(offset), "limit": str(limit), "q": q}
+        if klass:
+            params["class"] = klass
+        found = await self._call("GET", f"/specifications/{spec_id}/operations", params=params)
+        return found if isinstance(found, dict) else {}
+
+    async def connection_check(self, business_id: str, base_url: str) -> dict[str, Any]:
+        found = await self._call("POST", f"/businesses/{business_id}/connection-check", body={"base_url": base_url})
+        return found if isinstance(found, dict) else {}
+
+    async def create_batch(self, business_id: str, body: dict[str, Any]) -> dict[str, Any]:
+        found = await self._call("POST", f"/businesses/{business_id}/tool-batches", body=body, long=True)
+        return found if isinstance(found, dict) else {}
+
+    async def batch(self, batch_id: str) -> dict[str, Any] | None:
+        found = await self._call("GET", f"/tool-batches/{batch_id}", missing_ok=True)
+        return found if isinstance(found, dict) else None
+
+    async def approve_batch(self, batch_id: str, body: dict[str, Any]) -> dict[str, Any]:
+        found = await self._call("POST", f"/tool-batches/{batch_id}/approve", body=body)
+        return found if isinstance(found, dict) else {}
+
+    async def retry_batch_item(self, batch_id: str, operation_id: str) -> dict[str, Any]:
+        found = await self._call("POST", f"/tool-batches/{batch_id}/retry/{operation_id}", body={})
+        return found if isinstance(found, dict) else {}
+
+    async def publish_batch(self, batch_id: str, actor: str) -> dict[str, Any]:
+        found = await self._call("POST", f"/tool-batches/{batch_id}/publish", body={"actor": actor})
+        return found if isinstance(found, dict) else {}
+
+    async def artifact(self, artifact_id: str) -> dict[str, Any] | None:
+        found = await self._call("GET", f"/artifacts/{artifact_id}", missing_ok=True)
+        return found if isinstance(found, dict) else None
+
     async def _call(
         self,
         method: str,
@@ -102,12 +168,15 @@ class TeamCAdmin:
         *,
         params: dict[str, str] | None = None,
         body: dict[str, Any] | None = None,
+        files: dict[str, tuple[str, bytes]] | None = None,
         missing_ok: bool = False,
+        long: bool = False,  # an upload, a fetch or a model call may take longer than a read
     ) -> Any:
         try:
-            async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport, trust_env=False) as client:
+            timeout = max(self._timeout, 120.0) if long else self._timeout
+            async with httpx.AsyncClient(timeout=timeout, transport=self._transport, trust_env=False) as client:
                 response = await client.request(
-                    method, self._base + path, params=params, json=body, headers=self._headers
+                    method, self._base + path, params=params, json=body, files=files, headers=self._headers
                 )
         except httpx.TimeoutException:
             raise UpstreamError(SERVICE, "TIMEOUT", "Team C did not answer in time", retryable=True) from None

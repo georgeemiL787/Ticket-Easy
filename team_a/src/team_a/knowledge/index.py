@@ -11,6 +11,7 @@ The .npy files are absent when the index was built with --no-embeddings (keyword
 import hashlib
 import json
 import logging
+import shutil
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -131,14 +132,14 @@ def resolution_embed_text(r: dict) -> str:
     return f"{r['category'].replace('_', ' ')}\n{r['redacted_summary']}\n{r['resolution']}"
 
 
-def index_resolutions(tenant_id: str, embedder: Embedder | None, strict: bool = True) -> int:
+def index_resolutions(tenant_id: str, embedder: Embedder | None, strict: bool = True, out: Path | None = None) -> int:
     """(Re)build only the resolutions part of the index. Called by build_index and after each write.
 
     With strict=False an embedding failure leaves resolutions keyword-only (vectors removed) instead
     of failing the write, so stored records and vectors can never get out of step.
     """
     rows = load_resolutions(tenant_id)
-    out = settings.tenant_index_dir(tenant_id)
+    out = out or settings.tenant_index_dir(tenant_id)
     out.mkdir(parents=True, exist_ok=True)
     _write_jsonl(out / "resolutions.jsonl", rows)
     (out / "resolutions.npy").unlink(missing_ok=True)
@@ -157,10 +158,12 @@ def index_resolutions(tenant_id: str, embedder: Embedder | None, strict: bool = 
     return len(rows)
 
 
-def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
+def build_index(tenant_id: str, embedder: Embedder | None, out: Path | None = None) -> dict:
+    """Build the tenant's index into `out` (default: its index folder). A rebuild of a live tenant passes a scratch folder
+    and swaps it in afterwards (see swap_index), so searches never see a half-written index."""
     records, hashes = build_passages(tenant_id)
     tickets = load_tickets(tenant_id)
-    out = settings.tenant_index_dir(tenant_id)
+    out = out or settings.tenant_index_dir(tenant_id)
     out.mkdir(parents=True, exist_ok=True)
 
     _write_jsonl(out / "passages.jsonl", records)
@@ -171,7 +174,7 @@ def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
         np.save(out / "passages.npy", embedder.embed([passage_embed_text(r) for r in records]))
         if tickets:
             np.save(out / "tickets.npy", embedder.embed([ticket_embed_text(t) for t in tickets]))
-    resolutions = index_resolutions(tenant_id, embedder)
+    resolutions = index_resolutions(tenant_id, embedder, out=out)
 
     meta = {
         "tenant_id": tenant_id,
@@ -185,6 +188,23 @@ def build_index(tenant_id: str, embedder: Embedder | None) -> dict:
     }
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return meta
+
+
+def swap_index(tenant_id: str, built: Path) -> None:
+    """Make a freshly built folder the tenant's index: the old one is moved aside first and removed only after the new one is
+    in place, and put back if the move fails."""
+    final = settings.tenant_index_dir(tenant_id)
+    old = final.with_name(final.name + ".old")
+    shutil.rmtree(old, ignore_errors=True)
+    if final.exists():
+        final.rename(old)
+    try:
+        built.rename(final)
+    except OSError:
+        if old.exists():
+            old.rename(final)
+        raise
+    shutil.rmtree(old, ignore_errors=True)
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:

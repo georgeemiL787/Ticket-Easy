@@ -1,0 +1,45 @@
+{
+  "swagger": "2.0",
+  "info": {"title": "Shop", "version": "1.0"},
+  "host": "api.shop.example",
+  "basePath": "/v1",
+  "schemes": ["https"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "securityDefinitions": {
+    "key": {"type": "apiKey", "name": "X-Api-Key", "in": "header"},
+    "basic": {"type": "basic"}
+  },
+  "security": [{"key": []}],
+  "paths": {
+    "/orders/{order_id}": {
+      "parameters": [{"name": "order_id", "in": "path", "required": true, "type": "string"}],
+      "get": {
+        "operationId": "getOrder",
+        "summary": "One order",
+        "parameters": [{"name": "expand", "in": "query", "type": "array", "items": {"type": "string"}, "collectionFormat": "multi"}],
+        "responses": {"200": {"description": "ok", "schema": {"$ref": "#/definitions/Order"}}, "404": {"description": "missing"}}
+      }
+    },
+    "/tickets": {
+      "post": {
+        "operationId": "createTicket",
+        "parameters": [{"name": "body", "in": "body", "required": true, "schema": {"$ref": "#/definitions/NewTicket"}}],
+        "responses": {"201": {"description": "created", "schema": {"$ref": "#/definitions/Ticket"}}}
+      }
+    },
+    "/uploads": {
+      "post": {
+        "operationId": "upload",
+        "consumes": ["multipart/form-data"],
+        "parameters": [{"name": "file", "in": "formData", "type": "file", "required": true}],
+        "responses": {"200": {"description": "ok"}}
+      }
+    }
+  },
+  "definitions": {
+    "Order": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}, "status": {"type": "string", "x-nullable": true}}},
+    "NewTicket": {"type": "object", "required": ["order_id", "subject"], "properties": {"order_id": {"type": "string"}, "subject": {"type": "string"}}},
+    "Ticket": {"type": "object", "properties": {"id": {"type": "string"}, "status": {"type": "string"}}}
+  }
+}

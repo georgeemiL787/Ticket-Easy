@@ -16,6 +16,7 @@ dependencies = [
   "openapi-schema-validator>=0.6,<0.9",
   "itsdangerous>=2.2,<3",
   "mcp==2.2.0",
+  "cryptography>=43,<52",
 ]
 [dependency-groups]
 dev = ["pytest>=8,<10"]

@@ -21,13 +21,20 @@ def lexicon_hash() -> str:
 
 
 def tenant_config_hash(tenant: TenantConfig) -> str:
+    if tenant.bundle_sha256:  # the configuration comes from a bundle: its content hash names it
+        return tenant.bundle_sha256[:12]
     return _short(tenant.model_dump_json().encode("utf-8"))
 
 
 def base_versions(tenant: TenantConfig) -> dict[str, str]:
     """The versions every trace records, whatever the turn did."""
-    return {
+    versions = {
         "schema": TRACE_SCHEMA_VERSION,
         "tenant_config_hash": tenant_config_hash(tenant),
         "lexicon_hash": lexicon_hash(),
     }
+    if tenant.bundle_version is not None:
+        versions["bundle_version"] = str(tenant.bundle_version)
+    if tenant.preview:
+        versions["preview"] = "1"
+    return versions

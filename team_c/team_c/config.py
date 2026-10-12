@@ -35,8 +35,9 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     openrouter_timeout: float = 120
     openrouter_input_tokens: int = 24000
-    max_upload_bytes: int = 2 * 1024 * 1024
-    max_operations: int = 50
+    max_upload_bytes: int = 10 * 1024 * 1024
+    secret_key: str = Field("", validation_alias=AliasChoices("TEAM_C_SECRET_KEY", "SECRET_KEY"))  # encrypts stored test credentials: a Fernet key, env:NAME or file:PATH; empty: a key file beside the database
+    max_operations: int = 1000
     max_model_chars: int = 100_000
     openapi_fetch_hosts: str = ""
     openapi_fetch_timeout: float = 15
@@ -66,6 +67,8 @@ class Settings(BaseSettings):
     # TEAM_C_ADMIN_TOKEN: required (header x-team-c-admin-token) for production actions on /api/v1
     admin_token: str = Field("", validation_alias=AliasChoices("TEAM_C_ADMIN_TOKEN", "ADMIN_TOKEN"))
     connection_check_timeout: float = 10
+    # TEAM_C_PRODUCT_URL: where the guided flow lives (the dashboard). Set: this app's start page sends owners there and every page links to it.
+    product_url: str = Field("", validation_alias=AliasChoices("TEAM_C_PRODUCT_URL", "PRODUCT_URL"))
     allowed_project_directory: str = ""
     code_max_files: int = 200
     code_max_entries: int = 3000

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" data-theme="aurora-light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket-Easy design tokens</title>
+  <link rel="stylesheet" href="/ui/aurora.css">
+</head>
+<body>
+  <header class="te-header">
+    <a class="te-brand" href="#">Ticket-Easy</a>
+    <nav class="te-nav"><a href="#" aria-current="page">Overview</a><a href="#">Inbox</a><a href="#">Tools</a></nav>
+    <div class="te-header-end"><button class="te-btn">EN / AR</button></div>
+  </header>
+  <main style="position:relative;z-index:1;max-width:760px;margin:24px auto;padding:0 16px;display:grid;gap:16px">
+    <section class="te-card" style="padding:20px">
+      <h1>Tokens preview</h1>
+      <p>Body text on a glass card. <span style="color:var(--muted-text)">Muted text.</span> <a href="#">A link</a>.</p>
+      <p dir="rtl" lang="ar">نص عربي للتحقق من الخط والاتجاه.</p>
+      <p>
+        <button class="te-btn te-btn--primary">Primary</button>
+        <button class="te-btn">Secondary</button>
+        <button class="te-btn te-btn--danger">Danger</button>
+        <button class="te-btn" disabled>Disabled</button>
+        <button class="te-btn te-btn--primary" aria-busy="true">Loading</button>
+      </p>
+      <p>
+        <span class="te-badge--ok">&#10003; Ready</span>
+        <span class="te-badge--warn">&#9888; Needs review</span>
+        <span class="te-badge--bad">&#10005; Failed</span>
+      </p>
+    </section>
+    <div class="te-state--empty">Nothing here yet</div>
+    <div class="te-state--loading">Loading&hellip;</div>
+    <div class="te-state--error">Something went wrong</div>
+  </main>
+</body>
+</html>

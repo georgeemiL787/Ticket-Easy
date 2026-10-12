@@ -15,11 +15,14 @@ NAMES = (
     "DashboardConversationPage",
     "DashboardConversation",
     "DashboardEscalations",
+    "DashboardAgent",
+    "ReplayResult",
     "DashboardTools",
     "DashboardBusinessTools",
     "DashboardQueue",
     "DashboardPassage",
     "DashboardKnowledgeGaps",
+    "TenantBundle",
 )
 
 
@@ -38,3 +41,9 @@ def test_committed_schemas_match_the_models(tmp_path: Path) -> None:
         committed = (ROOT / "contracts" / "schemas" / f"{name}.schema.json").read_text(encoding="utf-8")
         assert generated == committed, f"{name}.schema.json is out of date"
         assert json.loads(generated)["title"] == name
+
+
+def test_every_committed_schema_is_drift_checked() -> None:
+    files = (ROOT / "contracts" / "schemas").glob("*.schema.json")
+    committed = {path.name.removesuffix(".schema.json") for path in files}
+    assert committed == set(NAMES), "add the schema to NAMES (or remove the stale file)"

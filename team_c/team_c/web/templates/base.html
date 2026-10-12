@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ticket-Easy · Team C</title>
+<title>Ticket-Easy tools</title>
 <style>
 body{font:16px/1.6 system-ui,sans-serif;background:#f4f6f8;color:#182b3c;margin:0}
 main{max-width:1050px;margin:auto;padding:20px 28px 60px}
-header{background:#12355b;color:white;padding:16px 32px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+header{background:#0f766e;color:white;padding:16px 32px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 header a{color:white;font-weight:600;text-decoration:none}
 header .who{font-size:14px;opacity:.85}
 h1,h2,h3{line-height:1.25}
 h1{margin:10px 0 6px}
-a{color:#145d85}
+a{color:#0f766e}
 article,.panel{background:white;padding:20px 24px;border:1px solid #d6e0e8;border-radius:10px;margin:18px 0}
 .notice{padding:10px 12px;background:#fff1ce;border-radius:6px}
 .muted{color:#526778}
@@ -21,7 +21,7 @@ label{display:block;margin-top:14px;font-weight:600}
 input,textarea,select{box-sizing:border-box;width:100%;font:inherit;border:1px solid #95a9b9;border-radius:5px;padding:10px}
 input[type=checkbox]{width:auto;margin-right:6px}
 textarea{min-height:90px}
-button{font:inherit;background:#145d85;color:white;border:0;border-radius:5px;padding:10px 16px;margin:10px 8px 0 0;cursor:pointer}
+button{font:inherit;background:#0f766e;color:white;border:0;border-radius:5px;padding:10px 16px;margin:10px 8px 0 0;cursor:pointer}
 button:disabled{background:#9caab4;cursor:not-allowed}
 button.secondary{background:#526778}
 pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f2f5f7;padding:12px;font-size:13px}
@@ -34,7 +34,7 @@ details.tech>summary{color:#526778;font-weight:500}
 .crumbs a{text-decoration:none}
 .steps{display:flex;gap:6px;flex-wrap:wrap;list-style:none;padding:0;margin:8px 0 4px}
 .steps li{flex:1;min-width:150px;background:#e6edf2;color:#526778;border-radius:6px;padding:8px 10px;font-size:14px}
-.steps li.current{background:#145d85;color:white;font-weight:600}
+.steps li.current{background:#0f766e;color:white;font-weight:600}
 .next{background:#e6f3ea;border-left:5px solid #2e7d4f;padding:12px 16px;border-radius:6px;margin:14px 0}
 .next strong{display:block}
 .badge{display:inline-block;border-radius:20px;padding:2px 10px;font-size:13px;font-weight:600;white-space:nowrap}
@@ -55,9 +55,10 @@ header a.nav{margin-left:18px;font-weight:500}
 </style>
 </head>
 <body>
-<header><span><a href="/">Ticket-Easy · Team C</a> <a class="nav" href="/proposals">Proposals</a></span><span class="who">Signed in as <strong>{{ reviewer }}</strong> (local development, not real authentication) · Model: {{ provider }} / {{ model }} · Fallback: {{ fallback }}</span></header>
+<header><span><a href="/">Ticket-Easy tools</a> <a class="nav" href="/proposals">Proposals</a></span><span class="who">Signed in as <strong>{{ reviewer }}</strong> (local development, not real authentication) · Model: {{ provider }} / {{ model }} · Fallback: {{ fallback }}</span></header>
 <main>
 {% if ai_job and screen != 'live' %}<p class="next"><strong>The AI is busy: {{ ai_job.title }} (started {{ ai_job.minutes }} min ago).</strong> Other AI buttons wait until it finishes. <a href="/live/{{ ai_job.id }}">View progress</a></p>{% endif %}
+{% if product_url %}<p class="notice small">Advanced view. The guided flow (import, review and select, test and publish) is in the product: <a href="{{ product_url.rstrip('/') }}/dashboard/tools">open it</a>.</p>{% endif %}
 {% block crumbs %}{% endblock %}
 {% block steps %}{% endblock %}
 <p class="notice small">Approval means <strong>approved to build</strong>. Publishing is a separate decision: a <strong>sandbox</strong> publication is TEST-ONLY; a <strong>Live Demo</strong> publication{% if live_demo.enabled %} (switched on here){% else %} (switched off here){% endif %} calls the owner-configured real API. Neither is a production release.</p>

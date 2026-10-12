@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from team_b import replay
 from team_b.api import business_tools, dashboard
+from team_b.domain.bundle import TenantBundle
 from team_b.domain.handoff import HandoffCase, HandoffPackage
 from team_b.domain.reply import AgentReply
 from team_b.domain.trace import DecisionTrace
@@ -34,6 +35,7 @@ MODELS: tuple[type[BaseModel], ...] = (
     dashboard.DashboardPassage,
     dashboard.DashboardKnowledgeGaps,
     business_tools.DashboardBusinessTools,
+    TenantBundle,
 )
 
 

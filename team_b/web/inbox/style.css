@@ -1,10 +1,11 @@
-/* The support inbox, in the aurora look (shared tokens and glass in /ui/aurora.css). */
+/* The support inbox: a case list and a case page (shared tokens and glass in /ui/aurora.css). An urgent case has a red edge on
+   its row; below 900px the list and the case take turns (list first, then the case with a back button). */
 :root {
-  --urgent: #ff8a80;
-  --high: #fbbf24;
-  --normal: #7dd3fc;
-  --low: #94a3b8;
-  --ai: #e879f9;
+  --urgent: #dc2626;
+  --high: #b45309;
+  --normal: #2563eb;
+  --low: #64748b;
+  --ai: #a21caf;
 }
 
 .top {
@@ -28,10 +29,10 @@
 }
 
 .top label {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--muted-text);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -43,16 +44,16 @@
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--muted-text);
   font-size: 0.85rem;
 }
 
 .error {
   margin: 12px 24px;
   padding: 10px 14px;
-  background: rgba(255, 138, 128, 0.1);
-  color: var(--bad);
-  border: 1px solid rgba(255, 138, 128, 0.35);
+  background: var(--red-soft);
+  color: #991b1b;
+  border: 1px solid rgba(220, 38, 38, 0.35);
   border-radius: 12px;
 }
 
@@ -73,11 +74,50 @@
   .top {
     padding: 10px 12px;
   }
+
+  /* list first; once a case is opened it takes the screen and a back button returns to the list */
+  body.has-case .list-pane {
+    display: none;
+  }
+
+  body:not(.has-case) .case-pane {
+    display: none;
+  }
+
+  .back {
+    display: inline-flex;
+  }
+
+  .cases thead {
+    display: none;
+  }
+
+  .cases,
+  .cases tbody,
+  .cases tr.row,
+  .cases td {
+    display: block;
+    width: 100%;
+  }
+
+  .cases tr.row {
+    padding: 10px 6px;
+    border-top: 1px solid var(--border);
+  }
+
+  .cases td {
+    padding: 2px 0;
+    border: 0;
+  }
+}
+
+.back {
+  display: none;
 }
 
 .list-pane,
 .case-pane {
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 16px;
   min-width: 0;
 }
@@ -91,7 +131,7 @@
 }
 
 .inline {
-  color: var(--muted);
+  color: var(--muted-text);
   font-size: 0.85rem;
 }
 
@@ -104,15 +144,15 @@ table.cases {
   text-align: start;
   padding: 6px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--muted-text);
 }
 
 .cases td {
   padding: 8px 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--border);
   vertical-align: top;
 }
 
@@ -122,11 +162,16 @@ table.cases {
 }
 
 .cases tr.row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--teal-soft);
 }
 
 .cases tr.row.selected {
-  background: linear-gradient(90deg, rgba(45, 212, 191, 0.14), rgba(232, 121, 249, 0.1));
+  background: var(--teal-soft);
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+
+.cases tr.row.urgent-row {
+  box-shadow: inset 3px 0 0 var(--urgent);
 }
 
 .badge {
@@ -135,23 +180,26 @@ table.cases {
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #ffffff;
+  border: 1px solid var(--border);
 }
 
 .badge.urgent {
-  color: var(--urgent);
-  border-color: rgba(255, 138, 128, 0.55);
+  color: #b91c1c;
+  background: var(--red-soft);
+  border-color: rgba(220, 38, 38, 0.45);
 }
 
 .badge.high {
   color: var(--high);
-  border-color: rgba(251, 191, 36, 0.5);
+  background: var(--amber-soft);
+  border-color: rgba(217, 119, 6, 0.45);
 }
 
 .badge.normal {
   color: var(--normal);
-  border-color: rgba(125, 211, 252, 0.45);
+  background: var(--blue-soft);
+  border-color: rgba(37, 99, 235, 0.35);
 }
 
 .badge.low {
@@ -164,8 +212,8 @@ table.cases {
   border-radius: 9999px;
   font-size: 11px;
   color: var(--ai);
-  background: rgba(232, 121, 249, 0.12);
-  border: 1px solid rgba(232, 121, 249, 0.3);
+  background: var(--magenta-soft);
+  border: 1px solid rgba(192, 38, 211, 0.35);
 }
 
 .case-head {
@@ -195,16 +243,16 @@ table.cases {
 .block {
   margin-top: 14px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--border);
 }
 
 .block h3 {
   margin: 0 0 6px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.28em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--muted-text);
 }
 
 dl.facts {
@@ -215,7 +263,7 @@ dl.facts {
 }
 
 dl.facts dt {
-  color: var(--muted);
+  color: var(--muted-text);
 }
 
 dl.facts dd {
@@ -226,14 +274,14 @@ dl.facts dd {
 blockquote {
   margin: 6px 0;
   padding: 8px 12px;
-  border-inline-start: 3px solid var(--aqua);
-  background: rgba(255, 255, 255, 0.04);
+  border-inline-start: 3px solid var(--teal);
+  background: var(--teal-soft);
   border-radius: 0 12px 12px 0;
 }
 
 blockquote cite {
   display: block;
-  color: var(--muted);
+  color: var(--muted-text);
   font-size: 0.78rem;
   font-style: normal;
 }
@@ -261,20 +309,26 @@ ul.plain {
 
 .line.customer {
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(45, 212, 191, 0.2), rgba(56, 189, 248, 0.12));
-  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: var(--teal-soft);
+  border: 1px solid rgba(13, 148, 136, 0.35);
 }
 
 .line.agent {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.line.human_agent {
+  align-self: flex-start;
+  background: var(--magenta-soft);
+  border: 1px solid rgba(192, 38, 211, 0.35);
 }
 
 .pending {
   padding: 10px 12px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: var(--amber-soft);
+  border: 1px solid rgba(217, 119, 6, 0.4);
   border-radius: 14px;
 }
 
@@ -297,16 +351,14 @@ form.login {
   width: min(calc(100% - 32px), 380px);
   margin: 12vh auto 0;
   padding: 28px;
-  border-radius: 24px;
+  border-radius: 20px;
   position: relative;
   z-index: 2;
-  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  backdrop-filter: blur(22px) saturate(140%);
+  background: rgba(255, 255, 255, 0.9);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
   border: 1px solid var(--glass-border);
-  box-shadow:
-    0 30px 80px -20px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow);
 }
 
 form.login h2 {
@@ -317,10 +369,10 @@ form.login label {
   display: grid;
   gap: 6px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.28em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--muted-text);
 }
 
 form.login input {
@@ -335,14 +387,11 @@ form.login .error {
 
 form.login button {
   padding: 12px;
-  font-family: "Space Grotesk", "Inter", sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
-  color: var(--ink);
-  background: linear-gradient(100deg, #2dd4bf, #e879f9);
-  border: 0;
-  box-shadow:
-    0 10px 30px -8px rgba(45, 212, 191, 0.55),
-    0 10px 30px -8px rgba(232, 121, 249, 0.5);
+  color: #ffffff;
+  background: var(--teal-text);
+  border: 1px solid var(--teal-text);
 }
 
 body:has(form.login) .page {

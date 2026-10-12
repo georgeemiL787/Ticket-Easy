@@ -197,6 +197,47 @@ async def outage_incident(container: "Container", clock: "DriftClock") -> None:
         await container.alert_engine.evaluate(TENANT)  # and resolves
 
 
+async def bundle_cmd(args: argparse.Namespace) -> int:
+    """bundle import: a published bundle from the tenant file; export: a version as JSON; activate: make one live."""
+    from team_b.bundles import BundleError, import_from_files
+
+    container = build_container(Settings.from_env())
+    registry = container.bundles
+    if registry is None:
+        print("tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        return 1
+    await registry.load()
+    actor = "cli"
+    try:
+        if args.action == "import":
+            draft = await import_from_files(registry, args.tenant, actor)
+            published = await registry.publish(args.tenant, draft.version)
+            print(f"{args.tenant}: version {published.version} published from the tenant file")
+            if args.activate:
+                await registry.activate(args.tenant, published.version, actor)
+                print(f"{args.tenant}: version {published.version} is active")
+        elif args.action == "export":
+            active = registry.active_bundle(args.tenant)
+            version = args.version or (active.version if active else await registry.store.latest_version(args.tenant))
+            bundle = await registry.get_bundle(args.tenant, version)
+            text = bundle.model_dump_json(indent=2)
+            if args.out:
+                args.out.write_text(text + chr(10), encoding="utf-8")
+                print(f"wrote {args.out}")
+            else:
+                print(text)
+        else:
+            await registry.activate(args.tenant, args.version, actor)
+            print(f"{args.tenant}: version {args.version} is active")
+    except (BundleError, KeyError) as exc:
+        print(f"refused: {exc}")
+        return 1
+    except Exception as exc:  # NotFoundError and friends carry a readable message
+        print(f"refused: {exc}")
+        return 1
+    return 0
+
+
 async def create_user_cmd(args: argparse.Namespace) -> int:
     """Add a person who may sign in (or, with --reset-password, set a new password for an existing one)."""
     import getpass
@@ -328,7 +369,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     user.add_argument("--generate-password", action="store_true", help="make a random password and print it once")
     user.add_argument("--if-missing", action="store_true", help="do nothing when the email already exists")
     user.add_argument("--reset-password", action="store_true", help="set a new password for an existing email")
+    bundle = commands.add_parser("bundle", help="tenant bundles: import a tenant file, export a version, activate one")
+    bundle.add_argument("action", choices=["import", "export", "activate"])
+    bundle.add_argument("--tenant", required=True)
+    bundle.add_argument("--version", type=int, help="export/activate this version")
+    bundle.add_argument("--out", type=Path, help="export: write to this file")
+    bundle.add_argument("--activate", action="store_true", help="import: also make the new version active")
     args = parser.parse_args(argv)
+    if args.command == "bundle":
+        if args.action == "activate" and not args.version:
+            parser.error("activate needs --version")
+        return asyncio.run(bundle_cmd(args))
     if args.command == "create-user":
         return asyncio.run(create_user_cmd(args))
     if args.command == "replay":

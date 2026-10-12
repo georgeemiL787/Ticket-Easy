@@ -30,6 +30,8 @@ ENV_VARS: dict[str, str] = {
     "openrouter_api_key": "OPENROUTER_API_KEY",
     "team_a_url": "TEAM_B_TEAM_A_URL",
     "team_a_timeout_s": "TEAM_B_TEAM_A_TIMEOUT_S",
+    "team_a_key": "TEAM_B_TEAM_A_KEY",
+    "team_a_admin_key": "TEAM_B_TEAM_A_ADMIN_KEY",
     "team_c_config": "TEAM_B_TEAM_C_CONFIG",
     "llm_base_url": "TEAM_B_LLM_BASE_URL",
     "llm_api_key": "TEAM_B_LLM_API_KEY",
@@ -57,6 +59,7 @@ ENV_VARS: dict[str, str] = {
     "agent_mode": "TEAM_B_AGENT_MODE",
     "agent_max_moves": "TEAM_B_AGENT_MAX_MOVES",
     "agent_turn_timeout_s": "TEAM_B_AGENT_TURN_TIMEOUT_S",
+    "bundles": "TEAM_B_BUNDLES",
 }
 
 # The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
@@ -106,6 +109,12 @@ class Settings(BaseModel):
     mode: Mode = "standin"  # standin: Team B own fake services. live: the real Team A (policy search, safety, rules)
     team_a_url: str = "http://127.0.0.1:8001"  # TEAM_B_MODE=live: where Team A's service listens
     team_a_timeout_s: float = Field(default=10.0, gt=0)
+    team_a_key: SecretStr | None = (
+        None  # sent as X-Service-Key on every call to Team A (needed when Team A has service keys)
+    )
+    team_a_admin_key: SecretStr | None = (
+        None  # X-Admin-Key for documents and rules (the knowledge pages); unset: those pages are off
+    )
     # Team C's TEST-ONLY sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
     # stand-in shop serves every tool. Set: the tools it binds are served by Team C, the rest by the stand-in.
     team_c_config: Path | None = None
@@ -150,6 +159,7 @@ class Settings(BaseModel):
     llm_knowledge: bool = False  # the AI model writes the search query and words the policy answer
     llm_review: bool = False  # the reviewer checks every written reply and every write (stricter only); needs a model
     rate_limit_per_minute: int = Field(default=20, ge=1)  # messages per conversation per minute (chat API)
+    bundles: bool = True  # 0: tenant bundles are ignored and only config/tenants/*.json is used (always-safe fallback)
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
 
     @model_validator(mode="after")

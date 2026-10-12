@@ -106,6 +106,7 @@ export default function Overview() {
               <section className="kpi" aria-label={t("overview.openCases")}>
                 <h3>{t("overview.openCases")}</h3>
                 <p className="kpi-value">{d.open_cases}</p>
+                <p className="kpi-change flat">{t("common.noPrevious")}</p>
               </section>
             </div>
             <AgentCards />

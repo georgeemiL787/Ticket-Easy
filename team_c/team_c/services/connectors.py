@@ -14,6 +14,7 @@ from ..connectors import (LIVE_DEMO, PRODUCTION, SANDBOX, base_url, environment_
                           live_destination_problem, load_connectors, production_destination_problem, resolve_secret, secret_name)
 from ..fixtures import FixtureClient, fixtures_problem, public_view
 from ..persistence.util import digest, dump, now
+from ..secretbox import has_plaintext, seal
 
 
 def server_candidates(document, source_url="", operations=()):
@@ -46,6 +47,14 @@ class Connectors:
         self.settings, self.store = settings, store
         self.proposals, self.discovery = proposals, discovery
 
+    def seal_existing(self):
+        """Encrypt any credential still stored as plaintext (rows written before encryption existed). Runs at start-up."""
+        with self.store.connect(write=True) as conn:
+            for cid, raw in conn.execute("SELECT id,content FROM sandbox_connectors").fetchall():
+                content = json.loads(raw)
+                if has_plaintext(content):
+                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(content, self.settings)), cid))
+
     def apply_policy_context(self, cid, business_id, policy):
         """Register accepted field names on managed connectors, never fabricate values."""
         if cid in external_connectors(self.settings):
@@ -59,7 +68,7 @@ class Connectors:
             if row:
                 content = json.loads(row[0])
                 content["context_fields"] = sorted(set(content.get("context_fields", [])) | fields)
-                conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(content), cid))
+                conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(content, self.settings)), cid))
 
     def draft(self, pid):
         view = self.proposals.view(pid)
@@ -97,7 +106,7 @@ class Connectors:
                 if problem:
                     raise problem
                 content["fixtures"] = dict(base_url=base_url(fixtures["base_url"]), key_ref=fixtures["key_ref"])
-            conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(content), cid))
+            conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(content, self.settings)), cid))
 
     def save(self, pid, url, context_fields, confirmed=False, environment=SANDBOX, fixtures=None, secret_ref=None):
         """Save the owner's destination for this business. A sandbox needs the sandbox confirmation; a Live Demo
@@ -144,14 +153,14 @@ class Connectors:
         with self.store.connect(write=True) as conn:
             # Repeating setup is idempotent and never erases existing credentials.
             conn.execute("INSERT OR IGNORE INTO sandbox_connectors(id,business_id,content,created_at) VALUES(?,?,?,?)",
-                         (cid, view["business_id"], dump(content), now()))
+                         (cid, view["business_id"], dump(seal(content, self.settings)), now()))
         if environment == PRODUCTION:  # repeating setup may point the connector at another variable, but never erases anything else
             with self.store.connect(write=True) as conn:
                 row = conn.execute("SELECT content FROM sandbox_connectors WHERE id=?", (cid,)).fetchone()
                 saved = json.loads(row[0])
                 if saved.get("secret_ref") != secret_ref:
                     saved["secret_ref"] = secret_ref
-                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(saved, self.settings)), cid))
         if fixtures:
             self.set_fixtures(cid, view["business_id"], fixtures)
         return cid
@@ -220,7 +229,7 @@ class Connectors:
         if scope not in {"end_user", "admin", "service", "public", "guest"}:
             raise AppError("identity_scope", "Choose the identity's actual account type")
         auth = artifact["connector"].get("auth")
-        keys = ("token",) if auth and auth["type"] == "http_bearer" else ("username", "password") if auth else ()
+        keys = ("token",) if auth and auth["type"] in ("http_bearer", "api_key") else ("username", "password") if auth else ()
         current = ((load_connectors(self.settings).get(cid) or {}).get("identities") or {}).get(name) or {}
         # Editing an existing identity: a field left blank keeps its saved value, so a password is never retyped to change a name or scope.
         credential = {k: credential.get(k) or current.get(k, "") for k in keys}
@@ -237,7 +246,7 @@ class Connectors:
             if set(context) - set(saved["context_fields"]):
                 raise AppError("connector_context", "The identity contains undeclared context fields")
             saved["identities"][name] = dict(scope=scope, context=context, **{k: credential[k] for k in keys})
-            conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+            conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(saved, self.settings)), cid))
 
     def remove_identity(self, cid, business_id, name):
         """Delete one saved test identity of a managed connector (its credential leaves the database with it)."""
@@ -249,7 +258,7 @@ class Connectors:
                 raise AppError("connector_unknown", "No connector with this id serves this business", 404)
             saved = json.loads(row[0])
             if saved.get("identities", {}).pop(name, None) is not None:
-                conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+                conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(saved, self.settings)), cid))
 
     # ---- listing and checking connectors (never returns a credential) ----
 
@@ -370,5 +379,5 @@ class Connectors:
                 if row:
                     saved = json.loads(row[0])
                     saved["last_check"] = result
-                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(seal(saved, self.settings)), cid))
         return result

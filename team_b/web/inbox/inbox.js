@@ -3,6 +3,8 @@
    Every customer-supplied text is put in the page with textContent, never as HTML. */
 
 const REFRESH_MS = 10000;
+const tr = (typeof window !== "undefined" && window.TE) ? window.TE.tr
+  : (text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (whole, name) => (name in vars ? String(vars[name]) : whole)) : text);
 const REASONS = [
   "customer_request", "mandatory_risk", "policy_denied", "approval_required", "repeated_tool_failure",
   "unverified_result", "no_evidence", "dependency_unavailable", "low_confidence", "identity_failed",
@@ -39,7 +41,7 @@ function ageText(iso, nowMs) {
 function errorMessage(status, body) {
   const e = body && body.error;
   if (e && e.message) return e.message + (e.code ? " (" + e.code + ")" : "");
-  return "Something went wrong (HTTP " + status + ").";
+  return tr("Something went wrong (HTTP {status}).", { status: status });
 }
 
 /** The summary to show and whether it was written by the AI model. */
@@ -90,7 +92,7 @@ if (typeof document !== "undefined") {
       if (method !== "GET" && state.csrf) headers["X-CSRF-Token"] = state.csrf;
       response = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     } catch (exc) {
-      throw new Error("Cannot reach the server. Check your connection.");
+      throw new Error(tr("Cannot reach the server. Check your connection."));
     }
     let data = null;
     try { data = await response.json(); } catch (exc) { /* no body */ }
@@ -122,11 +124,11 @@ if (typeof document !== "undefined") {
     const password = el("input", { type: "password", id: "login-password", autocomplete: "current-password", required: "" });
     const message = el("p", { class: "error", role: "alert", hidden: "" });
     const form = el("form", { id: "login", class: "login" },
-      el("h2", { text: "Sign in" }),
-      el("label", {}, "Email ", email),
-      el("label", {}, "Password ", password),
+      el("h2", { text: tr("Sign in") }),
+      el("label", {}, tr("Email") + " ", email),
+      el("label", {}, tr("Password") + " ", password),
       message,
-      el("button", { type: "submit", text: "Sign in" }));
+      el("button", { type: "submit", text: tr("Sign in") }));
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       try {
@@ -165,13 +167,13 @@ if (typeof document !== "undefined") {
   function renderRows() {
     const body = $("case-rows");
     body.replaceChildren(...state.rows.map((c) => {
-      const row = el("tr", { class: "row" + (c.case_id === state.selected ? " selected" : ""), tabindex: "0",
+      const row = el("tr", { class: "row" + (c.case_id === state.selected ? " selected" : "") + (c.priority === "urgent" ? " urgent-row" : ""), tabindex: "0",
         onclick: () => select(c.case_id), onkeydown: (e) => { if (e.key === "Enter") select(c.case_id); } },
-        el("td", {}, el("span", { class: "badge " + c.priority, text: c.priority })),
+        el("td", {}, el("span", { class: "badge " + c.priority, text: tr(c.priority) })),
         el("td", { text: c.reason.replaceAll("_", " ") }),
         el("td", { text: c.language || "" }),
         el("td", { text: ageText(c.created_at) }),
-        el("td", { text: c.status.replaceAll("_", " ") + (c.claimed_by ? " · " + c.claimed_by : "") }),
+        el("td", { text: tr(c.status.replaceAll("_", " ")) + (c.claimed_by ? " · " + c.claimed_by : "") }),
         el("td", { dir: "auto", text: c.summary.length > 110 ? c.summary.slice(0, 110) + "…" : c.summary }));
       return row;
     }));
@@ -187,7 +189,7 @@ if (typeof document !== "undefined") {
       state.rows = more ? state.rows.concat(page.items) : page.items;
       state.cursor = page.next_cursor;
       renderRows();
-      $("refreshed").textContent = "updated " + new Date().toLocaleTimeString();
+      $("refreshed").textContent = tr("updated") + " " + new Date().toLocaleTimeString(window.TE ? window.TE.lang : undefined);
       showError("");
     } catch (exc) {
       showError(exc.message);
@@ -202,7 +204,7 @@ if (typeof document !== "undefined") {
 
   function facts(object) {
     const entries = Object.entries(object || {});
-    if (!entries.length) return el("p", { class: "muted", text: "none" });
+    if (!entries.length) return el("p", { class: "muted", text: tr("none") });
     return el("dl", { class: "facts" }, entries.flatMap(([k, v]) => [
       el("dt", { text: k }), el("dd", { dir: "auto", text: typeof v === "object" ? JSON.stringify(v) : String(v) })]));
   }
@@ -221,40 +223,40 @@ if (typeof document !== "undefined") {
     renderActions(c);
     const customer = pkg.customer;
     const body = [
-      block("Summary",
+      block(tr("Summary"),
         el("p", { dir: "auto", text: summary.text }, summary.ai ? " " : null),
-        summary.ai ? el("span", { class: "tag", text: "AI-written summary" }) : null,
-        el("p", {}, el("strong", { text: "Suggested next step: " }), el("span", { dir: "auto", text: pkg.suggested_next_step })),
+        summary.ai ? el("span", { class: "tag", text: tr("AI-written summary") }) : null,
+        el("p", {}, el("strong", { text: tr("Suggested next step: ") }), el("span", { dir: "auto", text: pkg.suggested_next_step })),
         pkg.ai_suggestion ? el("p", { dir: "auto" }, el("span", { class: "tag", text: "AI" }), " ", pkg.ai_suggestion) : null,
-        el("p", { class: "muted", text: "Why: " + (pkg.detail || pkg.reason) + " · priority " + pkg.priority })),
-      pkg.tried && pkg.tried.length ? block("Already tried (do not ask the customer again)",
+        el("p", { class: "muted", text: tr("Why: ") + (pkg.detail || pkg.reason) + " · priority " + pkg.priority })),
+      pkg.tried && pkg.tried.length ? block(tr("Already tried (do not ask the customer again)"),
         list(pkg.tried, (t) => el("span", { dir: "auto", text: t }))) : null,
-      c.pending_approval ? block("Waiting for approval", el("div", { class: "pending" },
+      c.pending_approval ? block(tr("Waiting for approval"), el("div", { class: "pending" },
         el("strong", { text: c.pending_approval.capability }), facts(c.pending_approval.arguments),
         el("p", { class: "muted", dir: "auto", text: c.pending_approval.reason }))) : null,
-      block("Customer", facts({
+      block(tr("Customer"), facts({
         verified: customer.verified ? "yes (" + (customer.method || "checked") + ")" : "no",
         customer_id: customer.customer_id || "-", phone: customer.phone_masked || "-",
         orders: (customer.orders || []).join(", ") || "-", language: pkg.language || "-",
         intents: (pkg.intents || []).join(", ") || "-" })),
-      block("Details the customer gave", facts(pkg.details)),
-      block("Order facts", facts(pkg.order_facts)),
-      pkg.safety_flags && pkg.safety_flags.length ? block("Safety flags", el("p", { text: pkg.safety_flags.join(", ") })) : null,
-      block("Policy evidence", list(pkg.policy_quotes, (q) => el("blockquote", { dir: "auto" }, q.text, el("cite", { text: q.citation })),
-        "no policy passage was used")),
-      block("Rule checker answers", list(pkg.rule_answers, (r) =>
+      block(tr("Details the customer gave"), facts(pkg.details)),
+      block(tr("Order facts"), facts(pkg.order_facts)),
+      pkg.safety_flags && pkg.safety_flags.length ? block(tr("Safety flags"), el("p", { text: pkg.safety_flags.join(", ") })) : null,
+      block(tr("Policy evidence"), list(pkg.policy_quotes, (q) => el("blockquote", { dir: "auto" }, q.text, el("cite", { text: q.citation })),
+        tr("no policy passage was used"))),
+      block(tr("Rule checker answers"), list(pkg.rule_answers, (r) =>
         r.action + ": " + r.decision + " (" + r.reason_code + ")" + (r.citations.length ? " · " + r.citations.join(", ") : ""))),
-      block("Actions tried", list(pkg.attempted_actions, (a) => el("span", {},
+      block(tr("Actions tried"), list(pkg.attempted_actions, (a) => el("span", {},
         a.tool + " - " + a.state + (a.error ? " (" + a.error + ")" : ""),
         a.history.length ? el("div", { class: "muted", text: a.history.join("  |  ") }) : null,
         a.audit_id || a.execution_id ? el("div", { class: "muted", text: [a.audit_id && "audit " + a.audit_id, a.execution_id && "ref " + a.execution_id].filter(Boolean).join(" · ") }) : null))),
-      block("Failures", list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " - " + f.message : "") +
+      block(tr("Failures"), list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " - " + f.message : "") +
         (f.audit_id ? " · audit " + f.audit_id : ""))),
-      pkg.similar_tickets && pkg.similar_tickets.length ? block("Similar past tickets",
+      pkg.similar_tickets && pkg.similar_tickets.length ? block(tr("Similar past tickets"),
         list(pkg.similar_tickets, (t) => t.category + ": " + t.resolution)) : null,
-      block("Conversation", el("div", { class: "transcript" }, (pkg.transcript || []).map((l) =>
+      block(tr("Conversation"), el("div", { class: "transcript" }, (pkg.transcript || []).map((l) =>
         el("div", { class: "line " + l.role, dir: "auto", text: l.text })))),
-      block("History", list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
+      block(tr("History"), list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
         (e.note ? " - " + e.note : ""))),
     ];
     $("case-body").replaceChildren(...body.filter(Boolean));
@@ -265,22 +267,22 @@ if (typeof document !== "undefined") {
     const buttons = [];
     const act = (label, path, extra, cls) => el("button", { type: "button", class: cls || "", text: label,
       onclick: () => doAction(path, extra ? extra() : {}) });
-    if (allowed.claim) buttons.push(act("Claim", "claim", null, "primary"));
-    if (allowed.release) buttons.push(act("Release", "release"));
+    if (allowed.claim) buttons.push(act(tr("Claim"), "claim", null, "primary"));
+    if (allowed.release) buttons.push(act(tr("Release"), "release"));
     if (allowed.decide) {
-      const note = el("input", { type: "text", maxlength: "1000", placeholder: "note (optional)", "aria-label": "Decision note" });
+      const note = el("input", { type: "text", maxlength: "1000", placeholder: tr("note (optional)"), "aria-label": tr("Decision note") });
       buttons.push(note,
-        el("button", { type: "button", class: "primary", text: "Approve", onclick: () => doAction("decision", { approve: true, note: note.value || null }) }),
-        el("button", { type: "button", class: "danger", text: "Reject", onclick: () => doAction("decision", { approve: false, note: note.value || null }) }));
+        el("button", { type: "button", class: "primary", text: tr("Approve"), onclick: () => doAction("decision", { approve: true, note: note.value || null }) }),
+        el("button", { type: "button", class: "danger", text: tr("Reject"), onclick: () => doAction("decision", { approve: false, note: note.value || null }) }));
     }
-    if (allowed.returnToAgent) buttons.push(act("Give back to assistant", "return-to-agent"));
-    if (allowed.resolve) buttons.push(act("Resolve", "resolve", null, "primary"));
+    if (allowed.returnToAgent) buttons.push(act(tr("Give back to assistant"), "return-to-agent"));
+    if (allowed.resolve) buttons.push(act(tr("Resolve"), "resolve", null, "primary"));
     $("actions").replaceChildren(...buttons);
     $("reply-form").hidden = !allowed.reply;
   }
 
   async function doAction(path, extra) {
-    if (!agent()) { showError("Type your name first."); return; }
+    if (!agent()) { showError(tr("Type your name first.")); return; }
     try {
       const updated = await api("POST", "/v1/handoff/cases/" + encodeURIComponent(state.selected) + "/" + path,
         { agent: agent(), ...extra });
@@ -304,6 +306,7 @@ if (typeof document !== "undefined") {
   function select(id) {
     state.selected = id;
     location.hash = id;
+    document.body.classList.add("has-case");  // on a phone the case takes the screen
     renderRows();
     openCase(id);
   }
@@ -318,6 +321,11 @@ if (typeof document !== "undefined") {
     }
     state.started = true;
     $("signout").addEventListener("click", signOut);
+    $("back").addEventListener("click", () => { document.body.classList.remove("has-case"); });
+    if ($("lang") && window.TE) {
+      $("lang").value = window.TE.lang;
+      $("lang").addEventListener("change", () => window.TE.setLang($("lang").value));
+    }
     $("agent").value = (() => { try { return localStorage.getItem("inbox.agent") || ""; } catch (e) { return ""; } })();
     if (params.get("tenant_id")) $("tenant").value = params.get("tenant_id");
     for (const reason of REASONS) $("f-reason").append(el("option", { value: reason, text: reason.replaceAll("_", " ") }));
@@ -333,7 +341,7 @@ if (typeof document !== "undefined") {
       event.preventDefault();
       const text = $("reply-text").value.trim();
       if (!text) return;
-      if (!agent()) { showError("Type your name first."); return; }
+      if (!agent()) { showError(tr("Type your name first.")); return; }
       try {
         const updated = await api("POST", "/v1/handoff/cases/" + encodeURIComponent(state.selected) + "/reply", { agent: agent(), text });
         $("reply-text").value = "";

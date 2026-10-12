@@ -71,8 +71,8 @@ export function TimeLine(props: { rows: Row[]; name: string; unit?: string }) {
     <ResponsiveContainer width="100%" height={HEIGHT}>
       <LineChart data={props.rows} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
         <CartesianGrid stroke="var(--grid)" strokeDasharray="3 3" />
-        <XAxis dataKey="label" stroke="var(--muted)" tick={{ fill: "var(--muted)", fontSize: 12 }} reversed={dir === "rtl"} />
-        <YAxis stroke="var(--muted)" tick={{ fill: "var(--muted)", fontSize: 12 }} width={44} orientation={dir === "rtl" ? "right" : "left"} />
+        <XAxis dataKey="label" stroke="var(--muted-text)" tick={{ fill: "var(--muted-text)", fontSize: 12 }} reversed={dir === "rtl"} />
+        <YAxis stroke="var(--muted-text)" tick={{ fill: "var(--muted-text)", fontSize: 12 }} width={44} orientation={dir === "rtl" ? "right" : "left"} />
         <Tooltip
           contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" }}
           formatter={(value) => [`${Math.round(Number(value) * 10) / 10}${props.unit ?? ""}`, props.name]}
@@ -90,8 +90,8 @@ export function StackedBars(props: { rows: Row[]; series: { key: string; label: 
     <ResponsiveContainer width="100%" height={HEIGHT + 40}>
       <BarChart data={props.rows} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
         <CartesianGrid stroke="var(--grid)" strokeDasharray="3 3" />
-        <XAxis dataKey="label" stroke="var(--muted)" tick={{ fill: "var(--muted)", fontSize: 12 }} reversed={dir === "rtl"} />
-        <YAxis allowDecimals={false} stroke="var(--muted)" tick={{ fill: "var(--muted)", fontSize: 12 }} width={32} orientation={dir === "rtl" ? "right" : "left"} />
+        <XAxis dataKey="label" stroke="var(--muted-text)" tick={{ fill: "var(--muted-text)", fontSize: 12 }} reversed={dir === "rtl"} />
+        <YAxis allowDecimals={false} stroke="var(--muted-text)" tick={{ fill: "var(--muted-text)", fontSize: 12 }} width={32} orientation={dir === "rtl" ? "right" : "left"} />
         <Tooltip contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" }} />
         <Legend />
         {props.series.map((s, index) => (
@@ -109,8 +109,8 @@ export function CategoryBars(props: { data: { name: string; label: string; value
     <ResponsiveContainer width="100%" height={HEIGHT}>
       <BarChart data={props.data} layout="vertical" margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
         <CartesianGrid stroke="var(--grid)" strokeDasharray="3 3" horizontal={false} />
-        <XAxis type="number" allowDecimals={false} stroke="var(--muted)" tick={{ fill: "var(--muted)", fontSize: 12 }} reversed={dir === "rtl"} />
-        <YAxis type="category" dataKey="label" width={90} stroke="var(--muted)" tick={{ fill: "var(--text)", fontSize: 13 }} orientation={dir === "rtl" ? "right" : "left"} />
+        <XAxis type="number" allowDecimals={false} stroke="var(--muted-text)" tick={{ fill: "var(--muted-text)", fontSize: 12 }} reversed={dir === "rtl"} />
+        <YAxis type="category" dataKey="label" width={90} stroke="var(--muted-text)" tick={{ fill: "var(--text)", fontSize: 13 }} orientation={dir === "rtl" ? "right" : "left"} />
         <Tooltip contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)", color: "var(--text)" }} />
         <Bar isAnimationActive={false} dataKey="value" fill="var(--c3)" radius={[0, 4, 4, 0]} />
       </BarChart>

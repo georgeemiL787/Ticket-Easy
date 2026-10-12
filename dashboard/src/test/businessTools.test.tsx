@@ -57,13 +57,13 @@ describe("business tools", () => {
     expect(await screen.findByRole("heading", { name: "Business tools", level: 1 })).toBeInTheDocument();
     expect(await screen.findByRole("note")).toHaveTextContent("TEST-ONLY");
     const tools = (await screen.findAllByRole("table"))[0]!;
-    expect(within(tools).getByText("Team C")).toBeInTheDocument();
+    expect(within(tools).getByText("Tool service")).toBeInTheDocument();
     expect(within(tools).getByText("SANDBOX")).toBeInTheDocument();
     expect(within(tools).getByText("Stand-in shop")).toBeInTheDocument();
     const publications = screen.getAllByRole("table")[1]!;
     expect(within(publications).getByText("SANDBOX")).toBeInTheDocument();
     expect(within(publications).getByText(/not production/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open the tool builder (Team C)" })).toHaveAttribute("href", "http://127.0.0.1:8101/businesses/biz-1");
+    expect(screen.getByRole("link", { name: "Open the advanced tool builder" })).toHaveAttribute("href", "http://127.0.0.1:8101/businesses/biz-1");
     expect(screen.getByText("Ready for your decision")).toBeInTheDocument();
 
     const user = userEvent.setup();

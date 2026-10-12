@@ -1,0 +1,510 @@
+{
+  "schema_version": "1.0",
+  "tenant_id": "shop_001",
+  "version": 1,
+  "status": "published",
+  "created_at": "2026-09-28T09:00:00Z",
+  "created_by": "import",
+  "parent_version": null,
+  "content_sha256": "c9de9de1b2425303fa6a39457c355e6453a9b524c001d6a4bbfd0c5c01802cf5",
+  "config": {
+    "tenant_id": "shop_001",
+    "display_name": "Nile Style",
+    "default_locale": "ar",
+    "history_max_turns": 12,
+    "order_id_pattern": "NS-\\d{4,6}",
+    "order_id_prefix": "NS-",
+    "identity": {
+      "verify_tool": "verify_customer",
+      "required_slots": [
+        "order_id",
+        "phone"
+      ],
+      "max_attempts": 2
+    },
+    "escalation": {
+      "max_tool_failures": 2,
+      "max_clarifications": 2,
+      "min_intent_confidence": 0.55,
+      "escalate_on_deny": true,
+      "escalate_on_high_frustration": true,
+      "frustration_attempts": 1,
+      "policy_questions": 1,
+      "outage_retries": 1,
+      "priorities": {},
+      "next_steps": {},
+      "final_deny_rules": [
+        "R-RETURN-EXCLUDED",
+        "R-RETURN-UNUSED",
+        "R-EXCHANGE-14D",
+        "R-REFUND-STATUS",
+        "R-ADDRESS-BEFORE-SHIP",
+        "R-VOUCHER-LATE-3D"
+      ],
+      "sla_minutes": {
+        "urgent": 15,
+        "high": 60,
+        "normal": 240
+      }
+    },
+    "permissions": {
+      "allowed_tools": [
+        "verify_customer",
+        "get_order",
+        "list_customer_orders",
+        "create_return",
+        "create_exchange",
+        "create_refund",
+        "cancel_order",
+        "update_delivery_address",
+        "apply_voucher",
+        "create_ticket"
+      ],
+      "max_risk": "high",
+      "confirm_operation_kinds": [
+        "create",
+        "update",
+        "delete"
+      ]
+    },
+    "alerts": {
+      "enabled": true,
+      "service_down_errors": 3,
+      "service_down_window_min": 5,
+      "action_failing_rate": 0.2,
+      "action_failing_min_calls": 10,
+      "action_failing_window_min": 15,
+      "unverified_result_window_min": 60,
+      "action_missing_window_min": 60,
+      "knowledge_gap_rate": 0.15,
+      "knowledge_gap_min_questions": 10,
+      "knowledge_gap_window_min": 1440,
+      "knowledge_gap_same_question": 5,
+      "slow_p95_ms": 6000.0,
+      "slow_min_turns": 5,
+      "slow_window_min": 15,
+      "escalation_spike_factor": 2.0,
+      "escalation_spike_min_turns": 10,
+      "ai_fallback_rate": 0.1,
+      "ai_fallback_min_turns": 5,
+      "ai_fallback_window_min": 60,
+      "agent_fallback_rate": 0.2,
+      "agent_fallback_min_turns": 5,
+      "agent_fallback_window_min": 60,
+      "reviewer_block_rate": 0.15,
+      "reviewer_block_min_turns": 5,
+      "reviewer_block_window_min": 60,
+      "backlog_sla_min": 15
+    },
+    "knowledge": {
+      "min_score": 0.0
+    },
+    "intents": {
+      "policy_question": {
+        "kind": "knowledge",
+        "description": "A question about shop policies (returns, refunds, shipping, payment, FAQ) that needs no order data.",
+        "examples": [
+          "What is your return policy?",
+          "ممكن ارجع المنتج بعد كام يوم من الاستلام؟",
+          "emta a2dar araga3 el montag?"
+        ],
+        "lookup_tool": null,
+        "action_tool": null,
+        "required_slots": [],
+        "argument_map": {},
+        "knowledge_query": null,
+        "knowledge_when": null,
+        "labels": {},
+        "alternatives": []
+      },
+      "greeting": {
+        "kind": "smalltalk",
+        "description": "A greeting or thanks with no request.",
+        "examples": [
+          "Hello",
+          "السلام عليكم",
+          "ahlan, ezayak"
+        ],
+        "lookup_tool": null,
+        "action_tool": null,
+        "required_slots": [],
+        "argument_map": {},
+        "knowledge_query": null,
+        "knowledge_when": null,
+        "labels": {},
+        "alternatives": []
+      },
+      "order_status": {
+        "kind": "lookup",
+        "description": "Where is my order, what is its status or delivery date.",
+        "examples": [
+          "Where is my order NS-20877?",
+          "الاوردر بتاعي وصل فين؟",
+          "el order NS-20877 et2akhar, 3ayez a3raf feen"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": null,
+        "required_slots": [
+          "order_id"
+        ],
+        "argument_map": {},
+        "knowledge_query": "late delivery shipping",
+        "knowledge_when": "order_late",
+        "labels": {},
+        "alternatives": []
+      },
+      "return_request": {
+        "kind": "action",
+        "description": "The customer wants to return a delivered item.",
+        "examples": [
+          "I want to return my order NS-20512",
+          "عايز ارجع المنتج لان المقاس مش مظبوط",
+          "3ayez araga3 el order 3shan el ma2as msh mazboot"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "create_return",
+        "required_slots": [
+          "order_id",
+          "reason"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id",
+          "reason": "slot:reason"
+        },
+        "knowledge_query": "return policy",
+        "knowledge_when": null,
+        "labels": {
+          "en": "return the item",
+          "ar": "ترجيع المنتج",
+          "arabizi": "return el montag"
+        },
+        "alternatives": []
+      },
+      "exchange_request": {
+        "kind": "action",
+        "description": "The customer wants another size or color of a delivered item.",
+        "examples": [
+          "I want to exchange it for a bigger size",
+          "عايز ابدل المقاس",
+          "3ayza abdel el ma2as"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "create_exchange",
+        "required_slots": [
+          "order_id",
+          "reason"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id",
+          "reason": "slot:reason"
+        },
+        "knowledge_query": "exchange policy",
+        "knowledge_when": null,
+        "labels": {
+          "en": "exchange it",
+          "ar": "استبدال المنتج",
+          "arabizi": "estebdal el montag"
+        },
+        "alternatives": []
+      },
+      "refund_request": {
+        "kind": "action",
+        "description": "The customer wants their money back.",
+        "examples": [
+          "I want a refund for order NS-20512",
+          "عايز فلوسي ترجع",
+          "3ayez flousi el order mesh 3agebny"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "create_refund",
+        "required_slots": [
+          "order_id"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id",
+          "amount": "fact:order_total"
+        },
+        "knowledge_query": "refund policy",
+        "knowledge_when": null,
+        "labels": {
+          "en": "get a refund",
+          "ar": "استرداد الفلوس",
+          "arabizi": "estredad el felous"
+        },
+        "alternatives": [
+          "exchange_request",
+          "voucher_request"
+        ]
+      },
+      "cancel_order": {
+        "kind": "action",
+        "description": "The customer wants to cancel an order.",
+        "examples": [
+          "Please cancel my order",
+          "الغي الاوردر لو سمحت",
+          "3ayez alghy el order"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "cancel_order",
+        "required_slots": [
+          "order_id"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id"
+        },
+        "knowledge_query": "cancel order",
+        "knowledge_when": null,
+        "labels": {
+          "en": "cancel the order",
+          "ar": "إلغاء الأوردر",
+          "arabizi": "elgha2 el order"
+        },
+        "alternatives": [
+          "return_request"
+        ]
+      },
+      "change_address": {
+        "kind": "action",
+        "description": "The customer wants to change the delivery address of an order.",
+        "examples": [
+          "I need to change the delivery address",
+          "عايز اغير عنوان التوصيل",
+          "3ayez a8ayar el 3enwan"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "update_delivery_address",
+        "required_slots": [
+          "order_id",
+          "new_address"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id",
+          "new_address": "slot:new_address"
+        },
+        "knowledge_query": "change delivery address",
+        "knowledge_when": null,
+        "labels": {},
+        "alternatives": []
+      },
+      "voucher_request": {
+        "kind": "action",
+        "description": "A late order and the customer asks for the compensation voucher.",
+        "examples": [
+          "My order is late, do I get a voucher?",
+          "الاوردر اتاخر وعايز كوبون",
+          "el order et2akhar, fi kobon ta3weed?"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "apply_voucher",
+        "required_slots": [
+          "order_id"
+        ],
+        "argument_map": {
+          "order_id": "slot:order_id",
+          "amount": "const:100",
+          "reason": "const:late_delivery"
+        },
+        "knowledge_query": "late delivery voucher",
+        "knowledge_when": null,
+        "labels": {
+          "en": "ask for a voucher",
+          "ar": "طلب كوبون",
+          "arabizi": "talab kobon"
+        },
+        "alternatives": []
+      },
+      "complaint": {
+        "kind": "action",
+        "description": "The customer wants to file a complaint, which opens a support ticket.",
+        "examples": [
+          "I want to file a complaint about my delivery",
+          "عايز اقدم شكوى",
+          "3ayez a2adem shakwa 3an el mandoob"
+        ],
+        "lookup_tool": "get_order",
+        "action_tool": "create_ticket",
+        "required_slots": [
+          "order_id",
+          "description"
+        ],
+        "argument_map": {
+          "subject": "const:Customer complaint",
+          "description": "slot:description",
+          "order_id": "slot:order_id"
+        },
+        "knowledge_query": null,
+        "knowledge_when": null,
+        "labels": {},
+        "alternatives": []
+      },
+      "human_request": {
+        "kind": "handoff",
+        "description": "The customer asks to talk to a person.",
+        "examples": [
+          "I want to talk to a human",
+          "عايز اكلم حد من خدمة العملاء",
+          "3ayez akalem mowazaf"
+        ],
+        "lookup_tool": null,
+        "action_tool": null,
+        "required_slots": [],
+        "argument_map": {},
+        "knowledge_query": null,
+        "knowledge_when": null,
+        "labels": {},
+        "alternatives": []
+      },
+      "delete_account": {
+        "kind": "action",
+        "description": "The customer wants their account and personal data deleted. Only a person may do this.",
+        "examples": [
+          "Please delete my account and all my data",
+          "عايز امسح حسابي",
+          "3ayez emsa7 7esaby"
+        ],
+        "lookup_tool": null,
+        "action_tool": "delete_customer",
+        "required_slots": [],
+        "argument_map": {
+          "customer_id": "identity:customer_id"
+        },
+        "knowledge_query": null,
+        "knowledge_when": null,
+        "labels": {
+          "en": "delete your account",
+          "ar": "مسح الحساب",
+          "arabizi": "mas7 el account"
+        },
+        "alternatives": []
+      }
+    },
+    "conflicting_intents": [
+      [
+        "return_request",
+        "exchange_request"
+      ],
+      [
+        "exchange_request",
+        "refund_request"
+      ],
+      [
+        "return_request",
+        "cancel_order"
+      ],
+      [
+        "exchange_request",
+        "cancel_order"
+      ]
+    ],
+    "agent_mode": null,
+    "managers": [
+      "manager",
+      "mona"
+    ]
+  },
+  "profile": {
+    "display_name": "Nile Style",
+    "locales": [
+      "ar"
+    ],
+    "default_locale": "ar",
+    "tone": "friendly"
+  },
+  "knowledge": {
+    "provider": "standin",
+    "index_tenant": null,
+    "built_at": null,
+    "documents": []
+  },
+  "guardrails": {
+    "ruleset_version": null,
+    "ruleset_sha256": null,
+    "approved_rule_ids": [],
+    "violation": {
+      "deny": "refuse",
+      "require_human": "handoff",
+      "unavailable": "handoff"
+    }
+  },
+  "tools": [
+    {
+      "name": "apply_voucher",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "cancel_order",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "create_exchange",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "create_refund",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "create_return",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "create_ticket",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "delete_customer",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "get_order",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "list_customer_orders",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "update_delivery_address",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    },
+    {
+      "name": "verify_customer",
+      "source": "standin",
+      "binding": null,
+      "permission": "read",
+      "risk": "low"
+    }
+  ],
+  "escalation": null,
+  "identities": {}
+}

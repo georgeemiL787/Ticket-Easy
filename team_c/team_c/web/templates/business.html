@@ -24,14 +24,14 @@
 <div class="grid">
 <div>
 <h3>Upload a file</h3>
-<p class="small muted">OpenAPI JSON or YAML (3.0.0–3.0.4 or 3.1.0–3.1.2, documented subset), up to 2 MiB and 50 operations. No business endpoint is contacted.</p>
+<p class="small muted">OpenAPI JSON or YAML (Swagger 2.0, 3.0.x or 3.1.x, documented subset), up to 10 MiB and 1000 operations. No business endpoint is contacted.</p>
 <form method="post" action="/actions/upload" enctype="multipart/form-data">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="file" name="file" accept=".json,.yaml,.yml" required><button>Discover capabilities</button></form>
 </div>
 <div>
 <h3>Fetch from a URL</h3>
 <p class="small muted">Paste the API's docs page (for example <code>/docs</code> or <code>/redoc</code>) or its OpenAPI JSON/YAML link. No redirects, credentials, cookies or proxies; no API operation is called.</p>
 {% if fetch_hosts %}<p class="small muted">Allowed hosts: {% for host in fetch_hosts %}{{ 'Local services (any port)' if host == 'loopback:*' else host }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
-{% else %}<p class="notice small">Fetching is turned off. Add the API's <code>host:port</code> to <code>OPENAPI_FETCH_HOSTS</code> in <code>.env</code> (for example <code>OPENAPI_FETCH_HOSTS=127.0.0.1:8000</code>) and restart Team C.</p>{% endif %}
+{% else %}<p class="notice small">Fetching is turned off. Add the API's <code>host:port</code> to <code>OPENAPI_FETCH_HOSTS</code> in <code>.env</code> (for example <code>OPENAPI_FETCH_HOSTS=127.0.0.1:8000</code>) and restart the tool builder.</p>{% endif %}
 <form method="post" action="/actions/fetch">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input name="url" type="url" required placeholder="http://{{ 'localhost:8080' if 'loopback:*' in fetch_hosts else (fetch_hosts[0] if fetch_hosts else '127.0.0.1:8000') }}/docs"><button {% if not fetch_hosts %}disabled{% endif %}>Fetch and discover</button></form>
 </div>
 </div>
@@ -45,7 +45,7 @@
 <div class="grid">
 <article>
 <h3>Request a tool</h3>
-<p class="small muted">Describe what the tool should do. Team C checks your API and existing tools, then creates a proposal for review, asks questions, points to an existing tool, or tells you what the API lacks. Nothing is approved, built or published automatically, and the AI can miss gaps.</p>
+<p class="small muted">Describe what the tool should do. The tool builder checks your API and existing tools, then creates a proposal for review, asks questions, points to an existing tool, or tells you what the API lacks. Nothing is approved, built or published automatically, and the AI can miss gaps.</p>
 <form method="post" action="/actions/request_tool">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input type="hidden" name="request_key" value="{{ request_key }}">
 <label>What should the tool do?<textarea name="goal" required minlength="10" maxlength="2000" placeholder="For example: let a customer report a problem with their booking."></textarea></label>
 <label>Examples (optional)<textarea name="examples" maxlength="4000" placeholder="For example: booking ABC123, the shower does not drain."></textarea></label>
@@ -53,7 +53,7 @@
 </article>
 <article>
 <h3>Suggest additional tools</h3>
-<p class="small muted">Team C compares your business, earlier requests and your API with the tools you already have, and suggests a few more. Only strong ideas are shown: security must score 4/5 or better and every other criterion 3/5 or better; weaker ideas are replaced by asking again (up to 3 AI rounds). Accepting one starts a normal proposal review (not build approval); dismissing one changes nothing else. Restricted operations are never used.</p>
+<p class="small muted">The tool builder compares your business, earlier requests and your API with the tools you already have, and suggests a few more. Only strong ideas are shown: security must score 4/5 or better and every other criterion 3/5 or better; weaker ideas are replaced by asking again (up to 3 AI rounds). Accepting one starts a normal proposal review (not build approval); dismissing one changes nothing else. Restricted operations are never used.</p>
 <form method="post" action="/actions/suggest">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><label>How many suggestions?<input name="count" type="number" min="1" max="5" value="{{ suggestion_count }}"></label><button>Suggest additional tools</button></form>
 </article>
 </div>

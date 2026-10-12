@@ -2,7 +2,7 @@
 <h2 id="structured-policy">Who can use this tool</h2>
 <p class="small muted">Structured access and input policy. These decisions record your intent; building turns them into runtime enforcement and generated security tests. Prose answers never enforce access.</p>
 <h3>Access and identity requirements</h3>
-<p class="small muted">Found by Team C in the operations this tool uses, whether or not the AI asked. Accepting the policy below decides all of them at once.</p>
+<p class="small muted">Found by the tool builder in the operations this tool uses, whether or not the AI asked. Accepting the policy below decides all of them at once.</p>
 <ul>{% for r in p.requirements %}<li>{{ r.text }} {{ m.badge(r.status, "requirement") }}{% if r.answer and not p.policy and r.answer.text %}<br><span class="small muted">Earlier written answer: {{ r.answer.text }}</span>{% endif %}
 <details class="tech"><summary>Evidence</summary><p class="small">Source-documented: {{ r.evidence.source_documented|join('; ') }}<br>Owner-confirmed: {{ 'by the accepted policy' if p.policy and r.status == 'owner_confirmed' else (r.evidence.owner_confirmed or 'not confirmed') }} | Verified by a test: none | Runtime implementation: awaiting implementation</p></details></li>
 {% else %}<li class="muted">No access requirements for these operations.</li>{% endfor %}</ul>
@@ -28,7 +28,7 @@
 {% for key,title,why in [('public','Public','anyone, without signing in'),('end_user','Authenticated user','any signed-in customer or user'),('resource_owner','Resource owner','a signed-in user, only for records they own'),('admin','Administrator','staff with administrative rights'),('service','Service account','another system, not a person'),('guest','Guest/session user','an anonymous session such as a guest cart')] %}
 {% set impossible = not p.login.declared and key not in ['public','guest'] %}
 <label{% if impossible %} class="muted"{% endif %}><input type="checkbox" name="principals" value="{{ key }}" {% if key in policy.get('principals',[]) and not impossible %}checked{% endif %} {% if impossible %}disabled{% endif %}>{{ title }} <span class="why">{{ why }}{% if impossible %} — not possible: the API declares no login{% endif %}</span></label>{% endfor %}
-{% if not p.login.declared %}<p class="notice small">{{ p.login.operations }} declares no login, so Team C cannot verify who is calling. Only Public or Guest/session user can be chosen. To restrict this tool to signed-in users, staff or services, the API must declare authentication (OAuth2 password or HTTP bearer); then import the updated specification.</p>{% endif %}
+{% if not p.login.declared %}<p class="notice small">{{ p.login.operations }} declares no login, so the tool builder cannot verify who is calling. Only Public or Guest/session user can be chosen. To restrict this tool to signed-in users, staff or services, the API must declare authentication (OAuth2 password or HTTP bearer); then import the updated specification.</p>{% endif %}
 </fieldset>
 {% for r in p.requirements if r.kind == 'record_scope' %}
 {% set scope = policy.get('scopes',[])|selectattr('requirement_id','equalto',r.id)|first|default({}) %}

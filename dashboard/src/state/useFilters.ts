@@ -56,7 +56,7 @@ export function useFilters(): Filters {
 }
 
 /** The filters that must follow the user from page to page (the nav links carry them). */
-export const SHARED_KEYS = ["tenant", "range", "from", "to", "lang"] as const; // not "r": a link is not a refresh
+export const SHARED_KEYS = ["tenant", "range", "from", "to", "lang", "wizard"] as const; // not "r": a link is not a refresh
 
 export function sharedQuery(params: URLSearchParams): string {
   const kept = new URLSearchParams();

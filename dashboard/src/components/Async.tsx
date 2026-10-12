@@ -11,12 +11,13 @@ export function Loading() {
   );
 }
 
-export function EmptyState({ title, hint }: { title?: string; hint?: string }) {
+export function EmptyState({ title, hint, children }: { title?: string; hint?: string; children?: ReactNode }) {
   const { t } = useI18n();
   return (
     <div className="state empty" role="status">
       <p className="state-title">{title ?? t("common.empty")}</p>
-      <p className="muted">{hint ?? t("common.emptyHint")}</p>
+      {hint === "" ? null : <p className="muted">{hint ?? t("common.emptyHint")}</p>}
+      {children}
     </div>
   );
 }

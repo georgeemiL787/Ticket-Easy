@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ApiError, apiPost, withQuery } from "../api/client";
 import type { DashboardBusinessTools, TeamCConnector, TeamCPromotion, TeamCProposal, TeamCPublication } from "../api/types/DashboardBusinessTools";
 import { useAuth } from "../auth";
@@ -313,6 +314,9 @@ export default function BusinessTools() {
   return (
     <>
       <h1>{t("bt.title")}</h1>
+      <p>
+        <Link to={{ pathname: "/tools/connect", search: window.location.search }}>{t("bt.guided")}</Link>
+      </p>
       <Async state={state}>
         {(d) => (
           <>

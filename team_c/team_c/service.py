@@ -11,6 +11,7 @@ from .services.building import Building
 from .services.publication import Publication
 from .services.autotest import AutoTest
 from .services.promotion import Promotion
+from .services.batches import Batches
 
 
 class Service:
@@ -32,6 +33,8 @@ class Service:
         self.promotion_service = Promotion(settings, store, self.building, self.publishing, self.connectors, self.discovery)
         self.publishing.after_production_call = self.promotion_service.after_call
         self.providers = providers
+        self.batches = Batches(self)
+        self.connectors.seal_existing()
 
     # Callers replace these on the facade; every service must see the same objects.
     @property

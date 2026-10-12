@@ -8,6 +8,8 @@
             "UNAUTHORIZED",
             "TENANT_NOT_FOUND",
             "NOT_FOUND",
+            "FORBIDDEN",
+            "INVALID_STATE",
             "INDEX_NOT_BUILT",
             "EMBEDDING_UNAVAILABLE",
             "LLM_UNAVAILABLE",

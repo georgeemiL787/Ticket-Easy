@@ -102,6 +102,17 @@ def _store(tenant_id: str) -> RuleStore:
     return RuleStore(tenant_id)
 
 
+def authorize_caller(x_service_key: str | None, tenant_id: str, request_id: str | None = None) -> None:
+    """When service keys are configured, a public endpoint needs a key that may read this business (401 / 403)."""
+    if not config.settings.service_auth:
+        return
+    allowed = config.settings.allowed_tenants(x_service_key or "")
+    if allowed is not None and not allowed:
+        raise ServiceError(401, "UNAUTHORIZED", "Missing or invalid X-Service-Key", request_id)
+    if allowed is not None and tenant_id not in allowed:
+        raise ServiceError(403, "FORBIDDEN", "This key may not read this business", request_id)
+
+
 def require_admin(x_admin_key: str | None = Header(default=None)) -> None:
     """Gate admin/review endpoints on the X-Admin-Key header. Fails closed if ADMIN_API_KEY is unset."""
     expected = config.settings.admin_api_key
@@ -117,7 +128,8 @@ def health() -> dict:
 # ---------------------------------------------------------------- knowledge
 
 @app.post("/v1/knowledge/search", response_model=RetrievalResult)
-def search_knowledge_endpoint(req: SearchKnowledgeRequest) -> RetrievalResult:
+def search_knowledge_endpoint(req: SearchKnowledgeRequest, x_service_key: str | None = Header(default=None)) -> RetrievalResult:
+    authorize_caller(x_service_key, req.tenant_id, req.request_id)
     index = load_index(req.tenant_id, req.request_id)
     return search_knowledge(req, index, _embedder())
 
@@ -126,7 +138,9 @@ def search_knowledge_endpoint(req: SearchKnowledgeRequest) -> RetrievalResult:
 def get_passage_endpoint(
     tenant_id: str = Query(pattern=TENANT_PATTERN),
     citation: str = Query(min_length=3, max_length=200),
+    x_service_key: str | None = Header(default=None),
 ) -> Passage:
+    authorize_caller(x_service_key, tenant_id)
     passage = get_passage(load_index(tenant_id), citation)
     if passage is None:
         raise ServiceError(404, "NOT_FOUND", f"No passage with citation '{citation}'")
@@ -134,7 +148,8 @@ def get_passage_endpoint(
 
 
 @app.post("/v1/knowledge/past-tickets/search", response_model=PastTicketResult)
-def search_past_tickets_endpoint(req: SearchPastTicketsRequest) -> PastTicketResult:
+def search_past_tickets_endpoint(req: SearchPastTicketsRequest, x_service_key: str | None = Header(default=None)) -> PastTicketResult:
+    authorize_caller(x_service_key, req.tenant_id, req.request_id)
     index = load_index(req.tenant_id, req.request_id)
     return search_past_tickets(req, index, _embedder())
 
@@ -250,23 +265,36 @@ def get_return_endpoint(return_id: str, tenant_id: str = Query(pattern=TENANT_PA
 # ------------------------------------------------------------------- policy
 
 @app.post("/v1/policy/check-action", response_model=PolicyDecision)
-def check_action_endpoint(req: CheckActionRequest) -> PolicyDecision:
+def check_action_endpoint(req: CheckActionRequest, x_service_key: str | None = Header(default=None)) -> PolicyDecision:
+    authorize_caller(x_service_key, req.tenant_id, req.request_id)
     return check_action(req, _store(req.tenant_id))
 
 
 @app.post("/v1/policy/classify-risk", response_model=RiskAssessment)
-def classify_risk_endpoint(req: ClassifyRiskRequest) -> RiskAssessment:
+def classify_risk_endpoint(req: ClassifyRiskRequest, x_service_key: str | None = Header(default=None)) -> RiskAssessment:
+    authorize_caller(x_service_key, req.tenant_id, req.request_id)
     return classify_risk(req)
 
 
 @app.get("/v1/policy/rules/{rule_id}/explain", response_model=RuleExplanation)
 def explain_rule_endpoint(
-    rule_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN), as_of: date | None = None
+    rule_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN), as_of: date | None = None,
+    x_service_key: str | None = Header(default=None),
 ) -> RuleExplanation:
+    authorize_caller(x_service_key, tenant_id)
     try:
         return explain_rule(_store(tenant_id), rule_id, as_of)
     except RuleNotFound:
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}' for tenant '{tenant_id}'")
+
+
+@app.get("/v1/policy/rules/ruleset")
+def ruleset_endpoint(tenant_id: str = Query(pattern=TENANT_PATTERN), x_service_key: str | None = Header(default=None)) -> dict:
+    """The approved rules that are enforced right now and a version id that changes whenever any of them does."""
+    authorize_caller(x_service_key, tenant_id)
+    if not config.settings.corpus_dir(tenant_id).exists() and not config.settings.rules_file(tenant_id).exists():
+        raise ServiceError(404, "TENANT_NOT_FOUND", f"Unknown tenant '{tenant_id}'")
+    return _store(tenant_id).ruleset()
 
 
 @app.get("/v1/policy/rules", response_model=list[Rule], dependencies=[Depends(require_admin)])
@@ -311,3 +339,8 @@ def edit_rule(rule_id: str, req: EditRequest) -> Rule:
         raise ServiceError(404, "NOT_FOUND", f"No rule '{rule_id}'")
     except ValueError as exc:
         raise ServiceError(422, "INVALID_REQUEST", str(exc))
+
+
+from team_a import admin_api  # noqa: E402  (after the names it imports exist)
+
+app.include_router(admin_api.router)

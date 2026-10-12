@@ -89,6 +89,7 @@ class Inventory(TypedDict):
     diagnostics: list[Diagnostic]
     summary: InventorySummary
     source_kind: NotRequired[str]
+    converted_from: NotRequired[str]  # "swagger_2.0" when the description was converted to OpenAPI 3.0 for discovery
 
 
 class RuntimeInput(TypedDict):

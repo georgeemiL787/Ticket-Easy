@@ -76,7 +76,7 @@
 {% if promotions %}
 <article id="production">
 <h2>Production</h2>
-<p class="small muted">Read-only. A tool is promoted to production, and rolled back, by an admin in Team B's dashboard (or the admin API with the operator's token); this page can do neither.</p>
+<p class="small muted">Read-only. A tool is promoted to production, and rolled back, by an admin in the product dashboard (or the admin API with the operator's token); this page can do neither.</p>
 {% for p in promotions %}<details {% if p.status == 'active' %}open{% endif %}><summary>{{ m.badge("production", "environment") }} {{ p.status|replace('_', ' ')|capitalize }} · decided by {{ p.actor }} · {{ p.created_at[:19]|replace('T', ' ') }}</summary>
 <p class="small">Note: {{ p.note }} · Rollback contact: {{ p.rollback_contact }}{% if p.rolled_back_at %} · Rolled back {{ p.rolled_back_at[:19]|replace('T', ' ') }} by {{ p.rolled_back_by }}: {{ p.rollback_note }}{% endif %}</p>
 <ul class="small">{% for k, v in p.checklist.items() %}<li>{{ m.badge("ok" if v.ok else "failed", "check") }} <strong>{{ k|replace('_', ' ') }}</strong> {{ v.detail }}</li>{% endfor %}</ul></details>{% endfor %}

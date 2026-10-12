@@ -1,4 +1,5 @@
-/* The customer chat, in the aurora look (shared tokens and glass in /ui/aurora.css). */
+/* The customer chat: one centred column, the customer on the right in teal, the assistant on the left on glass, a person from
+   customer care on the left in magenta. Tokens and glass come from /ui/aurora.css. Logical properties keep it right in Arabic. */
 body {
   padding: 24px 16px;
 }
@@ -6,11 +7,11 @@ body {
 .chat {
   display: flex;
   flex-direction: column;
-  max-width: 760px;
+  max-width: 720px;
   height: calc(100vh - 48px);
   min-height: 420px;
   margin: 0 auto;
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -19,9 +20,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(11, 15, 20, 0.35);
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .chat-header h1 {
@@ -33,13 +34,24 @@ body {
   font-weight: 700;
 }
 
+.header-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-end select {
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
 .dev-toggle {
   cursor: pointer;
   user-select: none;
 }
 
 .dev-toggle input {
-  accent-color: var(--aqua);
+  accent-color: var(--teal);
 }
 
 .messages {
@@ -52,7 +64,7 @@ body {
   overflow-y: auto;
   list-style: none;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
 }
 
 .message {
@@ -66,35 +78,38 @@ body {
 
 .message.customer {
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(45, 212, 191, 0.22), rgba(56, 189, 248, 0.14));
-  border: 1px solid rgba(45, 212, 191, 0.3);
+  background: var(--teal-text);
+  color: #ffffff;
+  border: 1px solid var(--teal-text);
   border-end-end-radius: 6px;
 }
 
 .message.agent {
   align-self: flex-start;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px -8px rgba(15, 23, 42, 0.25);
   border-end-start-radius: 6px;
 }
 
 .message.human_agent {
   align-self: flex-start;
-  background: linear-gradient(135deg, rgba(232, 121, 249, 0.2), rgba(232, 121, 249, 0.08));
-  border: 1px solid rgba(232, 121, 249, 0.32);
+  background: var(--magenta-soft);
+  border: 1px solid rgba(192, 38, 211, 0.4);
   border-end-start-radius: 6px;
 }
 
 .message .who {
-  display: block;
-  margin-bottom: 3px;
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid rgba(192, 38, 211, 0.4);
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #86198f;
 }
 
 .chips {
@@ -107,15 +122,14 @@ body {
 .message .chip {
   direction: ltr;
   font-size: 11px;
-  color: rgba(230, 237, 243, 0.8);
 }
 
 .dev {
   display: none;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.18);
-  color: var(--muted);
+  border-top: 1px dashed var(--border);
+  color: var(--muted-text);
   font-size: 12px;
   direction: ltr;
   text-align: left;
@@ -132,17 +146,19 @@ body {
 
 .status {
   margin: 0;
-  padding: 6px 20px;
-  color: var(--bad);
-  font-size: 0.85rem;
+  padding: 8px 20px;
+  background: var(--red-soft);
+  color: #991b1b;
+  font-size: 0.9rem;
+  border-top: 1px solid rgba(220, 38, 38, 0.3);
 }
 
 .composer {
   display: flex;
   gap: 10px;
-  padding: 14px 20px 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(11, 15, 20, 0.35);
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .composer input {
@@ -162,20 +178,24 @@ body {
 
   .chat {
     height: calc(100vh - 16px);
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .message {
     max-width: 92%;
   }
+
+  .messages {
+    padding: 14px;
+  }
 }
 
-/* The "agent is working" bubble: moving dots and a short line about what is happening. */
+/* The "assistant is working" bubble: moving dots and a short line about what is happening. */
 .message.pending {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--muted);
+  color: var(--muted-text);
   font-size: 0.9rem;
 }
 
@@ -188,19 +208,35 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--aqua);
+  background: var(--teal);
   opacity: 0.35;
   animation: blink 1.2s infinite ease-in-out;
 }
 
-.dots i:nth-child(2) { animation-delay: 0.2s; }
-.dots i:nth-child(3) { animation-delay: 0.4s; }
+.dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes blink {
-  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
-  40% { opacity: 1; transform: translateY(-3px); }
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dots i { animation: none; opacity: 0.7; }
+  .dots i {
+    animation: none;
+    opacity: 0.7;
+  }
 }

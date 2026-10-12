@@ -1,0 +1,28 @@
+{
+  "tenant_id": "demo_min",
+  "version": 1,
+  "status": "draft",
+  "created_at": "2026-09-28T09:00:00Z",
+  "created_by": "tester",
+  "config": {
+    "tenant_id": "demo_min",
+    "display_name": "Demo",
+    "order_id_pattern": "D-\\d{4}",
+    "identity": {
+      "verify_tool": "verify_customer"
+    },
+    "permissions": {
+      "allowed_tools": [
+        "verify_customer"
+      ]
+    }
+  },
+  "profile": {
+    "display_name": "Demo"
+  },
+  "tools": [
+    {
+      "name": "verify_customer"
+    }
+  ]
+}

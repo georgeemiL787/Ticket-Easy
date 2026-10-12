@@ -32,6 +32,12 @@ class Settings:
     min_cosine: float = float(os.getenv("MIN_COSINE", "0.58"))
     min_bm25: float = float(os.getenv("MIN_BM25", "2.5"))
     admin_api_key: str = os.getenv("ADMIN_API_KEY", "")
+    # Who may call the public endpoints. Unset: anybody (local development). SERVICE_API_KEY: one key for every tenant;
+    # SERVICE_API_KEYS: "key=tenantA+tenantB,otherkey=*" binds each key to the tenants it may read.
+    service_api_key: str = os.getenv("SERVICE_API_KEY", "")
+    service_api_keys: str = os.getenv("SERVICE_API_KEYS", "")
+    onboarded_dir: Path = ROOT / "var" / "tenants"  # businesses added through the admin API (documents, rules)
+    max_upload_bytes: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 
     @property
     def shared_dir(self) -> Path:
@@ -44,13 +50,43 @@ class Settings:
         return None
 
     def tenant_dir(self, tenant_id: str) -> Path:
-        """data/<category>/<tenant_id>; for an unknown tenant a path that does not exist."""
+        """data/<category>/<tenant_id>; var/tenants/<tenant_id> for a business added through the admin API;
+        for an unknown tenant a path that does not exist."""
         category = self.category(tenant_id)
-        return self.data_dir / category / tenant_id if category else self.data_dir / "_unknown" / tenant_id
+        if category:
+            return self.data_dir / category / tenant_id
+        if (self.onboarded_dir / tenant_id).is_dir():
+            return self.onboarded_dir / tenant_id
+        return self.data_dir / "_unknown" / tenant_id
+
+    def is_onboarded(self, tenant_id: str) -> bool:
+        """Added through the admin API (its files live in var/tenants), not shipped in data/."""
+        return self.category(tenant_id) is None and (self.onboarded_dir / tenant_id).is_dir()
 
     def tenants(self) -> list[str]:
-        return sorted(p.parent.parent.name for c in CATEGORIES
-                      for p in (self.data_dir / c).glob("*/corpus/manifest.json"))
+        shipped = [p.parent.parent.name for c in CATEGORIES for p in (self.data_dir / c).glob("*/corpus/manifest.json")]
+        added = [p.parent.parent.name for p in self.onboarded_dir.glob("*/corpus/manifest.json")]
+        return sorted({*shipped, *added})
+
+    def allowed_tenants(self, key: str) -> frozenset[str] | None:
+        """The tenants a service key may read: None means every tenant; an unknown key is an empty set (nothing)."""
+        import hmac
+
+        keys: dict[str, frozenset[str] | None] = {}
+        if self.service_api_key:
+            keys[self.service_api_key] = None
+        for item in self.service_api_keys.split(","):
+            name, _, tenants = item.strip().partition("=")
+            if name and tenants:
+                keys[name.strip()] = None if tenants.strip() == "*" else frozenset(t for t in tenants.strip().split("+") if t)
+        for known, tenants in keys.items():
+            if key and hmac.compare_digest(known, key):
+                return tenants
+        return frozenset()
+
+    @property
+    def service_auth(self) -> bool:
+        return bool(self.service_api_key or self.service_api_keys)
 
     def corpus_dir(self, tenant_id: str) -> Path:
         return self.tenant_dir(tenant_id) / "corpus"

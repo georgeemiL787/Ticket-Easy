@@ -34,6 +34,19 @@ def businesses(store:StoreDep):
     return queries.businesses(store)
 
 
+@router.get("/businesses/{bid}/specifications")
+def specifications(bid:str,service:ServiceDep,store:StoreDep):
+    """The API descriptions added for this business, newest first, with their counts (no operations)."""
+    queries.business(store,bid)
+    out=[]
+    for row in reversed(queries.specifications(store,bid)):
+        inv=service.spec(row["id"])["inventory"]
+        out.append(dict(row,operations=len(inv["operations"]),eligible=inv.get("eligible_operation_count",0),document_valid=inv.get("document_valid"),
+                        openapi_version=inv.get("openapi_version"),converted_from=inv.get("converted_from"),
+                        problems=[d["message"] for d in inv.get("diagnostics",[]) if d.get("severity")=="error" and d.get("scope")=="document"][:5]))
+    return out
+
+
 @router.post("/businesses/{bid}/specifications")
 def upload(bid:str,service:ServiceDep,settings:SettingsDep,file:UploadFile=File(...)):
     return service.upload(bid,file.filename or "upload",file.file.read(settings.max_upload_bytes+1))

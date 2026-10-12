@@ -15,9 +15,11 @@ from team_b.contracts.policy import CheckActionRequest, PolicyDecision
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from team_b.domain.agent import AgentPlan, AgentView, AnyMove, MoveProposal
 from team_b.domain.alerts import Alert
+from team_b.domain.bundle import BundleStatus, TenantBundle
 from team_b.domain.decision import Decision, EscalationReason
 from team_b.domain.facts import Facts, FactsSummary
 from team_b.domain.handoff import CaseStatus, HandoffCase
+from team_b.domain.onboarding import OnboardingDraft
 from team_b.domain.session import SessionState
 from team_b.domain.trace import DecisionTrace
 from team_b.domain.users import User
@@ -25,10 +27,13 @@ from team_b.domain.users import User
 __all__ = [
     "AlertStore",
     "AlreadyExistsError",
+    "BundleStore",
     "CapabilityClient",
     "CaseStore",
     "Clock",
+    "DraftStore",
     "EvidenceProvider",
+    "KnowledgeAdmin",
     "LLMClient",
     "MovePicker",
     "NotFoundError",
@@ -221,6 +226,89 @@ class UserStore(Protocol):
     async def set_active(self, user_id: str, active: bool) -> None: ...
 
     async def list(self) -> Sequence[User]: ...
+
+
+@runtime_checkable
+class BundleStore(Protocol):
+    """Versioned tenant bundles. A stored bundle's content never changes: only its status does (draft -> published ->
+    active -> retired). At most one bundle per business is active."""
+
+    async def add(self, bundle: TenantBundle) -> None:
+        """Store a new version (AlreadyExistsError if tenant_id + version is taken)."""
+        ...
+
+    async def get(self, tenant_id: str, version: int) -> TenantBundle | None: ...
+
+    async def list(self, tenant_id: str) -> Sequence[TenantBundle]:
+        """Every version of this business, newest first."""
+        ...
+
+    async def latest_version(self, tenant_id: str) -> int:
+        """The highest stored version number (0 when there is none)."""
+        ...
+
+    async def set_status(self, tenant_id: str, version: int, status: BundleStatus) -> TenantBundle: ...
+
+    async def activate(self, tenant_id: str, version: int, actor: str, at: datetime) -> TenantBundle:
+        """Make this version the active one; the previously active version becomes published again."""
+        ...
+
+    async def active(self, tenant_id: str) -> TenantBundle | None: ...
+
+    async def all_active(self) -> Sequence[TenantBundle]: ...
+
+    async def latest(self, tenant_id: str) -> TenantBundle | None:
+        """The highest version, whatever its status."""
+        ...
+
+    async def all_latest(self) -> Sequence[TenantBundle]:
+        """The highest version of every business."""
+        ...
+
+
+@runtime_checkable
+class DraftStore(Protocol):
+    """The onboarding wizard's state, one draft per business being set up."""
+
+    async def get(self, tenant_id: str) -> OnboardingDraft | None: ...
+
+    async def save(self, draft: OnboardingDraft) -> None: ...
+
+    async def list(self) -> Sequence[OnboardingDraft]: ...
+
+    async def delete(self, tenant_id: str) -> None: ...
+
+
+@runtime_checkable
+class KnowledgeAdmin(Protocol):
+    """Documents, the index and the rules of a business, for the dashboard's knowledge pages (never used by the brain).
+    A refusal (an unreadable file, a rule that would break a guardrail case) is an UpstreamError with the reason."""
+
+    async def upload(
+        self, tenant_id: str, filename: str, content: bytes, document_id: str | None = None
+    ) -> dict[str, Any]: ...
+
+    async def documents(self, tenant_id: str) -> dict[str, Any]: ...
+
+    async def remove(self, tenant_id: str, document_id: str) -> dict[str, Any]: ...
+
+    async def reindex(self, tenant_id: str) -> dict[str, Any]: ...
+
+    async def job(self, job_id: str) -> dict[str, Any]: ...
+
+    async def extract_rules(self, tenant_id: str, document_id: str | None = None) -> dict[str, Any]: ...
+
+    async def rules(self, tenant_id: str) -> dict[str, Any]: ...
+
+    async def approve_rule(self, tenant_id: str, rule_id: str, reviewer: str) -> dict[str, Any]: ...
+
+    async def reject_rule(self, tenant_id: str, rule_id: str, reviewer: str) -> dict[str, Any]: ...
+
+    async def edit_rule(self, tenant_id: str, rule_id: str, changes: dict[str, Any]) -> dict[str, Any]: ...
+
+    async def ruleset(self, tenant_id: str) -> dict[str, Any]: ...
+
+    async def snapshot(self, tenant_id: str) -> dict[str, Any]: ...
 
 
 @runtime_checkable

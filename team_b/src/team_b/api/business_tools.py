@@ -42,12 +42,12 @@ log = get_logger(__name__)
 
 # What a Team C problem means, in words a business owner can act on.
 PROBLEMS = {
-    "not_published": "no sandbox publication of this tool is active in Team C",
-    "ambiguous": "two artifacts of the same version are published: disable one in Team C",
+    "not_published": "no sandbox publication of this tool is active in the tool service",
+    "ambiguous": "two artifacts of the same version are published: disable one in the tool service",
     "kind_mismatch": "the published tool reads or writes differently from what this business declared",
-    "environment_not_allowed": "its environment (e.g. Live Demo) is not allowed for this tool in Team B's config",
+    "environment_not_allowed": "its environment (e.g. Live Demo) is not allowed for this tool here",
     "no_spec": "this business has no declaration of the tool (spec) to check it against",
-    "team_c_unavailable": "Team C's tool server could not be asked",
+    "team_c_unavailable": "the tool service could not be asked",
 }
 
 
@@ -216,7 +216,7 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
         out.team_c_error = state.error
     admin = team_c.admin
     if admin is None:
-        out.publications_error = "Team C's API address (api_url) is not configured"
+        out.publications_error = "the tool service's API address (api_url) is not configured"
         return out
     by_proposal = {b.proposal_id: name for name, b in binding.tools.items() if b.proposal_id}
     try:
@@ -224,7 +224,7 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
         proposals = await admin.proposals(binding.business_id)
         connectors = await admin.connectors(binding.business_id)
     except UpstreamError as exc:
-        out.publications_error = f"Team C's API could not be asked ({exc.code})"
+        out.publications_error = f"the tool service's API could not be asked ({exc.code})"
         return out
     out.publications = [_publication(p, by_proposal) for p in reversed(publications)]
     try:
@@ -351,10 +351,10 @@ async def disable(
     built = checked_tenant(request, tenant_id)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None:
-        raise not_found("this business has no Team C tools")
+        raise not_found("this business has no the tool service tools")
     admin = built.team_c.admin
     if admin is None:
-        raise upstream_unavailable("Team C's API address is not configured")
+        raise upstream_unavailable("the tool service's API address is not configured")
     try:
         found = await admin.publication(publication_id)
         if found is None or found.get("business_id") != binding.business_id:
@@ -363,7 +363,7 @@ async def disable(
         who = user.display_name if user is not None else "an operator"
         await admin.disable(publication_id, f"Disabled in Ticket-Easy by {who}: {body.note}")
     except UpstreamError as exc:
-        raise upstream_unavailable(f"Team C could not be asked ({exc.code})") from None
+        raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
     log.info("team_c_publication_disabled", tenant_id=tenant_id, publication_id=publication_id, actor=who)
     return await _overview(built, tenant_id, refresh=True)
 
@@ -377,7 +377,7 @@ async def check_connector(connector_id: CONNECTOR_ID, tenant_id: TENANT, request
     built = checked_tenant(request, tenant_id)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None or built.team_c.admin is None:
-        raise not_found("this business has no Team C connectors")
+        raise not_found("this business has no the tool service connectors")
     admin = built.team_c.admin
     try:
         mine = {c.get("id") for c in await admin.connectors(binding.business_id)}
@@ -385,7 +385,7 @@ async def check_connector(connector_id: CONNECTOR_ID, tenant_id: TENANT, request
             raise not_found("connector not found")  # another business's connector is answered as missing
         await admin.check_connector(connector_id)
     except UpstreamError as exc:
-        raise upstream_unavailable(f"Team C could not be asked ({exc.code})") from None
+        raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
     log.info("team_c_connector_checked", tenant_id=tenant_id, connector_id=connector_id)
     return await _overview(built, tenant_id, refresh=False)
 
@@ -403,7 +403,7 @@ async def auto_test(artifact_id: ARTIFACT_ID, tenant_id: TENANT, request: Reques
     built = checked_tenant(request, tenant_id)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None or built.team_c.admin is None:
-        raise not_found("this business has no Team C tools")
+        raise not_found("this business has no the tool service tools")
     admin = built.team_c.admin
     try:
         mine = {a.get("id") for a in await admin.artifacts(binding.business_id)}
@@ -411,7 +411,7 @@ async def auto_test(artifact_id: ARTIFACT_ID, tenant_id: TENANT, request: Reques
             raise not_found("tool not found")  # another business's tool, or an older version, is answered as missing
         await admin.auto_test(artifact_id)
     except UpstreamError as exc:
-        raise upstream_unavailable(f"Team C could not be asked ({exc.code})") from None
+        raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
     user = current_user(request)
     log.info(
         "team_c_auto_test_started",
@@ -447,7 +447,7 @@ def _admin_name(request: Request) -> str:
 def _team_c_failure(exc: UpstreamError) -> ApiError:
     if exc.code in ("PROMOTION_REFUSED", "PRODUCTION_DISABLED", "PROMOTION_NOT_ACTIVE"):
         return ApiError(409, exc.code, exc.message)  # Team C's own words: which checks failed
-    return upstream_unavailable(f"Team C could not be asked ({exc.code})")
+    return upstream_unavailable(f"The tool service could not be asked ({exc.code})")
 
 
 @router.post("/artifacts/{artifact_id}/promote", response_model=DashboardBusinessTools)
@@ -460,7 +460,7 @@ async def promote(
     actor = _admin_name(request)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None or built.team_c.admin is None:
-        raise not_found("this business has no Team C tools")
+        raise not_found("this business has no the tool service tools")
     admin = built.team_c.admin
     try:
         if artifact_id not in {a.get("id") for a in await admin.artifacts(binding.business_id)}:
@@ -493,7 +493,7 @@ async def rollback(
     actor = _admin_name(request)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None or built.team_c.admin is None:
-        raise not_found("this business has no Team C tools")
+        raise not_found("this business has no the tool service tools")
     admin = built.team_c.admin
     try:
         if promotion_id not in {p.get("id") for p in await admin.promotions(binding.business_id)}:

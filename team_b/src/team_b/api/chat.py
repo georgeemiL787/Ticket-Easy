@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from team_b.api.auth import check_chat_key
-from team_b.api.errors import not_found, rate_limited, tenant_not_found
+from team_b.api.errors import ApiError, not_found, rate_limited, tenant_not_found
 from team_b.api.ratelimit import RateLimiter
 from team_b.brain.composer import default_composer
 from team_b.brain.redaction import redact
@@ -54,6 +54,19 @@ def checked_tenant(request: Request, tenant_id: str) -> Container:
     return built
 
 
+PREVIEW_HEADER = "X-Preview-Token"
+
+
+def live_tenant(request: Request, tenant_id: str) -> Container:
+    """For the customer chat: a draft-only business answers TENANT_NOT_LIVE unless staff bring a preview token."""
+    built = checked_tenant(request, tenant_id)
+    if built.bundles is not None and tenant_id in built.bundles.drafts:
+        token = request.headers.get(PREVIEW_HEADER, "")
+        if built.previews is None or not built.previews.valid(token, tenant_id):
+            raise ApiError(404, "TENANT_NOT_LIVE", "this business is not live yet")
+    return built
+
+
 async def load_session(request: Request, tenant_id: str, conversation_id: str) -> SessionState:
     built = checked_tenant(request, tenant_id)
     session = await built.sessions.load(tenant_id, conversation_id)
@@ -65,7 +78,7 @@ async def load_session(request: Request, tenant_id: str, conversation_id: str) -
 @router.post("/v1/conversations/{conversation_id}/messages", response_model=AgentReply)
 async def post_message(conversation_id: CONVERSATION, body: MessageIn, request: Request) -> AgentReply:
     """One customer message in, the agent's reply out. The X-Request-ID header (or a new id) tags the whole turn."""
-    built = checked_tenant(request, body.tenant_id)
+    built = live_tenant(request, body.tenant_id)
     check_chat_key(request, body.tenant_id)
     limiter: RateLimiter = request.app.state.rate_limiter
     if (wait := limiter.hit((body.tenant_id, conversation_id))) is not None:
@@ -151,7 +164,7 @@ async def get_welcome(
     tenant_id: Annotated[str, Path(pattern=r"^[a-z0-9_]{1,64}$")], request: Request
 ) -> dict[str, str]:
     """The greeting the chat page shows when it opens, in the business default language. No conversation is created."""
-    tenant = checked_tenant(request, tenant_id).tenants.get(tenant_id)
+    tenant = live_tenant(request, tenant_id).tenants.get(tenant_id)
     locale = Locale(tenant.default_locale.value)
     return {
         "display_name": tenant.display_name,

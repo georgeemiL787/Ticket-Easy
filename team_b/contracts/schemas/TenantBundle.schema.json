@@ -1,0 +1,1055 @@
+{
+  "$defs": {
+    "AlertThresholds": {
+      "additionalProperties": false,
+      "description": "When the alert engine warns the managers of this business. Every number can be changed per business.",
+      "properties": {
+        "action_failing_min_calls": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Action Failing Min Calls",
+          "type": "integer"
+        },
+        "action_failing_rate": {
+          "default": 0.2,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Action Failing Rate",
+          "type": "number"
+        },
+        "action_failing_window_min": {
+          "default": 15,
+          "minimum": 1,
+          "title": "Action Failing Window Min",
+          "type": "integer"
+        },
+        "action_missing_window_min": {
+          "default": 60,
+          "minimum": 1,
+          "title": "Action Missing Window Min",
+          "type": "integer"
+        },
+        "agent_fallback_min_turns": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Agent Fallback Min Turns",
+          "type": "integer"
+        },
+        "agent_fallback_rate": {
+          "default": 0.2,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Agent Fallback Rate",
+          "type": "number"
+        },
+        "agent_fallback_window_min": {
+          "default": 60,
+          "minimum": 1,
+          "title": "Agent Fallback Window Min",
+          "type": "integer"
+        },
+        "ai_fallback_min_turns": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Ai Fallback Min Turns",
+          "type": "integer"
+        },
+        "ai_fallback_rate": {
+          "default": 0.1,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Ai Fallback Rate",
+          "type": "number"
+        },
+        "ai_fallback_window_min": {
+          "default": 60,
+          "minimum": 1,
+          "title": "Ai Fallback Window Min",
+          "type": "integer"
+        },
+        "backlog_sla_min": {
+          "default": 15,
+          "minimum": 1,
+          "title": "Backlog Sla Min",
+          "type": "integer"
+        },
+        "enabled": {
+          "default": true,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "escalation_spike_factor": {
+          "default": 2.0,
+          "exclusiveMinimum": 1,
+          "title": "Escalation Spike Factor",
+          "type": "number"
+        },
+        "escalation_spike_min_turns": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Escalation Spike Min Turns",
+          "type": "integer"
+        },
+        "knowledge_gap_min_questions": {
+          "default": 10,
+          "minimum": 1,
+          "title": "Knowledge Gap Min Questions",
+          "type": "integer"
+        },
+        "knowledge_gap_rate": {
+          "default": 0.15,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Knowledge Gap Rate",
+          "type": "number"
+        },
+        "knowledge_gap_same_question": {
+          "default": 5,
+          "minimum": 2,
+          "title": "Knowledge Gap Same Question",
+          "type": "integer"
+        },
+        "knowledge_gap_window_min": {
+          "default": 1440,
+          "minimum": 1,
+          "title": "Knowledge Gap Window Min",
+          "type": "integer"
+        },
+        "reviewer_block_min_turns": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Reviewer Block Min Turns",
+          "type": "integer"
+        },
+        "reviewer_block_rate": {
+          "default": 0.15,
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Reviewer Block Rate",
+          "type": "number"
+        },
+        "reviewer_block_window_min": {
+          "default": 60,
+          "minimum": 1,
+          "title": "Reviewer Block Window Min",
+          "type": "integer"
+        },
+        "service_down_errors": {
+          "default": 3,
+          "minimum": 1,
+          "title": "Service Down Errors",
+          "type": "integer"
+        },
+        "service_down_window_min": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Service Down Window Min",
+          "type": "integer"
+        },
+        "slow_min_turns": {
+          "default": 5,
+          "minimum": 1,
+          "title": "Slow Min Turns",
+          "type": "integer"
+        },
+        "slow_p95_ms": {
+          "default": 6000.0,
+          "exclusiveMinimum": 0,
+          "title": "Slow P95 Ms",
+          "type": "number"
+        },
+        "slow_window_min": {
+          "default": 15,
+          "minimum": 1,
+          "title": "Slow Window Min",
+          "type": "integer"
+        },
+        "unverified_result_window_min": {
+          "default": 60,
+          "minimum": 1,
+          "title": "Unverified Result Window Min",
+          "type": "integer"
+        }
+      },
+      "title": "AlertThresholds",
+      "type": "object"
+    },
+    "BundleDocument": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "minLength": 1,
+          "title": "Document Id",
+          "type": "string"
+        },
+        "status": {
+          "default": "indexed",
+          "enum": [
+            "uploaded",
+            "parsing",
+            "indexed",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "document_id"
+      ],
+      "title": "BundleDocument",
+      "type": "object"
+    },
+    "BundleGuardrails": {
+      "additionalProperties": false,
+      "properties": {
+        "approved_rule_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Approved Rule Ids",
+          "type": "array"
+        },
+        "ruleset_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ruleset Sha256"
+        },
+        "ruleset_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ruleset Version"
+        },
+        "violation": {
+          "$ref": "#/$defs/ViolationBehaviour"
+        }
+      },
+      "title": "BundleGuardrails",
+      "type": "object"
+    },
+    "BundleKnowledge": {
+      "additionalProperties": false,
+      "properties": {
+        "built_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Built At"
+        },
+        "documents": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/BundleDocument"
+          },
+          "title": "Documents",
+          "type": "array"
+        },
+        "index_tenant": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Index Tenant"
+        },
+        "provider": {
+          "default": "standin",
+          "enum": [
+            "team_a",
+            "standin"
+          ],
+          "title": "Provider",
+          "type": "string"
+        }
+      },
+      "title": "BundleKnowledge",
+      "type": "object"
+    },
+    "BundleProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "default_locale": {
+          "$ref": "#/$defs/Locale",
+          "default": "en"
+        },
+        "display_name": {
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "locales": {
+          "default": [
+            "en"
+          ],
+          "items": {
+            "$ref": "#/$defs/Locale"
+          },
+          "title": "Locales",
+          "type": "array"
+        },
+        "tone": {
+          "default": "friendly",
+          "enum": [
+            "friendly",
+            "formal",
+            "neutral"
+          ],
+          "title": "Tone",
+          "type": "string"
+        }
+      },
+      "required": [
+        "display_name"
+      ],
+      "title": "BundleProfile",
+      "type": "object"
+    },
+    "BundleTool": {
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ToolBindingRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "permission": {
+          "default": "read",
+          "enum": [
+            "read",
+            "confirm",
+            "human_only"
+          ],
+          "title": "Permission",
+          "type": "string"
+        },
+        "risk": {
+          "default": "low",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Risk",
+          "type": "string"
+        },
+        "source": {
+          "default": "standin",
+          "enum": [
+            "team_c",
+            "standin"
+          ],
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "BundleTool",
+      "type": "object"
+    },
+    "EscalationConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "escalate_on_deny": {
+          "default": true,
+          "title": "Escalate On Deny",
+          "type": "boolean"
+        },
+        "escalate_on_high_frustration": {
+          "default": true,
+          "title": "Escalate On High Frustration",
+          "type": "boolean"
+        },
+        "final_deny_rules": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Final Deny Rules",
+          "type": "array"
+        },
+        "frustration_attempts": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Frustration Attempts",
+          "type": "integer"
+        },
+        "max_clarifications": {
+          "default": 2,
+          "minimum": 1,
+          "title": "Max Clarifications",
+          "type": "integer"
+        },
+        "max_tool_failures": {
+          "default": 2,
+          "minimum": 1,
+          "title": "Max Tool Failures",
+          "type": "integer"
+        },
+        "min_intent_confidence": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Min Intent Confidence",
+          "type": "number"
+        },
+        "next_steps": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Next Steps",
+          "type": "object"
+        },
+        "outage_retries": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Outage Retries",
+          "type": "integer"
+        },
+        "policy_questions": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Policy Questions",
+          "type": "integer"
+        },
+        "priorities": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Priorities",
+          "type": "object"
+        },
+        "sla_minutes": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Sla Minutes",
+          "type": "object"
+        }
+      },
+      "title": "EscalationConfig",
+      "type": "object"
+    },
+    "IdentityConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "default": 2,
+          "minimum": 1,
+          "title": "Max Attempts",
+          "type": "integer"
+        },
+        "required_slots": {
+          "default": [
+            "order_id",
+            "phone"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Slots",
+          "type": "array"
+        },
+        "verify_tool": {
+          "minLength": 1,
+          "title": "Verify Tool",
+          "type": "string"
+        }
+      },
+      "required": [
+        "verify_tool"
+      ],
+      "title": "IdentityConfig",
+      "type": "object"
+    },
+    "IntentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "action_tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Action Tool"
+        },
+        "alternatives": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Alternatives",
+          "type": "array"
+        },
+        "argument_map": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Argument Map",
+          "type": "object"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "examples": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Examples",
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "knowledge",
+            "lookup",
+            "action",
+            "handoff",
+            "smalltalk"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "knowledge_query": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Knowledge Query"
+        },
+        "knowledge_when": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Knowledge When"
+        },
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Labels",
+          "type": "object"
+        },
+        "lookup_tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lookup Tool"
+        },
+        "required_slots": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Required Slots",
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "IntentSpec",
+      "type": "object"
+    },
+    "KnowledgeConfig": {
+      "additionalProperties": false,
+      "description": "How the knowledge agent judges what the policy search returns.",
+      "properties": {
+        "min_score": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Min Score",
+          "type": "number"
+        }
+      },
+      "title": "KnowledgeConfig",
+      "type": "object"
+    },
+    "Locale": {
+      "description": "Reply style. Mixed-language customers get Egyptian Arabic, so there is no mixed locale.",
+      "enum": [
+        "en",
+        "ar",
+        "arabizi"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "PermissionsConfig": {
+      "additionalProperties": false,
+      "description": "Which tools the agent may use at all. The default allows nothing (fail closed).",
+      "properties": {
+        "allowed_tools": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowed Tools",
+          "type": "array"
+        },
+        "confirm_operation_kinds": {
+          "default": [
+            "create",
+            "update",
+            "delete"
+          ],
+          "items": {
+            "enum": [
+              "read",
+              "create",
+              "update",
+              "delete"
+            ],
+            "type": "string"
+          },
+          "title": "Confirm Operation Kinds",
+          "type": "array"
+        },
+        "max_risk": {
+          "default": "medium",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Max Risk",
+          "type": "string"
+        }
+      },
+      "title": "PermissionsConfig",
+      "type": "object"
+    },
+    "TenantConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "agent_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "on",
+                "off",
+                "shadow"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent Mode"
+        },
+        "alerts": {
+          "$ref": "#/$defs/AlertThresholds"
+        },
+        "bundle_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bundle Sha256"
+        },
+        "bundle_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bundle Version"
+        },
+        "conflicting_intents": {
+          "default": [],
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Conflicting Intents",
+          "type": "array"
+        },
+        "default_locale": {
+          "$ref": "#/$defs/Locale",
+          "default": "en"
+        },
+        "display_name": {
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "escalation": {
+          "$ref": "#/$defs/EscalationConfig"
+        },
+        "history_max_turns": {
+          "default": 12,
+          "minimum": 1,
+          "title": "History Max Turns",
+          "type": "integer"
+        },
+        "identity": {
+          "$ref": "#/$defs/IdentityConfig"
+        },
+        "intents": {
+          "additionalProperties": {
+            "$ref": "#/$defs/IntentSpec"
+          },
+          "title": "Intents",
+          "type": "object"
+        },
+        "knowledge": {
+          "$ref": "#/$defs/KnowledgeConfig"
+        },
+        "managers": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Managers",
+          "type": "array"
+        },
+        "order_id_pattern": {
+          "minLength": 1,
+          "title": "Order Id Pattern",
+          "type": "string"
+        },
+        "order_id_prefix": {
+          "default": "",
+          "title": "Order Id Prefix",
+          "type": "string"
+        },
+        "permissions": {
+          "$ref": "#/$defs/PermissionsConfig"
+        },
+        "preview": {
+          "default": false,
+          "title": "Preview",
+          "type": "boolean"
+        },
+        "tenant_id": {
+          "pattern": "^[a-z0-9_]{1,64}$",
+          "title": "Tenant Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_id",
+        "display_name",
+        "order_id_pattern",
+        "identity"
+      ],
+      "title": "TenantConfig",
+      "type": "object"
+    },
+    "ToolBindingRef": {
+      "additionalProperties": false,
+      "description": "Which tools-service publication serves a tool. Ids only, no credentials.",
+      "properties": {
+        "arguments": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Arguments",
+          "type": "object"
+        },
+        "business_id": {
+          "minLength": 1,
+          "title": "Business Id",
+          "type": "string"
+        },
+        "constants": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Constants",
+          "type": "object"
+        },
+        "echo": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Echo",
+          "type": "array"
+        },
+        "environments": {
+          "default": [
+            "sandbox"
+          ],
+          "items": {
+            "enum": [
+              "sandbox",
+              "live_demo",
+              "production"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Environments",
+          "type": "array"
+        },
+        "fields": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "object"
+        },
+        "proposal_id": {
+          "minLength": 1,
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "reference_field": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Field"
+        },
+        "spec": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Spec"
+        }
+      },
+      "required": [
+        "business_id",
+        "proposal_id"
+      ],
+      "title": "ToolBindingRef",
+      "type": "object"
+    },
+    "ViolationBehaviour": {
+      "additionalProperties": false,
+      "description": "What happens when a guardrail is hit. Fixed by the gates in brain/actions.py; stored so the bundle shows it.",
+      "properties": {
+        "deny": {
+          "const": "refuse",
+          "default": "refuse",
+          "title": "Deny",
+          "type": "string"
+        },
+        "require_human": {
+          "const": "handoff",
+          "default": "handoff",
+          "title": "Require Human",
+          "type": "string"
+        },
+        "unavailable": {
+          "const": "handoff",
+          "default": "handoff",
+          "title": "Unavailable",
+          "type": "string"
+        }
+      },
+      "title": "ViolationBehaviour",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "config": {
+      "$ref": "#/$defs/TenantConfig"
+    },
+    "content_sha256": {
+      "default": "",
+      "pattern": "^([0-9a-f]{64})?$",
+      "title": "Content Sha256",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "created_by": {
+      "minLength": 1,
+      "title": "Created By",
+      "type": "string"
+    },
+    "escalation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EscalationConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "guardrails": {
+      "$ref": "#/$defs/BundleGuardrails"
+    },
+    "identities": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Identities",
+      "type": "object"
+    },
+    "knowledge": {
+      "$ref": "#/$defs/BundleKnowledge"
+    },
+    "parent_version": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Version"
+    },
+    "profile": {
+      "$ref": "#/$defs/BundleProfile"
+    },
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "default": "draft",
+      "enum": [
+        "draft",
+        "published",
+        "active",
+        "retired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "tenant_id": {
+      "pattern": "^[a-z0-9_]{1,64}$",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "tools": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/BundleTool"
+      },
+      "title": "Tools",
+      "type": "array"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "version",
+    "created_at",
+    "created_by",
+    "config",
+    "profile"
+  ],
+  "title": "TenantBundle",
+  "type": "object"
+}

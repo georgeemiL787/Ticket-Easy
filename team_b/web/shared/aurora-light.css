@@ -1,0 +1,347 @@
+/* The "aurora" look of Ticket-Easy: a light, calm theme shared by the chat, the inbox, the dashboard and the tools pages
+   (aurora.css imports this file; the dashboard imports it directly). It is the default: no attribute is needed.
+
+   Colour roles (contrast measured against #FFFFFF / #F8FAFC, checked by team_b/scripts/check_contrast.py):
+   - text:        --text #0F172A, --text-2 #475569
+   - muted text:  --muted-text #64748B; the lighter --muted #94A3B8 is for placeholders, disabled states and borders only
+   - fills, icons, edges, focus ring, large text: --teal #0D9488, --magenta #C026D3, --blue #2563EB, --amber #D97706, --green #16A34A
+   - text and button fills with a white label: --teal-text #0F766E, --amber-text #B45309, --green-text #15803D, --red #DC2626
+
+   Markup contract for the shared pieces:
+     .te-header  > .te-brand + nav.te-nav (a[aria-current="page"]) + .te-header-end (locale switch, user)
+     .te-btn  (+ .te-btn--primary | .te-btn--danger; [disabled]; [aria-busy="true"] shows a spinner)
+     .te-state--empty | .te-state--loading | .te-state--error   (a centred message block)
+     .te-badge--ok | --warn | --bad   (always an icon or dot plus a label, never colour alone)
+     .te-card  (glass panel; solid white where backdrop-filter is unsupported) */
+:root {
+  color-scheme: light;
+  --ink: #f8fafc;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --text-2: #475569;
+  --muted-text: #64748b;
+  --muted: #94a3b8;
+  --faint: #94a3b8;
+  --border: rgba(15, 23, 42, 0.12);
+  --glass-border: rgba(15, 23, 42, 0.12);
+  --soft-border: rgba(15, 23, 42, 0.08);
+  --teal: #0d9488;
+  --teal-text: #0f766e;
+  --magenta: #c026d3;
+  --blue: #2563eb;
+  --aqua: #0d9488;
+  --sky: #2563eb;
+  --accent: #0f766e;
+  --accent-text: #ffffff;
+  --red: #dc2626;
+  --amber: #d97706;
+  --amber-text: #b45309;
+  --green: #16a34a;
+  --green-text: #15803d;
+  --bad: #dc2626;
+  --warn: #b45309;
+  --good: #15803d;
+  --red-soft: #fef2f2;
+  --amber-soft: #fffbeb;
+  --green-soft: #f0fdf4;
+  --teal-soft: #f0fdfa;
+  --magenta-soft: #fdf4ff;
+  --blue-soft: #eff6ff;
+  --glass: rgba(255, 255, 255, 0.72);
+  --radius: 16px;
+  --radius-lg: 20px;
+  --shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.18);
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tap: 44px;
+}
+
+:root:lang(ar),
+:root :lang(ar) {
+  --font-display: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+}
+
+:root,
+:root body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+:root body {
+  font-family: var(--font-body);
+}
+
+:root h1,
+:root h2,
+:root h3 {
+  font-family: var(--font-display);
+  color: var(--text);
+}
+
+:root a {
+  color: var(--blue);
+}
+
+/* two static corner glows instead of the drifting dark blobs, and a very light grain */
+:root body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(520px 420px at 0% 0%, rgba(13, 148, 136, 0.14), transparent 70%),
+    radial-gradient(560px 460px at 100% 100%, rgba(192, 38, 211, 0.1), transparent 70%);
+}
+
+:root body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+:root .aurora,
+:root .grain,
+:root .vignette {
+  display: none;
+}
+
+:root ::placeholder {
+  color: var(--muted);
+}
+
+:root :focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* ---- cards ---- */
+:root .te-card,
+:root .glass {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root .te-card,
+  :root .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+  }
+}
+
+/* ---- header ---- */
+:root .te-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root .te-header {
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+}
+
+:root .te-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+:root .te-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+:root .te-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  color: var(--text-2);
+  text-decoration: none;
+}
+
+:root .te-nav a:hover {
+  background: var(--teal-soft);
+}
+
+:root .te-nav a[aria-current="page"] {
+  background: var(--teal-soft);
+  color: var(--teal-text);
+  font-weight: 600;
+}
+
+:root .te-header-end {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- buttons ---- */
+:root .te-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 16px;
+  font: 600 14px/1.2 var(--font-body);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+:root .te-btn:hover {
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+:root .te-btn--primary {
+  color: #ffffff;
+  background: var(--teal-text);
+  border-color: var(--teal-text);
+}
+
+:root .te-btn--primary:hover {
+  background: #115e59;
+}
+
+:root .te-btn--danger {
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.5);
+  background: var(--red-soft);
+}
+
+:root .te-btn[disabled],
+:root .te-btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+:root .te-btn[aria-busy="true"] {
+  position: relative;
+  pointer-events: none;
+}
+
+:root .te-btn[aria-busy="true"]::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: 9999px;
+  animation: te-spin 0.8s linear infinite;
+}
+
+@keyframes te-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- states ---- */
+:root .te-state--empty,
+:root .te-state--loading,
+:root .te-state--error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-2);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+:root .te-state--error {
+  color: #991b1b;
+  background: var(--red-soft);
+  border-style: solid;
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+:root .te-state--loading {
+  color: var(--muted-text);
+}
+
+/* ---- badges: soft tint behind, dark text on it, an icon or dot in the label ---- */
+:root .te-badge--ok,
+:root .te-badge--warn,
+:root .te-badge--bad {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:root .te-badge--ok {
+  color: var(--green-text);
+  background: var(--green-soft);
+}
+
+:root .te-badge--warn {
+  color: var(--amber-text);
+  background: var(--amber-soft);
+}
+
+:root .te-badge--bad {
+  color: #b91c1c;
+  background: var(--red-soft);
+}
+
+/* ---- touch targets and motion ---- */
+@media (max-width: 768px) {
+  :root .te-btn,
+  :root .te-nav a,
+  :root button,
+  :root select,
+  :root input[type="text"],
+  :root input[type="email"],
+  :root input[type="password"],
+  :root input[type="search"] {
+    min-height: var(--tap);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

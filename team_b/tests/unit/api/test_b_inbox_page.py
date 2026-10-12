@@ -80,4 +80,6 @@ def test_the_reason_filter_lists_every_escalation_reason() -> None:
 
     source = (INBOX / "inbox.js").read_text(encoding="utf-8")
     assert all(f'"{reason.value}"' in source for reason in EscalationReason)
-    assert Path(INBOX / "index.html").read_text(encoding="utf-8").count("<script") == 1
+    assert (
+        Path(INBOX / "index.html").read_text(encoding="utf-8").count("<script") == 2
+    )  # the shared translator, then the inbox

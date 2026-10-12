@@ -1,11 +1,12 @@
 """Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
 
 import secrets
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
 from team_b.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
+from team_b.adapters.bundle_repository import InMemoryBundleStore, SqliteBundleStore
 from team_b.adapters.llm_policy_gate import LLMPolicyGate
 from team_b.adapters.llm_registry import LLMRegistry
 from team_b.adapters.memory_store import (
@@ -15,12 +16,15 @@ from team_b.adapters.memory_store import (
     InMemoryTraceStore,
     SystemClock,
 )
+from team_b.adapters.onboarding_repository import InMemoryDraftStore, SqliteDraftStore
 from team_b.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
 from team_b.adapters.standins.evidence import StandinEvidenceProvider
+from team_b.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
 from team_b.adapters.standins.policy_search import PolicySearchStandin
 from team_b.adapters.standins.rule_checker import RuleCheckerStandin
 from team_b.adapters.standins.safety_screen import SafetyScreenStandin
 from team_b.adapters.standins.shop import StandinShop
+from team_b.adapters.team_a_admin import TeamAAdmin
 from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
 from team_b.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
 from team_b.adapters.user_repository import InMemoryUserStore, SqliteUserStore
@@ -37,7 +41,10 @@ from team_b.brain.rewrite import LLMRewriter
 from team_b.brain.smalltalk import SmallTalkWriter
 from team_b.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
 from team_b.brain.writer import ReplyWriter
+from team_b.bundles import BundleRegistry
 from team_b.config import Settings
+from team_b.contracts.errors import UpstreamError
+from team_b.domain.bundle import TenantBundle
 from team_b.domain.tenant import TenantRegistry
 from team_b.events import EventHub
 from team_b.ports import (
@@ -45,13 +52,16 @@ from team_b.ports import (
     CapabilityClient,
     CaseStore,
     Clock,
+    DraftStore,
     EvidenceProvider,
+    KnowledgeAdmin,
     LLMClient,
     PolicyGate,
     SessionStore,
     TraceStore,
     UserStore,
 )
+from team_b.preview import PreviewTokens
 
 
 class ContainerError(RuntimeError):
@@ -83,6 +93,12 @@ class Container:
     auth: AuthService | None = None  # checks passwords and the sign-in cookie
     alerts: AlertStore | None = None  # alerts for managers (opened and resolved by alert_engine)
     alert_engine: AlertEngine | None = None
+    previews: PreviewTokens | None = None  # signed passes for staff to chat with a business that is not live yet
+    drafts: DraftStore | None = None  # where the onboarding wizard stands for each business being set up
+    knowledge_admin: KnowledgeAdmin | None = (
+        None  # documents and rules for the knowledge pages (None: those pages are off)
+    )
+    bundles: BundleRegistry | None = None  # versioned business configuration; `tenants` is this registry when enabled
     events: EventHub = field(default_factory=EventHub)  # live delivery of human replies to open chat pages
 
 
@@ -97,11 +113,23 @@ def build_container(
     clock = clock or (FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock())
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
+    bundles: BundleRegistry | None = None
+    if settings.bundles:  # an active bundle replaces the tenant file of its business; the registry has the same API
+        bundles = BundleRegistry(
+            tenants,
+            SqliteBundleStore(SqliteDatabase(settings.db_path))
+            if settings.store == "sqlite"
+            else InMemoryBundleStore(),
+            clock,
+        )
+        tenants = bundles
     shops_dir = settings.db_path.parent / "shops" if settings.store == "sqlite" else None  # SQLite shops keep files
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
     # Team C serves the tools its config binds (TEST-ONLY sandbox publications over MCP); the stand-in serves the rest.
     team_c = TeamCCapabilities(shop, TeamCConfig.load(settings.team_c_config)) if settings.team_c_config else None
     capabilities: CapabilityClient = team_c if team_c is not None else shop
+    if bundles is not None and team_c is not None:
+        bundles.add_listener(team_c.on_bundle_change)  # a new active bundle rebinds that business's tools
     live = settings.mode == "live"  # Team A is real (policy search, safety screen, rule checker)
     policy_search = None if live else PolicySearchStandin(settings.fixtures_dir)
     rule_checker = None if live else RuleCheckerStandin(settings.fixtures_dir)
@@ -109,11 +137,18 @@ def build_container(
     evidence: EvidenceProvider
     policy: PolicyGate
     if live:
-        team_a = TeamAClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s)
+        service_key = settings.team_a_key.get_secret_value() if settings.team_a_key is not None else None
+        team_a = TeamAClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s, service_key=service_key)
         evidence, policy = HttpEvidenceProvider(team_a), HttpPolicyGate(team_a)
+        knowledge_admin: KnowledgeAdmin | None = (
+            TeamAAdmin(settings.team_a_url, settings.team_a_admin_key.get_secret_value(), service_key=service_key)
+            if settings.team_a_admin_key is not None
+            else None
+        )
     else:
         assert policy_search is not None and rule_checker is not None and safety_screen is not None
         evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
+        knowledge_admin = StandinKnowledgeAdmin()
     llm = llms.default()
     if settings.llm_policy and llms.llm_for("reviewer") is None:
         raise ContainerError("TEAM_B_LLM_POLICY needs an AI model: set TEAM_B_LLM.")
@@ -140,10 +175,14 @@ def build_container(
         cases=cases,
         shop=shop,
         team_c=team_c,
+        bundles=bundles,
+        knowledge_admin=knowledge_admin,
         policy_search=policy_search,
         rule_checker=rule_checker,
         safety_screen=safety_screen,
     )
+    if bundles is not None and knowledge_admin is not None:
+        bundles.add_publish_check(approved_rules_are_current(knowledge_admin))
     registry = CapabilityRegistry(container.capabilities, clock, settings.capability_ttl_s)
     summary_llm, reader_llm, knowledge_llm = llms.llm_for("summary"), llms.llm_for("reader"), llms.llm_for("knowledge")
     writer_llm = llms.llm_for("writer") if settings.llm_rewrite else None
@@ -172,8 +211,13 @@ def build_container(
         tenants=tenants,
         notifier=WebhookNotifier(settings.alert_webhook) if settings.alert_webhook else None,
     )
+    drafts: DraftStore = (
+        SqliteDraftStore(SqliteDatabase(settings.db_path)) if settings.store == "sqlite" else InMemoryDraftStore()
+    )
     return replace(
         container,
+        previews=PreviewTokens(secret),
+        drafts=drafts,
         users=users,
         auth=AuthService(users, secret, session_hours=settings.session_hours),
         alerts=alerts,
@@ -208,6 +252,31 @@ def build_container(
             agent_turn_timeout_s=settings.agent_turn_timeout_s,
         ),
     )
+
+
+def approved_rules_are_current(admin: KnowledgeAdmin) -> Callable[[Any], Awaitable[list[str]]]:
+    """A bundle that names a ruleset version may be published only while that is still the knowledge service's approved
+    ruleset (a bundle from the knowledge service must name one): rules approved or made stale since then block it."""
+
+    async def check(bundle: TenantBundle) -> list[str]:
+        named = bundle.guardrails.ruleset_version
+        if named is None and bundle.knowledge.provider != "team_a":
+            return []
+        try:
+            current = (await admin.ruleset(bundle.tenant_id)).get("ruleset_version")
+        except UpstreamError:
+            return ["the approved rules could not be checked: the knowledge service did not answer"]
+        if named is None:
+            return [
+                "the guardrails were never taken from the knowledge service: refresh them and approve the rules first"
+            ]
+        if named != current:
+            return [
+                "the approved rules changed since this draft was made: refresh the draft from the knowledge service"
+            ]
+        return []
+
+    return check
 
 
 def build_llm(settings: Settings) -> LLMClient | None:

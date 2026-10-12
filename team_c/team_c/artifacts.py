@@ -55,7 +55,11 @@ def auth_for(op, missing):
             return dict(scheme=option[0]["scheme"], type="oauth2_password", token_path=token_url, scopes=sorted(option[0]["scopes"]))
         if scheme.get("type") == "http" and str(scheme.get("scheme", "")).lower() == "bearer":
             return dict(scheme=option[0]["scheme"], type="http_bearer", scopes=[])
-    missing.append(f'{op["method"]} {op["path"]}: no supported authentication (OAuth2 password flow or HTTP bearer) is declared')
+        if scheme.get("type") == "http" and str(scheme.get("scheme", "")).lower() == "basic":
+            return dict(scheme=option[0]["scheme"], type="http_basic", scopes=[])
+        if scheme.get("type") == "apiKey" and scheme.get("in") in ("header", "query") and re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", str(scheme.get("name", ""))):
+            return dict(scheme=option[0]["scheme"], type="api_key", location=scheme["in"], name=scheme["name"], scopes=[])
+    missing.append(f'{op["method"]} {op["path"]}: no supported authentication (OAuth2 password flow, HTTP bearer or basic, or an API key in a header or query) is declared')
     return None
 
 

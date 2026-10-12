@@ -6,6 +6,7 @@ gates of connectors.live_destination_problem (re-checked before every run, right
 Credentials come from the trusted execution context and never enter reports. Execution stops at
 the first failure, and the report says truthfully whether each write was applied, rejected or unknown.
 """
+import base64
 import json
 import time
 from urllib.parse import quote, unquote, urlencode, urlparse
@@ -135,6 +136,9 @@ def service_identity(connector, context, auth=None):
     return identity
 
 
+TOKEN_AUTH = ("http_bearer", "api_key")  # authentication types whose credential is one secret value (`token`)
+
+
 def credentials(identity, artifact: Artifact):
     """Pre-flight: the trusted execution context must hold a usable end-user credential."""
     from .compiler.policies import authorize
@@ -143,7 +147,7 @@ def credentials(identity, artifact: Artifact):
     mechanisms = {a["enforcement"].get("mechanism") for a in artifact["access_requirements"]}
     if identity is None:
         raise AppError("identity_unknown", "The identity is not configured for this connector", 404)
-    if auth and not (identity.get("token") if auth["type"] == "http_bearer" else identity.get("username") and identity.get("password")):
+    if auth and not (identity.get("token") if auth["type"] in TOKEN_AUTH else identity.get("username") and identity.get("password")):
         raise AppError("credential_missing", "The trusted execution context has no credential for this connector; no request was sent")
     if "delegated_user_credential" in mechanisms and identity.get("scope") != "end_user":
         raise AppError("credential_scope", "Only identities the operator registered as individual end users may run this tool; service or administrator credentials are refused", 403)
@@ -197,6 +201,7 @@ class Run:
         self.context = dict(identity.get("context") or {}, business_id=artifact["proposal"]["business_id"])
         self.identity_context = identity.get("context") or {}
         self.results, self.trace, self.retry_after = {}, [], None
+        self.auth_query = {}  # an API key the connector sends in the query string
         self.client = httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.limits["timeout_seconds"])
 
     def value(self, source):
@@ -302,7 +307,7 @@ class Run:
         if content is not None:
             headers["Content-Type"] = "application/json"
         try:
-            with self.client.stream(method, url, headers=headers, content=content, data=form) as response:
+            with self.client.stream(method, httpx.URL(url).copy_merge_params(self.auth_query) if self.auth_query else url, headers=headers, content=content, data=form) as response:
                 if 300 <= response.status_code < 400:
                     raise StepFailure("redirect_rejected", f"HTTP {response.status_code} redirect was not followed", "unknown" if write else "not_applied")
                 data = bytearray()
@@ -327,6 +332,14 @@ class Run:
             return {}
         if auth["type"] == "http_bearer":
             return {"Authorization": "Bearer " + self.identity["token"]}
+        if auth["type"] == "api_key":
+            if auth["location"] == "query":
+                self.auth_query = {auth["name"]: self.identity["token"]}
+                return {}
+            return {auth["name"]: self.identity["token"]}
+        if auth["type"] == "http_basic":
+            pair = (self.identity["username"] + ":" + self.identity["password"]).encode("utf-8")
+            return {"Authorization": "Basic " + base64.b64encode(pair).decode("ascii")}
         form = dict(grant_type="password", username=self.identity["username"], password=self.identity["password"])
         if auth["scopes"]:
             form["scope"] = " ".join(auth["scopes"])

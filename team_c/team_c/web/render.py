@@ -21,4 +21,4 @@ def page(request,**context):
     state=request.app.state
     settings=state.settings
     return state.templates.TemplateResponse(request=request,name=context["screen"]+".html",context=dict(csrf=request.session["csrf"],reviewer=settings.dev_reviewer_id,provider=settings.llm_primary,model=getattr(settings,settings.llm_primary+"_model",""),fallback=settings.llm_fallback,ai_job=jobs.banner(state.jobs),
-                                                                                                  live_demo=dict(enabled=settings.live_demo_enabled,hosts=sorted(listed(settings.live_demo_hosts))),**context))
+                                                                                                  live_demo=dict(enabled=settings.live_demo_enabled,hosts=sorted(listed(settings.live_demo_hosts))),product_url=settings.product_url,**context))

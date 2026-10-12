@@ -35,10 +35,13 @@ class TeamAClient:
         *,
         timeout_s: float = 10.0,
         transport: httpx.AsyncBaseTransport | None = None,
+        service_key: str | None = None,
     ) -> None:
         self._base = base_url.rstrip("/")
         self._timeout = timeout_s
         self._transport = transport
+        # Who we are to Team A: it answers only a caller whose key is bound to the business (X-Service-Key).
+        self._headers = {"X-Service-Key": service_key} if service_key else {}
 
     async def request(
         self, method: str, path: str, *, body: dict[str, Any] | None = None, params: dict[str, str] | None = None
@@ -46,7 +49,9 @@ class TeamAClient:
         """The response, or UpstreamError. A plain NOT_FOUND 404 is returned so a lookup can answer None."""
         try:
             async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
-                response = await client.request(method, self._base + path, json=body, params=params)
+                response = await client.request(
+                    method, self._base + path, json=body, params=params, headers=self._headers
+                )
         except httpx.TimeoutException:
             raise UpstreamError(SERVICE, "TIMEOUT", "Team A did not answer in time", retryable=True) from None
         except httpx.TransportError as exc:

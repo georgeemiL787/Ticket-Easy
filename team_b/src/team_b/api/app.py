@@ -12,7 +12,19 @@ from fastapi.staticfiles import StaticFiles
 
 from team_b.api import alerts as alerts_api
 from team_b.api import auth as auth_api
-from team_b.api import business_tools, capabilities, chat, dashboard, inbox, testadmin, traces
+from team_b.api import bundles as bundles_api
+from team_b.api import (
+    business_tools,
+    capabilities,
+    chat,
+    dashboard,
+    inbox,
+    knowledge,
+    onboarding,
+    testadmin,
+    tool_setup,
+    traces,
+)
 from team_b.api.errors import install_error_handlers
 from team_b.api.ratelimit import RateLimiter
 from team_b.brain.alerts import alert_loop
@@ -89,6 +101,8 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             built = build_container(resolved)
         app.state.container = built
         app.state.events = built.events
+        if built.bundles is not None:
+            await built.bundles.load()  # the active bundle of every business replaces its tenant file
         app.state.rate_limiter = RateLimiter(built.settings.rate_limit_per_minute)
         log.info("started", mode=built.settings.mode, tenants=list(built.tenants.tenant_ids()))
         retention = asyncio.create_task(retention_loop(built))
@@ -119,6 +133,10 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
     app.include_router(business_tools.router)
+    app.include_router(bundles_api.router)
+    app.include_router(tool_setup.router)
+    app.include_router(knowledge.router)
+    app.include_router(onboarding.router)
     mount_chat_page(app)
     mount_shared_ui(app)
     mount_inbox_page(app)

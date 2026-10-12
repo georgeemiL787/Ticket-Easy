@@ -38,7 +38,7 @@ class Discovery:
     def upload(self, business_id, filename, raw):
         self.store.one("SELECT * FROM businesses WHERE id=?", (business_id,))
         if len(raw) > self.settings.max_upload_bytes:
-            raise AppError("upload_limit", "Upload exceeds 2 MiB", 413)
+            raise AppError("upload_limit", f"Upload exceeds {self.settings.max_upload_bytes // (1024 * 1024)} MiB", 413)
         if not filename.lower().endswith((".json", ".yaml", ".yml")):
             raise AppError("file_type", "Upload an OpenAPI JSON or YAML file")
         return self.save_openapi(business_id, filename, filename, raw, dict(kind="upload", filename=filename))
@@ -101,7 +101,7 @@ class Discovery:
                     for chunk in response.iter_bytes():
                         raw.extend(chunk)
                         if len(raw) > self.settings.max_upload_bytes:
-                            raise AppError("upload_limit", "Fetched document exceeds 2 MiB", 413)
+                            raise AppError("upload_limit", f"Fetched document exceeds {self.settings.max_upload_bytes // (1024 * 1024)} MiB", 413)
                     media = response.headers.get("content-type", "").split(";")[0].strip().lower()
         except httpx.HTTPError as exc:
             raise AppError("fetch_failed", f"Could not fetch {url} ({type(exc).__name__}); is the server running?", 502)

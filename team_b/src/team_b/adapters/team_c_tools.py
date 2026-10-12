@@ -51,6 +51,7 @@ from team_b.adapters.team_c_admin import TeamCAdmin
 from team_b.adapters.team_c_mcp import McpLost, McpRemoteError, McpStdioSession, McpUnavailable
 from team_b.contracts.errors import UpstreamError
 from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from team_b.domain.bundle import TenantBundle
 from team_b.observability import get_logger
 from team_b.ports import CapabilityClient
 
@@ -193,6 +194,7 @@ class TeamCCapabilities:
         self._starting: dict[tuple[str, str], asyncio.Lock] = {}
         self._start_failed: dict[tuple[str, str], tuple[float, str]] = {}
         self._state: dict[str, TenantState] = {}
+        self._file_bindings: dict[str, TenantBinding] = dict(config.tenants)  # as the operator's file says
         # Team C's REST API, for the Business tools page (publications, proposals, disable); None without api_url.
         token = os.environ.get(config.admin_token_env or "") or None
         self.admin: TeamCAdmin | None = TeamCAdmin(config.api_url, admin_token=token) if config.api_url else None
@@ -200,7 +202,7 @@ class TeamCCapabilities:
     # ---- the CapabilityClient plug ----
 
     async def list_tools(self, tenant_id: str) -> list[ToolSpec]:
-        own = await self._fallback.list_tools(tenant_id)
+        own = await self._own_tools(tenant_id)
         binding = self.config.tenants.get(tenant_id)
         if binding is None:
             return own
@@ -212,6 +214,15 @@ class TeamCCapabilities:
             if resolved is not None and resolved.problem is None and spec is not None:
                 served.append(spec)
         return served
+
+    async def _own_tools(self, tenant_id: str) -> list[ToolSpec]:
+        """The built-in shop's tools of this business; one set up in the dashboard has none (not an error)."""
+        try:
+            return await self._fallback.list_tools(tenant_id)
+        except UpstreamError as exc:
+            if exc.code == "TENANT_NOT_FOUND":
+                return []
+            raise
 
     async def call_tool(self, tenant_id: str, request: ToolCallRequest) -> ToolResult:
         binding = self.config.tenants.get(tenant_id)
@@ -266,7 +277,7 @@ class TeamCCapabilities:
         """List Team C's tools again (no list_changed notifications exist) and resolve every binding."""
         binding = self.config.tenants[tenant_id]
         if declared is None:
-            declared = {t.name: t for t in await self._fallback.list_tools(tenant_id)}
+            declared = {t.name: t for t in await self._own_tools(tenant_id)}
         state = self._state.setdefault(tenant_id, TenantState())
         state.declared = declared
         lister = binding.lister()
@@ -298,6 +309,47 @@ class TeamCCapabilities:
             name: _resolve(name, bound, tools, self._spec(tenant_id, name)) for name, bound in binding.tools.items()
         }
         return state
+
+    async def on_bundle_change(self, bundle: TenantBundle | None, tenant_id: str) -> None:
+        """A business's active bundle changed: serve the tools it binds (the bundle wins over the file for this
+        business); with no bundle, or none of its tools bound here, the operator's file applies again. Only this
+        business's cached listing is dropped; its running tool processes are reused when the business id is the same."""
+        mine = [t for t in (bundle.tools if bundle else ()) if t.source == "team_c" and t.binding is not None]
+        file_binding = self._file_bindings.get(tenant_id)
+        if not mine:
+            if file_binding is not None:
+                self.config.tenants[tenant_id] = file_binding
+            else:
+                self.config.tenants.pop(tenant_id, None)
+        else:
+            tools: dict[str, ToolBinding] = {}
+            for entry in mine:
+                ref = entry.binding
+                assert ref is not None
+                kept = file_binding.tools.get(entry.name) if file_binding is not None else None
+                tools[entry.name] = ToolBinding(
+                    proposal_id=ref.proposal_id,
+                    arguments=ref.arguments,
+                    fields=ref.fields,
+                    reference_field=ref.reference_field,
+                    echo=list(ref.echo),
+                    constants=ref.constants,
+                    spec=ref.spec if ref.spec is not None else (kept.spec if kept is not None else None),
+                    environments=list(ref.environments),
+                )
+            bundle_identities = dict(bundle.identities) if bundle is not None else {}
+            first = mine[0].binding
+            assert first is not None
+            same = file_binding if file_binding is not None and file_binding.business_id == first.business_id else None
+            self.config.tenants[tenant_id] = TenantBinding(
+                business_id=first.business_id,
+                identities={**(dict(same.identities) if same else {}), **bundle_identities},
+                anonymous_identity=same.anonymous_identity if same else None,
+                list_identity=same.list_identity if same else None,
+                production_context_field=same.production_context_field if same else "customer_id",
+                tools=tools,
+            )
+        self._state.pop(tenant_id, None)
 
     def status(self, tenant_id: str) -> TenantState | None:
         return self._state.get(tenant_id)

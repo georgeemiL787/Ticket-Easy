@@ -21,6 +21,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .config import AppError
+from .secretbox import unseal
 
 
 def managed_connectors(settings):
@@ -31,7 +32,7 @@ def managed_connectors(settings):
     try:
         if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sandbox_connectors'").fetchone():
             return {}
-        return {cid: json.loads(content) for cid, content in conn.execute("SELECT id,content FROM sandbox_connectors")}
+        return {cid: unseal(json.loads(content), settings) for cid, content in conn.execute("SELECT id,content FROM sandbox_connectors")}
     finally:
         conn.close()
 

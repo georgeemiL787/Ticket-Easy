@@ -82,3 +82,15 @@ def test_failed_job_raises_its_error_and_unknown_jobs_have_expired(monkeypatch):
     with pytest.raises(AppError) as missing:
         jobs.live_view(registry, "unknown", None)
     assert missing.value.status == 404
+
+
+def test_the_start_page_sends_owners_to_the_product_when_one_is_configured(env):
+    app, client, settings = env
+    assert client.get("/", follow_redirects=False).status_code == 200  # no product configured: the page is the start page
+    settings.product_url = "http://product.test:8010/"
+    moved = client.get("/", follow_redirects=False)
+    assert moved.status_code == 302 and moved.headers["location"] == "http://product.test:8010/dashboard/tools/connect"
+    advanced = client.get("/?advanced=1", follow_redirects=False)
+    assert advanced.status_code == 200 and "Advanced view" in advanced.text and "http://product.test:8010/dashboard/tools" in advanced.text
+    business = client.get("/proposals")
+    assert business.status_code == 200 and "Advanced view" in business.text  # every page links back to the guided flow

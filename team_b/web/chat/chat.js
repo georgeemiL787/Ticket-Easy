@@ -4,6 +4,7 @@
   "use strict";
 
   var params = new URLSearchParams(window.location.search);
+  var tr = (window.TE && window.TE.tr) || function (text) { return text; };
   var tenantId = params.get("tenant_id") || "shop_001";
 
   var messagesEl = document.getElementById("messages");
@@ -23,6 +24,13 @@
   var conversationId = newConversationId();
   var base = "/v1/conversations/" + encodeURIComponent(conversationId);
   var tenantQuery = "tenant_id=" + encodeURIComponent(tenantId);
+  // staff trying a business that is not live yet bring a signed pass (?preview=...); customers never have one
+  var previewToken = params.get("preview") || "";
+  function passHeaders(extra) {
+    var headers = extra || {};
+    if (previewToken) { headers["X-Preview-Token"] = previewToken; }
+    return headers;
+  }
 
   function showStatus(text) {
     statusEl.textContent = text || "";
@@ -39,7 +47,7 @@
     if (role === "human_agent") {
       var who = document.createElement("span");
       who.className = "who";
-      who.textContent = "Customer care";
+      who.textContent = tr("Customer care");
       item.appendChild(who);
     }
     item.appendChild(body);
@@ -74,13 +82,13 @@
       dev.className = "dev";
       var reply = extra.reply;
       var parts = [reply.decision];
-      if (reply.awaiting) { parts.push("waiting for: " + reply.awaiting); }
+      if (reply.awaiting) { parts.push(tr("waiting for: ") + reply.awaiting); }
       dev.appendChild(document.createTextNode(parts.join(" · ") + " · "));
       var link = document.createElement("a");
       link.href = "/v1/traces/" + encodeURIComponent(reply.trace_id) + "?" + tenantQuery;
       link.target = "_blank";
       link.rel = "noopener";
-      link.textContent = "trace";
+      link.textContent = tr("trace");
       dev.appendChild(link);
       item.appendChild(dev);
     }
@@ -123,7 +131,7 @@
 
   function errorText(body, status) {
     if (body && body.error && body.error.message) { return body.error.message; }
-    return "Something went wrong (" + status + "). Please try again.";
+    return tr("Something went wrong ({status}). Please try again.", { status: status });
   }
 
   function send(text) {
@@ -133,7 +141,7 @@
     var stopPending = showPending();
     return fetch(base + "/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: passHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ tenant_id: tenantId, text: text, channel: "web" })
     }).then(function (response) {
       return response.json().catch(function () { return null; }).then(function (body) {
@@ -142,7 +150,7 @@
         if (body.text) { addMessage("agent", body.text, { citations: body.citations, reply: body }); }
       });
     }).catch(function () {
-      showStatus("Could not reach the server. Please try again.");
+      showStatus(tr("Could not reach the server. Please try again."));
     }).then(function () {
       stopPending();
       sendButton.disabled = false;
@@ -177,18 +185,24 @@
     send(text);
   });
 
+  var langSelect = document.getElementById("lang");
+  if (langSelect && window.TE) {
+    langSelect.value = window.TE.lang;
+    langSelect.addEventListener("change", function () { window.TE.setLang(langSelect.value); });
+  }
+
   devToggle.addEventListener("change", function () {
     chatEl.classList.toggle("show-dev", devToggle.checked);
   });
 
-  fetch("/v1/tenants/" + encodeURIComponent(tenantId) + "/welcome").then(function (response) {
+  fetch("/v1/tenants/" + encodeURIComponent(tenantId) + "/welcome", { headers: passHeaders() }).then(function (response) {
     return response.ok ? response.json() : Promise.reject(response);
   }).then(function (welcome) {
     document.getElementById("title").textContent = welcome.display_name;
     document.title = welcome.display_name + " · chat";
     addMessage("agent", welcome.text);
   }).catch(function () {
-    showStatus("This business is not available.");
+    showStatus(tr("This business is not available."));
   }).then(function () {
     showEarlierRepliesFromPeople();
     listenForHumanReplies();

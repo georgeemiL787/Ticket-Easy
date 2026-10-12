@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import yaml
 from openapi_spec_validator import OpenAPIV30SpecValidator, OpenAPIV31SpecValidator
 from .contracts import Inventory
+from .swagger2 import convert as convert_swagger2, is_swagger2
 
 PARSER_VERSION = "2"
 METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
@@ -245,6 +246,7 @@ def discover(raw: bytes, filename: str, business_id: str, max_operations=50) -> 
     diagnostics = []
     operations = []
     document = None
+    converted_from = None
     traversal_nodes = [0]
 
     def issue(code, message, path="#", severity="error", operation=None, scope="document"):
@@ -280,13 +282,16 @@ def discover(raw: bytes, filename: str, business_id: str, max_operations=50) -> 
         ready = document_valid and summary["proposal_eligible"] > 0
         # valid is a deprecated alias of proposal_generation_ready, kept for stored records and existing consumers.
         return dict(valid=ready, document_valid=document_valid, eligible_operation_count=summary["proposal_eligible"], proposal_generation_ready=ready, parser_version=PARSER_VERSION,
-                    openapi_version=version, openapi_family=family, operations=operations, diagnostics=diagnostics, summary=summary)
+                    openapi_version=version, openapi_family=family, operations=operations, diagnostics=diagnostics, summary=summary,
+                    **(dict(converted_from=converted_from) if converted_from else {}))
 
     try:
         text = raw.decode("utf-8-sig")
         document = json.loads(text, object_pairs_hook=unique_pairs, parse_constant=lambda x: (_ for _ in ()).throw(ValueError(f"Invalid JSON constant {x}"))) if filename.lower().endswith(".json") else yaml.load(text, Loader=UniqueLoader)
         if not isinstance(document, dict):
             raise ValueError("The document root must be an object")
+        if is_swagger2(document):  # converted before anything else looks at it; the original bytes stay in the specification record
+            document, converted_from = convert_swagger2(document), "swagger_2.0"
         # JSON roundtrip also rejects non-JSON YAML values, e.g. dates and arbitrary keys.
         entries = []
         for entry in walk(document):
@@ -298,6 +303,8 @@ def discover(raw: bytes, filename: str, business_id: str, max_operations=50) -> 
         issue("malformed_input", str(exc)[:500])
         return None, result()
 
+    if converted_from:
+        issue("converted_from_swagger2", "Swagger 2.0 description converted to OpenAPI 3.0.3 in memory; operations are described as converted", "#/swagger", "warning")
     version = document.get("openapi")
     family, validator_cls = VERSIONS.get(version, (None, None)) if isinstance(version, str) else (None, None)
     if not family:

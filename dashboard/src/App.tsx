@@ -4,6 +4,7 @@ import { Layout } from "./components/Layout";
 import { I18nProvider, isLang } from "./i18n";
 import Actions from "./pages/Actions";
 import Alerts from "./pages/Alerts";
+import BusinessTools from "./pages/BusinessTools";
 import ConversationDetail from "./pages/ConversationDetail";
 import Conversations from "./pages/Conversations";
 import Escalations from "./pages/Escalations";
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="actions" element={<Actions />} />
           <Route path="unanswered" element={<Unanswered />} />
           <Route path="alerts" element={<Alerts />} />
+          <Route path="tools" element={<BusinessTools />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
         </Routes>

@@ -14,6 +14,7 @@ export const NAV: { to: string; key: TextKey; end?: boolean }[] = [
   { to: "/actions", key: "nav.actions" },
   { to: "/unanswered", key: "nav.unanswered" },
   { to: "/alerts", key: "nav.alerts" },
+  { to: "/tools", key: "nav.businessTools" },
 ];
 
 function TopBar() {

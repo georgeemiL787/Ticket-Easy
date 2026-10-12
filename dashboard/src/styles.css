@@ -727,3 +727,30 @@ td, th { border-block-end-color: rgba(255, 255, 255, 0.07); }
 .replay textarea { width: 100%; font-family: monospace; }
 .replay-table td { vertical-align: top; }
 .replay-table tr.differs { background: rgba(240, 180, 40, 0.15); }
+
+/* Business tools (Team C sandbox tools) */
+.notice {
+  padding: 8px 12px;
+  border: 1px solid var(--warn);
+  border-radius: 12px;
+  background: var(--chip);
+}
+
+.actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block: 12px 4px;
+}
+
+a.button-link {
+  padding: 7px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  text-decoration: none;
+}
+
+.table-wrap .inline-form input {
+  inline-size: 160px;
+}

@@ -179,6 +179,14 @@ def sandbox_test(service,settings,form):
     return "/artifacts/"+aid+"#test-results"
 
 
+def suggest_test_inputs(service,settings,form):
+    """Let the model draft the test form from what the owner already chose or typed; the page then shows the draft for review."""
+    aid=str(form["artifact_id"])
+    typed=form_arguments(service.artifact(aid)["content"]["input_schema"],form)
+    service.suggest_test_inputs(aid,str(form.get("identity","")),str(form.get("scenario","general")),str(form.get("record_owner","")).strip() or None,typed)
+    return "/artifacts/"+aid+"?prefill=1#run-test"
+
+
 def retire_test(service,settings,form):
     a=service.retire_test(str(form["test_id"]),str(form.get("reason","")))
     return "/artifacts/"+a["id"]+"#test-results"
@@ -317,7 +325,7 @@ ACTIONS=dict(business=business,upload=upload,fetch=fetch,local_project=lambda *_
              save_connector=save_connector,save_test_identity=save_test_identity,
              review_enforcement=review_enforcement,build_artifact=build_artifact,publish=publish,request_tool=request_tool,clarify_request=clarify_request,
              suggest=suggest,request_next_batch=request_next_batch,areas_organize=areas_organize,areas_select=areas_select,decide_suggestion=decide_suggestion,
-             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,fix_and_retest=fix_and_retest,retire_test=retire_test,
+             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,retire_test=retire_test,
              reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),answers_and_check=review(answers_and_check),suggest_answers=review(suggest_answers),suggest_access=review(suggest_access),decision=review(decision),confirm_requirement=review(confirm_requirement),
              supersede_question=review(supersede_question),dismiss_gap=review(dismiss_gap),accept_api_gap=review(accept_api_gap),revise=review(revise))
 

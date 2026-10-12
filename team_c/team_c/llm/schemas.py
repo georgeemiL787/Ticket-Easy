@@ -210,6 +210,10 @@ def output_schema(kind, payload, output_model):
         ids = [r["id"] for r in payload["requirements"]]
         schema["$defs"]["RequirementAdvice"]["properties"]["requirement_id"]["enum"] = ids or ["none"]
         schema["properties"]["requirements"].update(minItems=len(ids), maxItems=len(ids))
+    if kind == "test_input_suggestion":
+        schema["properties"]["identity"]["enum"] = [i["name"] for i in payload["identities"]]
+        schema["properties"]["record_owner"]["enum"] = [""] + [i["name"] for i in payload["identities"]]
+        schema["$defs"]["TestArgument"]["properties"]["name"]["enum"] = list(payload["input_schema"].get("properties") or {}) or ["none"]
     if kind == "answer_suggestion":
         # One draft per open question, in order; evidence can cite only operations actually supplied.
         ids = [q["id"] for q in payload["questions"]]

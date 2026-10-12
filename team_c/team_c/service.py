@@ -136,6 +136,8 @@ class Service:
     def record_selectors(self, a): return self.building.record_selectors(a)
     def repair(self, test_id, submission): return self.building.repair(test_id, submission)
     def fix_and_retest(self, aid, identity, scenario='general', record_owner=None, arguments=None, attempts=3): return self.building.fix_and_retest(aid, identity, scenario, record_owner, arguments, attempts)
+    def suggest_test_inputs(self, aid, identity='', scenario='general', record_owner=None, typed=None): return self.building.suggest_test_inputs(aid, identity, scenario, record_owner, typed)
+    def latest_test_suggestion(self, aid): return self.building.latest_test_suggestion(aid)
     def latest_fix(self, aid): return self.building.latest_fix(aid)
     def retire_test(self, test_id, reason, actor=None): return self.building.retire_test(test_id, reason, actor)
 

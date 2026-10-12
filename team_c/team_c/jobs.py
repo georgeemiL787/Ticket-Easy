@@ -12,15 +12,15 @@ from .config import AppError
 from .diagnostics import check_errors
 from .progress import LIVE
 
-LIVE_ACTIONS={"generate","request_tool","clarify_request","request_next_batch","suggest","areas_organize","reconcile","answers_and_check","suggest_answers","suggest_access","fix_and_retest","revise"}
+LIVE_ACTIONS={"generate","request_tool","clarify_request","request_next_batch","suggest","areas_organize","reconcile","answers_and_check","suggest_answers","suggest_access","fix_and_retest","revise","suggest_test_inputs"}
 LIVE_WAIT_SECONDS=2
 EXPIRY_SECONDS=3600
 ACTION_LABELS={"generate":"Generating a tool proposal","request_tool":"Working on your tool request","clarify_request":"Working on your tool request",
                "request_next_batch":"Looking in the next batch","suggest":"Looking for useful tools","areas_organize":"Organizing business areas",
-               "reconcile":"Checking your answers","answers_and_check":"Saving and checking your answers","suggest_answers":"Drafting suggested answers","suggest_access":"Recommending access settings","fix_and_retest":"Fixing and retesting","revise":"Revising the proposal","decide_suggestion":"Turning the suggestion into a tool request"}
+               "reconcile":"Checking your answers","answers_and_check":"Saving and checking your answers","suggest_answers":"Drafting suggested answers","suggest_access":"Recommending access settings","fix_and_retest":"Fixing and retesting","suggest_test_inputs":"Filling in the test form","revise":"Revising the proposal","decide_suggestion":"Turning the suggestion into a tool request"}
 STEP_LABELS={"request_triage":"Checking whether your API can do this","generation":"Writing the tool proposal","suggestion":"Thinking of useful tools",
              "area_naming":"Naming and ranking business areas","area_assignment":"Placing API groups in areas","reconciliation":"Checking your answers","answer_suggestion":"Drafting suggested answers from the API description","access_suggestion":"Recommending least-privilege access",
-             "revision":"Revising the proposal","repair":"Repairing the proposal (AI rewiring)"}
+             "revision":"Revising the proposal","test_input_suggestion":"Choosing test values","repair":"Repairing the proposal (AI rewiring)"}
 
 
 def is_live(action,form):

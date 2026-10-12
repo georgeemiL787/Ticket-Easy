@@ -29,27 +29,30 @@
 {% endif %}
 
 <article>
-<h2>Run a sandbox test</h2>
+<h2 id="run-test">Run a sandbox test</h2>
 <p class="small muted">Runs against the sandbox connector as the chosen test identity. The identity is never a tool argument.</p>
 {% include "identity_setup.html" %}
 {% if not connectors.get(c.connector.id, []) %}<p class="notice">Add a test identity below before running this artifact.{% if not identity_setup.managed %} This connector's identities are managed in its external configuration.{% endif %}</p>{% endif %}
+{% set d = draft or {} %}
+{% if draft %}<div class="next"><strong>AI filled in the form below</strong> <span>{{ d.note }} Check the values, change anything, then press Run sandbox test.</span></div>{% endif %}
 {% set scoped = c.access_requirements|selectattr('kind','equalto','record_scope')|list %}
 <form method="post" action="/actions/sandbox_test">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
-<label>Test identity<select name="identity">{% for i in connectors.get(c.connector.id, []) %}<option>{{ i }}</option>{% endfor %}</select></label>
+<label>Test identity<select name="identity">{% for i in connectors.get(c.connector.id, []) %}<option{% if i == d.identity %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></label>
 <label>What should happen?<select name="scenario">
-<option value="general">It should work (success test)</option>
-{% if scoped %}<option value="own_record">It should work on this identity's own record (own-record test)</option>
-<option value="cross_user">It must be refused: this identity targets another customer's record (cross-user test)</option>{% endif %}
+<option value="general" {% if d.scenario == "general" %}selected{% endif %}>It should work (success test)</option>
+{% if scoped %}<option value="own_record" {% if d.scenario == "own_record" %}selected{% endif %}>It should work on this identity's own record (own-record test)</option>
+<option value="cross_user" {% if d.scenario == "cross_user" %}selected{% endif %}>It must be refused: this identity targets another customer's record (cross-user test)</option>{% endif %}
 </select></label>
-{% if scoped %}<label>Whose record is targeted? <span class="why">cross-user test only: the other identity that owns the record in the inputs below</span><select name="record_owner"><option value="">Not a cross-user test</option>{% for i in connectors.get(c.connector.id, []) %}<option>{{ i }}</option>{% endfor %}</select></label>{% endif %}
+{% if scoped %}<label>Whose record is targeted? <span class="why">cross-user test only: the other identity that owns the record in the inputs below</span><select name="record_owner"><option value="">Not a cross-user test</option>{% for i in connectors.get(c.connector.id, []) %}<option{% if i == d.record_owner %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></label>{% endif %}
 {% for name, prop in (c.input_schema.properties or {}).items() %}{% set kind = field_kind(prop) %}{% set req = name in (c.input_schema.required or []) %}
 <label>{{ prop.title or name }}{% if not req %} <span class="muted small">(optional)</span>{% endif %}{% if prop.description %} <span class="muted small">{{ prop.description }}</span>{% endif %}
-{% if prop.enum or kind == 'boolean' %}<select name="a:{{ name }}" {% if req %}required{% endif %}><option value="">Choose…</option>{% for v in (prop.enum or ['true', 'false']) %}<option>{{ v }}</option>{% endfor %}</select>
-{% elif kind in ('integer', 'number') %}<input type="number" name="a:{{ name }}" step="{{ 'any' if kind == 'number' else 1 }}" {% if req %}required{% endif %}>
-{% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value" {% if req %}required{% endif %}></textarea>
-{% else %}<input name="a:{{ name }}" {% if prop.maxLength %}maxlength="{{ prop.maxLength }}"{% endif %} {% if req %}required{% endif %}>{% endif %}</label>
+{% if prop.enum or kind == 'boolean' %}<select name="a:{{ name }}" {% if req %}required{% endif %}><option value="">Choose…</option>{% for v in (prop.enum or ['true', 'false']) %}<option{% if (d.arguments or {}).get(name) == v|string %} selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+{% elif kind in ('integer', 'number') %}<input type="number" name="a:{{ name }}" step="{{ 'any' if kind == 'number' else 1 }}" value="{{ (d.arguments or {}).get(name, '') }}" {% if req %}required{% endif %}>
+{% elif kind == 'json' %}<textarea name="a:{{ name }}" placeholder="JSON value" {% if req %}required{% endif %}>{{ (d.arguments or {}).get(name, '') }}</textarea>
+{% else %}<input name="a:{{ name }}" value="{{ (d.arguments or {}).get(name, '') }}" {% if prop.maxLength %}maxlength="{{ prop.maxLength }}"{% endif %} {% if req %}required{% endif %}>{% endif %}</label>
 {% else %}<p class="muted small">This tool takes no inputs.</p>{% endfor %}
 <button {% if c.execution_blockers or not connectors.get(c.connector.id, []) %}disabled{% endif %}>Run sandbox test</button>
+<button type="submit" class="secondary" formaction="/actions/suggest_test_inputs" formnovalidate {% if not connectors.get(c.connector.id, []) %}disabled{% endif %}>Fill in with AI</button> <span class="muted small">Pick what should happen first if you like; the AI chooses the identity and example values. It never sees credentials and runs nothing.</span>
 <p class="small muted">The result is judged against what you chose and recorded under Test results; a passing success test is what publishing needs.</p></form>
 </article>
 

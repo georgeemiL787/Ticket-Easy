@@ -318,6 +318,38 @@ class Building:
                        dump(dict(retired_by=actor or self.settings.dev_reviewer_id, reason=reason.strip(), retired_test_id=test_id)), now(), t["scenario"], t["record_owner"], t["selector_sha256"]))
         return self.artifact(t["artifact_id"])
 
+    def suggest_test_inputs(self, aid, identity="", scenario="general", record_owner=None, typed=None):
+        """Draft the sandbox test form (identity, record owner, input values) with a model; nothing is run or saved as a test.
+
+        The model sees the tool's declared inputs, identity names with their account type and the owner's choices so far, never credentials or trusted context. The draft is stored on its run and only prefills the form.
+        """
+        from ..models import TestInputSuggestionOutput
+        a = self.artifact(aid)
+        c = a["content"]
+        identities = (load_connectors(self.settings).get(c["connector"]["id"]) or {}).get("identities") or {}
+        if not identities:
+            raise AppError("no_test_identity", "Add a test identity first; the helper chooses between saved identities")
+        if scenario not in ("general", "own_record", "cross_user"):
+            scenario = "general"
+        payload = dict(artifact_id=aid, tool=dict(name=c["name"], purpose=c["purpose"]), input_schema=c["input_schema"], scenario=scenario,
+                       identities=[dict(name=n, account_type=i.get("scope") or "") for n, i in sorted(identities.items())],
+                       chosen=dict(identity=identity, record_owner=record_owner or "", typed_arguments=typed or {}),
+                       record_selecting_inputs=self.record_selectors(a))
+        run, output = self.runs_model(c["proposal"]["business_id"], "test_input_suggestion", payload, TestInputSuggestionOutput)
+        known = set((c["input_schema"].get("properties") or {}))
+        result = dict(artifact_id=aid, scenario=scenario, identity=output.identity, record_owner=output.record_owner if scenario == "cross_user" and output.record_owner != output.identity else "",
+                      arguments={x.name: x.value for x in output.arguments if x.name in known}, note=output.note)
+        self.store.finish_run(run, result)
+        return result
+
+    def runs_model(self, business_id, kind, payload, output):
+        from .runs import Runs
+        return Runs(self.settings, self.store, self.providers).model_run(business_id, kind, payload, output)
+
+    def latest_test_suggestion(self, aid):
+        rows = self.store.all("SELECT result FROM runs WHERE kind='test_input_suggestion' AND status='succeeded' AND json_extract(result,'$.artifact_id')=? ORDER BY created_at DESC LIMIT 1", (aid,))
+        return json.loads(rows[0]["result"]) if rows else None
+
     def latest_fix(self, aid):
         rows = self.store.all("SELECT result FROM runs WHERE kind='fix_loop' AND status='succeeded' AND json_extract(result,'$.artifact_id')=? ORDER BY created_at DESC LIMIT 1", (aid,))
         return json.loads(rows[0]["result"]) if rows else None

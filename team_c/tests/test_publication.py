@@ -216,3 +216,32 @@ def test_ui_controls_publish_and_disable(desk):
     assert pub["tool_name"] in page and "Disable publication" in page and "cannot undo writes" in page
     d.client.post("/actions/disable_publication", data=dict(csrf=csrf, publication_id=pub["id"], note=LABEL + "stop"), follow_redirects=False)
     assert d.client.get(f"/api/v1/publications/{pub['id']}").json()["status"] == "disabled"
+
+
+def test_the_ai_helper_prefills_the_sandbox_test_form_without_running_anything(desk, monkeypatch):
+    from team_c.llm.schemas import output_schema
+    from team_c.models import TestInputSuggestionOutput
+    d = desk
+    a = review_and_build(d, generated(d))
+    names = list((a["content"]["input_schema"].get("properties") or {}))
+    seen = {}
+    original = RevisingDesk.call
+
+    def call(self, kind, payload, output_model, run):
+        if kind != "test_input_suggestion":
+            return original(self, kind, payload, output_model, run)
+        seen.update(payload)
+        self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+        return output_model(identity="bob", record_owner="alice", arguments=[dict(name=n, value="42") for n in names] + [dict(name="invented", value="x")], note="Replace the id.")
+
+    monkeypatch.setattr(RevisingDesk, "call", call)
+    before = len(d.service.artifact(a["id"])["executions"])
+    draft = d.service.suggest_test_inputs(a["id"], "", "cross_user")
+    assert draft["identity"] == "bob" and draft["record_owner"] == "alice" and set(draft["arguments"]) == set(names)
+    assert {i["name"] for i in seen["identities"]} >= {"alice", "bob"} and "token" not in json.dumps(seen)
+    assert len(d.service.artifact(a["id"])["executions"]) == before and not d.service.artifact(a["id"])["tests"]
+    page = d.client.get(f"/artifacts/{a['id']}?prefill=1").text
+    assert "AI filled in the form" in page and 'value="42"' in page and "Fill in with AI" in page
+    assert "AI filled in the form" not in d.client.get(f"/artifacts/{a['id']}").text
+    schema, _ = output_schema("test_input_suggestion", seen, TestInputSuggestionOutput)
+    assert schema["properties"]["identity"]["enum"] == [i["name"] for i in seen["identities"]]

@@ -214,6 +214,18 @@ class AnswerSuggestionOutput(StrictModel):
     suggestions: list[SuggestedAnswer]
 
 
+class TestArgument(StrictModel):
+    name: str
+    value: str = Field(description="The value to type into the field, written as plain text (true/false for booleans, JSON text for objects and lists)")
+
+
+class TestInputSuggestionOutput(StrictModel):
+    identity: str = Field(description="One of the supplied test identity names")
+    record_owner: str = Field(description="For a cross-user test: a different supplied identity that owns the targeted record; otherwise an empty string")
+    arguments: list[TestArgument]
+    note: str = Field(description="One or two plain sentences for the owner: what was filled in and what they must still replace with a real value from their sandbox")
+
+
 PRINCIPAL = Literal["public", "end_user", "resource_owner", "admin", "service", "guest"]
 
 

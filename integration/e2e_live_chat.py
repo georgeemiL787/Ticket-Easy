@@ -20,7 +20,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "integration"))
-from e2e_chat import RESULTS, Chat, call_old_name, check, manager, mcp_executions, sandbox_state, traces  # noqa: E402
+from e2e_chat import RESULTS, Chat, call_old_name, check, manager, mcp_executions, sandbox_state, team_c_headers, traces  # noqa: E402
 
 VAR = ROOT / "integration" / "var"
 TEAM_B, TEAM_C, DEMO_SHOP = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8103"
@@ -48,7 +48,7 @@ def main() -> int:
     ticket = json.loads((VAR / "lifecycle_ticket_live.json").read_text(encoding="utf-8"))
     sandbox_order = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
     http = httpx.Client(base_url=TEAM_B, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False)
+    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False, headers=team_c_headers())
     headers = manager(http)
 
     print("\n== The Business tools page tells the truth about Live Demo")

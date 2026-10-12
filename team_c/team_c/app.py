@@ -37,6 +37,15 @@ def create_app(settings=None, provider_factory=None):
                 return JSONResponse({"code":"origin_rejected","message":"Cross-origin mutations are forbidden"},status_code=403)
         return await call_next(request)
 
+    @app.middleware("http")
+    async def admin_token(request,call_next):
+        # When the operator sets TEAM_C_ADMIN_TOKEN, every change through the REST API needs it (Team B holds it); production routes
+        # need it always. Team C's browser pages are not under /api and are never allowed to do production actions.
+        if settings.admin_token and request.url.path.startswith("/api/") and request.method in {"POST","PUT","PATCH","DELETE"}:
+            if not secrets.compare_digest(request.headers.get("x-team-c-admin-token",""),settings.admin_token):
+                return JSONResponse({"code":"admin_token_invalid","message":"Changes through the REST API need the operator's admin token","details":{}},status_code=403)
+        return await call_next(request)
+
     @app.exception_handler(AppError)
     async def error(request,exc):
         payload=dict(code=exc.code,message=exc.message,details=exc.details)

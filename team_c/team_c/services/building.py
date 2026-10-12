@@ -5,10 +5,12 @@ from ..config import AppError
 from ..grounding import validate_proposal
 from ..models import ProposalContent, RevisionSubmission, SandboxRunSubmission
 from ..persistence.recovery import INTERRUPTED, OWNER
+from pathlib import Path
 from ..persistence.util import uid, now, dump, digest
 from ..artifacts import compile_artifact, validate_enforcement
-from ..connectors import LIVE_DEMO, environment_of
-from ..executor import Run, artifact_environment, credentials, destination, load_connectors, validate_arguments
+import os
+from ..connectors import LIVE_DEMO, PRODUCTION, environment_of
+from ..executor import Run, artifact_environment, credentials, destination, load_connectors, service_identity, validate_arguments
 from .. import repair as repairs
 from ..persistence.repositories import enforcement as enforcement_repo, proposals as proposals_repo
 
@@ -47,10 +49,10 @@ class Building:
             from .connectors import Connectors
             Connectors(self.settings, self.store, self.proposals, self.discovery).apply_policy_context(connector_id, row["business_id"], view["policy"]["content"])
             connector = load_connectors(self.settings)[connector_id]
-        live = environment_of(connector) == LIVE_DEMO
+        environment = environment_of(connector)
         connector = dict(id=connector_id, base_url=connector["base_url"].rstrip("/"), context_fields=sorted(connector.get("context_fields") or []))
-        if live:  # recorded in the artifact (and its hash); sandbox connectors keep their earlier exact shape
-            connector["environment"] = LIVE_DEMO
+        if environment in (LIVE_DEMO, PRODUCTION):  # recorded in the artifact (and its hash); sandbox connectors keep their earlier exact shape
+            connector["environment"] = environment
         return view, row, content, spec, decision, connector, view["derived"].get("generation_scope")
 
     def enforcement(self, eid):
@@ -166,18 +168,31 @@ class Building:
             row["readiness"] = assess(version["content"], self.discovery.spec(version["spec_id"])["inventory"], row["content"]["access_policy"], row["content"], row["policy_tests"])
         return row
 
-    def run_sandbox(self, aid, submission, mode="sandbox", audit=None, precheck=None):
-        """One execution in the artifact's environment (sandbox, or Live Demo against the configured real API);
-        pre-flight rejections are recorded and send no request. Live executions are recorded as such."""
+    def run_sandbox(self, aid, submission, mode="sandbox", audit=None, precheck=None, service_context=None, idempotency_key=None, smoke=False):
+        """One execution in the artifact's environment (sandbox, Live Demo, or production); pre-flight rejections are recorded and
+        send no request. Live and production executions are recorded as such.
+
+        A PRODUCTION artifact runs only with a `precheck` (the caller proved a live promotion and publication) and the verified
+        customer's trusted `service_context`; it uses the business's one service credential, so every customer separation is a
+        Team C check. `smoke` (promotion only) runs the read steps before the first write and nothing else."""
         eid = uid()
         audit = audit or {}
         artifact = self.artifact(aid)["content"]
         live = artifact_environment(artifact) == LIVE_DEMO
+        production = artifact_environment(artifact) == PRODUCTION
         if live:
             mode = {"sandbox": "live_demo", "mcp_sandbox": "mcp_live_demo"}.get(mode, mode)
             audit = dict(audit, environment=LIVE_DEMO)
+        if production:
+            mode = {"sandbox": "production", "mcp_sandbox": "mcp_production"}.get(mode, mode)
+            audit = dict(audit, environment=PRODUCTION, context_sha256=digest(service_context) if service_context else None)
         record = lambda status, report, done=True: dict(id=eid, owner=OWNER, artifact_id=aid, mode=mode, identity=submission.identity, status=status, report=dump(dict(report, **audit)) if report else None, created_at=now(), completed_at=now() if done else None)
         try:
+            if production:
+                if precheck is None:
+                    raise AppError("production_requires_publication", "A production tool runs only through its active publication; no request was sent", 403)
+                if not isinstance(service_context, dict) or not service_context:
+                    raise AppError("context_missing", "A production call needs the verified customer's trusted context; no request was sent", 422)
             if precheck:
                 precheck()
             self.approval(artifact["proposal"]["id"], artifact["proposal"]["version"], artifact["proposal"]["content_sha256"])
@@ -190,7 +205,14 @@ class Building:
             base = destination(connector, artifact, self.settings)
             if live:
                 self.check_live_budget(artifact["connector"]["id"])
-            identity = (connector.get("identities") or {}).get(submission.identity)
+            if production:
+                self.check_production_context(connector, service_context)
+                self.check_production_budget(artifact["connector"]["id"], audit["context_sha256"])
+                identity = service_identity(connector, service_context, artifact["connector"]["auth"])
+                if identity is None:
+                    raise AppError("credential_missing", "The production service credential is not set in Team C's environment; no request was sent", 409)
+            else:
+                identity = (connector.get("identities") or {}).get(submission.identity)
             credentials(identity, artifact)
             validate_arguments(artifact["input_schema"], submission.arguments)
         except AppError as exc:
@@ -202,14 +224,51 @@ class Building:
         with self.store.connect(write=True) as c:
             c.execute("INSERT INTO executions(id,artifact_id,mode,identity,status,report,created_at,completed_at,owner) VALUES(:id,:artifact_id,:mode,:identity,:status,:report,:created_at,:completed_at,:owner)", record("running", None, False))
         try:
-            report, outputs = Run(artifact, submission.arguments, identity, base, self.execution_transport).execute()
+            idempotency = dict(key=idempotency_key, steps=audit["idempotency_steps"]) if production and idempotency_key and audit.get("idempotency_steps") else None
+            report, outputs = Run(artifact, submission.arguments, identity, base, self.execution_transport, idempotency).execute(smoke=smoke)
         except Exception:
             with self.store.connect(write=True) as c:
                 c.execute("UPDATE executions SET status='interrupted',completed_at=?,report=? WHERE id=?", (now(), dump(dict(INTERRUPTED, message="The execution stopped on an unexpected error. A write may or may not have been applied; check the target before retrying. Nothing was retried.", **audit)), eid))
             raise
         with self.store.connect(write=True) as c:
             c.execute("UPDATE executions SET status=?,report=?,completed_at=? WHERE id=?", (report["status"], dump(dict(report, **audit)), now(), eid))
+        if production:
+            self.audit_production(eid, aid, mode, report["status"], audit)
         return dict(execution_id=eid, artifact_id=aid, report=report, outputs=outputs)
+
+    def check_production_context(self, connector, context):
+        """The trusted context of a production call: only the connector's declared fields, each a non-empty string or integer."""
+        declared = set(connector.get("context_fields") or [])
+        extra = sorted(set(context) - declared)
+        if extra:
+            raise AppError("context_undeclared", "The call's trusted context has fields the connector does not declare: " + ", ".join(extra) + "; no request was sent", 422)
+        if any(isinstance(v, bool) or not isinstance(v, (str, int)) or v == "" for v in context.values()):
+            raise AppError("context_invalid", "Trusted context values must be non-empty strings or integers; no request was sent", 422)
+
+    def check_production_budget(self, connector_id, context_sha256):
+        """PRODUCTION_CALLS_PER_MINUTE per connector and PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE per customer (counted by
+        context hash), across every tool, read from the shared database so separate MCP processes count together."""
+        since = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
+        base = ("SELECT COUNT(*) AS n FROM executions e JOIN artifacts a ON a.id=e.artifact_id WHERE json_extract(a.content,'$.connector.id')=? "
+                "AND e.created_at>=? AND e.status!='rejected' AND e.mode LIKE '%production%'")
+        used = self.store.one(base, (connector_id, since))["n"]
+        if used >= self.settings.production_calls_per_minute:
+            raise AppError("rate_limited", f"This production connector already made {used} calls in the last minute (PRODUCTION_CALLS_PER_MINUTE); try again shortly", 429)
+        mine = self.store.one(base + " AND json_extract(e.report,'$.context_sha256')=?", (connector_id, since, context_sha256))["n"]
+        if mine >= self.settings.production_calls_per_customer_per_minute:
+            raise AppError("rate_limited", f"This customer already made {mine} production calls in the last minute; try again shortly", 429)
+
+    def audit_production(self, eid, aid, mode, status, audit):
+        """One line per production execution in an append-only daily file: ids, hashes and status; never a value."""
+        try:
+            directory = Path(self.settings.production_audit_dir)
+            directory.mkdir(parents=True, exist_ok=True)
+            line = dict(time=now(), execution_id=eid, artifact_id=aid, mode=mode, status=status, publication_id=audit.get("publication_id"),
+                        tool_name=audit.get("tool_name"), context_sha256=audit.get("context_sha256"), channel=audit.get("channel"))
+            with open(directory / f"production-{now()[:10]}.jsonl", "a", encoding="utf-8") as f:
+                f.write(json.dumps(line) + chr(10))
+        except OSError:
+            pass  # the execution itself is already recorded in the database; a full disk must not turn a done write into an error
 
     def check_live_budget(self, connector_id):
         """LIVE_DEMO_CALLS_PER_MINUTE across every artifact and identity of one live connector (read from the shared

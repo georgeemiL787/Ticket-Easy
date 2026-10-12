@@ -39,6 +39,7 @@ Results (only `succeeded` is a success; nothing is retried here):
 
 import asyncio
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -60,7 +61,8 @@ START_RETRY_S = 5.0  # after a failed start the process is not tried again for t
 log = get_logger(__name__)
 
 
-Environment = Literal["sandbox", "live_demo"]
+Environment = Literal["sandbox", "live_demo", "production"]
+PRODUCTION_KEY = "<production>"  # the session key of a business's production process (no identity is ever mapped to it)
 
 
 def _sandbox_only() -> list[Environment]:
@@ -82,7 +84,8 @@ class ToolBinding(BaseModel):
     constants: dict[str, str] = Field(default_factory=dict)  # a fixed value (e.g. status "created")
     spec: dict[str, Any] | None = None  # the ToolSpec when the stand-in has none of this name (capability, kind, ...)
     # Which Team C environments this tool may use. live_demo = calls reach the owner-configured REAL API: the operator
-    # opts in per tool. Never "production": no production release process exists.
+    # opts in per tool. production = a promoted tool that acts on real customers' data with the business's service
+    # credential; Team C scopes every call to the VERIFIED customer whose id Team B sends as trusted context.
     environments: list[Environment] = Field(default_factory=_sandbox_only, min_length=1)
 
     @model_validator(mode="after")
@@ -101,6 +104,9 @@ class TenantBinding(BaseModel):
     identities: dict[str, str] = Field(default_factory=dict)  # verified customer_id -> Team C sandbox identity name
     anonymous_identity: str | None = None  # only for tools that need no identity (requires_identity false)
     list_identity: str | None = None  # the process that lists tools (default: the first mapped identity)
+    production_context_field: str = (
+        "customer_id"  # the Team C connector context field the verified customer id is sent as
+    )
     tools: dict[str, ToolBinding] = Field(default_factory=dict)
 
     def lister(self) -> str | None:
@@ -119,6 +125,9 @@ class TeamCConfig(BaseModel):
     connectors: str | None = None  # --connectors (optional trusted connectors file)
     sandbox_hosts: str | None = None  # --sandbox-hosts
     api_url: str | None = None  # Team C's REST API (http://127.0.0.1:<port>) for the Business tools page
+    admin_token_env: str | None = (
+        None  # NAME of the environment variable holding Team C's admin token (production actions)
+    )
     builder_url: str | None = None  # Team C's owner pages, linked from the Business tools page
     list_timeout_s: float = Field(default=15.0, gt=0)
     call_timeout_s: float = Field(default=30.0, gt=0)
@@ -135,8 +144,10 @@ class TeamCConfig(BaseModel):
             program = str((base / program).resolve())
         return config.model_copy(update={"cwd": resolve(config.cwd), "command": [program, *config.command[1:]]})
 
-    def server_command(self, business_id: str, identity: str) -> list[str]:
-        command = [*self.command, "--business-id", business_id, "--identity", identity]
+    def server_command(self, business_id: str, identity: str, production: bool = False) -> list[str]:
+        command = [*self.command, "--business-id", business_id, "--identity", "service" if production else identity]
+        if production:
+            command.append("--context-from-client")
         for flag, value in (("--database", self.database), ("--connectors", self.connectors),
                             ("--sandbox-hosts", self.sandbox_hosts)):  # fmt: skip
             if value:
@@ -183,7 +194,8 @@ class TeamCCapabilities:
         self._start_failed: dict[tuple[str, str], tuple[float, str]] = {}
         self._state: dict[str, TenantState] = {}
         # Team C's REST API, for the Business tools page (publications, proposals, disable); None without api_url.
-        self.admin: TeamCAdmin | None = TeamCAdmin(config.api_url) if config.api_url else None
+        token = os.environ.get(config.admin_token_env or "") or None
+        self.admin: TeamCAdmin | None = TeamCAdmin(config.api_url, admin_token=token) if config.api_url else None
 
     # ---- the CapabilityClient plug ----
 
@@ -215,14 +227,30 @@ class TeamCCapabilities:
             why = resolved.problem if resolved is not None else "not_published"
             return _error("TOOL_NOT_PUBLISHED", f"{request.tool} has no usable Team C sandbox publication ({why})")
         spec = self._spec(tenant_id, request.tool)
-        identity = self._identity(binding, request, spec)
+        production = resolved.environment == "production"
+        if production:
+            # One service credential serves every customer, so the VERIFIED customer (set by code, never by the model
+            # or an argument) travels as trusted context and Team C scopes the call to them. None: nothing is sent.
+            if not request.acting_customer_id:
+                return _error("IDENTITY_NOT_MAPPED", "a production tool needs a verified customer; not sent")
+            identity: str | None = PRODUCTION_KEY
+        else:
+            identity = self._identity(binding, request, spec)
         if identity is None:
             return _error("IDENTITY_NOT_MAPPED", "no Team C sandbox identity is configured for this customer; not sent")
         arguments = {bound.arguments.get(k, k): v for k, v in request.arguments.items()}
         writes = resolved.read_only is False
+        meta = (
+            {"ticketeasy": {"context": {binding.production_context_field: request.acting_customer_id},
+                            "idempotency_key": request.idempotency_key}}
+            if production
+            else None
+        )  # fmt: skip
         try:
             session = await self._session(binding.business_id, identity)
-            raw = await session.call_tool(resolved.team_c_tool, arguments, timeout_s=self.config.call_timeout_s)
+            raw = await session.call_tool(
+                resolved.team_c_tool, arguments, timeout_s=self.config.call_timeout_s, meta=meta
+            )
         except McpUnavailable as exc:
             raise UpstreamError(SERVICE, "BACKEND_UNAVAILABLE", str(exc), retryable=True) from None
         except McpLost as exc:
@@ -242,17 +270,30 @@ class TeamCCapabilities:
         state = self._state.setdefault(tenant_id, TenantState())
         state.declared = declared
         lister = binding.lister()
-        try:
-            if lister is None:
-                raise McpUnavailable("no sandbox identity is configured for this business")
-            session = await self._session(binding.business_id, lister)
-            tools = await session.list_tools(timeout_s=self.config.list_timeout_s)
-        except (McpUnavailable, McpLost, McpRemoteError) as exc:
-            state.error = str(exc)[:300]
+        wants_production = any("production" in b.environments for b in binding.tools.values())
+        wants_other = any(set(b.environments) - {"production"} for b in binding.tools.values())
+        tools: list[dict[str, Any]] = []
+        errors: list[str] = []
+        if lister is not None or wants_other:
+            try:
+                if lister is None:
+                    raise McpUnavailable("no sandbox identity is configured for this business")
+                session = await self._session(binding.business_id, lister)
+                tools = await session.list_tools(timeout_s=self.config.list_timeout_s)
+            except (McpUnavailable, McpLost, McpRemoteError) as exc:
+                errors.append(str(exc)[:300])
+        if wants_production:  # production tools are listed by a separate process that runs on the service credential
+            try:
+                session = await self._session(binding.business_id, PRODUCTION_KEY)
+                tools = [*tools, *await session.list_tools(timeout_s=self.config.list_timeout_s)]
+            except (McpUnavailable, McpLost, McpRemoteError) as exc:
+                errors.append("production: " + str(exc)[:280])
+        if errors and not tools:
+            state.error = "; ".join(errors)[:300]
             state.resolved = {n: ResolvedTool(n, problem="team_c_unavailable") for n in binding.tools}
             log.warning("team_c_list_failed", tenant_id=tenant_id, error=state.error)
             return state
-        state.listed_at, state.error, state.tools = time.time(), None, tools
+        state.listed_at, state.error, state.tools = time.time(), ("; ".join(errors)[:300] or None), tools
         state.resolved = {
             name: _resolve(name, bound, tools, self._spec(tenant_id, name)) for name, bound in binding.tools.items()
         }
@@ -294,6 +335,7 @@ class TeamCCapabilities:
         return None
 
     async def _session(self, business_id: str, identity: str) -> McpStdioSession:
+        production = identity == PRODUCTION_KEY
         key = (business_id, identity)
         session = self._sessions.get(key)
         if session is not None and session.alive:
@@ -307,7 +349,7 @@ class TeamCCapabilities:
             if failed is not None and time.monotonic() - failed[0] < START_RETRY_S:
                 raise McpUnavailable(failed[1])
             session = McpStdioSession(
-                self.config.server_command(business_id, identity),
+                self.config.server_command(business_id, identity, production),
                 cwd=self.config.cwd,
                 env=self.config.env,
                 start_timeout_s=self.config.start_timeout_s,
@@ -345,11 +387,7 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
     if not candidates:
         return ResolvedTool(name, problem="not_published")
     # Only the environments the operator allows count; a publication elsewhere is never a silent fallback.
-    allowed = [
-        t
-        for t in candidates
-        if _meta(t).get("environment") in bound.environments and _meta(t).get("production_ready") is False
-    ]
+    allowed = [t for t in candidates if _usable(t, bound)]
     if not allowed:
         return ResolvedTool(
             name, problem="environment_not_allowed", environment=_meta(candidates[0]).get("environment")
@@ -373,11 +411,22 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
         read_only=read_only if isinstance(read_only, bool) else None,
     )
     resolved.environment, resolved.api_host = meta.get("environment"), meta.get("api_host")
-    if meta.get("production_ready") is not False or meta.get("environment") not in bound.environments:
+    if not _usable(top[0], bound):
         resolved.problem = "environment_not_allowed"  # e.g. a Live Demo publication the operator has not allowed
     elif resolved.read_only is None or resolved.read_only != (spec.operation_kind == "read"):
         resolved.problem = "kind_mismatch"  # a tool that writes is never served as a read (or the reverse)
     return resolved
+
+
+def _usable(tool: dict[str, Any], bound: ToolBinding) -> bool:
+    """Is this publication in an environment the operator allows for the tool, with the right production flag? A
+    sandbox or Live Demo publication must NOT claim production readiness; a production one must (Team C sets it for a
+    promoted, active one)."""
+    meta = _meta(tool)
+    environment = meta.get("environment")
+    if environment not in bound.environments:
+        return False
+    return meta.get("production_ready") is (environment == "production")
 
 
 def _meta(tool: dict[str, Any]) -> dict[str, Any]:
@@ -419,17 +468,36 @@ def _envelope(raw: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _result(
-    raw: dict[str, Any], bound: ToolBinding, resolved: ResolvedTool, writes: bool, arguments: dict[str, Any] | None = None
+    raw: dict[str, Any],
+    bound: ToolBinding,
+    resolved: ResolvedTool,
+    writes: bool,
+    arguments: dict[str, Any] | None = None,
 ) -> ToolResult:
     envelope = _envelope(raw)
-    if envelope is None or envelope.get("production_ready") is not False:
+    production = resolved.environment == "production"
+    if production and envelope is not None and envelope.get("status") == "rejected" and envelope.get("tool") is None:
+        # refused by Team C before any request (e.g. no context, rate limit): nothing was sent, nothing applied
+        found_err = envelope.get("error")
+        err: dict[str, Any] = found_err if isinstance(found_err, dict) else {}
+        why = err.get("category") or err.get("code") or "rejected"
+        return ToolResult(
+            status="error", error_code="TEAM_C_REJECTED", error_message=f"{why}: {str(envelope.get('message'))[:200]}"
+        )
+    if envelope is None or envelope.get("production_ready") is not production:
         return _error(
-            "TEAM_C_BAD_RESULT", "Team C's answer is not a sandbox or Live Demo execution result", unclear=writes
+            "TEAM_C_BAD_RESULT",
+            "Team C's answer is not a production execution result"
+            if production
+            else "Team C's answer is not a sandbox or Live Demo execution result",
+            unclear=writes,
         )
     if envelope.get("environment", "sandbox") != (resolved.environment or "sandbox"):
         return _error(
             "TEAM_C_BAD_RESULT", "Team C answered from another environment than the tool was listed in", unclear=writes
         )
+    if production and envelope.get("publication_id") != resolved.publication_id:
+        return _error("TEAM_C_BAD_RESULT", "Team C answered for another production publication", unclear=writes)
     status = envelope.get("status")
     execution = envelope.get("execution_id")
     audit = f"{AUDIT_PREFIX}{execution}" if execution else None

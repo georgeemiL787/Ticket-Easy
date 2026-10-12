@@ -1,11 +1,16 @@
-"""Local MCP server (stdio) for published artifacts: TEST-ONLY sandbox publications and Live Demo publications that call
-the owner-configured real API (never a production release).
+"""Local MCP server (stdio) for published artifacts: TEST-ONLY sandbox publications, Live Demo publications that call the
+owner-configured real API, and (a separate process) promoted PRODUCTION publications.
 
-LOCAL DEVELOPMENT ONLY, not production authentication: each process is bound at startup to one
-test business and one test identity taken from the trusted connector configuration. Tool arguments
-cannot choose a user or credential. Protocol messages use stdout; logs go to stderr.
+A normal process is bound at startup to one test business and one test identity taken from the trusted connector
+configuration; tool arguments cannot choose a user or credential. A PRODUCTION process is started with --context-from-client:
+it lists and runs only production tools, uses the business's service credential, and takes the verified customer's trusted
+context (and an idempotency key) from the request's `_meta.ticketeasy`, never from arguments. TRUST BOUNDARY: that is safe only
+because this stdio process is spawned by the calling server (Team B) and nobody else can write to its input; any network
+transport would need mutual authentication first. A process without the flag ignores `_meta.ticketeasy` completely.
+Protocol messages use stdout; logs go to stderr (never the context, only its hash is recorded by Team C).
 
     python -m team_c.mcp_server --business-id <id> --identity <name> [--database ...] [--connectors ...] [--sandbox-hosts ...]
+    python -m team_c.mcp_server --business-id <id> --identity service --context-from-client [...]
 """
 import argparse
 import json
@@ -31,14 +36,25 @@ def result(envelope):
                                 is_error=envelope["status"] != "succeeded")
 
 
-def build_server(service, business_id, identity):
+def client_context(params):
+    """(context, idempotency_key) from `_meta.ticketeasy` of a production request; (None, None) when absent or malformed."""
+    meta = params.meta if isinstance(getattr(params, "meta", None), dict) else {}
+    found = meta.get("ticketeasy") if isinstance(meta.get("ticketeasy"), dict) else {}
+    context = found.get("context")
+    context = dict(context) if isinstance(context, dict) else None
+    key = found.get("idempotency_key")
+    return context, key if isinstance(key, str) and 8 <= len(key) <= 128 and key.isascii() and key.isprintable() else None
+
+
+def build_server(service, business_id, identity, production=False):
     async def list_tools(ctx, params):
-        tools = await anyio.to_thread.run_sync(service.published_tools, business_id, identity)
+        tools = await anyio.to_thread.run_sync(service.published_tools, business_id, identity, production)
         return types.ListToolsResult(tools=[types.Tool(**t) for t in tools])
 
     async def call_tool(ctx, params):
+        context, key = client_context(params) if production else (None, None)  # without the flag the metadata is never read
         try:
-            envelope = await anyio.to_thread.run_sync(service.invoke_published, business_id, identity, params.name, params.arguments)
+            envelope = await anyio.to_thread.run_sync(lambda: service.invoke_published(business_id, identity, params.name, params.arguments, context, key, production))
         except AppError as exc:
             if exc.code == "tool_not_published":
                 raise MCPError(INVALID_PARAMS, exc.message, {"code": exc.code})
@@ -63,6 +79,7 @@ def main(argv=None):
     parser.add_argument("--database")
     parser.add_argument("--connectors")
     parser.add_argument("--sandbox-hosts")
+    parser.add_argument("--context-from-client", action="store_true", help="PRODUCTION process: service credential, customer context from _meta.ticketeasy")
     args = parser.parse_args(argv)
     logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)  # request URLs can carry record references
@@ -70,10 +87,17 @@ def main(argv=None):
     settings = Settings(**overrides)
     service = Service(settings, Store(settings.database_path), None)
     service.store.one("SELECT id FROM businesses WHERE id=?", (args.business_id,))
-    if not any(c.get("business_id") == args.business_id and args.identity in (c.get("identities") or {}) for c in load_connectors(settings).values()):
-        parser.error("the identity is not configured for any connector of this business")
-    log.info("serving business %s as identity %s from %s", args.business_id, args.identity, settings.database_path)
-    server = build_server(service, args.business_id, args.identity)
+    if args.context_from_client:
+        if not settings.production_enabled:
+            parser.error("production is switched off (PRODUCTION_ENABLED)")
+        if not any(c.get("business_id") == args.business_id and c.get("environment") == "production" for c in load_connectors(settings).values()):
+            parser.error("this business has no production connector")
+        log.info("serving PRODUCTION tools of business %s with the service credential from %s", args.business_id, settings.database_path)
+    else:
+        if not any(c.get("business_id") == args.business_id and args.identity in (c.get("identities") or {}) for c in load_connectors(settings).values()):
+            parser.error("the identity is not configured for any connector of this business")
+        log.info("serving business %s as identity %s from %s", args.business_id, args.identity, settings.database_path)
+    server = build_server(service, args.business_id, args.identity, production=args.context_from_client)
 
     async def run():
         async with stdio_server() as (read, write):

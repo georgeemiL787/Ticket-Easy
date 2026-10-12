@@ -244,7 +244,7 @@ team_b/
                  team_c_tools (TeamCCapabilities, the CapabilityClient when TEAM_B_TEAM_C_CONFIG is set (config/team_c.example.json): wraps the
                            stand-in; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
                            mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the stand-in; a binding's
-                           `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API); two allowed
+                           `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API) or "production" (a PROMOTED tool, below); two allowed
                            environments published at once = ambiguous (no silent fallback); a result from another environment or claiming production
                            is not trusted; errors carry Team C's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
                            ToolCallRequest.acting_customer_id (the verified customer, set by code in shopcalls/actions/stages) -> the operator's identities map,
@@ -252,6 +252,16 @@ team_b/
                            (audit_id team-c:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
                            rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
                            (registry drops its list). Team C sends no list_changed: re-listed every TEAM_B_CAPABILITY_TTL_S and on refresh)
+                 production (TeamCCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when Team C lists it with
+                           environment production AND production_ready true (a sandbox/live one must say false); production tools are listed and called on a SEPARATE Team C process (`--identity service --context-from-client`,
+                           session key PRODUCTION_KEY) that uses the business's service credential; the call carries the VERIFIED customer (ToolCallRequest.acting_customer_id, set by code) as
+                           `_meta.ticketeasy.context` and the request's idempotency_key as `_meta.ticketeasy.idempotency_key`, never in arguments; no verified customer = IDENTITY_NOT_MAPPED, nothing sent; a result is
+                           trusted only for the same production publication id; a pre-flight rejection is TEAM_C_REJECTED (nothing applied). Production secrets never cross into Team B (the MCP process reads a `file:` or env
+                           reference in Team C's own environment); Team B only holds Team C's admin token (config `admin_token_env`) to call its admin routes
+                 (team_c_admin also: promotions(business_id), promote(artifact_id, actor, note, rollback_contact, accept_no_idempotency), rollback(promotion_id, actor, note); api/business_tools: POST .../artifacts/{id}/promote and
+                 POST .../promotions/{id}/rollback are ADMIN-only (not in ROLES) and need a signed-in person (their name is the recorded decision), the artifact / promotion must belong to the tenant's business else 404,
+                 Team C's refusal text (which checklist items failed) is returned as 409 PROMOTION_REFUSED; the page shows PRODUCTION badges, a banner count, promotions with checklists, Promote and Roll back (admins))
+                 (team_c_admin also: artifacts(business_id), auto_test(artifact_id), auto_test_run(run_id): Team C's automatic tests, started from the Business tools page, manager only, never publishes)
                  team_c_admin (TeamCAdmin: Team C's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
     api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}, POST
                  .../connectors/{id}/check: manager; the publication or connector must belong to the tenant's Team C business else 404;

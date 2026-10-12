@@ -32,6 +32,24 @@ class TeamCRest:
     def __init__(self) -> None:
         self.publications: dict[str, dict[str, Any]] = {}
         self.posts: list[tuple[str, Any]] = []
+        self.artifacts: dict[str, list[dict[str, Any]]] = {
+            BUSINESS: [
+                {
+                    "id": "art-1", "proposal_id": "prop-2", "version": 1, "name": "Open a ticket",
+                    "environment": "sandbox", "readiness_state": "needs_owner",
+                    "auto_test": {"status": "succeeded", "needs_owner": [{"question": "Add one more test account"}]},
+                }
+            ],
+            "biz-someone-else": [
+                {"id": "art-other", "proposal_id": "p9", "version": 1, "name": "x",
+                 "readiness_state": "not_tested", "auto_test": None}
+            ],
+        }  # fmt: skip
+        self.promotions: dict[str, list[dict[str, Any]]] = {BUSINESS: [], "biz-someone-else": [
+            {"id": "promo-other", "status": "active", "source_artifact_id": "art-other", "actor": "x", "note": "n",
+             "rollback_contact": "c", "checklist": {}},
+        ]}  # fmt: skip
+        self.refuse: str | None = None  # Team C's refusal text for the next promotion
         self.connectors: dict[str, list[dict[str, Any]]] = {
             BUSINESS: [{"id": "live-abc", "environment": "live_demo", "host": "api.example.com:443",
                         "identities": [{"name": "alice", "scope": "end_user"}], "last_check": None}],
@@ -72,6 +90,35 @@ class TeamCRest:
                 if c["id"] == cid:
                     c["last_check"] = check
             return httpx.Response(200, json=check)
+        if request.method == "GET" and path.startswith("/businesses/") and path.endswith("/artifacts"):
+            return httpx.Response(200, json=self.artifacts.get(path.split("/")[2], []))
+        if request.method == "POST" and path.startswith("/artifacts/") and path.endswith("/auto-test"):
+            self.posts.append((path, json.loads(request.content)))
+            for a in self.artifacts[BUSINESS]:
+                if a["id"] == path.split("/")[2]:
+                    a.update(readiness_state="testing", auto_test={"status": "running", "needs_owner": []})
+            return httpx.Response(200, json={"run_id": "run-1", "status": "running"})
+        if request.method == "GET" and path.startswith("/businesses/") and path.endswith("/promotions"):
+            return httpx.Response(200, json=self.promotions.get(path.split("/")[2], []))
+        if request.method == "POST" and path.startswith("/artifacts/") and path.endswith("/promotions"):
+            self.posts.append((path, json.loads(request.content)))
+            if self.refuse:
+                return httpx.Response(409, json={"code": "promotion_refused", "message": self.refuse})
+            promo = {
+                "id": "promo-1", "status": "active", "source_artifact_id": path.split("/")[2],
+                "production_artifact_id": "art-prod", "publication_id": "pub-prod",
+                "actor": json.loads(request.content)["actor"], "note": "n", "rollback_contact": "c",
+                "created_at": "2026-10-12T10:00:00",
+                "checklist": {"smoke": {"ok": True, "detail": "ok"}, "idempotency": {"ok": False, "detail": "none"}},
+            }  # fmt: skip
+            self.promotions[BUSINESS].append(promo)
+            return httpx.Response(200, json=promo)
+        if request.method == "POST" and path.startswith("/promotions/") and path.endswith("/rollback"):
+            self.posts.append((path, json.loads(request.content)))
+            for p in self.promotions[BUSINESS]:
+                if p["id"] == path.split("/")[2]:
+                    p.update(status="rolled_back", rolled_back_by=json.loads(request.content)["actor"])
+            return httpx.Response(200, json={})
         if request.method == "GET" and path == f"/businesses/{BUSINESS}/proposals":
             view = {"proposal_id": "prop-2", "id": None, "version": 1, "state": "ready_for_review",
                     "content": {"name": "Open a ticket", "questions": []}}  # fmt: skip
@@ -132,7 +179,10 @@ async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_public
     [pub] = body["publications"]
     assert pub["environment"] == "sandbox" and pub["production_ready"] is False and pub["bound_to"] == "get_order"
     assert "evidence" not in pub  # only what the page needs
-    assert body["proposals"] == [{"id": "prop-2", "name": "Open a ticket", "version": 1, "state": "ready_for_review"}]
+    [proposal] = body["proposals"]
+    assert proposal == proposal | {"id": "prop-2", "name": "Open a ticket", "version": 1, "state": "ready_for_review"}
+    assert proposal["artifact_id"] == "art-1" and proposal["readiness_state"] == "needs_owner"
+    assert proposal["auto_test_status"] == "succeeded" and proposal["auto_test_question"] == "Add one more test account"
     assert body["builder_url"] == f"http://127.0.0.1:9/businesses/{BUSINESS}"
 
 
@@ -246,3 +296,123 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
             and tool["status"] == "available"
         )
         assert body["live_tools"] == 1 and body["test_only"] is False
+
+
+async def test_a_manager_starts_automatic_tests_for_this_businesss_tool_only(
+    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+) -> None:
+    http, _, rest = open_client
+    reply = await http.post(f"{URL}/artifacts/art-1/auto-test", params={"tenant_id": T})
+    assert reply.status_code == 200, reply.text
+    assert rest.posts == [
+        ("/artifacts/art-1/auto-test", {})
+    ]  # never asks to publish: Team C's business setting decides
+    [proposal] = reply.json()["proposals"]
+    assert proposal["readiness_state"] == "testing" and proposal["auto_test_status"] == "running"
+    for other in ("art-other", "art-missing"):
+        assert (await http.post(f"{URL}/artifacts/{other}/auto-test", params={"tenant_id": T})).status_code == 404
+    assert len(rest.posts) == 1
+
+
+async def test_only_a_manager_may_start_automatic_tests(tmp_path: Path, rest: TeamCRest) -> None:
+    config = tmp_path / "tenants"
+    shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
+    fake = Fake(tmp_path)
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=ORDER_OK)
+    container = build(tmp_path, fake, rest, auth_required=True, secret_key="k" * 32, config_dir=config)
+    assert container.auth is not None
+    await container.auth.create_user("agent@example.com", "Agent", "agent", (T,), PASSWORD)
+    await container.auth.create_user("mona@example.com", "Mona", "manager", (T,), PASSWORD)
+    async for http in serve(container):
+        url = f"{URL}/artifacts/art-1/auto-test"
+        assert (await http.post(url, params={"tenant_id": T})).status_code == 401
+        login = await http.post("/v1/auth/login", json={"email": "agent@example.com", "password": PASSWORD})
+        assert (
+            await http.post(url, params={"tenant_id": T}, headers={"X-CSRF-Token": login.json()["csrf_token"]})
+        ).status_code == 403
+        await http.post("/v1/auth/logout", headers={"X-CSRF-Token": login.json()["csrf_token"]})
+        login = await http.post("/v1/auth/login", json={"email": "mona@example.com", "password": PASSWORD})
+        assert (
+            await http.post(url, params={"tenant_id": T}, headers={"X-CSRF-Token": login.json()["csrf_token"]})
+        ).status_code == 200
+        assert len(rest.posts) == 1
+
+
+async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries_their_name(
+    tmp_path: Path, rest: TeamCRest
+) -> None:
+    config = tmp_path / "tenants"
+    shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
+    fake = Fake(tmp_path)
+    fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=ORDER_OK)
+    rest.connectors[BUSINESS].append(
+        {"id": "prod-1", "environment": "production", "host": "api.example.com:443", "identities": []}
+    )
+    rest.artifacts[BUSINESS][0]["readiness_state"] = "published"
+    container = build(tmp_path, fake, rest, auth_required=True, secret_key="k" * 32, config_dir=config)
+    assert container.auth is not None
+    await container.auth.create_user("mona@example.com", "Mona", "manager", (T,), PASSWORD)
+    await container.auth.create_user("ali@example.com", "Ali Admin", "admin", (T,), PASSWORD)
+    body = {"note": "TEST-ONLY go-live", "rollback_contact": "oncall@example.com", "accept_no_idempotency": True}
+    url = f"{URL}/artifacts/art-1/promote"
+    async for http in serve(container):
+        login = await http.post("/v1/auth/login", json={"email": "mona@example.com", "password": PASSWORD})
+        manager = {"X-CSRF-Token": login.json()["csrf_token"]}
+        assert (
+            await http.post(url, params={"tenant_id": T}, json=body, headers=manager)
+        ).status_code == 403  # a manager may not
+        assert rest.posts == []
+        await http.post("/v1/auth/logout", headers=manager)
+        login = await http.post("/v1/auth/login", json={"email": "ali@example.com", "password": PASSWORD})
+        admin = {"X-CSRF-Token": login.json()["csrf_token"]}
+        page = (await http.get(URL, params={"tenant_id": T})).json()
+        assert page["production_connector"] is True and page["proposals"][0]["promotable"] is True
+        rest.refuse = "This tool cannot be promoted yet: smoke: PRODUCTION_SMOKE_CONTEXT is not configured"
+        refused = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)
+        assert refused.status_code == 409 and refused.json()["error"]["code"] == "PROMOTION_REFUSED"
+        assert "PRODUCTION_SMOKE_CONTEXT is not configured" in refused.json()["error"]["message"]  # Team C's own words
+        rest.refuse = None
+        done = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)
+        assert done.status_code == 200, done.text
+        assert rest.posts[-1] == (
+            "/artifacts/art-1/promotions",
+            {
+                "actor": "Ali Admin",
+                "note": "TEST-ONLY go-live",
+                "rollback_contact": "oncall@example.com",
+                "accept_no_idempotency": True,
+            },
+        )
+        shown = done.json()
+        assert [p["actor"] for p in shown["promotions"]] == ["Ali Admin"] and shown["proposals"][0]["promoted"] is True
+        assert {c["name"]: c["ok"] for c in shown["promotions"][0]["checklist"]} == {
+            "smoke": True,
+            "idempotency": False,
+        }
+        # another business's tool is answered as missing, and so is rolling back another business's promotion
+        assert (
+            await http.post(f"{URL}/artifacts/art-other/promote", params={"tenant_id": T}, json=body, headers=admin)
+        ).status_code == 404
+        assert (
+            await http.post(
+                f"{URL}/promotions/promo-other/rollback", params={"tenant_id": T}, json={"note": "nope"}, headers=admin
+            )
+        ).status_code == 404
+        back = await http.post(
+            f"{URL}/promotions/promo-1/rollback", params={"tenant_id": T}, json={"note": "TEST-ONLY"}, headers=admin
+        )
+        assert back.status_code == 200 and rest.posts[-1] == (
+            "/promotions/promo-1/rollback",
+            {"actor": "Ali Admin", "note": "TEST-ONLY"},
+        )
+        assert back.json()["promotions"][0]["status"] == "rolled_back"
+
+
+async def test_an_open_dashboard_without_sign_in_cannot_promote(
+    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+) -> None:
+    http, _, rest = open_client
+    body = {"note": "TEST-ONLY go-live", "rollback_contact": "oncall@example.com"}
+    # sign-in switched off: nobody can be named as the person who decided, so production decisions are refused
+    refused = await http.post(f"{URL}/artifacts/art-1/promote", params={"tenant_id": T}, json=body)
+    assert refused.status_code == 403 and rest.posts == []

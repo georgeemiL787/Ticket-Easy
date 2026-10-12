@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, apiPost, withQuery } from "../api/client";
-import type { DashboardBusinessTools, TeamCConnector, TeamCPublication } from "../api/types/DashboardBusinessTools";
+import type { DashboardBusinessTools, TeamCConnector, TeamCPromotion, TeamCProposal, TeamCPublication } from "../api/types/DashboardBusinessTools";
+import { useAuth } from "../auth";
 import { useApi } from "../api/useApi";
 import { Async } from "../components/Async";
 import { useI18n } from "../i18n";
@@ -55,9 +56,10 @@ function DisableForm({ tenant, publication, onDone }: { tenant: string; publicat
   );
 }
 
-/** SANDBOX or LIVE DEMO, exactly as Team C reports the environment; never "production". */
+/** SANDBOX, LIVE DEMO or PRODUCTION, exactly as Team C reports the environment. */
 function EnvBadge({ environment }: { environment: string | null | undefined }) {
   const { t } = useI18n();
+  if (environment === "production") return <span className="badge env-production">{t("bt.env.production")}</span>;
   if (environment === "live_demo") return <span className="badge env-live">{t("bt.env.live_demo")}</span>;
   if (environment === "sandbox") return <span className="badge env-sandbox">{t("bt.env.sandbox")}</span>;
   return null;
@@ -122,9 +124,175 @@ function ConnectorCard({ tenant, connector, onDone }: { tenant: string; connecto
   );
 }
 
+/** Production decisions are an admin's, by name: the service refuses anyone else, so the controls are shown to admins only. */
+function useIsAdmin(): boolean {
+  const auth = useAuth();
+  return Boolean(auth?.me.auth_required && auth.me.user?.role === "admin");
+}
+
+/** Promote a tested tool to production: a note, a rollback contact and (for writes) the idempotency acceptance. Team C may refuse; its words are shown. */
+function Promote({ tenant, proposal, reload }: { tenant: string; proposal: TeamCProposal; reload: () => void }) {
+  const { t } = useI18n();
+  const [note, setNote] = useState("");
+  const [contact, setContact] = useState("");
+  const [accept, setAccept] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await apiPost<DashboardBusinessTools>(withQuery(`${BASE}/artifacts/${proposal.artifact_id}/promote`, { tenant_id: tenant }), {
+        note,
+        rollback_contact: contact,
+        accept_no_idempotency: accept,
+      });
+      reload();
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : t("common.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <details className="promote">
+      <summary>{t("bt.promote")}</summary>
+      <form onSubmit={submit} aria-label={`${t("bt.promote")} ${proposal.name}`}>
+        <p className="muted small">{t("bt.promoteHint")}</p>
+        <input required minLength={3} maxLength={500} value={note} placeholder={t("bt.promoteNote")} onChange={(e) => setNote(e.target.value)} aria-label={t("bt.promoteNote")} />
+        <input required minLength={3} maxLength={200} value={contact} placeholder={t("bt.promoteContact")} onChange={(e) => setContact(e.target.value)} aria-label={t("bt.promoteContact")} />
+        <label className="small">
+          <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} /> {t("bt.promoteNoIdempotency")}
+        </label>
+        <button type="submit" disabled={busy}>
+          {busy ? t("common.loading") : t("bt.promoteConfirm")}
+        </button>
+        {error ? (
+          <p role="alert" className="notice">
+            {error}
+          </p>
+        ) : null}
+      </form>
+    </details>
+  );
+}
+
+/** One promotion: who decided it and why, its checklist with the evidence of each item, and (when active) the rollback. */
+function PromotionCard({ tenant, promotion, admin, reload }: { tenant: string; promotion: TeamCPromotion; admin: boolean; reload: () => void }) {
+  const { t, lang } = useI18n();
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function rollback(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await apiPost<DashboardBusinessTools>(withQuery(`${BASE}/promotions/${promotion.id}/rollback`, { tenant_id: tenant }), { note });
+      reload();
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : t("common.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <li className="connector">
+      <div className="actions-row">
+        <span className="badge env-production">{t("bt.env.production")}</span>
+        <span className={`badge ${promotion.status === "active" ? "ok" : "problem"}`}>{label(t, "bt.promotion", promotion.status)}</span>
+        <span className="muted small">
+          {t("bt.promotedBy")} {promotion.actor}
+          {promotion.created_at ? ` · ${formatDateTime(promotion.created_at, lang)}` : ""} · {promotion.rollback_contact}
+        </span>
+      </div>
+      <p className="small">{promotion.note}</p>
+      {promotion.status === "rolled_back" ? (
+        <p className="muted small">
+          {t("bt.rolledBackBy")} {promotion.rolled_back_by}: {promotion.rollback_note}
+        </p>
+      ) : null}
+      <ul className="plain checks">
+        {(promotion.checklist ?? []).map((c) => (
+          <li key={c.name}>
+            <span className={`badge ${c.ok ? "ok" : "problem"}`}>{c.ok ? "ok" : "no"}</span> <strong>{c.name.replace(/_/g, " ")}</strong> <span className="muted small">{c.detail}</span>
+          </li>
+        ))}
+      </ul>
+      {admin && promotion.status === "active" ? (
+        <form className="inline-form" onSubmit={rollback} aria-label={`${t("bt.rollback")} ${promotion.id}`}>
+          <input required minLength={3} maxLength={500} value={note} placeholder={t("bt.rollbackNote")} onChange={(e) => setNote(e.target.value)} aria-label={t("bt.rollbackNote")} />
+          <button type="submit" disabled={busy}>
+            {busy ? t("common.loading") : t("bt.rollback")}
+          </button>
+          {error ? (
+            <span role="alert" className="badge problem">
+              {error}
+            </span>
+          ) : null}
+        </form>
+      ) : null}
+    </li>
+  );
+}
+
+const READY_BADGE: Record<string, string> = { ready_to_publish: "ok", published: "ok", needs_owner: "problem", testing: "decision-handoff" };
+
+/** The state of a built tool and the button that starts Team C's automatic tests; polls while a run is going. */
+function AutoTest({ tenant, proposal, reload }: { tenant: string; proposal: TeamCProposal; reload: () => void }) {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const testing = proposal.readiness_state === "testing";
+
+  useEffect(() => {
+    if (!testing) return;
+    const timer = setInterval(reload, 3000);
+    return () => clearInterval(timer);
+  }, [testing, reload]);
+
+  async function start() {
+    setBusy(true);
+    setError(null);
+    try {
+      await apiPost<DashboardBusinessTools>(withQuery(`${BASE}/artifacts/${proposal.artifact_id}/auto-test`, { tenant_id: tenant }), {});
+      reload();
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : t("common.error"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!proposal.artifact_id) return null;
+  const state = proposal.readiness_state ?? "not_tested";
+  return (
+    <div className="actions-row">
+      <span className={`badge ${READY_BADGE[state] ?? ""}`}>{label(t, "bt.ready", state)}</span>
+      {state === "needs_owner" && proposal.auto_test_question ? <span className="muted small">{proposal.auto_test_question}</span> : null}
+      {state !== "published" ? (
+        <button type="button" onClick={() => void start()} disabled={busy || testing} title={t("bt.autoTestHint")}>
+          {busy || testing ? t("common.loading") : t("bt.autoTest")}
+        </button>
+      ) : null}
+      {error ? (
+        <span role="alert" className="badge problem">
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 export default function BusinessTools() {
   const { t, lang } = useI18n();
   const filters = useFilters();
+  const isAdmin = useIsAdmin();
   const state = useApi<DashboardBusinessTools>(BASE, { tenant_id: filters.tenant });
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
@@ -148,11 +316,16 @@ export default function BusinessTools() {
       <Async state={state}>
         {(d) => (
           <>
+            {d.production_tools ? (
+              <p className="notice production" role="note">
+                <strong>{t("bt.productionNotice", { n: d.production_tools })}</strong> {t("bt.productionNoticeHint")}
+              </p>
+            ) : null}
             {d.live_tools ? (
               <p className="notice live" role="note">
                 <strong>{t("bt.liveNotice", { n: d.live_tools })}</strong> {t("bt.liveNoticeHint")}
               </p>
-            ) : (
+            ) : d.production_tools ? null : (
               <p className="notice" role="note">
                 <strong>{t("bt.testOnly")}</strong> {t("bt.testOnlyHint")}
               </p>
@@ -296,6 +469,17 @@ export default function BusinessTools() {
                 )}
                 <p className="muted small">{t("bt.checkHint")}</p>
 
+                <h2>{t("bt.promotions")}</h2>
+                {(d.promotions ?? []).length === 0 ? (
+                  <p className="muted">{t("bt.noPromotions")}</p>
+                ) : (
+                  <ul className="plain connectors">
+                    {(d.promotions ?? []).map((p) => (
+                      <PromotionCard key={p.id} tenant={filters.tenant} promotion={p} admin={isAdmin} reload={state.reload} />
+                    ))}
+                  </ul>
+                )}
+
                 <h2>{t("bt.proposals")}</h2>
                 {(d.proposals ?? []).length === 0 ? (
                   <p className="muted">{t("bt.noProposals")}</p>
@@ -312,6 +496,8 @@ export default function BusinessTools() {
                         )}{" "}
                         <span className="muted">v{p.version}</span>{" "}
                         <span className={`badge ${OPEN_STATES.has(p.state) ? "decision-handoff" : p.state === "approved_to_build" ? "ok" : ""}`}>{label(t, "bt.state", p.state)}</span>
+                        <AutoTest tenant={filters.tenant} proposal={p} reload={state.reload} />
+                        {isAdmin && p.promotable ? <Promote tenant={filters.tenant} proposal={p} reload={state.reload} /> : null}
                       </li>
                     ))}
                   </ul>

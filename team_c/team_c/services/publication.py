@@ -2,10 +2,11 @@ import json
 from ..config import AppError
 from ..models import SandboxRunSubmission
 from ..persistence.util import uid, now, dump
-from ..connectors import LIVE_DEMO
+from ..connectors import LIVE_DEMO, PRODUCTION
 from ..executor import artifact_environment, destination, load_connectors
+from .. import promotions as promotion_rules
 from .. import publishing
-from ..persistence.repositories import publications as publications_repo
+from ..persistence.repositories import promotions as promotions_repo, publications as publications_repo
 
 
 class Publication:
@@ -15,6 +16,7 @@ class Publication:
     def __init__(self, settings, store, providers, building):
         self.settings, self.store, self.providers = settings, store, providers
         self.building = building
+        self.after_production_call = None  # set by Service: the promotion service's error-spike watch
 
     def publication(self, pub_id):
         row = publications_repo.get(self.store, pub_id)
@@ -27,6 +29,7 @@ class Publication:
         go), production_ready / production_activation (always false: no production release process exists)."""
         row = dict(row, evidence=json.loads(row["evidence"]), production_activation=False, production_ready=False,
                    production_assessment="not_assessed")
+        promo = promotions_repo.for_publication(self.store, row["id"]) if row["environment"] == PRODUCTION else None
         problem = None
         if row["status"] == "published":
             try:
@@ -36,6 +39,10 @@ class Publication:
         row["effective_status"] = row["status"] if not problem else "blocked"
         row["problem"] = problem
         row["execution_enabled"] = row["status"] == "published" and problem is None
+        if promo:  # production is true only for a promoted publication whose promotion is active and whose re-checks hold
+            row.update(promotion_id=promo["id"], production_activation=promo["status"] == "active" and row["execution_enabled"],
+                       production_ready=promo["status"] == "active" and row["execution_enabled"],
+                       production_assessment="passed" if promo["status"] == "active" else "rolled_back")
         return row
 
     def publications(self, business_id=None, artifact_id=None):
@@ -84,6 +91,8 @@ class Publication:
         """Explicit publication of one exact, approved and tested artifact in the environment it was built for
         (sandbox or Live Demo); idempotent while active. Never a production release."""
         built_for = artifact_environment(self.building.artifact(aid)["content"])
+        if built_for == PRODUCTION:
+            raise AppError("use_promotion", "A production tool is published only by an admin's promotion of a tested sandbox or Live Demo tool", 409)
         if submission.environment != built_for:
             raise AppError("environment_mismatch", f"This artifact was built for {built_for}; it can only be published to {built_for}", 409)
         a, problems, evidence = self.publication_problems(aid)
@@ -122,6 +131,21 @@ class Publication:
             raise AppError("environment_mismatch", "The publication's environment differs from the artifact's", 409)
         if row["environment"] == LIVE_DEMO and not self.settings.live_demo_enabled:
             raise AppError("live_demo_disabled", "Live Demo execution is switched off (LIVE_DEMO_ENABLED)", 409)
+        production = row["environment"] == PRODUCTION
+        evidence_of = a
+        if production:
+            if not self.settings.production_enabled:
+                raise AppError("production_disabled", "Production execution is switched off (PRODUCTION_ENABLED)", 409)
+            promo = promotions_repo.for_publication(self.store, row["id"])
+            if not promo or promo["status"] != "active" or promo["production_sha256"] != a["sha256"]:
+                raise AppError("promotion_not_active", "This production tool's promotion is not active (rolled back, or it no longer matches the artifact)", 409)
+            source = self.building.artifact(promo["source_artifact_id"])
+            if source["sha256"] != promo["source_sha256"]:
+                raise AppError("artifact_integrity", "The tested artifact differs from the one that was promoted", 409)
+            differ = promotion_rules.differences(source["content"], c)
+            if differ:
+                raise AppError("publication_evidence", "The production artifact no longer matches the tested one (" + ", ".join(differ) + ")", 409)
+            evidence_of = source
         publishing.tool_schemas(c)
         _, _, _, decision = self.building.approval(c["proposal"]["id"], c["proposal"]["version"], c["proposal"]["content_sha256"])
         if decision["id"] != row["decision_id"]:
@@ -129,38 +153,52 @@ class Publication:
         current = self.building.check_enforcement(c)
         if (current["id"] if current else None) != row["enforcement_config_id"]:
             raise AppError("enforcement_not_current", "The enforcement recorded at publication is no longer current", 409)
-        problems, _ = publishing.evidence(c, a["tests"], a["executions"])
-        if c.get("access_policy") and (not a.get("policy_tests") or not a["policy_tests"]["passed"]):
+        ec = evidence_of["content"]
+        problems, _ = publishing.evidence(ec, evidence_of["tests"], evidence_of["executions"])
+        if ec.get("access_policy") and (not evidence_of.get("policy_tests") or not evidence_of["policy_tests"]["passed"]):
             problems.append("Generated policy tests are missing or failed")
-        if c.get("access_policy") and not a["readiness"]["publish_ready"]:
-            problems.extend(a["readiness"]["blockers"])
+        if ec.get("access_policy") and not evidence_of["readiness"]["publish_ready"]:
+            problems.extend(evidence_of["readiness"]["blockers"])
+        if production and c["execution_blockers"]:
+            problems.extend(c["execution_blockers"])
         if problems:
             raise AppError("publication_evidence", "Sandbox test evidence for this artifact no longer holds: " + "; ".join(problems), 409)
         return a
 
-    def published_tools(self, business_id, identity):
-        """MCP tool definitions for publications that are valid right now and usable by this server's identity."""
+    def published_tools(self, business_id, identity, production=False):
+        """MCP tool definitions for publications that are valid right now. A normal server lists the sandbox and Live Demo tools its
+        identity can use; a production server (started with --context-from-client) lists only production tools."""
         tools = []
         for row in publications_repo.published(self.store, business_id):
+            if (row["environment"] == PRODUCTION) != production:
+                continue
             try:
                 c = self.check_publication(row)["content"]
             except AppError:
                 continue
-            if identity in ((load_connectors(self.settings).get(c["connector"]["id"]) or {}).get("identities") or {}):
+            if production or identity in ((load_connectors(self.settings).get(c["connector"]["id"]) or {}).get("identities") or {}):
                 tools.append(publishing.tool(row, c))
         return tools
 
-    def invoke_published(self, business_id, identity, name, arguments):
-        """One MCP tool call through the existing executor; identity comes from the server process, never from arguments."""
+    def invoke_published(self, business_id, identity, name, arguments, context=None, idempotency_key=None, production=False):
+        """One MCP tool call through the existing executor. A sandbox or Live Demo identity comes from the server process, never
+        from arguments. A production call (production server only) carries the verified customer's trusted `context` and an
+        optional `idempotency_key` from the calling server, never from arguments; the server's service credential is used."""
         pub = publications_repo.latest_for_tool(self.store, name, business_id)
-        if not pub or pub["status"] != "published":
-            raise AppError("tool_not_published", "No sandbox-published tool with this name is available to this server", 404)
+        if not pub or pub["status"] != "published" or (pub["environment"] == PRODUCTION) != production:
+            raise AppError("tool_not_published", "No published tool with this name is available to this server", 404)
         audit = dict(channel="mcp_stdio", publication_id=pub["id"], tool_name=name)
+        if production:
+            promo = promotions_repo.for_publication(self.store, pub["id"])
+            audit["idempotency_steps"] = {s: h for s, h in json.loads(promo["idempotency"])["plan"].items() if h} if promo else {}
         try:
-            # run_sandbox records it as mcp_live_demo when the artifact is a Live Demo one
-            result = self.building.run_sandbox(pub["artifact_id"], SandboxRunSubmission(identity=identity, arguments=arguments or {}), "mcp_sandbox", audit, lambda: self.check_publication(pub))
+            # run_sandbox records it as mcp_live_demo / mcp_production when the artifact is a Live Demo / production one
+            result = self.building.run_sandbox(pub["artifact_id"], SandboxRunSubmission(identity="service" if production else identity, arguments=arguments or {}), "mcp_sandbox", audit,
+                                               lambda: self.check_publication(pub), service_context=context if production else None, idempotency_key=idempotency_key if production else None)
         except AppError as exc:
             if "execution_id" not in exc.details:
                 raise
             return publishing.rejected(pub, exc)
+        if production and self.after_production_call:
+            self.after_production_call(pub, result["report"])
         return publishing.executed(pub, result)

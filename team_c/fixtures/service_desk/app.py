@@ -56,6 +56,10 @@ def create_app(variant=None, harness_key=None):
     app = FastAPI(title=f"Service desk fixture ({variant or 'base'})", version="1.0.0")
 
     def caller(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
+        # a business SERVICE credential (set by a test as app.state.service_token) may act on any booking: the API cannot
+        # tell customers apart for it, which is exactly why Team C must scope such calls itself
+        if credentials and getattr(app.state, "service_token", None) and secrets.compare_digest(credentials.credentials, app.state.service_token):
+            return dict(id=None, service=True)
         account = tokens.get(credentials.credentials) if credentials else None
         if account is None:
             raise HTTPException(401, "Not authenticated")
@@ -81,10 +85,12 @@ def create_app(variant=None, harness_key=None):
             booking = bookings.get(str(data[n["body_id"]]))
             if booking is None:
                 raise HTTPException(404, "Unknown booking")
-            if booking["holder"] != account["id"]:
+            if not account.get("service") and booking["holder"] != account["id"]:
                 raise HTTPException(403, "Not the booking holder")
+            if booking.get("state") == "cancelled":
+                raise HTTPException(409, "A cancelled booking takes no service requests")
             ticket = f"SR-{len(requests) + 1:04d}"
-            requests.append(dict(ticket=ticket, booking=booking["id"], filed_by=account["id"], category=data[n["category"]].value, text=data[n["text"]]))
+            requests.append(dict(ticket=ticket, booking=booking["id"], filed_by=booking["holder"] if account.get("service") else account["id"], category=data[n["category"]].value, text=data[n["text"]]))
         return {n["create_env"]: {n["created"]: {n["ticket"]: ticket, n["state"]: "open", n["body_id"]: booking["id"]}}}
 
     @app.post(n["prefix"] + n["attach"], status_code=201, tags=["requests"])
@@ -120,6 +126,75 @@ def create_app(variant=None, harness_key=None):
     def state():
         with lock:
             return dict(bookings=list(bookings.values()), requests=list(requests))
+
+    # ---- test fixtures for Team C's automatic tests (TEST-ONLY): same contract as the Nile sandbox, key header x-fixture-key ----
+    runs = {}
+
+    def fixture_auth(x_fixture_key: str = Header("")):
+        if not secrets.compare_digest(x_fixture_key, key):
+            raise HTTPException(403, "fixture key required")
+
+    def fixture_run(run_id):
+        return runs.setdefault(str(run_id or "default"), dict(accounts=[], bookings=[]))
+
+    @app.get("/_fixtures/kinds", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_kinds():
+        # the wrong state first, so a write tool has to find the state it works in
+        return [dict(kind="booking", states=["cancelled", "confirmed"], id_field="reference", selects_by=["booking_reference"])]
+
+    @app.post("/_fixtures/accounts", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_account(body: dict):
+        with lock:
+            account = dict(id=str(uuid.uuid4()), number=len(accounts) + 1001, name=str(body.get("label", "fixture")))
+            token = secrets.token_urlsafe(24)
+            accounts[account["id"]], tokens[token] = account, account
+            fixture_run(body.get("run_id"))["accounts"].append((account["id"], token))
+        return dict(account_id=account["id"], credential=dict(token=token), context={n["holder_id"]: account["number"] if n["holder_int"] else account["id"]})
+
+    @app.post("/_fixtures/records", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_record(body: dict):
+        state = str(body.get("state") or "confirmed")
+        if body.get("kind") != "booking" or state not in ("cancelled", "confirmed") or body.get("account_id") not in accounts:
+            raise HTTPException(422, "unknown kind, state or account")
+        with lock:
+            booking = dict(id=str(uuid.uuid4()), ref=f"BK-{secrets.token_hex(4).upper()}", date="2026-11-02", holder=body["account_id"], state=state)
+            bookings[booking["id"]] = booking
+            fixture_run(body.get("run_id"))["bookings"].append(booking["id"])
+        return dict(record_id=booking["ref"], kind="booking", state=state)
+
+    @app.post("/_fixtures/revoke", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_revoke(body: dict):
+        with lock:
+            for run in runs.values():
+                for account_id, token in run["accounts"]:
+                    if account_id == body.get("account_id"):
+                        tokens.pop(token, None)
+                        return dict(account_id=account_id, revoked=True)
+        raise HTTPException(404, "unknown fixture account")
+
+    @app.post("/_fixtures/reset", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_reset(body: dict):
+        with lock:
+            run = fixture_run(body.get("run_id"))
+            only = body.get("record_ids")
+            doomed = [b for b in run["bookings"] if only is None or bookings.get(b, {}).get("ref") in only]
+            for b in doomed:
+                bookings.pop(b, None)
+            run["bookings"] = [b for b in run["bookings"] if b not in doomed]
+            if only is None and not body.get("keep_accounts"):
+                for account_id, token in run["accounts"]:
+                    tokens.pop(token, None)
+                    accounts.pop(account_id, None)
+                run["accounts"] = []
+        return dict(run_id=body.get("run_id"), bookings_removed=len(doomed))
+
+    @app.get("/_fixtures/state", include_in_schema=False, dependencies=[Depends(fixture_auth)])
+    def fixture_state(run_id: str = "default"):
+        with lock:
+            run = fixture_run(run_id)
+            ids = set(run["bookings"])
+            return dict(run_id=run_id, bookings=[b for b in bookings.values() if b["id"] in ids],
+                        requests=[r for r in requests if r["booking"] in ids])
 
     app.state.names = n
     return app

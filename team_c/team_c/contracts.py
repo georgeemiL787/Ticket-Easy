@@ -176,7 +176,7 @@ class ArtifactConnector(TypedDict):
     id: str
     base_url: str
     auth: dict[str, Any] | None
-    environment: NotRequired[Literal["live_demo"]]  # absent: a sandbox artifact (every artifact built before Live Demo)
+    environment: NotRequired[Literal["live_demo", "production"]]  # absent: a sandbox artifact (every artifact built before Live Demo)
 
 
 class Artifact(TypedDict):

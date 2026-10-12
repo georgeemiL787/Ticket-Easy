@@ -764,6 +764,18 @@ a.button-link {
   border-color: var(--magenta);
 }
 
+.badge.env-production {
+  color: #fff;
+  background: var(--magenta);
+  border-color: var(--magenta);
+  font-weight: 700;
+}
+
+.notice.production {
+  border-color: var(--magenta);
+  background: color-mix(in srgb, var(--magenta) 10%, transparent);
+}
+
 .badge.env-sandbox {
   color: var(--muted);
 }

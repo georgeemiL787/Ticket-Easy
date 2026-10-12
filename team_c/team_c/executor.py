@@ -13,7 +13,8 @@ import httpx
 from jsonschema.exceptions import ValidationError
 from openapi_schema_validator import OAS30Validator, OAS30WriteValidator, oas30_format_checker
 from .config import AppError
-from .connectors import LIVE_DEMO, SANDBOX, confirmed_destination, environment_of, external_connectors, live_destination_problem, load_connectors
+from .connectors import (LIVE_DEMO, PRODUCTION, SANDBOX, confirmed_destination, environment_of, external_connectors, live_destination_problem,
+                         load_connectors, production_destination_problem, resolve_secret)
 from .contracts import Artifact, CompiledStep, ExecutionReport
 from .persistence.util import digest
 
@@ -78,7 +79,19 @@ def destination(connector, artifact: Artifact, settings):
     base = connector["base_url"].rstrip("/")
     host, _ = origin(base)
     environment = environment_of(connector)
-    if environment == LIVE_DEMO:
+    if environment == PRODUCTION:
+        if artifact_environment(artifact) != PRODUCTION:
+            raise AppError("environment_mismatch", "This artifact was not built for production; it cannot run on a production connector", 409)
+        problem = production_destination_problem(settings, base)
+        if problem:
+            raise problem
+        if artifact["connector"]["id"] in external_connectors(settings) or not connector.get("confirmed_by"):
+            raise AppError("destination_not_confirmed", "A production connector must be saved and confirmed through Team C by an admin", 403)
+        if connector.get("business_id") != artifact["proposal"]["business_id"]:
+            raise AppError("connector_scope", "This production connector belongs to another business", 403)
+    elif artifact_environment(artifact) == PRODUCTION:
+        raise AppError("environment_mismatch", "This artifact was built for production; it can only run on its production connector", 409)
+    elif environment == LIVE_DEMO:
         if artifact_environment(artifact) != LIVE_DEMO:
             raise AppError("environment_mismatch", "This artifact was built for the sandbox; build it again on the Live Demo connector", 409)
         problem = live_destination_problem(settings, base)
@@ -100,6 +113,26 @@ def destination(connector, artifact: Artifact, settings):
     if base != artifact["connector"]["base_url"].rstrip("/"):
         raise AppError("connector_changed", "The connector destination differs from the one recorded in the artifact; rebuild the artifact", 409)
     return base
+
+
+def service_identity(connector, context, auth=None):
+    """The identity a production call runs as: the business's ONE service credential (read from the environment variable the
+    connector names, never stored) acting for the verified customer whose trusted context the call carries. The class is
+    end_user because that is who the accepted policy admits; the credential is a service one, so the target API cannot tell
+    customers apart and Team C's checks do. An OAuth2-password API takes the secret as "username:password". None when the
+    secret is not set (or not in that form)."""
+    secret = resolve_secret(connector.get("secret_ref"))
+    if secret is None:
+        return None
+    identity = dict(scope="end_user", service=True, token="", username="", password="", context=dict(context))
+    if auth and auth.get("type") == "oauth2_password":
+        user, colon, password = secret.partition(":")
+        if not colon or not user or not password:
+            return None
+        identity.update(username=user, password=password)
+    else:
+        identity["token"] = secret
+    return identity
 
 
 def credentials(identity, artifact: Artifact):
@@ -155,8 +188,10 @@ def scalar(value):
 
 
 class Run:
-    def __init__(self, artifact: Artifact, arguments, identity, base, transport):
+    def __init__(self, artifact: Artifact, arguments, identity, base, transport, idempotency=None):
+        # idempotency: {"key": str, "steps": {step_id: header name}} for production writes whose API declares an idempotency header
         self.artifact, self.arguments, self.identity, self.base = artifact, arguments, identity, base
+        self.idempotency = idempotency
         self.origin, self.base_path = origin(base)
         self.limits = artifact["limits"]
         self.context = dict(identity.get("context") or {}, business_id=artifact["proposal"]["business_id"])
@@ -255,6 +290,11 @@ class Run:
                 headers[p["name"]] = text
         if cookies:
             headers["Cookie"] = "; ".join(cookies)
+        if self.idempotency and step["id"] in self.idempotency["steps"] and step["effect"] == "write":
+            name = self.idempotency["steps"][step["id"]]
+            if name.lower() in {k.lower() for k in headers}:
+                raise StepFailure("invalid_request", "The idempotency header cannot override another header")
+            headers[name] = self.idempotency["key"]  # trusted: it comes from the caller's server, never from tool arguments
         return headers
 
     def send(self, method, url, content=None, form=None, write=False, headers=None):
@@ -359,10 +399,15 @@ class Run:
                     raise StepFailure("invalid_response", f"Output {o['name']} is missing from {o['step_id']}'s response")
         return result
 
-    def execute(self) -> tuple[ExecutionReport, dict | None]:
+    def execute(self, smoke=False) -> tuple[ExecutionReport, dict | None]:
+        """Run the steps. With smoke=True only the read steps before the first write run and no output is extracted: a promotion's
+        production smoke check never writes."""
         if self.artifact.get("access_policy"):
             credentials(self.identity, self.artifact)
             validate_arguments(self.artifact["input_schema"], self.arguments)
+        steps = self.artifact["steps"]
+        if smoke:
+            steps = [s for s in steps[:next((i for i, s in enumerate(steps) if s["effect"] == "write"), len(steps))]]
         failure, outputs, failed_step = None, None, None
         with self.client:
             try:
@@ -371,13 +416,13 @@ class Run:
                 failure = exc
                 failed_step = "connector_auth"
             if failure is None:
-                for step in self.artifact["steps"]:
+                for step in steps:
                     try:
                         self.step(step, headers)
                     except StepFailure as exc:
                         failure, failed_step = exc, step["id"]
                         break
-            if failure is None:
+            if failure is None and not smoke:
                 try:
                     outputs = self.outputs()
                 except StepFailure as exc:

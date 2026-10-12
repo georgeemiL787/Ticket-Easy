@@ -133,9 +133,16 @@ class McpStdioSession:
                 break
         return tools
 
-    async def call_tool(self, name: str, arguments: dict[str, Any], *, timeout_s: float) -> dict[str, Any]:
-        """The raw CallToolResult. Raises McpUnavailable (not sent), McpLost (outcome unknown) or McpRemoteError."""
-        return await self.request("tools/call", {"name": name, "arguments": arguments}, timeout_s=timeout_s)
+    async def call_tool(
+        self, name: str, arguments: dict[str, Any], *, timeout_s: float, meta: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """The raw CallToolResult. Raises McpUnavailable (not sent), McpLost (outcome unknown) or McpRemoteError.
+        `meta` is the request's `_meta` (a production call carries ticketeasy.context and
+        ticketeasy.idempotency_key there, never in the arguments)."""
+        params: dict[str, Any] = {"name": name, "arguments": arguments}
+        if meta:
+            params["_meta"] = meta
+        return await self.request("tools/call", params, timeout_s=timeout_s)
 
     async def request(self, method: str, params: dict[str, Any], *, timeout_s: float) -> dict[str, Any]:
         if self._loop is None or not self.alive:

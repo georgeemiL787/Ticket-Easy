@@ -10,8 +10,9 @@ from urllib.parse import urljoin
 import httpx
 
 from ..config import AppError
-from ..connectors import (LIVE_DEMO, SANDBOX, base_url, environment_of, external_connectors, host_port, listed,
-                          live_destination_problem, load_connectors)
+from ..connectors import (LIVE_DEMO, PRODUCTION, SANDBOX, base_url, environment_of, external_connectors, host_port, listed,
+                          live_destination_problem, load_connectors, production_destination_problem, resolve_secret, secret_name)
+from ..fixtures import FixtureClient, fixtures_problem, public_view
 from ..persistence.util import digest, dump, now
 
 
@@ -80,15 +81,41 @@ class Connectors:
         return dict(base_url=urls[0] if len(urls) == 1 else "", candidates=urls,
                     context_fields=sorted(fields), business_id=view["business_id"])
 
-    def save(self, pid, url, context_fields, confirmed=False, environment=SANDBOX):
+    def set_fixtures(self, cid, business_id, fixtures):
+        """Declare (or with None remove) the test-fixture endpoints of a sandbox connector. The key is only a variable NAME."""
+        if cid in external_connectors(self.settings):
+            raise AppError("connector_external", "This connector is managed in its external configuration; add `fixtures` there", 409)
+        with self.store.connect(write=True) as conn:
+            row = conn.execute("SELECT content FROM sandbox_connectors WHERE id=? AND business_id=?", (cid, business_id)).fetchone()
+            if row is None:
+                raise AppError("connector_unknown", "No connector with this id serves this business", 404)
+            content = json.loads(row[0])
+            if fixtures is None:
+                content.pop("fixtures", None)
+            else:
+                problem = fixtures_problem(self.settings, content, fixtures)
+                if problem:
+                    raise problem
+                content["fixtures"] = dict(base_url=base_url(fixtures["base_url"]), key_ref=fixtures["key_ref"])
+            conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(content), cid))
+
+    def save(self, pid, url, context_fields, confirmed=False, environment=SANDBOX, fixtures=None, secret_ref=None):
         """Save the owner's destination for this business. A sandbox needs the sandbox confirmation; a Live Demo
         connector needs the owner's confirmation that it is the real API they may call, Live Demo switched on and the
         host in the operator's LIVE_DEMO_HOSTS (checked again before every call). Each environment keeps its own
-        connector and credentials."""
+        connector and credentials. Only a sandbox may declare test fixtures."""
         view = self.proposals.view(pid)
-        if environment not in (SANDBOX, LIVE_DEMO):
-            raise AppError("connector_environment", "Choose sandbox or live_demo")
+        if fixtures and environment != SANDBOX:
+            raise AppError("fixtures_sandbox_only", "Only a sandbox connector may declare test fixtures; Live Demo and production connectors never create accounts or records", 403)
+        if environment not in (SANDBOX, LIVE_DEMO, PRODUCTION):
+            raise AppError("connector_environment", "Choose sandbox, live_demo or production")
+        if environment == PRODUCTION and not secret_name(secret_ref):
+            raise AppError("production_secret_ref", 'A production connector names its service credential by reference, "env:VARIABLE" or "file:/path/to/secret"; the credential itself is never entered here')
+        if secret_ref and environment != PRODUCTION:
+            raise AppError("secret_ref_production_only", "Only a production connector uses a service credential reference", 422)
         if not confirmed:
+            if environment == PRODUCTION:
+                raise AppError("production_confirmation", "Confirm that this is the real production API, that its service credential is the business's own, and that you may act on its customers' data")
             if environment == LIVE_DEMO:
                 raise AppError("live_confirmation", "Confirm that this is the real API you are authorized to call for this demo")
             raise AppError("sandbox_confirmation", "Confirm that this destination is a sandbox you want to use for tests")
@@ -97,21 +124,36 @@ class Connectors:
             problem = live_destination_problem(self.settings, url)
             if problem:
                 raise problem
+        if environment == PRODUCTION:
+            problem = production_destination_problem(self.settings, url)
+            if problem:
+                raise problem
         fields = sorted(set(x.strip() for x in context_fields if x.strip()))
         if len(fields) > 100 or any(not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.-]{0,127}", x) for x in fields):
             raise AppError("connector_context", "Use field names separated by commas (letters, numbers, dots, underscores or hyphens)")
-        prefix = "live-" if environment == LIVE_DEMO else "sandbox-"
-        cid = prefix + digest([view["business_id"], url, fields] + ([LIVE_DEMO] if environment == LIVE_DEMO else []))[:20]
+        prefix = {LIVE_DEMO: "live-", PRODUCTION: "prod-"}.get(environment, "sandbox-")
+        cid = prefix + digest([view["business_id"], url, fields] + ([environment] if environment != SANDBOX else []))[:20]
         if cid in external_connectors(self.settings):
             raise AppError("connector_conflict", "This connector ID is already managed by the external configuration", 409)
         content = dict(business_id=view["business_id"], base_url=url, sandbox=environment == SANDBOX, context_fields=fields,
                        identities={}, confirmed_by=self.settings.dev_reviewer_id, confirmed_at=now())
-        if environment == LIVE_DEMO:
-            content["environment"] = LIVE_DEMO
+        if environment in (LIVE_DEMO, PRODUCTION):
+            content["environment"] = environment
+        if environment == PRODUCTION:
+            content["secret_ref"] = secret_ref
         with self.store.connect(write=True) as conn:
             # Repeating setup is idempotent and never erases existing credentials.
             conn.execute("INSERT OR IGNORE INTO sandbox_connectors(id,business_id,content,created_at) VALUES(?,?,?,?)",
                          (cid, view["business_id"], dump(content), now()))
+        if environment == PRODUCTION:  # repeating setup may point the connector at another variable, but never erases anything else
+            with self.store.connect(write=True) as conn:
+                row = conn.execute("SELECT content FROM sandbox_connectors WHERE id=?", (cid,)).fetchone()
+                saved = json.loads(row[0])
+                if saved.get("secret_ref") != secret_ref:
+                    saved["secret_ref"] = secret_ref
+                    conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+        if fixtures:
+            self.set_fixtures(cid, view["business_id"], fixtures)
         return cid
 
     def identity_setup(self, artifact):
@@ -197,6 +239,18 @@ class Connectors:
             saved["identities"][name] = dict(scope=scope, context=context, **{k: credential[k] for k in keys})
             conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
 
+    def remove_identity(self, cid, business_id, name):
+        """Delete one saved test identity of a managed connector (its credential leaves the database with it)."""
+        if cid in external_connectors(self.settings):
+            raise AppError("connector_external", "This connector's identities are managed in its external configuration", 409)
+        with self.store.connect(write=True) as conn:
+            row = conn.execute("SELECT content FROM sandbox_connectors WHERE id=? AND business_id=?", (cid, business_id)).fetchone()
+            if row is None:
+                raise AppError("connector_unknown", "No connector with this id serves this business", 404)
+            saved = json.loads(row[0])
+            if saved.get("identities", {}).pop(name, None) is not None:
+                conn.execute("UPDATE sandbox_connectors SET content=? WHERE id=?", (dump(saved), cid))
+
     # ---- listing and checking connectors (never returns a credential) ----
 
     def listing(self, business_id):
@@ -208,6 +262,8 @@ class Connectors:
                 continue
             out.append(dict(id=cid, environment=environment_of(c), base_url=c.get("base_url", ""), host=host_port(c.get("base_url", "")),
                             context_fields=c.get("context_fields") or [], external=cid in external,
+                            fixtures="configured" if c.get("fixtures") else "none", fixtures_endpoint=public_view(c.get("fixtures")),
+                            secret_ref=c.get("secret_ref"), secret_set=resolve_secret(c.get("secret_ref")) is not None if environment_of(c) == PRODUCTION else None,
                             identities=[dict(name=n, scope=i.get("scope")) for n, i in sorted((c.get("identities") or {}).items())],
                             confirmed_by=c.get("confirmed_by"), confirmed_at=c.get("confirmed_at"), last_check=c.get("last_check")))
         return out
@@ -234,7 +290,9 @@ class Connectors:
 
         problem = None
         if environment is None:
-            problem = AppError("not_sandbox", "The connector is neither a sandbox nor a Live Demo connector")
+            problem = AppError("not_sandbox", "The connector is neither a sandbox, a Live Demo nor a production connector")
+        elif environment == PRODUCTION:
+            problem = production_destination_problem(self.settings, connector["base_url"])
         elif environment == LIVE_DEMO:
             problem = live_destination_problem(self.settings, connector["base_url"])
         elif host_port(connector["base_url"]) not in listed(self.settings.sandbox_hosts) and not connector.get("confirmed_by"):
@@ -256,6 +314,13 @@ class Connectors:
                 add("reachable", "failed", f"Could not connect ({type(exc).__name__})")
         auth = next((a["content"]["connector"].get("auth") for a in artifacts if a["content"]["connector"]["id"] == cid), "unknown")
         identities = connector.get("identities") or {}
+        if environment == PRODUCTION:
+            # one service credential, read from the named environment variable: shown as present or absent, never its value
+            from ..executor import service_identity
+            found = service_identity(connector, {}, None if auth in ("unknown", None) else auth)
+            identities = {"service": found} if found else {}
+            add("secret", "ok" if resolve_secret(connector.get("secret_ref")) is not None else "failed",
+                f"{connector.get('secret_ref')} is " + ("available" if resolve_secret(connector.get("secret_ref")) is not None else "NOT available to Team C"))
         if not reachable:
             add("authentication", "skipped", "The API was not reached")
         elif auth == "unknown":
@@ -263,7 +328,7 @@ class Connectors:
         elif auth is None:
             add("authentication", "ok", "The specification declares no authentication for these operations")
         elif not identities:
-            add("authentication", "failed", "No identity (credential) is configured for this connector")
+            add("authentication", "failed", "The service credential is not set" if environment == PRODUCTION else "No identity (credential) is configured for this connector")
         elif auth["type"] == "oauth2_password":
             results = {}
             with httpx.Client(transport=transport, follow_redirects=False, trust_env=False, timeout=self.settings.connection_check_timeout) as client:
@@ -285,6 +350,16 @@ class Connectors:
                          for e in a["executions"] if e["id"] == t["execution_id"]})
         add("permissions", "ok" if proven else "unknown", f"Passing tests proved access for: {', '.join(proven)}" if proven else
             "No passing test on this connector yet: run a read test to prove what each identity may do")
+        if not connector.get("fixtures"):
+            add("fixtures", "unknown", "No test fixtures declared: automatic tests need accounts and records added by hand (optional)")
+        elif not reachable:
+            add("fixtures", "skipped", "The API was not reached")
+        else:
+            try:
+                kinds = FixtureClient(connector, self.settings, transport).kinds()
+                add("fixtures", "ok", "Record kinds: " + ", ".join(f"{k['kind']} ({', '.join(map(str, k['states']))})" for k in kinds))
+            except AppError as exc:
+                add("fixtures", "failed", f"{exc.code}: {exc.message}")
         live = [p["tool_name"] for p in publications if p.get("execution_enabled")]
         add("executable", "ok" if live else "unknown", f"Published and executable now: {', '.join(live)}" if live else "No executable publication on this connector")
         result = dict(connector_id=cid, environment=environment, host=host_port(connector["base_url"]), checked_at=now(), checks=checks,

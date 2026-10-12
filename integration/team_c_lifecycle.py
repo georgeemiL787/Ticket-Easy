@@ -6,9 +6,10 @@ as an owner would in its pages, with every owner decision labelled TEST-ONLY:
 
   business -> upload the sandbox OpenAPI -> request a tool (the model triages and generates a proposal)
   -> answer questions and access requirements -> accept the access policy -> reconcile (model) -> confirm requirements
-  -> approve to build -> save the sandbox connector -> build the artifact -> add two sandbox identities (alice = C-100,
-  bob = C-101, bearer tokens issued by the sandbox) -> generated policy tests -> sandbox tests (own record x2, a
-  cross-customer refusal) -> publish to the TEST-ONLY sandbox MCP -> write Team B's binding (integration/var/team_c.json)
+  -> approve to build -> save the sandbox connector (with its test-fixture endpoints) -> build the artifact -> save the demo
+  customers' identities for Team B's chat (alice = C-100, bob = C-101, ...) -> ONE automatic-test call (Team C creates its own
+  test accounts and records, runs the policy tests and the own-record / cross-customer scenarios) -> publish to the TEST-ONLY
+  sandbox MCP -> write Team B's binding (integration/var/team_c.json). `--manual-tests` keeps the old hand-written tests.
 
 Nothing here approves on anyone's behalf without saying so: approvals are recorded by Team C with this script's notes.
 Progress is kept in integration/var/lifecycle.json so a failed run resumes without asking the model again; --fresh
@@ -132,7 +133,10 @@ class Owner:
     """Team C's API and its browser forms (which need the page's CSRF token)."""
 
     def __init__(self) -> None:
-        self.http = httpx.Client(base_url=TEAM_C, timeout=600.0, trust_env=False)
+        # Team C requires its admin token on REST changes once the operator set one (integration/production.env switches that on)
+        key = VAR / "team_c_admin.key"
+        token = {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "integration" / "production.env").exists() else {}
+        self.http = httpx.Client(base_url=TEAM_C, timeout=600.0, trust_env=False, headers=token)
         self.csrf: str | None = None
 
     def get(self, path: str) -> Any:
@@ -196,7 +200,8 @@ def wait_for_proposal(owner: Owner, pid: str) -> dict[str, Any]:
 def answer_everything(owner: Owner, pid: str) -> None:
     p = owner.get(f"/proposals/{pid}")
     answers = {q["id"]: OWNER_POLICY for q in p["content"]["questions"]}
-    answers.update({r["id"]: OWNER_POLICY for r in p.get("requirements", [])})
+    if not (p.get("policy") or {}).get("accepted_at"):  # once the structured policy is accepted, prose can no longer answer requirements
+        answers.update({r["id"]: OWNER_POLICY for r in p.get("requirements", [])})
     if answers:
         owner.post(f"/proposals/{pid}/versions/{p['version']}/answers", {"expected_revision": p["review_revision"], "answers": answers})
     print(f"answered {len(answers)} questions/requirements")
@@ -323,6 +328,26 @@ def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[s
         elif schema.get("type") == "string" and name in ((content.get("input_schema") or {}).get("required") or []):
             args[name] = "TEST-ONLY"
     return args
+
+
+def ensure_fixtures(owner: Owner, business_id: str, connector_id: str) -> None:
+    """Tell Team C where the sandbox's test-fixture endpoints are (the key is only an environment variable NAME)."""
+    r = owner.http.put(f"/api/v1/businesses/{business_id}/connectors/{connector_id}/fixtures",
+                       json={"base_url": SANDBOX, "key_ref": "NILE_SANDBOX_FIXTURE_KEY"})
+    _ok(r, "declare fixtures")
+    print(f"connector {connector_id}: test fixtures declared at {SANDBOX}")
+
+
+def automatic_tests(owner: Owner, aid: str) -> None:
+    """One call: accounts, records, scenarios, guard tests and the evidence check. Fails with Team C's own questions."""
+    result = owner.post(f"/artifacts/{aid}/auto-test", {"wait": True})
+    for t in result["plan"]["tests"]:
+        verdicts = [a["verdict"] for a in result["attempts"] if a.get("test") == t["name"]]
+        print(f"  {t['name']} ({t['purpose']}): {verdicts[-1] if verdicts else 'diagnostic'}")
+    if result["outcome"] not in ("ready_to_publish", "published"):
+        asks = " | ".join(q["question"] for q in result["needs_owner"]) or "; ".join(result["problems"])
+        raise SystemExit(f"automatic tests did not reach ready_to_publish ({result['outcome']}): {asks}; open {TEAM_C}/artifacts/{aid}")
+    print(f"automatic tests: {result['outcome']}")
 
 
 def sandbox_tests(owner: Owner, aid: str, write: bool, tests: list | None = None) -> None:
@@ -462,6 +487,8 @@ def main() -> int:
     parser.add_argument("--fresh", action="store_true", help="start over (a new business in Team C)")
     parser.add_argument("--tool", choices=sorted(TOOLS), default="order")
     parser.add_argument("--refresh-identities", action="store_true", help="only re-save alice/bob on the built artifact")
+    parser.add_argument("--variant", default="", help="word the tool request differently to get a new proposal instead of an earlier stuck one")
+    parser.add_argument("--manual-tests", action="store_true", help="run the old hand-written tests instead of Team C's automatic tests")
     parser.add_argument("--environment", choices=["sandbox", "live_demo"], default="sandbox",
                         help="live_demo: publish the approved tool again on the separate demo-shop deployment (Live Demo)")
     args = parser.parse_args()
@@ -469,7 +496,7 @@ def main() -> int:
         return live_main(args.tool)
     tool, write = args.tool, TOOLS[args.tool]["method"] == "POST"
     state = load_state(args.fresh, tool)
-    shared = load_state(False, "order") if tool != "order" else {}
+    shared = load_state(False, "order") if tool != "order" and not args.variant else {}  # a variant retry gets its own business (the shared one holds the stuck proposal)
     owner = Owner()
 
     if args.refresh_identities:
@@ -497,7 +524,7 @@ def main() -> int:
     if "proposal_id" not in state:
         step(f"Request the tool ({tool}); the model triages and writes a proposal")
         req = owner.post(f"/businesses/{state['business_id']}/tool-requests",
-                         {"goal": TOOLS[tool]["goal"], "examples": "", "spec_id": state["spec_id"], "idempotency_key": secrets.token_urlsafe(16)})  # fmt: skip
+                         {"goal": TOOLS[tool]["goal"] + (f" (attempt {args.variant})" if args.variant else ""), "examples": "", "spec_id": state["spec_id"], "idempotency_key": secrets.token_urlsafe(16)})  # fmt: skip
         print(f"tool request {req['id']}: {req['status']}")
         if req["status"] == "needs_clarification":
             owner.post(f"/tool-requests/{req['id']}/clarifications", {"text": OWNER_POLICY})
@@ -537,9 +564,13 @@ def main() -> int:
     print(f"artifact {aid}")
 
     if "publication_id" not in state:
-        step("Sandbox identities and tests")
+        step("Sandbox identities (for Team B's chat) and tests")
         add_identities(owner, aid)
-        sandbox_tests(owner, aid, write, TOOLS[tool].get("tests"))
+        if args.manual_tests:
+            sandbox_tests(owner, aid, write, TOOLS[tool].get("tests"))
+        else:
+            ensure_fixtures(owner, state["business_id"], state["connector_id"])
+            automatic_tests(owner, aid)
         step("Publish to the TEST-ONLY sandbox MCP")
         pub = publish(owner, aid)
         assert pub["environment"] == "sandbox" and pub["production_ready"] is False and pub["production_activation"] is False

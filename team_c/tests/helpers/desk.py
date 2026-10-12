@@ -104,7 +104,7 @@ def post(d, pid, suffix, **body):
     return d.client.post(f'/api/v1/proposals/{pid}/versions/{p["version"]}/{suffix}', json=dict(expected_revision=p["review_revision"], **body))
 
 
-def review_and_build(d, pid):
+def review_and_build(d, pid, connector="desk"):
     """TEST-ONLY review of the current version, operator enforcement plus its TEST-ONLY review, then a build."""
     p = current(d, pid)
     assert post(d, pid, "answers", answers={i: LABEL + "only the booking holder may file requests for a booking." for i in [q["id"] for q in p["content"]["questions"]] + [r["id"] for r in p["requirements"]]}).status_code == 200
@@ -117,10 +117,10 @@ def review_and_build(d, pid):
     config = {r["id"]: dict(mechanism="delegated_user_credential") if r["kind"] == "caller_access" else
               dict(mechanism="response_field_matches_context", step_id="s1", response_status="200", pointer=holder, context_field=d.ctx, comparison="equals", check_point="after_step")
               for r in current(d, pid)["requirements"]}
-    e = d.client.post(f"/api/v1/proposals/{pid}/enforcement", json=dict(connector_id="desk", enforcement=config))
+    e = d.client.post(f"/api/v1/proposals/{pid}/enforcement", json=dict(connector_id=connector, enforcement=config))
     assert e.status_code == 200, e.text
     d.client.post(f'/api/v1/enforcement/{e.json()["id"]}/review', json=dict(note=LABEL + "enforcement review"))
-    a = d.client.post(f"/api/v1/proposals/{pid}/artifacts", json=dict(connector_id="desk"))
+    a = d.client.post(f"/api/v1/proposals/{pid}/artifacts", json=dict(connector_id=connector))
     assert a.status_code == 200, a.text
     return a.json()
 
@@ -138,3 +138,28 @@ def sandbox_test(d, aid, name, expect, who="alice", **args):
     r = d.client.post(f"/api/v1/artifacts/{aid}/sandbox-tests", json=dict(name=name, identity=who, arguments=args or arguments(d), expect=expect))
     assert r.status_code == 200, r.text
     return r.json()
+
+
+def review_and_build_policy(d, pid, connector="desk"):
+    """TEST-ONLY review with a STRUCTURED access policy (the path production needs): answers, an accepted ownership check on the
+    booking lookup, reconciliation, requirement confirmation, approval, then a build with no manual enforcement configuration."""
+    p = current(d, pid)
+    assert post(d, pid, "answers", answers={i: LABEL + "only the booking holder may file requests for a booking." for i in [q["id"] for q in p["content"]["questions"]] + [r["id"] for r in p["requirements"]]}).status_code == 200
+    p = current(d, pid)
+    records = [r for r in p["requirements"] if r["kind"] == "record_scope"]
+    holder = f'/{d.n["lookup_env"]}/{d.n["record"]}/{d.n["holder"]}/{d.n["holder_id"]}'
+    policy = dict(principals=["end_user", "resource_owner"], authentication="required", role_source=None, roles=[], permission_source=None, permissions=[],
+                  scopes=[dict(requirement_id=r["id"], mode="checked", reason=LABEL + "callers reach only bookings they hold") for r in records],
+                  checks=[dict(requirement_id=r["id"], kind="ownership", resource="Booking", step_id="s1", response_status="200", resource_field=holder, identity_source=d.ctx) for r in records],
+                  inputs=(p.get("policy_form") or {}).get("inputs", []), financial=False, irreversible=False, external_side_effects=True, idempotent=False, explanation=LABEL + "policy")
+    r = post(d, pid, "policy", policy=policy)
+    assert r.status_code == 200, r.text
+    assert post(d, pid, "reconcile").json()["state"] == "ready_for_review"
+    for r in current(d, pid)["requirements"]:
+        if r.get("status") == "answer_sufficient":
+            assert post(d, pid, f'requirements/{r["id"]}/confirm').status_code == 200
+    v = current(d, pid)["version"]
+    assert post(d, pid, "decisions", action="approve_to_build", reason=LABEL + "approval", idempotency_key=f"desk-approval-{pid}-{v}").status_code == 200
+    a = d.client.post(f"/api/v1/proposals/{pid}/artifacts", json=dict(connector_id=connector))
+    assert a.status_code == 200, a.text
+    return a.json()

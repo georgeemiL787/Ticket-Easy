@@ -466,5 +466,7 @@ def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_suc
     result = _result(raw, bound, resolved, True, {"order_id": "NS-1"})
     assert result.status == "success"
     assert result.data == {"reference_id": "RET-30001", "order_id": "NS-1", "status": "created"}
-    failed = _result({"structuredContent": {**envelope, "status": "failed"}}, bound, resolved, True, {"order_id": "NS-1"})
+    failed = _result(
+        {"structuredContent": {**envelope, "status": "failed"}}, bound, resolved, True, {"order_id": "NS-1"}
+    )
     assert failed.status == "error" and not failed.data

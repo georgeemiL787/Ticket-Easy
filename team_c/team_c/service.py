@@ -9,6 +9,8 @@ from .services.requests import Requests
 from .services.review import Review
 from .services.building import Building
 from .services.publication import Publication
+from .services.autotest import AutoTest
+from .services.promotion import Promotion
 
 
 class Service:
@@ -26,6 +28,9 @@ class Service:
         self.publishing = Publication(settings, store, providers, self.building)
         self.capability = Capability(settings, store, self.proposals, self.discovery)
         self.connectors = Connectors(settings, store, self.proposals, self.discovery)
+        self.autotest = AutoTest(settings, store, self.proposals, self.discovery, self.building, self.publishing, self.capability, self.connectors)
+        self.promotion_service = Promotion(settings, store, self.building, self.publishing, self.connectors, self.discovery)
+        self.publishing.after_production_call = self.promotion_service.after_call
         self.providers = providers
 
     # Callers replace these on the facade; every service must see the same objects.
@@ -129,7 +134,15 @@ class Service:
     def review_enforcement(self, eid, submission): return self.building.review_enforcement(eid, submission)
     def check_enforcement(self, content): return self.building.check_enforcement(content)
     def build_artifact(self, pid, submission): return self.building.build_artifact(pid, submission)
-    def artifact(self, aid): return self.building.artifact(aid)
+    def artifact(self, aid):
+        """The artifact with its computed readiness_state and the latest automatic test run (summary)."""
+        a = self.building.artifact(aid)
+        a["readiness_state"] = self.autotest.readiness_state(aid, a)
+        latest = self.autotest.latest(aid)
+        a["auto_test"] = dict(id=latest["id"], status=latest["status"], created_at=latest["created_at"], completed_at=latest["completed_at"],
+                              outcome=(latest["result"] or {}).get("outcome"), needs_owner=(latest["result"] or {}).get("needs_owner") or [],
+                              error=latest["error"]) if latest else None
+        return a
 
     def check_connector(self, cid):
         """A real connection check (services/connectors.py Connectors.check) with this connector's artifacts and publications."""
@@ -150,6 +163,27 @@ class Service:
     def latest_fix(self, aid): return self.building.latest_fix(aid)
     def retire_test(self, test_id, reason, actor=None): return self.building.retire_test(test_id, reason, actor)
 
+    def artifact_summaries(self, business_id):
+        """The newest artifact of each proposal of a business with its readiness state and latest automatic test (for the dashboard)."""
+        rows = self.store.all("SELECT a.id FROM artifacts a JOIN proposals p ON p.id=a.proposal_id WHERE p.business_id=? ORDER BY a.created_at DESC", (business_id,))
+        seen, out = set(), []
+        for r in rows:
+            a = self.artifact(r["id"])
+            pid = a["proposal_id"]
+            if pid in seen or a["content"]["connector"].get("environment") == "production":
+                continue  # the production twin of a tested artifact is shown through its promotion, not as a second tool
+            seen.add(pid)
+            out.append(dict(id=a["id"], proposal_id=pid, version=a["version"], name=a["content"]["name"], environment=a["content"]["connector"].get("environment", "sandbox"),
+                            readiness_state=a["readiness_state"], auto_test=a["auto_test"]))
+        return out
+
+    def auto_test(self, aid, publish_when_ready=None, cleanup=False): return self.autotest.auto_test(aid, publish_when_ready, cleanup)
+    def start_auto_test(self, aid, publish_when_ready=None, cleanup=False): return self.autotest.start(aid, publish_when_ready, cleanup)
+    def business_settings(self, bid): return self.autotest.settings_of(bid)
+    def set_business_settings(self, bid, auto_publish_sandbox): return self.autotest.set_settings(bid, auto_publish_sandbox)
+    def auto_test_run(self, rid): return self.autotest.run(rid)
+    def auto_test_runs(self, aid): return self.autotest.runs(aid)
+
     def publication(self, pub_id): return self.publishing.publication(pub_id)
     def publication_view(self, row): return self.publishing.publication_view(row)
     def publications(self, business_id=None, artifact_id=None): return self.publishing.publications(business_id, artifact_id)
@@ -158,8 +192,15 @@ class Service:
     def publish(self, aid, submission): return self.publishing.publish(aid, submission)
     def disable_publication(self, pub_id, submission): return self.publishing.disable_publication(pub_id, submission)
     def check_publication(self, pub): return self.publishing.check_publication(pub)
-    def published_tools(self, business_id, identity): return self.publishing.published_tools(business_id, identity)
-    def invoke_published(self, business_id, identity, name, arguments): return self.publishing.invoke_published(business_id, identity, name, arguments)
+    def published_tools(self, business_id, identity, production=False): return self.publishing.published_tools(business_id, identity, production)
+    def invoke_published(self, business_id, identity, name, arguments, context=None, idempotency_key=None, production=False):
+        return self.publishing.invoke_published(business_id, identity, name, arguments, context, idempotency_key, production)
+
+    def promote(self, aid, connector_id, actor, note, rollback_contact, accept_no_idempotency=False):
+        return self.promotion_service.promote(aid, connector_id, actor, note, rollback_contact, accept_no_idempotency)
+    def promotion(self, pid): return self.promotion_service.promotion(pid)
+    def promotions(self, business_id=None, artifact_id=None): return self.promotion_service.promotions(business_id, artifact_id)
+    def rollback_promotion(self, pid, actor, note): return self.promotion_service.rollback(pid, actor, note)
 
     def accept_policy(self, pid, version, submission):
         view = self.capability.accept(pid, version, submission)

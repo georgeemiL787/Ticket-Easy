@@ -41,6 +41,48 @@
 </article>
 {% endif %}
 
+{% if not is_live and not c.execution_blockers %}
+{% set r = auto_run.result if auto_run else none %}
+<article id="auto-test">
+<h2>Automatic tests</h2>
+<p class="small">State: <strong>{{ a.readiness_state|replace('_', ' ')|capitalize }}</strong>. One button creates the test accounts and records it needs (from the connector's test fixtures, or from your existing test accounts), runs the scenarios this tool needs as evidence, and tells you whether it is ready to publish. It never approves anything and never publishes unless you tick the box.</p>
+<form method="post" action="/actions/auto_test">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
+<label><input type="checkbox" name="publish_when_ready" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Publish to the TEST-ONLY sandbox MCP when everything passes</label>
+<button {% if a.readiness_state == 'testing' %}disabled{% endif %}>Run automatic tests</button></form>
+<details><summary class="small">Settings for this business and connector</summary>
+<form method="post" action="/actions/save_business_settings">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
+<label><input type="checkbox" name="auto_publish_sandbox" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Always publish to the sandbox MCP when automatic tests pass (off by default; never Live Demo or production)</label>
+<button>Save business setting</button></form>
+{% if connector_status and not connector_status.external %}
+<form method="post" action="/actions/save_fixtures">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
+<p class="small muted">Test fixtures: endpoints of the sandbox that create disposable test accounts and records (never part of the API description). Only the NAME of the environment variable that holds the fixture key is stored.</p>
+<label>Fixtures base URL<input name="base_url" value="{{ connector_status.fixtures_endpoint.base_url if connector_status.fixtures_endpoint else c.connector.base_url }}" required></label>
+<label>Key variable name<input name="key_ref" value="{{ connector_status.fixtures_endpoint.key_ref if connector_status.fixtures_endpoint else '' }}" placeholder="MY_SANDBOX_FIXTURE_KEY" required pattern="[A-Za-z_][A-Za-z0-9_]*"></label>
+<button>Save fixtures</button></form>
+{% if connector_status.fixtures_endpoint %}<form method="post" action="/actions/save_fixtures">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><input type="hidden" name="remove" value="1"><button>Remove fixtures</button></form>{% endif %}
+{% endif %}</details>
+{% if auto_run and auto_run.status == 'failed' %}<p class="notice">The last run stopped: {{ auto_run.error.message if auto_run.error else 'unexpected error' }}</p>{% endif %}
+{% if r %}
+<p class="small">Last run {{ auto_run.created_at[:19]|replace('T', ' ') }} · {{ r.source|replace('_', ' ') }} · outcome <strong>{{ r.outcome|replace('_', ' ') }}</strong>{% if r.published %} · published{% endif %}</p>
+{% for q in r.needs_owner %}<p class="notice"><strong>Needs you:</strong> {{ q.question }}</p>{% endfor %}
+<details><summary>What was tested and why ({{ r.plan.tests|length }} scenarios, {{ r.attempts|length }} attempts)</summary>
+<ul class="small">{% for t in r.plan.tests %}<li><code>{{ t.name }}</code> · {{ t.scenario|replace('_', ' ') }} as account {{ t.identity_label }}{% if t.record_owner_label %} on {{ t.record_owner_label }}'s record{% endif %} · expects {{ t.expect }} · {{ t.purpose }}{% if t.argument_sources %} · inputs: {% for k, v in t.argument_sources.items() %}{{ k }} ({{ v|replace('_', ' ') }}){{ ', ' if not loop.last }}{% endfor %}{% endif %}</li>{% endfor %}</ul>
+{% if r.diagnostics %}<p class="small">Diagnostics (not publication evidence):</p><ul class="small">{% for d in r.diagnostics %}<li>{{ m.badge(d.verdict, "test") }} {{ d.name }}: {{ d.detail }}</li>{% endfor %}</ul>{% endif %}
+<pre>{{ r.attempts|tojson(indent=2) }}</pre></details>
+{% endif %}
+</article>
+{% endif %}
+
+{% if promotions %}
+<article id="production">
+<h2>Production</h2>
+<p class="small muted">Read-only. A tool is promoted to production, and rolled back, by an admin in Team B's dashboard (or the admin API with the operator's token); this page can do neither.</p>
+{% for p in promotions %}<details {% if p.status == 'active' %}open{% endif %}><summary>{{ m.badge("production", "environment") }} {{ p.status|replace('_', ' ')|capitalize }} · decided by {{ p.actor }} · {{ p.created_at[:19]|replace('T', ' ') }}</summary>
+<p class="small">Note: {{ p.note }} · Rollback contact: {{ p.rollback_contact }}{% if p.rolled_back_at %} · Rolled back {{ p.rolled_back_at[:19]|replace('T', ' ') }} by {{ p.rolled_back_by }}: {{ p.rollback_note }}{% endif %}</p>
+<ul class="small">{% for k, v in p.checklist.items() %}<li>{{ m.badge("ok" if v.ok else "failed", "check") }} <strong>{{ k|replace('_', ' ') }}</strong> {{ v.detail }}</li>{% endfor %}</ul></details>{% endfor %}
+</article>
+{% endif %}
+
 <article>
 <h2 id="run-test">{% if is_live %}Run a live test{% else %}Run a sandbox test{% endif %}</h2>
 {% if is_live %}<p class="notice">Live Demo: this test calls the REAL API at <code>{{ c.connector.base_url }}</code> as the chosen identity. A write test changes real data in that account.</p>{% endif %}

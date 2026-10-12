@@ -66,6 +66,8 @@ def build_artifact(service,settings,form):
 def save_connector(service, settings, form):
     pid = str(form["proposal_id"])
     environment = str(form.get("environment", "sandbox"))
+    if environment == "production":
+        raise AppError("production_admin_only", "A production connector is saved by an admin through Team B or the admin API, not from this page", 403)
     confirmed = form.get("confirm_live") == "1" if environment == "live_demo" else form.get("sandbox") == "1"
     cid = service.connectors.save(pid, str(form.get("base_url", "")), str(form.get("context_fields", "")).split(","),
                                   confirmed=confirmed, environment=environment)
@@ -210,6 +212,28 @@ def fix_and_retest(service,settings,form):
     return "/artifacts/"+aid+"#fix"
 
 
+def auto_test(service,settings,form):
+    aid=str(form["artifact_id"])
+    service.auto_test(aid,form.get("publish_when_ready")=="1")
+    return "/artifacts/"+aid+"#auto-test"
+
+
+def save_business_settings(service,settings,form):
+    aid=str(form["artifact_id"])
+    bid=service.artifact(aid)["content"]["proposal"]["business_id"]
+    service.set_business_settings(bid,form.get("auto_publish_sandbox")=="1")
+    return "/artifacts/"+aid+"#auto-test"
+
+
+def save_fixtures(service,settings,form):
+    """Declare (or with remove=1 clear) the sandbox's test-fixture endpoints on the artifact's connector."""
+    aid=str(form["artifact_id"])
+    c=service.artifact(aid)["content"]
+    fixtures=None if form.get("remove")=="1" else dict(base_url=str(form.get("base_url","")).strip(),key_ref=str(form.get("key_ref","")).strip())
+    service.connectors.set_fixtures(c["connector"]["id"],c["proposal"]["business_id"],fixtures)
+    return "/artifacts/"+aid+"#auto-test"
+
+
 def sandbox_run(service,settings,form):
     aid=str(form["artifact_id"])
     data=form_arguments(service.artifact(aid)["content"]["input_schema"],form)
@@ -336,7 +360,7 @@ ACTIONS=dict(business=business,upload=upload,fetch=fetch,local_project=lambda *_
              save_connector=save_connector,save_test_identity=save_test_identity,check_connector=check_connector,
              review_enforcement=review_enforcement,build_artifact=build_artifact,publish=publish,request_tool=request_tool,clarify_request=clarify_request,
              suggest=suggest,request_next_batch=request_next_batch,areas_organize=areas_organize,areas_select=areas_select,decide_suggestion=decide_suggestion,
-             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,retire_test=retire_test,
+             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,auto_test=auto_test,save_business_settings=save_business_settings,save_fixtures=save_fixtures,retire_test=retire_test,
              reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),answers_and_check=review(answers_and_check),suggest_answers=review(suggest_answers),suggest_access=review(suggest_access),decision=review(decision),confirm_requirement=review(confirm_requirement),
              supersede_question=review(supersede_question),dismiss_gap=review(dismiss_gap),accept_api_gap=review(accept_api_gap),revise=review(revise))
 

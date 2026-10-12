@@ -306,6 +306,13 @@ class PublicationSubmission(StrictModel):
     note: str = Field(min_length=1, max_length=2000)
 
 
+class AutoTestSubmission(StrictModel):
+    # Publishing is OFF by default and, when on, is sandbox-only; it never reaches Live Demo or production.
+    publish_when_ready: bool | None = None  # None: the business setting (default off)
+    cleanup: bool = False  # delete the records the run created (accounts are kept: the evidence references them)
+    wait: bool = False  # answer when the run is finished instead of with its run id
+
+
 class PublicationDisableSubmission(StrictModel):
     note: str = Field(min_length=1, max_length=2000)
 

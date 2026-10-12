@@ -22,6 +22,9 @@ REJECTED_CATEGORIES = {
     "approval_not_current": "publication_unavailable", "enforcement_not_current": "publication_unavailable",
     "publication_evidence": "publication_unavailable", "artifact_integrity": "publication_unavailable",
     "environment_mismatch": "publication_unavailable", "credential_scope": "permission_denied",
+    "production_disabled": "publication_unavailable", "promotion_not_active": "publication_unavailable",
+    "production_requires_publication": "publication_unavailable", "context_missing": "invalid_arguments",
+    "context_undeclared": "invalid_arguments", "context_invalid": "invalid_arguments", "credential_missing": "configuration_error",
 }
 
 
@@ -246,7 +249,7 @@ def result_schema(content):
                            "error": {"anyOf": [{"type": "object"}, {"type": "null"}]}, "message": nullable("string"),
                            "execution_id": nullable("string"), "writes": {"type": "array"}, "tool": nullable("string"),
                            "publication_id": nullable("string"), "artifact": nullable("object"),
-                           "environment": {"enum": ["sandbox", "live_demo", None]}, "production_ready": {"const": False}}}
+                           "environment": {"enum": ["sandbox", "live_demo", "production", None]}, "production_ready": {"type": "boolean"}}}
 
 
 def tool_schemas(content):
@@ -266,7 +269,10 @@ def tool_schemas(content):
 def tool(pub, content):
     writes = [f'{s["method"]} {s["path"]}' for s in content["steps"] if s["effect"] == "write"]
     live = pub["environment"] == "live_demo"
-    where = (f'LIVE DEMO publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}): calls the owner-configured '
+    production = pub["environment"] == "production"
+    where = (f'PRODUCTION publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}), promoted by an admin: acts on REAL customers\' data at '
+             f'{api_host(content)} with the business\'s service credential, scoped to the verified customer by Team C. ' if production else
+             f'LIVE DEMO publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}): calls the owner-configured '
              f'real API at {api_host(content)}; not a production release. ' if live else
              f'TEST-ONLY sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. ')
     description = (f'{content["purpose"]}. {content["description"]}. '
@@ -275,8 +281,8 @@ def tool(pub, content):
     meta = dict(publication_id=pub["id"], artifact_id=pub["artifact_id"], artifact_sha256=pub["artifact_sha256"],
                 proposal_id=pub["proposal_id"], proposal_version=pub["version"], environment=pub["environment"],
                 execution_enabled=True,  # only publications that pass every re-check are listed
-                production_ready=False, activated=False)  # activated = production activation, which does not exist
-    if live:
+                production_ready=production, activated=production)  # true only for a promoted production publication
+    if live or production:
         meta["api_host"] = api_host(content)
     return dict(name=pub["tool_name"], title=content["name"], description=description, **tool_schemas(content), annotations=dict(read_only_hint=not writes),
                 meta={"team_c": meta})
@@ -291,7 +297,7 @@ def envelope(pub, status, execution_id=None, output=None, error=None, message=No
     return dict(status=status, output=output if status == "succeeded" else None, error=error, message=message, execution_id=execution_id,
                 writes=writes or [], tool=pub["tool_name"] if pub else None, publication_id=pub["id"] if pub else None,
                 artifact=dict(id=pub["artifact_id"], sha256=pub["artifact_sha256"], proposal_id=pub["proposal_id"], proposal_version=pub["version"]) if pub else None,
-                environment=pub.get("environment", ENVIRONMENT) if pub else None, production_ready=False)
+                environment=pub.get("environment", ENVIRONMENT) if pub else None, production_ready=bool(pub and pub.get("environment") == "production"))
 
 
 def failure_category(report):

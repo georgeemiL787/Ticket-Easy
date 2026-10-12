@@ -1,9 +1,10 @@
 from pathlib import Path
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
     database_path: str = "data/team_c.sqlite3"
     dev_reviewer_id: str = "local-owner"
     session_secret: str = ""
@@ -48,6 +49,22 @@ class Settings(BaseSettings):
     live_demo_hosts: str = ""
     live_demo_private_hosts: str = ""
     live_demo_calls_per_minute: int = 30  # per live connector, across every tool and identity (MCP calls and live tests)
+    # PRODUCTION: tools that act on real customers' data with a business service credential. Off unless the operator turns it
+    # on; only hosts listed here (exact host:port) may be production connectors and each must resolve to public addresses.
+    # production_private_hosts is a development-only exception (a local production-like deployment): it must stay EMPTY in a
+    # real production setup. The service credential itself is never stored: a connector names an environment variable.
+    production_enabled: bool = False
+    production_hosts: str = ""
+    production_private_hosts: str = ""
+    production_calls_per_minute: int = 60  # per production connector, across every tool and customer
+    production_calls_per_customer_per_minute: int = 20  # per customer (counted by context hash) per production connector
+    production_auto_disable_failures: int = 5  # failed / partial / outcome_unknown production calls of one tool within the window
+    production_auto_disable_window_seconds: int = 300
+    production_smoke_context: str = ""  # JSON object: the internal test customer's trusted context used by the promotion smoke check
+    production_smoke_arguments: str = ""  # JSON object: that customer's tool arguments (e.g. an order that customer owns)
+    production_audit_dir: str = "data/audit"  # append-only daily log of production executions (ids and hashes, no values)
+    # TEAM_C_ADMIN_TOKEN: required (header x-team-c-admin-token) for production actions on /api/v1
+    admin_token: str = Field("", validation_alias=AliasChoices("TEAM_C_ADMIN_TOKEN", "ADMIN_TOKEN"))
     connection_check_timeout: float = 10
     allowed_project_directory: str = ""
     code_max_files: int = 200

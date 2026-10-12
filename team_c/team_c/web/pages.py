@@ -78,6 +78,7 @@ def artifact_page(request:Request,aid:str,service:ServiceDep,store:StoreDep,sett
     a=service.artifact(aid)
     bid=a["content"]["proposal"]["business_id"]
     return page(request,screen="artifact",a=a,connectors=connector_choices(settings,bid),publications=service.publications(artifact_id=aid),publication_problems=problems,business=queries.business(store,bid),identity_setup=service.connectors.identity_setup(a["content"]),guidance=service.artifact_guidance(aid),edit_identity=edit,fix=service.latest_fix(aid),draft=service.latest_test_suggestion(aid) if prefill else None,
+                auto_run=next(iter(service.auto_test_runs(aid)),None),promotions=service.promotions(artifact_id=aid),business_settings=service.business_settings(bid),
                 connector_status=next((c for c in service.connectors_of(bid) if c["id"]==a["content"]["connector"]["id"]),None))
 
 

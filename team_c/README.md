@@ -1,6 +1,6 @@
   # Ticket-Easy — Team C
 
-Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as TEST-ONLY sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). Nothing is a production release: production readiness is not assessed and production activation does not exist.
+Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as TEST-ONLY sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). A tool becomes **production** only through an admin's promotion with an automatic checklist (see "Production"); nothing else makes `production_ready` true.
 
 ## Quick start (Windows PowerShell)
 
@@ -376,6 +376,47 @@ Evidence:
 - **Mocked, in process** (authored substitute, mock transport): `tests/test_publication.py`.
 - **Real SDK client and real server process** (fixture over HTTP; authored proposals, no model calls; both service-desk variants): `tests/test_mcp_stdio.py`.
 - **Real smoke run on both domains** (running item target and fixture process; reuses saved artifacts from copies of the TEST-ONLY databases; disposable accounts; isolated `data/mcp-*.sqlite3`): `$env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/mcp_smoke.py > data/mcp-smoke.log.json`.
+
+#### Automatic tests (sandbox only)
+
+One action replaces creating dummy accounts, hunting for records and hand-writing scenarios: **Run automatic tests** on the artifact page, or `POST /api/v1/artifacts/{id}/auto-test` (background, returns a run id; poll `GET /auto-test-runs/{id}`; `{"wait": true}` answers when finished). It works for any business API, not one shop.
+
+- **Test fixtures** (optional, sandbox connectors only): the sandbox exposes `POST /_fixtures/accounts`, `POST /_fixtures/records`, `GET /_fixtures/kinds`, `POST /_fixtures/reset`, `GET /_fixtures/state` and optionally `POST /_fixtures/revoke`, protected by an `x-fixture-key` header and absent from the OpenAPI document. Declare them with `PUT /businesses/{bid}/connectors/{cid}/fixtures` `{base_url, key_ref}`; `key_ref` is the NAME of an environment variable in Team C's process, never the key. Live Demo connectors refuse fixtures. `integration/nile_sandbox/app.py` is one provider; `fixtures/service_desk/app.py` is another.
+- **Plan** (`team_c/autotest.py`, pure, no model): derived from the artifact exactly as `publishing.evidence()` requires: a success test as account A; for record-scope requirements own_record A, own_record B and a cross_user refusal; for data-scope requirements a success test as each account. Diagnostics that are not publication evidence: a revoked credential must be refused, an unknown argument must be rejected before any request. Argument values come from the input schema (enum, default, example, format, constraints); only what a schema cannot decide goes to the existing test-input helper (marked `source: model`).
+- **Run** (`services/autotest.py`): creates accounts and records, saves the accounts as connector identities, runs each scenario through `run_sandbox_test` (tests are named `auto.<scenario>.<label>`; a re-run supersedes by name), tries each record state the kind offers for a write (a fresh record per attempt, a write is never retried on the same record), runs the generated guard tests and evaluates `publication_problems`. A wiring defect or any other question becomes `needs_owner` with the failure report; the AI repair is never started automatically, nothing is approved, and publishing happens only with `publish_when_ready` (default off, sandbox only).
+- **Without fixtures** it uses existing identities of the right account type and finds their records through a no-input read tool of the same connector; otherwise it says exactly what to add.
+- **Per-business setting**: `GET/PUT /businesses/{bid}/settings` `{auto_publish_sandbox}` (also on the artifact page, under "Settings for this business and connector"). Off by default; when on, a run that reaches ready_to_publish publishes to the TEST-ONLY sandbox MCP (never Live Demo or production). A request's explicit `publish_when_ready` wins; Team B's button never sends one, so the setting decides.
+- **Identities do not pile up**: after each run, `auto-*` identities that no current test of any artifact on the connector uses (as caller or record owner) are deleted. Evidence identities and your own identities are never touched.
+- **Fixtures form**: the artifact page can declare or remove the connector's fixtures (base URL + the NAME of the key variable; a value that is not a variable name is refused).
+- `readiness_state` (artifact view and `GET /businesses/{bid}/artifacts`): `not_tested | testing | needs_owner | ready_to_publish | published`, computed, never stored. Tests: `tests/test_autotest.py`, `tests/test_nile_fixtures.py`.
+
+#### Production: promoted tools that act on real customers' data
+
+A **production** tool is a tested sandbox or Live Demo tool that an admin has **promoted**. It calls the business's real API with ONE business **service credential** for every customer, so the target API can no longer tell customers apart: **Team C does**, on every call, against the verified customer's trusted context. Nothing is production until Team C says so for a promoted, active publication.
+
+| | Sandbox | Live Demo | Production |
+|---|---|---|---|
+| connector | test destination, test identities | real API, a demo account's credentials | real API, ONE service credential named by reference (`secret_ref`: `env:NAME` or `file:/path`), never stored |
+| who runs it | a registered test identity | one demo identity per MCP process | the business's service credential, acting for the **verified customer** whose id the calling server (Team B) sends as trusted context |
+| MCP server | `--identity <name>` | `--identity <name>` | a separate process: `--identity service --context-from-client` (lists and runs only production tools) |
+| published by | the owner, after tests | the owner, after tests | an **admin's promotion** (`POST /artifacts/{id}/promotions`), never `publish` |
+| `production_ready` | false | false | true only while the promotion is active and every re-check holds |
+
+**Switches (operator, `.env`)**: `PRODUCTION_ENABLED` (kill switch, off), `PRODUCTION_HOSTS` (exact host:port; every address must be public), `PRODUCTION_CALLS_PER_MINUTE` / `PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE`, `PRODUCTION_SMOKE_CONTEXT` / `PRODUCTION_SMOKE_ARGUMENTS`, `PRODUCTION_AUTO_DISABLE_FAILURES` / `_WINDOW_SECONDS`, `PRODUCTION_AUDIT_DIR`, and `TEAM_C_ADMIN_TOKEN`. `PRODUCTION_PRIVATE_HOSTS` is a **development-only** exception (a local production-like deployment) and must be empty in a real setup; it is the one place this deviates from "no private-host exception".
+
+**Why it is safe to use one credential for everyone** (all enforced by Team C, tested in `tests/test_production.py`):
+- the tool needs an accepted structured access policy; every record-scope requirement must be a `response_field_matches_context` check (after the record is read, its owner field must equal the customer's context); a write must come after such a checked read. `unrestricted`, `api_filtered` and list/data-scope requirements are **execution blockers** in production (a list the API filters by caller would return everyone's rows);
+- the customer context travels in the MCP request's `_meta.ticketeasy.context` (and an idempotency key in `_meta.ticketeasy.idempotency_key`), **never in arguments** (`additionalProperties: false` is unchanged). Keys must be the connector's declared context fields; a missing, undeclared or malformed context is refused before any request. A server started without `--context-from-client` never reads the metadata. **Trust boundary:** this holds because the stdio process is spawned by Team B and nobody else can write to it; any network transport needs mutual authentication first;
+- a production artifact runs only through its publication (`production_requires_publication` otherwise); context is recorded only as a hash;
+- every call is budgeted per connector and per customer, and every execution is appended to a daily audit file (ids, status and the context hash, never a value).
+
+**Promotion** (`services/promotion.py`; the human decision is the admin's, the checks are automatic and ALL must pass, each stored with its evidence; a refused attempt is kept): source published with complete evidence; approval current; enforcement reviewed; production twin built from the same approved version and identical to the tested artifact except destination and activation (`promotions.differences`); service-credential scoping satisfied; secret available; idempotency (an API-declared `Idempotency-Key` header is sent from the trusted key, otherwise an admin must explicitly accept "no idempotency" for each write; an uncertain write is never retried either way); rate limits set; a named rollback contact; and a **smoke check** (connection check plus the tool's read steps before its first write, as the operator's internal test customer; a write is never run by a promotion).
+
+**Rollback / disable**: `POST /promotions/{id}/rollback` disables the production publication and leaves the sandbox / Live Demo publications alone; an **error spike** (API or integration failures: unavailable, timeout, bad response, partial or unknown writes, bad login, within the window) rolls the tool back automatically as `auto-disable`. A customer refused by a Team C check never counts. (The plan's Team B `action_failing` hook is not used: this is Team C's own watch.)
+
+**Who may do what**: promote, roll back and save a production connector need the operator's `x-team-c-admin-token` on the REST API (`TEAM_C_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
+
+**Not done / limits**: no per-customer OAuth (D1 default); list/data-scope tools cannot be promoted yet (`output_rows_match_context` was not built); the idempotency header path is unit-tested but no real API in this repository declares one; nothing was run against a real external production API (only the local Nile "production" deployment, `integration/production_check.py`).
 
 #### Live Demo: tools that call the owner's real API
 

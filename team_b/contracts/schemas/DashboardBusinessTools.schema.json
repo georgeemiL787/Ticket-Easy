@@ -176,6 +176,29 @@
       "title": "ConnectorCheck",
       "type": "object"
     },
+    "PromotionCheck": {
+      "properties": {
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "ok"
+      ],
+      "title": "PromotionCheck",
+      "type": "object"
+    },
     "TeamCConnector": {
       "properties": {
         "checked_at": {
@@ -243,8 +266,162 @@
       "title": "TeamCConnector",
       "type": "object"
     },
+    "TeamCPromotion": {
+      "properties": {
+        "actor": {
+          "title": "Actor",
+          "type": "string"
+        },
+        "checklist": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PromotionCheck"
+          },
+          "title": "Checklist",
+          "type": "array"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "production_artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Production Artifact Id"
+        },
+        "publication_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Id"
+        },
+        "rollback_contact": {
+          "title": "Rollback Contact",
+          "type": "string"
+        },
+        "rollback_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rollback Note"
+        },
+        "rolled_back_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back At"
+        },
+        "rolled_back_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back By"
+        },
+        "source_artifact_id": {
+          "title": "Source Artifact Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source_artifact_id",
+        "status",
+        "actor",
+        "note",
+        "rollback_contact"
+      ],
+      "title": "TeamCPromotion",
+      "type": "object"
+    },
     "TeamCProposal": {
       "properties": {
+        "artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Id"
+        },
+        "auto_test_question": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auto Test Question"
+        },
+        "auto_test_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auto Test Status"
+        },
         "id": {
           "title": "Id",
           "type": "string"
@@ -252,6 +429,28 @@
         "name": {
           "title": "Name",
           "type": "string"
+        },
+        "promotable": {
+          "default": false,
+          "title": "Promotable",
+          "type": "boolean"
+        },
+        "promoted": {
+          "default": false,
+          "title": "Promoted",
+          "type": "boolean"
+        },
+        "readiness_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Readiness State"
         },
         "state": {
           "title": "State",
@@ -329,6 +528,18 @@
         "production_ready": {
           "title": "Production Ready",
           "type": "boolean"
+        },
+        "promotion_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Promotion Id"
         },
         "proposal_id": {
           "title": "Proposal Id",
@@ -444,6 +655,24 @@
       "default": 0,
       "title": "Mapped Customers",
       "type": "integer"
+    },
+    "production_connector": {
+      "default": false,
+      "title": "Production Connector",
+      "type": "boolean"
+    },
+    "production_tools": {
+      "default": 0,
+      "title": "Production Tools",
+      "type": "integer"
+    },
+    "promotions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCPromotion"
+      },
+      "title": "Promotions",
+      "type": "array"
     },
     "proposals": {
       "default": [],

@@ -25,6 +25,12 @@ ACTIVATION = dict(permitted_uses=["artifact_creation", "sandbox_testing"], runti
 # that real API. It is still not production: runtime_ready and activated (production activation) stay false.
 LIVE_ACTIVATION = dict(permitted_uses=["artifact_creation", "live_demo_testing", "live_demo_execution"], runtime_ready=False, activated=False,
                        note="Built for Live Demo: tests and published calls reach the owner-configured real API. Not a production release.")
+# A production artifact (built on a production connector by a promotion) runs with ONE business service credential for
+# every customer; Team C scopes each call to the verified customer's trusted context. It is activated only in the sense that
+# it is built for production: whether it may run is decided by the live promotion and publication, re-checked on every call.
+PRODUCTION_ACTIVATION = dict(permitted_uses=["artifact_creation", "production_execution"], runtime_ready=True, activated=True,
+                             note="Built for production by an admin promotion: calls reach the business's real API with its service credential, scoped to the "
+                                  "verified customer by Team C. It runs only while its promotion and publication are active.")
 # Supported mechanisms; anything else leaves the requirement unenforced and blocks execution.
 MECHANISMS = {"caller_access": {"delegated_user_credential"}, "record_scope": {"response_field_matches_context"}}
 COMPARISONS = {"equals"}
@@ -173,6 +179,30 @@ def validate_enforcement(configs, content, inventory: Inventory, requirements, c
     return {r["id"]: enforcement_for(r, configs.get(r["id"]), content, ops, auth, context_fields) for r in requirements}
 
 
+def production_blockers(access, auth, policy):
+    """Why this tool cannot safely run with a service credential (empty when it can). With one credential for every customer
+    the target API no longer separates them, so every separation must be a Team C check:
+      - an accepted structured policy exists (plain delegated credentials mean 'the API decides', which a service credential defeats);
+      - every record-scope requirement is `checked` by a response_field_matches_context check (no unrestricted, no api_filtered);
+      - no data-scope requirement (a list the API filters by caller) and no other kind of requirement;
+      - the API declares a login the service credential can use."""
+    found = []
+    if not policy:
+        found.append("production tools need an accepted structured access policy")
+    if not auth:
+        found.append("the API declares no supported login, so a service credential cannot be sent")
+    for a in access:
+        e = a["enforcement"]
+        if a["kind"] == "record_scope":
+            if e.get("mechanism") != "response_field_matches_context":
+                found.append(f'{a["id"]}: record-scope must be a Team C check against the customer\'s context, not {"unrestricted" if e.get("unrestricted") else "the API alone"}')
+        elif a["kind"] == "data_scope":
+            found.append(f'{a["id"]}: a list the API filters by caller cannot run with a service credential (no per-row customer filter exists yet)')
+        elif a["kind"] != "caller_access":
+            found.append(f'{a["id"]}: {a["kind"]} requirements are not supported in production')
+    return found
+
+
 def compile_artifact(content, derived: Grounding, inventory: Inventory, requirements, proposal, source, connector, enforcement, policy=None) -> tuple[Artifact, str]:
     from .compiler.compile import prepare, guards, manifest
     content, derived, protected, context = prepare(content, inventory, policy, connector)
@@ -202,7 +232,8 @@ def compile_artifact(content, derived: Grounding, inventory: Inventory, requirem
         compiled_policy, access = guards(policy, content, inventory, requirements, connector, auth)
     runtime = derived["runtime_inputs"]
     configuration = {c["key"]: c["value_json"] for c in content["configuration"]}
-    live = connector.get("environment") == "live_demo"  # absent for sandbox: those artifacts keep their exact content
+    environment = connector.get("environment")
+    live, production = environment == "live_demo", environment == "production"  # absent for sandbox: those artifacts keep their exact content
     artifact = dict(
         format=FORMAT, name=content["name"], purpose=content["business_purpose"], description=content["description"],
         proposal=proposal, source=dict(source, operations=[dict(id=s["operation_id"], method=s["method"], path=s["path"], source_pointer=s["source_pointer"]) for s in steps]),
@@ -210,10 +241,12 @@ def compile_artifact(content, derived: Grounding, inventory: Inventory, requirem
         output_schema=dict(type="object", properties={k: v["schema"] for k, v in sorted(derived["outputs"].items())}, required=sorted(k for k, v in derived["outputs"].items() if v["guaranteed"]), additionalProperties=False),
         configuration=configuration, steps=steps,
         outputs=[dict(name=o["name"], step_id=o["step_id"], response_status=o["response_status"], media_type="application/json", pointer=o["pointer"]) for o in content["outputs"]],
-        connector=dict(id=connector["id"], base_url=connector["base_url"], auth=auth, **({"environment": "live_demo"} if live else {})), access_requirements=access,
+        connector=dict(id=connector["id"], base_url=connector["base_url"], auth=auth, **({"environment": environment} if live or production else {})), access_requirements=access,
         enforcement_config={k: enforcement[k] for k in ("id", "sha256", "submitted_by", "submitted_at", "reviewed_by", "reviewed_at")} if enforcement else None,
-        limits=LIMITS, failure_behavior=FAILURE, activation=LIVE_ACTIVATION if live else ACTIVATION)
+        limits=LIMITS, failure_behavior=FAILURE, activation=PRODUCTION_ACTIVATION if production else LIVE_ACTIVATION if live else ACTIVATION)
     blocked = [f'{a["id"]}: {a["enforcement"]["reason"]}' for a in access if a["enforcement"]["status"] != "configured"]
+    if production:
+        blocked += production_blockers(access, auth, compiled_policy)
     artifact["execution_blockers"] = blocked
     artifact["compiler"] = manifest(content, inventory, compiled_policy, protected, context)
     artifact["access_policy"] = compiled_policy

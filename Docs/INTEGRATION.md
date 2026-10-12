@@ -126,6 +126,16 @@ scoped to its business; per-connector call budget (`LIVE_DEMO_CALLS_PER_MINUTE`)
 definitions, prompts, logs or reports; the identity fixed by the server, never by arguments; disabling or switching
 Live Demo off blocks the next call.
 
+### Production (local deployment)
+
+A tested tool is **promoted** to production by a signed-in Team B **admin** (Business tools page -> Promote to production: a note, a rollback contact, and for writes the explicit acceptance that the API has no idempotency). Team C builds the production twin, runs its whole checklist (evidence, customer scoping, identical content, secret, smoke check, idempotency, rollback contact) and refuses unless all pass. Production tools use ONE business service credential for every customer; Team B sends the VERIFIED customer's id as trusted context (`_meta.ticketeasy.context.customer_id`, never an argument), and Team C refuses any record that is not that customer's. See `team_c/README.md`, "Production".
+
+Local setup: copy `integration/production.example.env` to `integration/production.env` (git-ignored) and run `integration/serve.py up`. That also starts `nile-prod` (port 8104), a SEPARATE Nile shop deployment whose service token may act for any customer (so only Team C keeps customers apart), generates `integration/var/prod_service.key` (the credential; Team C reads it through a `file:` reference, because the MCP process Team B starts has a deliberately small environment) and `team_c_admin.key` (the admin token; Team B and the scripts send it, Team C's REST changes then require it). `integration/production_check.py --phase promote|bind|chat` runs the real thing: connector, promotion, the real production MCP process (own order succeeds, another customer's order is refused although the API would have allowed it, no/undeclared context, smuggled arguments), the customer chat, a confirmed write that lands as exactly one ticket, an admin rollback from the dashboard and the agent no longer using the tool. It is a LOCAL deployment with synthetic data, not a real production API.
+
+### Automatic tool tests
+
+`integration/team_c_lifecycle.py` no longer hard-codes test identities and order ids: after the build it declares the Nile sandbox's fixture endpoints on the connector (`NILE_SANDBOX_FIXTURE_KEY`, set for Team C by `integration/serve.py`), saves the demo customers' identities (needed by Team B's chat), and makes one `POST /artifacts/{id}/auto-test` call. `--manual-tests` keeps the old hand-written tests. `integration/autotest_check.py` runs this for every Nile tool and checks that each reaches ready_to_publish with only `auto.*` evidence tests. The dashboard's Business tools page shows each built tool's state (Not tested / Testing… / Needs you / Ready to publish / Published) and a **Run automatic tests** button (manager; `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test`, which only tests: it never approves or publishes).
+
 ## 5. The interface
 
 - **Customer chat** `/chat?tenant_id=shop_001` and **support inbox** `/inbox`: unchanged.

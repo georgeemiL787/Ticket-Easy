@@ -6,7 +6,10 @@ database. The script (path in FAKE_TEAM_C_SCRIPT):
 
     {"tools": [<MCP tool definitions>],
      "calls": {"<tool name>": <a structuredContent envelope> | {"rpc_error": {...}} | {"sleep": seconds} | {"exit": 1}},
-     "refuse_identities": ["mallory"]}
+     "refuse_identities": ["mallory"], "split_production": true}
+
+With "split_production" the process started with --context-from-client lists and runs only tools whose
+_meta.team_c.environment is "production", and an ordinary one only the others (like Team C's two kinds of server).
 
 A tool that is not in "tools" answers -32602 with data.code "tool_not_published", like Team C. Every call is appended
 to FAKE_TEAM_C_LOG as one JSON line {identity, business_id, tool, arguments} so a test can see what was really sent.
@@ -30,6 +33,19 @@ def send(message: dict) -> None:
     sys.stdout.flush()
 
 
+def environment_of(tool: dict) -> str | None:
+    meta: dict = (tool.get("_meta") or {}).get("team_c") or {}
+    found = meta.get("environment")
+    return found if isinstance(found, str) else None
+
+
+def visible(plan: dict, production: bool) -> list[dict]:
+    """The tools this process lists: all of them, or with "split_production" only its own kind."""
+    if not plan.get("split_production"):
+        return list(plan["tools"])
+    return [t for t in plan["tools"] if (environment_of(t) == "production") == production]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--business-id", required=True)
@@ -37,6 +53,7 @@ def main() -> None:
     parser.add_argument("--database")
     parser.add_argument("--connectors")
     parser.add_argument("--sandbox-hosts")
+    parser.add_argument("--context-from-client", action="store_true")
     args = parser.parse_args()
     if args.identity in script().get("refuse_identities", []):
         sys.stderr.write("the identity is not configured for any connector of this business\n")
@@ -59,25 +76,24 @@ def main() -> None:
                 }
             )
         elif method == "tools/list":
-            send({"jsonrpc": "2.0", "id": request_id, "result": {"tools": script()["tools"]}})
+            tools = visible(script(), args.context_from_client)
+            send({"jsonrpc": "2.0", "id": request_id, "result": {"tools": tools}})
         elif method == "tools/call":
             name, arguments = message["params"]["name"], message["params"].get("arguments") or {}
             plan = script()
             log = os.environ.get("FAKE_TEAM_C_LOG")
             if log:
                 with open(log, "a", encoding="utf-8") as f:
-                    f.write(
-                        json.dumps(
-                            {
-                                "identity": args.identity,
-                                "business_id": args.business_id,
-                                "tool": name,
-                                "arguments": arguments,
-                            }
-                        )
-                        + "\n"
-                    )
-            if name not in {t["name"] for t in plan["tools"]}:
+                    entry = {
+                        "identity": args.identity,
+                        "business_id": args.business_id,
+                        "tool": name,
+                        "arguments": arguments,
+                    }
+                    if args.context_from_client:  # only a production process records the metadata it was sent
+                        entry.update(production=True, meta=message["params"].get("_meta"))
+                    f.write(json.dumps(entry) + "\n")
+            if name not in {t["name"] for t in visible(plan, args.context_from_client)}:
                 send(
                     {
                         "jsonrpc": "2.0",

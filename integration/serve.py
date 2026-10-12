@@ -35,10 +35,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VAR = ROOT / "integration" / "var"
 LIVE_ENV = ROOT / "integration" / "live_demo.env"
-PORTS = {"sandbox": 8102, "demo-shop": 8103, "team-c": 8101, "team-a": 8001, "team-b": 8010}
-ORDER = ("sandbox", "demo-shop", "team-c", "team-a", "team-b")
-TEAMS = {"sandbox": "team_b", "demo-shop": "team_b", "team-c": "team_c", "team-a": "team_a", "team-b": "team_b"}
+PRODUCTION_ENV = ROOT / "integration" / "production.env"
+PORTS = {"sandbox": 8102, "demo-shop": 8103, "nile-prod": 8104, "team-c": 8101, "team-a": 8001, "team-b": 8010}
+# nile-prod (a production-like shop deployment with a service token) starts only when integration/production.env exists
+ORDER = ("sandbox", "demo-shop", *(("nile-prod",) if PRODUCTION_ENV.exists() else ()), "team-c", "team-a", "team-b")
+TEAMS = {"sandbox": "team_b", "demo-shop": "team_b", "nile-prod": "team_b", "team-c": "team_c", "team-a": "team_a", "team-b": "team_b"}
 LIVE_KEYS = ("LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")
+# the PRODUCTION_* lines of integration/production.env; the smoke settings belong to Team C's web app only
+PRODUCTION_KEYS = ("PRODUCTION_ENABLED", "PRODUCTION_HOSTS", "PRODUCTION_PRIVATE_HOSTS", "PRODUCTION_CALLS_PER_MINUTE",
+                   "PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE")
+SMOKE_KEYS = ("PRODUCTION_SMOKE_CONTEXT", "PRODUCTION_SMOKE_ARGUMENTS")
 
 
 def venv_python(team: str) -> str | None:
@@ -57,12 +63,12 @@ def secret(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def live_settings() -> dict[str, str]:
-    """KEY=VALUE lines of integration/live_demo.env (blank lines and # comments ignored)."""
-    if not LIVE_ENV.exists():
+def live_settings(path: Path = LIVE_ENV) -> dict[str, str]:
+    """KEY=VALUE lines of integration/live_demo.env (or another env file; blank lines and # comments ignored)."""
+    if not path.exists():
         return {}
     values = {}
-    for line in LIVE_ENV.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
@@ -76,10 +82,13 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (Docs/INTEGRATION.md, 'Run it locally')")
     env = dict(os.environ)
     port = str(PORTS[service])
-    if service in ("sandbox", "demo-shop"):
-        env["NILE_SANDBOX_HARNESS_KEY"] = secret("sandbox_harness.key" if service == "sandbox" else "demo_shop_harness.key")
+    if service in ("sandbox", "demo-shop", "nile-prod"):
+        env["NILE_SANDBOX_HARNESS_KEY"] = secret({"sandbox": "sandbox_harness.key", "demo-shop": "demo_shop_harness.key", "nile-prod": "nile_prod_harness.key"}[service])
         if service == "demo-shop":
             env["NILE_SANDBOX_TITLE"] = "Nile Style demo shop (local deployment, synthetic data)"
+        if service == "nile-prod":
+            env["NILE_SANDBOX_TITLE"] = "Nile Style production deployment (LOCAL, synthetic data, service token)"
+            env["NILE_SANDBOX_SERVICE_TOKEN"] = secret("prod_service.key")  # the one service credential; Team C reads the same file
         args = ["-m", "uvicorn", "integration.nile_sandbox.app:create_app", "--factory", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT, env
     if service == "team-c":
@@ -88,9 +97,14 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
             SANDBOX_HOSTS=f"127.0.0.1:{PORTS['sandbox']}",
             OPENAPI_FETCH_HOSTS=f"127.0.0.1:{PORTS['sandbox']},127.0.0.1:{PORTS['demo-shop']}",
             SESSION_SECRET=secret("team_c_session.key"),
+            NILE_SANDBOX_FIXTURE_KEY=secret("sandbox_harness.key"),  # the sandbox's fixture key defaults to its harness key
             PYTHONPATH=".",
         )
         env.update({k: v for k, v in live_settings().items() if k in LIVE_KEYS})
+        if PRODUCTION_ENV.exists():
+            production = live_settings(PRODUCTION_ENV)
+            env.update({k: v for k, v in production.items() if k in PRODUCTION_KEYS + SMOKE_KEYS})
+            env.update(PRODUCTION_AUDIT_DIR=str(VAR / "audit"), TEAM_C_ADMIN_TOKEN=secret("team_c_admin.key"))
         args = ["-m", "uvicorn", "team_c.web:create_app", "--factory", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "team_c", env
     if service == "team-a":
@@ -111,6 +125,8 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
     if binding.exists():
         sync_live_settings(binding)
         env["TEAM_B_TEAM_C_CONFIG"] = str(binding)
+    if PRODUCTION_ENV.exists():
+        env["TEAM_C_ADMIN_TOKEN"] = secret("team_c_admin.key")  # Team B's service credential TO Team C (admin actions)
     args = ["-m", "uvicorn", "team_b.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
     return [python, *args, "--port", port], ROOT / "team_b", env
 
@@ -119,9 +135,13 @@ def sync_live_settings(binding: Path) -> None:
     """Team B starts Team C's MCP server itself; give that process the same LIVE_DEMO_* settings as Team C's web app
     (integration/live_demo.env is the one source). Without them Team C keeps every Live Demo tool switched off."""
     config = json.loads(binding.read_text(encoding="utf-8"))
-    env = {k: v for k, v in (config.get("env") or {}).items() if k not in LIVE_KEYS}
+    env = {k: v for k, v in (config.get("env") or {}).items() if k not in LIVE_KEYS + PRODUCTION_KEYS + ("PRODUCTION_AUDIT_DIR",)}
     env.update({k: v for k, v in live_settings().items() if k in LIVE_KEYS})
-    if env != config.get("env"):
+    if PRODUCTION_ENV.exists():  # the production MCP process Team B starts needs the same switches (never a secret: it reads the file)
+        env.update({k: v for k, v in live_settings(PRODUCTION_ENV).items() if k in PRODUCTION_KEYS})
+        env["PRODUCTION_AUDIT_DIR"] = str(VAR / "audit")
+        config["admin_token_env"] = "TEAM_C_ADMIN_TOKEN"
+    if env != config.get("env") or PRODUCTION_ENV.exists():
         config["env"] = env
         binding.write_text(json.dumps(config, indent=2), encoding="utf-8")
 
@@ -135,7 +155,8 @@ def health(service: str) -> dict | None:
         return None
 
 
-TITLES = {"sandbox": "Nile Style sandbox shop", "demo-shop": "Nile Style demo shop", "team-c": "Ticket-Easy Team C",
+TITLES = {"sandbox": "Nile Style sandbox shop", "demo-shop": "Nile Style demo shop", "nile-prod": "Nile Style production deployment",
+          "team-c": "Ticket-Easy Team C",
           "team-a": "Ticket-Easy Team A"}
 
 

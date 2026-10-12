@@ -13,6 +13,8 @@ Records saved before environments existed have no `environment` key and keep mea
 """
 import ipaddress
 import json
+import os
+import re
 import socket
 import sqlite3
 from pathlib import Path
@@ -72,8 +74,8 @@ def confirmed_destination(settings, connector, artifact):
                 saved.get("base_url") == connector.get("base_url"))
 
 
-SANDBOX, LIVE_DEMO = "sandbox", "live_demo"
-ENVIRONMENTS = (SANDBOX, LIVE_DEMO)
+SANDBOX, LIVE_DEMO, PRODUCTION = "sandbox", "live_demo", "production"
+ENVIRONMENTS = (SANDBOX, LIVE_DEMO, PRODUCTION)
 
 
 def environment_of(connector):
@@ -101,6 +103,58 @@ def resolve_addresses(host):
         pass
     infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
     return {ipaddress.ip_address(info[4][0].split("%", 1)[0]) for info in infos}
+
+
+ENV_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,63}")
+
+
+def secret_name(ref):
+    """The target of a connector's `secret_ref`: "env:NAME" (an environment variable of the Team C process) or "file:PATH" (a file
+    only Team C's processes can read; use it for the MCP server Team B starts, whose environment is deliberately small). Returns
+    the reference itself when it is well formed, else None. The credential is never part of a reference."""
+    ref = str(ref or "")
+    kind, _, target = ref.partition(":")
+    if kind == "env" and ENV_NAME.fullmatch(target):
+        return ref
+    if kind == "file" and 0 < len(target) <= 300 and chr(0) not in target and ".." not in target.replace("\\", "/").split("/"):
+        return ref
+    return None
+
+
+def resolve_secret(ref, environ=None):
+    """The service credential a secret_ref points at (never stored, logged or returned), or None when it is not available."""
+    if not secret_name(ref):
+        return None
+    kind, _, target = str(ref).partition(":")
+    if kind == "env":
+        return (os.environ if environ is None else environ).get(target, "") or None
+    try:
+        path = Path(target)
+        if not path.is_file() or path.stat().st_size > 4096:
+            return None
+        return path.read_text(encoding="utf-8").strip() or None
+    except OSError:
+        return None
+
+
+def production_destination_problem(settings, url):
+    """Why a production connector may not call `url` now, or None. Checked when configuring and again before every call."""
+    if not settings.production_enabled:
+        return AppError("production_disabled", "Production execution is switched off (PRODUCTION_ENABLED); no request was sent", 403)
+    target = host_port(url)
+    if target not in listed(settings.production_hosts):
+        return AppError("destination_not_allowed", f"{target} is not listed in PRODUCTION_HOSTS", 403)
+    if target in listed(settings.production_private_hosts):
+        return None  # development only: a local production-like deployment; empty in a real production setup
+    host = urlparse(url).hostname or ""
+    try:
+        addresses = resolve_addresses(host)
+    except (OSError, UnicodeError):
+        return AppError("destination_unresolved", f"{host} could not be resolved; no request was sent", 502)
+    unsafe = sorted(str(a) for a in addresses if not a.is_global or a.is_multicast)
+    if not addresses or unsafe:
+        return AppError("destination_unsafe", f"{host} resolves to a non-public address ({', '.join(unsafe) or 'none'}); a production connector must reach a public API", 403)
+    return None
 
 
 def live_destination_problem(settings, url):

@@ -30,6 +30,13 @@ T = "shop_001"
 RESULTS: list[tuple[str, bool, str]] = []
 
 
+def team_c_headers() -> dict[str, str]:
+    """Team C's admin token (integration/var/team_c_admin.key, created when production.env is on): once the operator sets one, Team C
+    requires it on every change through its REST API."""
+    key = VAR / "team_c_admin.key"
+    return {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "integration" / "production.env").exists() else {}
+
+
 def check(name: str, ok: bool, detail: Any = "") -> bool:
     RESULTS.append((name, ok, str(detail)[:400]))
     print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"  [{str(detail)[:300]}]" if detail and not ok else ""), flush=True)
@@ -176,7 +183,7 @@ def main() -> int:
     state = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
     artifact_id, tool_name = state["artifact_id"], state["tool_name"]
     http = httpx.Client(base_url=TEAM_B, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False)
+    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False, headers=team_c_headers())
 
     print("\n== Services")
     for name, url in (("Team A", TEAM_A), ("Team B", TEAM_B), ("Team C", TEAM_C), ("sandbox", SANDBOX)):

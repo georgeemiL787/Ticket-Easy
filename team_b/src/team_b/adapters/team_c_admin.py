@@ -18,10 +18,19 @@ SERVICE = "team_c"
 
 
 class TeamCAdmin:
-    def __init__(self, base_url: str, *, timeout_s: float = 10.0, transport: httpx.AsyncBaseTransport | None = None):
+    def __init__(
+        self,
+        base_url: str,
+        *,
+        timeout_s: float = 10.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+        admin_token: str | None = None,
+    ):
         self._base = base_url.rstrip("/") + "/api/v1"
         self._timeout = timeout_s
         self._transport = transport
+        # Team B's service credential TO Team C (never a production secret), sent on every call when set.
+        self._headers = {"x-team-c-admin-token": admin_token} if admin_token else {}
 
     async def publications(self, business_id: str) -> list[dict[str, Any]]:
         found = await self._call("GET", "/publications", params={"business_id": business_id})
@@ -49,6 +58,43 @@ class TeamCAdmin:
         found = await self._call("GET", f"/businesses/{business_id}/proposals")
         return [p for p in found if isinstance(p, dict)] if isinstance(found, list) else []
 
+    async def promotions(self, business_id: str) -> list[dict[str, Any]]:
+        found = await self._call("GET", f"/businesses/{business_id}/promotions", missing_ok=True)
+        return [p for p in found if isinstance(p, dict)] if isinstance(found, list) else []
+
+    async def promote(
+        self, artifact_id: str, *, actor: str, note: str, rollback_contact: str, accept_no_idempotency: bool
+    ) -> dict[str, Any]:
+        """An admin promotes a tested tool to production; Team C refuses (409) unless its whole checklist passes."""
+        body = {
+            "actor": actor,
+            "note": note,
+            "rollback_contact": rollback_contact,
+            "accept_no_idempotency": accept_no_idempotency,
+        }
+        found = await self._call("POST", f"/artifacts/{artifact_id}/promotions", body=body)
+        return found if isinstance(found, dict) else {}
+
+    async def rollback(self, promotion_id: str, *, actor: str, note: str) -> dict[str, Any]:
+        found = await self._call("POST", f"/promotions/{promotion_id}/rollback", body={"actor": actor, "note": note})
+        return found if isinstance(found, dict) else {}
+
+    async def artifacts(self, business_id: str) -> list[dict[str, Any]]:
+        """The newest artifact of each proposal with its readiness_state and latest automatic test. An older Team C
+        without this endpoint answers 404: no artifacts are shown then."""
+        found = await self._call("GET", f"/businesses/{business_id}/artifacts", missing_ok=True)
+        return [a for a in found if isinstance(a, dict)] if isinstance(found, list) else []
+
+    async def auto_test(self, artifact_id: str) -> dict[str, Any]:
+        """Start Team C's automatic tests for one artifact (in the background). Team B never asks to publish:
+        whether a passing tool is published to the sandbox is the owner's setting for the business in Team C."""
+        found = await self._call("POST", f"/artifacts/{artifact_id}/auto-test", body={})
+        return found if isinstance(found, dict) else {}
+
+    async def auto_test_run(self, run_id: str) -> dict[str, Any] | None:
+        found = await self._call("GET", f"/auto-test-runs/{run_id}", missing_ok=True)
+        return found if isinstance(found, dict) else None
+
     async def _call(
         self,
         method: str,
@@ -60,7 +106,9 @@ class TeamCAdmin:
     ) -> Any:
         try:
             async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport, trust_env=False) as client:
-                response = await client.request(method, self._base + path, params=params, json=body)
+                response = await client.request(
+                    method, self._base + path, params=params, json=body, headers=self._headers
+                )
         except httpx.TimeoutException:
             raise UpstreamError(SERVICE, "TIMEOUT", "Team C did not answer in time", retryable=True) from None
         except httpx.TransportError as exc:
@@ -74,7 +122,13 @@ class TeamCAdmin:
                 code = str(response.json().get("code") or response.status_code)
             except (ValueError, AttributeError):
                 code = str(response.status_code)
-            raise UpstreamError(SERVICE, code.upper(), f"Team C answered {response.status_code} ({code})")
+            detail = ""
+            if code in ("promotion_refused", "production_disabled", "rate_limited", "promotion_not_active"):
+                try:
+                    detail = ": " + str(response.json().get("message") or "")[:600]
+                except (ValueError, AttributeError):
+                    detail = ""
+            raise UpstreamError(SERVICE, code.upper(), f"Team C answered {response.status_code} ({code}){detail}")
         try:
             return response.json()
         except ValueError:

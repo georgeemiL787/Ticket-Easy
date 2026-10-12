@@ -184,3 +184,4 @@ cython_debug/
 integration/var/
 # Live Demo settings and credentials (copy integration/live_demo.example.env)
 integration/live_demo.env
+integration/production.env

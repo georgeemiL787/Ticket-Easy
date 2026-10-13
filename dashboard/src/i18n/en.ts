@@ -531,6 +531,7 @@ const en = {
   "ob.new": "New business",
   "ob.resume": "Continue setting up",
   "ob.none": "No business is being set up.",
+  "ob.adminOnly": "Setting up a business needs an administrator. Ask an administrator to do this, or sign in with an administrator account.",
   "ob.live": "Live",
   "ob.draft": "Being set up",
   "ob.stepOf": "Step {n} of {total}",

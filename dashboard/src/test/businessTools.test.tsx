@@ -60,9 +60,6 @@ describe("business tools", () => {
     expect(within(tools).getByText("Tool service")).toBeInTheDocument();
     expect(within(tools).getByText("SANDBOX")).toBeInTheDocument();
     expect(within(tools).getByText("Stand-in shop")).toBeInTheDocument();
-    const publications = screen.getAllByRole("table")[1]!;
-    expect(within(publications).getByText("SANDBOX")).toBeInTheDocument();
-    expect(within(publications).getByText(/not production/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the advanced tool builder" })).toHaveAttribute("href", "http://127.0.0.1:8101/businesses/biz-1");
     expect(screen.getByText("Ready for your decision")).toBeInTheDocument();
 
@@ -133,7 +130,7 @@ describe("business tools in Live Demo", () => {
     expect(await screen.findByText(/LIVE DEMO: 1 tool\(s\) call the owner-configured real API/)).toBeInTheDocument();
     expect(screen.queryByText("sandbox-only.")).toBeNull();
     expect(screen.getByText("calls the real API at api.example.com")).toBeInTheDocument();
-    expect(screen.getAllByText("LIVE DEMO").length).toBeGreaterThanOrEqual(3); // tool, publication, connector
+    expect(screen.getAllByText("LIVE DEMO").length).toBeGreaterThanOrEqual(2); // tool, connector
     expect(screen.getByText("Not checked yet.")).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole("button", { name: "Check connection" }));
     await waitFor(() => expect(posted).toEqual(["/v1/dashboard/business-tools/connectors/live-abc/check"]));

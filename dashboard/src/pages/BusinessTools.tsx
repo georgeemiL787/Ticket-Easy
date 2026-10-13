@@ -428,7 +428,6 @@ export default function BusinessTools() {
                           <th>{t("bt.teamCTool")}</th>
                           <th>{t("bt.boundTo")}</th>
                           <th>{t("bt.status")}</th>
-                          <th>{t("bt.environment")}</th>
                           <th>{t("bt.publishedAt")}</th>
                           <th>{t("bt.actions")}</th>
                         </tr>
@@ -443,9 +442,6 @@ export default function BusinessTools() {
                             <td>
                               <span className={`badge ${p.effective_status === "published" ? "ok" : "problem"}`}>{label(t, "bt.pub", p.effective_status)}</span>
                               {p.problem ? <div className="muted small">{p.problem}</div> : null}
-                            </td>
-                            <td>
-                              <EnvBadge environment={p.environment} /> {p.production_ready ? t("bt.productionReady") : t("bt.notProduction")}
                             </td>
                             <td>{p.published_at ? formatDateTime(p.published_at, lang) : t("common.noData")}</td>
                             <td>{p.status === "published" ? <DisableForm tenant={filters.tenant} publication={p} onDone={state.reload} /> : p.disabled_at ? `${t("bt.disabledAt")} ${formatDateTime(p.disabled_at, lang)}` : ""}</td>

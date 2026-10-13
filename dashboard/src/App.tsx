@@ -15,6 +15,7 @@ import Guardrails from "./pages/Guardrails";
 import Knowledge from "./pages/Knowledge";
 import OnboardingFlow from "./pages/onboarding/OnboardingFlow";
 import OnboardingList from "./pages/onboarding/OnboardingList";
+import { AdminOnly } from "./pages/onboarding/AdminOnly";
 import Overview from "./pages/Overview";
 import Unanswered from "./pages/Unanswered";
 
@@ -38,8 +39,8 @@ export default function App() {
           <Route path="actions" element={<Actions />} />
           <Route path="unanswered" element={<Unanswered />} />
           <Route path="alerts" element={<Alerts />} />
-          <Route path="onboarding" element={<OnboardingList />} />
-          <Route path="onboarding/:id" element={<OnboardingFlow />} />
+          <Route path="onboarding" element={<AdminOnly><OnboardingList /></AdminOnly>} />
+          <Route path="onboarding/:id" element={<AdminOnly><OnboardingFlow /></AdminOnly>} />
           <Route path="knowledge" element={<Knowledge />} />
           <Route path="guardrails" element={<Guardrails />} />
           <Route path="tools" element={<BusinessTools />} />

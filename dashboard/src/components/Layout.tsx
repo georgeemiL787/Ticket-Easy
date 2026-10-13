@@ -24,14 +24,14 @@ const ICONS: Record<string, string> = {
 
 type NavGroup = "monitor" | "configure";
 
-export const NAV: { to: string; key: TextKey; icon: keyof typeof ICONS; end?: boolean; group: NavGroup }[] = [
+export const NAV: { to: string; key: TextKey; icon: keyof typeof ICONS; end?: boolean; group: NavGroup; adminOnly?: boolean }[] = [
   { to: "/", key: "nav.overview", icon: "overview", end: true, group: "monitor" },
   { to: "/conversations", key: "nav.conversations", icon: "conversations", group: "monitor" },
   { to: "/escalations", key: "nav.escalations", icon: "escalations", group: "monitor" },
   { to: "/actions", key: "nav.actions", icon: "actions", group: "monitor" },
   { to: "/unanswered", key: "nav.unanswered", icon: "unanswered", group: "monitor" },
   { to: "/alerts", key: "nav.alerts", icon: "alerts", group: "monitor" },
-  { to: "/onboarding", key: "nav.onboarding", icon: "onboarding", group: "configure" },
+  { to: "/onboarding", key: "nav.onboarding", icon: "onboarding", group: "configure", adminOnly: true },
   { to: "/knowledge", key: "nav.knowledge", icon: "knowledge", group: "configure" },
   { to: "/guardrails", key: "nav.guardrails", icon: "guardrails", group: "configure" },
   { to: "/tools", key: "nav.businessTools", icon: "tools", group: "configure" },
@@ -158,6 +158,7 @@ export function Layout() {
   const [params] = useSearchParams();
   const filters = useFilters();
   const keep = sharedQuery(params);
+  const auth = useAuth();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const toggleCollapsed = () => {
@@ -213,7 +214,7 @@ export function Layout() {
           {GROUPS.map((group) => (
             <div className="nav-group" key={group.id}>
               <p className="nav-label">{t(group.label)}</p>
-              {NAV.filter((item) => item.group === group.id).map((item) => (
+              {NAV.filter((item) => item.group === group.id && (!item.adminOnly || !auth?.me.user || auth.me.user.role === "admin")).map((item) => (
                 <NavLink
                   key={item.to}
                   to={{ pathname: item.to, search: keep }}

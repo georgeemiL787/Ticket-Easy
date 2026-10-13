@@ -1,5 +1,6 @@
-/* The customer chat: one centred column, the customer on the right in teal, the assistant on the left on glass, a person from
-   customer care on the left in magenta. Tokens and glass come from /ui/aurora.css. Logical properties keep it right in Arabic. */
+/* The customer chat: one narrow centred panel (the whole screen on a phone). The customer is on the inline-end side in teal,
+   the assistant on the start side on white glass, a person from customer care on the start side in magenta with a badge.
+   Tokens, glass and form elements come from /ui/aurora-light.css. Logical properties keep it right in Arabic. */
 body {
   padding: 24px 16px;
 }
@@ -7,11 +8,11 @@ body {
 .chat {
   display: flex;
   flex-direction: column;
-  max-width: 720px;
+  max-width: 640px;
   height: calc(100vh - 48px);
+  height: calc(100dvh - 48px);
   min-height: 420px;
   margin: 0 auto;
-  border-radius: 20px;
   overflow: hidden;
 }
 
@@ -20,9 +21,9 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.7);
+  padding: 14px 20px;
+  border-block-end: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .chat-header h1 {
@@ -37,7 +38,7 @@ body {
 .header-end {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .header-end select {
@@ -45,7 +46,15 @@ body {
   border-radius: 10px;
 }
 
-.dev-toggle {
+/* the developer switch is quiet: small muted text, not a button */
+.dev-toggle,
+.dev-toggle.chip {
+  gap: 6px;
+  padding: 0 4px;
+  background: none;
+  border: 0;
+  color: var(--muted-text);
+  font-size: 12px;
   cursor: pointer;
   user-select: none;
 }
@@ -72,7 +81,7 @@ body {
   padding: 10px 14px;
   border-radius: 18px;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: anywhere;
   line-height: 1.55;
 }
 
@@ -87,8 +96,8 @@ body {
 .message.agent {
   align-self: flex-start;
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 14px -8px rgba(15, 23, 42, 0.25);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
   border-end-start-radius: 6px;
 }
 
@@ -101,7 +110,8 @@ body {
 
 .message .who {
   display: inline-block;
-  margin-bottom: 4px;
+  margin-inline-end: 8px;
+  margin-block-end: 4px;
   padding: 1px 8px;
   border-radius: 9999px;
   background: #ffffff;
@@ -116,7 +126,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
+  margin-block-start: 8px;
 }
 
 .message .chip {
@@ -124,15 +134,21 @@ body {
   font-size: 11px;
 }
 
+/* developer details: hidden until the switch is on, then small, muted and set apart */
 .dev {
   display: none;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
+  margin-block-start: 8px;
+  padding-block-start: 8px;
+  border-block-start: 1px dashed var(--line);
   color: var(--muted-text);
-  font-size: 12px;
+  font-size: 11px;
   direction: ltr;
   text-align: left;
+}
+
+.message.customer .dev {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .show-dev .dev {
@@ -144,49 +160,74 @@ body {
   white-space: pre-wrap;
 }
 
+/* the error banner */
 .status {
-  margin: 0;
-  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 8px;
+  padding: 10px 14px;
   background: var(--red-soft);
   color: #991b1b;
   font-size: 0.9rem;
-  border-top: 1px solid rgba(220, 38, 38, 0.3);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  border-inline-start-width: 4px;
+  border-radius: 12px;
+}
+
+.status[hidden] {
+  display: none;
 }
 
 .composer {
   display: flex;
   gap: 10px;
-  padding: 12px 20px 16px;
-  border-top: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.7);
+  padding: 12px 16px 16px;
+  border-block-start: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .composer input {
   flex: 1;
-  padding: 12px 14px;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 10px 16px;
+  border-radius: 9999px;
 }
 
 .composer button {
-  padding: 12px 22px;
-  border-radius: 12px;
+  min-height: var(--tap);
+  padding: 10px 22px;
+  border-radius: 9999px;
 }
 
 @media (max-width: 520px) {
   body {
-    padding: 8px;
+    padding: 0;
   }
 
   .chat {
-    height: calc(100vh - 16px);
-    border-radius: 16px;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    border-inline: 0;
   }
 
   .message {
-    max-width: 92%;
+    max-width: 90%;
   }
 
   .messages {
     padding: 14px;
+  }
+
+  .chat-header,
+  .composer {
+    padding-inline: 14px;
+  }
+
+  .status {
+    margin-inline: 14px;
   }
 }
 
@@ -195,7 +236,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--muted-text);
+  color: var(--text-2);
   font-size: 0.9rem;
 }
 
@@ -205,8 +246,8 @@ body {
 }
 
 .dots i {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--teal);
   opacity: 0.35;

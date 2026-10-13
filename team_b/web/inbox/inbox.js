@@ -58,7 +58,7 @@ if (typeof module !== "undefined") {
 
 if (typeof document !== "undefined") {
   const $ = (id) => document.getElementById(id);
-  const state = { selected: null, cursor: null, rows: [], timer: null, current: null, csrf: null, me: null, started: false };
+  const state = { selected: null, cursor: null, rows: [], timer: null, current: null, csrf: null, me: null, started: false, sections: {} };
   const params = new URLSearchParams(location.search);
 
   function el(tag, props, ...children) {
@@ -173,7 +173,7 @@ if (typeof document !== "undefined") {
         el("td", { text: c.reason.replaceAll("_", " ") }),
         el("td", { text: c.language || "" }),
         el("td", { text: ageText(c.created_at) }),
-        el("td", { text: tr(c.status.replaceAll("_", " ")) + (c.claimed_by ? " · " + c.claimed_by : "") }),
+        el("td", {}, el("span", { class: "badge status-" + c.status, text: tr(c.status.replaceAll("_", " ")) }), c.claimed_by ? el("span", { class: "muted claimer", text: " · " + c.claimed_by }) : null),
         el("td", { dir: "auto", text: c.summary.length > 110 ? c.summary.slice(0, 110) + "…" : c.summary }));
       return row;
     }));
@@ -200,6 +200,14 @@ if (typeof document !== "undefined") {
 
   function block(title, ...content) {
     return el("div", { class: "block" }, el("h3", { text: title }), ...content);
+  }
+
+  /** A collapsible section for the facts and details that sit below the conversation. */
+  function section(title, open, ...content) {
+    const details = el("details", { class: "block section" }, el("summary", { text: title }), ...content);
+    details.open = title in state.sections ? state.sections[title] : open;  // the 10-second refresh keeps what you opened
+    details.addEventListener("toggle", () => { state.sections[title] = details.open; });
+    return details;
   }
 
   function facts(object) {
@@ -229,38 +237,38 @@ if (typeof document !== "undefined") {
         el("p", {}, el("strong", { text: tr("Suggested next step: ") }), el("span", { dir: "auto", text: pkg.suggested_next_step })),
         pkg.ai_suggestion ? el("p", { dir: "auto" }, el("span", { class: "tag", text: "AI" }), " ", pkg.ai_suggestion) : null,
         el("p", { class: "muted", text: tr("Why: ") + (pkg.detail || pkg.reason) + " · priority " + pkg.priority })),
-      pkg.tried && pkg.tried.length ? block(tr("Already tried (do not ask the customer again)"),
-        list(pkg.tried, (t) => el("span", { dir: "auto", text: t }))) : null,
       c.pending_approval ? block(tr("Waiting for approval"), el("div", { class: "pending" },
         el("strong", { text: c.pending_approval.capability }), facts(c.pending_approval.arguments),
         el("p", { class: "muted", dir: "auto", text: c.pending_approval.reason }))) : null,
-      block(tr("Customer"), facts({
-        verified: customer.verified ? "yes (" + (customer.method || "checked") + ")" : "no",
-        customer_id: customer.customer_id || "-", phone: customer.phone_masked || "-",
-        orders: (customer.orders || []).join(", ") || "-", language: pkg.language || "-",
-        intents: (pkg.intents || []).join(", ") || "-" })),
-      block(tr("Details the customer gave"), facts(pkg.details)),
-      block(tr("Order facts"), facts(pkg.order_facts)),
-      pkg.safety_flags && pkg.safety_flags.length ? block(tr("Safety flags"), el("p", { text: pkg.safety_flags.join(", ") })) : null,
-      block(tr("Policy evidence"), list(pkg.policy_quotes, (q) => el("blockquote", { dir: "auto" }, q.text, el("cite", { text: q.citation })),
-        tr("no policy passage was used"))),
-      block(tr("Rule checker answers"), list(pkg.rule_answers, (r) =>
-        r.action + ": " + r.decision + " (" + r.reason_code + ")" + (r.citations.length ? " · " + r.citations.join(", ") : ""))),
-      block(tr("Actions tried"), list(pkg.attempted_actions, (a) => el("span", {},
-        a.tool + " - " + a.state + (a.error ? " (" + a.error + ")" : ""),
-        a.history.length ? el("div", { class: "muted", text: a.history.join("  |  ") }) : null,
-        a.audit_id || a.execution_id ? el("div", { class: "muted", text: [a.audit_id && "audit " + a.audit_id, a.execution_id && "ref " + a.execution_id].filter(Boolean).join(" · ") }) : null))),
-      block(tr("Failures"), list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " - " + f.message : "") +
-        (f.audit_id ? " · audit " + f.audit_id : ""))),
-      pkg.similar_tickets && pkg.similar_tickets.length ? block(tr("Similar past tickets"),
-        list(pkg.similar_tickets, (t) => t.category + ": " + t.resolution)) : null,
       block(tr("Conversation"), el("div", { class: "transcript" }, [
         ...(pkg.transcript || []).map((l) => el("div", { class: "line " + l.role, dir: "auto", text: l.text })),
         // what colleagues have written since the hand-over, so the whole exchange reads in one place
         ...(c.events || []).filter((e) => e.kind === "reply" && e.note).map((e) =>
           el("div", { class: "line human_agent", dir: "auto", text: e.actor + ": " + e.note })),
       ])),
-      block(tr("History"), list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
+      pkg.tried && pkg.tried.length ? section(tr("Already tried (do not ask the customer again)"), true,
+        list(pkg.tried, (t) => el("span", { dir: "auto", text: t }))) : null,
+      section(tr("Customer"), true, facts({
+        verified: customer.verified ? "yes (" + (customer.method || "checked") + ")" : "no",
+        customer_id: customer.customer_id || "-", phone: customer.phone_masked || "-",
+        orders: (customer.orders || []).join(", ") || "-", language: pkg.language || "-",
+        intents: (pkg.intents || []).join(", ") || "-" })),
+      section(tr("Details the customer gave"), false, facts(pkg.details)),
+      section(tr("Order facts"), false, facts(pkg.order_facts)),
+      pkg.safety_flags && pkg.safety_flags.length ? section(tr("Safety flags"), true, el("p", { text: pkg.safety_flags.join(", ") })) : null,
+      section(tr("Policy evidence"), false, list(pkg.policy_quotes, (q) => el("blockquote", { dir: "auto" }, q.text, el("cite", { text: q.citation })),
+        tr("no policy passage was used"))),
+      section(tr("Rule checker answers"), false, list(pkg.rule_answers, (r) =>
+        r.action + ": " + r.decision + " (" + r.reason_code + ")" + (r.citations.length ? " · " + r.citations.join(", ") : ""))),
+      section(tr("Actions tried"), false, list(pkg.attempted_actions, (a) => el("span", {},
+        a.tool + " - " + a.state + (a.error ? " (" + a.error + ")" : ""),
+        a.history.length ? el("div", { class: "muted", text: a.history.join("  |  ") }) : null,
+        a.audit_id || a.execution_id ? el("div", { class: "muted", text: [a.audit_id && "audit " + a.audit_id, a.execution_id && "ref " + a.execution_id].filter(Boolean).join(" · ") }) : null))),
+      section(tr("Failures"), false, list(pkg.failures, (f) => f.source + ": " + f.error_code + (f.message ? " - " + f.message : "") +
+        (f.audit_id ? " · audit " + f.audit_id : ""))),
+      pkg.similar_tickets && pkg.similar_tickets.length ? section(tr("Similar past tickets"), false,
+        list(pkg.similar_tickets, (t) => t.category + ": " + t.resolution)) : null,
+      section(tr("History"), false, list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
         (e.note ? " - " + e.note : ""))),
     ];
     $("case-body").replaceChildren(...body.filter(Boolean));

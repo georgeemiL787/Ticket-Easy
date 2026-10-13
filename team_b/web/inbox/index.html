@@ -7,16 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/ui/aurora.css">
+  <link rel="stylesheet" href="/ui/aurora-light.css">
   <link rel="stylesheet" href="/inbox/static/style.css">
 </head>
-<body>
-  <div class="aurora" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob glow"></i></div>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="vignette" aria-hidden="true"></div>
+<body class="te-app">
   <div class="page">
   <header class="top nav-glass">
-    <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> <span data-i18n="Inbox">Inbox</span></h1>
+    <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="56 96 400 344" role="img" aria-hidden="true" focusable="false"><defs><mask id="te-notch"><rect x="0" y="0" width="512" height="512" fill="#fff"/><circle cx="176" cy="96" r="32"/><circle cx="176" cy="376" r="32"/></mask></defs><g mask="url(#te-notch)"><rect x="56" y="96" width="400" height="280" rx="56" fill="#106f73"/></g><path d="M322 376 414 440 396 376Z" fill="#106f73"/><g fill="#8fc3c5"><circle cx="177" cy="137" r="5.5"/><circle cx="177" cy="160.5" r="5.5"/><circle cx="177" cy="184" r="5.5"/><circle cx="177" cy="207.5" r="5.5"/><circle cx="177" cy="231" r="5.5"/><circle cx="177" cy="254.5" r="5.5"/><circle cx="177" cy="278" r="5.5"/><circle cx="177" cy="301.5" r="5.5"/><circle cx="177" cy="325" r="5.5"/></g><path d="M116 192Q122 230 158 236Q122 242 116 280Q110 242 75 236Q110 230 116 192Z" fill="#ff7456"/><path d="M250 238 298 286 392 190" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/></svg></span> <span data-i18n="Inbox">Inbox</span></h1>
     <label><span data-i18n="Your name">Your name</span> <input id="agent" type="text" maxlength="80" placeholder="e.g. Sara" data-i18n-placeholder="e.g. Sara" autocomplete="off"></label>
     <label><span data-i18n="Business">Business</span> <input id="tenant" type="text" maxlength="64" value="shop_001" autocomplete="off"></label>
     <select id="lang" aria-label="Language" data-i18n-aria="Language"><option value="en">English</option><option value="ar">العربية</option></select>

@@ -11,6 +11,11 @@ const ar: Record<TextKey, string> = {
   "nav.alerts": "التنبيهات",
   "nav.businessTools": "أدوات النشاط",
   "nav.label": "القائمة الرئيسية",
+  "nav.monitor": "المتابعة",
+  "nav.configure": "الإعداد",
+  "nav.menu": "القائمة",
+  "nav.collapse": "تصغير الشريط الجانبي",
+  "nav.expand": "توسيع الشريط الجانبي",
 
   "top.tenant": "النشاط التجاري",
   "top.range": "الفترة",

@@ -7,16 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/ui/aurora.css">
+  <link rel="stylesheet" href="/ui/aurora-light.css">
   <link rel="stylesheet" href="/chat/static/style.css">
 </head>
-<body>
-  <div class="aurora" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob glow"></i></div>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="vignette" aria-hidden="true"></div>
+<body class="te-app">
   <main class="chat glass page" id="chat">
     <header class="chat-header">
-      <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="0 0 256 256"><path d="M128 16 96 96 16 128l80 32 32 80 32-80 80-32-80-32Z"/></svg></span> <span id="title" data-i18n="Chat">Chat</span></h1>
+      <h1><span class="logo-tile" aria-hidden="true"><svg viewBox="56 96 400 344" role="img" aria-hidden="true" focusable="false"><defs><mask id="te-notch"><rect x="0" y="0" width="512" height="512" fill="#fff"/><circle cx="176" cy="96" r="32"/><circle cx="176" cy="376" r="32"/></mask></defs><g mask="url(#te-notch)"><rect x="56" y="96" width="400" height="280" rx="56" fill="#106f73"/></g><path d="M322 376 414 440 396 376Z" fill="#106f73"/><g fill="#8fc3c5"><circle cx="177" cy="137" r="5.5"/><circle cx="177" cy="160.5" r="5.5"/><circle cx="177" cy="184" r="5.5"/><circle cx="177" cy="207.5" r="5.5"/><circle cx="177" cy="231" r="5.5"/><circle cx="177" cy="254.5" r="5.5"/><circle cx="177" cy="278" r="5.5"/><circle cx="177" cy="301.5" r="5.5"/><circle cx="177" cy="325" r="5.5"/></g><path d="M116 192Q122 230 158 236Q122 242 116 280Q110 242 75 236Q110 230 116 192Z" fill="#ff7456"/><path d="M250 238 298 286 392 190" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/></svg></span> <span id="title" data-i18n="Chat">Chat</span></h1>
       <div class="header-end">
         <select id="lang" aria-label="Language" data-i18n-aria="Language"><option value="en">English</option><option value="ar">العربية</option></select>
         <label class="dev-toggle chip" title="Show how the agent decided" data-i18n-title="Show how the agent decided">
@@ -26,12 +23,12 @@
     </header>
 
     <ol class="messages" id="messages" aria-live="polite"></ol>
-    <p class="status" id="status" role="status" hidden></p>
+    <p class="status" id="status" role="alert" hidden></p>
 
     <form class="composer" id="composer" autocomplete="off">
       <input id="input" class="field" name="text" type="text" dir="auto" maxlength="2000"
              placeholder="Type a message" aria-label="Message" data-i18n-placeholder="Type a message" data-i18n-aria="Message" required>
-      <button type="submit" id="send" class="btn-glow" data-i18n="Send">Send</button>
+      <button type="submit" id="send" class="primary" data-i18n="Send">Send</button>
     </form>
   </main>
   <script src="/ui/i18n.js"></script>

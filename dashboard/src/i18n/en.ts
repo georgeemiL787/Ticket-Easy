@@ -9,6 +9,11 @@ const en = {
   "nav.alerts": "Alerts",
   "nav.businessTools": "Business tools",
   "nav.label": "Main navigation",
+  "nav.monitor": "Monitor",
+  "nav.configure": "Configure",
+  "nav.menu": "Menu",
+  "nav.collapse": "Collapse sidebar",
+  "nav.expand": "Expand sidebar",
 
   "top.tenant": "Business",
   "top.range": "Period",

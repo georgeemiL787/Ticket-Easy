@@ -4,7 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ticket-Easy design tokens</title>
-  <link rel="stylesheet" href="/ui/aurora.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/ui/aurora-light.css">
+  <style>
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .swatches li { display: grid; gap: 4px; font-size: 12px; color: var(--text-2); }
+    .swatches i { display: block; height: 44px; border: 1px solid var(--line); border-radius: 12px; }
+    .swatches b { color: var(--text); font-weight: 600; }
+    .bubble { max-width: 80%; margin: 0 0 8px; padding: 10px 14px; border-radius: 18px; }
+    .bubble.customer { margin-inline-start: auto; background: var(--teal-text); color: #fff; border-end-end-radius: 6px; }
+    .bubble.agent { background: rgba(255, 255, 255, 0.92); border: 1px solid var(--line); border-end-start-radius: 6px; }
+    .bubble.human { background: var(--magenta-soft); border: 1px solid rgba(192, 38, 211, 0.4); border-end-start-radius: 6px; }
+  </style>
 </head>
 <body>
   <header class="te-header">
@@ -15,7 +26,7 @@
   <main style="position:relative;z-index:1;max-width:760px;margin:24px auto;padding:0 16px;display:grid;gap:16px">
     <section class="te-card" style="padding:20px">
       <h1>Tokens preview</h1>
-      <p>Body text on a glass card. <span style="color:var(--muted-text)">Muted text.</span> <a href="#">A link</a>.</p>
+      <p>Body text on a glass card. <span style="color:var(--text-2)">Secondary text.</span> <span style="color:var(--muted-text)">Muted text.</span> <a href="#">A link</a>.</p>
       <p dir="rtl" lang="ar">نص عربي للتحقق من الخط والاتجاه.</p>
       <p>
         <button class="te-btn te-btn--primary">Primary</button>
@@ -30,6 +41,45 @@
         <span class="te-badge--bad">&#10005; Failed</span>
       </p>
     </section>
+
+    <section class="te-card" style="padding:20px">
+      <h2>Colours</h2>
+      <ul class="swatches">
+        <li><i style="background:var(--bg)"></i><b>--bg</b>#F8FAFC</li>
+        <li><i style="background:var(--bg-end)"></i><b>--bg-end</b>#FFFFFF</li>
+        <li><i style="background:var(--line)"></i><b>--line</b>#E2E8F0</li>
+        <li><i style="background:var(--text)"></i><b>--text</b>#0F172A</li>
+        <li><i style="background:var(--text-2)"></i><b>--text-2</b>#475569</li>
+        <li><i style="background:var(--muted)"></i><b>--muted</b>#94A3B8</li>
+        <li><i style="background:var(--teal)"></i><b>--teal</b>#0D9488 · customer</li>
+        <li><i style="background:var(--magenta)"></i><b>--magenta</b>#C026D3 · human agent</li>
+        <li><i style="background:var(--blue)"></i><b>--blue</b>#2563EB · links</li>
+        <li><i style="background:var(--red)"></i><b>--red</b>#DC2626</li>
+        <li><i style="background:var(--amber)"></i><b>--amber</b>#D97706</li>
+        <li><i style="background:var(--green)"></i><b>--green</b>#16A34A</li>
+        <li><i style="background:var(--glow-teal)"></i><b>--glow-teal</b>#5EEAD4</li>
+        <li><i style="background:var(--glow-sky)"></i><b>--glow-sky</b>#93C5FD</li>
+        <li><i style="background:var(--glow-pink)"></i><b>--glow-pink</b>#F0ABFC</li>
+        <li><i style="background:var(--red-soft)"></i><b>--red-soft</b>badge tint</li>
+        <li><i style="background:var(--amber-soft)"></i><b>--amber-soft</b>badge tint</li>
+        <li><i style="background:var(--green-soft)"></i><b>--green-soft</b>badge tint</li>
+      </ul>
+    </section>
+
+    <section class="te-card" style="padding:20px">
+      <h2>Type, radius and glass</h2>
+      <p style="font-family:var(--font-display);font-size:1.4rem;margin:0">Space Grotesk headings</p>
+      <p style="font-family:var(--font-body);margin:4px 0">Inter body text · --radius 16px · --radius-lg 20px · --blur 20px · --tap 44px</p>
+      <p lang="ar" dir="rtl" style="margin:4px 0">IBM Plex Sans Arabic للنص العربي</p>
+    </section>
+
+    <section class="te-card" style="padding:20px">
+      <h2>Chat bubbles</h2>
+      <p class="bubble customer">Where is my order?</p>
+      <p class="bubble agent">It left the warehouse today and arrives Thursday.</p>
+      <p class="bubble human">A colleague is joining the chat.</p>
+    </section>
+
     <div class="te-state--empty">Nothing here yet</div>
     <div class="te-state--loading">Loading&hellip;</div>
     <div class="te-state--error">Something went wrong</div>

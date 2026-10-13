@@ -32,7 +32,9 @@ async def test_the_page_has_every_element_its_script_looks_up(chat: httpx.AsyncC
 
 
 async def test_the_shared_look_is_served_and_linked(chat: httpx.AsyncClient) -> None:
-    sheet = await chat.get("/ui/aurora.css")
+    sheet = await chat.get("/ui/aurora-light.css")
     assert sheet.status_code == 200 and "css" in sheet.headers["content-type"]
     for path in ("/chat", "/inbox"):
-        assert "/ui/aurora.css" in (await chat.get(path)).text, path
+        page = (await chat.get(path)).text
+        assert "/ui/aurora-light.css" in page, path
+        assert "/ui/aurora.css" not in page, path  # the old stylesheet is no longer linked

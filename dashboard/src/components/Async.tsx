@@ -5,9 +5,14 @@ import { useI18n } from "../i18n";
 export function Loading() {
   const { t } = useI18n();
   return (
-    <p className="state" role="status" aria-live="polite">
-      {t("common.loading")}
-    </p>
+    <div className="state loading" role="status" aria-live="polite">
+      <p className="visually-hidden">{t("common.loading")}</p>
+      <div className="skeleton-rows" aria-hidden="true">
+        <span className="skeleton wide" />
+        <span className="skeleton" />
+        <span className="skeleton narrow" />
+      </div>
+    </div>
   );
 }
 

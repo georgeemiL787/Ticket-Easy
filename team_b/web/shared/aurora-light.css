@@ -48,10 +48,19 @@
   --teal-soft: #f0fdfa;
   --magenta-soft: #fdf4ff;
   --blue-soft: #eff6ff;
-  --glass: rgba(255, 255, 255, 0.72);
+  --line: #e2e8f0;
+  --bg-end: #ffffff;
+  --glow-teal: #5eead4;
+  --glow-sky: #93c5fd;
+  --glow-pink: #f0abfc;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --blur: 20px;
   --radius: 16px;
   --radius-lg: 20px;
   --shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.18);
+  --shadow-sm: 0 4px 14px -8px rgba(15, 23, 42, 0.25);
+  --ring: 0 0 0 3px rgba(13, 148, 136, 0.28);
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --tap: 44px;
@@ -65,7 +74,7 @@
 
 :root,
 :root body {
-  background: var(--bg);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-end) 100%) fixed var(--bg);
   color: var(--text);
 }
 
@@ -84,7 +93,7 @@
   color: var(--blue);
 }
 
-/* two static corner glows instead of the drifting dark blobs, and a very light grain */
+/* three soft blurred glows (teal, sky, pink) instead of the drifting dark blobs, and a very light grain */
 :root body::before {
   content: "";
   position: fixed;
@@ -92,8 +101,10 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(520px 420px at 0% 0%, rgba(13, 148, 136, 0.14), transparent 70%),
-    radial-gradient(560px 460px at 100% 100%, rgba(192, 38, 211, 0.1), transparent 70%);
+    radial-gradient(560px 460px at 0% 0%, color-mix(in srgb, var(--glow-teal) 38%, transparent), transparent 70%),
+    radial-gradient(520px 440px at 100% 8%, color-mix(in srgb, var(--glow-sky) 34%, transparent), transparent 70%),
+    radial-gradient(600px 480px at 80% 100%, color-mix(in srgb, var(--glow-pink) 30%, transparent), transparent 70%);
+  filter: blur(8px);
 }
 
 :root body::after {
@@ -125,7 +136,7 @@
 :root .te-card,
 :root .glass {
   background: #ffffff;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
@@ -134,8 +145,8 @@
   :root .te-card,
   :root .glass {
     background: var(--glass);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+    backdrop-filter: blur(var(--blur)) saturate(140%);
   }
 }
 
@@ -325,6 +336,132 @@
   background: var(--red-soft);
 }
 
+/* ---- the plain-element look of the chat and inbox pages (<body class="te-app">) ----
+   Scoped to .te-app so the dashboard, which imports this file, keeps its own elements. */
+.te-app {
+  position: relative;
+  min-height: 100vh;
+  margin: 0;
+  font: 15px/1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.te-app * {
+  box-sizing: border-box;
+}
+
+.te-app .page {
+  position: relative;
+  z-index: 2;
+}
+
+.te-app .nav-glass {
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  border-bottom: 1px solid var(--line);
+}
+
+.te-app .muted {
+  color: var(--muted-text);
+}
+
+.te-app .logo-tile {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+}
+
+.te-app .logo-tile svg {
+  width: 100%;
+  height: 100%;
+}
+
+.te-app input,
+.te-app select,
+.te-app textarea,
+.te-app button {
+  font: inherit;
+  color: var(--text);
+}
+
+.te-app input[type="text"],
+.te-app input[type="email"],
+.te-app input[type="password"],
+.te-app input[type="search"],
+.te-app select,
+.te-app textarea {
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.te-app input:focus-visible,
+.te-app select:focus-visible,
+.te-app textarea:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+  border-color: var(--teal);
+  box-shadow: var(--ring);
+}
+
+.te-app button {
+  min-height: 36px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+
+.te-app button:hover {
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.te-app button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.te-app button.primary {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--teal-text);
+  border-color: var(--teal-text);
+}
+
+.te-app button.primary:hover {
+  background: #115e59;
+}
+
+.te-app button.danger {
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.5);
+  background: var(--red-soft);
+}
+
+.te-app .chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background: var(--teal-soft);
+  border: 1px solid rgba(13, 148, 136, 0.25);
+  color: var(--teal-text);
+  font-size: 12px;
+}
+
 /* ---- touch targets and motion ---- */
 @media (max-width: 768px) {
   :root .te-btn,
@@ -334,7 +471,9 @@
   :root input[type="text"],
   :root input[type="email"],
   :root input[type="password"],
-  :root input[type="search"] {
+  :root input[type="search"],
+  :root textarea,
+  .te-app .chip {
     min-height: var(--tap);
   }
 }

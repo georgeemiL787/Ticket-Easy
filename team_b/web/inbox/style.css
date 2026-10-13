@@ -1,5 +1,5 @@
-/* The support inbox: a case list and a case page (shared tokens and glass in /ui/aurora.css). An urgent case has a red edge on
-   its row; below 900px the list and the case take turns (list first, then the case with a back button). */
+/* The support inbox: a case list and a case workspace (tokens, glass and form elements in /ui/aurora-light.css).
+   An urgent row has a red edge; below 900px the list and the case take turns (list first, then the case with a back button). */
 :root {
   --urgent: #dc2626;
   --high: #b45309;
@@ -14,7 +14,7 @@
   z-index: 20;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 20px;
+  gap: 8px 20px;
   align-items: center;
   padding: 10px 24px;
 }
@@ -29,18 +29,24 @@
 }
 
 .top label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--muted-text);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .top label input {
-  margin-inline-start: 8px;
   letter-spacing: normal;
   text-transform: none;
   font-size: 14px;
+}
+
+#refreshed {
+  margin-inline-start: auto;
 }
 
 .muted {
@@ -54,15 +60,52 @@
   background: var(--red-soft);
   color: #991b1b;
   border: 1px solid rgba(220, 38, 38, 0.35);
+  border-inline-start: 4px solid var(--urgent);
   border-radius: 12px;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(340px, 5fr) 7fr;
+  grid-template-columns: minmax(360px, 5fr) 7fr;
   gap: 16px;
-  padding: 16px 24px 40px;
+  padding: 16px 24px 24px;
   align-items: start;
+}
+
+.list-pane,
+.case-pane {
+  min-width: 0;
+  padding: 16px;
+}
+
+/* on a wide screen each pane scrolls on its own below the sticky bar */
+@media (min-width: 901px) {
+  .list-pane,
+  .case-pane {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+
+  .case-pane {
+    position: sticky;
+    top: 76px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .case-pane[hidden] {
+    display: none;
+  }
+
+  #case-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.back {
+  display: none;
 }
 
 @media (max-width: 900px) {
@@ -73,6 +116,15 @@
 
   .top {
     padding: 10px 12px;
+  }
+
+  .top label {
+    flex: 1 1 140px;
+  }
+
+  .top label input {
+    flex: 1;
+    min-width: 0;
   }
 
   /* list first; once a case is opened it takes the screen and a back button returns to the list */
@@ -86,6 +138,7 @@
 
   .back {
     display: inline-flex;
+    align-items: center;
   }
 
   .cases thead {
@@ -101,8 +154,8 @@
   }
 
   .cases tr.row {
-    padding: 10px 6px;
-    border-top: 1px solid var(--border);
+    padding: 12px 10px;
+    border-block-start: 1px solid var(--line);
   }
 
   .cases td {
@@ -111,30 +164,34 @@
   }
 }
 
-.back {
-  display: none;
-}
-
-.list-pane,
-.case-pane {
-  border-radius: 20px;
-  padding: 16px;
-  min-width: 0;
-}
-
+/* ---- filters ---- */
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-block-end: 12px;
   align-items: center;
 }
 
-.inline {
-  color: var(--muted-text);
-  font-size: 0.85rem;
+.filters select {
+  flex: 1 1 130px;
+  min-width: 0;
 }
 
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+
+.inline input {
+  accent-color: var(--teal);
+}
+
+/* ---- case list ---- */
 table.cases {
   width: 100%;
   border-collapse: collapse;
@@ -145,14 +202,14 @@ table.cases {
   padding: 6px;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted-text);
 }
 
 .cases td {
-  padding: 8px 6px;
-  border-top: 1px solid var(--border);
+  padding: 10px 6px;
+  border-block-start: 1px solid var(--line);
   vertical-align: top;
 }
 
@@ -162,16 +219,35 @@ table.cases {
 }
 
 .cases tr.row:hover {
-  background: var(--teal-soft);
+  background: rgba(240, 253, 250, 0.7);
+}
+
+.cases tr.row:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: -2px;
 }
 
 .cases tr.row.selected {
   background: var(--teal-soft);
-  box-shadow: inset 3px 0 0 var(--teal);
+  box-shadow: inset 4px 0 0 var(--teal);
 }
 
 .cases tr.row.urgent-row {
-  box-shadow: inset 3px 0 0 var(--urgent);
+  box-shadow: inset 4px 0 0 var(--urgent);
+}
+
+.cases tr.row.urgent-row.selected {
+  background: var(--red-soft);
+}
+
+[dir="rtl"] .cases tr.row.selected,
+:root:lang(ar) .cases tr.row.selected {
+  box-shadow: inset -4px 0 0 var(--teal);
+}
+
+[dir="rtl"] .cases tr.row.urgent-row,
+:root:lang(ar) .cases tr.row.urgent-row {
+  box-shadow: inset -4px 0 0 var(--urgent);
 }
 
 .badge {
@@ -181,29 +257,54 @@ table.cases {
   font-size: 12px;
   font-weight: 600;
   background: #ffffff;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
+  color: var(--text-2);
 }
 
 .badge.urgent {
   color: #b91c1c;
   background: var(--red-soft);
-  border-color: rgba(220, 38, 38, 0.45);
+  border-color: rgba(220, 38, 38, 0.4);
 }
 
 .badge.high {
   color: var(--high);
   background: var(--amber-soft);
-  border-color: rgba(217, 119, 6, 0.45);
+  border-color: rgba(217, 119, 6, 0.4);
 }
 
 .badge.normal {
   color: var(--normal);
   background: var(--blue-soft);
-  border-color: rgba(37, 99, 235, 0.35);
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 .badge.low {
   color: var(--low);
+}
+
+.badge.status-open {
+  color: var(--amber-text);
+  background: var(--amber-soft);
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.badge.status-claimed {
+  color: var(--teal-text);
+  background: var(--teal-soft);
+  border-color: rgba(13, 148, 136, 0.35);
+}
+
+.badge.status-resolved {
+  color: var(--green-text);
+  background: var(--green-soft);
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.badge.status-returned_to_agent {
+  color: var(--ai);
+  background: var(--magenta-soft);
+  border-color: rgba(192, 38, 211, 0.35);
 }
 
 .tag {
@@ -216,17 +317,26 @@ table.cases {
   border: 1px solid rgba(192, 38, 211, 0.35);
 }
 
+#more {
+  margin-block-start: 12px;
+}
+
+/* ---- case workspace ---- */
 .case-head {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 8px;
   align-items: center;
+  padding-block-end: 10px;
+  border-block-end: 1px solid var(--line);
 }
 
 .case-head h2 {
+  flex: 1 1 200px;
   margin: 0;
   font-size: 1.05rem;
+  overflow-wrap: anywhere;
 }
 
 .actions {
@@ -241,18 +351,39 @@ table.cases {
 }
 
 .block {
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
+  margin-block-start: 14px;
 }
 
-.block h3 {
+.block h3,
+.block > summary {
   margin: 0 0 6px;
+  font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted-text);
+}
+
+/* facts and details are collapsible sections under the conversation */
+.block.section {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.block.section > summary {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.block.section[open] > summary {
+  margin-block-end: 8px;
+  color: var(--teal-text);
 }
 
 dl.facts {
@@ -268,7 +399,7 @@ dl.facts dt {
 
 dl.facts dd {
   margin: 0;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 blockquote {
@@ -276,7 +407,7 @@ blockquote {
   padding: 8px 12px;
   border-inline-start: 3px solid var(--teal);
   background: var(--teal-soft);
-  border-radius: 0 12px 12px 0;
+  border-radius: 12px;
 }
 
 blockquote cite {
@@ -295,16 +426,17 @@ ul.plain {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 360px;
+  max-height: 420px;
   overflow-y: auto;
+  padding: 4px 2px;
 }
 
 .line {
+  max-width: 90%;
   padding: 8px 12px;
   border-radius: 16px;
-  max-width: 90%;
   white-space: pre-wrap;
-  word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .line.customer {
@@ -316,7 +448,7 @@ ul.plain {
 .line.agent {
   align-self: flex-start;
   background: #ffffff;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
 }
 
 .line.human_agent {
@@ -332,32 +464,42 @@ ul.plain {
   border-radius: 14px;
 }
 
+/* the reply composer stays at the bottom of the case */
 .reply {
+  position: sticky;
+  bottom: 0;
   display: flex;
   gap: 10px;
-  margin-top: 14px;
+  margin-block-start: 14px;
+  padding-block-start: 12px;
   align-items: flex-end;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.92) 18%);
+}
+
+.reply[hidden] {
+  display: none;
 }
 
 .reply textarea {
   flex: 1;
+  min-width: 0;
   resize: vertical;
 }
 
-/* sign-in: the form itself is .login */
+/* ---- sign-in: the form itself is .login ---- */
 form.login {
+  position: relative;
+  z-index: 2;
   display: grid;
   gap: 14px;
   width: min(calc(100% - 32px), 380px);
   margin: 12vh auto 0;
   padding: 28px;
-  border-radius: 20px;
-  position: relative;
-  z-index: 2;
-  background: rgba(255, 255, 255, 0.9);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
-  border: 1px solid var(--glass-border);
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(140%);
+  backdrop-filter: blur(var(--blur)) saturate(140%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
 }
 
@@ -370,7 +512,7 @@ form.login label {
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted-text);
 }
@@ -386,7 +528,7 @@ form.login .error {
 }
 
 form.login button {
-  padding: 12px;
+  min-height: var(--tap);
   font-family: var(--font-display);
   font-weight: 600;
   color: #ffffff;

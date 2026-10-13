@@ -116,7 +116,7 @@ def test_9_a_decision_closes_the_version_so_approval_cannot_rest_on_later_answer
     p = current(client, pid)
     r = client.post(f'/api/v1/proposals/{pid}/versions/{p["version"]}/answers',
                     json=dict(expected_revision=p["review_revision"],
-                              answers={q["id"]: "TEST-ONLY: changed my mind, anyone may use it."
+                              answers={q["id"]: "sandbox-only: changed my mind, anyone may use it."
                                        for q in p["content"]["questions"]}))
     assert r.status_code == 409
     assert r.json()["code"] == "closed_version"

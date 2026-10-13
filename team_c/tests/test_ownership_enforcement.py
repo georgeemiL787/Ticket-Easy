@@ -78,7 +78,7 @@ def test_guard_evidence_is_simulation_and_does_not_grant_publication(lifecycle, 
     report = artifact["policy_tests"]
     assert report["scope"] == "runtime_guard_simulation"
     assert any("do not verify target API behavior" in text for text in report["limitations"])
-    refused = client.post(f'/api/v1/artifacts/{artifact["id"]}/publications', json=dict(note="TEST-ONLY"))
+    refused = client.post(f'/api/v1/artifacts/{artifact["id"]}/publications', json=dict(note="sandbox-only"))
     assert refused.status_code == 409
     body = refused.json()
     problems = list((body.get("details") or {}).get("problems", [])) + [body.get("message", "")]

@@ -125,7 +125,7 @@ def build_container(
         tenants = bundles
     shops_dir = settings.db_path.parent / "shops" if settings.store == "sqlite" else None  # SQLite shops keep files
     shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
-    # Team C serves the tools its config binds (TEST-ONLY sandbox publications over MCP); the stand-in serves the rest.
+    # Team C serves the tools its config binds (sandbox publications over MCP); the stand-in serves the rest.
     team_c = TeamCCapabilities(shop, TeamCConfig.load(settings.team_c_config)) if settings.team_c_config else None
     capabilities: CapabilityClient = team_c if team_c is not None else shop
     if bundles is not None and team_c is not None:

@@ -9,7 +9,15 @@ import { loadChoice, saveChoice, type SetupChoice } from "../../state/setupStore
 import { sharedQuery, useFilters } from "../../state/useFilters";
 import { SetupFrame } from "./SetupFrame";
 
-const emptyAccount = (): Account => ({ name: "", scope: "end_user", token: "", context: {} });
+function originOf(address: string): string {
+  try {
+    return new URL(address).origin;
+  } catch {
+    return "";
+  }
+}
+
+const emptyAccount =(): Account => ({ name: "", scope: "end_user", token: "", context: {} });
 
 /** Screen 1: the API description, where the API lives, who uses the tools, and (optionally) test accounts. */
 export default function Connect() {
@@ -45,7 +53,11 @@ export default function Connect() {
     try {
       const result = await importSpec(tenant, file.current !== null ? { filename: fileName || "api.json", content: file.current } : { url: url.trim() });
       setRead(result);
-      if (result.valid) update({ specId: result.spec_id });
+      if (result.valid) {
+        // an address we already know: the API usually lives where its description was read from (still editable)
+        const origin = file.current === null && !choice.baseUrl.trim() ? originOf(url.trim()) : "";
+        update({ specId: result.spec_id, ...(origin ? { baseUrl: origin } : {}) });
+      }
       else setProblem(`${t("ts.connect.readBad")} ${result.problems.join(" ")}`);
     } catch (cause) {
       setProblem(cause instanceof ApiError ? cause.message : t("common.error"));

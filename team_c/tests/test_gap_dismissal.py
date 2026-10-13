@@ -25,7 +25,7 @@ def checked(client, pid):
     return client.get(f"/api/v1/proposals/{pid}").json()
 
 
-def dismiss(client, p, index=0, reason="TEST-ONLY: achievements are shown, never awarded by this tool"):
+def dismiss(client, p, index=0, reason="sandbox-only: achievements are shown, never awarded by this tool"):
     return client.post(f'/api/v1/proposals/{p["proposal_id"]}/versions/{p["version"]}/gaps/{index}/dismiss', json=dict(expected_revision=p["review_revision"], reason=reason))
 
 
@@ -49,7 +49,7 @@ def test_dismissing_every_reported_gap_reaches_review_and_approval(env):
     p = r.json()
     assert p["state"] == "ready_for_review" and p["open_gaps"] == []
     rec = next(x for x in p["reconciliations"] if x["id"] == p["reconciliation_id"])
-    assert rec["successful"] and rec["dismissals"]["0"]["reason"].startswith("TEST-ONLY")
+    assert rec["successful"] and rec["dismissals"]["0"]["reason"].startswith("sandbox-only")
     assert "achievements are shown" in client.get(f"/proposals/{pid}").text
     p = confirm_requirements(client, pid)
     approved = client.post(f"/api/v1/proposals/{pid}/versions/{p['version']}/decisions", json=dict(expected_revision=p["review_revision"], action="approve_to_build", idempotency_key="gap-dismissal-approval"))

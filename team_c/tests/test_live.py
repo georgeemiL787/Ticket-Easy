@@ -16,7 +16,7 @@ from team_c.storage import Store, now, uid
 from helpers.desk import make_desk
 from helpers.tool_requests import RequestDesk
 
-THOUGHT = "TEST-ONLY thinking: which operations help customers?"
+THOUGHT = "sandbox-only thinking: which operations help customers?"
 
 
 ANSWER = json.dumps(dict(suggestions=[]))
@@ -54,7 +54,7 @@ def test_ollama_stream_sends_thinking_to_the_live_step_only(tmp_path):
     step = job["steps"][0]
     assert step["thinking"] == THOUGHT and step["answer_tokens"] == 2 and step["finished"] and step["thinking_on"]
     stored = [r["payload"] for r in store.all("SELECT payload FROM diagnostics WHERE run_id=?", (run,))]
-    assert stored and not any("TEST-ONLY thinking" in p for p in stored)
+    assert stored and not any("sandbox-only thinking" in p for p in stored)
 
 
 def test_thinking_that_runs_out_of_room_is_redone_once_without_thinking(tmp_path):
@@ -120,7 +120,7 @@ def test_slow_action_moves_to_the_live_page_shows_thinking_then_the_result(desk)
     page = d.client.get(f"/businesses/{d.bid}")
     csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
     r = d.client.post("/actions/suggest", data=dict(csrf=csrf, business_id=d.bid), headers={"referer": f"http://testserver/businesses/{d.bid}"})
-    assert r.url.path.startswith("/live/") and "Looking for useful tools" in r.text and "not saved" in r.text
+    assert r.url.path.startswith("/live/") and "Looking for useful tools" in r.text
     jid = r.url.path.rsplit("/", 1)[1]
     running = poll(d, jid, lambda j: j["steps"] and j["steps"][0]["thinking"])
     assert running["status"] == "running" and running["steps"][0]["thinking"] == THOUGHT and running["steps"][0]["label"] == "Thinking of useful tools"
@@ -140,7 +140,7 @@ def test_one_ai_job_at_a_time_with_a_banner_and_a_stop_button(desk):
     assert f'action="/live/{jid}/cancel"' in first.text and ">Stop</button>" in first.text and "The AI is busy" not in first.text
     # A second AI action does not start: it shows the running job instead.
     second = d.client.post("/actions/suggest", data=dict(csrf=csrf, business_id=d.bid))
-    assert second.url.path == f"/live/{jid}" and second.url.query == b"busy=1" and "Your new action was not started" in second.text
+    assert second.url.path == f"/live/{jid}" and second.url.query == b"busy=1" and "still busy" in second.text
     assert len(d.app.state.jobs) == 1
     business = d.client.get(f"/businesses/{d.bid}").text
     assert "The AI is busy: Looking for useful tools" in business and f'href="/live/{jid}"' in business
@@ -158,7 +158,7 @@ def test_one_ai_job_at_a_time_with_a_banner_and_a_stop_button(desk):
     stopped = poll(d, jid, lambda j: j["status"] != "running")
     assert stopped["status"] == "failed" and stopped["error"]["code"] == "cancelled"
     page = d.client.get(f"/live/{jid}").text
-    assert "Stopped. Nothing from this run was used." in page and ">Stop</button>" not in page
+    assert "Stopped." in page and ">Stop</button>" not in page
     assert "The AI is busy" not in d.client.get(f"/businesses/{d.bid}").text
     run = d.service.store.all("SELECT status FROM runs WHERE kind='suggestion' ORDER BY rowid DESC LIMIT 1")[0]
     assert run["status"] == "failed"
@@ -166,12 +166,12 @@ def test_one_ai_job_at_a_time_with_a_banner_and_a_stop_button(desk):
 
 def test_a_failed_check_lists_what_it_found_on_the_live_page(desk):
     d = desk
-    error = AppError("invalid_bindings", "Proposal grounding failed", details={"errors": ["s3:body.category: TEST-ONLY check message"], "run_id": "r1"})
+    error = AppError("invalid_bindings", "Proposal grounding failed", details={"errors": ["s3:body.category: sandbox-only check message"], "run_id": "r1"})
     d.app.state.jobs["j1"] = dict(id="j1", action="reconcile", status="failed", url=None, back="/", started=time.time(), steps=[], error=error)
     job = d.client.get("/api/v1/live/j1").json()
-    assert job["error"]["errors"] == ["s3:body.category: TEST-ONLY check message"]
+    assert job["error"]["errors"] == ["s3:body.category: sandbox-only check message"]
     page = d.client.get("/live/j1").text
-    assert "What the check found" in page and "s3:body.category: TEST-ONLY check message" in page
+    assert "Details:" in page and "s3:body.category: sandbox-only check message" in page
 
 
 def test_fast_actions_redirect_straight_to_the_result(desk, monkeypatch):

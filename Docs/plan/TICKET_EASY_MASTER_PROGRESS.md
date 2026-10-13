@@ -92,3 +92,11 @@ Done: root `README.md` product framing, `contracts/README.md` index.
 Not done, on purpose: renaming `Docs/` to `docs/`, moving `team_a|b|c/` and `dashboard/` into new folders (venvs are not movable on Windows,
 and CI, Docker and `serve.py` paths all change), removing `team_c/.git`, dead code and scratch databases (needs your confirmation first).
 These can be done later one step at a time; nothing else depends on them.
+
+## QA pass through the running stack (2026-10-13)
+
+Driven through the in-app browser and the real HTTP surface of the local stack; repeatable checks are in `integration/qa_journeys_check.py` (17 checks) next to the unit suites.
+
+Fixed: tool binding for the demo shop pointed at the switched-off Live Demo (every order lookup became a handoff); a setup refusal from the tools service (`TEAM_C_REJECTED`, `IDENTITY_NOT_MAPPED`) was retried by the customer instead of reaching a person; the web-address import said only `fetch_host`/`fetch_failed` (now plain wording, local addresses allowed in the local stack); the API address is pre-filled from the address the description was read from; a failing tool test now links to the test-data form; "Done" after activation named the whole tool list including a human-only tool, now it names what the batch added; the Knowledge page failed for a business with no upload yet; the test-chat button had the hint text as its label; source codes such as `refund_policy@v1#s1` are only shown in the developer view; the inbox conversation includes what colleagues wrote; Team A's database build failed on a business added through the admin API.
+
+Known limits: the stack pins the service date to 2026-09-28 (`TEAM_B_FIXED_TODAY`, the demo orders are dated against it), so the dashboard's "last 7 days" is empty and inbox ages read wrong against the real date; Team A needs `OPENROUTER_API_KEY` for "Suggest rules" (Go live needs an approved rule); without an AI model the rules-only understanding misses loosely worded policy questions (a fallback search lowered the evaluation set's decision score, so it was not kept); no browser automation is installed (Playwright was not downloaded); the Team C test `test_target_system` depends on a project outside this repository.

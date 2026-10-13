@@ -11,7 +11,7 @@ from team_c.grounding import validate_proposal
 from team_c.models import ProposalContent
 
 CREATED = {"201": {"description": "Created", "content": {"application/json": {"schema": {"type": "object", "properties": {"id": {"type": "integer"}}}}}}}
-DOCUMENT = {"openapi": "3.0.3", "info": {"title": "TEST-ONLY bodies", "version": "1"}, "paths": {
+DOCUMENT = {"openapi": "3.0.3", "info": {"title": "sandbox-only bodies", "version": "1"}, "paths": {
     "/notes": {"post": {"operationId": "createNote", "responses": CREATED, "requestBody": {"required": False, "content": {"application/json": {"schema": {
         "type": "object", "required": ["title"], "properties": {"title": {"type": "string", "minLength": 1}, "tag": {"type": "string"}}}}}}}},
     "/orders": {"post": {"operationId": "createOrder", "responses": CREATED, "requestBody": {"required": True, "content": {"application/json": {"schema": {
@@ -188,7 +188,7 @@ def test_a_refused_body_after_an_applied_write_is_reported_as_partial(ops):
 def test_grounding_requires_required_siblings_of_an_optional_body(ops):
     by_name, inventory = ops
     op = by_name["createNote"]
-    proposal = dict(name="TEST-ONLY note", description="d", business_purpose="p", steps=[dict(id="s1", operation_id=op["id"], purpose="Create", bindings=[runtime("body.tag", "tag")])],
+    proposal = dict(name="sandbox-only note", description="d", business_purpose="p", steps=[dict(id="s1", operation_id=op["id"], purpose="Create", bindings=[runtime("body.tag", "tag")])],
                     configuration=[], questions=[], outputs=[dict(name="id", step_id="s1", response_status="201", pointer="/id")],
                     expected_reads=[], expected_writes=["Note"], assumptions=[], limitations=[], risk="low", risk_rationale="r")
     with pytest.raises(AppError) as exc:

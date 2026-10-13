@@ -65,7 +65,7 @@
 - `6eb0592` sandbox history (current-evidence marking + tests)
 - `04a4a35` Groq wire schema, binding target constrained to offered input keys
 - `b4212d0` reconciliation evidence retry
-- `9191c6c` test-only publication wording
+- `9191c6c` sandbox-only publication wording
 - final report and `scripts/e2e_flow.py` (this commit)
 
 **Excluded:** `*.sqlite3`, `*.db`, `*.log`, `*.err` via `.gitignore` — no runtime DBs, logs, cache, temp artifacts, credentials, or local `.env` committed. Secret scan (`gsk_`/`sk-or-v1`) clean. Git identity: `Team C local` / `local@team-c.invalid`.
@@ -93,7 +93,7 @@
   - `test_absent_capability_searches_the_whole_catalog_before_declaring_absence`
   - `test_retrieval_cap_reports_a_partial_search_rather_than_an_api_verdict`
 - `tests/test_artifacts.py`: +2 fast-track regression tests → 46 passed
-- `tests/test_publication.py`: +2 sandbox-history + 1 production-activation + 1 test-only-wording tests → 18 passed
+- `tests/test_publication.py`: +2 sandbox-history + 1 production-activation + 1 sandbox-only-wording tests → 18 passed
 - `tests/test_capability_policy_lifecycle.py`: +1 policy stale test → 4 passed
 - `tests/test_groq_schema.py`: +1 regression, 2 updated — the wire schema must not decode a bare reference name for a binding target
 - `tests/test_grounding_retry.py`: +2 reconciliation evidence-retry tests — one bounded retry carries `evidence_feedback` and succeeds; a repeat mis-citation fails closed with `earlier_run_ids`
@@ -129,11 +129,11 @@ The Groq path is exercised live by `tests/test_groq.py`; no test depends on a pa
 
 **Retrieval proof (step 16 of the script, asserted not just printed):**
 - Request A — the order-lookup goal: **19/81 operations in 1 round**, `partial_search=true`. This is the initial ~20-op slice.
-- Request B — goal *"TEST ONLY: show delivery cost and available rates for an address"*: **61/81 operations in 3 rounds**, `partial_search=true`. The first slice did not contain the shipping operation, the model named `absent_operation`, and retrieval widened the index until it found it. The script asserts `retrieval_rounds >= 2` and `searched_operations >` Request A's slice, so a regression back to single-slice retrieval fails the run.
+- Request B — goal *"show delivery cost and available rates for an address"*: **61/81 operations in 3 rounds**, `partial_search=true`. The first slice did not contain the shipping operation, the model named `absent_operation`, and retrieval widened the index until it found it. The script asserts `retrieval_rounds >= 2` and `searched_operations >` Request A's slice, so a regression back to single-slice retrieval fails the run.
 
 **Model calls in this run:** 0 failed runs; 36 attempts succeeded directly on Groq and 1 fell back to OpenRouter after a Groq rate-limit response. The 50 rate-limit attempts recorded today are all `provider_service_failure`, which is the designed fallback path.
 
-**Target-API note (environmental, not a team_c defect):** AstroCommerce occasionally answers `HTTP 500` on `GET /api/v1/orders/{order_id}` — roughly 1 run in 5, unreproducible outside the flow (200+ direct requests returned 200/403). The publication gate correctly refuses when that happens, because a 5xx is `other_failure` and not a record refusal, so no authorization claim could be made. The driver therefore re-runs a sandbox test only when the stored execution report shows the target API answered 5xx; denials, validation failures and every other result are never retried, all runs stay in the audit history, and the gate still judges the latest run.
+**Target-API note (environmental, not a team_c defect):** AstroCommerce occasionally answers `HTTP 500` on `GET /api/v1/orders/{order_id}` — roughly 1 run in 5, unreproducible outside the flow (200+ direct requests returned 200/403). The publication gate correctly refuses when that happens, because a 5xx is `other_failure` and not a record refusal, so no authorization claim could be made. The driver therefore re-runs a sandbox sandbox only when the stored execution report shows the target API answered 5xx; denials, validation failures and every other result are never retried, all runs stay in the audit history, and the gate still judges the latest run.
 
 **Production activation:** Correctly absent — publication `environment="sandbox"`, `activation=None`, `meta=None`, `permitted_uses=["artifact_creation","sandbox_testing"]`, `meta.team_c.production_ready=false`.
 
@@ -157,4 +157,4 @@ The Groq path is exercised live by `tests/test_groq.py`; no test depends on a pa
 ---
 
 ## Summary
-All 10 acceptance criteria met. The flow runs start-to-finish unaided on `data/flow4.sqlite3` with `DEV_FAST_TRACK=false` and `LLM_PRIMARY=groq`, and reaches test-only sandbox publication `b8828534-6848-4eb4-8a41-9cd690ff4946` with four passing sandbox tests. Index truncation is fixed with verifiable multi-round retrieval — Request A searched 19/81 operations in 1 round, Request B widened to 61/81 in 3 rounds, and the script asserts that widening. Both structured-output defects (Groq binding target, reconciliation evidence citation) are root-caused and fixed; the model ran with zero failed runs. Enforcement is manually reviewed, sandbox history preserves the superseded audit trail, production activation remains unimplemented, the suite is 595 passing, and git is clean with no secrets, databases or `.env` committed. The only outstanding fragility is upstream: AstroCommerce intermittently returns HTTP 500, which the gate correctly treats as unproven rather than as a refusal.
+All 10 acceptance criteria met. The flow runs start-to-finish unaided on `data/flow4.sqlite3` with `DEV_FAST_TRACK=false` and `LLM_PRIMARY=groq`, and reaches sandbox-only sandbox publication `b8828534-6848-4eb4-8a41-9cd690ff4946` with four passing sandbox tests. Index truncation is fixed with verifiable multi-round retrieval — Request A searched 19/81 operations in 1 round, Request B widened to 61/81 in 3 rounds, and the script asserts that widening. Both structured-output defects (Groq binding target, reconciliation evidence citation) are root-caused and fixed; the model ran with zero failed runs. Enforcement is manually reviewed, sandbox history preserves the superseded audit trail, production activation remains unimplemented, the suite is 595 passing, and git is clean with no secrets, databases or `.env` committed. The only outstanding fragility is upstream: AstroCommerce intermittently returns HTTP 500, which the gate correctly treats as unproven rather than as a refusal.

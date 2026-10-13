@@ -74,7 +74,7 @@ def test_title_normalization_handles_unicode_and_empty_keys():
 
 def inventory(env):
     app, client, settings = env
-    business = app.state.service.business("TEST-ONLY", "x" * 9500)
+    business = app.state.service.business("sandbox-only", "x" * 9500)
     spec = app.state.service.upload(business["id"], "ecommerce.json", (Path(__file__).parents[1] / "examples/ecommerce.json").read_bytes())
     return app, client, settings, spec
 
@@ -127,7 +127,7 @@ def test_cancellation_during_cloud_call_stops_workflow_and_fallback(env, primary
         sent.append(request)
         job["cancelled"] = True
         if response_kind == "timeout":
-            raise httpx.ReadTimeout("TEST-ONLY timeout", request=request)
+            raise httpx.ReadTimeout("sandbox-only timeout", request=request)
         if response_kind == "service_failure":
             return httpx.Response(503)
         if response_kind == "malformed":

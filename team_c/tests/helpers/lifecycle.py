@@ -1,9 +1,9 @@
-"""Review lifecycle on the target-shaped inventory: the deterministic TEST SUBSTITUTE and TEST-ONLY review helpers."""
+"""Review lifecycle on the target-shaped inventory: the deterministic TEST SUBSTITUTE and sandbox-only review helpers."""
 import json
 from conftest import refreshed_review, requirement_findings
 from team_c.models import CRITERIA, GenerationOutput, ReconciliationOutput
 
-ANSWER = "TEST-ONLY (not a business decision): only the authenticated owner of an item may read or update it."
+ANSWER = "sandbox-only (not a business decision): only the authenticated owner of an item may read or update it."
 OWNER_ID_QUESTION = "What is the exact business setting for the owner_id?"
 
 
@@ -22,12 +22,12 @@ def live_shaped(read, update, questions=True):
 
 
 class LifecycleSubstitute:
-    """TEST SUBSTITUTE: labeled TEST-ONLY answers resolve, 'both' contradicts, anything else is insufficient."""
+    """TEST SUBSTITUTE: labeled sandbox-only answers resolve, 'both' contradicts, anything else is insufficient."""
     def __init__(self, settings, store):
         self.store, self.mode, self.questions = store, "normal", True
 
     def call(self, kind, payload, output_model, run):
-        self.store.attempt(run, "TEST_SUBSTITUTE", "deterministic-test-only", "succeeded")
+        self.store.attempt(run, "TEST_SUBSTITUTE", "deterministic-sandbox-only", "succeeded")
         ops = {(o["method"], o["path"]): o for o in payload["inventory"]["operations"]}
         if kind == "generation":
             return GenerationOutput(proposals=[live_shaped(ops["GET", "/api/v1/items/{id}"], ops["PUT", "/api/v1/items/{id}"], self.questions)], capability_gaps=[])
@@ -38,7 +38,7 @@ class LifecycleSubstitute:
         for q in content["questions"]:
             a = answers.get(q["id"])
             text = a["text"] if a else ""
-            status = "contradictory" if "both" in text else "resolved" if text.startswith("TEST-ONLY") else "insufficient"
+            status = "contradictory" if "both" in text else "resolved" if text.startswith("sandbox-only") else "insufficient"
             findings.append(dict(question_id=q["id"], status=status, explanation="Test substitute assessment", answer_revision_ids=[a["id"]] if a else []))
         findings += requirement_findings(payload)
         resolved = all(f["status"] == "resolved" for f in findings)
@@ -48,7 +48,7 @@ class LifecycleSubstitute:
         elif self.mode == "invent_field":
             revised["steps"][1]["bindings"].append(dict(target="body.owner_id", kind="runtime_argument", reference="owner_id", step_id=None, response_status=None))
         elif resolved and not any(x.startswith("Owner answered") for x in content["assumptions"]):
-            revised["assumptions"].append("Owner answered: only an item's owner may read or update it (TEST-ONLY)")
+            revised["assumptions"].append("Owner answered: only an item's owner may read or update it")
         else:
             revised = None
         return ReconciliationOutput(findings=findings, revised_proposal=revised, capability_gaps=[],
@@ -81,7 +81,7 @@ def answer_all(client, pid, text=ANSWER, requirement_text=ANSWER):
 
 
 def approve(client, pid, key="lifecycle-approval"):
-    return post(client, pid, "decisions", action="approve_to_build", reason="TEST-ONLY approval", idempotency_key=key)
+    return post(client, pid, "decisions", action="approve_to_build", reason="sandbox-only approval", idempotency_key=key)
 
 
 def confirm_all(client, pid):
@@ -93,6 +93,6 @@ def confirm_all(client, pid):
 
 
 def supersede_q2(client, pid):
-    r = post(client, pid, "questions/q2/supersede", reason="TEST-ONLY review: owner_id is a response-only field; ownership is covered by the record-scope requirement.")
+    r = post(client, pid, "questions/q2/supersede", reason="sandbox-only review: owner_id is a response-only field; ownership is covered by the record-scope requirement.")
     assert r.status_code == 200, r.text
     return r.json()

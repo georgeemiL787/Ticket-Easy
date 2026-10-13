@@ -166,7 +166,7 @@ async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_public
     reply = await http.get(URL, params={"tenant_id": T})
     assert reply.status_code == 200, reply.text
     body = reply.json()
-    assert body["configured"] and body["test_only"] and body["business_id"] == BUSINESS
+    assert body["configured"] and body["sandbox_only"] and body["business_id"] == BUSINESS
     tools = {t["name"]: t for t in body["tools"]}
     assert tools["get_order"]["source"] == "team_c" and tools["get_order"]["status"] == "available"
     assert tools["get_order"]["team_c_tool"] == "get_order_v1_aa"
@@ -295,7 +295,7 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
             and tool["api_host"] == "api.example.com"
             and tool["status"] == "available"
         )
-        assert body["live_tools"] == 1 and body["test_only"] is False
+        assert body["live_tools"] == 1 and body["sandbox_only"] is False
 
 
 async def test_a_manager_starts_automatic_tests_for_this_businesss_tool_only(
@@ -353,7 +353,7 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
     assert container.auth is not None
     await container.auth.create_user("mona@example.com", "Mona", "manager", (T,), PASSWORD)
     await container.auth.create_user("ali@example.com", "Ali Admin", "admin", (T,), PASSWORD)
-    body = {"note": "TEST-ONLY go-live", "rollback_contact": "oncall@example.com", "accept_no_idempotency": True}
+    body = {"note": "sandbox-only go-live", "rollback_contact": "oncall@example.com", "accept_no_idempotency": True}
     url = f"{URL}/artifacts/art-1/promote"
     async for http in serve(container):
         login = await http.post("/v1/auth/login", json={"email": "mona@example.com", "password": PASSWORD})
@@ -378,7 +378,7 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
             "/artifacts/art-1/promotions",
             {
                 "actor": "Ali Admin",
-                "note": "TEST-ONLY go-live",
+                "note": "sandbox-only go-live",
                 "rollback_contact": "oncall@example.com",
                 "accept_no_idempotency": True,
             },
@@ -399,11 +399,11 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
             )
         ).status_code == 404
         back = await http.post(
-            f"{URL}/promotions/promo-1/rollback", params={"tenant_id": T}, json={"note": "TEST-ONLY"}, headers=admin
+            f"{URL}/promotions/promo-1/rollback", params={"tenant_id": T}, json={"note": "sandbox-only"}, headers=admin
         )
         assert back.status_code == 200 and rest.posts[-1] == (
             "/promotions/promo-1/rollback",
-            {"actor": "Ali Admin", "note": "TEST-ONLY"},
+            {"actor": "Ali Admin", "note": "sandbox-only"},
         )
         assert back.json()["promotions"][0]["status"] == "rolled_back"
 
@@ -412,7 +412,7 @@ async def test_an_open_dashboard_without_sign_in_cannot_promote(
     open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
 ) -> None:
     http, _, rest = open_client
-    body = {"note": "TEST-ONLY go-live", "rollback_contact": "oncall@example.com"}
+    body = {"note": "sandbox-only go-live", "rollback_contact": "oncall@example.com"}
     # sign-in switched off: nobody can be named as the person who decided, so production decisions are refused
     refused = await http.post(f"{URL}/artifacts/art-1/promote", params={"tenant_id": T}, json=body)
     assert refused.status_code == 403 and rest.posts == []

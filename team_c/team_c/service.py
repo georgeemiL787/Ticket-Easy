@@ -121,6 +121,9 @@ class Service:
     def reconcile(self, pid, version, revision): return self.review.reconcile(pid, version, revision)
     def suggest_answers(self, pid, version): return self.review.suggest_answers(pid, version)
     def suggest_access(self, pid, version): return self.review.suggest_access(pid, version)
+    def autopilot(self, pid, version):
+        from .services.autopilot import Autopilot
+        return Autopilot(self).run(pid, version)
     def rejected_revision(self, result, spec, scope): return self.review.rejected_revision(result, spec, scope)
     def decide(self, pid, version, submission): return self.review.decide(pid, version, submission)
     def revise(self, pid, submission, constraint=None, actor=None, repair=False): return self.review.revise(pid, submission, constraint, actor, repair)

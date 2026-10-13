@@ -30,6 +30,17 @@ class Provider:
     def is_service_failure(self, response):
         return response.status_code == 429 or response.status_code >= 500
 
+    @staticmethod
+    def provider_reason(response):
+        """The provider's own explanation of a rejection (it never contains our credentials), shortened; empty when unreadable."""
+        try:
+            response.read()
+            error = response.json().get("error", {})
+            text = error.get("message", "") if isinstance(error, dict) else str(error)
+        except (ValueError, AttributeError, TypeError):
+            return ""
+        return f': "{" ".join(str(text).split())[:300]}"' if text else ""
+
     def service_error(self, response):
         return AppError("provider_service_failure", f"{self.name} returned HTTP {response.status_code}", 502)
 
@@ -42,7 +53,8 @@ class Provider:
                     if self.is_service_failure(response):
                         raise self.service_error(response)
                     if response.status_code >= 300:
-                        raise AppError("provider_request_failure", f"{self.name} rejected the request (HTTP {response.status_code}); check credentials/model/structured-output support", 502)
+                        raise AppError("provider_request_failure", f"{self.name} rejected the request (HTTP {response.status_code}); check credentials/model/structured-output support"
+                                       + self.provider_reason(response), 502)
                     return read(response)
         finally:
             # Cancellation while waiting takes precedence over success, parsing errors and fallback.

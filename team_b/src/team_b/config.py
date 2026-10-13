@@ -115,7 +115,7 @@ class Settings(BaseModel):
     team_a_admin_key: SecretStr | None = (
         None  # X-Admin-Key for documents and rules (the knowledge pages); unset: those pages are off
     )
-    # Team C's TEST-ONLY sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
+    # Team C's sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
     # stand-in shop serves every tool. Set: the tools it binds are served by Team C, the rest by the stand-in.
     team_c_config: Path | None = None
     config_dir: Path = PROJECT_ROOT / "config" / "tenants"

@@ -1,11 +1,11 @@
 """Repair-only live check, reusing the saved second-domain state instead of regenerating it.
 
 Copies data/desk-base.sqlite3 (opened read-only) to an isolated test database. In the copy, the saved proposal is
-cloned under a new id "as of" a version: every row (versions, answers, reconciliations, TEST-ONLY decisions,
+cloned under a new id "as of" a version: every row (versions, answers, reconciliations, sandbox-only decisions,
 requirement events) is copied unchanged apart from ids, so no repair history from the source applies. Only disposable
 fixture data is recreated. Cases:
 - mapping: the FAULT-INJECTED version (authored defect: the holder id wired into the booking id) gets up to two live
-  repair attempts; a repaired version goes through TEST-ONLY review, rebuild, the original test and the cross-user check.
+  repair attempts; a repaired version goes through sandbox-only review, rebuild, the original test and the cross-user check.
 - capability: the correct approved version is asked for an attachment id the API never returns.
 Live model calls: repair attempts, plus a reconciliation only if a repair produced a new version.
 """
@@ -28,7 +28,7 @@ SOURCE, DB, CONNECTORS = Path("data/desk-base.sqlite3"), "data/desk-repair.sqlit
 
 
 def clone(db, pid, upto):
-    """TEST-DB CLONE of proposal pid as of version upto; decisions keep their TEST-ONLY reasons and snapshots."""
+    """TEST-DB CLONE of proposal pid as of version upto; decisions keep their sandbox-only reasons and snapshots."""
     new = uid()
     c = sqlite3.connect(db)
     c.row_factory = sqlite3.Row
@@ -111,7 +111,7 @@ def main():
     key, base = secrets.token_urlsafe(24), f"http://127.0.0.1:{args.port}"
     proc = start_fixture("base", args.port, key)
     log = [dict(step="setup", source_db=str(SOURCE), isolated_db=DB, source_proposal=source_pid, source_versions=source_versions,
-                note="No generation or initial review is repeated; saved TEST-ONLY review state is cloned in the isolated copy.")]
+                note="No generation or initial review is repeated; saved sandbox-only review state is cloned in the isolated copy.")]
     try:
         backend = Backend(base, key)
         people = {name: backend.account(name) for name in ("alice", "bob")}

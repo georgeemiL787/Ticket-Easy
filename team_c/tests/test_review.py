@@ -116,7 +116,7 @@ def test_html_upload_form_with_csrf(env):
     assert r.status_code==200
     bid=str(r.url).rsplit("/",1)[-1]
     r=client.post("/actions/upload",data=dict(csrf=csrf,business_id=bid),files={"file":("ecommerce.json",(ROOT/"examples/ecommerce.json").read_bytes())})
-    assert r.status_code==200 and "Capability inventory" in r.text and "2 operations" in r.text
+    assert r.status_code==200 and "API operations" in r.text and "2 operations" in r.text
 
 
 def test_restart_preserves_pending_and_marks_interrupted(env):

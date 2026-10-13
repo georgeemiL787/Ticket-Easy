@@ -88,7 +88,7 @@ def next_steps(content, tests, executions, identities, policy_tests, published):
     step("guards", bool(policy_tests and policy_tests.get("passed")), "Pass the generated guard scenarios",
          "They check the compiled policy itself, before any sandbox run.",
          "" if policy_tests and policy_tests.get("passed") else "Run the generated policy tests.")
-    step("publish", bool(published), "Publish to the TEST-ONLY sandbox MCP",
+    step("publish", bool(published), "Publish to the sandbox MCP",
          "Publishing exposes this exact artifact to local test clients.",
          "Choose Publish to sandbox MCP once every step above is done.")
     return steps
@@ -274,7 +274,7 @@ def tool(pub, content):
              f'{api_host(content)} with the business\'s service credential, scoped to the verified customer by Team C. ' if production else
              f'LIVE DEMO publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}): calls the owner-configured '
              f'real API at {api_host(content)}; not a production release. ' if live else
-             f'TEST-ONLY sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. ')
+             f'sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. ')
     description = (f'{content["purpose"]}. {content["description"]}. '
                    + (f'Writes: {", ".join(writes)}. ' if writes else "Read-only. ")
                    + where + "The caller identity is fixed by the server; arguments cannot select a user or credential.")

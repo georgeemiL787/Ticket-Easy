@@ -18,7 +18,7 @@ from team_c.service import Service
 from team_c.storage import Store
 
 REAL_DB = Path("data/openapi-live.sqlite3")
-LABEL = "TEST-ONLY (live request check; not a business decision): "
+LABEL = "sandbox-only (live request check; not a business decision): "
 
 
 def sha(path):
@@ -31,7 +31,7 @@ def main():
     settings = Settings(database_path=str(db), connectors_file="", sandbox_hosts="")
     store = Store(str(db))
     service = Service(settings, store, Providers(settings, store))
-    business = service.business("Service desk (TEST-ONLY live request check)", "Holiday lettings company. Customers report problems with their bookings (broken appliances, cleaning issues) and staff resolve them.")
+    business = service.business("Service desk (sandbox-only live request check)", "Holiday lettings company. Customers report problems with their bookings (broken appliances, cleaning issues) and staff resolve them.")
     spec = service.save_openapi(business["id"], "openapi.json", "openapi.json", json.dumps(create_fixture("base", "unused").openapi()).encode(), dict(kind="upload", filename="openapi.json"))
     report = dict(database=str(db), model=f"{settings.llm_primary}/{settings.ollama_model}", results=[])
     cases = [("supported", LABEL + "Let a customer report a problem with one of their bookings, giving the booking reference, a category and a description.", "Booking ABC123, category plumbing: the shower does not drain."),

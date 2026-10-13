@@ -76,7 +76,9 @@ def _json(value) -> str | None:
 
 
 def discover_tenants() -> list[str]:
-    return settings.tenants()
+    """The shipped businesses (data/<category>/<tenant>). A business added through the admin API has no category and
+    its own search index; it is not part of the relational database build."""
+    return [t for t in settings.tenants() if settings.category(t) is not None]
 
 
 def _insert(conn: sqlite3.Connection, table: str, row: dict) -> None:

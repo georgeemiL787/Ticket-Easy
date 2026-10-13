@@ -37,7 +37,7 @@ Entry points:
 | Module | Responsibility |
 |---|---|
 | `app.py` | `create_app(settings=None, provider_factory=None)`: builds the `Store`, `Providers` and `Service`, puts them and the job registry on `app.state`, adds session, trusted-host and same-origin middleware, error handlers, templates and routers |
-| `mcp_server.py` | Stdio MCP server for TEST-ONLY sandbox publications (`python -m team_c.mcp_server`); builds its own `Store` and `Service` with no model providers |
+| `mcp_server.py` | Stdio MCP server for sandbox publications (`python -m team_c.mcp_server`); builds its own `Store` and `Service` with no model providers |
 
 HTTP layers:
 

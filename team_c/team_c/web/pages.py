@@ -31,11 +31,18 @@ def active_areas(service,bid):
         return None
 
 
+def start_page(request,store,stage=""):
+    items=queries.proposal_index(store)
+    stages=[(key,label,[i for i in items if i["stage"]==key]) for key,label in queries.STAGES]
+    return page(request,screen="home",businesses=queries.businesses(store),stages=[s for s in stages if not stage or s[0]==stage],stage=stage,
+                counts={key:len(group) for key,_,group in stages},labels=dict(queries.STAGES))
+
+
 @router.get("/")
-def home(request:Request,store:StoreDep,settings:SettingsDep,advanced:bool=False):
+def home(request:Request,store:StoreDep,settings:SettingsDep,advanced:bool=False,stage:str=""):
     if settings.product_url and not advanced:  # the guided flow lives in the product; ?advanced=1 keeps this view reachable
         return RedirectResponse(settings.product_url.rstrip("/")+"/dashboard/tools/connect",302)
-    return page(request,screen="home",businesses=queries.businesses(store))
+    return start_page(request,store,stage)
 
 
 @router.get("/businesses/{bid}")
@@ -59,10 +66,7 @@ def spec_page(request:Request,sid:str,service:ServiceDep,store:StoreDep,batch:st
 
 @router.get("/proposals")
 def proposals_page(request:Request,store:StoreDep,stage:str=""):
-    items=queries.proposal_index(store)
-    stages=[(key,label,[i for i in items if i["stage"]==key]) for key,label in queries.STAGES]
-    return page(request,screen="proposals",stages=[s for s in stages if not stage or s[0]==stage],stage=stage,
-                counts={key:len(group) for key,_,group in stages},labels=dict(queries.STAGES))
+    return start_page(request,store,stage)
 
 
 @router.get("/proposals/{pid}")

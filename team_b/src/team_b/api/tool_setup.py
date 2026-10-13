@@ -9,7 +9,7 @@ Every route is under /v1/dashboard/tool-setup with ?tenant_id= (managers, like t
   GET  /batches/{id}               its state (Team C prepares, builds and tests in the background)
   POST /batches/{id}/approve       the owner's confirmations; writes need the four effect flags
   POST /batches/{id}/retry/{op}    prepare one tool again
-  POST /batches/{id}/publish       publish what passed to the TEST-ONLY sandbox and write it into a DRAFT bundle
+  POST /batches/{id}/publish       publish what passed to the sandbox and write it into a DRAFT bundle
   POST /batches/{id}/activate      make that bundle the one in use (the owner's step; the next message uses it)
 
 The business in the tools service is found by name (ticket-easy:<tenant>) or created on the first import, so there is
@@ -107,11 +107,31 @@ def _actor(request: Request) -> str:
     return user.display_name if user is not None else "dashboard"
 
 
+KNOWN_REFUSALS = {
+    "fetch_failed": (
+        "We could not reach that address. Check that your system is running and the address is right, "
+        "or upload the file instead."
+    ),
+    "fetch_url": "Enter a full web address that starts with http:// or https://, without a password in it.",
+    "fetch_status": "That address answered with an error. Check the address, or upload the file instead.",
+    "fetch_host": (
+        "We are not allowed to read from that address. Upload the file instead, or ask your administrator to allow it."
+    ),
+    "fetch_disabled": "Reading from a web address is switched off here. Upload the file instead.",
+    "file_type": (
+        "That address did not return an API description. Use the address of the OpenAPI file (JSON or YAML), "
+        "or upload it."
+    ),
+    "upload_limit": "That file is too large (the limit is 10 MB).",
+}
+
+
 def _failure(exc: UpstreamError) -> ApiError:
     """The tools service is down (try again) or refused this (say so)."""
     if exc.code in ("TIMEOUT", "BACKEND_UNAVAILABLE", "BAD_RESPONSE"):
         return upstream_unavailable("the tools service did not answer: try again in a moment")
-    return invalid_state(f"the tools service refused this ({exc.code.lower()})")
+    said = KNOWN_REFUSALS.get(exc.code.lower())
+    return invalid_state(said or f"this could not be done ({exc.code.lower()})")
 
 
 async def _business(built: Container, admin: TeamCAdmin, tenant_id: str, *, create: bool) -> str | None:

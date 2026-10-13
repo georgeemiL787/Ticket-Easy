@@ -364,7 +364,7 @@ class Batches:
     # ---- 3. publish ----
 
     def publish(self, batch_id, actor=None):
-        """Publish every tool whose automatic tests passed to the TEST-ONLY sandbox. Never Live Demo or production."""
+        """Publish every tool whose automatic tests passed to the sandbox. Never Live Demo or production."""
         row = self._load(batch_id)
         actor = actor or self.settings.dev_reviewer_id
         published = []

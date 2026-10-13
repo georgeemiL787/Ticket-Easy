@@ -95,7 +95,7 @@ describe("onboarding", () => {
     expect(go).toBeDisabled();
     expect(await screen.findByText("Choose the tool that checks who the customer is.")).toBeInTheDocument();
     expect(screen.getByText("Send a message in the test chat first.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Try your assistant here. Tools run in test mode only." }));
+    await user.click(screen.getByRole("button", { name: "Open the test chat" }));
     expect(await screen.findByTitle("Try your assistant here. Tools run in test mode only.")).toHaveAttribute("src", `/chat?tenant_id=${T}&preview=123.abc`);
     ready = true;
     await user.click(screen.getByRole("button", { name: "Check again" }));

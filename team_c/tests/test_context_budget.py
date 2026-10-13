@@ -63,7 +63,7 @@ def test_revision_and_reconciliation_think_with_the_proposal_reserve_and_repair_
 
 def test_area_naming_thinks_with_its_short_prompt(tmp_path):
     payload = dict(business=dict(name="B", description="B"), groups=[dict(key="bookings", label="Bookings")])
-    area = dict(name="Bookings", description="d", audience="customer", reason="TEST-ONLY")
+    area = dict(name="Bookings", description="d", audience="customer", reason="sandbox-only")
     sent, error, _ = call(tmp_path, 32768, "area_naming", payload, AreaNamingOutput, dict(areas=[area]))
     body = json.loads(sent[0])
     assert error is None and body["think"] is True and body["stream"] is True and body["messages"][0]["content"] == AREA_SYSTEM

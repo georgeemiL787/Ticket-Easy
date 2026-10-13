@@ -36,7 +36,7 @@ def test_conversion_preserves_openapi_validation(schema, values):
 @pytest.mark.parametrize("version,bound", [("3.0.3", {"minimum": 0, "exclusiveMinimum": True}), ("3.1.0", {"exclusiveMinimum": 0})])
 def test_discovery_to_mcp_preserves_exclusive_bounds(version, bound):
     schema = dict(type="object", properties={"amount": dict(type="number", **bound)})
-    doc = dict(openapi=version, info=dict(title="TEST-ONLY", version="1"), paths={"/quote": {"post": {
+    doc = dict(openapi=version, info=dict(title="sandbox-only", version="1"), paths={"/quote": {"post": {
         "requestBody": {"content": {"application/json": {"schema": schema}}},
         "responses": {"200": {"description": "quote", "content": {"application/json": {"schema": schema}}}},
     }}})

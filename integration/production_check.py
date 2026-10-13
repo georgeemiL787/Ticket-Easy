@@ -11,7 +11,7 @@ integration/production.example.env to integration/production.env and restart the
 
 Needs: sandbox, nile-prod, Team C (with the PRODUCTION_* settings), Team A and Team B running, and the sandbox lifecycle done for the order and
 ticket tools (integration/team_c_lifecycle.py), whose sandbox-published, tested artifacts are what gets promoted. Every owner decision is
-labelled TEST-ONLY. Credentials are read from integration/var and never printed. Prints PASS/FAIL per check; exits 1 when any failed.
+labelled sandbox-only. Credentials are read from integration/var and never printed. Prints PASS/FAIL per check; exits 1 when any failed.
 """
 
 import argparse
@@ -35,8 +35,8 @@ from e2e_chat import RESULTS, Chat, check  # noqa: E402
 
 TEAM_B, TEAM_C, NILE_PROD = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8104"
 T = "shop_001"
-ACTOR = "Production check (integration/production_check.py, TEST-ONLY)"
-CONTACT = "oncall@example.com (TEST-ONLY)"
+ACTOR = "Production check (integration/production_check.py, sandbox-only)"
+CONTACT = "oncall@example.com"
 ALICE_ORDER, ALICE_PHONE = "NS-20877", "01012345601"
 
 
@@ -75,7 +75,7 @@ def promote_phase() -> None:
 
     for old in tc.get(f"/businesses/{business}/promotions").json():  # a clean slate: promotions an earlier run left active
         if old["status"] == "active":
-            tc.post(f"/promotions/{old['id']}/rollback", json=dict(actor=ACTOR, note="TEST-ONLY: clean slate before a new production check"))
+            tc.post(f"/promotions/{old['id']}/rollback", json=dict(actor=ACTOR, note="sandbox-only: clean slate before a new production check"))
     r = tc.post(f"/proposals/{states['order']['proposal_id']}/connectors", json=dict(
         base_url=NILE_PROD, context_fields=["customer_id"], environment="production", confirmed=True, secret_ref="file:" + str(VAR / "prod_service.key")))
     check("a production connector is saved with a secret REFERENCE (the credential never enters Team C's database)", r.status_code == 200 and r.json()["environment"] == "production", r.text[:300])
@@ -90,13 +90,13 @@ def promote_phase() -> None:
     promoted: dict[str, dict[str, Any]] = {}
     for tool, state in states.items():
         write = tool == "ticket"
-        refused = tc.post(f"/artifacts/{state['artifact_id']}/promotions", json=dict(actor=ACTOR, note="TEST-ONLY", rollback_contact=CONTACT, accept_no_idempotency=False,
+        refused = tc.post(f"/artifacts/{state['artifact_id']}/promotions", json=dict(actor=ACTOR, note="sandbox-only", rollback_contact=CONTACT, accept_no_idempotency=False,
                                                                                       production_connector_id=connector))
         if write:
             check("a write is refused until an admin explicitly accepts that the API has no idempotency",
                   refused.status_code == 409 and refused.json()["code"] == "promotion_refused" and "idempotency" in refused.json()["message"], refused.text[:300])
         done = refused if refused.status_code == 200 else tc.post(f"/artifacts/{state['artifact_id']}/promotions", json=dict(
-            actor=ACTOR, note=f"TEST-ONLY: promote the {tool} tool for the local production check", rollback_contact=CONTACT, accept_no_idempotency=True, production_connector_id=connector))
+            actor=ACTOR, note=f"sandbox-only: promote the {tool} tool for the local production check", rollback_contact=CONTACT, accept_no_idempotency=True, production_connector_id=connector))
         ok = done.status_code == 200 and done.json()["status"] == "active" and all(v["ok"] for v in done.json()["checklist"].values())
         check(f"the {tool} tool is promoted: every checklist item passes, including the smoke check", ok, done.text[:500])
         if ok:
@@ -164,7 +164,7 @@ async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, pr
         check("an ordinary server refuses the production tool by name (tool_not_published), ignoring any context", refused_here)
 
         before = len(prod_state()["tickets"])
-        args = {"order_id": ALICE_ORDER, "subject": "TEST-ONLY production check", "description": "Filed by integration/production_check.py"}
+        args = {"order_id": ALICE_ORDER, "subject": "sandbox-only production check", "description": "Filed by integration/production_check.py"}
         ticket_args = {k: v for k, v in args.items() if k in (tools[ticket_tool].get("inputSchema") or tools[ticket_tool].get("input_schema") or {}).get("properties", {})}
         filed = await call(ticket_tool, ticket_args, ctx("C-100", idempotency_key="prodcheck-0123456789abcdef"))
         state = prod_state()["tickets"]
@@ -229,7 +229,7 @@ def chat_phase() -> None:
     served = {t["name"]: t for t in tools["tools"] if t["source"] == "team_c"}
     check("the Business tools page shows get_order and create_ticket served as PRODUCTION",
           all(served.get(n, {}).get("environment") == "production" and served[n]["status"] == "available" for n in ("get_order", "create_ticket")), served)
-    check("...with a banner count and no 'test only' claim", tools["production_tools"] == 2 and tools["test_only"] is False, {k: tools[k] for k in ("production_tools", "test_only")})
+    check("...with a banner count and no 'sandbox only' claim", tools["production_tools"] == 2 and tools["sandbox_only"] is False, {k: tools[k] for k in ("production_tools", "sandbox_only")})
     promotions = {p["id"]: p for p in tools["promotions"] if p["status"] == "active"}
     check("...and the active promotions with who decided them and their checklists", len(promotions) >= 2 and all(p["actor"] and p["checklist"] for p in promotions.values()))
 
@@ -263,7 +263,7 @@ def chat_phase() -> None:
     print("\n== rollback through Team B (admin): the next call is refused and the agent stops using the tool")
     ids = [p["id"] for p in promotions.values()]
     for pid in ids:
-        r = http.post(f"/v1/dashboard/business-tools/promotions/{pid}/rollback", params={"tenant_id": T}, json={"note": "TEST-ONLY rollback of the production check"}, headers=csrf)
+        r = http.post(f"/v1/dashboard/business-tools/promotions/{pid}/rollback", params={"tenant_id": T}, json={"note": "sandbox-only rollback of the production check"}, headers=csrf)
         check(f"promotion {pid[:8]} is rolled back", r.status_code == 200, r.text[:200])
     after = http.post("/v1/dashboard/business-tools/refresh", params={"tenant_id": T}, headers=csrf).json()
     check("Team B no longer lists the tools as available", {t["name"]: t["status"] for t in after["tools"] if t["source"] == "team_c"}.get("get_order") != "available")

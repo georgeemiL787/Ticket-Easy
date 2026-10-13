@@ -1,4 +1,4 @@
-"""Test-only endpoints for the load and chaos tests. They exist only when TEAM_B_ENABLE_TEST_ADMIN=1.
+"""Endpoints for the load and chaos tests. They exist only when TEAM_B_ENABLE_TEST_ADMIN=1.
 
 OWNER: Track A. Never enable this in production: it switches stand-in services off and shows the shop audit log.
 

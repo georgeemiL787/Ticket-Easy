@@ -14,7 +14,7 @@
 {% elif p.state == 'needs_reconciliation' %}{{ m.next("check your answers", "Press Check answers so Team C can verify that each answer is specific enough.") }}
 {% elif p.state == 'ready_for_review' and not p.lifecycle.requirements_confirmed %}{{ m.next("confirm the access requirements", "Press Confirm for each accepted access requirement below, then make your decision.") }}
 {% elif p.state == 'ready_for_review' %}{{ m.next("make your decision", "Approve to build, reject, or request changes in the Owner decision section.") }}
-{% elif p.state == 'approved_to_build' and artifacts %}{{ m.next("test the built tool", "Open the artifact below to run sandbox tests and publish it to the test-only MCP server.") }}
+{% elif p.state == 'approved_to_build' and artifacts %}{{ m.next("test the built tool", "Open the artifact below to run sandbox tests and publish it to the sandbox MCP server.") }}
 {% elif p.state == 'approved_to_build' and p.enforcement and p.enforcement.status == 'awaiting_review' %}{{ m.next("review the enforcement configuration", "Check the access enforcement below and approve it, then build the artifact.") }}
 {% elif p.state == 'approved_to_build' and p.enforcement %}{{ m.next("build the tool", "Choose the connector and press Build artifact below.") }}
 {% elif p.state == 'approved_to_build' %}{{ m.next("set up access enforcement", "Submit how each access requirement is enforced, review it, then build the artifact.") }}

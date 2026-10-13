@@ -10,7 +10,7 @@ class RevisingDesk(DeskSubstitute):
     """AUTHORED TEST SUBSTITUTE that also answers owner revisions with the intended wiring."""
     def call(self, kind, payload, output_model, run):
         if kind.startswith("revision"):
-            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-sandbox-only", "succeeded")
             return GenerationOutput(proposals=[desk_proposal(payload["inventory"], self.names, suffix=" (revised)")], capability_gaps=[])
         return super().call(kind, payload, output_model, run)
 
@@ -35,5 +35,5 @@ def with_evidence(d, aid):
 
 def revise(d, pid):
     p = current(d, pid)
-    r = d.client.post(f"/api/v1/proposals/{pid}/revisions", json=dict(expected_revision=p["review_revision"], instruction="TEST-ONLY revision"))
+    r = d.client.post(f"/api/v1/proposals/{pid}/revisions", json=dict(expected_revision=p["review_revision"], instruction="sandbox-only revision"))
     assert r.status_code == 200, r.text

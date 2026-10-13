@@ -212,6 +212,19 @@ def fix_and_retest(service,settings,form):
     return "/artifacts/"+aid+"#fix"
 
 
+def easy_publish(service,settings,form):
+    """One click for the sandbox: set aside hand-made tests that failed (kept in history), run the automatic tests, publish if they all pass."""
+    aid=str(form["artifact_id"])
+    latest={}
+    for t in service.artifact(aid)["tests"]:
+        latest[t["name"]]=t
+    for t in latest.values():
+        if t["verdict"]=="failed":
+            service.retire_test(t["id"],"Replaced by the automatic tests: this test was set up by hand and failed; the automatic tests create their own accounts and records.")
+    service.auto_test(aid,True)
+    return "/artifacts/"+aid+"#auto-test"
+
+
 def auto_test(service,settings,form):
     aid=str(form["artifact_id"])
     service.auto_test(aid,form.get("publish_when_ready")=="1")
@@ -263,6 +276,14 @@ def reconcile(service,form,pid,version,rev):
 def suggest_access(service,form,pid,version,rev):
     service.suggest_access(pid,version)
     return "/proposals/"+pid+"#structured-policy"
+
+
+def autopilot(service,form,pid,version,rev):
+    """Let the AI do every review step it can; the page then shows what it did and what is left for the owner."""
+    from urllib.parse import quote
+    result=service.autopilot(pid,version)
+    lines=["done:"+x for x in result["done"]]+["left:"+x for x in result["needs_you"]]
+    return "/proposals/"+pid+"?auto="+quote(chr(10).join(lines)[:3000])+"#review-help"
 
 
 def suggest_answers(service,form,pid,version,rev):
@@ -339,8 +360,11 @@ def accept_policy(service, form, pid, version, rev):
         except ValidationError as exc:
             # Say which choice is missing in the owner's words, not as a validation dump.
             plain = {"principals": "tick at least one caller under \"Who may use it?\""}
+            owner_fix = ("Resource owner needs an ownership check. Either untick Resource owner and tick Authenticated user, "
+                         "or choose \"Only records that belong to the caller\" and fill in the ownership check (the read operation, the record's field and the caller's identity field)")
+            said = {"Resource-owner access requires an ownership check": owner_fix}
             raise AppError("policy_incomplete", "The access policy is not complete yet: " + "; ".join(
-                plain.get(str(e["loc"][0]) if e["loc"] else "", e["msg"].removeprefix("Value error, ")) for e in exc.errors()[:3]))
+                plain.get(str(e["loc"][0]) if e["loc"] else "", said.get(e["msg"].removeprefix("Value error, "), e["msg"].removeprefix("Value error, "))) for e in exc.errors()[:3]))
         service.accept_policy(pid, version, PolicySubmission(expected_revision=rev, policy=policy))
     except AppError as exc:
         exc.details.setdefault("recovery_url", "/proposals/" + pid + "#structured-policy")
@@ -360,8 +384,8 @@ ACTIONS=dict(business=business,upload=upload,fetch=fetch,local_project=lambda *_
              save_connector=save_connector,save_test_identity=save_test_identity,check_connector=check_connector,
              review_enforcement=review_enforcement,build_artifact=build_artifact,publish=publish,request_tool=request_tool,clarify_request=clarify_request,
              suggest=suggest,request_next_batch=request_next_batch,areas_organize=areas_organize,areas_select=areas_select,decide_suggestion=decide_suggestion,
-             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,auto_test=auto_test,save_business_settings=save_business_settings,save_fixtures=save_fixtures,retire_test=retire_test,
-             reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),answers_and_check=review(answers_and_check),suggest_answers=review(suggest_answers),suggest_access=review(suggest_access),decision=review(decision),confirm_requirement=review(confirm_requirement),
+             disable_publication=disable_publication,submit_enforcement=submit_enforcement,sandbox_run=sandbox_run,sandbox_test=sandbox_test,suggest_test_inputs=suggest_test_inputs,fix_and_retest=fix_and_retest,auto_test=auto_test,easy_publish=easy_publish,save_business_settings=save_business_settings,save_fixtures=save_fixtures,retire_test=retire_test,
+             reopen_policy=review(reopen_policy),accept_policy=review(accept_policy),answers=review(answers),reconcile=review(reconcile),answers_and_check=review(answers_and_check),suggest_answers=review(suggest_answers),autopilot=review(autopilot),suggest_access=review(suggest_access),decision=review(decision),confirm_requirement=review(confirm_requirement),
              supersede_question=review(supersede_question),dismiss_gap=review(dismiss_gap),accept_api_gap=review(accept_api_gap),revise=review(revise))
 
 

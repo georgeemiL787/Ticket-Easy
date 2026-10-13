@@ -1,6 +1,6 @@
 """Production: a service credential scoped to the verified customer by Team C, promotion with its checklist, rollback, auto-disable.
 
-MOCKED / AUTHORED: the proposal comes from the AUTHORED TEST SUBSTITUTE, owner decisions are TEST-ONLY, the target is the
+MOCKED / AUTHORED: the proposal comes from the AUTHORED TEST SUBSTITUTE, owner decisions are sandbox-only, the target is the
 in-process service-desk fixture, which here also accepts a business SERVICE token that may act on any booking (so the API itself
 no longer separates customers: only Team C's check does). The real stdio server and the Nile deployment: integration/production_check.py.
 """
@@ -42,7 +42,7 @@ def prod(tmp_path, monkeypatch):
     assert publish(d, d.source["id"]).status_code == 200
     d.prod_connector = d.service.connectors.save(pid, "http://desk.test", [d.ctx], confirmed=True, environment="production", secret_ref="env:" + ENV)
     d.ctx_of = lambda who: {d.ctx: holder(who)}
-    d.promote = lambda **kw: d.service.promote(d.source["id"], None, **dict(dict(actor="Mona Admin", note="TEST-ONLY promotion", rollback_contact="oncall@example.com", accept_no_idempotency=True), **kw))
+    d.promote = lambda **kw: d.service.promote(d.source["id"], None, **dict(dict(actor="Mona Admin", note="sandbox-only promotion", rollback_contact="oncall@example.com", accept_no_idempotency=True), **kw))
     d.call = lambda promo, who, owner=None, **extra: d.service.invoke_published(
         d.business, "service", d.service.publication(promo["publication_id"])["tool_name"], extra.pop("arguments", None) or dict(
             booking_reference=d.booking[owner or who]["ref"], category=d.n["categories"][0], details="Leaking tap"),
@@ -199,7 +199,7 @@ def test_rollback_blocks_the_next_call_and_leaves_the_sandbox_publication(prod):
     d = prod
     promo = d.promote()
     assert d.call(promo, "alice")["status"] == "succeeded"
-    rolled = d.service.rollback_promotion(promo["id"], "Mona Admin", "TEST-ONLY rollback")
+    rolled = d.service.rollback_promotion(promo["id"], "Mona Admin", "sandbox-only rollback")
     assert rolled["status"] == "rolled_back" and rolled["rolled_back_by"] == "Mona Admin"
     pub = d.service.publication(promo["publication_id"])
     assert pub["status"] == "disabled" and pub["production_ready"] is False and pub["production_assessment"] == "rolled_back"
@@ -265,7 +265,7 @@ def test_the_secret_and_the_context_never_appear_anywhere_but_hashes_are_audited
 def test_admin_token_gates_production_actions_through_the_api(prod):
     d = prod
     url = f"/api/v1/artifacts/{d.source['id']}/promotions"
-    body = dict(actor="Mona Admin", note="TEST-ONLY", rollback_contact="oncall@example.com", accept_no_idempotency=True)
+    body = dict(actor="Mona Admin", note="sandbox-only", rollback_contact="oncall@example.com", accept_no_idempotency=True)
     assert d.client.post(url, json=body).json()["code"] == "admin_token_required"  # no token configured: production actions are off
     d.service.settings.admin_token = "operator-token"
     assert d.client.post(url, json=body).json()["code"] == "admin_token_invalid"
@@ -311,7 +311,7 @@ def test_a_secret_can_also_be_a_file_that_only_team_c_reads(prod, tmp_path, monk
     monkeypatch.delenv(ENV)
     pid = prod.source["content"]["proposal"]["id"]
     cid = prod.service.connectors.save(pid, "http://desk.test", [prod.ctx], confirmed=True, environment="production", secret_ref="file:" + str(path))
-    promo = prod.service.promote(prod.source["id"], cid, "Mona Admin", "TEST-ONLY", "oncall@example.com", True)
+    promo = prod.service.promote(prod.source["id"], cid, "Mona Admin", "sandbox-only", "oncall@example.com", True)
     assert promo["checklist"]["secret_resolved"]["ok"] and prod.call(promo, "alice")["status"] == "succeeded"
 
 
@@ -338,7 +338,7 @@ def test_a_promoted_tool_cannot_be_promoted_twice_but_can_be_again_after_a_rollb
     with pytest.raises(AppError) as exc:
         d.promote()
     assert exc.value.code == "already_promoted"
-    d.service.rollback_promotion(promo["id"], "Mona Admin", "TEST-ONLY")
+    d.service.rollback_promotion(promo["id"], "Mona Admin", "sandbox-only")
     again = d.promote()
     assert again["status"] == "active" and again["id"] != promo["id"]
     assert d.service.publication(again["publication_id"])["execution_enabled"]

@@ -1,6 +1,6 @@
 """Approved proposal -> artifact -> sandbox execution, against a MOCK target shaped like the real API.
 
-Every approval here is a labeled TEST-ONLY decision. Expected outcomes come from the approved intent
+Every approval here is a labeled sandbox-only decision. Expected outcomes come from the approved intent
 (an owner looks up and updates their own item) and the API contract, not from the executor.
 """
 import json
@@ -90,7 +90,7 @@ def submit(client, pid, config):
 
 
 def review(client, eid):
-    return client.post(f"/api/v1/enforcement/{eid}/review", json=dict(note="TEST-ONLY enforcement review"))
+    return client.post(f"/api/v1/enforcement/{eid}/review", json=dict(note="sandbox-only enforcement review"))
 
 
 @pytest.fixture
@@ -105,7 +105,7 @@ def sandbox(lifecycle, tmp_path):
 
 
 def approved(client, pid):
-    """TEST-ONLY review: labeled answers, confirmations and approval."""
+    """sandbox-only review: labeled answers, confirmations and approval."""
     supersede_q2(client, pid)
     answer_all(client, pid)
     post(client, pid, "reconcile")
@@ -404,7 +404,7 @@ def test_history_survives_restart_and_running_becomes_interrupted(built):
 def test_ui_shows_artifacts_and_sandbox_controls(built):
     _, client, _, _, p, a, _ = built
     page = client.get(f'/proposals/{p["proposal_id"]}').text
-    assert "Executable artifacts" in page and f'/artifacts/{a["id"]}' in page and "items-sandbox" in page
+    assert "Built tools" in page and f'/artifacts/{a["id"]}' in page and "items-sandbox" in page
     detail = client.get(f'/artifacts/{a["id"]}').text
     assert "Runtime-ready: no" in detail and "Run sandbox test" in detail and "response_field_matches_context" in detail
     assert "Access enforcement" in page and "approved" in page

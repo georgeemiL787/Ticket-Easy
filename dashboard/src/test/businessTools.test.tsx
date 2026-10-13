@@ -12,7 +12,7 @@ const publication = {
   proposal_id: "prop-1", version: 1, bound_to: "get_order",
 };
 const page = (published: boolean) => ({
-  tenant_id: T, configured: true, test_only: true, business_id: "biz-1", builder_url: "http://127.0.0.1:8101/businesses/biz-1",
+  tenant_id: T, configured: true, sandbox_only: true, business_id: "biz-1", builder_url: "http://127.0.0.1:8101/businesses/biz-1",
   builder_base: "http://127.0.0.1:8101", listed_at: "2026-10-12T08:05:00Z", team_c_error: null, mapped_customers: 2,
   tools: [
     { name: "get_order", used_by: ["order_status"], source: "team_c", environment: "sandbox", api_host: null, status: published ? "available" : "missing",
@@ -34,7 +34,7 @@ function respond(body: unknown, status = 200) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("business tools", () => {
-  it("shows which tools Team C serves, marks them TEST-ONLY, and disables one through the service", async () => {
+  it("shows which tools Team C serves, marks them sandbox-only, and disables one through the service", async () => {
     let published = true;
     const posted: { path: string; body: unknown }[] = [];
     vi.stubGlobal(
@@ -55,8 +55,8 @@ describe("business tools", () => {
     render(<MemoryRouter initialEntries={["/tools"]}><App /></MemoryRouter>);
 
     expect(await screen.findByRole("heading", { name: "Business tools", level: 1 })).toBeInTheDocument();
-    expect(await screen.findByRole("note")).toHaveTextContent("TEST-ONLY");
     const tools = (await screen.findAllByRole("table"))[0]!;
+    expect(screen.queryByText(/Sandbox-only/)).not.toBeInTheDocument();
     expect(within(tools).getByText("Tool service")).toBeInTheDocument();
     expect(within(tools).getByText("SANDBOX")).toBeInTheDocument();
     expect(within(tools).getByText("Stand-in shop")).toBeInTheDocument();
@@ -102,7 +102,7 @@ describe("business tools in Live Demo", () => {
       return {
         ...base,
         live_tools: 1,
-        test_only: false,
+        sandbox_only: false,
         tools: base.tools.map((tool) => (tool.name === "get_order" ? { ...tool, environment: "live_demo", api_host: "api.example.com" } : tool)),
         publications: base.publications.map((p) => ({ ...p, environment: "live_demo", execution_enabled: true })),
         connectors: [
@@ -131,7 +131,7 @@ describe("business tools in Live Demo", () => {
     );
     render(<MemoryRouter initialEntries={["/tools"]}><App /></MemoryRouter>);
     expect(await screen.findByText(/LIVE DEMO: 1 tool\(s\) call the owner-configured real API/)).toBeInTheDocument();
-    expect(screen.queryByText("TEST-ONLY.")).toBeNull();
+    expect(screen.queryByText("sandbox-only.")).toBeNull();
     expect(screen.getByText("calls the real API at api.example.com")).toBeInTheDocument();
     expect(screen.getAllByText("LIVE DEMO").length).toBeGreaterThanOrEqual(3); // tool, publication, connector
     expect(screen.getByText("Not checked yet.")).toBeInTheDocument();
@@ -178,7 +178,7 @@ describe("business tools in Live Demo", () => {
     const posted: { path: string; body: unknown }[] = [];
     const body = () => ({
       ...page(true),
-      test_only: false,
+      sandbox_only: false,
       production_tools: promoted && !rolledBack ? 1 : 0,
       production_connector: true,
       proposals: [{ id: "prop-2", name: "Open a ticket", version: 1, state: "approved_to_build", artifact_id: "art-1",

@@ -43,7 +43,12 @@
 
     var body = document.createElement("span");
     body.setAttribute("dir", "auto");
-    body.textContent = text;
+    // The sources are shown as chips in the developer view; the customer reads the answer without the source codes.
+    var shown = text;
+    if (extra && extra.citations) {
+      extra.citations.forEach(function (citation) { shown = shown.split(" [" + citation + "]").join(""); });
+    }
+    body.textContent = shown;
     if (role === "human_agent") {
       var who = document.createElement("span");
       who.className = "who";
@@ -67,7 +72,7 @@
 
     if (extra && extra.citations && extra.citations.length) {
       var chips = document.createElement("div");
-      chips.className = "chips";
+      chips.className = "chips dev";
       extra.citations.forEach(function (citation) {
         var chip = document.createElement("span");
         chip.className = "chip";

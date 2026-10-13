@@ -2,7 +2,7 @@
 {% set editing = identity_setup.saved.get(edit_identity) if edit_identity else none %}
 {% if identity_setup.saved %}<p id="identity"><strong>Saved test identities:</strong> {% for n, i in identity_setup.saved.items() %}{{ n }} <span class="muted small">({{ (i.scope or '')|replace('_',' ') }}{% if i.username %}, user {{ i.username }}{% endif %})</span> <a href="?edit={{ n|urlencode }}#identity">Edit</a>{% if not loop.last %} · {% endif %}{% endfor %}</p>{% endif %}
 <details {% if not connectors.get(c.connector.id, []) or editing %}open{% endif %}><summary>{{ 'Edit test identity "' ~ edit_identity ~ '"' if editing else 'Add a test identity' }}</summary>
-<p class="small">Use an existing test account for this API. Credentials and trusted context are stored locally in the app database and are never included in generated tools or sent to the model.</p>
+<p class="small">Use an existing test account. Credentials stay local and are never sent to the model.</p>
 {% set g = identity_setup.guide %}
 {% if g %}<div class="next"><strong>Setup helper: next identity "{{ g.name }}"{% if g.scope %} ({{ g.scope|replace('_',' ') }} account){% endif %}</strong>
 <span>Use {{ g.why }}.{% if g.existing %} Saved so far: {{ g.existing|join(', ') }}.{% endif %}</span>

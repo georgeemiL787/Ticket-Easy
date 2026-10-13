@@ -83,7 +83,7 @@ def test_full_response_contract_is_enforced_after_groq_compatible_decoding(desk,
         assert not Draft202012Validator(original).is_valid(answer)
 
     settings = desk.app.state.settings.model_copy(update=dict(llm_primary="groq", llm_fallback="ollama",
-        groq_api_key="TEST-ONLY-primary", groq_api_key_2="TEST-ONLY-backup"))
+        groq_api_key="sandbox-only-primary", groq_api_key_2="sandbox-only-backup"))
     sent = []
     def handler(request):
         sent.append(request)

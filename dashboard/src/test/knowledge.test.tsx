@@ -52,7 +52,7 @@ describe("knowledge page", () => {
     expect(await screen.findByText("Uploaded, not searchable yet")).toBeInTheDocument();
     expect(screen.getByText("Could not be read")).toBeInTheDocument();
     expect(screen.getByText("no readable text was found in this file")).toBeInTheDocument();
-    expect(screen.getByText("1 files are waiting for the search update.")).toBeInTheDocument();
+    expect(screen.getByText("Waiting for the search update: 1.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Update the search" }));
     expect(await screen.findByText("The search is up to date: 7 passages.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Searchable")).toBeInTheDocument());

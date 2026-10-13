@@ -57,8 +57,9 @@ export default function Publish() {
     setBusy(true);
     setError(null);
     try {
-      const done = await activateBatch(tenant, batch.id, draft.version);
-      setActive(done.tools);
+      await activateBatch(tenant, batch.id, draft.version);
+      // name what this batch added, in the owner's words (not the assistant's whole tool list, which also holds internal names)
+      setActive(batch.items.filter((i) => i.state === "published").map((i) => i.summary?.name ?? i.title ?? i.path));
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : t("common.error"));
     } finally {
@@ -104,6 +105,11 @@ export default function Publish() {
                       <button type="button" onClick={() => void retryItem(tenant, batch.id, item.operation_id).then(setBatch)}>
                         {t("ts.review.retry")}
                       </button>
+                    ) : null}
+                    {item.state === "needs_attention" ? (
+                      <p>
+                        <Link to={{ pathname: "/tools/connect", search: sharedQuery(params) }}>{t("ts.publish.addTestData")}</Link>
+                      </p>
                     ) : null}
                   </li>
                 ))}

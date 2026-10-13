@@ -1,6 +1,6 @@
   # Ticket-Easy — Team C
 
-Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as TEST-ONLY sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). A tool becomes **production** only through an admin's promotion with an automatic checklist (see "Production"); nothing else makes `production_ready` true.
+Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). A tool becomes **production** only through an admin's promotion with an automatic checklist (see "Production"); nothing else makes `production_ready` true.
 
 ## Quick start (Windows PowerShell)
 
@@ -204,7 +204,7 @@ Access requirements: the server derives durable access/identity requirements fro
 
 Question review: a question naming a field the selected operations only return (not an input or configuration) is flagged. The owner may supersede a question without a configuration key (`POST …/versions/{v}/questions/{qid}/supersede` with a reason); this creates a regrounded version and keeps the question, reason and answers in history. Versions after the first show a readable change summary before the decision.
 
-Live check on a database copy: `$env:PYTHONPATH="."; $env:OLLAMA_CONTEXT="40960"; python -m scripts.live_review --proposal <id>` copies `data/openapi-live.sqlite3` read-only to `data/openapi-live-review-copy.sqlite3` and applies labeled TEST-ONLY answers there only.
+Live check on a database copy: `$env:PYTHONPATH="."; $env:OLLAMA_CONTEXT="40960"; python -m scripts.live_review --proposal <id>` copies `data/openapi-live.sqlite3` read-only to `data/openapi-live-review-copy.sqlite3` and applies labeled sandbox-only answers there only.
 
 ### Executable artifacts and sandbox runs
 
@@ -273,7 +273,7 @@ A revised proposal may only rewire the existing steps. Operations, questions, co
 
 If a write was rejected, repair waits for `verification` (independent evidence that nothing changed). After two model attempts a case is `repair_exhausted`, and the check makes no model call. Every attempt, its feedback and every refusal are kept in the `repairs` history.
 
-`scripts/repair_only.py` checks repair live without regenerating anything. It copies the saved `data/desk-base.sqlite3` into `data/desk-repair.sqlite3`, clones the saved TEST-ONLY reviewed proposal there, and recreates only the disposable fixture data.
+`scripts/repair_only.py` checks repair live without regenerating anything. It copies the saved `data/desk-base.sqlite3` into `data/desk-repair.sqlite3`, clones the saved sandbox-only reviewed proposal there, and recreates only the disposable fixture data.
 
 #### Supported subset
 
@@ -291,7 +291,7 @@ Two domains (the item API and the service-desk fixture with a renamed variant) a
 
 #### Second domain: service-desk fixture
 
-`fixtures/service_desk/app.py` is a local FastAPI app whose expected behavior and access rules are stated in its docstring. A booking lookup takes a required query reference and returns a nested internal identifier and holder to any authenticated caller. Filing a request needs that identifier and returns 201 in a different envelope; the backend refuses non-holders with 403. Attachment upload is multipart (unsupported). The `renamed` variant changes every path and field and uses an integer holder number. The live run (discovery, live-model proposal, TEST-ONLY review, enforcement, build, sandbox tests, independent state checks):
+`fixtures/service_desk/app.py` is a local FastAPI app whose expected behavior and access rules are stated in its docstring. A booking lookup takes a required query reference and returns a nested internal identifier and holder to any authenticated caller. Filing a request needs that identifier and returns 201 in a different envelope; the backend refuses non-holders with 403. Attachment upload is multipart (unsupported). The `renamed` variant changes every path and field and uses an integer holder number. The live run (discovery, live-model proposal, sandbox-only review, enforcement, build, sandbox tests, independent state checks):
 
 ```powershell
 $env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/domain_demo.py --variant base --port 8002 --repair
@@ -300,7 +300,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/domain_demo.py --variant
 
 These start the fixture on the given port, write `data/desk-<variant>.sqlite3` and print a sanitized JSON log. With `--repair`, a labeled FAULT INJECTION (authored, recorded as provider `FAULT_INJECTION`) creates a mapping defect through the revision path; the live model must then repair it. A missing-capability case follows. Mocked equivalents with an authored substitute model: `uv run pytest -q tests/test_second_domain.py`.
 
-Live demonstration against the local target, on a copy of the TEST-ONLY approved review database (requires the target at `127.0.0.1:8001` and `data/openapi-live-review-copy.sqlite3`):
+Live demonstration against the local target, on a copy of the sandbox-only approved review database (requires the target at `127.0.0.1:8001` and `data/openapi-live-review-copy.sqlite3`):
 
 ```powershell
 $env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/sandbox_demo.py > data/sandbox-demo.log.json
@@ -308,7 +308,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/sandbox_demo.py > data/s
 
 It copies the database read-only to `data/sandbox-demo.sqlite3`. It creates two disposable non-superuser accounts with one item each through public signup, writes `data/sandbox-connectors.json`, builds the artifact and runs the scenarios. It checks backend state with an independent client, then deletes the items and accounts; pass `--keep` to keep them for manual runs in the UI. To browse the result: `$env:DATABASE_PATH="data/sandbox-demo.sqlite3"; $env:CONNECTORS_FILE="data/sandbox-connectors.json"; $env:SANDBOX_HOSTS="127.0.0.1:8001"`, then start the app.
 
-#### Sandbox MCP publication (TEST-ONLY, local development only)
+#### Sandbox MCP publication (sandbox-only, local development only)
 
 Publication is a separate, explicit decision from approve-to-build: nothing built is exposed until an operator publishes that exact artifact (artifact page, or `POST /artifacts/{id}/publications`). The publication record stores the artifact hash and proposal version, the approval decision, the enforcement configuration id and hash, the IDs of the passing sandbox tests, the publisher (the development reviewer label), the time, status and environment (`sandbox`). Production activation and production readiness are always false.
 
@@ -375,7 +375,7 @@ Evidence:
 
 - **Mocked, in process** (authored substitute, mock transport): `tests/test_publication.py`.
 - **Real SDK client and real server process** (fixture over HTTP; authored proposals, no model calls; both service-desk variants): `tests/test_mcp_stdio.py`.
-- **Real smoke run on both domains** (running item target and fixture process; reuses saved artifacts from copies of the TEST-ONLY databases; disposable accounts; isolated `data/mcp-*.sqlite3`): `$env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/mcp_smoke.py > data/mcp-smoke.log.json`.
+- **Real smoke run on both domains** (running item target and fixture process; reuses saved artifacts from copies of the sandbox-only databases; disposable accounts; isolated `data/mcp-*.sqlite3`): `$env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/mcp_smoke.py > data/mcp-smoke.log.json`.
 
 #### Automatic tests (sandbox only)
 
@@ -385,7 +385,7 @@ One action replaces creating dummy accounts, hunting for records and hand-writin
 - **Plan** (`team_c/autotest.py`, pure, no model): derived from the artifact exactly as `publishing.evidence()` requires: a success test as account A; for record-scope requirements own_record A, own_record B and a cross_user refusal; for data-scope requirements a success test as each account. Diagnostics that are not publication evidence: a revoked credential must be refused, an unknown argument must be rejected before any request. Argument values come from the input schema (enum, default, example, format, constraints); only what a schema cannot decide goes to the existing test-input helper (marked `source: model`).
 - **Run** (`services/autotest.py`): creates accounts and records, saves the accounts as connector identities, runs each scenario through `run_sandbox_test` (tests are named `auto.<scenario>.<label>`; a re-run supersedes by name), tries each record state the kind offers for a write (a fresh record per attempt, a write is never retried on the same record), runs the generated guard tests and evaluates `publication_problems`. A wiring defect or any other question becomes `needs_owner` with the failure report; the AI repair is never started automatically, nothing is approved, and publishing happens only with `publish_when_ready` (default off, sandbox only).
 - **Without fixtures** it uses existing identities of the right account type and finds their records through a no-input read tool of the same connector; otherwise it says exactly what to add.
-- **Per-business setting**: `GET/PUT /businesses/{bid}/settings` `{auto_publish_sandbox}` (also on the artifact page, under "Settings for this business and connector"). Off by default; when on, a run that reaches ready_to_publish publishes to the TEST-ONLY sandbox MCP (never Live Demo or production). A request's explicit `publish_when_ready` wins; Team B's button never sends one, so the setting decides.
+- **Per-business setting**: `GET/PUT /businesses/{bid}/settings` `{auto_publish_sandbox}` (also on the artifact page, under "Settings for this business and connector"). Off by default; when on, a run that reaches ready_to_publish publishes to the sandbox MCP (never Live Demo or production). A request's explicit `publish_when_ready` wins; Team B's button never sends one, so the setting decides.
 - **Identities do not pile up**: after each run, `auto-*` identities that no current test of any artifact on the connector uses (as caller or record owner) are deleted. Evidence identities and your own identities are never touched.
 - **Fixtures form**: the artifact page can declare or remove the connector's fixtures (base URL + the NAME of the key variable; a value that is not a variable name is refused).
 - `readiness_state` (artifact view and `GET /businesses/{bid}/artifacts`): `not_tested | testing | needs_owner | ready_to_publish | published`, computed, never stored. Tests: `tests/test_autotest.py`, `tests/test_nile_fixtures.py`.
@@ -420,7 +420,7 @@ A **production** tool is a tested sandbox or Live Demo tool that an admin has **
 
 #### Live Demo: tools that call the owner's real API
 
-A sandbox publication stays TEST-ONLY. A **Live Demo** publication runs the same reviewed artifact against an owner-configured **real** API with real credentials and returns its real responses. It is not a production release: `production_ready` stays false (`production_assessment: "not_assessed"`), and `activated` keeps meaning production activation, which does not exist.
+A sandbox publication stays sandbox-only. A **Live Demo** publication runs the same reviewed artifact against an owner-configured **real** API with real credentials and returns its real responses. It is not a production release: `production_ready` stays false (`production_assessment: "not_assessed"`), and `activated` keeps meaning production activation, which does not exist.
 
 What separates the two, everywhere:
 

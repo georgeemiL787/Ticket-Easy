@@ -184,3 +184,12 @@ def test_unknown_tenant_is_rejected(tmp_path):
 
     with pytest.raises(TenantNotFound):
         loader.build(["nobody"], embedder=None, db_path=tmp_path / "x.sqlite")
+
+
+def test_a_business_added_through_the_admin_api_is_not_part_of_the_database_build(monkeypatch):
+    from team_a.config import settings
+    from team_a.db import loader
+
+    monkeypatch.setattr(type(settings), "tenants", lambda self: ["shipped_one", "added_later"])
+    monkeypatch.setattr(type(settings), "category", lambda self, tenant: "e-commerce" if tenant == "shipped_one" else None)
+    assert loader.discover_tenants() == ["shipped_one"]

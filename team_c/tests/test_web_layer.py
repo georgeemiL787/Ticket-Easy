@@ -29,7 +29,7 @@ def test_errors_are_json_for_the_api_and_a_page_otherwise(env):
     r = client.get("/api/v1/proposals/unknown")
     assert r.status_code == 404 and r.json() == dict(code="not_found", message="Record not found", details={})
     r = client.get("/businesses/unknown")
-    assert r.status_code == 404 and "Unable to complete this step" in r.text and "Record not found" in r.text
+    assert r.status_code == 404 and "Something went wrong" in r.text and "Record not found" in r.text
     r = client.post("/api/v1/businesses/b/local-projects")
     assert r.status_code == 410 and r.json()["code"] == "code_discovery_retired"
 
@@ -91,6 +91,6 @@ def test_the_start_page_sends_owners_to_the_product_when_one_is_configured(env):
     moved = client.get("/", follow_redirects=False)
     assert moved.status_code == 302 and moved.headers["location"] == "http://product.test:8010/dashboard/tools/connect"
     advanced = client.get("/?advanced=1", follow_redirects=False)
-    assert advanced.status_code == 200 and "Advanced view" in advanced.text and "http://product.test:8010/dashboard/tools" in advanced.text
+    assert advanced.status_code == 200 and "Guided flow" in advanced.text and "http://product.test:8010/dashboard/tools" in advanced.text
     business = client.get("/proposals")
-    assert business.status_code == 200 and "Advanced view" in business.text  # every page links back to the guided flow
+    assert business.status_code == 200 and "Guided flow" in business.text  # every page links back to the guided flow

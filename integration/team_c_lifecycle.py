@@ -1,14 +1,14 @@
-"""Run Team C's real tool lifecycle for the Nile Style sandbox shop and bind the result into Team B (TEST-ONLY).
+"""Run Team C's real tool lifecycle for the Nile Style sandbox shop and bind the result into Team B.
 
 Needs the sandbox API (integration/serve.py sandbox) and Team C (integration/serve.py team-c) running, and a model
 provider configured for Team C (team_c/.env: Groq, OpenRouter or Ollama). It drives Team C's own API and forms exactly
-as an owner would in its pages, with every owner decision labelled TEST-ONLY:
+as an owner would in its pages, with every owner decision labelled sandbox-only:
 
   business -> upload the sandbox OpenAPI -> request a tool (the model triages and generates a proposal)
   -> answer questions and access requirements -> accept the access policy -> reconcile (model) -> confirm requirements
   -> approve to build -> save the sandbox connector (with its test-fixture endpoints) -> build the artifact -> save the demo
   customers' identities for Team B's chat (alice = C-100, bob = C-101, ...) -> ONE automatic-test call (Team C creates its own
-  test accounts and records, runs the policy tests and the own-record / cross-customer scenarios) -> publish to the TEST-ONLY
+  test accounts and records, runs the policy tests and the own-record / cross-customer scenarios) -> publish to the sandbox-only
   sandbox MCP -> write Team B's binding (integration/var/team_c.json). `--manual-tests` keeps the old hand-written tests.
 
 Nothing here approves on anyone's behalf without saying so: approvals are recorded by Team C with this script's notes.
@@ -35,7 +35,7 @@ TEAM_C = "http://127.0.0.1:8101"
 API = TEAM_C + "/api/v1"
 SANDBOX = "http://127.0.0.1:8102"
 DEMO_SHOP = "http://127.0.0.1:8103"  # a second, separate deployment of the shop API (integration/serve.py demo-shop)
-LABEL = "TEST-ONLY integration run (integration/team_c_lifecycle.py):"
+LABEL = "sandbox-only integration run (integration/team_c_lifecycle.py):"
 # Team B's own customers (team_b/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
 IDENTITIES = {
     "alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790"),
@@ -45,14 +45,14 @@ IDENTITIES = {
 TOOLS = {
     "order": dict(
         team_b="get_order",
-        goal="TEST ONLY: let a logged-in customer look up one of their own orders by its order id: order status, "
+        goal="let a logged-in customer look up one of their own orders by its order id: order status, "
         "payment status, dates (placed, shipped, delivered, expected delivery), total, item name, product category, "
         "clearance flag, item condition and tracking number. Read only; change nothing.",
         method="GET",
     ),
     "ticket": dict(
         team_b="create_ticket",
-        goal="TEST ONLY: let a logged-in customer open a support ticket about one of their own orders. First look up "
+        goal="let a logged-in customer open a support ticket about one of their own orders. First look up "
         "the order by its order id (GET /api/orders/{order_id}) to confirm it belongs to the caller, then open the ticket "
         "(POST /api/tickets) for that same order with a subject and a description, and return the new ticket id and "
         "its status.",
@@ -72,27 +72,27 @@ _UNSHIPPED = [("carol_own_order", "carol", "NS-20955", "succeeded", "own_record"
 TOOLS.update(
     orders=dict(
         team_b="list_customer_orders", method="GET", financial=False, irreversible=False,
-        goal="TEST ONLY: let a logged-in customer list all of their own orders (GET /api/orders): for each the order "
+        goal="let a logged-in customer list all of their own orders (GET /api/orders): for each the order "
         "id, status, total and placement date. Read only; change nothing.",
         tests=[("alice_orders", "alice", None, "succeeded", "own_record", None),
                ("bob_orders", "bob", None, "succeeded", "own_record", None)],
     ),
     return_=dict(
         team_b="create_return", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
-        goal="TEST ONLY: let a logged-in customer request a return for one of their own delivered orders. First look up "
+        goal="let a logged-in customer request a return for one of their own delivered orders. First look up "
         "the order by its order id (GET /api/orders/{order_id}) to confirm it belongs to the caller, then request the "
         "return (POST /api/returns) for that order with a reason, and return the return reference and status.",
     ),
     exchange=dict(
         team_b="create_exchange", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
-        goal="TEST ONLY: let a logged-in customer request an exchange (optionally for another size) for one of their own "
+        goal="let a logged-in customer request an exchange (optionally for another size) for one of their own "
         "delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
         "request the exchange (POST /api/exchanges) with a reason and the new size, and return the exchange reference "
         "and status.",
     ),
     refund=dict(
         team_b="create_refund", method="POST", financial=True, irreversible=True, tests=_AFTER_SALES,
-        goal="TEST ONLY: let a logged-in customer request a refund of an amount (at most the order total) for one of "
+        goal="let a logged-in customer request a refund of an amount (at most the order total) for one of "
         "their own paid, delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to "
         "the caller, then request the refund (POST /api/refunds) with the order id, the amount and a reason, and return "
         "the refund reference, status and amount.",
@@ -100,21 +100,21 @@ TOOLS.update(
     cancel=dict(
         team_b="cancel_order", method="POST", financial=False, irreversible=True,
         tests=_UNSHIPPED,
-        goal="TEST ONLY: let a logged-in customer cancel one of their own orders that has not shipped yet. First look up "
+        goal="let a logged-in customer cancel one of their own orders that has not shipped yet. First look up "
         "the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then cancel it "
         "(POST /api/orders/{order_id}/cancel), and return the cancellation reference and status.",
     ),
     address=dict(
         team_b="update_delivery_address", method="POST", financial=False, irreversible=False,
         tests=_UNSHIPPED,
-        goal="TEST ONLY: let a logged-in customer change the delivery address of one of their own orders that has not "
+        goal="let a logged-in customer change the delivery address of one of their own orders that has not "
         "shipped yet. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
         "change the address (PATCH /api/orders/{order_id}/delivery-address) with the new address, and return the "
         "reference and status.",
     ),
     voucher=dict(
         team_b="apply_voucher", method="POST", financial=True, irreversible=False, tests=_AFTER_SALES,
-        goal="TEST ONLY: let a logged-in customer be issued a goodwill voucher (up to 1000 EGP) about one of their own "
+        goal="let a logged-in customer be issued a goodwill voucher (up to 1000 EGP) about one of their own "
         "orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then issue the "
         "voucher (POST /api/vouchers) with the order id, amount and reason, and return the reference, voucher code and "
         "amount.",
@@ -318,15 +318,15 @@ def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[s
         elif schema.get("type") in ("number", "integer"):
             args[name] = 10
         elif "address" in lowered:
-            args[name] = "TEST-ONLY 1 Example Street, Cairo"
+            args[name] = "sandbox-only 1 Example Street, Cairo"
         elif "size" in lowered:
             args[name] = "L"
         elif write and "subject" in lowered:
-            args[name] = "TEST-ONLY sandbox ticket"
+            args[name] = "sandbox ticket"
         elif write and ("description" in lowered or "body" in lowered or "detail" in lowered or "message" in lowered):
-            args[name] = "Created by the TEST-ONLY integration run against the sandbox."
+            args[name] = "Created by the sandbox-only integration run against the sandbox."
         elif schema.get("type") == "string" and name in ((content.get("input_schema") or {}).get("required") or []):
-            args[name] = "TEST-ONLY"
+            args[name] = "sandbox-only"
     return args
 
 
@@ -513,8 +513,8 @@ def main() -> int:
             print(f"specification {uploaded['id']}: {uploaded['inventory']['eligible_operation_count']} eligible operations")
         else:
             step("Create the business and upload the sandbox OpenAPI")
-            biz = owner.post("/businesses", {"name": "Nile Style (TEST-ONLY sandbox)",
-                                             "description": "Online fashion shop in Egypt. Customers ask about their orders and open support tickets. TEST-ONLY sandbox API with synthetic data."})  # fmt: skip
+            biz = owner.post("/businesses", {"name": "Nile Style (sandbox)",
+                                             "description": "Online fashion shop in Egypt. Customers ask about their orders and open support tickets. sandbox API with synthetic data."})  # fmt: skip
             spec = httpx.get(SANDBOX + "/openapi.json", timeout=10).content
             uploaded = owner.post(f"/businesses/{biz['id']}/specifications", files={"file": ("openapi.json", spec, "application/json")})
             state.update(business_id=biz["id"], spec_id=uploaded["id"])
@@ -571,7 +571,7 @@ def main() -> int:
         else:
             ensure_fixtures(owner, state["business_id"], state["connector_id"])
             automatic_tests(owner, aid)
-        step("Publish to the TEST-ONLY sandbox MCP")
+        step("Publish to the sandbox MCP")
         pub = publish(owner, aid)
         assert pub["environment"] == "sandbox" and pub["production_ready"] is False and pub["production_activation"] is False
         state.update(publication_id=pub["id"], tool_name=pub["tool_name"])
@@ -583,7 +583,7 @@ def main() -> int:
     path = write_binding(state, tool, content)
     print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]['team_b']} -> proposal {pid}")
     print(json.dumps(json.loads(path.read_text(encoding="utf-8"))["tenants"]["shop_001"]["tools"][TOOLS[tool]["team_b"]], indent=2))
-    print("\nLIFECYCLE COMPLETE (TEST-ONLY)")
+    print("\nLIFECYCLE COMPLETE")
     return 0
 
 

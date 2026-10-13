@@ -7,32 +7,35 @@
 {% block steps %}{{ m.steps("build" if p.state == 'approved_to_build' else "review") }}{% endblock %}
 {% block content %}
 <h1>{{ p.capability.name }}</h1>
-<p>Version {{ p.version }} · {{ m.badge(p.state) }}</p>
-<p class="small">Approved to build: <strong>{{ 'yes' if p.lifecycle.approved_to_build else 'no' }}</strong> | Access requirements owner-confirmed: <strong>{{ 'yes' if p.lifecycle.requirements_confirmed else 'no' }}</strong> | Runtime-ready: <strong>no</strong></p>
+<p>Version {{ p.version }} · {{ m.badge(p.state) }} <span class="small muted">Runtime-ready: <strong>no</strong></span></p>
 
+{% if open and current %}<section id="review-help" class="notice">
+<form method="post" action="/actions/autopilot">{{ m.hidden(p) }}<button>Let the AI do this review</button> <span class="small muted">You still approve the build.</span></form>
+{% set auto = request.query_params.get('auto', '') %}{% if auto %}<ul class="small">{% for line in auto.split('
+') %}{% if line.startswith('done:') %}<li>✓ {{ line[5:] }}</li>{% elif line.startswith('left:') %}<li><strong>Needs you:</strong> {{ line[5:] }}</li>{% endif %}{% endfor %}</ul>{% endif %}
+</section>{% endif %}
 {% if not current %}{{ m.next("open the current version", "You are looking at version " ~ p.version ~ ". Version " ~ p.current_version ~ " is the current one.") }}<p><a href="/proposals/{{ p.proposal_id }}">Go to version {{ p.current_version }}</a></p>
-{% elif p.policy_review_pending %}{{ m.next("complete the access policy", "Review the suggested input sources, choose the access rules and effects, then accept the policy. Your saved answers are preserved.") }}<p><a href="#structured-policy">Review policy and input sources</a></p>
-{% elif p.state == 'approved_to_build' and p.interface_preview.blockers %}{{ m.next("resolve trusted input sources", "This version exposes protected context as caller input. Open a new policy review below to resolve the mappings while preserving your operations and answers.") }}<p><a href="#structured-policy">Resolve input sources</a></p>
-{% elif p.state == 'needs_clarification' and p.answers_resolved and p.open_gaps %}{{ m.next("decide about the reported missing capabilities", "Every answer was accepted. The answer check also reported missing capabilities (see Result of the last check). If one is not needed for this tool, press Not needed for this tool with a reason; otherwise create a new version.") }}
-{% elif p.state in ['needs_clarification', 'needs_reconciliation'] and access_open %}{{ m.next("decide who can use this tool, then answer the questions", "Accept the access policy first (suggested fields are prefilled), then answer the questions and press Save and check answers. Deciding access first means your answers are checked only once.") }}
-{% elif p.state == 'needs_clarification' %}{{ m.next("answer the questions", "Answer the questions below and press Save and check answers.") }}
-{% elif p.state == 'needs_reconciliation' %}{{ m.next("check your answers", "Press Check answers so the tool builder can verify that each answer is specific enough.") }}
-{% elif p.state == 'ready_for_review' and not p.lifecycle.requirements_confirmed %}{{ m.next("confirm the access requirements", "Press Confirm for each accepted access requirement below, then make your decision.") }}
-{% elif p.state == 'ready_for_review' and not p.policy and p.requirements %}{{ m.next("accept the structured access policy, then decide", "Deciding closes this version: a policy accepted afterwards needs a new version and a renewed approval. Accepting it now compiles your access rules into runtime enforcement and generates the guard tests, while your answers stay as they are.") }}<p><a href="#structured-policy">Review and accept the policy</a></p>
-{% elif p.state == 'ready_for_review' %}{{ m.next("make your decision", "Everything is checked. Approve to build, reject, or request changes in the Owner decision section.") }}<p><a href="#decision">Go to the decision</a></p>
-{% elif p.state == 'approved_to_build' and not connectors %}{{ m.next("set up the sandbox and build", "Confirm the sandbox API address below and press Save connector and build artifact.") }}<p><a href="#build">Go to Build and test</a></p>
-{% elif p.state == 'approved_to_build' and p.policy and not artifacts %}{{ m.next("build from the accepted policy", "Press Build artifact below. Building compiles the accepted access policy into runtime enforcement and runs generated security tests.") }}<p><a href="#build">Go to Build and test</a></p>
-{% elif p.state == 'approved_to_build' and artifacts %}{{ m.next("test the built tool", "Open the artifact below to run sandbox tests and publish it to the test-only MCP server.") }}<p><a href="#build">Go to Build and test</a></p>
-{% elif p.state == 'approved_to_build' and p.enforcement and p.enforcement.status == 'awaiting_review' %}{{ m.next("review the enforcement configuration", "Check the access enforcement below and approve it, then build the artifact.") }}
-{% elif p.state == 'approved_to_build' and p.enforcement %}{{ m.next("build the tool", "Choose the connector and press Build artifact below.") }}
-{% elif p.state == 'approved_to_build' %}{{ m.next("set up access enforcement", "Submit how each access requirement is enforced, review it, then build the artifact.") }}
-{% else %}{{ m.next("this version is closed", "Create a new version at the bottom of the page if you want to continue.") }}{% endif %}
+{% elif p.policy_review_pending %}{{ m.next("complete the access policy") }}<p><a href="#structured-policy">Review policy and input sources</a></p>
+{% elif p.state == 'approved_to_build' and p.interface_preview.blockers %}{{ m.next("resolve trusted input sources") }}<p><a href="#structured-policy">Resolve input sources</a></p>
+{% elif p.state == 'needs_clarification' and p.answers_resolved and p.open_gaps %}{{ m.next("decide about the reported missing capabilities") }}
+{% elif p.state in ['needs_clarification', 'needs_reconciliation'] and access_open %}{{ m.next("decide who can use this tool, then answer the questions") }}
+{% elif p.state == 'needs_clarification' %}{{ m.next("answer the questions") }}
+{% elif p.state == 'needs_reconciliation' %}{{ m.next("check your answers") }}
+{% elif p.state == 'ready_for_review' and not p.lifecycle.requirements_confirmed %}{{ m.next("confirm the access requirements") }}
+{% elif p.state == 'ready_for_review' and not p.policy and p.requirements %}{{ m.next("accept the structured access policy, then decide") }}<p><a href="#structured-policy">Review and accept the policy</a></p>
+{% elif p.state == 'ready_for_review' %}{{ m.next("make your decision") }}<p><a href="#decision">Go to the decision</a></p>
+{% elif p.state == 'approved_to_build' and not connectors %}{{ m.next("set up the sandbox and build") }}<p><a href="#build">Go to Build and test</a></p>
+{% elif p.state == 'approved_to_build' and p.policy and not artifacts %}{{ m.next("build from the accepted policy") }}<p><a href="#build">Go to Build and test</a></p>
+{% elif p.state == 'approved_to_build' and artifacts %}{{ m.next("test the built tool") }}<p><a href="#build">Go to Build and test</a></p>
+{% elif p.state == 'approved_to_build' and p.enforcement and p.enforcement.status == 'awaiting_review' %}{{ m.next("review the enforcement configuration") }}
+{% elif p.state == 'approved_to_build' and p.enforcement %}{{ m.next("build the tool") }}
+{% elif p.state == 'approved_to_build' %}{{ m.next("set up access enforcement") }}
+{% else %}{{ m.next("this version is closed") }}{% endif %}
 
 {% if open and current %}
 <article>
-<h2>Before you can approve</h2>
+<h2>To do</h2>
 <ul class="checklist">{% for item in p.checklist %}<li class="{{ 'done' if item.done }}">{% if item.done %}{{ item.label }}{% else %}<a href="{{ item.href }}">{{ item.label }}</a>{% endif %}</li>{% endfor %}</ul>
-<p class="small muted">Only these steps are required. Everything under "Technical details" is optional reading.</p>
 </article>
 {% endif %}
 
@@ -46,36 +49,33 @@
 </div>
 <p><strong>What the caller provides:</strong> {{ p.interface_preview.arguments|join(', ') or 'nothing' }}{% if p.interface_preview.blocked_arguments %} <span class="small">(awaiting a safe source: {{ p.interface_preview.blocked_arguments|join(', ') }})</span>{% endif %}</p>
 <p><strong>Risk:</strong> {{ p.risk.level }} <span class="small muted">({{ p.risk.state }}; unresolved: {{ p.risk.unresolved|join(", ") or "none" }})</span></p>
-{% if p.quality and not p.quality.ready and not p.reconciliation_id and open %}<div class="small"><strong>The AI's first rating raised concerns.</strong> Your answers and access decisions often resolve them; the proposal is re-rated when your answers are checked.<ul>{% for f in p.quality.findings if f.severity == 'blocker' %}<li>{{ f.summary }}</li>{% endfor %}</ul></div>
-{% elif p.quality and not p.quality.ready %}<div class="notice"><strong>Approval is blocked until these are resolved. Ask for a revision.</strong><ul>{% for f in p.quality.findings if f.severity == 'blocker' %}<li>{{ f.summary }}{% if f.detail %} <span class="small">{{ f.detail }}</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+{% if p.quality and not p.quality.ready and not p.reconciliation_id and open %}<div class="small"><strong>Concerns to resolve:</strong><ul>{% for f in p.quality.findings if f.severity == 'blocker' %}<li>{{ f.summary }}</li>{% endfor %}</ul></div>
+{% elif p.quality and not p.quality.ready %}<div class="notice"><strong>Approval is blocked:</strong><ul>{% for f in p.quality.findings if f.severity == 'blocker' %}<li>{{ f.summary }}{% if f.detail %} <span class="small">{{ f.detail }}</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
 {% set accepted_gaps = (p.derived.acknowledged_gaps or [])|map(attribute='index')|list %}
 {% for gap in p.derived.generation_capability_gaps or [] %}{% set i = loop.index0 %}
 <div class="{{ 'small muted' if i in accepted_gaps else 'notice' }}" id="api-gap-{{ i }}"><strong>Not possible with this API:</strong> {{ gap.requested_capability }}. <span class="small">{{ gap.explanation }}</span>
 {% if i in accepted_gaps %}{% for a in p.derived.acknowledged_gaps if a.index == i %}<br>Accepted without this part by {{ a.reviewer }}: {{ a.reason }}{% endfor %}
-{% elif open and current %}<p class="small">The tool can still do the rest. Decide once: approve it without this part, or ask the AI to change the tool.</p>
-<form method="post" action="/actions/accept_api_gap">{{ m.hidden(p) }}<input type="hidden" name="gap_index" value="{{ i }}"><label>Why it is fine without it (optional, kept in history)<input name="reason" placeholder="The tool is useful without this part."></label><button>Approve without this part</button> <a class="small" href="#revise-proposal">or ask the AI to change the tool</a></form>{% endif %}</div>
+{% elif open and current %}<form method="post" action="/actions/accept_api_gap">{{ m.hidden(p) }}<input type="hidden" name="gap_index" value="{{ i }}"><label>Why it is fine without it (optional, kept in history)<input name="reason" placeholder="The tool is useful without this part."></label><button>Approve without this part</button> <a class="small" href="#revise-proposal">or ask the AI to change the tool</a></form>{% endif %}</div>
 {% endfor %}
 {% if p.content.assumptions or p.content.limitations %}<details><summary>Assumptions and limitations</summary><ul>{% for x in p.content.assumptions + p.content.limitations %}<li>{{ x }}</li>{% endfor %}</ul></details>{% endif %}
-<p class="muted small">Purpose, reads/writes and risk are AI interpretations. Schema facts and operation references are validated separately. {{ p.lifecycle.note }}</p>
 </article>
 
 {% if p.quality %}
 <article>
-<h2>AI quality rating</h2>
-{% if not p.quality.assessed %}<p class="notice">This proposal was generated before quality rating existed, so only the checks the application can make for itself were applied.</p>{% endif %}
+<h2>Quality check</h2>
+{% if not p.quality.assessed %}{% endif %}
 {% if p.quality.criteria %}<p>Model's own rating: <strong>{{ p.quality.score }}/5</strong> — {{ p.quality.verdict }}</p>
 <table><tr><th>Criterion</th><th>Score</th><th>Reason</th></tr>
 {% for c in p.quality.criteria %}<tr><td>{{ c.criterion|replace('_',' ') }}</td><td>{{ c.score }}/5</td><td class="small">{{ c.reason }}</td></tr>{% endfor %}
 </table>{% endif %}
 {% if p.quality.findings %}<ul>{% for f in p.quality.findings %}<li>{{ 'Blocking' if f.severity == 'blocker' else 'Note' }}: <strong>{{ f.summary }}</strong>{% if f.detail %} <span class="small">{{ f.detail }}</span>{% endif %}</li>{% endfor %}</ul>{% else %}<p class="small">No quality findings.</p>{% endif %}
-{% if p.quality.ready %}<p class="small">Nothing blocking. You still decide whether to approve.</p>{% endif %}
+{% if p.quality.ready %}{% endif %}
 </article>
 {% endif %}
 
 {% if previous %}
 <article>
-<h2>What changed in this version</h2>
-<p class="small muted">Approval never carries over from an earlier version.</p>
+<h2>Changes</h2>
 <h3>Changes from version {{ p.version - 1 }}</h3>
 <ul>{% for line in p.change_summary %}<li>{{ line }}</li>{% else %}<li>No content changes.</li>{% endfor %}</ul>
 <details class="tech"><summary>Raw differences</summary>{% for key,value in p.content.items() %}{% if value != previous.get(key) %}<p><strong>{{ key }}</strong></p><p class="small">Before</p><pre>{{ previous.get(key)|tojson(indent=2) }}</pre><p class="small">Now</p><pre>{{ value|tojson(indent=2) }}</pre>{% endif %}{% endfor %}</details>
@@ -85,9 +85,9 @@
 {% include "capability.html" %}
 
 <article>
-<h2 id="questions">Questions from the AI</h2>
-{% if p.content.questions %}<p class="small muted">Answer in your own words. Each answer is checked for being specific enough; saving a non-empty answer is not enough on its own.</p>{% endif %}
-{% if open and current and p.content.questions %}<form method="post" action="/actions/suggest_answers">{{ m.hidden(p) }}<button class="secondary">{{ "Draft answers again with the AI assistant" if p.ai_answer_suggestions else "Draft answers with the AI assistant" }}</button> <span class="small muted">A separate assistant drafts answers from the API description; the answer check judges them independently later. Business decisions are left to you, with options.</span></form>{% endif %}
+<h2 id="questions">Questions</h2>
+{% if p.content.questions %}{% endif %}
+{% if open and current and p.content.questions %}<form method="post" action="/actions/suggest_answers">{{ m.hidden(p) }}<button class="secondary">{{ "Draft answers again with the AI assistant" if p.ai_answer_suggestions else "Draft answers with the AI assistant" }}</button></form>{% endif %}
 <form method="post" action="/actions/answers_and_check">{{ m.hidden(p) }}
 {% for q in p.content.questions %}{% set suggestion = p.answer_suggestions.get(q.id) %}{% set draft = p.ai_answer_suggestions.get(q.id) %}
 <label>{{ q.text }}<span class="why">{{ q.id }}{% if q.configuration_key %} · sets the business setting <code>{{ q.configuration_key }}</code>{% endif %}</span>
@@ -101,14 +101,15 @@
 {% if open and p.content.questions %}<button>Save and check answers</button><button class="secondary" formaction="/actions/answers">Save without checking</button>{% endif %}
 </form>
 {% if open %}
-{% if not p.can_check_answers %}<p class="notice small">No answers have been saved yet. Answer the questions above (or accept the access policy), then check them.</p>{% endif %}
+{% if not p.can_check_answers %}{% endif %}
+{% if not p.can_check_answers %}<p class="notice small">No answers have been saved yet.</p>{% endif %}
 {% if p.state == 'needs_reconciliation' or not p.can_check_answers %}<form method="post" action="/actions/reconcile">{{ m.hidden(p) }}<button {% if not p.can_check_answers %}disabled{% endif %}>Check answers</button></form>{% endif %}
 {% for r in p.requirements if r.status == 'answer_sufficient' %}<form method="post" action="/actions/confirm_requirement">{{ m.hidden(p) }}<input type="hidden" name="requirement_id" value="{{ r.id }}"><button>Confirm as intended behavior: {{ r.id }}</button></form>{% endfor %}
 {% endif %}
 {% set r = p.reconciliations[-1] if p.reconciliations else none %}{% if r %}
 <h3>Result of the last check</h3>
-{% if r.result.reused_from == 'generation' %}<p class="small muted">Nothing was left for the AI to judge: there are no open questions and every access decision is in your accepted policy. No AI call was made.</p>
-{% elif r.result.reused_from %}<p class="small muted">Your answers had not changed since they were last checked, so that check was reused without another AI call.</p>{% endif %}
+{% if r.result.reused_from == 'generation' %}<p class="small muted">Nothing left to check.</p>
+{% elif r.result.reused_from %}<p class="small muted">Answers unchanged since the last check.</p>{% endif %}
 {% for f in r.result.findings if f.status != 'resolved' %}<p class="small"><strong>{{ f.question_id }} · {{ f.status|replace('_', ' ') }}</strong> — {{ f.explanation }}</p>{% endfor %}
 {% set ok = r.result.findings|selectattr('status','equalto','resolved')|list %}{% if ok %}<details class="tech"><summary>{{ ok|length }} accepted</summary>{% for f in ok %}<p class="small"><strong>{{ f.question_id }}</strong> — {{ f.explanation }}</p>{% endfor %}</details>{% endif %}
 {% for gap in r.result.capability_gaps %}{% set d = r.dismissals.get(loop.index0) %}<p class="notice">Missing capability: {{ gap.explanation }}{% if d %} <span class="small">Not needed for this tool, decided by {{ d.reviewer }}: {{ d.reason }}</span>{% endif %}</p>
@@ -122,10 +123,9 @@
 
 {% if open %}
 <article>
-<h2 id="decision">Owner decision</h2>
-{% if p.state != 'ready_for_review' %}<p class="notice">Approval is blocked until current answers are reconciled and all validation passes.</p>{% endif %}
-{% if not p.lifecycle.requirements_confirmed %}<p class="notice">Approval is blocked until every access requirement is owner-confirmed (accepting the access policy does this).</p>{% endif %}
-<p class="muted small">Approving means approved to build only; it does not activate the tool or implement runtime authorization.</p>
+<h2 id="decision">Decision</h2>
+{% if p.state != 'ready_for_review' %}<p class="notice">Check the answers before approving.</p>{% endif %}
+{% if not p.lifecycle.requirements_confirmed %}<p class="notice">Confirm the access requirements first.</p>{% endif %}
 <form method="post" action="/actions/decision">{{ m.hidden(p) }}<input type="hidden" name="idempotency_key" value="{{ decision_key }}">
 <label>Reason or requested changes <span class="why">optional for approval; required when requesting changes</span><textarea name="reason"></textarea></label>
 <button name="decision" value="approve_to_build" {% if p.state != 'ready_for_review' or not p.lifecycle.requirements_confirmed %}disabled{% endif %}>Approve to build</button><button class="secondary" name="decision" value="reject">Reject</button><button class="secondary" name="decision" value="request_changes">Request changes</button></form>
@@ -136,15 +136,14 @@
 <article>
 <h2 id="build">Build and test</h2>
 {% include "build_enforcement.html" %}
-<h3>Executable artifacts</h3>
-<p class="small muted">Built from this approved version for sandbox testing only. Nothing is activated. Publishing is a separate decision on each artifact page.</p>
+<h3>Built tools</h3>
 {% for a in artifacts %}<p><a href="/artifacts/{{ a.id }}">Open artifact for v{{ a.version }}</a> <span class="muted small">built {{ a.created_at[:16]|replace('T', ' ') }} · SHA-256 {{ a.sha256[:12] }}</span></p>{% else %}<p class="muted">No artifact built yet.</p>{% endfor %}
 </article>
 {% endif %}
 
 {% if current %}
-<details id="revise-proposal"><summary>Create a new version (ask the AI to change this tool)</summary>
-<article><p class="small muted">The AI revises this proposal or explains what is missing. Every new version needs a fresh review.</p>
+<details id="revise-proposal"><summary>Ask the AI to change this tool</summary>
+<article>
 <form method="post" action="/actions/revise">{{ m.hidden(p) }}<label>What should change?<textarea name="instruction" required></textarea></label><button>Generate revision</button></form></article>
 </details>
 {% endif %}
@@ -156,8 +155,8 @@
 {% endif %}
 
 <details class="tech"><summary>Technical details: readiness, steps and history</summary>
-<h3>Capability readiness</h3>
-<p>{{ p.readiness.score }}% of compiler checks satisfied. Every blocking check must pass; this score grants no permission to publish.</p>
+<h3>Readiness</h3>
+<p>{{ p.readiness.score }}%</p>
 <ul>{% for factor in p.readiness.factors if not factor.passed %}<li>{{ factor.detail }}</li>{% endfor %}</ul>
 <h3>Steps and where each input comes from</h3>
 {% for s in p.content.steps %}<h4>{{ s.id }} · {{ s.purpose }}</h4><p class="small"><code>{{ operations[s.operation_id].method }} {{ operations[s.operation_id].path }}</code> · Technically supported: {{ p.operation_states.get(s.operation_id,{}).get('technically_supported') }} · Eligible for proposals: {{ p.operation_states.get(s.operation_id,{}).get('proposal_eligible') }}</p>

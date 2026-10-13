@@ -4,7 +4,7 @@
 <form method="post" action="/actions/save_connector">{{ m.csrf_field() }}
 <input type="hidden" name="proposal_id" value="{{ p.proposal_id }}">
 <fieldset><legend>Where should this tool run?</legend>
-<label><input type="radio" name="environment" value="sandbox" checked> <strong>Sandbox</strong> <span class="small muted">a test API with test accounts (TEST-ONLY)</span></label>
+<label><input type="radio" name="environment" value="sandbox" checked> <strong>Sandbox</strong> <span class="small muted">a test API with test accounts</span></label>
 <label><input type="radio" name="environment" value="live_demo" {% if not live_demo.enabled or not live_demo.hosts %}disabled{% endif %}> <strong>Live Demo</strong>
 <span class="small muted">the real API, with real credentials you are allowed to use for this demo. Not a production release.</span></label>
 {% if not live_demo.enabled %}<p class="small muted">Live Demo is switched off on this server (LIVE_DEMO_ENABLED). The operator turns it on and lists the allowed API hosts in LIVE_DEMO_HOSTS.</p>
@@ -15,8 +15,8 @@
 <datalist id="api-server-candidates">{% for url in connector_draft.candidates %}<option value="{{ url }}">{% endfor %}</datalist>
 {% if connector_draft.candidates|length > 1 %}<p class="small">The specification declares several servers. Choose the one that serves these operations in the environment you picked.</p>
 {% elif not connector_draft.candidates %}<p class="small">The specification does not provide a usable server address. Enter the API base URL.</p>{% endif %}
-<p class="small muted">The address in an uploaded specification is only a suggestion; calls go only to the URL you confirm here, and a Live Demo URL must also be on the operator's allowed list.</p>
-<details><summary>Trusted context fields</summary><p class="small">Field names needed by the accepted policy are filled in automatically. You can add names separated by commas. Enter actual values later for each identity.</p>
+<p class="small muted">Calls go only to the URL you confirm here.</p>
+<details><summary>Trusted context fields</summary><p class="small">Comma-separated field names; values are set per identity.</p>
 <label>Context field names<input name="context_fields" value="{{ connector_draft.context_fields|join(', ') }}" placeholder="user_id, tenant_id, cart_session"></label></details>
 <label><input type="checkbox" name="sandbox" value="1"> Sandbox: this is a sandbox destination I want to use for tests.</label>
 <label><input type="checkbox" name="confirm_live" value="1"> Live Demo: this is the real API I am authorized to call for this demo, with a dedicated demo account and only the operations I approve.</label>

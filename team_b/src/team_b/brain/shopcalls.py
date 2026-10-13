@@ -108,11 +108,17 @@ def output_complete(tool: ToolSpec | None, data: dict[str, Any]) -> bool:
     return all(field in data for field in required)
 
 
+PERMANENT_FAILURES = ("IDENTITY_NOT_MAPPED", "TEAM_C_REJECTED")
+
+
 def failed_read(ctx: TurnContext, what: str) -> Step:
     """A read failed even after the retry: say so honestly (never guess), count it, hand off at the limit."""
     session = ctx.session
     session.tool_failures += 1
-    if session.tool_failures >= ctx.tenant.escalation.max_tool_failures:
+    # A setup problem (no identity for this customer, or the tools service refused before sending anything) will not
+    # go away by asking again: a person looks at it at once instead of the customer retrying in vain.
+    permanent = any(e.endswith(PERMANENT_FAILURES) for e in ctx.errors)
+    if permanent or session.tool_failures >= ctx.tenant.escalation.max_tool_failures:
         return Step(
             Decision.HANDOFF,
             reason=f"{what} failed {session.tool_failures} times",

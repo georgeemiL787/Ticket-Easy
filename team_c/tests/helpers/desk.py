@@ -1,4 +1,4 @@
-"""Second domain: the local service-desk fixture, its AUTHORED TEST SUBSTITUTE and TEST-ONLY review helpers."""
+"""Second domain: the local service-desk fixture, its AUTHORED TEST SUBSTITUTE and sandbox-only review helpers."""
 import json
 from types import SimpleNamespace
 import httpx
@@ -11,7 +11,7 @@ from team_c.models import GenerationOutput, ReconciliationOutput, RepairOutput
 from team_c.web import create_app
 
 KEY = "harness-test-key"
-LABEL = "TEST-ONLY (not a business decision): "
+LABEL = "sandbox-only (not a business decision): "
 
 
 def desk_proposal(inv, n, defect=None, suffix=""):
@@ -36,7 +36,7 @@ class DeskSubstitute:
         self.store, self.names, self.defect, self.revisions, self.instructions = store, None, None, [], []
 
     def call(self, kind, payload, output_model, run):
-        self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+        self.store.attempt(run, "TEST_SUBSTITUTE", "authored-sandbox-only", "succeeded")
         inv = payload["inventory"]
         if kind == "generation":
             return GenerationOutput(proposals=[desk_proposal(inv, self.names, self.defect)], capability_gaps=[])
@@ -55,7 +55,7 @@ class DeskSubstitute:
                 proposal["steps"].append(dict(proposal["steps"][0], id="s3"))
             return RepairOutput(outcome="revised", explanation="Rewired the booking identifier", revised_proposal=proposal)
         answers = payload["proposal"]["answers"]
-        findings = [dict(question_id=q["id"], status="resolved" if answers.get(q["id"], {}).get("text", "").startswith("TEST-ONLY") else "insufficient",
+        findings = [dict(question_id=q["id"], status="resolved" if answers.get(q["id"], {}).get("text", "").startswith("sandbox-only") else "insufficient",
                          explanation="Test substitute assessment", answer_revision_ids=[answers[q["id"]]["id"]] if q["id"] in answers else [])
                     for q in payload["proposal"]["content"]["questions"]]
         return ReconciliationOutput(findings=findings + requirement_findings(payload), revised_proposal=None, capability_gaps=[], self_review=refreshed_review())
@@ -105,7 +105,7 @@ def post(d, pid, suffix, **body):
 
 
 def review_and_build(d, pid, connector="desk"):
-    """TEST-ONLY review of the current version, operator enforcement plus its TEST-ONLY review, then a build."""
+    """sandbox-only review of the current version, operator enforcement plus its sandbox-only review, then a build."""
     p = current(d, pid)
     assert post(d, pid, "answers", answers={i: LABEL + "only the booking holder may file requests for a booking." for i in [q["id"] for q in p["content"]["questions"]] + [r["id"] for r in p["requirements"]]}).status_code == 200
     assert post(d, pid, "reconcile").json()["state"] == "ready_for_review"
@@ -141,7 +141,7 @@ def sandbox_test(d, aid, name, expect, who="alice", **args):
 
 
 def review_and_build_policy(d, pid, connector="desk"):
-    """TEST-ONLY review with a STRUCTURED access policy (the path production needs): answers, an accepted ownership check on the
+    """sandbox-only review with a STRUCTURED access policy (the path production needs): answers, an accepted ownership check on the
     booking lookup, reconciliation, requirement confirmation, approval, then a build with no manual enforcement configuration."""
     p = current(d, pid)
     assert post(d, pid, "answers", answers={i: LABEL + "only the booking holder may file requests for a booking." for i in [q["id"] for q in p["content"]["questions"]] + [r["id"] for r in p["requirements"]]}).status_code == 200

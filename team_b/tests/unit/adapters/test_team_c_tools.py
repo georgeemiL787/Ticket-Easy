@@ -50,7 +50,7 @@ def tool_def(
         meta["api_host"] = "api.example.com"
     schema = {"type": "object", "properties": {"order_id": {"type": "string"}}, "additionalProperties": False}
     return {
-        "name": name, "title": name, "description": "TEST-ONLY", "annotations": {"readOnlyHint": read_only},
+        "name": name, "title": name, "description": "sandbox-only", "annotations": {"readOnlyHint": read_only},
         "inputSchema": schema, "_meta": {"team_c": meta},
     }  # fmt: skip
 

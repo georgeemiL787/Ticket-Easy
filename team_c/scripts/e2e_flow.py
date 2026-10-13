@@ -89,7 +89,7 @@ def main():
     log_step("Create business")
     biz = assert_ok(ec.post_json(f"{API}/businesses", {
         "name": "AstroCommerce storefront",
-        "description": "TEST-ONLY target API: an Astro e-commerce backend with orders, customers, products, cart, payments, images, shipping and store configuration."
+        "description": "sandbox-only target API: an Astro e-commerce backend with orders, customers, products, cart, payments, images, shipping and store configuration."
     }), "create business")
     bid = biz["id"]
     print(f"Business: {bid}")
@@ -104,7 +104,7 @@ def main():
 
     # --- 3. Tool Request A (main: order lookup) ---
     log_step("Tool Request A: customer order lookup")
-    goal_a = "TEST ONLY: let a customer look up one of their own orders by its order id, read the order status, totals and items, and change nothing"
+    goal_a = "let a customer look up one of their own orders by its order id, read the order status, totals and items, and change nothing"
     req = assert_ok(ec.post_json(f"{API}/businesses/{bid}/tool-requests", {
         "goal": goal_a,
         "examples": "",
@@ -147,9 +147,9 @@ def main():
 
     # --- 5. Answer questions AND requirements (before policy) ---
     # Every question this proposal raises is about who may call it and how ownership is enforced, so
-    # the standing TEST-ONLY decision also answers whatever the keyword pass below does not match;
+    # the standing sandbox-only decision also answers whatever the keyword pass below does not match;
     # a placeholder would correctly be judged insufficient by the reviewer.
-    OWNER_POLICY = ("TEST-ONLY owner decision: the caller is a logged-in customer (end_user) authenticated via "
+    OWNER_POLICY = ("sandbox-only owner decision: the caller is a logged-in customer (end_user) authenticated via "
                     "the AstroCommerce customer OAuth2 password grant and must own the order. The enforcement "
                     "policy checks that the response's customer_id field equals the authenticated customer's "
                     "identity (customer_id context field) after the successful 200 response and denies access on mismatch.")
@@ -171,7 +171,7 @@ def main():
             elif r["kind"] == "record_scope":
                 q_answers[r["id"]] = "The tool calls GET /api/v1/orders/{order_id} and the enforcement policy checks that the response's customer_id field matches the authenticated customer's identity (customer_id context field). This ownership check runs after the successful 200 response."
             else:
-                q_answers[r["id"]] = "TEST-ONLY answer provided by the owner for this capability."
+                q_answers[r["id"]] = "sandbox-only answer provided by the owner for this capability."
         return assert_ok(ec.post_json(f"{API}/proposals/{pid}/versions/{version}/answers", {
             "expected_revision": rev,
             "answers": q_answers
@@ -325,7 +325,7 @@ def main():
     dec = assert_ok(ec.post_json(f"{API}/proposals/{pid}/versions/{p['version']}/decisions", {
         "expected_revision": p["review_revision"],
         "action": "approve_to_build",
-        "reason": "TEST-ONLY approval for sandbox publication",
+        "reason": "sandbox-only approval for sandbox publication",
         "idempotency_key": secrets.token_urlsafe(16)
     }), "approve")
     print("Decision: " + json.dumps(dec).encode("ascii", "replace").decode())
@@ -460,7 +460,7 @@ def main():
     log_step("Publish to sandbox")
     pub = assert_ok(ec.post_json(f"{API}/artifacts/{aid}/publications", {
         "environment": "sandbox",
-        "note": "TEST-ONLY sandbox publication for demo"
+        "note": "sandbox publication for demo"
     }), "publish")
     pub_id = pub["id"]
     print(f"Published: {pub_id}")
@@ -488,7 +488,7 @@ def main():
     assert search_a["searched_operations"] < search_a["total_operations"], "Request A should stop at its first slice"
 
     # A request whose operation the first slice does not contain: retrieval has to widen the index.
-    goal_b = "TEST ONLY: show delivery cost and available rates for an address"
+    goal_b = "show delivery cost and available rates for an address"
     request_b = assert_ok(ec.post_json(f"{API}/businesses/{bid}/tool-requests", {
         "goal": goal_b,
         "examples": "",

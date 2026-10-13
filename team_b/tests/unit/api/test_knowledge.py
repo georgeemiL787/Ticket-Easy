@@ -105,6 +105,19 @@ async def test_documents_go_from_uploaded_to_indexed_and_a_bad_file_is_reported(
     ).status_code == 409
 
 
+async def test_a_business_that_has_uploaded_nothing_yet_shows_an_empty_list_not_an_error(
+    secured: Container, web: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    await sign_in(secured, web, "manager", "Mona")
+
+    async def unknown(tenant_id: str) -> dict[str, Any]:
+        raise UpstreamError("team_a", "TENANT_NOT_FOUND", f"Unknown tenant '{tenant_id}'")
+
+    monkeypatch.setattr(admin_of(secured), "documents", unknown)
+    reply = await web.get("/v1/dashboard/knowledge/documents", params={"tenant_id": T})
+    assert reply.status_code == 200 and reply.json()["documents"] == []
+
+
 async def test_the_reviewer_is_the_signed_in_person_and_an_agent_cannot_review(
     secured: Container, web: httpx.AsyncClient
 ) -> None:

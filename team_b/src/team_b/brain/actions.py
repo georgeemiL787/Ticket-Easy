@@ -180,6 +180,16 @@ def _with_alternatives(ctx: TurnContext, intent_spec: IntentSpec | None, message
     return f"{message}\n\n{composer.t(locale, 'policy_alternatives', options=options)}"
 
 
+def _not_delivered_yet(ctx: TurnContext, decision: PolicyDecision) -> bool:
+    """A deny only because the delivery date is unknown and the order really has no delivery date yet."""
+    return (
+        decision.reason_code == "MISSING_CONTEXT"
+        and "days_since_delivery" in decision.missing_fields
+        and not ctx.session.facts.get("delivered_at")
+        and ctx.session.facts.get("order_status") in {"pending", "processing", "shipped", "out_for_delivery"}
+    )
+
+
 def _deny_step(ctx: TurnContext, decision: PolicyDecision, intent_spec: IntentSpec | None = None) -> Step:
     """A deny is never executed. A final one (the tenant's final_deny_rules) is told as a refusal; any other goes to a
     person (when the tenant escalates denies), with the rule's own wording and its citation. A refusal that closes the
@@ -193,6 +203,16 @@ def _deny_step(ctx: TurnContext, decision: PolicyDecision, intent_spec: IntentSp
         and all(rule in ctx.tenant.escalation.final_deny_rules for rule in denying)
     )
     why = f"policy said no ({decision.reason_code}: {', '.join(denying) or decision.rationale})"
+    if _not_delivered_yet(ctx, decision):
+        # Nothing to review: the rule cannot run because the parcel has not arrived. Say so, no case is opened.
+        ctx.session.active_intent = None
+        return Step(
+            Decision.REFUSE,
+            reason=f"{why}; the order has not been delivered yet",
+            reply_key="not_delivered_yet",
+            values={},
+            citations=decision.citations,
+        )
     if final or not ctx.tenant.escalation.escalate_on_deny:
         ctx.session.active_intent = None  # told no: a later message does not start the request again
         return Step(

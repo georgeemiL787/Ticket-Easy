@@ -1,30 +1,33 @@
 {% extends "base.html" %}
 {% import "macros.html" as m with context %}
 {% block content %}
-<h1>Business tools, reviewed before building</h1>
-<article>
-<h2>How it works</h2>
-{{ m.steps("") }}
-<ol class="small">
-<li><strong>Connect your system:</strong> upload or fetch its OpenAPI description. The tool builder lists what the API can do; nothing is called.</li>
-<li><strong>Get tools:</strong> describe a tool in plain language, or ask the tool builder to suggest some. The AI turns them into proposals.</li>
-<li><strong>Review and approve:</strong> answer the proposal's questions, check the answers, confirm who may use it, then approve it to build.</li>
-<li><strong>Build and test:</strong> set up access enforcement, build the tool and run sandbox tests against test accounts.</li>
-<li><strong>Publish:</strong> expose the tested tool to the assistant's MCP server, as a TEST-ONLY sandbox tool or, when the operator allows it, as a Live Demo tool that calls your real API. Neither is a production release.</li>
-</ol>
-</article>
+<h1>Business tools</h1>
 <div class="grid">
 <article>
-<h2>Start with a new business</h2>
-<form method="post" action="/actions/business">{{ m.csrf_field() }}
-<label>Business name<input name="name" required maxlength="200"></label>
-<label>What does the business do?<textarea name="description" required maxlength="10000" placeholder="For example: holiday lettings; customers report problems with their bookings and staff fix them."></textarea></label>
-<button>Create business</button>
-</form>
+<h3>Businesses</h3>
+{% for b in businesses %}<p><a href="/businesses/{{ b.id }}"><strong>{{ b.name }}</strong></a><br><span class="muted small">{{ b.description[:120] }}</span></p>{% else %}<p class="muted">No businesses yet.</p>{% endfor %}
 </article>
 <article>
-<h2>Your businesses</h2>
-{% for b in businesses %}<p><a href="/businesses/{{ b.id }}"><strong>{{ b.name }}</strong></a><br><span class="muted small">{{ b.description[:160] }}</span></p>{% else %}<p class="muted">No businesses yet. Create one to begin.</p>{% endfor %}
+<h3>New business</h3>
+<form method="post" action="/actions/business">{{ m.csrf_field() }}
+<label>Name<input name="name" required maxlength="200"></label>
+<label>What it does<textarea name="description" required maxlength="10000" placeholder="Holiday lettings; customers report problems with bookings."></textarea></label>
+<button>Create</button>
+</form>
 </article>
 </div>
+<h2>Tools</h2>
+<nav class="filters small"><a href="/" {% if not stage %}class="current"{% endif %}>All</a>{% for key, label in labels.items() %}<a href="/?advanced=1&amp;stage={{ key }}" {% if stage == key %}class="current"{% endif %}>{{ label }} ({{ counts[key] }})</a>{% endfor %}</nav>
+{% for key, label, items in stages if items %}
+<article>
+<h3>{{ label }} ({{ items|length }})</h3>
+<table>
+{% for p in items %}<tr>
+<td><a href="/proposals/{{ p.proposal_id }}">{{ p.name }}</a> <span class="muted small">v{{ p.version }}</span><br><span class="muted small">{{ p.purpose }}</span></td>
+<td class="small"><a href="/businesses/{{ p.business_id }}">{{ p.business }}</a></td>
+<td>{{ m.badge(p.state) }}</td>
+</tr>{% endfor %}
+</table>
+</article>
+{% else %}<p class="muted">No tools yet. Open a business to request one.</p>{% endfor %}
 {% endblock %}

@@ -57,6 +57,7 @@ class ToolsService(TeamCRest):
         self.batches: dict[str, dict[str, Any]] = {}
         self.calls: list[tuple[str, str]] = []
         self.down = False
+        self.fetch_code = ""
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path.removeprefix("/api/v1")
@@ -90,6 +91,8 @@ class ToolsService(TeamCRest):
                     },
                 },
             )
+        if path.endswith("/specifications/fetch") and self.fetch_code:
+            return httpx.Response(502, json={"code": self.fetch_code, "message": "internal wording"})
         if path.endswith("/specifications/fetch"):
             return httpx.Response(
                 200,
@@ -195,6 +198,16 @@ async def test_a_url_import_reports_what_is_wrong_with_the_description(setup: An
     reply = await http.post(f"{URL}/import", params={"tenant_id": T}, json={"url": "http://shop.test/openapi.json"})
     assert reply.status_code == 200
     assert reply.json()["valid"] is False and reply.json()["problems"] == ["No operations found"]
+
+
+@pytest.mark.parametrize("code", ["fetch_failed", "fetch_host", "file_type", "fetch_url"])
+async def test_an_address_that_cannot_be_read_says_what_to_do_in_plain_words(setup: Any, code: str) -> None:
+    http, service, _ = setup
+    service.fetch_code = code
+    reply = await http.post(f"{URL}/import", params={"tenant_id": T}, json={"url": "http://shop.test/openapi.json"})
+    message = reply.json()["error"]["message"]
+    assert reply.status_code == 409 and message != f"this could not be done ({code})"
+    assert "Team C" not in message and code not in message  # no internal names or codes
 
 
 async def test_an_import_needs_exactly_one_of_file_or_url(setup: Any) -> None:

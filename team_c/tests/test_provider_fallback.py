@@ -7,7 +7,7 @@ from team_c.providers import GENERATION_NUM_PREDICT, OLLAMA_MARGIN_TOKENS, Provi
 from team_c.storage import Store, now, uid
 
 # Far above the byte bound of a small Ollama context, so reaching Ollama requires a token count.
-PAYLOAD = dict(business=dict(description="TEST-ONLY " * 2000))
+PAYLOAD = dict(business=dict(description="sandbox-only " * 2000))
 CONTEXT = GENERATION_NUM_PREDICT + OLLAMA_MARGIN_TOKENS + 1000
 CONTENT = json.dumps(dict(proposals=[], capability_gaps=[]))
 

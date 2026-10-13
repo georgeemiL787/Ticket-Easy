@@ -27,6 +27,7 @@
   "action_changed": "Something changed on your order since I asked, so I have not done anything. Please tell me again what you would like.",
   "approval_rejected": "Thank you for your patience. Our team reviewed your request and could not approve it. Is there anything else I can help with?",
   "policy_refusal_offer": "{message}\n\nIf you would like a colleague to look at your case, just tell me.",
+  "not_delivered_yet": "Your order hasn't been delivered yet, so I can't start a return for it. Once it arrives you can return it within the return period. If you'd like, I can help with something else, such as the order status.",
   "alt_or": "or",
   "policy_alternatives": "I can check other options for you instead: {options}."
 }

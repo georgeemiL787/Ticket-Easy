@@ -1,7 +1,7 @@
 """Owner-requested tools and capability suggestions.
 
 MOCKED / AUTHORED: triage, suggestion and generation outputs come from an AUTHORED TEST SUBSTITUTE that
-reads the operation ids from the payload it receives; reviews are labeled TEST-ONLY decisions and all data
+reads the operation ids from the payload it receives; reviews are labeled sandbox-only decisions and all data
 lives in per-test databases with the in-process service-desk fixture. The live-model check is
 scripts/request_live.py.
 """
@@ -37,7 +37,7 @@ def test_supported_request_becomes_a_grounded_proposal_in_normal_review(desk):
     assert req["coverage"]["partial"] is False and len(req["coverage"]["considered_ids"]) == 4
     # A repeated submission returns the same request without another model call; a reused key with other content is refused.
     assert ask(d, "request-key-1").json()["id"] == req["id"] and len(d.provider.payloads) == 2
-    conflict = ask(d, "request-key-1", goal="TEST-ONLY: something else entirely")
+    conflict = ask(d, "request-key-1", goal="sandbox-only: something else entirely")
     assert conflict.status_code == 409 and conflict.json()["code"] == "idempotency_conflict"
     assert ask(d, "request-key-2", approve=True).status_code == 422
     assert d.client.post(f'/api/v1/tool-requests/{req["id"]}/clarifications', json=dict(text="more")).json()["code"] == "request_closed"
@@ -47,14 +47,14 @@ def test_ambiguous_request_asks_questions_and_clarification_reprocesses(desk):
     d = desk
     d.provider.triage += [triage("needs_clarification", questions=["Should the tool file a service request, or only show the booking?"]),
                           triage("feasible", [d.lookup, d.create])]
-    req = ask(d, "ambiguous-1", goal="TEST-ONLY: help customers with bookings").json()
+    req = ask(d, "ambiguous-1", goal="sandbox-only: help customers with bookings").json()
     assert req["status"] == "needs_clarification" and req["proposal_ids"] == []
     assert req["unresolved"] == [dict(kind="question", description="Should the tool file a service request, or only show the booking?", operation_ids=[], source="triage")]
     empty = d.client.post(f'/api/v1/tool-requests/{req["id"]}/clarifications', json=dict(text=""))
     assert empty.status_code == 422 and empty.json()["code"] == "clarification_required"
-    again = d.client.post(f'/api/v1/tool-requests/{req["id"]}/clarifications', json=dict(text="TEST-ONLY: file a service request")).json()
-    assert again["status"] == "proposed" and len(again["proposal_ids"]) == 1 and [c["text"] for c in again["clarifications"]] == ["TEST-ONLY: file a service request"]
-    assert d.provider.payloads[1][1]["owner_request"]["clarifications"] == ["TEST-ONLY: file a service request"]
+    again = d.client.post(f'/api/v1/tool-requests/{req["id"]}/clarifications', json=dict(text="sandbox-only: file a service request")).json()
+    assert again["status"] == "proposed" and len(again["proposal_ids"]) == 1 and [c["text"] for c in again["clarifications"]] == ["sandbox-only: file a service request"]
+    assert d.provider.payloads[1][1]["owner_request"]["clarifications"] == ["sandbox-only: file a service request"]
     assert len(again["run_ids"]) == 3
 
 
@@ -66,10 +66,10 @@ def test_absent_operations_stay_unavailable_and_invented_ones_are_rejected(desk)
                           triage("feasible", [d.attach]),
                           triage("unavailable", missing=[("absent_operation", "Claims lookup is missing", [d.lookup])]),
                           triage("unavailable", missing=[("missing_information", "Which bookings?", [])])]
-    cancel = ask(d, "absent-1", goal="TEST-ONLY: let customers cancel a booking").json()
+    cancel = ask(d, "absent-1", goal="sandbox-only: let customers cancel a booking").json()
     assert cancel["status"] == "unavailable" and cancel["proposal_ids"] == [] and cancel["unresolved"][0]["kind"] == "absent_operation"
     assert [k for k, _ in d.provider.payloads] == ["request_triage"]
-    photos = ask(d, "absent-2", goal="TEST-ONLY: let customers attach photos").json()
+    photos = ask(d, "absent-2", goal="sandbox-only: let customers attach photos").json()
     assert photos["status"] == "unavailable" and photos["unresolved"][0]["operation_ids"] == [d.attach]
     for key in ("absent-3", "absent-4", "absent-5", "absent-6"):
         bad = ask(d, key).json()
@@ -102,7 +102,7 @@ def test_existing_equivalent_tools_are_recognized_not_duplicated(desk):
     # Observed live: triage called a cancellation feasible, generation reported the gap and repeated the existing tool.
     d.provider.triage.append(triage("feasible", [d.lookup, d.create]))
     d.provider.generations.append(lambda inv, n: dict(proposals=[desk_proposal(inv, n)], capability_gaps=[dict(requested_capability="cancel a booking", explanation="No operation cancels a booking")]))
-    gap = ask(d, "existing-3", goal="TEST-ONLY: let customers cancel a booking").json()
+    gap = ask(d, "existing-3", goal="sandbox-only: let customers cancel a booking").json()
     assert gap["status"] == "unavailable" and gap["existing_proposal_ids"] == [pid] and gap["unresolved"][-1]["kind"] == "capability_gap" and proposal_count(d) == 1
 
 
@@ -159,7 +159,7 @@ def test_suggestions_are_grounded_and_decisions_touch_only_the_suggestion(desk):
     assert new["state"] == "needs_clarification" and not new["built"] and d.client.get(f'/api/v1/proposals/{new["proposal_id"]}').json()["decisions"] == []
     assert d.client.post(f'/api/v1/proposals/{new["proposal_id"]}/artifacts', json=dict(connector_id="desk")).status_code in (409, 422)
     assert decide(got["Booking lookup for customers"], action="accept").json()["request"]["id"] == req["id"]
-    revised = decide(got["Cancel a booking"], action="revise", title="TEST-ONLY: cancel or reschedule a booking").json()
+    revised = decide(got["Cancel a booking"], action="revise", title="sandbox-only: cancel or reschedule a booking").json()
     assert revised["revised"]["status"] == "revised" and revised["suggestion"]["parent_id"] == got["Cancel a booking"]["id"]
     assert revised["suggestion"]["content"]["revised_by_owner"] is True and revised["suggestion"]["category"] == "blocked_by_missing_api"
     # A later run does not bring back dismissed or accepted ideas.
@@ -222,15 +222,15 @@ def test_requests_and_suggestion_decisions_survive_a_restart(desk):
 def test_business_page_request_form_is_submitted_once(desk):
     d = desk
     page = d.client.get(f"/businesses/{d.bid}").text
-    assert "Request a tool" in page and "Suggest additional tools" in page
+    assert "Request a tool" in page and "Suggest tools" in page
     csrf, key = re.search(r'name="csrf" value="([^"]+)"', page)[1], re.search(r'name="request_key" value="([^"]+)"', page)[1]
-    d.provider.triage.append(triage("needs_clarification", questions=["TEST-ONLY question: which bookings?"]))
-    form = dict(csrf=csrf, business_id=d.bid, request_key=key, goal="TEST-ONLY: help customers with bookings", examples="")
+    d.provider.triage.append(triage("needs_clarification", questions=["sandbox-only question: which bookings?"]))
+    form = dict(csrf=csrf, business_id=d.bid, request_key=key, goal="sandbox-only: help customers with bookings", examples="")
     for _ in range(2):
         assert d.client.post("/actions/request_tool", data=form, follow_redirects=False).status_code == 303
     assert len(d.client.get(f"/api/v1/businesses/{d.bid}/tool-requests").json()) == 1
     page = d.client.get(f"/businesses/{d.bid}").text
-    assert "Needs clarification" in page and "TEST-ONLY question: which bookings?" in page and "Send and process again" in page
+    assert "Needs clarification" in page and "sandbox-only question: which bookings?" in page and "Send and process again" in page
     d.provider.ideas.append([idea("Service status for staff", "feasible", [d.health])])
     assert d.client.post("/actions/suggest", data=dict(csrf=csrf, business_id=d.bid, count="1"), follow_redirects=False).status_code == 303
     [s] = d.client.get(f"/api/v1/businesses/{d.bid}/suggestions").json()["suggestions"]

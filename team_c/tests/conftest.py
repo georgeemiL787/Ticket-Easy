@@ -32,7 +32,7 @@ class DeterministicModelSubstitute:
         self.count=1
 
     def call(self,kind,payload,output_model,run):
-        self.store.attempt(run,"TEST_SUBSTITUTE","deterministic-test-only","succeeded")
+        self.store.attempt(run,"TEST_SUBSTITUTE","deterministic-sandbox-only","succeeded")
         if kind=="generation":
             p=candidate(payload["inventory"])
             if self.mode=="invented": p["steps"][0]["operation_id"]="made-up"
@@ -62,7 +62,7 @@ def refreshed_review(verdict="proceed", summary="The owner's answers resolved th
                 verdict=verdict, summary=summary)
 
 
-TEST_REQUIREMENT_ANSWER="TEST-ONLY (not a business decision): only the authenticated record owner may use these operations."
+TEST_REQUIREMENT_ANSWER="sandbox-only (not a business decision): only the authenticated record owner may use these operations."
 
 
 def requirement_findings(payload):
@@ -71,7 +71,7 @@ def requirement_findings(payload):
     for r in payload.get("requirements",[]):
         a=payload["proposal"]["answers"].get(r["id"])
         text=a["text"] if a else ""
-        status="resolved" if text.startswith("TEST-ONLY") and "both" not in text else "contradictory" if "both" in text else "insufficient"
+        status="resolved" if text.startswith("sandbox-only") and "both" not in text else "contradictory" if "both" in text else "insufficient"
         result.append(dict(question_id=r["id"],status=status,explanation="Test substitute assessment",answer_revision_ids=[a["id"]] if a else []))
     return result
 
@@ -106,7 +106,7 @@ def answer_reconcile(client,pid,text,requirement_answer=TEST_REQUIREMENT_ANSWER)
 
 
 def confirm_requirements(client,pid):
-    """Test-only owner confirmation of every requirement the current reconciliation found sufficient."""
+    """Sandbox-only owner confirmation of every requirement the current reconciliation found sufficient."""
     p=client.get(f"/api/v1/proposals/{pid}").json()
     for r in p["requirements"]:
         response=client.post(f'/api/v1/proposals/{pid}/versions/{p["version"]}/requirements/{r["id"]}/confirm',json=dict(expected_revision=p["review_revision"]))

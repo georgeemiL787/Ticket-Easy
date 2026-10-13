@@ -67,7 +67,7 @@ export type Publications = TeamCPublication[];
 export type PublicationsError = string | null;
 export type TeamCError = string | null;
 export type TenantId = string;
-export type TestOnly = boolean;
+export type SandboxOnly = boolean;
 export type ApiHost = string | null;
 export type ArtifactSha256 = string | null;
 export type Detail2 = string;
@@ -101,7 +101,7 @@ export interface DashboardBusinessTools {
   publications_error?: PublicationsError;
   team_c_error?: TeamCError;
   tenant_id: TenantId;
-  test_only?: TestOnly;
+  sandbox_only?: SandboxOnly;
   tools: Tools;
 }
 export interface TeamCConnector {

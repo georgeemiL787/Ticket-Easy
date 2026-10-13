@@ -57,7 +57,7 @@ def main() -> int:
     for name in ("get_order", "create_ticket"):
         check(f"{name} is served by Team C as LIVE DEMO against {DEMO_SHOP.split('//')[1]}",
               tools[name]["environment"] == "live_demo" and tools[name]["api_host"] == "127.0.0.1:8103" and tools[name]["status"] == "available", tools[name])  # fmt: skip
-    check("the page counts the live tools and no longer says TEST-ONLY", page["live_tools"] == 2 and page["test_only"] is False, page["live_tools"])
+    check("the page counts the live tools and no longer says sandbox-only", page["live_tools"] == 2 and page["sandbox_only"] is False, page["live_tools"])
     live_pubs = [p for p in page["publications"] if p["environment"] == "live_demo" and p["status"] == "published"]
     check("its Live Demo publications are executable and never production-ready",
           len(live_pubs) >= 2 and all(p["execution_enabled"] and not p["production_ready"] for p in live_pubs), live_pubs)  # fmt: skip

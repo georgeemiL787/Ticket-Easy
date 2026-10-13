@@ -127,7 +127,7 @@ def create_app(variant=None, harness_key=None):
         with lock:
             return dict(bookings=list(bookings.values()), requests=list(requests))
 
-    # ---- test fixtures for Team C's automatic tests (TEST-ONLY): same contract as the Nile sandbox, key header x-fixture-key ----
+    # ---- test fixtures for Team C's automatic tests: same contract as the Nile sandbox, key header x-fixture-key ----
     runs = {}
 
     def fixture_auth(x_fixture_key: str = Header("")):

@@ -1,4 +1,4 @@
-"""Contract tests for the Nile sandbox's /_fixtures routes (TEST-ONLY), the provider Team C's automatic tests use for that shop."""
+"""Contract tests for the Nile sandbox's /_fixtures routes, the provider Team C's automatic tests use for that shop."""
 import sys
 from pathlib import Path
 import pytest

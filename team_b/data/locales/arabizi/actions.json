@@ -27,6 +27,7 @@
   "action_changed": "Fe haga etghayaret fel order ba3d ma so2eltak, fa ma3amaltesh 7aga. Momken te2olly tany 3ayez eh?",
   "approval_rejected": "Shokran 3ala sabrak. Fari2na raga3 talabak w ma2darsh yewafe2 3aleih. Fe 7aga tanya a2dar asa3dak feha?",
   "policy_refusal_offer": "{message}\n\nLaw 7abeb zameel men khedmet el 3omala2 yebos 3ala 7altak, olly bas.",
+  "not_delivered_yet": "El order beta3ak lessa ma wasalsh, fa ma2darsh a3mel talab estrga3 delwa2ty. Awel ma yewsalak te2dar terga3o fi modet el estrga3. Law 7abeb a2dar asa3dak fe 7aga tanya zay 7alet el order.",
   "alt_or": "aw",
   "policy_alternatives": "A2der ashoflak e5tyarat tanya badal keda: {options}."
 }

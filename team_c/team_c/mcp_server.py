@@ -1,4 +1,4 @@
-"""Local MCP server (stdio) for published artifacts: TEST-ONLY sandbox publications, Live Demo publications that call the
+"""Local MCP server (stdio) for published artifacts: sandbox publications, Live Demo publications that call the
 owner-configured real API, and (a separate process) promoted PRODUCTION publications.
 
 A normal process is bound at startup to one test business and one test identity taken from the trusted connector
@@ -67,13 +67,13 @@ def build_server(service, business_id, identity, production=False):
         return result(envelope)
 
     return Server("team-c-sandbox", version="0.1.0", on_list_tools=list_tools, on_call_tool=call_tool,
-                  instructions="Tools compiled from owner-reviewed artifacts: sandbox publications are TEST-ONLY; live_demo publications (see _meta.team_c.environment) "
+                  instructions="Tools compiled from owner-reviewed artifacts: sandbox publications are sandbox-only; live_demo publications (see _meta.team_c.environment) "
                                "call the owner-configured real API and are not a production release. The caller identity is fixed by this server; "
                                "results with is_error=true include partial and outcome_unknown executions, which must not be treated as success or retried blindly.")
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="TEST-ONLY sandbox MCP server over stdio (local development only)")
+    parser = argparse.ArgumentParser(description="sandbox MCP server over stdio (local development only)")
     parser.add_argument("--business-id", required=True)
     parser.add_argument("--identity", required=True, help="sandbox identity name in the trusted connector configuration")
     parser.add_argument("--database")

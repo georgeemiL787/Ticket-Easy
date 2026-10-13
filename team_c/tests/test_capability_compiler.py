@@ -41,7 +41,7 @@ def fixture(domain):
         dict(id="s1", operation_id=ops["GET"]["id"], purpose="Check resource", bindings=[binding("path.ref", "record")]),
         dict(id="s2", operation_id=ops["POST"]["id"], purpose="Apply change", bindings=[binding("path.ref", "record"), binding("body.choice", "choice"), binding("body." + owner, "actor")])],
         outputs=[dict(name="result", step_id="s2", response_status="200", pointer="")], configuration=[], expected_reads=["Resource"], expected_writes=["Change"], assumptions=[], questions=[], limitations=[], risk="medium", risk_rationale="Writes")
-    reqs = [dict(r, status="owner_confirmed", answer=dict(text="Test-only accepted intent")) for r in derive(content["steps"], inventory)]
+    reqs = [dict(r, status="owner_confirmed", answer=dict(text="Sandbox-only accepted intent")) for r in derive(content["steps"], inventory)]
     checks = []
     for r in reqs:
         if r["kind"] == "record_scope":

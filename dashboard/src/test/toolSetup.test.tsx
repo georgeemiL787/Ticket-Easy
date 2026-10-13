@@ -191,7 +191,7 @@ describe("tool setup: test and publish", () => {
     expect(await screen.findByText("Saved as version 3. Customers see no change until you use these tools.")).toBeInTheDocument();
     expect(calls.some((c) => c.path.endsWith("/activate"))).toBe(false); // nothing is in use yet
     await user.click(screen.getByRole("button", { name: "Use these tools now" }));
-    expect(await screen.findByText("Done. The assistant now uses: open_a_ticket.")).toBeInTheDocument();
+    expect(await screen.findByText("Done. The assistant now uses: Open a ticket.")).toBeInTheDocument();
     expect(calls.find((c) => c.path.endsWith("/activate"))?.body).toEqual({ bundle_version: 3 });
   });
 

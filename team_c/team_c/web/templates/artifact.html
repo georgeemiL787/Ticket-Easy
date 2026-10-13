@@ -9,7 +9,7 @@
 {% block content %}
 <h1>{{ c.name }}</h1>
 <p>{{ c.purpose }}</p>
-<p class="small">Built from proposal v{{ c.proposal.version }} · Environment: {% if is_live %}<strong class="badge live">LIVE DEMO</strong> calls the real API at <code>{{ c.connector.base_url }}</code>{% else %}<strong class="badge">SANDBOX</strong> (TEST-ONLY){% endif %} · Runtime-ready: no · Production-ready: no (not assessed) · Production activation: no</p>
+<p class="small">v{{ c.proposal.version }} · {% if is_live %}<strong class="badge live">LIVE DEMO</strong> <code>{{ c.connector.base_url }}</code>{% else %}<strong class="badge">SANDBOX</strong>{% endif %} · Runtime-ready: no</p>
 {% set conn = connector_status %}
 {% if conn %}<article>
 <h2>Connection</h2>
@@ -17,25 +17,25 @@
 {% if conn.last_check %}<ul>{% for chk in conn.last_check.checks %}<li>{{ m.badge(chk.status, "check") }} <strong>{{ chk.check }}</strong> <span class="small">{{ chk.detail }}</span></li>{% endfor %}</ul>
 {% else %}<p class="muted small">Not checked yet.</p>{% endif %}
 <form method="post" action="/actions/check_connector">{{ m.csrf_field() }}<input type="hidden" name="connector_id" value="{{ c.connector.id }}"><input type="hidden" name="back" value="/artifacts/{{ a.id }}">
-<button>Check connection</button> <span class="small muted">{% if is_live %}Sends one GET to the real API's base URL{% if c.connector.auth and c.connector.auth.type == 'oauth2_password' %} and one login per identity{% endif %}. It does not run any operation.{% else %}Sends one GET to the sandbox base URL.{% endif %}</span></form>
+<button>Check connection</button></form>
 </article>{% endif %}
 
-{% if c.execution_blockers %}{{ m.next("fix access enforcement", "This artifact cannot run until every access requirement has a reviewed enforcement mechanism. Go back to the proposal.") }}
-{% elif live and is_live %}{{ m.next("published as LIVE DEMO", "The assistant can call this tool now; each call reaches the real API. Disable it below at any time.") }}
-{% elif live %}{{ m.next("published for testing", "Sandbox MCP clients can call this tool now. Disable it below at any time.") }}
-{% elif publication_problems %}{{ m.next("finish the steps above", "Work through the remaining steps under Before this tool can run; this artifact may then be published.") }}
-{% elif is_live %}{{ m.next("publish as Live Demo", "All checks pass. Add a note and press Publish as Live Demo.") }}
-{% else %}{{ m.next("publish to the test-only MCP server", "All checks pass. Add a note and press Publish to sandbox MCP.") }}{% endif %}
+{% if c.execution_blockers %}{{ m.next("fix access enforcement") }}
+{% elif live and is_live %}{{ m.next("published as LIVE DEMO") }}
+{% elif live %}{{ m.next("published for testing") }}
+{% elif publication_problems %}{{ m.next("finish the steps above") }}
+{% elif is_live %}{{ m.next("publish as Live Demo") }}
+{% else %}{{ m.next("publish to the sandbox MCP server") }}{% endif %}
 {% for b in c.execution_blockers %}<p class="notice">Execution blocked: {{ b }}</p>{% endfor %}
 
 {% if guidance %}
 <article>
-<h2>Before this tool can run</h2>
+<h2>To do</h2>
 {% if guidance.unrunnable %}<p class="notice">{{ guidance.unrunnable }}</p>{% endif %}
 {% if not guidance.remaining and not guidance.unrunnable %}<p>This artifact is published and every check has passed.</p>
 {% else %}<ol>
 {% for s in guidance.steps %}<li>{% if s.done %}<strong>Done:</strong>{% else %}<strong>Next:</strong>{% endif %} {{ s.title }}
-<span class="muted small">— {{ s.why }}</span>
+<span class="muted small">{{ s.why }}</span>
 {% if not s.done and s.action %}<br><span class="small">{{ s.action }}</span>{% endif %}</li>{% endfor %}
 </ol>{% endif %}
 </article>
@@ -45,17 +45,16 @@
 {% set r = auto_run.result if auto_run else none %}
 <article id="auto-test">
 <h2>Automatic tests</h2>
-<p class="small">State: <strong>{{ a.readiness_state|replace('_', ' ')|capitalize }}</strong>. One button creates the test accounts and records it needs (from the connector's test fixtures, or from your existing test accounts), runs the scenarios this tool needs as evidence, and tells you whether it is ready to publish. It never approves anything and never publishes unless you tick the box.</p>
+<p class="small">State: <strong>{{ a.readiness_state|replace('_', ' ')|capitalize }}</strong></p>
 <form method="post" action="/actions/auto_test">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
-<label><input type="checkbox" name="publish_when_ready" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Publish to the TEST-ONLY sandbox MCP when everything passes</label>
+<label><input type="checkbox" name="publish_when_ready" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Publish to the sandbox MCP when everything passes</label>
 <button {% if a.readiness_state == 'testing' %}disabled{% endif %}>Run automatic tests</button></form>
 <details><summary class="small">Settings for this business and connector</summary>
 <form method="post" action="/actions/save_business_settings">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
-<label><input type="checkbox" name="auto_publish_sandbox" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Always publish to the sandbox MCP when automatic tests pass (off by default; never Live Demo or production)</label>
+<label><input type="checkbox" name="auto_publish_sandbox" value="1" {% if business_settings.auto_publish_sandbox %}checked{% endif %}> Always publish to the sandbox MCP when automatic tests pass</label>
 <button>Save business setting</button></form>
 {% if connector_status and not connector_status.external %}
 <form method="post" action="/actions/save_fixtures">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
-<p class="small muted">Test fixtures: endpoints of the sandbox that create disposable test accounts and records (never part of the API description). Only the NAME of the environment variable that holds the fixture key is stored.</p>
 <label>Fixtures base URL<input name="base_url" value="{{ connector_status.fixtures_endpoint.base_url if connector_status.fixtures_endpoint else c.connector.base_url }}" required></label>
 <label>Key variable name<input name="key_ref" value="{{ connector_status.fixtures_endpoint.key_ref if connector_status.fixtures_endpoint else '' }}" placeholder="MY_SANDBOX_FIXTURE_KEY" required pattern="[A-Za-z_][A-Za-z0-9_]*"></label>
 <button>Save fixtures</button></form>
@@ -76,7 +75,7 @@
 {% if promotions %}
 <article id="production">
 <h2>Production</h2>
-<p class="small muted">Read-only. A tool is promoted to production, and rolled back, by an admin in the product dashboard (or the admin API with the operator's token); this page can do neither.</p>
+<p class="small muted">Managed by an admin in the dashboard.</p>
 {% for p in promotions %}<details {% if p.status == 'active' %}open{% endif %}><summary>{{ m.badge("production", "environment") }} {{ p.status|replace('_', ' ')|capitalize }} · decided by {{ p.actor }} · {{ p.created_at[:19]|replace('T', ' ') }}</summary>
 <p class="small">Note: {{ p.note }} · Rollback contact: {{ p.rollback_contact }}{% if p.rolled_back_at %} · Rolled back {{ p.rolled_back_at[:19]|replace('T', ' ') }} by {{ p.rolled_back_by }}: {{ p.rollback_note }}{% endif %}</p>
 <ul class="small">{% for k, v in p.checklist.items() %}<li>{{ m.badge("ok" if v.ok else "failed", "check") }} <strong>{{ k|replace('_', ' ') }}</strong> {{ v.detail }}</li>{% endfor %}</ul></details>{% endfor %}
@@ -85,12 +84,11 @@
 
 <article>
 <h2 id="run-test">{% if is_live %}Run a live test{% else %}Run a sandbox test{% endif %}</h2>
-{% if is_live %}<p class="notice">Live Demo: this test calls the REAL API at <code>{{ c.connector.base_url }}</code> as the chosen identity. A write test changes real data in that account.</p>{% endif %}
-<p class="small muted">Runs against this artifact's connector as the chosen identity. The identity is never a tool argument.</p>
+{% if is_live %}<p class="notice">Live Demo: this test calls the real API at <code>{{ c.connector.base_url }}</code> and a write changes real data.</p>{% endif %}
 {% include "identity_setup.html" %}
 {% if not connectors.get(c.connector.id, []) %}<p class="notice">Add a test identity below before running this artifact.{% if not identity_setup.managed %} This connector's identities are managed in its external configuration.{% endif %}</p>{% endif %}
 {% set d = draft or {} %}
-{% if draft %}<div class="next"><strong>AI filled in the form below</strong> <span>{{ d.note }} Check the values, change anything, then press Run sandbox test.</span></div>{% endif %}
+{% if draft %}<div class="next"><strong>AI filled in the form below</strong> <span>{{ d.note }}</span></div>{% endif %}
 {% set scoped = c.access_requirements|selectattr('kind','equalto','record_scope')|list %}
 <form method="post" action="/actions/sandbox_test">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}">
 <label>Test identity<select name="identity">{% for i in connectors.get(c.connector.id, []) %}<option{% if i == d.identity %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></label>
@@ -99,7 +97,7 @@
 {% if scoped %}<option value="own_record" {% if d.scenario == "own_record" %}selected{% endif %}>It should work on this identity's own record (own-record test)</option>
 <option value="cross_user" {% if d.scenario == "cross_user" %}selected{% endif %}>It must be refused: this identity targets another customer's record (cross-user test)</option>{% endif %}
 </select></label>
-{% if scoped %}<label>Whose record is targeted? <span class="why">cross-user test only: the other identity that owns the record in the inputs below</span><select name="record_owner"><option value="">Not a cross-user test</option>{% for i in connectors.get(c.connector.id, []) %}<option{% if i == d.record_owner %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></label>{% endif %}
+{% if scoped %}<label>Whose record is targeted? <span class="why">cross-user sandbox only: the other identity that owns the record in the inputs below</span><select name="record_owner"><option value="">Not a cross-user test</option>{% for i in connectors.get(c.connector.id, []) %}<option{% if i == d.record_owner %} selected{% endif %}>{{ i }}</option>{% endfor %}</select></label>{% endif %}
 {% for name, prop in (c.input_schema.properties or {}).items() %}{% set kind = field_kind(prop) %}{% set req = name in (c.input_schema.required or []) %}
 <label>{{ prop.title or name }}{% if not req %} <span class="muted small">(optional)</span>{% endif %}{% if prop.description %} <span class="muted small">{{ prop.description }}</span>{% endif %}
 {% if prop.enum or kind == 'boolean' %}<select name="a:{{ name }}" {% if req %}required{% endif %}><option value="">Choose…</option>{% for v in (prop.enum or ['true', 'false']) %}<option{% if (d.arguments or {}).get(name) == v|string %} selected{% endif %}>{{ v }}</option>{% endfor %}</select>
@@ -108,23 +106,21 @@
 {% else %}<input name="a:{{ name }}" value="{{ (d.arguments or {}).get(name, '') }}" {% if prop.maxLength %}maxlength="{{ prop.maxLength }}"{% endif %} {% if req %}required{% endif %}>{% endif %}</label>
 {% else %}<p class="muted small">This tool takes no inputs.</p>{% endfor %}
 <button {% if c.execution_blockers or not connectors.get(c.connector.id, []) %}disabled{% endif %}>{{ "Run live test" if is_live else "Run sandbox test" }}</button>
-<button type="submit" class="secondary" formaction="/actions/suggest_test_inputs" formnovalidate {% if not connectors.get(c.connector.id, []) %}disabled{% endif %}>Fill in with AI</button> <span class="muted small">Pick what should happen first if you like; the AI chooses the identity and example values. It never sees credentials and runs nothing.</span>
-<p class="small muted">The result is judged against what you chose and recorded under Test results; a passing success test is what publishing needs.</p></form>
+<button type="submit" class="secondary" formaction="/actions/suggest_test_inputs" formnovalidate {% if not connectors.get(c.connector.id, []) %}disabled{% endif %}>Fill in with AI</button></form>
 </article>
 
 <article>
 <h2 id="test-results">Test results</h2>
-{% if a.readiness %}<p><strong>Compiled correctly.</strong> The readiness score ({{ a.readiness.score }}%) covers the specification, inputs, policy and generated guards only. It says nothing about whether the tool has ever run: a sandbox success and a cross-owner refusal are separate evidence, listed under "Before this tool can run".</p>{% endif %}
-{% if a.policy_tests %}<h3>Generated policy tests</h3><p>{{ 'Passed' if a.policy_tests.passed else 'Failed' }} · {{ a.policy_tests.cases|length }} guard scenarios</p><p class="small">{{ a.policy_tests.limitations|join(' ') }}</p><details><summary>Positive and negative cases</summary><ul>{% for case in a.policy_tests.cases %}<li>{{ case.name|replace('_',' ') }}: {{ 'passed' if case.passed else 'failed' }}</li>{% endfor %}</ul></details>{% endif %}
+{% if a.readiness %}<p class="small">Readiness {{ a.readiness.score }}%</p>{% endif %}
+{% if a.policy_tests %}<h3>Generated policy tests</h3><p>{{ 'Passed' if a.policy_tests.passed else 'Failed' }} · {{ a.policy_tests.cases|length }} guard scenarios</p><details><summary>Positive and negative cases</summary><ul>{% for case in a.policy_tests.cases %}<li>{{ case.name|replace('_',' ') }}: {{ 'passed' if case.passed else 'failed' }}</li>{% endfor %}</ul></details>{% endif %}
 {% macro test_row(t) %}<details><summary>{{ m.badge(t.verdict, "test") }} {{ t.name }} <span class="muted small">({{ 'current evidence' if t.current else 'superseded, history only' }})</span>{% if t.scenario and t.scenario != 'general' %} <span class="muted small">({{ t.scenario|replace('_', ' ') }}{% if t.record_owner %} on {{ t.record_owner }}'s record{% endif %})</span>{% endif %}{% if t.failure_report %} <span class="muted small">{{ t.failure_report.classification }}; repairable: {{ 'yes' if t.failure_report.repairable else 'no' }}</span>{% endif %}</summary><pre>{{ (t.failure_report or t.expectation)|tojson(indent=2) }}</pre></details>{% endmacro %}
-<p class="small muted">Publication uses only the latest run of each named test on this exact artifact. Earlier runs stay listed below for audit: a superseded failure no longer blocks publication, and a superseded success is no longer evidence.</p>
 {% if not a.tests %}<p class="muted">No recorded sandbox tests yet.</p>{% endif %}
 {% for t in a.tests if t.current %}{{ test_row(t) }}
 {% if t.verdict == 'failed' %}{% set ex = a.executions|selectattr('id','equalto',t.execution_id)|first|default({}) %}
 <form method="post" action="/actions/fix_and_retest" class="small">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><input type="hidden" name="identity" value="{{ ex.identity }}"><input type="hidden" name="scenario" value="{{ t.scenario or 'general' }}">{% if t.record_owner %}<input type="hidden" name="record_owner" value="{{ t.record_owner }}">{% endif %}
 <label>Fix and retest "{{ t.name }}" — attempts (k)<input type="number" name="attempts" min="1" max="5" value="3" style="max-width:6em"></label>
-<button>Fix and retest</button> <span class="muted">Reruns, diagnoses and fixes safe test-setup problems itself; uses the AI repair for wiring problems; stops and asks you when only you can act.</span></form>
-<details class="small"><summary>This test was set up wrongly: retire it</summary><form method="post" action="/actions/retire_test">{{ m.csrf_field() }}<input type="hidden" name="test_id" value="{{ t.id }}"><label>Why it was set up wrongly (kept in history)<input name="reason" required></label><button class="secondary">Retire this test</button> <span class="muted">It stays in history and stops blocking publication; it never counts as a pass.</span></form></details>{% endif %}
+<button>Fix and retest</button></form>
+<details class="small"><summary>This test was set up wrongly: retire it</summary><form method="post" action="/actions/retire_test">{{ m.csrf_field() }}<input type="hidden" name="test_id" value="{{ t.id }}"><label>Why it was set up wrongly (kept in history)<input name="reason" required></label><button class="secondary">Retire this test</button></form></details>{% endif %}
 {% endfor %}
 {% if fix %}<div id="fix" class="{{ 'next' if fix.outcome == 'passed' else 'notice' }}"><strong>Last Fix and retest: {{ {'passed':'fixed, the test passes','needs_owner':'needs your help','repaired':'repaired by the AI, needs your approval','exhausted':'still failing after all attempts'}.get(fix.outcome, fix.outcome|replace('_',' ')) }}</strong> ({{ fix.attempts_used }} attempt{{ 's' if fix.attempts_used != 1 }})
 <ol class="small">{% for s in fix.log %}<li>As {{ s.identity }}: {{ s.result }}{% if s.note %} — {{ s.note }}{% endif %}</li>{% endfor %}</ol>
@@ -141,11 +137,11 @@
 
 <article>
 {% if is_live %}<h2>Publish (LIVE DEMO)</h2>
-<p class="small muted">Publishing exposes this exact artifact to the assistant's MCP client. Each call then reaches the owner-configured real API at <code>{{ c.connector.base_url }}</code> with the connector's credentials, every call re-checked (publication, approval, enforcement, evidence, Live Demo switched on, allowed host). This is a Live Demo, not a production release: production readiness is not assessed and production activation does not exist. Disabling blocks later calls but cannot undo writes already completed or in flight.</p>
-{% else %}<h2>Publish (TEST-ONLY sandbox MCP)</h2>
-<p class="small muted">Publishing exposes this exact artifact to local sandbox MCP clients. It is a TEST-ONLY step, separate from approval and separate from production activation, which this product does not implement: permitted uses are artifact creation and sandbox testing, runtime-ready and activated stay false, and there is no production environment to activate. Disabling blocks later calls but cannot undo writes already completed or in flight.</p>{% endif %}
-{% if publication_problems %}<p>Cannot publish yet:</p><ul>{% for pr in publication_problems %}<li>{{ pr }}</li>{% endfor %}</ul>{% endif %}
-<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="{{ 'Live Demo publication' if is_live else 'TEST-ONLY sandbox publication' }}"></label><button {% if publication_problems %}disabled{% endif %}>{{ 'Publish as Live Demo' if is_live else 'Publish to sandbox MCP' }}</button></form>
+<p class="small muted">Each call reaches the real API at <code>{{ c.connector.base_url }}</code>. Disabling stops later calls; it cannot undo writes already completed.</p>
+{% else %}<h2>Publish (sandbox MCP)</h2>
+<p class="small muted">Sandbox only, not a production release. Disabling stops later calls; it cannot undo writes already completed.</p>{% endif %}
+{% if publication_problems %}<p>Cannot publish yet:</p><ul>{% for pr in publication_problems %}<li>{{ pr }}</li>{% endfor %}</ul>{% endif %}{% if publication_problems and not is_live and not c.execution_blockers %}<form method="post" action="/actions/easy_publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><button class="primary">Fix this for me: run the automatic tests and publish when they pass</button></form>{% endif %}
+<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="{{ 'Live Demo publication' if is_live else 'sandbox publication' }}"></label><button {% if publication_problems %}disabled{% endif %}>{{ 'Publish as Live Demo' if is_live else 'Publish to sandbox MCP' }}</button></form>
 {% for pub in publications %}
 <details {% if pub.status == 'published' %}open{% endif %}><summary>{{ m.badge(pub.environment, "environment") }} {{ m.badge(pub.effective_status, "publication") }} tool <code>{{ pub.tool_name }}</code>{% if pub.problem %} <span class="muted small">({{ pub.problem.code }})</span>{% endif %}</summary>
 <p class="small">Published {{ pub.published_at }} by {{ pub.publisher }} · Note: {{ pub.note }}{% if pub.disabled_at %} · Disabled {{ pub.disabled_at }} by {{ pub.disabled_by }}: {{ pub.disable_note }}{% endif %}</p>

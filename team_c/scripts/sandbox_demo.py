@@ -1,4 +1,4 @@
-"""Live sandbox demonstration on a COPY of the TEST-ONLY approved review database.
+"""Live sandbox demonstration on a COPY of the sandbox-only approved review database.
 
 The source database is opened read-only and copied. Two disposable, non-superuser accounts and one
 item each are created through the target's public API by an independent harness (not the tool);
@@ -100,7 +100,7 @@ def main():
         service.build_artifact(pid, ArtifactBuildSubmission(connector_id="target-sandbox"))
     except AppError as exc:
         log.append(dict(step="build_before_enforcement_review", code=exc.code))
-    config = service.review_enforcement(config["id"], EnforcementReviewSubmission(note="TEST-ONLY enforcement review on the demo copy"))
+    config = service.review_enforcement(config["id"], EnforcementReviewSubmission(note="sandbox-only enforcement review on the demo copy"))
     artifact = service.build_artifact(pid, ArtifactBuildSubmission(connector_id="target-sandbox"))
     c = artifact["content"]
     log.append(dict(step="artifacts_built", unenforced=dict(id=blocked["id"], execution_blockers=blocked["content"]["execution_blockers"]),

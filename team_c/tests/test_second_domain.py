@@ -1,7 +1,7 @@
 """Second domain: the local service-desk fixture and its renamed variant, plus the bounded repair loop.
 
 MOCKED / AUTHORED: proposals come from an AUTHORED TEST SUBSTITUTE built from the discovered inventory,
-and every review is a labeled TEST-ONLY decision. The live-model proof is scripts/domain_demo.py.
+and every review is a labeled sandbox-only decision. The live-model proof is scripts/domain_demo.py.
 Expected outcomes come from the fixture's documented rules (fixtures/service_desk/app.py), and backend
 state is read through the fixture's harness routes, independently of Team C.
 """

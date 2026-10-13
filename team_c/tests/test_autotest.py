@@ -1,7 +1,7 @@
 """Automatic tests: plan derivation (pure), provisioning through a fixture provider, state trying, owner questions, safety.
 
-MOCKED / AUTHORED: the proposal comes from the AUTHORED TEST SUBSTITUTE, owner decisions are TEST-ONLY and the target is the
-in-process service-desk fixture with its (test-only) /_fixtures provider. Nothing here is specific to one business API.
+MOCKED / AUTHORED: the proposal comes from the AUTHORED TEST SUBSTITUTE, owner decisions are sandbox-only and the target is the
+in-process service-desk fixture with its (sandbox-only) /_fixtures provider. Nothing here is specific to one business API.
 """
 import json
 import re

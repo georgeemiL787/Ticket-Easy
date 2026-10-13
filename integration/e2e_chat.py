@@ -7,7 +7,7 @@ sandbox's harness state are read independently. Prints PASS/FAIL per check and e
 
     team_b/.venv/Scripts/python.exe integration/e2e_chat.py
 
-It changes state on purpose (TEST-ONLY): it disables the order-lookup publication through Team B, checks the agent
+It changes state on purpose: it disables the order-lookup publication through Team B, checks the agent
 stops using it, then publishes the same tested artifact again through Team C's API and checks Team B discovers it.
 """
 
@@ -244,11 +244,11 @@ def main() -> int:
     print("\n== TEST C: disabling through Team B stops the tool at once")
     page = http.get("/v1/dashboard/business-tools", params={"tenant_id": T}).json()
     tools = {t["name"]: t for t in page["tools"]}
-    check("the business-tools page shows get_order served by Team C, TEST-ONLY",
-          page["test_only"] and tools["get_order"]["source"] == "team_c" and tools["get_order"]["status"] == "available", tools.get("get_order"))  # fmt: skip
+    check("the business-tools page shows get_order served by Team C, sandbox-only",
+          page["sandbox_only"] and tools["get_order"]["source"] == "team_c" and tools["get_order"]["status"] == "available", tools.get("get_order"))  # fmt: skip
     pub_id = state["publication_id"]
     r = http.post(f"/v1/dashboard/business-tools/publications/{pub_id}/disable", params={"tenant_id": T},
-                  json={"note": "TEST-ONLY e2e: check the agent stops using it"}, headers=headers)  # fmt: skip
+                  json={"note": "sandbox-only e2e: check the agent stops using it"}, headers=headers)  # fmt: skip
     after = r.json() if r.status_code == 200 else {}
     check("a manager disables the publication through Team B", r.status_code == 200, r.text[:300])
     check("Team B lists the tool as missing straight after",
@@ -264,7 +264,7 @@ def main() -> int:
           reply["decision"] == "handoff" and len(mcp_executions(team_c, artifact_id)) == count, reply)  # fmt: skip
 
     print("\n== TEST C: publishing again is discovered on refresh")
-    r = team_c.post(f"/api/v1/artifacts/{artifact_id}/publications", json={"note": "TEST-ONLY e2e: publish the tested artifact again"})
+    r = team_c.post(f"/api/v1/artifacts/{artifact_id}/publications", json={"note": "sandbox-only e2e: publish the tested artifact again"})
     check("Team C publishes the same tested artifact again (new publication)", r.status_code == 200, r.text[:300])
     if r.status_code == 200:
         state["publication_id"] = r.json()["id"]

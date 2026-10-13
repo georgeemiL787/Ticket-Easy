@@ -65,7 +65,7 @@ def auto_test(aid:str,body:AutoTestSubmission,service:ServiceDep):
 
 class BusinessSettingsInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    auto_publish_sandbox: bool  # publish to the TEST-ONLY sandbox MCP when automatic tests pass (never Live Demo or production)
+    auto_publish_sandbox: bool  # publish to the sandbox MCP when automatic tests pass (never Live Demo or production)
 
 
 @router.get("/businesses/{bid}/settings")

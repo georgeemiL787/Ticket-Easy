@@ -95,7 +95,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         env.update(
             DATABASE_PATH="data/integration.sqlite3",  # its own database, next to Team C's others (git-ignored)
             SANDBOX_HOSTS=f"127.0.0.1:{PORTS['sandbox']}",
-            OPENAPI_FETCH_HOSTS=f"127.0.0.1:{PORTS['sandbox']},127.0.0.1:{PORTS['demo-shop']}",
+            OPENAPI_FETCH_HOSTS="loopback:*",  # any API running on this machine (a stack for local use only)
             SESSION_SECRET=secret("team_c_session.key"),
             NILE_SANDBOX_FIXTURE_KEY=secret("sandbox_harness.key"),  # the sandbox's fixture key defaults to its harness key
             PYTHONPATH=".",

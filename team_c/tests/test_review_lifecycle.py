@@ -1,6 +1,6 @@
 """Review lifecycle scenarios on a target-shaped OpenAPI 3.1 inventory.
 
-The model is a deterministic TEST SUBSTITUTE and every owner answer is a labeled TEST-ONLY value,
+The model is a deterministic TEST SUBSTITUTE and every owner answer is a labeled sandbox-only value,
 not a business decision.
 """
 import json
@@ -96,7 +96,7 @@ def test_proposal_page_shows_requirements_and_html_supersession(lifecycle):
     assert "Access and identity requirements" in page and "Runtime-ready: <strong>no</strong>" in page and "Question review:" in page
     csrf = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
     p = current(client, pid)
-    r = client.post("/actions/supersede_question", data=dict(csrf=csrf, proposal_id=pid, version=p["version"], revision=p["review_revision"], question_id="q2", reason="TEST-ONLY: response-only field"))
+    r = client.post("/actions/supersede_question", data=dict(csrf=csrf, proposal_id=pid, version=p["version"], revision=p["review_revision"], question_id="q2", reason="sandbox-only: response-only field"))
     assert r.status_code == 200 and "Changes from version 1" in r.text and "Question q2 removed" in r.text
 
 
@@ -126,7 +126,7 @@ def test_requirements_block_approval_even_when_the_model_asks_nothing(lifecycle)
     assert approve(client, pid).status_code == 200
 
 
-@pytest.mark.parametrize("text,status", [("yes", "insufficient"), ("", "insufficient"), ("TEST-ONLY: both the owner and any logged-in user", "contradictory")])
+@pytest.mark.parametrize("text,status", [("yes", "insufficient"), ("", "insufficient"), ("sandbox-only: both the owner and any logged-in user", "contradictory")])
 def test_insufficient_or_contradictory_answers_stay_unresolved(lifecycle, text, status):
     _, client, _, spec, scope = lifecycle
     pid = generate(client, spec, scope)

@@ -1,7 +1,7 @@
 """Live end-to-end run on the local service-desk fixture, an independent second domain.
 
-OpenAPI discovery -> live-model proposal -> labeled TEST-ONLY review and approval -> operator enforcement
-with TEST-ONLY review -> automatic artifact build -> sandbox tests -> independent backend verification.
+OpenAPI discovery -> live-model proposal -> labeled sandbox-only review and approval -> operator enforcement
+with sandbox-only review -> automatic artifact build -> sandbox tests -> independent backend verification.
 With --repair: a missing-capability case is sent to live repair, then a labeled FAULT INJECTION (authored,
 not model output) creates a mapping defect that the live model must repair (at most twice) through fresh review.
 Uses a fresh database; the real review database is only hashed to prove it is unchanged.
@@ -25,7 +25,7 @@ from team_c.service import Service
 from team_c.storage import Store
 
 PREFLIGHT_REFUSALS = {"repair_stale", "repair_not_applicable", "verification_required", "repair_exhausted", "nothing_to_repair"}
-LABEL = "TEST-ONLY (live second-domain check; not a business decision): "
+LABEL = "sandbox-only (live second-domain check; not a business decision): "
 ANSWERS = {
     "question": "ownership is verified by comparing the booking holder returned by the lookup with the authenticated customer before any request is filed.",
     "caller_access": "only authenticated customers may use these operations, and only for their own bookings; no staff or administrator use.",
@@ -51,12 +51,12 @@ class Backend:
 
 
 class FaultInjection:
-    """FAULT INJECTION (authored, TEST-ONLY): feeds the holder identifier where the booking identifier belongs."""
+    """FAULT INJECTION (authored, sandbox-only): feeds the holder identifier where the booking identifier belongs."""
     def __init__(self, store, n):
         self.store, self.n = store, n
 
     def call(self, kind, payload, output_model, run):
-        self.store.attempt(run, "FAULT_INJECTION", "authored-test-only", "succeeded")
+        self.store.attempt(run, "FAULT_INJECTION", "authored-sandbox-only", "succeeded")
         content = json.loads(json.dumps(payload["proposal"]))
         for step in content["steps"]:
             for b in step["bindings"]:
@@ -96,7 +96,7 @@ def mapping_check(service, view, n):
 
 
 def review(service, pid, log, label):
-    """Labeled TEST-ONLY answers, live reconciliation, confirmation of sufficient answers, then approval."""
+    """Labeled sandbox-only answers, live reconciliation, confirmation of sufficient answers, then approval."""
     view = service.view(pid)
     for qid in sorted({x["question_id"] for x in view["question_review"]}):
         note = next(x["note"] for x in view["question_review"] if x["question_id"] == qid)
@@ -128,12 +128,12 @@ def review(service, pid, log, label):
     view = service.view(pid)
     d = service.decide(pid, view["version"], DecisionSubmission(expected_revision=view["review_revision"], action="approve_to_build", reason=LABEL + "approval",
                                                                idempotency_key=f"{label}-{pid}-{view['version']}"))
-    log.append(dict(step=f"{label}:approved_test_only", version=view["version"], decision_id=d["id"]))
+    log.append(dict(step=f"{label}:approved_sandbox_only", version=view["version"], decision_id=d["id"]))
     return True
 
 
 def build(service, pid, n, ctx, log, label):
-    """Operator enforcement (authored from the API contract), its TEST-ONLY review, then the automatic build."""
+    """Operator enforcement (authored from the API contract), its sandbox-only review, then the automatic build."""
     view = service.view(pid)
     steps = labels(service, view)
     lookup = view["content"]["steps"][steps.index(f'GET {n["prefix"]}{n["lookup"]}')]["id"] if f'GET {n["prefix"]}{n["lookup"]}' in steps else None
@@ -201,7 +201,7 @@ def main():
         store = Store(db)
         live = Providers(settings, store)
         service = Service(settings, store, live)
-        business = service.business("Harbor Stay (TEST-ONLY second domain)", Path("examples/service-desk-business.txt").read_text(encoding="utf-8"))
+        business = service.business("Harbor Stay (sandbox-only second domain)", Path("examples/service-desk-business.txt").read_text(encoding="utf-8"))
         Path(connectors).write_text(json.dumps(dict(connectors={"desk-sandbox": dict(business_id=business["id"], base_url=base, sandbox=True, context_fields=[ctx], identities={
             name: dict(token=p["token"], scope="end_user", context={ctx: holder(p)}) for name, p in people.items()})})), encoding="utf-8")
         spec = service.fetch(business["id"], base + "/openapi.json")
@@ -267,7 +267,7 @@ def repair_demo(service, backend, live, pid, current, n, ctx, people, booking, l
     view = service.view(pid)
     service.providers = FaultInjection(service.store, n)
     try:
-        injected = service.revise(pid, RevisionSubmission(expected_revision=view["review_revision"], instruction="FAULT INJECTION (TEST-ONLY): wire the holder identifier into the booking identifier."), actor="fault_injection")
+        injected = service.revise(pid, RevisionSubmission(expected_revision=view["review_revision"], instruction="FAULT INJECTION: wire the holder identifier into the booking identifier."), actor="fault_injection")
     finally:
         service.providers = live
     log.append(dict(step="repair:fault_injected", note="Authored defect through the normal revision path; provider recorded as FAULT_INJECTION", result=injected,

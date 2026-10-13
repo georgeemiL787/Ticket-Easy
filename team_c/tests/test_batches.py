@@ -94,8 +94,8 @@ def test_a_batch_rejects_unknown_operations_and_empty_choices(started):
 
 
 def test_the_approval_reviews_builds_and_tests_in_the_owners_name(started, tmp_path, monkeypatch):
-    # the deterministic substitute only accepts answers labelled TEST-ONLY; a live model judges the real wording
-    monkeypatch.setattr("team_c.services.batches.owner_statement", lambda access, actor: f"TEST-ONLY (recorded for {actor}): only the authenticated owner of an item may read or update it.")
+    # the deterministic substitute only accepts answers labelled sandbox-only; a live model judges the real wording
+    monkeypatch.setattr("team_c.services.batches.owner_statement", lambda access, actor: f"sandbox-only (recorded for {actor}): only the authenticated owner of an item may read or update it.")
     app, client, settings, spec, get_id, put_id = started
     settings.sandbox_hosts = "target.test:80"
     target = FakeTarget()

@@ -254,8 +254,12 @@ if (typeof document !== "undefined") {
         (f.audit_id ? " · audit " + f.audit_id : ""))),
       pkg.similar_tickets && pkg.similar_tickets.length ? block(tr("Similar past tickets"),
         list(pkg.similar_tickets, (t) => t.category + ": " + t.resolution)) : null,
-      block(tr("Conversation"), el("div", { class: "transcript" }, (pkg.transcript || []).map((l) =>
-        el("div", { class: "line " + l.role, dir: "auto", text: l.text })))),
+      block(tr("Conversation"), el("div", { class: "transcript" }, [
+        ...(pkg.transcript || []).map((l) => el("div", { class: "line " + l.role, dir: "auto", text: l.text })),
+        // what colleagues have written since the hand-over, so the whole exchange reads in one place
+        ...(c.events || []).filter((e) => e.kind === "reply" && e.note).map((e) =>
+          el("div", { class: "line human_agent", dir: "auto", text: e.actor + ": " + e.note })),
+      ])),
       block(tr("History"), list(c.events, (e) => new Date(e.at).toLocaleString() + " · " + e.actor + " · " + e.kind.replaceAll("_", " ") +
         (e.note ? " - " + e.note : ""))),
     ];

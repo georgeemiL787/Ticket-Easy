@@ -1,6 +1,6 @@
 """Live-model review lifecycle check on a COPY of a proposal database.
 
-The source database is opened read-only and copied; every write (supersession, labeled TEST-ONLY
+The source database is opened read-only and copied; every write (supersession, labeled sandbox-only
 answers, confirmations, the approval) happens in the copy. Nothing here is a business decision.
 """
 import argparse
@@ -16,7 +16,7 @@ from team_c.providers import Providers
 from team_c.service import Service
 from team_c.storage import Store
 
-LABEL = "TEST-ONLY (live check on a database copy; not a business decision): "
+LABEL = "sandbox-only (live check on a database copy; not a business decision): "
 ANSWERS = {
     "question": "ownership is checked by comparing the item's owner with the authenticated caller before it is returned or updated.",
     "caller_access": "only authenticated users may call these operations, and only for items they own; no administrator access.",

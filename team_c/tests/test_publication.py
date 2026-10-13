@@ -1,6 +1,6 @@
 """Sandbox publication records, evidence rules and the MCP result mapping (in process).
 
-MOCKED / AUTHORED: proposals come from the AUTHORED TEST SUBSTITUTE, reviews are TEST-ONLY decisions and
+MOCKED / AUTHORED: proposals come from the AUTHORED TEST SUBSTITUTE, reviews are sandbox-only decisions and
 executor traffic goes to the in-process service-desk fixture through a mock transport. The real SDK
 client over stdio is exercised in test_mcp_stdio.py.
 """
@@ -78,7 +78,6 @@ def test_an_older_failed_run_stays_visible_while_a_newer_passing_run_becomes_the
     assert [t["current"] for t in named] == [False, True]            # only the latest run is evidence
     page = d.client.get(f"/artifacts/{a['id']}").text
     assert page.count("owner_files_request") >= 2 and "Superseded runs (history only)" in page
-    assert "a superseded failure no longer blocks publication" in page
     pub = publish(d, a["id"])
     assert pub.status_code == 200, pub.text
     evidence = pub.json()["evidence"]
@@ -91,7 +90,7 @@ def test_test_only_publication_is_stated_separately_from_production_activation(d
     d = desk
     a = review_and_build(d, generated(d))
     page = d.client.get(f"/artifacts/{a['id']}").text
-    assert "separate from production activation, which this product does not implement" in page
+    assert "not a production release" in page
     activation = d.client.get(f"/api/v1/artifacts/{a['id']}").json()["content"]["activation"]
     assert activation["runtime_ready"] is False and activation["activated"] is False
     assert activation["permitted_uses"] == ["artifact_creation", "sandbox_testing"]
@@ -231,7 +230,7 @@ def test_the_ai_helper_prefills_the_sandbox_test_form_without_running_anything(d
         if kind != "test_input_suggestion":
             return original(self, kind, payload, output_model, run)
         seen.update(payload)
-        self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+        self.store.attempt(run, "TEST_SUBSTITUTE", "authored-sandbox-only", "succeeded")
         return output_model(identity="bob", record_owner="alice", arguments=[dict(name=n, value="42") for n in names] + [dict(name="invented", value="x")], note="Replace the id.")
 
     monkeypatch.setattr(RevisingDesk, "call", call)

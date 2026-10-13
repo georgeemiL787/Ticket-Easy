@@ -252,6 +252,25 @@ class Proposals:
             row["policy_form"]["scopes"] = list(row["policy_form"].get("scopes", [])) + [
                 dict(requirement_id=a["requirement_id"], mode=a["mode"], reason=a["reason"]) for a in advice["requirements"]
                 if a["mode"] in ("checked", "api_filtered") and a["requirement_id"] not in decided_scopes]
+        form = row["policy_form"]
+        row["resource_owner_possible"] = any(r["kind"] == "record_scope" for r in row["requirements"])
+        row["policy_form_notes"] = []
+        if not policy:
+            # "Resource owner" needs an ownership check the form can only take for a record the caller selects. A suggestion
+            # (the AI advisor's or the default) that has none would fail on Accept with nothing the owner can fix: use signed-in users.
+            if "resource_owner" in form.get("principals", []) and not any(c.get("kind") == "ownership" for c in form.get("checks", [])):
+                form["principals"] = sorted({"end_user" if p == "resource_owner" else p for p in form["principals"]})
+                row["policy_form_notes"].append(
+                    "Resource owner was suggested, but no record's owner can be checked for this tool, so \"Authenticated user\" is ticked instead. "
+                    + ("Choose \"Only records that belong to the caller\" and fill the ownership check below if you want resource owner."
+                       if row["resource_owner_possible"] else "Callers do not pick a record here, so there is no ownership to check."))
+            # The effects start from what the operations suggest (a refund moves money, a delete cannot be undone); the owner confirms.
+            effects = self._suggested_effects(row["content"], ops)
+            if effects:
+                for key, value in effects.items():
+                    if form.get(key) is None:
+                        form[key] = value
+                row["policy_form_notes"].append("The effects below are suggested from the operations (for example a refund is financial). Check them before accepting.")
         row["policy_review_pending"] = bool(row["derived"].get("policy_review_required") and not policy)
         row["capability"] = capability(row["content"], inventory)
         artifact, guards = self.build_evidence(pid, version, row["policy"], row["enforcement"])
@@ -296,6 +315,17 @@ class Proposals:
         if view.get("policy"):
             snapshot["policy_sha256"] = view["policy"]["sha256"]
         return snapshot
+
+    @staticmethod
+    def _suggested_effects(content, ops):
+        """The four effect flags the operations of a tool that changes data suggest, or {} for a read-only tool."""
+        from ..classify import operation_class
+        found = [operation_class(ops[s["operation_id"]])["suggested_effects"] for s in content["steps"]
+                 if s["operation_id"] in ops and ops[s["operation_id"]].get("method", "GET") not in ("GET", "HEAD", "OPTIONS")]
+        if not found:
+            return {}
+        return dict(financial=any(f["financial"] for f in found), irreversible=any(f["irreversible"] for f in found),
+                    external_side_effects=any(f["external_side_effects"] for f in found), idempotent=all(f["idempotent"] for f in found))
 
     def build_evidence(self, pid, version, policy, enforcement):
         """The guard evidence for this version, or (None, None) when it no longer describes it.

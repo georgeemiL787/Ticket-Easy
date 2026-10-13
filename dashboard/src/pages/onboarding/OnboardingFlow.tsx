@@ -139,7 +139,7 @@ export default function OnboardingFlow() {
                       })
                     }
                   >
-                    {t("ob.review.try")}
+                    {t("ob.review.tryButton")}
                   </button>{" "}
                   <button type="button" onClick={() => review.reload()}>
                     {t("ob.review.refresh")}

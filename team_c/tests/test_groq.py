@@ -206,9 +206,9 @@ def test_keys_rotate_only_until_one_succeeds(tmp_path, failure, successful_slot)
         if len(seen) == successful_slot:
             return chat_ok(request, body)
         if failure == "timeout":
-            raise httpx.ReadTimeout("TEST-ONLY timeout", request=request)
+            raise httpx.ReadTimeout("sandbox-only timeout", request=request)
         if failure == "unreachable":
-            raise httpx.ConnectError("TEST-ONLY offline", request=request)
+            raise httpx.ConnectError("sandbox-only offline", request=request)
         return httpx.Response(failure)
     result, error, sent, attempts, *_ = call(tmp_path, dict(groq=groq, ollama=untouched), **BACKUP_KEYS)
     assert error is None and result.proposals == []

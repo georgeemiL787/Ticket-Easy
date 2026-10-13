@@ -10,7 +10,7 @@ POST /v1/dashboard/business-tools/artifacts/{id}/promote?tenant_id= {"note","rol
      unless its whole checklist passes)
 POST /v1/dashboard/business-tools/promotions/{id}/rollback?tenant_id= {"note"}   switch a production tool off (admin)
 
-Environments are shown as they are: SANDBOX (TEST-ONLY destinations and identities), LIVE DEMO (calls the
+Environments are shown as they are: SANDBOX (sandbox-only destinations and identities), LIVE DEMO (calls the
 owner-configured real API) or PRODUCTION (a promoted tool that acts on real customers' data with the business's
 service credential; Team C scopes every call to the verified customer). A tool is production only if Team C says so
 for a promoted, active publication.
@@ -140,7 +140,7 @@ class TeamCProposal(BaseModel):
 class DashboardBusinessTools(BaseModel):
     tenant_id: str
     configured: bool  # is any tool of this business served by Team C?
-    test_only: bool = True  # no tool the agent uses calls a real API (every Team C tool in use is a sandbox one)
+    sandbox_only: bool = True  # no tool the agent uses calls a real API (every Team C tool in use is a sandbox one)
     production_connector: bool = False  # the business has a production connector in Team C (so a tool can be promoted)
     live_tools: int = 0  # tools the agent uses that call an owner-configured real API (Live Demo)
     production_tools: int = 0  # tools the agent uses that act on real customers' data (promoted to production)
@@ -202,7 +202,7 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
         tools=tools,
         live_tools=live,
         production_tools=production,
-        test_only=live == 0 and production == 0,
+        sandbox_only=live == 0 and production == 0,
     )
     if team_c is None or binding is None:
         return out

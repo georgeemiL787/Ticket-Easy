@@ -12,7 +12,7 @@
 {% if c.execution_blockers %}{{ m.next("fix access enforcement", "This artifact cannot run until every access requirement has a reviewed enforcement mechanism. Go back to the proposal.") }}
 {% elif live %}{{ m.next("published for testing", "Sandbox MCP clients can call this tool now. Disable it below at any time.") }}
 {% elif publication_problems %}{{ m.next("run sandbox tests", "Run the tests listed under Publish until every check passes.") }}
-{% else %}{{ m.next("publish to the test-only MCP server", "All checks pass. Add a note and press Publish to sandbox MCP.") }}{% endif %}
+{% else %}{{ m.next("publish to the sandbox MCP server", "All checks pass. Add a note and press Publish to sandbox MCP.") }}{% endif %}
 {% for b in c.execution_blockers %}<p class="notice">Execution blocked: {{ b }}</p>{% endfor %}
 
 <article>
@@ -33,10 +33,10 @@
 </article>
 
 <article>
-<h2>Publish (TEST-ONLY sandbox MCP)</h2>
+<h2>Publish (sandbox MCP)</h2>
 <p class="small muted">Publishing exposes this exact artifact to local sandbox MCP clients. It is separate from approval and never production (production activation: no, production-ready: no). Disabling blocks later calls but cannot undo writes already completed or in flight.</p>
 {% if publication_problems %}<p>Cannot publish yet:</p><ul>{% for pr in publication_problems %}<li>{{ pr }}</li>{% endfor %}</ul>{% endif %}
-<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="TEST-ONLY sandbox publication"></label><button {% if publication_problems %}disabled{% endif %}>Publish to sandbox MCP</button></form>
+<form method="post" action="/actions/publish">{{ m.csrf_field() }}<input type="hidden" name="artifact_id" value="{{ a.id }}"><label>Publication note<input name="note" required value="sandbox publication"></label><button {% if publication_problems %}disabled{% endif %}>Publish to sandbox MCP</button></form>
 {% for pub in publications %}
 <details {% if pub.status == 'published' %}open{% endif %}><summary>{{ m.badge(pub.effective_status, "publication") }} tool <code>{{ pub.tool_name }}</code>{% if pub.problem %} <span class="muted small">({{ pub.problem.code }})</span>{% endif %}</summary>
 <p class="small">Published {{ pub.published_at }} by {{ pub.publisher }} · Note: {{ pub.note }}{% if pub.disabled_at %} · Disabled {{ pub.disabled_at }} by {{ pub.disabled_by }}: {{ pub.disable_note }}{% endif %}</p>

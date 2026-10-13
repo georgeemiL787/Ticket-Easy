@@ -48,7 +48,7 @@ def test_policy_is_version_bound_and_generated_tests_do_not_grant_publication(li
     a = built.json()
     assert a["content"]["access_policy"]["sha256"] == saved.json()["policy"]["sha256"]
     assert a["policy_tests"]["passed"] and a["policy_tests"]["artifact_sha256"] == a["sha256"]
-    assert client.post(f'/api/v1/artifacts/{a["id"]}/publications', json=dict(note="Test only")).status_code == 409
+    assert client.post(f'/api/v1/artifacts/{a["id"]}/publications', json=dict(note="Sandbox only")).status_code == 409
     assert post(client, pid, "policy", policy=policy).status_code == 409
     app.state.service.execution_transport = httpx.MockTransport(FakeTarget())
     result = client.post(f'/api/v1/artifacts/{a["id"]}/sandbox-runs', json=dict(identity="alice", arguments=dict(item_id=ITEM_A, title="change")))
@@ -83,7 +83,7 @@ def test_policy_test_runs_from_another_hash_never_satisfy_this_artifact(lifecycl
     assert client.get(page).json()["policy_tests"]["passed"] is True
     record("latest-for-this-hash", a["sha256"], False, "2999-01-02T00:00:00")  # latest run of this build
     assert client.get(page).json()["policy_tests"]["passed"] is False
-    problems = client.post(page + "/publications", json=dict(note="TEST-ONLY")).json()["details"]["problems"]
+    problems = client.post(page + "/publications", json=dict(note="sandbox-only")).json()["details"]["problems"]
     assert any("policy security tests must pass for this artifact hash" in p for p in problems)
 
 

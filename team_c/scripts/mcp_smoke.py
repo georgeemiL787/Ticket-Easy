@@ -3,7 +3,7 @@
 REAL: stdio server process, SDK client, HTTP to the running items target (127.0.0.1:8001, read-only code)
 and to the service-desk fixture started here as a separate process. Backend state is checked by
 independent harness clients.
-REUSED / TEST-ONLY: saved artifacts from copies of the TEST-ONLY demo databases (no generation, no model
+REUSED / sandbox-only: saved artifacts from copies of the sandbox-only demo databases (no generation, no model
 calls); fresh disposable accounts; sandbox tests and publications are recorded only in isolated copies.
 Credentials live in local connectors files and are asserted absent from the printed log.
 
@@ -30,7 +30,7 @@ from team_c.models import PublicationDisableSubmission, PublicationSubmission, S
 from team_c.service import Service
 from team_c.storage import Store
 
-NOTE = "TEST-ONLY sandbox publication (MCP smoke run, isolated copy)"
+NOTE = "sandbox publication (MCP smoke run, isolated copy)"
 
 
 def copy(source, target):
@@ -109,7 +109,7 @@ async def exercise(d, aid, owner, other, valid, cross, extra, state, log):
         log.append(dict(step="cross_user_call", identity=other, result=await call(s, name, cross), backend_unchanged=state() == before))
     async with d.session(owner) as s:
         log.append(dict(step="after_restart", tools=[t["name"] for t in await listed(s)]))
-        d.service.disable_publication(pub["id"], PublicationDisableSubmission(note="TEST-ONLY: smoke run finished"))
+        d.service.disable_publication(pub["id"], PublicationDisableSubmission(note="sandbox-only: smoke run finished"))
         before = state()
         log.append(dict(step="call_after_disable_same_session", result=await call(s, name, valid), tools=await listed(s), backend_unchanged=state() == before))
 

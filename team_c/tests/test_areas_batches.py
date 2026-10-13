@@ -17,7 +17,7 @@ from helpers.tool_requests import RequestDesk, ask, idea, lookup_only, triage
 
 
 def named(name, audience="customer"):
-    return dict(name=name, description=f"TEST-ONLY {name}", audience=audience, reason="TEST-ONLY")
+    return dict(name=name, description=f"sandbox-only {name}", audience=audience, reason="sandbox-only")
 
 
 class AreaDesk(RequestDesk):
@@ -29,7 +29,7 @@ class AreaDesk(RequestDesk):
     def call(self, kind, payload, output_model, run):
         if kind in ("area_naming", "area_assignment"):
             self.payloads.append((kind, payload))
-            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-sandbox-only", "succeeded")
             if kind == "area_naming":
                 return AreaNamingOutput.model_validate(dict(areas=self.namings.pop(0)))
             names = [a["name"] for a in payload["areas"]]
@@ -134,8 +134,8 @@ def test_selected_areas_limit_what_the_model_sees(desk):
     assert bad.status_code == 422 and bad.json()["code"] == "unknown_area"
     chosen = d.client.post(f"/api/v1/specifications/{d.sid}/areas", json=dict(area_ids=[booking["id"]])).json()
     assert chosen["selected"] == [booking["id"]] and set(chosen["included_ids"]) == set(booking["operation_ids"])
-    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: no such operation", ())]))
-    d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal="TEST-ONLY: show the service status", idempotency_key="areas-key-1"))
+    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "sandbox-only: no such operation", ())]))
+    d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal="sandbox-only: show the service status", idempotency_key="areas-key-1"))
     sent = d.provider.payloads[-1][1]["operation_index"]
     assert {o["id"] for o in sent["operations"]} <= set(booking["operation_ids"]) and d.health not in {o["id"] for o in sent["operations"]}
     assert sent["coverage"]["area_scoped"] is True
@@ -143,13 +143,13 @@ def test_selected_areas_limit_what_the_model_sees(desk):
 
 def test_capability_outside_the_first_slice_is_found_by_expanding_retrieval(desk):
     d = desk
-    inv, goal = d.spec["inventory"], "TEST-ONLY: health health reference"
+    inv, goal = d.spec["inventory"], "sandbox-only: health health reference"
     ranked = capabilities.operation_index(inv, 10 ** 9, None, (), goal)[1]["considered_ids"]
     # The capability the owner asks for (the lookup) is deliberately ranked outside the first slice.
     assert ranked[:2] == [d.health, d.lookup]
     sizes = {o["id"]: len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]}
     d.service.settings.capability_index_chars = sizes[d.health] + sizes[d.lookup] - 1
-    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+    d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "sandbox-only: not in this slice", ())]))
     d.provider.triage.append(triage("feasible", [d.lookup]))
     d.provider.generations.append(lookup_only)
     req = ask(d, "expand-1", goal=goal).json()
@@ -163,13 +163,13 @@ def test_capability_outside_the_first_slice_is_found_by_expanding_retrieval(desk
 
 def test_absent_capability_searches_the_whole_catalog_before_declaring_absence(desk):
     d = desk
-    inv, goal = d.spec["inventory"], "TEST-ONLY: show the service status"
+    inv, goal = d.spec["inventory"], "sandbox-only: show the service status"
     sizes = [len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]]
     d.service.settings.capability_index_chars = max(sizes) + 1      # one operation per retrieval round
     # Every scripted round claims absence, so retrieval has to keep fetching slices until nothing is
     # left unsearched: one slice is a statement about the slice, not about the API.
     for _ in range(8):
-        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "sandbox-only: not in this slice", ())]))
     first = d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests",
                           json=dict(goal=goal, idempotency_key="batch-key-1")).json()
     cov, search = first["coverage"], first["outcome"]["search"]
@@ -188,12 +188,12 @@ def test_absent_capability_searches_the_whole_catalog_before_declaring_absence(d
 
 def test_retrieval_cap_reports_a_partial_search_rather_than_an_api_verdict(desk, monkeypatch):
     d = desk
-    inv, goal = d.spec["inventory"], "TEST-ONLY: show the service status"
+    inv, goal = d.spec["inventory"], "sandbox-only: show the service status"
     sizes = [len(json.dumps(capabilities.entry(o), ensure_ascii=False)) for o in inv["operations"]]
     d.service.settings.capability_index_chars = max(sizes) + 1
     monkeypatch.setattr(capabilities, "RETRIEVAL_ROUNDS_CAP", 1)
     for _ in range(8):
-        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "TEST-ONLY: not in this slice", ())]))
+        d.provider.triage.append(triage("unavailable", missing=[("absent_operation", "sandbox-only: not in this slice", ())]))
     first = d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests",
                           json=dict(goal=goal, idempotency_key="batch-key-2")).json()
     cov = first["coverage"]

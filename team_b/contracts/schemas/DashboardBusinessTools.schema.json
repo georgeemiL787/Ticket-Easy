@@ -718,9 +718,9 @@
       "title": "Tenant Id",
       "type": "string"
     },
-    "test_only": {
+    "sandbox_only": {
       "default": true,
-      "title": "Test Only",
+      "title": "Sandbox Only",
       "type": "boolean"
     },
     "tools": {

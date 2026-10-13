@@ -4,7 +4,7 @@ POST /businesses/{bid}/connection-check   is the API reachable (and does the log
 GET  /specifications/{sid}/operations     compact, paginated rows with the class of each operation
 POST /businesses/{bid}/tool-batches       choose operations: one tool is prepared for each
 POST /tool-batches/{id}/approve           the owner's confirmations; review, build and automatic tests follow
-POST /tool-batches/{id}/publish           publish the tools that passed to the TEST-ONLY sandbox
+POST /tool-batches/{id}/publish           publish the tools that passed to the sandbox
 """
 from typing import Literal
 

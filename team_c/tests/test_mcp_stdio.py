@@ -3,8 +3,8 @@
 REAL: the official SDK client launches `python -m team_c.mcp_server`; the fixture runs as a separate
 uvicorn process and the executor reaches it over HTTP. Backend state is read through the fixture's
 harness routes, independently of Team C.
-AUTHORED / TEST-ONLY: proposals come from the authored test substitute (no model call), every review
-and publication is a labeled TEST-ONLY decision, and all records live in a temporary database.
+AUTHORED / sandbox-only: proposals come from the authored test substitute (no model call), every review
+and publication is a labeled sandbox-only decision, and all records live in a temporary database.
 """
 import json
 import os
@@ -183,7 +183,7 @@ def test_published_artifact_through_the_real_sdk_client(desk):
 
 
 def review_and_build_again(d, pid):
-    """TEST-ONLY review of the replacement enforcement for the same approved version, then a rebuild."""
+    """sandbox-only review of the replacement enforcement for the same approved version, then a rebuild."""
     config = {r["id"]: dict(mechanism="delegated_user_credential") if r["kind"] == "caller_access" else
               dict(mechanism="response_field_matches_context", step_id="s1", response_status="200", pointer=f'/{d.n["lookup_env"]}/{d.n["record"]}/{d.n["holder"]}/{d.n["holder_id"]}',
                    context_field=d.ctx, comparison="equals", check_point="after_step") for r in current(d, pid)["requirements"]}

@@ -19,7 +19,7 @@ def policy_for(p):
     checks = [dict(requirement_id=r["id"], kind="ownership", resource="Item", step_id="s1", response_status="200", resource_field="/owner_id", identity_source="user_id")
               for r in p["requirements"] if r["kind"] == "record_scope"]
     return dict(principals=["resource_owner"], authentication="required", checks=checks,
-                scopes=[dict(requirement_id=c["requirement_id"], mode="checked", reason="TEST-ONLY: owners only") for c in checks],
+                scopes=[dict(requirement_id=c["requirement_id"], mode="checked", reason="sandbox-only: owners only") for c in checks],
                 financial=False, irreversible=False, external_side_effects=False, idempotent=True)
 
 
@@ -155,10 +155,10 @@ def test_answer_assistant_is_isolated_cached_and_never_saves_answers(lifecycle):
         if kind != "answer_suggestion":
             return original(kind, payload, model, run)
         seen.append(payload)
-        app.state.store.attempt(run, "TEST_SUBSTITUTE", "deterministic-test-only", "succeeded")
+        app.state.store.attempt(run, "TEST_SUBSTITUTE", "deterministic-sandbox-only", "succeeded")
         assert model is AnswerSuggestionOutput
         return AnswerSuggestionOutput(suggestions=[dict(question_id="q1", owner_decision=True, answer="guessed rule", options=["Owner only", "Any signed-in user"],
-                                                        confidence="low", operation_ids=[], evidence="TEST-ONLY: ownership is a business decision")])
+                                                        confidence="low", operation_ids=[], evidence="sandbox-only: ownership is a business decision")])
     service.providers.call = call
     p = current(client, pid)
     first = client.post(f'/api/v1/proposals/{pid}/versions/{p["version"]}/answer-suggestions')
@@ -258,7 +258,7 @@ def test_without_questions_the_policy_alone_settles_the_review(lifecycle):
     view = post(client, pid, "policy", policy=policy_for(current(client, pid))).json()
     rec = next(r for r in view["reconciliations"] if r["id"] == view["reconciliation_id"])
     assert view["state"] == "ready_for_review" and rec["result"]["reused_from"] == "generation" and attempts(app) == before
-    assert "Nothing was left for the AI to judge" in client.get(f"/proposals/{pid}").text
+    assert "Nothing left to check" in client.get(f"/proposals/{pid}").text
     assert approve(client, pid).status_code == 200
 
 
@@ -318,7 +318,7 @@ def test_assistant_is_offered_even_when_a_question_is_prefilled_from_the_policy(
     supersede_q2(client, pid)
     p = current(client, pid)
     admin_only = dict(principals=["admin"], authentication="required",
-                      scopes=[dict(requirement_id=r["id"], mode="unrestricted", reason="TEST-ONLY: staff tool") for r in p["requirements"] if r["kind"] == "record_scope"])
+                      scopes=[dict(requirement_id=r["id"], mode="unrestricted", reason="sandbox-only: staff tool") for r in p["requirements"] if r["kind"] == "record_scope"])
     view = post(client, pid, "policy", policy=admin_only).json()
     assert "administrators" in view["answer_suggestions"]["q1"]["text"]
     page = client.get(f"/proposals/{pid}").text

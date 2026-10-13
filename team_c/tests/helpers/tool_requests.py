@@ -13,7 +13,7 @@ class RequestDesk(RevisingDesk):
     def call(self, kind, payload, output_model, run):
         self.payloads.append((kind, payload))
         if kind in ("request_triage", "suggestion") or (kind == "generation" and self.generations):
-            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-test-only", "succeeded")
+            self.store.attempt(run, "TEST_SUBSTITUTE", "authored-sandbox-only", "succeeded")
             if kind == "request_triage":
                 return RequestTriageOutput.model_validate(self.triage.pop(0))
             if kind == "suggestion":
@@ -23,17 +23,17 @@ class RequestDesk(RevisingDesk):
 
 
 def triage(outcome, operation_ids=(), existing=(), questions=(), missing=()):
-    return dict(outcome=outcome, summary="TEST-ONLY triage summary", operation_ids=list(operation_ids), existing_proposal_ids=list(existing),
+    return dict(outcome=outcome, summary="sandbox-only triage summary", operation_ids=list(operation_ids), existing_proposal_ids=list(existing),
                 questions=list(questions), missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing])
 
 
 def idea(title, category, operation_ids=(), missing=(), related=(), security=4, others=4):
     """A substitute suggestion, rated strong by default; lower security/others to exercise the potential gate."""
     from team_c.models import POTENTIAL
-    return dict(title=title, purpose=f"TEST-ONLY purpose: {title}", benefit="TEST-ONLY benefit", business_reason="TEST-ONLY reason for this service desk",
-                category=category, operation_ids=list(operation_ids), related_proposal_ids=list(related), relationship="TEST-ONLY relationship",
+    return dict(title=title, purpose=f"sandbox-only purpose: {title}", benefit="sandbox-only benefit", business_reason="sandbox-only reason for this service desk",
+                category=category, operation_ids=list(operation_ids), related_proposal_ids=list(related), relationship="sandbox-only relationship",
                 missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing],
-                potential=[dict(criterion=c, score=security if c == "security" else others, reason="TEST-ONLY rating") for c in POTENTIAL])
+                potential=[dict(criterion=c, score=security if c == "security" else others, reason="sandbox-only rating") for c in POTENTIAL])
 
 
 def lookup_only(inv, n):
@@ -47,8 +47,8 @@ def lookup_only(inv, n):
                 capability_gaps=[])
 
 
-def ask(d, key, goal="TEST-ONLY: let a customer report a problem with their booking", **extra):
-    return d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal=goal, examples="TEST-ONLY: my shower is broken, booking ABC", idempotency_key=key, **extra))
+def ask(d, key, goal="sandbox-only: let a customer report a problem with their booking", **extra):
+    return d.client.post(f"/api/v1/businesses/{d.bid}/tool-requests", json=dict(goal=goal, examples="sandbox-only: my shower is broken, booking ABC", idempotency_key=key, **extra))
 
 
 def proposal_count(d):

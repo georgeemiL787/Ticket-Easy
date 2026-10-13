@@ -329,11 +329,7 @@ export default function BusinessTools() {
               <p className="notice live" role="note">
                 <strong>{t("bt.liveNotice", { n: d.live_tools })}</strong> {t("bt.liveNoticeHint")}
               </p>
-            ) : d.production_tools ? null : (
-              <p className="notice" role="note">
-                <strong>{t("bt.testOnly")}</strong> {t("bt.testOnlyHint")}
-              </p>
-            )}
+            ) : null}
             <section className="chart-card" aria-labelledby="bt-connection">
               <h2 id="bt-connection">{t("bt.connection")}</h2>
               {d.configured ? (

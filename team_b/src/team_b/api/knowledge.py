@@ -81,6 +81,9 @@ async def documents(tenant_id: TENANT, request: Request) -> dict[str, Any]:
     try:
         return await _admin(request).documents(tenant_id)
     except UpstreamError as exc:
+        if exc.code in ("NOT_FOUND", "TENANT_NOT_FOUND"):
+            # a known business with nothing uploaded yet: the knowledge service learns of it with its first file
+            return {"tenant_id": tenant_id, "managed": True, "documents": []}
         raise _failure(exc) from None
 
 
@@ -126,6 +129,12 @@ async def job(job_id: ID, tenant_id: TENANT, request: Request) -> dict[str, Any]
         raise _failure(exc) from None
     if found.get("tenant_id") != tenant_id:
         raise not_found("no such job for this business")
+    if str(found.get("error") or "").startswith("LLMUnavailable"):
+        # the service's own words name its settings; the owner needs to know what is missing and who can fix it
+        found = {
+            **found,
+            "error": "The AI that reads your documents is not set up here. Ask your administrator to switch it on.",
+        }
     return found
 
 

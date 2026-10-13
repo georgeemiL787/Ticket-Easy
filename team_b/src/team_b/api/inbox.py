@@ -193,7 +193,10 @@ async def list_cases(
         and (claimed_by is None or c.claimed_by == claimed_by)
     ]
     if new:  # newest first, one page: what just arrived
-        cases.sort(key=lambda c: (c.created_at, c.case_id), reverse=True)
+        # The stores list in the order cases were opened. Cases opened at the very same moment (a fixed demo clock)
+        # keep that order, so the last one opened comes first; the random case id must not decide it.
+        cases.reverse()
+        cases.sort(key=lambda c: c.created_at, reverse=True)
         return CasePage(items=[summary_of(c) for c in cases[:limit]], next_cursor=None)
     cases.sort(key=sort_key)
     if cursor is not None:

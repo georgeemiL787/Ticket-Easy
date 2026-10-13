@@ -34,6 +34,7 @@ from team_b.observability import bind_context, clear_context, configure_logging,
 from team_b.retention import retention_loop
 
 REQUEST_ID_HEADER = "X-Request-ID"
+SERVER_TIME_HEADER = "X-Server-Time"
 log = get_logger(__name__)
 
 
@@ -150,6 +151,11 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
         bind_context(request_id=request_id)
         response = await call_next(request)
         response.headers[REQUEST_ID_HEADER] = request_id
+        built: Container | None = getattr(request.app.state, "container", None)
+        if (
+            built is not None
+        ):  # the service's own now: a pinned demo clock differs from the browser's, ages must follow it
+            response.headers[SERVER_TIME_HEADER] = built.clock.now().isoformat()
         return response
 
     @app.get("/health")

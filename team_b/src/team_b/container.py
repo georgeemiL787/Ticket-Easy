@@ -15,6 +15,7 @@ from team_b.adapters.memory_store import (
     InMemorySessionStore,
     InMemoryTraceStore,
     SystemClock,
+    TickingClock,
 )
 from team_b.adapters.onboarding_repository import InMemoryDraftStore, SqliteDraftStore
 from team_b.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
@@ -110,7 +111,11 @@ def build_container(
     if settings.llm_rewrite and llms.llm_for("writer") is None:
         raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
 
-    clock = clock or (FixedClock(settings.fixed_today) if settings.fixed_today else SystemClock())
+    if clock is None:
+        if not settings.fixed_today:
+            clock = SystemClock()
+        else:
+            clock = TickingClock(settings.fixed_today) if settings.clock_ticks else FixedClock(settings.fixed_today)
     tenants = TenantRegistry.from_dir(settings.config_dir)
     sessions, traces, cases = build_stores(settings, clock)
     bundles: BundleRegistry | None = None

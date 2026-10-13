@@ -19,6 +19,10 @@
     "Could not reach the server. Please try again.": "تعذّر الوصول إلى الخادم. حاول مرة أخرى.",
     "Something went wrong ({status}). Please try again.": "حدث خطأ ({status}). حاول مرة أخرى.",
     "waiting for: ": "في انتظار: ",
+    "Typing a reply": "جارٍ كتابة الرد",
+    "One moment, please": "لحظة من فضلك",
+    "Still working on it, thank you for waiting": "ما زلنا نعمل على الرد، شكراً لانتظارك",
+    "This is taking longer than usual, thank you for waiting": "الأمر يستغرق وقتاً أطول من المعتاد، شكراً لانتظارك",
     "trace": "التتبّع",
     "Language": "اللغة",
     // inbox

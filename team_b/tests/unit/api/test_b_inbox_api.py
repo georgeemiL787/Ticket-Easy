@@ -287,6 +287,16 @@ async def test_new_shows_untouched_cases_newest_first(chat: httpx.AsyncClient, c
     assert [c["case_id"] for c in new] == ["fresh", "old"]
 
 
+async def test_new_puts_the_last_opened_first_when_the_clock_is_fixed(
+    chat: httpx.AsyncClient, chat_container: Container
+) -> None:
+    R = EscalationReason
+    for case_id in ("z-first", "m-second", "a-last"):  # same moment, ids in the opposite order of opening
+        await add_case(chat_container, case_id, "normal", 0, R.NO_EVIDENCE)
+    new = (await chat.get(BASE, params={"tenant_id": T, "new": "true"})).json()["items"]
+    assert [c["case_id"] for c in new] == ["a-last", "m-second", "z-first"]
+
+
 async def test_the_case_view_carries_what_the_assistant_tried(chat: httpx.AsyncClient) -> None:
     case_id = await hand_off(chat, "tried-1")
     body = (await chat.get(f"{BASE}/{case_id}", params={"tenant_id": T})).json()

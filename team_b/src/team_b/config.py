@@ -38,6 +38,7 @@ ENV_VARS: dict[str, str] = {
     "llm_model": "TEAM_B_LLM_MODEL",
     "llm_timeout_s": "TEAM_B_LLM_TIMEOUT_S",
     "fixed_today": "TEAM_B_FIXED_TODAY",
+    "clock_ticks": "TEAM_B_CLOCK_TICKS",
     "capability_ttl_s": "TEAM_B_CAPABILITY_TTL_S",
     "queue_max_runs": "TEAM_B_QUEUE_MAX_RUNS",
     "alert_webhook": "TEAM_B_ALERT_WEBHOOK",
@@ -141,6 +142,7 @@ class Settings(BaseModel):
     agent_turn_timeout_s: float = Field(default=20.0, gt=0)  # seconds the agent loop may take for one message
     roles: dict[str, RoleSettings] = Field(default_factory=dict)  # only the roles that have settings of their own
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28
+    clock_ticks: bool = False  # with fixed_today: start on that day at noon, then keep running
     capability_ttl_s: float = Field(default=60.0, ge=0)  # how long the list of shop tools is cached
     auth_required: bool = True  # staff must sign in to the inbox, dashboard and traces. 0 only for local experiments.
     secret_key: SecretStr | None = None  # signs the sign-in cookie; unset: a random key per start (all sign in again)

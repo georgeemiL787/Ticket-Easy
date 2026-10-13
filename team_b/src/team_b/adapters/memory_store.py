@@ -24,6 +24,19 @@ class SystemClock:
         return datetime.now(UTC)
 
 
+class TickingClock:
+    """A demo clock: the pinned day at noon (what FixedClock says), then it keeps running, so new things are newer."""
+
+    def __init__(self, day: date) -> None:
+        self._offset = datetime.combine(day, time(12, 0), tzinfo=UTC) - datetime.now(UTC)
+
+    def today(self) -> date:
+        return self.now().date()
+
+    def now(self) -> datetime:
+        return datetime.now(UTC) + self._offset
+
+
 class FixedClock:
     """A clock that always says the same moment. Give it a date (noon UTC) or a full datetime."""
 

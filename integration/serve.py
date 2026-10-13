@@ -113,6 +113,11 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         env["SERVICE_API_KEY"] = secret("team_a_service.key")  # only a caller that sends it may search or check actions
         args = ["-m", "uvicorn", "team_a.service:app", "--app-dir", "src", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "team_a", env
+    # Team B reads only the process environment, so load its own .env here (AI model, per-job models, agent mode).
+    # A variable already set in the shell wins, and the fixed values below (mode, database, keys) win over the file.
+    for key, value in live_settings(ROOT / "team_b" / ".env").items():
+        if key.startswith("TEAM_B_") and key not in os.environ and value:
+            env[key] = value.split(" #", 1)[0].strip()
     env.update(
         TEAM_B_MODE="standin" if standin else "live",
         TEAM_B_TEAM_A_URL=f"http://127.0.0.1:{PORTS['team-a']}",
@@ -121,6 +126,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         TEAM_B_STORE="sqlite",
         TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"),
         TEAM_B_FIXED_TODAY="2026-09-28",  # the demo orders are dated against this day
+        TEAM_B_CLOCK_TICKS="1",  # ... but the clock keeps running, so a new case is "just now", not 15 days old
         TEAM_B_AUTH_REQUIRED="0" if no_auth else "1",
         TEAM_B_SECRET_KEY=secret("team_b_cookie.key"),
         TEAM_B_LOG_JSON="0",

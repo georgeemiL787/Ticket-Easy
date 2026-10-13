@@ -103,11 +103,11 @@
   }
 
   // While the agent works (it may read the policy and ask the AI model), show a bubble with moving dots and a short
-  // line about what is happening, so the customer never stares at a frozen page.
+  // generic line (it never says what the customer asked about), so the customer never stares at a frozen page.
   var PROGRESS = [
-    [0, "Reading your message"],
-    [2500, "Checking our policies and your order"],
-    [7000, "Still working on it, almost there"],
+    [0, "Typing a reply"],
+    [4000, "One moment, please"],
+    [9000, "Still working on it, thank you for waiting"],
     [20000, "This is taking longer than usual, thank you for waiting"]
   ];
 
@@ -126,7 +126,7 @@
     messagesEl.appendChild(item);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     var timers = PROGRESS.map(function (step) {
-      return window.setTimeout(function () { label.textContent = step[1]; }, step[0]);
+      return window.setTimeout(function () { label.textContent = tr(step[1]); }, step[0]);
     });
     return function stop() {
       timers.forEach(function (timer) { window.clearTimeout(timer); });

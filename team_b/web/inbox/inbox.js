@@ -58,7 +58,7 @@ if (typeof module !== "undefined") {
 
 if (typeof document !== "undefined") {
   const $ = (id) => document.getElementById(id);
-  const state = { selected: null, cursor: null, rows: [], timer: null, current: null, csrf: null, me: null, started: false, sections: {} };
+  const state = { selected: null, cursor: null, rows: [], timer: null, current: null, csrf: null, me: null, started: false, sections: {}, clockOffset: 0 };
   const params = new URLSearchParams(location.search);
 
   function el(tag, props, ...children) {
@@ -94,6 +94,8 @@ if (typeof document !== "undefined") {
     } catch (exc) {
       throw new Error(tr("Cannot reach the server. Check your connection."));
     }
+    const serverTime = Date.parse(response.headers.get("X-Server-Time") || "");
+    if (!Number.isNaN(serverTime)) state.clockOffset = serverTime - Date.now();  // ages follow the service's clock
     let data = null;
     try { data = await response.json(); } catch (exc) { /* no body */ }
     if (response.status === 401 && !path.startsWith("/v1/auth/")) showLogin();  // the session ended
@@ -172,7 +174,7 @@ if (typeof document !== "undefined") {
         el("td", {}, el("span", { class: "badge " + c.priority, text: tr(c.priority) })),
         el("td", { text: c.reason.replaceAll("_", " ") }),
         el("td", { text: c.language || "" }),
-        el("td", { text: ageText(c.created_at) }),
+        el("td", { text: ageText(c.created_at, Date.now() + state.clockOffset) }),
         el("td", {}, el("span", { class: "badge status-" + c.status, text: tr(c.status.replaceAll("_", " ")) }), c.claimed_by ? el("span", { class: "muted claimer", text: " · " + c.claimed_by }) : null),
         el("td", { dir: "auto", text: c.summary.length > 110 ? c.summary.slice(0, 110) + "…" : c.summary }));
       return row;

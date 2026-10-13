@@ -11,8 +11,8 @@ recommendations (see "Decisions taken" below).
 | P3 Swagger/OpenAPI to tools, three screens | done (real-stack check written, not run) |
 | P4 RAG ingestion and guardrails | done (real-stack check not run) |
 | P5 Onboarding wizard | done (real-stack check not run) |
-| P6 Restyle and unify | see the section below |
-| P7 Repo restructuring | see the section below |
+| P6 Restyle and unify | done, except screenshots of every page (see below) |
+| P7 Repo restructuring | partly done on purpose (see below) |
 
 ## What was and was not verified
 
@@ -73,9 +73,22 @@ used. Dashboard `/onboarding` and `/onboarding/:id`. Not verified end to end wit
 | Suite | Baseline (2026-10-12) | Now |
 |---|---|---|
 | Team A pytest | 973 | 992 |
-| Team B pytest | 3844 (+1 flake), 3849 with P0 tests | 3992 |
-| Team C pytest | 671 | 704 before the last Team C additions (rerun at the end) |
+| Team B pytest | 3844 (+1 flake), 3849 with P0 tests | 4036 (ruff, format, mypy clean) |
+| Team C pytest | 671 | 704 |
 | Dashboard vitest | 51, 68 after P0 | 104 |
 
-## P6 and P7
-See below (appended as they are done).
+## P6 · Restyle and unify
+The light aurora theme is now the default (`aurora-light.css` on `:root`, `aurora.css` rewritten light, dark block and blobs gone).
+Chat: centred 720px column, customer teal on the right, assistant on glass, a person from customer care in magenta with a badge,
+error banner, language switch, `?preview=` pass. Inbox: light cards, urgent rows get a red edge, list and case take turns below 900px
+with a back button. `web/shared/i18n.js` gives chat and inbox English and Arabic (RTL). Dashboard: light tokens, sidebar with icons, open-alerts badge
+and a menu button on phones, tables become card lists on phones, charts recoloured. "Team A/B/C" no longer appears in any shown text
+(dashboard texts, Team C pages, tool-service messages); `tests/unit/test_product_names.py` guards it.
+Looked at in the browser pane: the chat (English, desktop) and the dashboard's connect screen (English, desktop). **Not** looked at:
+Arabic/RTL, mobile widths, the inbox, the other dashboard pages, Chat/Inbox with real conversations.
+
+## P7 · Repo restructuring (D5: only the low-risk part)
+Done: root `README.md` product framing, `contracts/README.md` index.
+Not done, on purpose: renaming `Docs/` to `docs/`, moving `team_a|b|c/` and `dashboard/` into new folders (venvs are not movable on Windows,
+and CI, Docker and `serve.py` paths all change), removing `team_c/.git`, dead code and scratch databases (needs your confirmation first).
+These can be done later one step at a time; nothing else depends on them.

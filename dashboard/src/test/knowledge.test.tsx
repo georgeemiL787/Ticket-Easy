@@ -48,7 +48,7 @@ describe("knowledge page", () => {
     const user = userEvent.setup();
     render(<MemoryRouter initialEntries={["/knowledge"]}><App /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: "Knowledge", level: 1 })).toBeInTheDocument();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light");
+    await waitFor(() => expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light"));
     expect(await screen.findByText("Uploaded, not searchable yet")).toBeInTheDocument();
     expect(screen.getByText("Could not be read")).toBeInTheDocument();
     expect(screen.getByText("no readable text was found in this file")).toBeInTheDocument();

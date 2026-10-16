@@ -38,6 +38,8 @@ class Settings:
     service_api_keys: str = os.getenv("SERVICE_API_KEYS", "")
     onboarded_dir: Path = ROOT / "var" / "tenants"  # businesses added through the admin API (documents, rules)
     max_upload_bytes: int = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
+    usage_log: str = os.getenv("TEAM_A_USAGE_LOG", "")  # a file path: one JSON line per AI request (tokens only). Empty = off
+    usage_run_label: str = os.getenv("TEAM_A_USAGE_RUN_LABEL", "")  # free text written into every usage line
 
     @property
     def shared_dir(self) -> Path:

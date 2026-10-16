@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     openrouter_timeout: float = 120
     openrouter_input_tokens: int = 24000
     max_upload_bytes: int = 10 * 1024 * 1024
+    usage_log: str = Field("", validation_alias=AliasChoices("TEAM_C_USAGE_LOG", "USAGE_LOG"))  # a file path: one JSON line per model request (tokens only, never text or keys); empty = off
+    usage_run_label: str = Field("", validation_alias=AliasChoices("TEAM_C_USAGE_RUN_LABEL", "USAGE_RUN_LABEL"))  # free text written into every usage line
     secret_key: str = Field("", validation_alias=AliasChoices("TEAM_C_SECRET_KEY", "SECRET_KEY"))  # encrypts stored test credentials: a Fernet key, env:NAME or file:PATH; empty: a key file beside the database
     max_operations: int = 1000
     max_model_chars: int = 100_000

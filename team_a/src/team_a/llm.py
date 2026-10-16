@@ -10,6 +10,7 @@ import re
 
 import httpx
 
+from team_a import usage_log
 from team_a.config import settings
 
 log = logging.getLogger(__name__)
@@ -49,6 +50,8 @@ def complete_json(system: str, user: str, timeout: float = 90) -> dict:
         raise LLMUnavailable("Set OPENROUTER_API_KEY and at least one ':free' model in OPENROUTER_MODELS")
     errors = []
     for model in _free_models():
+        watch = usage_log.Stopwatch()
+        status, code, body = "error", None, None
         try:
             resp = _client().post(
                 OPENROUTER_URL,
@@ -66,12 +69,26 @@ def complete_json(system: str, user: str, timeout: float = 90) -> dict:
                 },
                 timeout=timeout,
             )
+            code = resp.status_code
+            status = "ok" if code == 200 else "rate_limited" if code == 429 else "error"
+            try:
+                body = resp.json()
+            except ValueError:
+                body = None
             resp.raise_for_status()
             content = resp.json()["choices"][0]["message"]["content"] or ""
             return _extract_json(content)
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
+            if isinstance(exc, httpx.TimeoutException):
+                status = "timeout"
             log.warning("OpenRouter model %s failed: %s", model, exc)
             errors.append(f"{model}: {exc}")
+        finally:
+            usage_log.record(
+                job=usage_log.current_job("rule_extraction"), kind="chat", model=model, url=OPENROUTER_URL,
+                status=status, http_status=code, latency_ms=watch.ms(), key_index=0,
+                **(usage_log.chat_tokens(body) if status == "ok" else {}),
+            )
     raise LLMUnavailable("All free models failed: " + " | ".join(errors))
 
 

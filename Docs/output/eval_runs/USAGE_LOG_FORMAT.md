@@ -44,3 +44,8 @@ Example (conversation service):
 ```
 
 Summary: `python team_b/scripts/usage_summary.py <logs...> [--csv out.csv]` groups by service, run label, job and model.
+
+## How each service fills the fields
+- **Conversation service:** one line per HTTP request to a model (a retry on the next key and a backup-model call are separate lines). Tokens are the provider's `usage`.
+- **Knowledge service:** one line per OpenRouter request (jobs `rule_extraction`, `risk_second_opinion`; free models only; each model tried in turn is its own line) and one line per Ollama `/api/embed` request (`embed_document` at indexing, `embed_query` for each search). Embedding input tokens are Ollama's `prompt_eval_count` (reported, `estimated` false). If the server does not return it, the count is an estimate of characters / 3 and `estimated` is `true`. Embedding lines have `output_tokens` null.
+- **Tool service:** one line per provider attempt in the router (job = the call kind: `triage`, `generation`, `revision`, `repair`, ...). Groq and OpenRouter counts come from `usage`; Ollama's from `prompt_eval_count` and `eval_count`. A fallback to the next key or provider is its own line.

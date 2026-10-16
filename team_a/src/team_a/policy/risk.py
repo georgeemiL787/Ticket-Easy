@@ -15,6 +15,7 @@ from team_a import llm
 from team_a.config import settings
 from team_a.schemas import MANDATORY_ESCALATION, ClassifyRiskRequest, RiskAssessment
 from team_a.text import normalize
+from team_a.usage_log import usage_job
 
 log = logging.getLogger(__name__)
 
@@ -131,7 +132,8 @@ def classify_risk(req: ClassifyRiskRequest) -> RiskAssessment:
 
     if req.use_llm and llm.is_configured():
         try:
-            out = llm.complete_json(_SYSTEM, f"Message:\n{req.message}")
+            with usage_job("risk_second_opinion"):
+                out = llm.complete_json(_SYSTEM, f"Message:\n{req.message}")
             extra = {c for c in out.get("categories", []) if c in MANDATORY_ESCALATION}
             categories |= extra
             rationale = str(out.get("rationale", ""))[:500] or None

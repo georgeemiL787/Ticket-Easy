@@ -16,6 +16,7 @@ from functools import lru_cache
 import numpy as np
 
 from team_a.config import settings
+from team_a.usage_log import usage_job
 from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
 from team_a.knowledge.index import TenantIndex, TenantNotFound, load_manifest
 from team_a.schemas import (
@@ -62,7 +63,8 @@ def _cosines(query: str, vectors: np.ndarray | None, embedder: Embedder | None) 
     if vectors is None or embedder is None:
         return None
     try:
-        return vectors @ embedder.embed([query])[0]
+        with usage_job("embed_query"):
+            return vectors @ embedder.embed([query])[0]
     except EmbeddingUnavailable as exc:
         log.warning("Falling back to keyword-only retrieval: %s", exc)
         return None

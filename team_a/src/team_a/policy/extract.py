@@ -17,6 +17,7 @@ from team_a.config import settings
 from team_a.knowledge.index import build_passages, load_manifest
 from team_a.schemas import Rule
 from team_a.text import normalize
+from team_a.usage_log import usage_job
 
 log = logging.getLogger(__name__)
 
@@ -114,7 +115,8 @@ def extract_candidates(tenant_id: str, document_id: str | None = None) -> list[R
     candidates: list[Rule] = []
     for passage in targets:
         prompt = f"Passage {passage['citation']} ({passage['section']}):\n{passage['text']}"
-        out = llm.complete_json(_system_prompt(), prompt)
+        with usage_job("rule_extraction"):
+            out = llm.complete_json(_system_prompt(), prompt)
         for raw in out.get("rules", []):
             rule = _validate_candidate(raw, passage, effective[(passage["document_id"], passage["version"])])
             if rule is not None:

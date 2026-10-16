@@ -1,0 +1,2 @@
+{"at": "2026-10-13T11:10:28.489183+00:00", "event": "edited", "rule_id": "R-RETURN-14D", "by": null, "detail": {"fields": ["user_message"]}}
+{"at": "2026-10-13T11:10:34.347444+00:00", "event": "approved", "rule_id": "R-RETURN-14D", "by": "Demo Manager", "detail": {}}

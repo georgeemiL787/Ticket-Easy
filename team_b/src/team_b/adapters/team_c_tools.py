@@ -250,6 +250,7 @@ class TeamCCapabilities:
         if identity is None:
             return _error("IDENTITY_NOT_MAPPED", "no Team C sandbox identity is configured for this customer; not sent")
         arguments = {bound.arguments.get(k, k): v for k, v in request.arguments.items()}
+        arguments = self._without_undeclared_identity(state, resolved.team_c_tool, arguments)
         writes = resolved.read_only is False
         meta = (
             {"ticketeasy": {"context": {binding.production_context_field: request.acting_customer_id},
@@ -270,6 +271,16 @@ class TeamCCapabilities:
         except McpRemoteError as exc:
             return self._remote_error(tenant_id, request.tool, exc, writes)
         return _result(raw, bound, resolved, writes, request.arguments)
+
+    @staticmethod
+    def _without_undeclared_identity(state: TenantState, team_c_tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        """The customer travels by the identity of the call. A tool that declares no customer input (Team C's order list
+        reads the caller's own orders) would reject the customer_id Team B always adds, so it is left out for that tool."""
+        listed = next((t for t in state.tools if t.get("name") == team_c_tool), None)
+        properties = ((listed or {}).get("inputSchema") or {}).get("properties")
+        if not isinstance(properties, dict):
+            return arguments
+        return {k: v for k, v in arguments.items() if k != "customer_id" or k in properties}
 
     # ---- discovery ----
 

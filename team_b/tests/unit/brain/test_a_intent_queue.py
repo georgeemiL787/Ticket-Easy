@@ -82,7 +82,7 @@ async def test_a_status_answer_comes_first_then_the_cancellation_is_confirmed(co
     reply = await say(container, PHONE_C104)
     assert reply.decision is Decision.CONFIRM and reply.awaiting == "confirmation"
     first, second = reply.text.split("\n\n")
-    assert "pending" in first or "waiting" in first  # the status, answered
+    assert "pending" in first or "waiting" in first or "prepared" in first  # the status, answered
     assert "cancel order NS-20960" in second  # the action, not done yet
     assert writes(container) == []
 

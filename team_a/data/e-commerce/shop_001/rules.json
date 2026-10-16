@@ -29,8 +29,8 @@
       },
       "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": "team_a_policy_owner",
-      "approved_at": "2026-09-28T12:00:00Z"
+      "approved_by": "Demo Manager",
+      "approved_at": "2026-10-13T11:10:34.347444Z"
     },
     {
       "rule_id": "R-RETURN-EXCLUDED",

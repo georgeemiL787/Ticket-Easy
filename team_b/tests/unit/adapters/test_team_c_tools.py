@@ -512,3 +512,13 @@ async def test_a_bundle_without_tools_service_tools_leaves_the_file_binding_alon
     bundle = bundle_with("create_return", "prop-return").model_copy(update={"tools": ()})
     await client.on_bundle_change(bundle, T)
     assert set(client.config.tenants[T].tools) == {"get_order", "apply_voucher"}
+
+
+async def test_the_customer_id_is_left_out_for_a_tool_that_takes_no_customer(fake: Fake, made: Made) -> None:
+    listing = tool_def("list_orders_v1_aa", "prop-list")
+    listing["inputSchema"] = {"type": "object", "properties": {}, "additionalProperties": False}
+    fake.publish(listing, list_orders_v1_aa=envelope("list_orders_v1_aa", "succeeded", {"orders": [ORDER]}))
+    client = made(tools={"list_customer_orders": {"proposal_id": "prop-list"}})
+    await client.list_tools(T)
+    result = await client.call_tool(T, request("list_customer_orders", {"customer_id": "C-100"}))
+    assert result.status == "success" and [c["arguments"] for c in fake.calls()] == [{}]

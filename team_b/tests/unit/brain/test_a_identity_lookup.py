@@ -202,7 +202,7 @@ async def test_session_facts_hold_only_the_customers_own_order(container: Contai
     [
         ("NS-20877", PHONE, "on its way"),  # shipped
         ("NS-20512", PHONE, "delivered on 2026-09-08"),  # delivered
-        ("NS-20960", "01098765405", "waiting to be processed"),  # pending
+        ("NS-20960", "01098765405", "being prepared for shipping"),  # pending, with its expected date
         ("NS-20701", "01187654306", "cancelled"),  # cancelled
     ],
 )

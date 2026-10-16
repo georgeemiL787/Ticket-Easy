@@ -1,0 +1,70 @@
+<title>Team B Agent Workflow</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#171b22;--muted:#5a6472;--line:#d6dbe3;--card:#ffffff;--accent:#b45309}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12161c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c3441;--card:#dfe3ea;--accent:#f0a964;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12161c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c3441;--card:#dfe3ea;--accent:#f0a964;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.55;padding-inline:16px;padding-block:32px}
+main{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:2rem;margin:0;text-wrap:balance}
+p{margin:0;max-width:72ch;color:var(--muted)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto;color:#1a1a1a}
+pre.mermaid{margin:0;text-align:center}
+.key{display:flex;gap:16px;flex-wrap:wrap;font-size:13px}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:14px;height:14px;border-radius:3px;border:2px solid;display:inline-block}
+.ai{background:#ffd6a5;border-color:#b45309}.ext{background:#cfe3ff;border-color:#2b5fb3}.cd{background:#e8e8e8;border-color:#777}
+ul{margin:0;padding-left:20px;max-width:72ch;color:var(--muted)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap">
+<main>
+<header><h1>Team B: the agentic system</h1></header>
+<p>Orchestrator, planner and router are plain code. Only the orange boxes call the AI model with a system prompt. Each one's answer is checked by code, and a rule or template takes over if the check fails.</p>
+<div class="key"><span><i class="ai"></i>AI agent (model + system prompt)</span><span><i class="cd"></i>Code (no model)</span><span><i class="ext"></i>Team A / Team C service</span></div>
+<div class="box"><pre class="mermaid">flowchart TD
+    C([Customer message]) --&gt; ORC
+
+    subgraph ORC [&quot; Orchestrator: code, runs the same fixed 12 stages every turn &quot;]
+        direction TB
+        NLU{{&quot;1. NLU agent&lt;br/&gt;understands the message&quot;}}
+        RISK[/&quot;2. Risk screen (Team A)&quot;/]
+        ROUTER[&quot;3. Planner / Router&lt;br/&gt;code: picks the intent and the path&quot;]
+        NLU --&gt; RISK --&gt; ROUTER
+    end
+
+    ROUTER --&gt;|policy question| KQ
+    ROUTER --&gt;|order lookup| LK[&quot;Lookup handler&lt;br/&gt;code: identity, ownership&quot;]
+    ROUTER --&gt;|action| GATES
+
+    subgraph KN [Knowledge path]
+        KQ{{&quot;Query agent&lt;br/&gt;writes the search query&quot;}} --&gt; SEARCH[/&quot;Policy search (Team A)&quot;/] --&gt; KA{{&quot;Answer agent&lt;br/&gt;words the reply from passages&quot;}}
+    end
+
+    subgraph AC [Action path]
+        GATES[&quot;Action gates, code&lt;br/&gt;slots, identity, facts, permission&quot;] --&gt; PA{{&quot;Policy agent&lt;br/&gt;allow / needs human / deny&quot;}}
+        RULES[/&quot;Rule checker (Team A)&quot;/] --&gt; PA
+        PA --&gt;|allow| CONFIRM[&quot;Customer confirms&quot;] --&gt; EXEC[/&quot;Run tool (Team C)&quot;/]
+    end
+
+    PA --&gt;|needs human, deny, risk, errors| HAND
+    LK --&gt;|problem| HAND
+    RISK -.-&gt;|risk found| HAND
+    HAND[&quot;Handoff, code&lt;br/&gt;builds the briefing&quot;] --&gt; HS{{&quot;Handoff summary agent&lt;br/&gt;writes the case summary&quot;}} --&gt; INBOX[Human inbox]
+    INBOX --&gt;|approve / reject| GATES
+
+    KA --&gt; COMP
+    LK --&gt; COMP
+    EXEC --&gt; COMP
+    COMP[&quot;Composer, code&lt;br/&gt;template reply&quot;] --&gt; RW{{&quot;Rewrite agent&lt;br/&gt;makes it sound natural&quot;}}
+    RW --&gt; OUT([Reply to customer])
+
+    classDef ai fill:#ffd6a5,stroke:#b45309,color:#1a1a1a,stroke-width:2px;
+    classDef ext fill:#cfe3ff,stroke:#2b5fb3,color:#1a1a1a;
+    classDef code fill:#e8e8e8,stroke:#777,color:#1a1a1a;
+    class NLU,KQ,KA,PA,HS,RW ai;
+    class RISK,SEARCH,RULES,EXEC ext;
+    class ROUTER,LK,GATES,HAND,COMP,CONFIRM code;</pre></div>
+<ul>
+<li>Also AI, outside the live flow: the history summarizer (shrinks old messages) and the judge (scores reply quality in evaluation).</li>
+<li>The model never picks a tool and never turns a deny into an allow. Code makes those decisions.</li>
+</ul>
+</main>

@@ -212,6 +212,8 @@ def _status_reply(ctx: TurnContext, facts: dict[str, Any], passages: list[Passag
         key, values["date"] = "order_status_delivered", str(facts["delivered_at"])[:10]
     elif status == "shipped" and facts.get("expected_delivery_date"):
         key, values["date"] = "order_status_in_transit", str(facts["expected_delivery_date"])[:10]
+    elif status in ("pending", "processing") and facts.get("expected_delivery_date"):
+        key, values["date"] = "order_status_preparing", str(facts["expected_delivery_date"])[:10]
     else:
         key = "order_status_other"
     return Step(

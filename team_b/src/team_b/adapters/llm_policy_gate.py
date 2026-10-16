@@ -11,6 +11,8 @@ The decision logic lives in Reviewer.review_action; this class only finds the pa
 TEAM_B_LLM_POLICY=1 still switches it on, as does TEAM_B_LLM_REVIEW=1.)
 """
 
+import asyncio
+
 from team_b.brain.llm_nlu import PromptTemplate
 from team_b.brain.reviewer import Reviewer
 from team_b.contracts.evidence import Passage
@@ -20,6 +22,7 @@ from team_b.ports import EvidenceProvider, LLMClient, PolicyGate
 
 log = get_logger(__name__)
 TOP_K = 6
+RETRY_DELAY_S = 0.5
 FACT_KEYS_IN_QUERY = ("status", "days_since_delivery", "days_late", "item", "category")
 
 
@@ -53,13 +56,22 @@ class LLMPolicyGate:
         if request.tool.operation_kind == "read" or decision.decision == "deny":
             return decision
         try:
-            passages = await self._passages(request)
-        except Exception as exc:  # search down: an allowed write waits for a person
+            passages = await self._passages_with_retry(request)
+        except Exception as exc:  # search down twice: an allowed write waits for a person
             log.warning("reviewer_search_failed", reason=type(exc).__name__, action=request.action)
             return self._reviewer.unavailable(request, decision)
         if not passages:  # nothing in the policy concerns this action: the rule engine's answer stands
             return decision
         return await self._reviewer.review_action(request, decision, passages)
+
+    async def _passages_with_retry(self, request: CheckActionRequest) -> tuple[Passage, ...]:
+        """One hiccup in the search (a slow answer, a dropped call) must not send a normal request to a person."""
+        try:
+            return await self._passages(request)
+        except Exception as exc:
+            log.warning("reviewer_search_retry", reason=type(exc).__name__, action=request.action)
+            await asyncio.sleep(RETRY_DELAY_S)
+            return await self._passages(request)
 
     async def _passages(self, request: CheckActionRequest) -> tuple[Passage, ...]:
         result = await self._evidence.search_knowledge(

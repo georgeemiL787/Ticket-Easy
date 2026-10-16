@@ -30,6 +30,7 @@ PLACEHOLDERS: Mapping[str, frozenset[str]] = {
     "disambiguate_order": frozenset({"orders"}),
     "order_status_in_transit": frozenset({"order_id", "status", "date"}),
     "order_status_delivered": frozenset({"order_id", "date"}),
+    "order_status_preparing": frozenset({"order_id", "date"}),
     "order_status_other": frozenset({"order_id", "status"}),
     "return_status_requested": frozenset({"order_id", "return_id", "date"}),
     "return_status_refund_approved": frozenset({"order_id", "return_id", "amount", "destination"}),

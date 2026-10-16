@@ -200,3 +200,20 @@ async def test_v2_cannot_loosen_a_rule_checker_deny_or_hold(engine: str) -> None
 async def test_v2_does_not_trust_an_allow_that_cites_nothing() -> None:
     out = await agent("allow", FakeLLM(verdict("allow", citations=["made_up#1"]))).check_action(request())
     assert out.decision == "require_human"
+
+
+async def test_one_failed_search_is_retried_and_the_write_is_judged_normally() -> None:
+    class FlakySearch(Search):
+        def __init__(self) -> None:
+            super().__init__()
+            self.tries = 0
+
+        async def search_knowledge(self, *args: Any, **kwargs: Any) -> RetrievalResult:
+            self.tries += 1
+            if self.tries == 1:
+                raise UpstreamError("team_a", "TIMEOUT", "slow")
+            return await super().search_knowledge(*args, **kwargs)
+
+    search = FlakySearch()
+    out = await agent("allow", FakeLLM(verdict("allow", citations=[PASSAGE.passage_id])), search).check_action(request())
+    assert search.tries == 2 and out.decision == "allow"

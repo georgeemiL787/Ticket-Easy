@@ -1,0 +1,16 @@
+Split: test (64 questions, 24 unanswerable)
+
+Thresholds: MIN_COSINE=0.6 MIN_BM25=4.0
+recall@5            97.50%  per style: {'ar': '12/12', 'arabizi': '11/12', 'en': '16/16'}
+no-answer precision 93.75%
+no-answer recall    62.50%
+  MISS NQ058 el return yeb2a accepted emta? lama a2adem el talab? []
+  MISS NQ083 should be empty ['noon_return_policy@v1#s3', 'noon_return_policy@v1#s24']
+  MISS NQ085 should be empty ['noon_return_policy@v1#s1', 'noon_return_policy@v1#s20']
+  MISS NQ087 should be empty ['noon_return_policy@v1#s2', 'noon_return_policy@v1#s24']
+  MISS NQ091 should be empty ['noon_return_policy@v1#s18', 'noon_return_policy@v1#s17']
+  MISS NQ105 should be empty ['noon_return_policy@v1#s31']
+  MISS NQ107 should be empty ['noon_return_policy@v1#s31', 'noon_return_policy@v1#s28']
+  MISS NQ111 should be empty ['noon_return_policy@v1#s1', 'noon_return_policy@v1#s30']
+  MISS NQ115 should be empty ['noon_return_policy@v1#s29', 'noon_return_policy@v1#s26']
+  MISS NQ129 should be empty ['noon_return_policy@v1#s1', 'noon_return_policy@v1#s4']

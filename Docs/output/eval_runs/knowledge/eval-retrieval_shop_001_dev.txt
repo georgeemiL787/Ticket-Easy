@@ -1,0 +1,11 @@
+Split: dev (33 questions, 6 unanswerable)
+
+Thresholds: MIN_COSINE=0.58 MIN_BM25=2.5
+recall@5            92.59%  per style: {'ar': '8/9', 'arabizi': '9/9', 'en': '8/9'}
+no-answer precision 100.00%
+no-answer recall    50.00%
+  MISS Q53 My order is still on the way, can I get my money back now? ['faq@v1#q10', 'return_policy@v2#s7']
+  MISS Q59 المندوب جه مرتين ومكنتش موجود، الطلب هيروح فين؟ ['return_policy@v2#s7', 'faq@v1#q07']
+  MISS Q66 should be empty ['faq@v1#q01', 'faq@v1#q05']
+  MISS Q67 should be empty ['return_policy@v2#s6', 'return_policy@v2#s4']
+  MISS Q70 should be empty ['faq@v1#q06', 'shipping_policy@v1#s4']

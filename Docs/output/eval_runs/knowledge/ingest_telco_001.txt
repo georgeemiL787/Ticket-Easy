@@ -1,0 +1,22 @@
+{
+  "tenant_id": "telco_001",
+  "built_at": "2026-10-16T20:03:17.570461+00:00",
+  "embed_model": "bge-m3",
+  "passages": 59,
+  "current_passages": 59,
+  "tickets": 527,
+  "resolutions": 0,
+  "source_hashes": {
+    "bundles_policy.md": "503a1cff70a95f1b",
+    "complaints_policy.md": "296f80f42837c9da",
+    "contract_policy.md": "68bc208f6583526d",
+    "home_internet_policy.md": "af258340d13edcbb",
+    "porting_policy.md": "b358c4711bedc6ce",
+    "postpaid_billing_policy.md": "7990fed0bb26a7f8",
+    "prepaid_recharge_policy.md": "85d82bd7d9d53a28",
+    "privacy_policy.md": "c74bed926b799f22",
+    "refund_policy.md": "e60ef4ceb3324bcb",
+    "roaming_policy.md": "1f7d7969717c1776",
+    "sim_policy.md": "7fdb8b0dd1e7fb4c"
+  }
+}

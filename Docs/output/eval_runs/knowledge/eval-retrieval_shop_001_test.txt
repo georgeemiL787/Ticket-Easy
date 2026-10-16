@@ -1,0 +1,11 @@
+Split: test (37 questions, 9 unanswerable)
+
+Thresholds: MIN_COSINE=0.58 MIN_BM25=2.5
+recall@5            89.29%  per style: {'ar': '7/9', 'arabizi': '10/10', 'en': '8/9'}
+no-answer precision 87.50%
+no-answer recall    77.78%
+  MISS Q26 الأوردر متأخر، ليا تعويض؟ []
+  MISS Q56 لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟ ['return_policy@v2#s3', 'return_policy@v2#s6']
+  MISS Q58 I paid part of the order with a voucher, will I get that amount back in cash? ['shipping_policy@v1#s4', 'faq@v1#q02']
+  MISS Q64 should be empty ['shipping_policy@v1#s2', 'shipping_policy@v1#s1']
+  MISS Q65 should be empty ['faq@v1#q05', 'faq@v1#q02']

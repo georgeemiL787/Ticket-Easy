@@ -1,0 +1,16 @@
+Split: dev (65 questions, 24 unanswerable)
+
+Thresholds: MIN_COSINE=0.6 MIN_BM25=4.0
+recall@5            90.24%  per style: {'ar': '11/12', 'arabizi': '11/13', 'en': '15/16'}
+no-answer precision 90.00%
+no-answer recall    75.00%
+  MISS NQ009 What are the conditions for returning sports and outdoor equipment? []
+  MISS NQ035 بعد ما المرتجع يوصل المخزن بياخد كام يوم عشان يتراجع؟ ['noon_return_policy@v1#s21', 'noon_return_policy@v1#s23']
+  MISS NQ065 el treadmill mesta3mal mara wa7da, arga3o? ['noon_return_policy@v1#s19', 'noon_return_policy@v1#s5']
+  MISS NQ081 rakam customer service bta3 noon kam? []
+  MISS NQ088 should be empty ['noon_return_policy@v1#s28']
+  MISS NQ108 should be empty ['noon_return_policy@v1#s26', 'noon_return_policy@v1#s29']
+  MISS NQ112 should be empty ['noon_return_policy@v1#s4', 'noon_return_policy@v1#s20']
+  MISS NQ114 should be empty ['noon_return_policy@v1#s21', 'noon_return_policy@v1#s2']
+  MISS NQ116 should be empty ['noon_return_policy@v1#s18', 'noon_return_policy@v1#s23']
+  MISS NQ124 should be empty ['noon_return_policy@v1#s31', 'noon_return_policy@v1#s26']

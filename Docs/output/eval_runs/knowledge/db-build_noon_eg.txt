@@ -1,0 +1,47 @@
+{
+  "db_path": "D:\\NTI Grad Project\\Ticket-Easy\\team_a\\var\\db\\team_a.sqlite",
+  "schema_version": "2",
+  "tenants": {
+    "noon_eg": {
+      "retrieval_mode": "hybrid",
+      "rows": {
+        "tel_plans": 0,
+        "tel_bundles": 0,
+        "tel_vas_services": 0,
+        "tel_devices": 0,
+        "tel_stores": 0,
+        "customers": 5011,
+        "orders": 26166,
+        "order_items": 40363,
+        "returns": 1335,
+        "tel_customer_profiles": 0,
+        "tel_accounts": 0,
+        "tel_lines": 0,
+        "tel_line_bundles": 0,
+        "tel_vas_subscriptions": 0,
+        "tel_transactions": 0,
+        "tel_invoices": 0,
+        "tel_invoice_items": 0,
+        "tel_usage_daily": 0,
+        "tel_device_installments": 0,
+        "tel_sim_events": 0,
+        "tel_port_requests": 0,
+        "tel_network_outages": 0,
+        "tel_technician_appointments": 0,
+        "tel_complaints": 0,
+        "tel_refunds": 0,
+        "resolutions_mirror": 0,
+        "rules_mirror": 0,
+        "past_tickets": 1518,
+        "ticket_embeddings": 1518,
+        "policy_documents": 1,
+        "policy_passages": 32,
+        "passage_embeddings": 32,
+        "benchmark_questions": 129,
+        "eval_scenarios": 967,
+        "eval_scenario_sections": 1127
+      },
+      "warnings": []
+    }
+  }
+}

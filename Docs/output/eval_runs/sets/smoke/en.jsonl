@@ -1,0 +1,2 @@
+{"id": "en-01", "language_style": "en", "topic": "K1", "turns": [{"say": "How many days do I have to return an item?", "gold": {"intents": ["policy_question"], "decision": "answer", "citations_any": ["return_policy@v2#s2"]}}]}
+{"id": "en-02", "language_style": "en", "topic": "K1", "turns": [{"say": "Can I return my order after 10 days?", "gold": {"intents": ["policy_question"], "decision": "answer", "citations_any": ["return_policy@v2#s2"]}}]}

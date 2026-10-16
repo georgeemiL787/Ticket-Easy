@@ -1,0 +1,24 @@
+{
+  "tenant": "shop_001",
+  "per_document": {
+    "return_policy": {
+      "passages": 9,
+      "candidate_rules": 8
+    },
+    "shipping_policy": {
+      "passages": 10,
+      "candidate_rules": 5
+    },
+    "refund_policy": {
+      "passages": 7,
+      "candidate_rules": 6
+    },
+    "faq": {
+      "passages": 10,
+      "candidate_rules": 1
+    }
+  },
+  "passages_failed_after_retries": [],
+  "total_passages": 36,
+  "total_candidate_rules": 20
+}

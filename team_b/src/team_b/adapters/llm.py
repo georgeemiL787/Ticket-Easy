@@ -11,11 +11,13 @@ import asyncio
 import itertools
 import json
 import re
+import time
 from typing import Any
 
 import httpx
 
 from team_b.adapters.llm_limits import RateLimiter, Reservation
+from team_b.adapters.usage_log import UsageLog, provider_host
 from team_b.contracts.errors import InvalidLLMOutput, UpstreamError
 from team_b.observability import get_logger
 
@@ -63,12 +65,15 @@ class OpenAICompatibleLLM:
         transport: httpx.AsyncBaseTransport | None = None,
         reasoning_effort: str | None = None,
         limiter: RateLimiter | None = None,
+        usage_log: UsageLog | None = None,
     ) -> None:
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._model = model
         keys = [k.strip() for k in (api_key or "").split(",") if k.strip()]  # several keys allowed
         self._headers = {"Authorization": f"Bearer {keys[0]}"} if keys else {}  # the first key's header
-        self._keys = itertools.cycle(keys or [""])
+        self._keys = itertools.cycle(enumerate(keys or [""]))  # (position in the list, key)
+        self._usage = usage_log  # one line per request when set (no text, no key)
+        self._host = provider_host(base_url)
         self._key_count = max(1, len(keys))
         self._timeout = timeout_s
         self._transport = transport
@@ -156,22 +161,48 @@ class OpenAICompatibleLLM:
         async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
             for round_ in range(RATE_LIMIT_ROUNDS):
                 for _ in range(self._key_count):
-                    key = next(self._keys)
+                    position, key = next(self._keys)
                     headers = {"Authorization": f"Bearer {key}"} if key else {}
                     slot = await self._limiter.acquire(tokens) if self._limiter is not None else None
+                    started = time.perf_counter()
                     try:
                         response = await client.post(self._url, json=payload, headers=headers)
-                    except BaseException:
+                    except BaseException as exc:
                         if slot is not None and self._limiter is not None:
                             self._limiter.release(slot)  # it never reached the server
+                        self._note(None, started, position if key else None, exc)
                         raise
                     self._settle(slot, response)
+                    self._note(response, started, position if key else None)
                     if response.status_code != 429:
                         return response
                 if round_ + 1 < RATE_LIMIT_ROUNDS:
                     await asyncio.sleep(_wait_seconds(response, round_))
         assert response is not None
         return response
+
+    def _note(
+        self, response: httpx.Response | None, started: float, key_index: int | None, error: BaseException | None = None
+    ) -> None:
+        """One line in the usage log for this request (a no-op when the log is off)."""
+        if self._usage is None:
+            return
+        code = response.status_code if response is not None else None
+        if response is None:
+            status = "timeout" if isinstance(error, httpx.TimeoutException) else "error"
+        elif code == 429:
+            status = "rate_limited"
+        else:
+            status = "ok" if code == 200 else "error"
+        self._usage.record(
+            model=self._model,
+            host=self._host,
+            status=status,
+            http_status=code,
+            latency_ms=round((time.perf_counter() - started) * 1000),
+            key_index=key_index,
+            response=response,
+        )
 
     def _settle(self, slot: Reservation | None, response: httpx.Response) -> None:
         """Replace the estimated tokens of a request with the count the server reports (a refused request used none)."""

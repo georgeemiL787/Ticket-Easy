@@ -1,0 +1,98 @@
+.venv/Scripts/python.exe -m pytest -q tests/integration/test_scenarios.py && .venv/Scripts/python.exe scripts/scenario_report.py
+........................................................................ [ 86%]
+...........                                                              [100%]
+83 passed in 2.42s
+2026-10-16T20:05:25.942313Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=21b809ac228f4f5da0ab1885dab25feb service=safety_screen tenant_id=shop_001 trace_id=099619afdc494da5884cd9b9d21fb03e
+2026-10-16T20:05:25.943313Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=21b809ac228f4f5da0ab1885dab25feb service=safety_screen tenant_id=shop_001 trace_id=099619afdc494da5884cd9b9d21fb03e
+2026-10-16T20:05:25.957891Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=a00d0b2fc1b54a829b3409f8d4d62449 service=safety_screen tenant_id=shop_001 trace_id=b26b8d7ec61d4098a663b75193872ee9
+2026-10-16T20:05:25.957891Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=a00d0b2fc1b54a829b3409f8d4d62449 service=safety_screen tenant_id=shop_001 trace_id=b26b8d7ec61d4098a663b75193872ee9
+2026-10-16T20:05:25.960928Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=d84039b466934d31ae561882c9bed04f service=safety_screen tenant_id=shop_001 trace_id=2f82812b6a524ad2a98ada986622a912
+2026-10-16T20:05:25.960928Z [warning  ] dependency_error               conversation_id=scn-S33 error=UpstreamError request_id=d84039b466934d31ae561882c9bed04f service=safety_screen tenant_id=shop_001 trace_id=2f82812b6a524ad2a98ada986622a912
+2026-10-16T20:05:25.973451Z [warning  ] dependency_error               attempt=1 code=BACKEND_UNAVAILABLE conversation_id=scn-S34 request_id=7cd7979023fb4b58bb243531b0dbdeb9 service=policy_search tenant_id=shop_001 trace_id=00e5e1ad5a8d444f8148aab84c24e8d1
+2026-10-16T20:05:25.973451Z [warning  ] dependency_error               attempt=2 code=BACKEND_UNAVAILABLE conversation_id=scn-S34 request_id=7cd7979023fb4b58bb243531b0dbdeb9 service=policy_search tenant_id=shop_001 trace_id=00e5e1ad5a8d444f8148aab84c24e8d1
+2026-10-16T20:05:26.307917Z [warning  ] dependency_error               conversation_id=scn-S47 error=UpstreamError request_id=c354f9f8a35448d6a5039df2cfb80d78 service=safety_screen tenant_id=shop_001 trace_id=8fb4d001259246d3898f35333f0b0b95
+id    owner  title                                                                                                                                              status  result  decision  escalation
+N01   B      Noon: a greeting is answered, nothing else happens                                                                                                 active  passed  answer    -
+N02   B      Noon: order status after the phone check (English)                                                                                                 active  passed  answer    -
+N03   B      Noon: order status in Egyptian Arabic                                                                                                              active  passed  answer    -
+N04   B      Noon: a phone that does not match, twice: handoff, no data                                                                                         active  passed  handoff   identity_failed
+N05   B      Noon: an order that is not the customer's: handoff, nothing shown                                                                                  active  passed  handoff   ownership_mismatch
+N06   B      Noon: a return with no approved rules goes to a person, nothing is changed                                                                         active  passed  handoff   approval_required
+N07   B      Noon: asking for a person                                                                                                                          active  passed  handoff   customer_request
+N08   B      Noon: a fraud report goes to a person at once                                                                                                      active  passed  handoff   mandatory_risk
+N09   B      Noon: a policy question is answered from Noon's own policy                                                                                         active  passed  answer    -
+N10   B      Noon: order status in Arabizi                                                                                                                      active  passed  answer    -
+N11   B      Noon: where is my refund (started, to the original card)                                                                                           active  passed  answer    -
+N12   B      Noon: where is my refund in Egyptian Arabic (completed, to the noon wallet)                                                                        active  passed  answer    -
+N13   B      Noon: a return that failed the hub check says so, no refund promised                                                                               active  passed  answer    -
+N14   B      Noon: an order with no return says so and offers to start one                                                                                      active  passed  answer    -
+N15   B      Noon: where is my refund in Arabizi (started, to the payment provider)                                                                             active  passed  answer    -
+N16   B      Noon: the refund of an order that is not theirs: handoff, no data                                                                                  active  passed  handoff   ownership_mismatch
+S00   A      A greeting gets a valid reply and trace                                                                                                            active  passed  answer    -
+S01   B      English return-window question is answered from return_policy v2                                                                                   active  passed  answer    -
+S02   B      Same question in Arabizi gets the same citation in an Arabizi reply                                                                                active  passed  answer    -
+S03   sync   Arabizi late order: order id, then phone, then status with the late-delivery policy                                                                active  passed  answer    -
+S04   A      Egyptian Arabic return within the window: confirm, then execute with a reference                                                                   active  passed  execute   -
+S05   A      Refund 20 days after delivery is denied by R-REFUND-14D: explained with a colleague offered, and handed over only when asked again                 active  passed  handoff   policy_denied
+S06   A      Refund above EGP 3,000 needs human approval (R-REFUND-LIMIT); the person approves and it runs once                                                 active  passed  execute   -
+S06b  A      Refund above EGP 3,000: the person rejects, nothing runs                                                                                           active  passed  refuse    -
+S07   A      A fraud report always goes to a human, urgently                                                                                                    active  passed  handoff   mandatory_risk
+S08   sync   A customer who asks for a person is handed off                                                                                                     active  passed  handoff   customer_request
+S09   A      Order lookup fails on two turns: no invented status, then handoff                                                                                  active  passed  handoff   repeated_tool_failure
+S10   B      An unanswerable question: clarify once, say so honestly and offer a colleague, hand off only the third time                                        active  passed  handoff   no_evidence
+S11   sync   Where is my order and cancel it: status first, then confirmed cancellation                                                                         active  passed  execute   -
+S12   A      Wrong phone twice fails identity and shows no order data                                                                                           active  passed  handoff   identity_failed
+S13   A      A customer who says no to the confirmation: nothing executes                                                                                       active  passed  answer    -
+S14   A      Cancelling a shipped order: R-CANCEL-BEFORE-SHIP says require_human, so it goes to a human for approval                                            active  passed  handoff   approval_required
+S15   A      Asking about another customer order: ownership mismatch, no data                                                                                   active  passed  handoff   ownership_mismatch
+S16   A      Rule checker unavailable: fail closed, handoff, nothing written                                                                                    active  passed  handoff   dependency_unavailable
+S17   B      Mixed Arabic-English return question is answered in Arabic                                                                                         active  passed  answer    -
+S18   A      Arabizi refund within the window confirmed with ah tamam                                                                                           active  passed  execute   -
+S19   A      Egyptian Arabic address change before shipping: confirm, then execute                                                                              active  passed  execute   -
+S20   A      Address change after shipping is refused with the shipping policy citation                                                                         active  passed  refuse    -
+S21   A      Clearance item return is refused by R-RETURN-EXCLUDED                                                                                              active  passed  refuse    -
+S22   A      Exchange within the 14 days: confirm, then execute with a reference                                                                                active  passed  execute   -
+S23   A      Voucher above EGP 100 on a late order: LATE-3D allows, MAX-100 requires a human, strictest wins                                                    active  passed  handoff   approval_required
+S24   A      A refund larger than the order total: the order facts win (EGP 1250)                                                                               active  passed  execute   -
+S25   B      A return question never cites the superseded return_policy v1                                                                                      active  passed  answer    -
+S26   A      A topic change during a pending confirmation cancels the action                                                                                    active  passed  clarify   -
+S27   sync   Three intents in one message: status, address change, refund, each action confirmed                                                                active  passed  execute   -
+S28   A      Order id and +20 10 1234 5601 in one Arabizi message: verified in one turn                                                                         active  passed  answer    -
+S29   A      A phone in Arabic-Indic digits is verified                                                                                                         active  passed  answer    -
+S30   A      Refund write with an unknown outcome: handoff, never claimed done or failed                                                                        active  passed  handoff   unverified_result
+S31   A      Write succeeds without an audit id: not claimed, handoff unverified_result                                                                         active  passed  handoff   unverified_result
+S32   A      A needed tool is no longer published: handoff capability_missing                                                                                   active  passed  handoff   capability_missing
+S33   A      Safety screen down: policy question still answered, refund blocked and handed off                                                                  active  passed  handoff   dependency_unavailable
+S34   B      Policy search down: no invented answer, handoff dependency_unavailable                                                                             active  passed  handoff   dependency_unavailable
+S35   A      A legal threat in Egyptian Arabic goes to a human urgently                                                                                         active  passed  handoff   mandatory_risk
+S36   A      Frustration rising: the first very angry message is apologised to and the request goes on, a second one in a row ends in handoff high_frustration  active  passed  handoff   high_frustration
+S37   A      Book me a flight: refused politely with an offer of a person                                                                                       active  passed  refuse    -
+S38   A      Delete my account is a human-only tool: handoff unsupported                                                                                        active  passed  handoff   unsupported
+S39   B      Handoff: a person claims, replies and gives the chat back, and the agent carries on                                                                active  passed  answer    -
+S40   sync   Greeting and thanks: answered from templates, no intent opened, no case                                                                            active  passed  answer    -
+S41   A      Return or exchange: the agent asks which one, then continues with the answer                                                                       active  passed  execute   -
+S42   A      A verified customer with several orders is shown them, masked, and picks one                                                                       active  passed  execute   -
+S43   A      Messages that cannot be understood: clarify twice, then handoff low_confidence                                                                     active  passed  handoff   low_confidence
+S44   A      One very angry message is apologised to and still solved: the order status is given, no handoff                                                    active  passed  answer    -
+S45   A      A verified customer mistypes an order number: asked once with their own orders (masked), the right number is answered                              active  passed  answer    -
+S46   A      An order number the shop does not know twice in a row: asked once, then handoff ownership_mismatch with no data                                    active  passed  handoff   ownership_mismatch
+S47   A      The safety screen fails once: it is asked again in the same turn and the return goes on to a confirmation                                          active  passed  confirm   -
+S48   A      A refund after 14 days is explained, other options (exchange, voucher) are named, and a colleague is offered                                       active  passed  refuse    -
+S49   sync   How are you (English): the greeting template, no question back, no case                                                                            active  passed  answer    -
+S50   sync   How are you (Egyptian Arabic): the greeting template, no question back, no case                                                                    active  passed  answer    -
+S51   sync   How are you (Arabizi): the greeting template, no question back, no case                                                                            active  passed  answer    -
+S52   B      Good morning (English): the greeting, no question back, no case                                                                                    active  passed  answer    -
+S53   B      Good morning (Egyptian Arabic): the greeting, no question back, no case                                                                            active  passed  answer    -
+S54   B      Good morning (Arabic and English mixed): the Egyptian Arabic greeting, no case                                                                     active  passed  answer    -
+S55   B      Good morning (Arabizi): the greeting in Arabizi, no question back, no case                                                                         active  passed  answer    -
+S56   B      A joke request (English): the shop agent asks what it can help with, no case                                                                       active  passed  clarify   -
+S57   B      A joke request (Egyptian Arabic): the shop agent asks what it can help with, no case                                                               active  passed  clarify   -
+S58   B      A joke request (mixed): the shop agent asks what it can help with in Egyptian Arabic                                                               active  passed  clarify   -
+S59   B      A joke request (Arabizi): the shop agent asks what it can help with, no case                                                                       active  passed  clarify   -
+S60   B      Three requests in Egyptian Arabic: status, address change, refund; the missing address is asked, each action confirmed                             active  passed  execute   -
+S61   B      One very angry message (Arabizi) is apologised to and still solved, no handoff                                                                     active  passed  answer    -
+S62   B      A refund for an order still on its way is refused, the late-delivery voucher is taken                                                              active  passed  execute   -
+S63   B      A mistyped order number (Egyptian Arabic) is asked again with the customer's own orders                                                            active  passed  answer    -
+S64   B      The shop fails once while reading the order: the retry works, the status is given                                                                  active  passed  answer    -
+S65   B      A refund and a complaint in one message: the first is confirmed, the second resumes after the yes                                                  active  passed  execute   -
+active: 83  pending: 0  failing: 0

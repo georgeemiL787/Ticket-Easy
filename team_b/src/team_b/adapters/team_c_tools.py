@@ -274,8 +274,9 @@ class TeamCCapabilities:
 
     @staticmethod
     def _without_undeclared_identity(state: TenantState, team_c_tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        """The customer travels by the identity of the call. A tool that declares no customer input (Team C's order list
-        reads the caller's own orders) would reject the customer_id Team B always adds, so it is left out for that tool."""
+        """The customer travels by the identity of the call. A tool that declares no customer input (Team C's order
+        list reads the caller's own orders) would reject the customer_id Team B always adds, so it is left out for
+        that tool."""
         listed = next((t for t in state.tools if t.get("name") == team_c_tool), None)
         properties = ((listed or {}).get("inputSchema") or {}).get("properties")
         if not isinstance(properties, dict):

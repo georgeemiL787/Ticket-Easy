@@ -78,6 +78,7 @@ async def test_a_write_the_gold_expects_is_fine_and_one_it_does_not_is_wrong() -
     m = report.overall.measures()
     assert m["writes"] == 2  # both conversations wrote (each in its own chat)
     assert m["wrong_or_unapproved_actions"] == 1  # the second one was not expected by its gold
+    assert m["unbacked_facts"] == 0  # the reference the shop issued ("REF-...", "RET-...") is a backed fact
 
 
 async def test_the_unbacked_fact_audit_flags_an_invented_number_and_accepts_known_ones() -> None:
@@ -89,6 +90,28 @@ async def test_the_unbacked_fact_audit_flags_an_invented_number_and_accepts_know
     bad = await unbacked_facts(container, "audit", ["Hello"], "You will get EGP 9999 back by 2031-01-01.", known)
     assert ok == []
     assert any("9999" in p for p in bad) and any("2031-01-01" in p for p in bad)
+
+
+async def test_today_passes_in_a_chat_with_no_facts_but_not_next_to_a_fact_or_as_another_day() -> None:
+    """The live check lets small talk say "today"; the audit does the same, and nothing else loosens."""
+    container = build_container(SETTINGS.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}))
+    assert container.orchestrator is not None
+    await container.orchestrator.handle_turn(TENANT, "audit2", "Hello")
+    known = known_text(container)
+    chat = "أنا تمام، أقدر أساعدك النهاردة؟"  # Egyptian Arabic: "I am fine, how can I help you today?"
+    assert await unbacked_facts(container, "audit2", ["Hello"], chat, known) == []
+    cited = await unbacked_facts(container, "audit2", ["Hello"], chat, known, ["return_policy@v2#s2"])
+    assert any("النهاردة" in p for p in cited)  # next to a citation it is a claim, so it is flagged
+    quoted = "Shipping costs EGP 50. [shipping_policy@v1#s0]"  # a passage the search really returned
+    assert not [
+        p
+        for p in await unbacked_facts(container, "audit2", ["Hello"], quoted, known, ["shipping_policy@v1#s0"])
+        if "citation" in p
+    ]
+    invented = await unbacked_facts(container, "audit2", ["Hello"], quoted, known, ["shipping_policy@v1#s3"])
+    assert any("shipping_policy@v1#s0" in p for p in invented)  # cited in the text but never retrieved
+    other_day = await unbacked_facts(container, "audit2", ["Hello"], "هنوصلك بكرة", known)
+    assert any("بكرة" in p for p in other_day)  # another day is never excused
 
 
 async def test_ai_calls_are_counted_per_message() -> None:

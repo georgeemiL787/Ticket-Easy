@@ -459,3 +459,42 @@ def test_lexicon_sizes_are_reasonable() -> None:
     lexicon = default_lexicon()
     assert min(w.size() for w in lexicon.intents.values()) >= 25
     assert lexicon.yes.size() >= 20 and lexicon.no.size() >= 20 and lexicon.negation.size() >= 15
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "when is customer support open",
+        "is customer care open on friday",
+        "support hours",
+        "ايه مواعيد خدمة العملاء؟",
+        "خدمة العملاء بتشتغل امتى؟",
+        "khedmet el 3omala bteshtaghal emta",
+        "3ayez a3raf mawa3id khedmet el 3omala",
+    ],
+)
+def test_a_question_about_the_support_hours_is_a_policy_question_not_a_request_for_a_person(
+    nlu: RuleBasedNLU, tenant: TenantConfig, text: str
+) -> None:
+    result = nlu.understand_sync(text, None, tenant)
+    assert [i.name for i in result.intents] == ["policy_question"]
+    assert not result.wants_human
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "I want to talk to customer support",
+        "can I talk to customer service",
+        "customer service",
+        "I waited 48 hours get me customer service",
+        "can I open a case with customer service",
+        "عايز اكلم خدمة العملاء",
+        "agent please",
+    ],
+)
+def test_asking_for_a_person_is_still_a_request_for_a_person(
+    nlu: RuleBasedNLU, tenant: TenantConfig, text: str
+) -> None:
+    result = nlu.understand_sync(text, None, tenant)
+    assert [i.name for i in result.intents] == ["human_request"] and result.wants_human

@@ -311,6 +311,20 @@
       "how يا", "ممكن اعرف", "ينفع اعمل"
     ]
   },
+  "hours_markers": {
+    "en": [
+      "opening hours", "working hours", "business hours", "support hours", "service hours", "care hours",
+      "support open", "service open", "care open", "support opens", "service opens", "care opens",
+      "support closes", "service closes", "care closes", "support close", "service close", "care close"
+    ],
+    "ar": [
+      "مواعيد", "ميعاد", "ساعات العمل", "بتشتغل", "بتفتح", "بتقفل", "بيشتغل", "بيفتح", "بيقفل", "مفتوح", "مفتوحة"
+    ],
+    "arabizi": [
+      "mawa3id", "maw3ed", "mawaeid", "sa3at el 3amal", "bteshtaghal", "beyeshtaghal", "bet2fel", "beyeftah", "maftou7"
+    ],
+    "mixed": []
+  },
   "policy_timing_markers": {
     "en": [
       "how many days", "how long", "how soon", "within how many days", "after how many days", "how much time",

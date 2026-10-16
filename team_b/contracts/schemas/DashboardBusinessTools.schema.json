@@ -702,6 +702,11 @@
       "default": null,
       "title": "Publications Error"
     },
+    "sandbox_only": {
+      "default": true,
+      "title": "Sandbox Only",
+      "type": "boolean"
+    },
     "team_c_error": {
       "anyOf": [
         {
@@ -717,11 +722,6 @@
     "tenant_id": {
       "title": "Tenant Id",
       "type": "string"
-    },
-    "sandbox_only": {
-      "default": true,
-      "title": "Sandbox Only",
-      "type": "boolean"
     },
     "tools": {
       "items": {

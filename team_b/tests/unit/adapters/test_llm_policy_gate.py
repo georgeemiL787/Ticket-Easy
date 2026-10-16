@@ -215,5 +215,6 @@ async def test_one_failed_search_is_retried_and_the_write_is_judged_normally() -
             return await super().search_knowledge(*args, **kwargs)
 
     search = FlakySearch()
-    out = await agent("allow", FakeLLM(verdict("allow", citations=[PASSAGE.passage_id])), search).check_action(request())
+    llm = FakeLLM(verdict("allow", citations=[PASSAGE.passage_id]))
+    out = await agent("allow", llm, search).check_action(request())
     assert search.tries == 2 and out.decision == "allow"

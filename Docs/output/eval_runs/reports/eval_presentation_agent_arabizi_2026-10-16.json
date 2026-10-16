@@ -1,0 +1,354 @@
+{
+  "mode": "llm",
+  "date": "2026-10-16",
+  "label": "presentation_agent_arabizi",
+  "agent_mode": "on",
+  "shadow_disagreements": [],
+  "topics": {
+    "K2": {
+      "right": 0,
+      "total": 1
+    },
+    "K4": {
+      "right": 1,
+      "total": 1
+    },
+    "K5": {
+      "right": 0,
+      "total": 1
+    },
+    "K7": {
+      "right": 0,
+      "total": 1
+    },
+    "T10": {
+      "right": 1,
+      "total": 1
+    },
+    "T12": {
+      "right": 1,
+      "total": 1
+    },
+    "T14": {
+      "right": 0,
+      "total": 1
+    },
+    "T16": {
+      "right": 1,
+      "total": 1
+    },
+    "T18": {
+      "right": 1,
+      "total": 1
+    },
+    "T2": {
+      "right": 1,
+      "total": 1
+    },
+    "T20": {
+      "right": 0,
+      "total": 1
+    },
+    "T22": {
+      "right": 1,
+      "total": 1
+    },
+    "T4": {
+      "right": 1,
+      "total": 1
+    },
+    "T6": {
+      "right": 1,
+      "total": 1
+    },
+    "T8": {
+      "right": 0,
+      "total": 1
+    }
+  },
+  "judge": {
+    "en": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "ar": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "mixed": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "arabizi": {
+      "judged": 21,
+      "failed": 0,
+      "mean_clarity": 3.2857142857142856,
+      "mean_politeness": 4.619047619047619,
+      "mean_register": 4.142857142857143,
+      "mean_helpfulness": 3.1904761904761907
+    },
+    "all": {
+      "judged": 21,
+      "failed": 0,
+      "mean_clarity": 3.2857142857142856,
+      "mean_politeness": 4.619047619047619,
+      "mean_register": 4.142857142857143,
+      "mean_helpfulness": 3.1904761904761907
+    }
+  },
+  "overall": {
+    "style": "all",
+    "conversations": 15,
+    "turns": 21,
+    "measures": {
+      "solved_without_person": 12,
+      "solved_without_person_rate": 0.8,
+      "no_person_needed": 14,
+      "needless_handoffs": 2,
+      "missed_escalations": 0,
+      "escalations_wanted": 1,
+      "wrong_or_unapproved_actions": 0,
+      "writes": 0,
+      "unbacked_facts": 0,
+      "agent_fallbacks": 0,
+      "ai_calls_per_message": 4.904761904761905,
+      "time_p50_ms": 59536.73549999803,
+      "time_p95_ms": 180561.53979999362,
+      "shadow_asked": 0,
+      "shadow_agreement": null
+    },
+    "agent_fallback_reasons": {},
+    "intent_accuracy": 0.7333333333333333,
+    "decision_accuracy": 0.7619047619047619,
+    "citation_accuracy": 0.4,
+    "locale_match": 1.0,
+    "entity_recall": 1.0,
+    "handoff_precision": 0.3333333333333333,
+    "handoff_recall": 1.0,
+    "latency_p50_ms": 59536.73549999803,
+    "latency_p95_ms": 180561.53979999362
+  },
+  "styles": {
+    "en": {
+      "style": "en",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "ar": {
+      "style": "ar",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "mixed": {
+      "style": "mixed",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "arabizi": {
+      "style": "arabizi",
+      "conversations": 15,
+      "turns": 21,
+      "measures": {
+        "solved_without_person": 12,
+        "solved_without_person_rate": 0.8,
+        "no_person_needed": 14,
+        "needless_handoffs": 2,
+        "missed_escalations": 0,
+        "escalations_wanted": 1,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 4.904761904761905,
+        "time_p50_ms": 59536.73549999803,
+        "time_p95_ms": 180561.53979999362,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.7333333333333333,
+      "decision_accuracy": 0.7619047619047619,
+      "citation_accuracy": 0.4,
+      "locale_match": 1.0,
+      "entity_recall": 1.0,
+      "handoff_precision": 0.3333333333333333,
+      "handoff_recall": 1.0,
+      "latency_p50_ms": 59536.73549999803,
+      "latency_p95_ms": 180561.53979999362
+    }
+  },
+  "worst_conversations": [
+    {
+      "id": "arabizi-17",
+      "style": "arabizi",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "el montag weselny maksour a3mel eh?",
+      "problems": [
+        "intent: expected policy_question, got complaint",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "Tamam, a2dar asa3dak fe da. eh ra2am el order?"
+    },
+    {
+      "id": "arabizi-07",
+      "style": "arabizi",
+      "topic": "K2",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "el shahn bekam?",
+      "problems": [
+        "intent: expected policy_question, got greeting",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "Ana b2afak shakran, el shahn beek? Ahlan beek, a2dar asa3dak ezay?"
+    },
+    {
+      "id": "arabizi-22",
+      "style": "arabizi",
+      "topic": "K7",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "eh mawa3eed khedmet el 3omala2?",
+      "problems": [
+        "decision: expected answer, got handoff",
+        "citation: expected one of faq@v1#q01, got none"
+      ],
+      "reply": "Akeed, ha7awelak delwa2ty le zameel men fari2 khedmet el 3omala2."
+    },
+    {
+      "id": "arabizi-44",
+      "style": "arabizi",
+      "topic": "T8",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "el gaw eh el naharda?",
+      "problems": [
+        "intent: expected none, got greeting",
+        "decision: expected clarify/refuse, got answer"
+      ],
+      "reply": "Ana kheyra, shukran 3ala es2ol! Ahlan beek, a2dar asa3dak ezay el naharda?"
+    },
+    {
+      "id": "arabizi-52",
+      "style": "arabizi",
+      "topic": "T14",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "momken tersha77ly mat3am kewayes?",
+      "problems": [
+        "intent: expected none, got policy_question",
+        "decision: expected clarify/refuse, got handoff"
+      ],
+      "reply": "A2dar asa3dak fel orderat w siyasat el matgar bas. Te7eb a7awelak le 7ad men el fari2?\n\nA7an, zameel men el fari2 ghadi yikmel ma3ak el 7agha."
+    },
+    {
+      "id": "arabizi-58",
+      "style": "arabizi",
+      "topic": "T20",
+      "wrong_checks": 2,
+      "first_wrong_turn": 2,
+      "said": "01012345601",
+      "problems": [
+        "decision: expected confirm, got clarify",
+        "text: expected it to contain NS-20745"
+      ],
+      "reply": "Eh el mablagh el matloub?"
+    }
+  ]
+}

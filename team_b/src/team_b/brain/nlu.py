@@ -221,7 +221,17 @@ class RuleBasedNLU:
             names.remove("greeting")
             del scores["greeting"]
 
-        human = "human_request" in scores or self._short_human_request(normalized)
+        # "when is customer support open?" asks about the department's hours; it does not ask to talk to someone
+        person = "human_request" in scores or self._short_human_request(normalized)
+        asks_hours = person and self._has(normalized, lex.hours_markers)
+        if asks_hours:
+            if "human_request" in scores:
+                names.remove("human_request")
+                del scores["human_request"]
+            if "policy_question" in tenant.intents and "policy_question" not in scores:
+                names.append("policy_question")
+                scores["policy_question"] = BASE_CONFIDENCE + 0.05
+        human = person and not asks_hours
         if human and "human_request" in tenant.intents and "human_request" not in scores:
             names.append("human_request")
             scores["human_request"] = BASE_CONFIDENCE

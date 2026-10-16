@@ -1,0 +1,427 @@
+{
+  "mode": "rules",
+  "date": "2026-10-17",
+  "label": "live_rules_after_fix",
+  "agent_mode": null,
+  "shadow_disagreements": [],
+  "topics": {
+    "K1": {
+      "right": 13,
+      "total": 24
+    },
+    "K2": {
+      "right": 6,
+      "total": 16
+    },
+    "K3": {
+      "right": 7,
+      "total": 12
+    },
+    "K4": {
+      "right": 3,
+      "total": 12
+    },
+    "K5": {
+      "right": 0,
+      "total": 12
+    },
+    "K6": {
+      "right": 3,
+      "total": 8
+    },
+    "K7": {
+      "right": 5,
+      "total": 8
+    },
+    "T1": {
+      "right": 12,
+      "total": 12
+    },
+    "T10": {
+      "right": 2,
+      "total": 4
+    },
+    "T11": {
+      "right": 4,
+      "total": 4
+    },
+    "T12": {
+      "right": 4,
+      "total": 4
+    },
+    "T13": {
+      "right": 4,
+      "total": 4
+    },
+    "T14": {
+      "right": 4,
+      "total": 4
+    },
+    "T15": {
+      "right": 2,
+      "total": 4
+    },
+    "T16": {
+      "right": 3,
+      "total": 4
+    },
+    "T17": {
+      "right": 3,
+      "total": 4
+    },
+    "T18": {
+      "right": 2,
+      "total": 4
+    },
+    "T19": {
+      "right": 2,
+      "total": 4
+    },
+    "T2": {
+      "right": 5,
+      "total": 12
+    },
+    "T20": {
+      "right": 3,
+      "total": 4
+    },
+    "T21": {
+      "right": 2,
+      "total": 4
+    },
+    "T22": {
+      "right": 3,
+      "total": 4
+    },
+    "T3": {
+      "right": 6,
+      "total": 12
+    },
+    "T4": {
+      "right": 7,
+      "total": 12
+    },
+    "T5": {
+      "right": 10,
+      "total": 12
+    },
+    "T6": {
+      "right": 8,
+      "total": 8
+    },
+    "T7": {
+      "right": 11,
+      "total": 12
+    },
+    "T8": {
+      "right": 11,
+      "total": 12
+    },
+    "T9": {
+      "right": 0,
+      "total": 4
+    }
+  },
+  "judge": null,
+  "overall": {
+    "style": "all",
+    "conversations": 240,
+    "turns": 284,
+    "measures": {
+      "solved_without_person": 209,
+      "solved_without_person_rate": 0.8708333333333333,
+      "no_person_needed": 212,
+      "needless_handoffs": 4,
+      "missed_escalations": 5,
+      "escalations_wanted": 28,
+      "wrong_or_unapproved_actions": 0,
+      "writes": 0,
+      "unbacked_facts": 1,
+      "agent_fallbacks": 0,
+      "ai_calls_per_message": 0.0,
+      "time_p50_ms": 230.54440000123577,
+      "time_p95_ms": 464.3422000008286,
+      "shadow_asked": 0,
+      "shadow_agreement": null
+    },
+    "agent_fallback_reasons": {},
+    "intent_accuracy": 0.6416666666666667,
+    "decision_accuracy": 0.6901408450704225,
+    "citation_accuracy": 0.43,
+    "locale_match": 0.9894366197183099,
+    "entity_recall": 1.0,
+    "handoff_precision": 0.8518518518518519,
+    "handoff_recall": 0.8214285714285714,
+    "latency_p50_ms": 230.54440000123577,
+    "latency_p95_ms": 464.3422000008286
+  },
+  "styles": {
+    "en": {
+      "style": "en",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 53,
+        "solved_without_person_rate": 0.8833333333333333,
+        "no_person_needed": 53,
+        "needless_handoffs": 0,
+        "missed_escalations": 1,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 0.0,
+        "time_p50_ms": 230.15049999958137,
+        "time_p95_ms": 458.73410000058357,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.7833333333333333,
+      "decision_accuracy": 0.8028169014084507,
+      "citation_accuracy": 0.56,
+      "locale_match": 1.0,
+      "entity_recall": 1.0,
+      "handoff_precision": 1.0,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 230.15049999958137,
+      "latency_p95_ms": 458.73410000058357
+    },
+    "ar": {
+      "style": "ar",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 53,
+        "solved_without_person_rate": 0.8833333333333333,
+        "no_person_needed": 53,
+        "needless_handoffs": 0,
+        "missed_escalations": 1,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 0.0,
+        "time_p50_ms": 233.4242000069935,
+        "time_p95_ms": 468.5475000005681,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.7,
+      "decision_accuracy": 0.7605633802816901,
+      "citation_accuracy": 0.4,
+      "locale_match": 1.0,
+      "entity_recall": 1.0,
+      "handoff_precision": 1.0,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 233.4242000069935,
+      "latency_p95_ms": 468.5475000005681
+    },
+    "mixed": {
+      "style": "mixed",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 53,
+        "solved_without_person_rate": 0.8833333333333333,
+        "no_person_needed": 53,
+        "needless_handoffs": 0,
+        "missed_escalations": 1,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 1,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 0.0,
+        "time_p50_ms": 227.3910000003525,
+        "time_p95_ms": 467.9063000003225,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.6833333333333333,
+      "decision_accuracy": 0.7464788732394366,
+      "citation_accuracy": 0.52,
+      "locale_match": 0.9859154929577465,
+      "entity_recall": 1.0,
+      "handoff_precision": 1.0,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 227.3910000003525,
+      "latency_p95_ms": 467.9063000003225
+    },
+    "arabizi": {
+      "style": "arabizi",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 50,
+        "solved_without_person_rate": 0.8333333333333334,
+        "no_person_needed": 53,
+        "needless_handoffs": 4,
+        "missed_escalations": 2,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 0.0,
+        "time_p50_ms": 230.11780000524595,
+        "time_p95_ms": 462.5973000001977,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.4,
+      "decision_accuracy": 0.4507042253521127,
+      "citation_accuracy": 0.24,
+      "locale_match": 0.971830985915493,
+      "entity_recall": 1.0,
+      "handoff_precision": 0.5555555555555556,
+      "handoff_recall": 0.7142857142857143,
+      "latency_p50_ms": 230.11780000524595,
+      "latency_p95_ms": 462.5973000001977
+    }
+  },
+  "worst_conversations": [
+    {
+      "id": "arabizi-56",
+      "style": "arabizi",
+      "topic": "T18",
+      "wrong_checks": 7,
+      "first_wrong_turn": 1,
+      "said": "el order NS-20877 wasal fein?",
+      "problems": [
+        "intent: expected order_status, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
+    },
+    {
+      "id": "arabizi-20",
+      "style": "arabizi",
+      "topic": "K6",
+      "wrong_checks": 4,
+      "first_wrong_turn": 1,
+      "said": "fi taghleef hedeya?",
+      "problems": [
+        "intent: expected policy_question, got none",
+        "decision: expected answer, got clarify",
+        "citation: expected one of faq@v1#q05, got none",
+        "locale: expected arabizi, got en"
+      ],
+      "reply": "Could you tell me a little more about what you need help with?"
+    },
+    {
+      "id": "arabizi-48",
+      "style": "arabizi",
+      "topic": "T10",
+      "wrong_checks": 4,
+      "first_wrong_turn": 1,
+      "said": "el order NS-20877 wasal fein?",
+      "problems": [
+        "intent: expected order_status, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
+    },
+    {
+      "id": "arabizi-55",
+      "style": "arabizi",
+      "topic": "T17",
+      "wrong_checks": 4,
+      "first_wrong_turn": 1,
+      "said": "3ayez floosy bta3et NS-20512",
+      "problems": [
+        "intent: expected refund_request, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "Momken twadda7ly aktar me7tag mosa3da fe eh?"
+    },
+    {
+      "id": "mixed-48",
+      "style": "mixed",
+      "topic": "T10",
+      "wrong_checks": 4,
+      "first_wrong_turn": 1,
+      "said": "where is order NS-20877 بتاعي",
+      "problems": [
+        "intent: expected order_status, got none",
+        "decision: expected verify_identity, got clarify"
+      ],
+      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
+    },
+    {
+      "id": "ar-03",
+      "style": "ar",
+      "topic": "K1",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "اقدر ارجع الحاجة بعد ١٠ ايام؟",
+      "problems": [
+        "intent: expected policy_question, got return_request",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s2, got none"
+      ],
+      "reply": "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟"
+    },
+    {
+      "id": "ar-05",
+      "style": "ar",
+      "topic": "K1",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "هل ينفع ارجع طلب اشتريته من اسبوعين؟",
+      "problems": [
+        "intent: expected policy_question, got return_request",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s2, got none"
+      ],
+      "reply": "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟"
+    },
+    {
+      "id": "ar-08",
+      "style": "ar",
+      "topic": "K2",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "مصاريف التوصيل كام؟",
+      "problems": [
+        "intent: expected policy_question, got none",
+        "decision: expected answer, got clarify",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
+    },
+    {
+      "id": "ar-09",
+      "style": "ar",
+      "topic": "K2",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "بتاخدوا كام على الشحن؟",
+      "problems": [
+        "intent: expected policy_question, got none",
+        "decision: expected answer, got clarify",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
+    },
+    {
+      "id": "ar-10",
+      "style": "ar",
+      "topic": "K2",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "كام رسوم التوصيل؟",
+      "problems": [
+        "intent: expected policy_question, got none",
+        "decision: expected answer, got clarify",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
+    }
+  ]
+}

@@ -38,6 +38,7 @@ from team_b.brain.choices import mask_order_id, short_date
 from team_b.brain.composer import check_grounded, default_composer
 from team_b.brain.metrics import percentile
 from team_b.brain.shadow import Agreement, compare
+from team_b.brain.smalltalk import TODAY_WORDS
 from team_b.config import PROJECT_ROOT, Settings
 from team_b.container import Container, build_container
 from team_b.domain.agent import AgentMode
@@ -214,18 +215,29 @@ def known_text(container: Container) -> str:
     return "\n".join([*default_composer().template_texts(), data, *short])
 
 
-async def unbacked_facts(container: Container, chat_id: str, said: Sequence[str], text: str, known: str) -> list[str]:
+async def unbacked_facts(
+    container: Container, chat_id: str, said: Sequence[str], text: str, known: str, citations: Sequence[str] = ()
+) -> list[str]:
     """Facts in a reply that none of the customer's messages, the agent's known texts or the order facts contain.
 
     check_grounded is the very check that stops the AI from inventing facts; run again here on every reply that was
-    really sent, so a gap in the live check would show up as a number above zero."""
+    really sent, so a gap in the live check would show up as a number above zero. Like the live check, it lets
+    "today" pass in a chat with no facts in it ("how can I help you today?" promises nothing): no citation and no
+    fact held by the session. Any other time word ("tomorrow"), and "today" next to a fact, is still flagged."""
     session = await container.sessions.load(TENANT, chat_id)
     extra = [json.dumps(session.facts, default=str, ensure_ascii=False)] if session is not None else []
     case = [session.handoff_case_id] if session is not None and session.handoff_case_id else []
-    sources = [known, *said, *extra, *case]
+    # a reference the shop really issued (RET-30001, CAN-30001): its own audit log is the proof, so "Your reference
+    # number is CAN-30001" is a fact the agent was told; one the shop never issued is still unbacked
+    issued = [e.reference_id for e in container.shop.audit_log(TENANT) if e.reference_id] if container.shop else []
+    # a passage the reply carries in its own citation list was retrieved by the search (code refuses any other)
+    sources = [known, *said, *extra, *case, *issued, *citations]
     # the order list shows ids hidden except their last digits (NS-**877): that is the same id, not a new number
     masked = [mask_order_id(i) for i in dict.fromkeys(ORDER_ID.findall("\n".join(sources)))]
-    return check_grounded(text, [*sources, *masked])
+    found = check_grounded(text, [*sources, *masked])
+    if not citations and not (session is not None and session.facts):
+        found = [p for p in found if p.removeprefix("new time word ") not in TODAY_WORDS]
+    return found
 
 
 async def run_conversation(
@@ -255,7 +267,7 @@ async def run_conversation(
             latency_ms=latency, ai_calls=(ai_calls() - calls_before) if ai_calls is not None else 0,
             fallback=trace.fallback_reason,
         )  # fmt: skip
-        result.unbacked = await unbacked_facts(container, chat_id, said, reply.text, known)
+        result.unbacked = await unbacked_facts(container, chat_id, said, reply.text, known, reply.citations)
         result.shadow = compare(trace, action_tools)
         result.wrong = problems(turn.gold, result, LOCALE_OF_STYLE[conversation.language_style])
         results.append(result)

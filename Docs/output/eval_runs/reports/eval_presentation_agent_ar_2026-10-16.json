@@ -1,0 +1,463 @@
+{
+  "mode": "llm",
+  "date": "2026-10-16",
+  "label": "presentation_agent_ar",
+  "agent_mode": "on",
+  "shadow_disagreements": [],
+  "topics": {
+    "K1": {
+      "right": 6,
+      "total": 6
+    },
+    "K2": {
+      "right": 3,
+      "total": 4
+    },
+    "K3": {
+      "right": 3,
+      "total": 3
+    },
+    "K4": {
+      "right": 3,
+      "total": 3
+    },
+    "K5": {
+      "right": 0,
+      "total": 3
+    },
+    "K6": {
+      "right": 1,
+      "total": 2
+    },
+    "K7": {
+      "right": 0,
+      "total": 2
+    },
+    "T1": {
+      "right": 3,
+      "total": 3
+    },
+    "T10": {
+      "right": 1,
+      "total": 1
+    },
+    "T11": {
+      "right": 0,
+      "total": 1
+    },
+    "T12": {
+      "right": 1,
+      "total": 1
+    },
+    "T13": {
+      "right": 1,
+      "total": 1
+    },
+    "T14": {
+      "right": 0,
+      "total": 1
+    },
+    "T15": {
+      "right": 1,
+      "total": 1
+    },
+    "T16": {
+      "right": 1,
+      "total": 1
+    },
+    "T17": {
+      "right": 0,
+      "total": 1
+    },
+    "T18": {
+      "right": 1,
+      "total": 1
+    },
+    "T19": {
+      "right": 1,
+      "total": 1
+    },
+    "T2": {
+      "right": 3,
+      "total": 3
+    },
+    "T20": {
+      "right": 1,
+      "total": 1
+    },
+    "T21": {
+      "right": 1,
+      "total": 1
+    },
+    "T22": {
+      "right": 1,
+      "total": 1
+    },
+    "T3": {
+      "right": 3,
+      "total": 3
+    },
+    "T4": {
+      "right": 3,
+      "total": 3
+    },
+    "T5": {
+      "right": 3,
+      "total": 3
+    },
+    "T6": {
+      "right": 2,
+      "total": 2
+    },
+    "T7": {
+      "right": 3,
+      "total": 3
+    },
+    "T8": {
+      "right": 0,
+      "total": 3
+    },
+    "T9": {
+      "right": 1,
+      "total": 1
+    }
+  },
+  "judge": {
+    "en": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "ar": {
+      "judged": 71,
+      "failed": 0,
+      "mean_clarity": 3.943661971830986,
+      "mean_politeness": 4.943661971830986,
+      "mean_register": 4.098591549295775,
+      "mean_helpfulness": 3.676056338028169
+    },
+    "mixed": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "arabizi": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "all": {
+      "judged": 71,
+      "failed": 0,
+      "mean_clarity": 3.943661971830986,
+      "mean_politeness": 4.943661971830986,
+      "mean_register": 4.098591549295775,
+      "mean_helpfulness": 3.676056338028169
+    }
+  },
+  "overall": {
+    "style": "all",
+    "conversations": 60,
+    "turns": 71,
+    "measures": {
+      "solved_without_person": 49,
+      "solved_without_person_rate": 0.8166666666666667,
+      "no_person_needed": 53,
+      "needless_handoffs": 4,
+      "missed_escalations": 1,
+      "escalations_wanted": 7,
+      "wrong_or_unapproved_actions": 0,
+      "writes": 0,
+      "unbacked_facts": 4,
+      "agent_fallbacks": 0,
+      "ai_calls_per_message": 5.0,
+      "time_p50_ms": 19877.59989999904,
+      "time_p95_ms": 60734.91980000108,
+      "shadow_asked": 0,
+      "shadow_agreement": null
+    },
+    "agent_fallback_reasons": {},
+    "intent_accuracy": 0.95,
+    "decision_accuracy": 0.8169014084507042,
+    "citation_accuracy": 0.68,
+    "locale_match": 1.0,
+    "entity_recall": 1.0,
+    "handoff_precision": 0.6,
+    "handoff_recall": 0.8571428571428571,
+    "latency_p50_ms": 19877.59989999904,
+    "latency_p95_ms": 60734.91980000108
+  },
+  "styles": {
+    "en": {
+      "style": "en",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "ar": {
+      "style": "ar",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 49,
+        "solved_without_person_rate": 0.8166666666666667,
+        "no_person_needed": 53,
+        "needless_handoffs": 4,
+        "missed_escalations": 1,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 4,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 5.0,
+        "time_p50_ms": 19877.59989999904,
+        "time_p95_ms": 60734.91980000108,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.95,
+      "decision_accuracy": 0.8169014084507042,
+      "citation_accuracy": 0.68,
+      "locale_match": 1.0,
+      "entity_recall": 1.0,
+      "handoff_precision": 0.6,
+      "handoff_recall": 0.8571428571428571,
+      "latency_p50_ms": 19877.59989999904,
+      "latency_p95_ms": 60734.91980000108
+    },
+    "mixed": {
+      "style": "mixed",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "arabizi": {
+      "style": "arabizi",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    }
+  },
+  "worst_conversations": [
+    {
+      "id": "ar-17",
+      "style": "ar",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "المنتج وصلني مكسور اعمل ايه؟",
+      "problems": [
+        "intent: expected policy_question, got return_request",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "أنا آسف جدًا إن المنتج وصلك مكسور، ده مش اللي مستنيينه منك. عشان أقدر أساعدك في أسرع وقت، ممكن تديني رقم الأوردر؟"
+    },
+    {
+      "id": "ar-18",
+      "style": "ar",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "استلمت حاجة بايظة اعمل ايه؟",
+      "problems": [
+        "intent: expected policy_question, got return_request",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "أنا آسف جدًا إنك استلمت حاجة بايظة، ده مش اللي بنتمناه لك أبدًا. عشان أقدر أساعدك وأحل المشكلة، ممكن تديني رقم الأوردر؟"
+    },
+    {
+      "id": "ar-19",
+      "style": "ar",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "الحاجة جاتلي بعيب مين اكلمه؟",
+      "problems": [
+        "intent: expected policy_question, got complaint",
+        "decision: expected answer, got handoff",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "أنا آسف جدًا إن الحاجة جاتك بعيب. هحولك دلوقتي لزميل من فريق خدمة العملاء عشان يتابع معاك الموضوع."
+    },
+    {
+      "id": "ar-10",
+      "style": "ar",
+      "topic": "K2",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "كام رسوم التوصيل؟",
+      "problems": [
+        "decision: expected answer, got clarify",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "أهلاً بيك، ممكن توضحلي أكتر محتاج مساعدة في إيه؟"
+    },
+    {
+      "id": "ar-21",
+      "style": "ar",
+      "topic": "K6",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "ينفع تغلفوا الاوردر هدية؟",
+      "problems": [
+        "decision: expected answer, got clarify",
+        "citation: expected one of faq@v1#q05, got none"
+      ],
+      "reply": "أكيد، يسعدني أساعدك في تغليف الأوردر كهدية. عشان أقدر أعملك ده، ممكن تديني رقم الأوردر؟"
+    },
+    {
+      "id": "ar-22",
+      "style": "ar",
+      "topic": "K7",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "ايه مواعيد خدمة العملاء؟",
+      "problems": [
+        "decision: expected answer, got handoff",
+        "citation: expected one of faq@v1#q01, got none"
+      ],
+      "reply": "أكيد، هحولك دلوقتي لزميل من فريق خدمة العملاء."
+    },
+    {
+      "id": "ar-23",
+      "style": "ar",
+      "topic": "K7",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "خدمة العملاء بتشتغل امتى؟",
+      "problems": [
+        "decision: expected answer, got handoff",
+        "citation: expected one of faq@v1#q01, got none"
+      ],
+      "reply": "أكيد، هحولك دلوقتي لزميل من فريق خدمة العملاء."
+    },
+    {
+      "id": "ar-49",
+      "style": "ar",
+      "topic": "T11",
+      "wrong_checks": 2,
+      "first_wrong_turn": 2,
+      "said": "اسوأ خدمة، مش معقول، قرفتوني!!!",
+      "problems": [
+        "decision: expected handoff, got clarify",
+        "escalation: expected high_frustration, got None"
+      ],
+      "reply": "آسف جدًا إنك حسيت كده، وعايز أظبط الموضوع فورًا. عشان أقدر أساعدك، ممكن تقولي رقم الأوردر؟"
+    },
+    {
+      "id": "ar-55",
+      "style": "ar",
+      "topic": "T17",
+      "wrong_checks": 2,
+      "first_wrong_turn": 2,
+      "said": "01012345601",
+      "problems": [
+        "decision: expected refuse, got clarify",
+        "citation: expected one of refund_policy@v1#s1, got none"
+      ],
+      "reply": "تمام، استلمت الرقم. عشان أكمل معاك، قولي بس إيه السبب اللي عايز ترجع بيه؟ كلمتين كفاية."
+    },
+    {
+      "id": "ar-44",
+      "style": "ar",
+      "topic": "T8",
+      "wrong_checks": 1,
+      "first_wrong_turn": 1,
+      "said": "الطقس عامل ايه النهاردة؟",
+      "problems": [
+        "decision: expected clarify/refuse, got handoff"
+      ],
+      "reply": "أنا مش بقدر أساعدك في أخبار الطقس، بس أقدر أساعدك في الأوردرات وسياسات المتجر. تحب أحولك لحد من الفريق؟\n\nده حاجة زميل من الفريق بس اللي يقدر يعملها، فهحولك دلوق"
+    }
+  ]
+}

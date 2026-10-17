@@ -1,0 +1,29 @@
+{"index": 4, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 10, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": false, "problems": ["The reply does not answer the customer's question about the 10-day return window.", "The reply contains no actual policy information or facts.", "The reply is incomplete and repetitive ('Here is what our policy says: This is what our policy says:')."]}, "seconds": 0.7}
+{"index": 12, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 17, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.5}
+{"index": 22, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 27, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 32, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 37, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 42, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 48, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 53, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 1.8}
+{"index": 58, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 63, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 68, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.5}
+{"index": 74, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": false, "problems": ["The reply fails to answer the customer's question using the provided policy passage, which clearly states the refund timeline (7-14 business days for bank cards).", "The reply claims it does not have the specific details, which is incorrect given the available policy text."]}, "seconds": 0.8}
+{"index": 80, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 85, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 90, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 96, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 98, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": false, "problems": ["Does not answer the customer's question about the damaged product", "Does not ask for necessary details or offer a solution as implied by the context of a damaged item inquiry"]}, "seconds": 0.6}
+{"index": 102, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.5}
+{"index": 107, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 113, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 115, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": false, "problems": ["Does not answer the customer's question about gift wrapping", "Does not match the plan's purpose of saying 'you are welcome' (customer did not thank)"]}, "seconds": 0.8}
+{"index": 120, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.5}
+{"index": 125, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 1.1}
+{"index": 137, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": false, "problems": ["Promises a colleague can look at the case, which is not in the plan or passages"]}, "seconds": 1.1}
+{"index": 139, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 144, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}

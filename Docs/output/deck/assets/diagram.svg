@@ -1,0 +1,133 @@
+<svg style="height:1060px;width:1224px;" viewBox="0 0 1224 1060" role="img" aria-label="Ticket-Easy system architecture">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+      <marker id="as" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>
+      <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+      <marker id="ars" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>
+      <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+    </defs>
+<rect class="band" x="0" y="0" width="1224" height="92" rx="16"/><text class="lab" x="20" y="24">Clients · 4 interfaces</text>
+<g class="n"><rect x="20" y="40" width="262" height="42" rx="14"/><text x="151.0" y="66.0" class="t1" text-anchor="middle">Customer chat</text></g>
+<g class="n"><rect x="312" y="40" width="262" height="42" rx="14"/><text x="443.0" y="58.0" class="t1" text-anchor="middle">Support inbox</text><text x="443.0" y="75.0" class="t2" text-anchor="middle">human agent console</text></g>
+<g class="n"><rect x="604" y="40" width="262" height="42" rx="14"/><text x="735.0" y="58.0" class="t1" text-anchor="middle">Owner dashboard</text><text x="735.0" y="75.0" class="t2" text-anchor="middle">monitor · alerts · replay · rules</text></g>
+<g class="n"><rect x="944" y="40" width="260" height="42" rx="14"/><text x="1074.0" y="58.0" class="t1" text-anchor="middle">Tool builder</text><text x="1074.0" y="75.0" class="t2" text-anchor="middle">connect an API · approve tools</text></g>
+<path class="e flow" d="M151 92V132" marker-end="url(#a)"/>
+<g class="tag "><rect x="111.3" y="101" width="79.4" height="22" rx="11"/><text x="151" y="116" text-anchor="middle">HTTP JSON</text></g>
+<path class="e hand" d="M443 92V132" marker-end="url(#ar)" marker-start="url(#ars)"/>
+<g class="tag rose"><rect x="409.9" y="101" width="66.2" height="22" rx="11"/><text x="443" y="116" text-anchor="middle">handoff</text></g>
+<path class="e flow" d="M735 92V132" marker-end="url(#a)"/>
+<g class="tag "><rect x="711.8" y="101" width="46.4" height="22" rx="11"/><text x="735" y="116" text-anchor="middle">REST</text></g>
+<path class="e dash" d="M1074 92V132" marker-end="url(#a)"/>
+<g class="tag "><rect x="1050.8" y="101" width="46.4" height="22" rx="11"/><text x="1074" y="116" text-anchor="middle">HTTP</text></g>
+<rect class="band core" x="0" y="132" width="884" height="308" rx="16"/><text class="lab" x="20" y="156">Agent core</text>
+<text class="ctitle" x="20" y="182">Agent Orchestrator</text>
+<text class="csub" x="262" y="181">FastAPI :8010 · the only customer-facing service · multi-tenant · agent mode ON by default</text>
+<g class="n dk"><rect x="21" y="206" width="112" height="58" rx="14"/><text x="77.0" y="232.0" class="t1" text-anchor="middle">Understand</text><text x="77.0" y="249.0" class="t2" text-anchor="middle">intent · entities</text></g>
+<circle class="num" cx="35" cy="206" r="11"/><text class="numt" x="35" y="210" text-anchor="middle">1</text>
+<path class="e2" d="M133 235H143" marker-end="url(#ag)"/>
+<g class="n dk"><rect x="143" y="206" width="112" height="58" rx="14"/><text x="199.0" y="232.0" class="t1" text-anchor="middle">Safety screen</text><text x="199.0" y="249.0" class="t2" text-anchor="middle">risk · injection</text></g>
+<circle class="num" cx="157" cy="206" r="11"/><text class="numt" x="157" y="210" text-anchor="middle">2</text>
+<path class="e2" d="M255 235H265" marker-end="url(#ag)"/>
+<g class="n dk"><rect x="265" y="206" width="112" height="58" rx="14"/><text x="321.0" y="232.0" class="t1" text-anchor="middle">Verify identity</text><text x="321.0" y="249.0" class="t2" text-anchor="middle">order id + phone</text></g>
+<circle class="num" cx="279" cy="206" r="11"/><text class="numt" x="279" y="210" text-anchor="middle">3</text>
+<path class="e2" d="M377 235H387" marker-end="url(#ag)"/>
+<g class="n dk acc"><rect x="387" y="206" width="112" height="58" rx="14"/><text x="443.0" y="232.0" class="t1" text-anchor="middle">Agent loop</text><text x="443.0" y="249.0" class="t2" text-anchor="middle">plan · act · replan</text></g>
+<circle class="num" cx="401" cy="206" r="11"/><text class="numt" x="401" y="210" text-anchor="middle">4</text>
+<path class="e2" d="M499 235H509" marker-end="url(#ag)"/>
+<g class="n dk"><rect x="509" y="206" width="112" height="58" rx="14"/><text x="565.0" y="232.0" class="t1" text-anchor="middle">Policy gate</text><text x="565.0" y="249.0" class="t2" text-anchor="middle">allow·deny·human</text></g>
+<circle class="num" cx="523" cy="206" r="11"/><text class="numt" x="523" y="210" text-anchor="middle">5</text>
+<path class="e2" d="M621 235H631" marker-end="url(#ag)"/>
+<g class="n dk"><rect x="631" y="206" width="112" height="58" rx="14"/><text x="687.0" y="232.0" class="t1" text-anchor="middle">Confirm &amp; act</text><text x="687.0" y="249.0" class="t2" text-anchor="middle">write once</text></g>
+<circle class="num" cx="645" cy="206" r="11"/><text class="numt" x="645" y="210" text-anchor="middle">6</text>
+<path class="e2" d="M743 235H753" marker-end="url(#ag)"/>
+<g class="n dk"><rect x="753" y="206" width="112" height="58" rx="14"/><text x="809.0" y="232.0" class="t1" text-anchor="middle">Verify &amp; reply</text><text x="809.0" y="249.0" class="t2" text-anchor="middle">cite · log</text></g>
+<circle class="num" cx="767" cy="206" r="11"/><text class="numt" x="767" y="210" text-anchor="middle">7</text>
+<rect x="20" y="282" width="844" height="96" rx="14" fill="#ffffff0a" stroke="#ffffff22" stroke-width="1.2" stroke-dasharray="4 5"/>
+<text class="csub" x="34" y="302" style="fill:#d4fb70;font-weight:700">Inside the agent loop · the model only proposes, code decides</text>
+<g class="n dk sm"><rect x="34" y="312" width="148" height="54" rx="14"/><text x="108.0" y="336.0" class="t1" text-anchor="middle">Plan</text><text x="108.0" y="353.0" class="t2" text-anchor="middle">1–5 steps, saved</text></g>
+<path class="e2" d="M182 339H208" marker-end="url(#ag)"/>
+<g class="n dk sm"><rect x="208" y="312" width="148" height="54" rx="14"/><text x="282.0" y="336.0" class="t1" text-anchor="middle">Propose move</text><text x="282.0" y="353.0" class="t2" text-anchor="middle">one at a time</text></g>
+<path class="e2" d="M356 339H382" marker-end="url(#ag)"/>
+<g class="n dk sm"><rect x="382" y="312" width="148" height="54" rx="14"/><text x="456.0" y="336.0" class="t1" text-anchor="middle">Code checks</text><text x="456.0" y="353.0" class="t2" text-anchor="middle">menu · identity · grounding</text></g>
+<path class="e2" d="M530 339H556" marker-end="url(#ag)"/>
+<g class="n dk sm"><rect x="556" y="312" width="148" height="54" rx="14"/><text x="630.0" y="336.0" class="t1" text-anchor="middle">Work the move</text><text x="630.0" y="353.0" class="t2" text-anchor="middle">read · ask · act · hand over</text></g>
+<path class="e2" d="M704 339H730" marker-end="url(#ag)"/>
+<g class="n dk sm"><rect x="730" y="312" width="148" height="54" rx="14"/><text x="804.0" y="336.0" class="t1" text-anchor="middle">Replan</text><text x="804.0" y="353.0" class="t2" text-anchor="middle">until done / needs input</text></g>
+<path d="M778 366V374H108V368" fill="none" stroke="#8ea0c6" stroke-width="1.6" stroke-dasharray="3 5"/>
+<text class="csub" x="443" y="389" text-anchor="middle" style="font-size:11.5px">loop again · max moves &amp; time limit · on failure or time-out → today's fixed six-stage flow (fallback)</text>
+<g class="n dk sm"><rect x="21" y="398" width="160" height="32" rx="14"/><text x="101.0" y="419.0" class="t1" text-anchor="middle">Conversation memory</text></g>
+<g class="n dk sm"><rect x="192" y="398" width="160" height="32" rx="14"/><text x="272.0" y="419.0" class="t1" text-anchor="middle">Handoff briefing</text></g>
+<g class="n dk sm"><rect x="363" y="398" width="160" height="32" rx="14"/><text x="443.0" y="419.0" class="t1" text-anchor="middle">Approvals queue</text></g>
+<g class="n dk sm"><rect x="534" y="398" width="160" height="32" rx="14"/><text x="614.0" y="419.0" class="t1" text-anchor="middle">DecisionTrace · replay</text></g>
+<g class="n dk sm"><rect x="705" y="398" width="160" height="32" rx="14"/><text x="785.0" y="419.0" class="t1" text-anchor="middle">Redaction · grounding</text></g>
+<path class="e flow" d="M216 440V488" marker-end="url(#a)" marker-start="url(#as)"/>
+<g class="tag "><rect x="83.9" y="453" width="264.2" height="22" rx="11"/><text x="216" y="468" text-anchor="middle">HTTP JSON · classify · search · check</text></g>
+<path class="e flow" d="M668 440V488" marker-end="url(#a)" marker-start="url(#as)"/>
+<g class="tag "><rect x="575.5" y="453" width="185.0" height="22" rx="11"/><text x="668" y="468" text-anchor="middle">MCP · JSON-RPC over stdio</text></g>
+<path class="e dash" d="M884 235H924" marker-end="url(#a)" marker-start="url(#as)"/>
+<text class="vt" transform="translate(904 292) rotate(-90)" text-anchor="middle">manage</text>
+<rect class="band" x="0" y="488" width="432" height="250" rx="16"/><text class="lab" x="20" y="512">Knowledge &amp; Guardrails</text>
+<text class="stitle" x="20" y="534">RAG + policy-as-code</text><text class="ssub" x="20" y="554">FastAPI :8001 · never talks to customers</text>
+<g class="n"><rect x="20" y="568" width="188" height="46" rx="14"/><text x="114.0" y="588.0" class="t1" text-anchor="middle">Risk classifier</text><text x="114.0" y="605.0" class="t2" text-anchor="middle">rules + LLM 2nd opinion</text></g>
+<g class="n"><rect x="224" y="568" width="188" height="46" rx="14"/><text x="318.0" y="588.0" class="t1" text-anchor="middle">Hybrid retrieval</text><text x="318.0" y="605.0" class="t2" text-anchor="middle">keyword + bge-m3 vectors</text></g>
+<g class="n"><rect x="20" y="624" width="188" height="46" rx="14"/><text x="114.0" y="644.0" class="t1" text-anchor="middle">Cited passages</text><text x="114.0" y="661.0" class="t2" text-anchor="middle">or an honest “no evidence”</text></g>
+<g class="n"><rect x="224" y="624" width="188" height="46" rx="14"/><text x="318.0" y="644.0" class="t1" text-anchor="middle">Rule engine</text><text x="318.0" y="661.0" class="t2" text-anchor="middle">allow · deny · require_human</text></g>
+<g class="n"><rect x="20" y="680" width="392" height="40" rx="14"/><text x="216.0" y="705.0" class="t1" text-anchor="middle">Precedent store · how humans resolved similar cases</text></g>
+<rect class="band" x="452" y="488" width="432" height="250" rx="16"/><text class="lab" x="472" y="512">Tool Execution</text>
+<text class="stitle" x="472" y="534">MCP Tool Server</text><text class="ssub" x="472" y="554">one per business identity · re-checks every call</text>
+<g class="n"><rect x="472" y="568" width="188" height="46" rx="14"/><text x="566.0" y="588.0" class="t1" text-anchor="middle">Tool registry</text><text x="566.0" y="605.0" class="t2" text-anchor="middle">published tools only</text></g>
+<g class="n"><rect x="676" y="568" width="188" height="46" rx="14"/><text x="770.0" y="588.0" class="t1" text-anchor="middle">Safety re-check</text><text x="770.0" y="605.0" class="t2" text-anchor="middle">approval · hash · env</text></g>
+<g class="n"><rect x="472" y="624" width="188" height="46" rx="14"/><text x="566.0" y="644.0" class="t1" text-anchor="middle">Identity binding</text><text x="566.0" y="661.0" class="t2" text-anchor="middle">verified customer only</text></g>
+<g class="n"><rect x="676" y="624" width="188" height="46" rx="14"/><text x="770.0" y="644.0" class="t1" text-anchor="middle">Executor</text><text x="770.0" y="661.0" class="t2" text-anchor="middle">no redirects · size &amp; time limits</text></g>
+<g class="n acc"><rect x="472" y="680" width="392" height="40" rx="14"/><text x="668.0" y="705.0" class="t1" text-anchor="middle">Sandbox  →  Live Demo  →  Production</text></g>
+<rect class="band" x="924" y="132" width="300" height="606" rx="16"/><text class="lab" x="944" y="156">Tool Generation</text>
+<text class="stitle" x="944" y="174">Tool Generation Service</text><text class="ssub" x="944" y="194">FastAPI :8101 · owner in the loop</text>
+<g class="n"><rect x="944" y="214" width="260" height="44" rx="14"/><text x="1074.0" y="233.0" class="t1" text-anchor="middle">OpenAPI discovery</text><text x="1074.0" y="250.0" class="t2" text-anchor="middle">upload or fetch the spec</text></g>
+<circle class="num" cx="944" cy="214" r="11"/><text class="numt" x="944" y="218" text-anchor="middle">1</text>
+<path class="e2" d="M1074 258V298" marker-end="url(#ag)"/>
+<g class="n"><rect x="944" y="298" width="260" height="44" rx="14"/><text x="1074.0" y="317.0" class="t1" text-anchor="middle">AI proposals</text><text x="1074.0" y="334.0" class="t2" text-anchor="middle">hosted or local LLM drafts tools</text></g>
+<circle class="num" cx="944" cy="298" r="11"/><text class="numt" x="944" y="302" text-anchor="middle">2</text>
+<path class="e2" d="M1074 342V382" marker-end="url(#ag)"/>
+<g class="n"><rect x="944" y="382" width="260" height="44" rx="14"/><text x="1074.0" y="401.0" class="t1" text-anchor="middle">Owner approval</text><text x="1074.0" y="418.0" class="t2" text-anchor="middle">clarify · review · accept</text></g>
+<circle class="num" cx="944" cy="382" r="11"/><text class="numt" x="944" y="386" text-anchor="middle">3</text>
+<path class="e2" d="M1074 426V466" marker-end="url(#ag)"/>
+<g class="n"><rect x="944" y="466" width="260" height="44" rx="14"/><text x="1074.0" y="485.0" class="t1" text-anchor="middle">Artifact build</text><text x="1074.0" y="502.0" class="t2" text-anchor="middle">strict schema · signed hash</text></g>
+<circle class="num" cx="944" cy="466" r="11"/><text class="numt" x="944" y="470" text-anchor="middle">4</text>
+<path class="e2" d="M1074 510V550" marker-end="url(#ag)"/>
+<g class="n"><rect x="944" y="550" width="260" height="44" rx="14"/><text x="1074.0" y="569.0" class="t1" text-anchor="middle">Test &amp; publish</text><text x="1074.0" y="586.0" class="t2" text-anchor="middle">sandbox → live demo → prod</text></g>
+<circle class="num" cx="944" cy="550" r="11"/><text class="numt" x="944" y="554" text-anchor="middle">5</text>
+<path class="e2" d="M1074 594V634" marker-end="url(#ag)"/>
+<g class="n"><rect x="944" y="634" width="260" height="44" rx="14"/><text x="1074.0" y="653.0" class="t1" text-anchor="middle">Disable / rollback</text><text x="1074.0" y="670.0" class="t2" text-anchor="middle">blocks the next call</text></g>
+<circle class="num" cx="944" cy="634" r="11"/><text class="numt" x="944" y="638" text-anchor="middle">6</text>
+<path class="e dash" d="M924 632H884" marker-end="url(#a)"/>
+<text class="vt" transform="translate(904 686) rotate(-90)" text-anchor="middle">publish</text>
+<rect class="band" x="0" y="764" width="432" height="112" rx="16"/><text class="lab" x="20" y="788">Knowledge &amp; data stores</text>
+<g class="n sm"><rect x="20" y="792" width="188" height="32" rx="14"/><text x="114.0" y="813.0" class="t1" text-anchor="middle">Policy documents</text></g>
+<g class="n sm"><rect x="224" y="792" width="188" height="32" rx="14"/><text x="318.0" y="813.0" class="t1" text-anchor="middle">Search index</text></g>
+<g class="n sm"><rect x="20" y="834" width="188" height="32" rx="14"/><text x="114.0" y="855.0" class="t1" text-anchor="middle">Rules store</text></g>
+<g class="n sm"><rect x="224" y="834" width="188" height="32" rx="14"/><text x="318.0" y="855.0" class="t1" text-anchor="middle">Sessions · traces · alerts</text></g>
+<path class="e flow" d="M216 738V764" marker-end="url(#a)" marker-start="url(#as)"/>
+<rect class="band" x="452" y="764" width="772" height="112" rx="16"/><text class="lab" x="472" y="788">Customer's own systems · via their REST API</text>
+<g class="n"><rect x="472" y="796" width="156" height="54" rx="14"/><text x="550.0" y="828.0" class="t1" text-anchor="middle">Orders</text></g>
+<g class="n"><rect x="640" y="796" width="156" height="54" rx="14"/><text x="718.0" y="828.0" class="t1" text-anchor="middle">CRM</text></g>
+<g class="n"><rect x="808" y="796" width="156" height="54" rx="14"/><text x="886.0" y="828.0" class="t1" text-anchor="middle">Billing</text></g>
+<g class="n"><rect x="976" y="796" width="228" height="54" rx="14"/><text x="1090.0" y="828.0" class="t1" text-anchor="middle">Bookings &amp; more</text></g>
+<path class="e flow" d="M668 738V764" marker-end="url(#a)" marker-start="url(#as)"/>
+<path class="e dash" d="M1074 738V764" marker-end="url(#a)"/>
+<rect class="band" x="0" y="902" width="884" height="150" rx="16"/><text class="lab" x="20" y="926">AI model layer · one model per job</text>
+<text class="ssub" x="330" y="926">backup model per job · shared rate limits · falls back to rules / templates</text>
+<g class="n"><rect x="20" y="940" width="200" height="44" rx="14"/><text x="120.0" y="959.0" class="t1" text-anchor="middle">Reader</text><text x="120.0" y="976.0" class="t2" text-anchor="middle">understands the message</text></g>
+<g class="n acc"><rect x="234" y="940" width="200" height="44" rx="14"/><text x="334.0" y="959.0" class="t1" text-anchor="middle">Orchestrator</text><text x="334.0" y="976.0" class="t2" text-anchor="middle">plans · picks moves</text></g>
+<g class="n"><rect x="448" y="940" width="200" height="44" rx="14"/><text x="548.0" y="959.0" class="t1" text-anchor="middle">Knowledge agent</text><text x="548.0" y="976.0" class="t2" text-anchor="middle">answers from passages</text></g>
+<g class="n acc"><rect x="662" y="940" width="200" height="44" rx="14"/><text x="762.0" y="959.0" class="t1" text-anchor="middle">Reviewer</text><text x="762.0" y="976.0" class="t2" text-anchor="middle">can only tighten, never loosen</text></g>
+<g class="n"><rect x="20" y="992" width="200" height="44" rx="14"/><text x="120.0" y="1011.0" class="t1" text-anchor="middle">Reply writer</text><text x="120.0" y="1028.0" class="t2" text-anchor="middle">words the answer</text></g>
+<g class="n"><rect x="234" y="992" width="200" height="44" rx="14"/><text x="334.0" y="1011.0" class="t1" text-anchor="middle">Egyptian writer (optional)</text><text x="334.0" y="1028.0" class="t2" text-anchor="middle">dialect replies · not in the evaluation</text></g>
+<g class="n"><rect x="448" y="992" width="200" height="44" rx="14"/><text x="548.0" y="1011.0" class="t1" text-anchor="middle">Summarizer</text><text x="548.0" y="1028.0" class="t2" text-anchor="middle">history · handoff brief</text></g>
+<g class="n"><rect x="662" y="992" width="200" height="44" rx="14"/><text x="762.0" y="1011.0" class="t1" text-anchor="middle">Judge</text><text x="762.0" y="1028.0" class="t2" text-anchor="middle">grades replies in eval only</text></g>
+<rect class="band" x="924" y="902" width="300" height="150" rx="16"/><text class="lab" x="944" y="926">Evaluation</text>
+<text class="ssub" x="1065" y="926">proves it before go-live</text>
+<g class="n"><rect x="944" y="940" width="260" height="44" rx="14"/><text x="1074.0" y="959.0" class="t1" text-anchor="middle">Conversation suites</text><text x="1074.0" y="976.0" class="t2" text-anchor="middle">EN · Egyptian Arabic · Arabizi</text></g>
+<g class="n"><rect x="944" y="992" width="125" height="44" rx="14"/><text x="1006.5" y="1019.0" class="t1" text-anchor="middle">AI judge</text></g>
+<g class="n"><rect x="1079" y="992" width="125" height="44" rx="14"/><text x="1141.5" y="1019.0" class="t1" text-anchor="middle">Shadow mode</text></g>
+<path class="e dash" d="M884 977H924" marker-end="url(#a)"/>
+  </svg>

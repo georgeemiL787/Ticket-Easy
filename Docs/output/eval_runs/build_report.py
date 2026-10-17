@@ -133,7 +133,7 @@ add(md(["measure", "unit", "rules_only_before_fix", "rules_only_after_fix", "age
 add("")
 add("What this shows, without spin:")
 add("")
-add("- Agent mode understands the customer far better (intent 70% to 94%) and cites the right policy passage much more often (44% to 71%); decisions improve by about 7 points.")
+add("- Agent mode against rules only: intent 70% to 94%, citation 44% to 71%, decision about 7 points higher.")
 add("- Agent mode **hands conversations to a person more often than the rules do**: handoff precision is 65% against 82%, with 9 needless handoffs against 4. "
     "The one rule fix (a question about support opening hours was being read as a request for a person) lifted the rules-only precision to 100%; the agent runs were made before that fix.")
 add("- The agent is slower and uses AI calls: about 4.9 calls per message, median reply 6 to 7 seconds and 95th percentile about 31 seconds on the Groq free tier, "
@@ -180,7 +180,7 @@ tg = [
 add(md(["measure", "target", "now", "status"], tg, ["Measure", "Target", "Agent mode now", "Status"]))
 add("")
 add("The gap is concentrated in policy questions. On the policy topics the agent often understands the question and then asks a clarifying question or hands over instead of searching and quoting; "
-    "the fixed flow often answers these correctly. This is the roadmap: a better orchestrator model (Part 2 shows the first evidence) and a rule that policy questions are searched before anything else is asked. "
+    "the fixed flow often answers these correctly. Part 2 measures how the orchestrator's model affects these policy questions. "
     "A second open item: in agent mode, a refund request on an old order can loop on \"what amount?\" instead of explaining the 14-day rule.[^7]")
 add("")
 add("---")
@@ -197,10 +197,10 @@ add("")
 # ------------------------------------------------------------------ Part 2
 add("# Part 2. Models and cost")
 add("")
-add("## 2.1 The recommended bare-minimum model stack")
+add("## 2.1 The bare-minimum model stack")
 add("")
 add("The aim: the fewest models that still cover every job. **Two chat model slots (one small for high-volume work, one strong for decisions) plus one local embedding model.** "
-    "Today we also keep Qwen 27B for knowledge and writing, because it words Arabic and Egyptian Arabic replies well (a preview model on Groq that can be withdrawn, so gpt-oss-20b is its automatic backup).")
+    "Today Qwen 27B is used for knowledge and writing (a preview model on Groq that can be withdrawn; gpt-oss-20b is its automatic backup).")
 add("")
 slots = [
     {"job": "reader (understand the message)", "runs": "every message", "slot": "small"}, {"job": "writer (word the reply)", "runs": "every message", "slot": "small"},
@@ -215,7 +215,7 @@ add("**What the minimum stack costs per 1,000 customer messages** (agent mode, t
 add("")
 stack_rows = [{"option": "Today: three Groq models (measured tokens, priced at list)", "usd1k": fnum(next(r for r in hyp if r["stack"].startswith("bare-minimum, today"))["usd_per_1000_messages"]),
                "m10": next(r for r in hyp if r["stack"].startswith("bare-minimum, today"))["usd_per_month_at_10k_messages"], "m100": next(r for r in hyp if r["stack"].startswith("bare-minimum, today"))["usd_per_month_at_100k_messages"], "status": "tokens measured"}]
-for key, label in (("bare-minimum, best value (recommended", "Best value: GPT-6 Luna + Gemini 3.8 Flash (introductory price to 31 Dec 2026)"), ("bare-minimum, best value: same, Gemini", "Best value after 1 Jan 2027"), ("bare-minimum, lowest cost", "Lowest cost: Mistral Small 4 + Mistral Large 3 (prices indicative)")):
+for key, label in (("bare-minimum, best value (from the plan", "Best value: GPT-6 Luna + Gemini 3.8 Flash (introductory price to 31 Dec 2026)"), ("bare-minimum, best value: same, Gemini", "Best value after 1 Jan 2027"), ("bare-minimum, lowest cost", "Lowest cost: Mistral Small 4 + Mistral Large 3 (prices indicative)")):
     r = next(x for x in hyp if x["stack"].startswith(key))
     stack_rows.append({"option": label, "usd1k": fnum(r["usd_per_1000_messages"]), "m10": r["usd_per_month_at_10k_messages"], "m100": r["usd_per_month_at_100k_messages"], "status": "hypothetical, not tested"})
 for tier in ("L1 starter", "L2 mirror", "L3 server", "L3 rented"):
@@ -238,8 +238,8 @@ for r in cmp_show:
 add(md(["model", "intent_accuracy_pct", "intent_accuracy_en_pct", "intent_accuracy_ar_pct", "intent_accuracy_mixed_pct", "intent_accuracy_arabizi_pct", "lat", "tok"], cmp_show,
        ["Model", "Intent accuracy %", "English %", "Arabic %", "Mixed %", "Arabizi %", "Latency p50 / p95 ms (Groq free tier)", "Tokens per call in / out"]))
 add("")
-add("Read this carefully: it tests **one job** (the reader) on **short, hand-written messages**; the three AI readers are within 3 messages of 155 of each other, so they are effectively tied, and all beat the rules by 8 to 10 points. "
-    "It says nothing about the other jobs. The gpt-oss-120b figure includes 67 messages that had to be re-run on another free account after its daily token limit was reached (the rate-limited calls in the file are from that first pass).[^9]")
+add("This tests **one job** (the reader) on **short, hand-written messages**; the three AI readers differ by at most 3 messages out of 155 and the rules differ from them by 8 to 10 points. "
+    "It does not cover the other jobs. The gpt-oss-120b figure includes 67 messages that had to be re-run on another free account after its daily token limit was reached (the rate-limited calls in the file are from that first pass).[^9]")
 add("")
 add("**The orchestrator (the job that plans each step), English policy and refund conversations: 25 conversations, 27 messages, real knowledge service.** Only the orchestrator model changed.")
 add("")
@@ -247,9 +247,9 @@ rep = [dict(r) for r in orch_rep]
 add(md(["run", "turns", "fallback_turns", "citation_right_all_turns", "citation_right_agent_turns_only", "turns_with_a_failed_check"], rep,
        ["Run", "Messages", "Fallbacks to the fixed flow", "Citations right, all messages", "Citations right, agent's own messages only", "Messages with a failed check"]))
 add("")
-add("qwen3.8-27b as orchestrator was repeated three times; the two runs with few fallbacks agree (22 and 21 of 25 citations right) and the run with 18 fallbacks (rate limits) is shown but not relied on. "
-    "gpt-oss-120b, the orchestrator used today, scored 17 of 25 in one run, and gpt-oss-20b 19 of 25. That is a hint that qwen is the better orchestrator for English policy questions, "
-    "**not yet a verdict**: it is one language, 25 policy messages, and the 120B repeats are still pending its daily token quota. The original choice of 120B was not based on a head-to-head test.")
+add("qwen3.8-27b was run three times on these conversations (22, 21 and 21 of 25 citations right); in run 2, 18 of the 27 messages fell back to the fixed flow because of rate limits, so its agent-only figure covers 9 messages. "
+    "gpt-oss-120b, the orchestrator used in the product today, was run once (17 of 25) and gpt-oss-20b once (19 of 25). Each run is one language and 25 policy messages. "
+    "The orchestrator setting used in the product was not chosen from a head-to-head test.")
 add("")
 add("Arabic and mixed (same design):")
 add("")
@@ -257,7 +257,8 @@ ol = [dict(r) for r in orch_lang]
 add(md(["language", "orchestrator_model", "citation_right_all_turns", "citation_right_agent_turns_only", "fallback_turns", "turns_with_a_failed_check", "status"], ol,
        ["Language", "Orchestrator", "Citations right, all", "Citations right, agent's own messages", "Fallbacks", "Failed checks", "Status"]))
 add("")
-add("The qwen runs in Arabic and mixed are **not conclusive**: most messages fell back to the fixed flow because qwen's free daily quota ran out. gpt-oss-20b ran cleanly and is weaker in Arabic and mixed than in English. The 120B runs for these languages are pending.[^10]")
+add("The qwen rows are from a second pass: the first pass ran into qwen's daily token limit and most of its messages fell back to the fixed flow (its files are kept as `*_first_run_ratelimited`). "
+    "The fallback count of every run is in the table; a figure for \"the agent's own messages\" excludes the messages that fell back.[^10]")
 add("")
 add("**The other jobs, by replaying the same recorded inputs to other models.** Agreement is with the baseline model, not with a ground truth; the writer's wording needs a person (a blinded grading sheet is provided).")
 add("")
@@ -278,7 +279,7 @@ for lang, title in (("en", "English"), ("ar", "Arabic"), ("mixed", "Mixed")):
     add("")
 loose = [(r["language"], r["model"], int(r["looser_than_baseline"])) for r in replay if r.get("job") == "reviewer" and r.get("looser_than_baseline") not in (None, "") and int(r["looser_than_baseline"]) > 0]
 add("**Reviewer, the safety-relevant job:** " + ("no alternative reviewer was ever more lenient than the baseline reviewer (the safe direction)." if not loose else
-    "an alternative reviewer was more lenient than the baseline on " + "; ".join(f"{n} input(s) for {m} in {lg}" for lg, m, n in loose) + ", so a cheaper reviewer is not yet shown to be as strict; it needs a larger test before it is used."))
+    "an alternative reviewer was more lenient than the baseline on " + "; ".join(f"{n} input(s) for {m} in {lg}" for lg, m, n in loose) + "."))
 add("Failed replays are rate limits (qwen's free daily quota ran out), not wrong answers; a row with many failures is not a result.[^11]")
 add("")
 add("## 2.3 The models, measured against hypothetical")
@@ -286,8 +287,7 @@ add("")
 mt = [dict(r) for r in models_t if r["status"] != "hypothetical, not tested"]
 add(md(["model", "deploy", "role", "status", "latency", "quality", "usd_per_1m_in_out"], mt, ["Model", "Deploy", "Role", "Status", "Latency", "Quality fit", "USD per 1M tokens in / out"]))
 add("")
-add("Models that were not run in this refresh appear only in the cost tables below, marked **hypothetical, not tested**; their latency and quality are \"not tested\". "
-    "We do not recommend a top-tier model as the default volume stack.")
+add("Models that were not run in this refresh appear only in the cost tables below, marked **hypothetical, not tested**; their latency and quality are \"not tested\".")
 add("")
 add("## 2.4 What it would cost with other models (hypothetical, not tested)")
 add("")
@@ -329,8 +329,8 @@ add(md(["stack", "total_usd_per_1000_messages_at_list_price", "usd_per_month_at_
        ["Stack", "USD per 1,000 messages", "USD per month at 10k", "USD per month at 100k", "Pilot: 50,000 messages + 2 onboardings (USD)", "Status"]))
 add("")
 add("The conversation service accounts for all of the AI cost in these rows; the knowledge service's search runs on a local model ($0 API) and its risk second opinion runs on a free model. "
-    "Qwen as the orchestrator looks expensive at Groq's list price for qwen ($0.80 in / $4.00 out per million tokens, a preview model): about 2.6 times today's mix, because it also uses more tokens per message. "
-    "At OpenRouter's lower price for the same model family the picture would differ, so the choice of orchestrator should be made on quality first and then priced on the provider actually used.")
+    "In the last row, qwen3.8-27b as orchestrator is priced at Groq's list price for qwen ($0.80 in / $4.00 out per million tokens, a preview model) with its measured tokens per message; "
+    "OpenRouter lists a Qwen3.8 27B at $0.24 / $2.20.")
 add("")
 add("**One business onboarding, measured.**")
 add("")
@@ -347,15 +347,15 @@ add("**Tool generation (tool service, Groq free tier).** The tool service demand
 add("")
 add(md(["model", "attempts", "accepted", "typical_tokens_of_an_accepted_run", "same_tool_idea_when_accepted"], on_tools, ["Model", "Attempts", "Accepted", "Tokens of an accepted run", "Tool proposed"]))
 add("")
-add("Only gpt-oss-120b produced a valid tool every time. qwen3.8-27b produced one in three attempts and gpt-oss-20b in none: Groq rejected their output as invalid or not matching the required structure. "
-    "This is a reason to keep the strong model for onboarding even if the cheaper models handle the chat. It is a small test (one example API, three attempts); no model other than the three Groq models was tried, and the local models were not tested.[^14]")
+add("gpt-oss-120b: 2 of 2 attempts accepted. qwen3.8-27b: 1 of 3. gpt-oss-20b: 0 of 3. The rejected attempts were refused by Groq as invalid JSON or JSON that did not match the required structure. "
+    "It is a small test: one example API and a few attempts per model; the local models were not tested.[^14]")
 add("")
 add("**Rule extraction (knowledge service, free OpenRouter models).** The same 36 policy passages of the example shop were sent to each model; nothing was stored or approved, and the candidate rules were not judged for quality.")
 add("")
 add(md(["model", "passages", "passages_failed_after_retries", "candidate_rules", "ok_requests", "failed_or_rate_limited_requests", "input_tokens", "output_tokens", "latency_p50_ms"], on_rules,
        ["Model", "Passages", "Passages that failed", "Candidate rules", "Answered requests", "Failed or rate-limited", "Input tokens", "Output tokens", "Median latency ms"]))
 add("")
-add("Of the three free models tried, only Nemotron 3 Super gave usable answers. Nemotron 3 Ultra answered every request without a usable body and Gemma 26B was refused with HTTP 429 (Gemma 31B had been refused too in the first measurement), so the free route for rule extraction depends on one model and needs a fallback; the knowledge service tries models in turn but the free choices are fragile.[^14]")
+add("Nemotron 3 Super answered all 36 passages. For Nemotron 3 Ultra, every request returned a response without a usable body; for Gemma 26B, every request was refused with HTTP 429 (Gemma 31B had been refused too in the first measurement). Both were stopped after the retries of the first passage.[^14]")
 add("")
 add("---")
 add("")
@@ -395,7 +395,7 @@ add("## D. Method note and what is still open")
 add("")
 add("- The agent-mode runs were made before a rule fix (support-hours questions) and three corrections to the evaluation's own checks; the rules-only table is shown both before and after the rule fix. The corrections only removed false alarms (a greeting saying \"today\", a reference number the shop really issued, a passage the real service really returned).")
 add("- The conversation tests ran on one business (a fashion shop). A second business, real customer messages and a person-graded sample of replies are not yet included.")
-add("- Pending because of the free daily token limit of gpt-oss-120b: its orchestrator repeats and its Arabic and mixed runs; the qwen Arabic and mixed orchestrator runs need a clean re-run.")
+add("- Not done: repeats of the gpt-oss-120b orchestrator on the English conversations (it was run once) and a run at a higher reasoning level; the Arabic and mixed orchestrator comparisons were run once per model.")
 add("- Onboarding on other models was compared on one small example (three Groq models for tool generation, free OpenRouter models for rule extraction); the quality of what they generated was not judged.")
 add("- The recorded Arabizi sample on the real knowledge service is incomplete (rate limits).")
 OUT.write_text("\n".join(L) + "\n", encoding="utf-8")

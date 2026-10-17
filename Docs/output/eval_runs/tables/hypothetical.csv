@@ -1,6 +1,6 @@
 stack,status,usd_per_1000_messages,usd_per_month_at_10k_messages,usd_per_month_at_100k_messages,quality,note,tokenizer_caveat,speed
 "bare-minimum, today: reader+summary gpt-oss-20b, knowledge+writer qwen3.8-27b, orchestrator+reviewer gpt-oss-120b (plan slots)",measured tokens x list price,2.314,23.14,231.37,see models.csv,the three Groq models; reader and summary tokens were measured on qwen and are priced here on gpt-oss-20b,other models count the same text as more or fewer tokens,measured on the Groq free tier
-"bare-minimum, best value (recommended in the plan): small GPT-6 Luna, strong Gemini 3.8 Flash (to 31 Dec 2026)","hypothetical, not tested",6.247,62.47,624.71,not tested,,other models count the same text as more or fewer tokens,not tested
+"bare-minimum, best value (from the plan): small GPT-6 Luna, strong Gemini 3.8 Flash (to 31 Dec 2026)","hypothetical, not tested",6.247,62.47,624.71,not tested,,other models count the same text as more or fewer tokens,not tested
 "bare-minimum, best value: same, Gemini 3.8 Flash from 1 Jan 2027","hypothetical, not tested",12.19,121.9,1219.02,not tested,,other models count the same text as more or fewer tokens,not tested
 "bare-minimum, lowest cost: small Mistral Small 4, strong Mistral Large 3","hypothetical, not tested",4.126,41.26,412.55,not tested,prices indicative,other models count the same text as more or fewer tokens,not tested
 what-if 1a: GPT-6 Luna for every job,"hypothetical, not tested",1.096,10.96,109.65,not tested,,other models count the same text as more or fewer tokens,not tested

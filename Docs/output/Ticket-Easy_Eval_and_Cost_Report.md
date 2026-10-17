@@ -81,7 +81,7 @@ The weak spot, stated plainly: for questions the documents cannot answer, the se
 
 What this shows, without spin:
 
-- Agent mode understands the customer far better (intent 70% to 94%) and cites the right policy passage much more often (44% to 71%); decisions improve by about 7 points.
+- Agent mode against rules only: intent 70% to 94%, citation 44% to 71%, decision about 7 points higher.
 - Agent mode **hands conversations to a person more often than the rules do**: handoff precision is 65% against 82%, with 9 needless handoffs against 4. The one rule fix (a question about support opening hours was being read as a request for a person) lifted the rules-only precision to 100%; the agent runs were made before that fix.
 - The agent is slower and uses AI calls: about 4.9 calls per message, median reply 6 to 7 seconds and 95th percentile about 31 seconds on the Groq free tier, which waits when the free plan's per-minute limit is reached. The rules answer in under a second.
 
@@ -133,7 +133,7 @@ The tool service is judged by what it lets a business publish, not by chat accur
 | Correct source (citation) | 95% | 70.7% | below target |
 | Reply language | 100% | 99.5% | almost |
 
-The gap is concentrated in policy questions. On the policy topics the agent often understands the question and then asks a clarifying question or hands over instead of searching and quoting; the fixed flow often answers these correctly. This is the roadmap: a better orchestrator model (Part 2 shows the first evidence) and a rule that policy questions are searched before anything else is asked. A second open item: in agent mode, a refund request on an old order can loop on "what amount?" instead of explaining the 14-day rule.[^7]
+The gap is concentrated in policy questions. On the policy topics the agent often understands the question and then asks a clarifying question or hands over instead of searching and quoting; the fixed flow often answers these correctly. Part 2 measures how the orchestrator's model affects these policy questions. A second open item: in agent mode, a refund request on an old order can loop on "what amount?" instead of explaining the 14-day rule.[^7]
 
 ---
 
@@ -147,9 +147,9 @@ The gap is concentrated in policy questions. On the policy topics the agent ofte
 
 # Part 2. Models and cost
 
-## 2.1 The recommended bare-minimum model stack
+## 2.1 The bare-minimum model stack
 
-The aim: the fewest models that still cover every job. **Two chat model slots (one small for high-volume work, one strong for decisions) plus one local embedding model.** Today we also keep Qwen 27B for knowledge and writing, because it words Arabic and Egyptian Arabic replies well (a preview model on Groq that can be withdrawn, so gpt-oss-20b is its automatic backup).
+The aim: the fewest models that still cover every job. **Two chat model slots (one small for high-volume work, one strong for decisions) plus one local embedding model.** Today Qwen 27B is used for knowledge and writing (a preview model on Groq that can be withdrawn; gpt-oss-20b is its automatic backup).
 
 | Job | How often | Model slot |
 |---|---|---|
@@ -189,7 +189,7 @@ Local rows are **estimates** (hardware price / 36 months + power x 730 hours x $
 | openai/gpt-oss-20b | 96.1 | 100.0 | 100.0 | 89.7 | 94.8 | 627 / 866 | 1314.4 / 116.0 |
 | rule-based reader | 87.7 | 91.4 | 84.8 | 82.8 | 89.7 |  |  |
 
-Read this carefully: it tests **one job** (the reader) on **short, hand-written messages**; the three AI readers are within 3 messages of 155 of each other, so they are effectively tied, and all beat the rules by 8 to 10 points. It says nothing about the other jobs. The gpt-oss-120b figure includes 67 messages that had to be re-run on another free account after its daily token limit was reached (the rate-limited calls in the file are from that first pass).[^9]
+This tests **one job** (the reader) on **short, hand-written messages**; the three AI readers differ by at most 3 messages out of 155 and the rules differ from them by 8 to 10 points. It does not cover the other jobs. The gpt-oss-120b figure includes 67 messages that had to be re-run on another free account after its daily token limit was reached (the rate-limited calls in the file are from that first pass).[^9]
 
 **The orchestrator (the job that plans each step), English policy and refund conversations: 25 conversations, 27 messages, real knowledge service.** Only the orchestrator model changed.
 
@@ -201,20 +201,20 @@ Read this carefully: it tests **one job** (the reader) on **short, hand-written 
 | gpt-oss-20b run 1 | 27 | 1 | 19/25 | 18/24 | 6 |
 | gpt-oss-120b run 1 (baseline) | 27 | 0 | 17/25 | 17/25 | 8 |
 
-qwen3.8-27b as orchestrator was repeated three times; the two runs with few fallbacks agree (22 and 21 of 25 citations right) and the run with 18 fallbacks (rate limits) is shown but not relied on. gpt-oss-120b, the orchestrator used today, scored 17 of 25 in one run, and gpt-oss-20b 19 of 25. That is a hint that qwen is the better orchestrator for English policy questions, **not yet a verdict**: it is one language, 25 policy messages, and the 120B repeats are still pending its daily token quota. The original choice of 120B was not based on a head-to-head test.
+qwen3.8-27b was run three times on these conversations (22, 21 and 21 of 25 citations right); in run 2, 18 of the 27 messages fell back to the fixed flow because of rate limits, so its agent-only figure covers 9 messages. gpt-oss-120b, the orchestrator used in the product today, was run once (17 of 25) and gpt-oss-20b once (19 of 25). Each run is one language and 25 policy messages. The orchestrator setting used in the product was not chosen from a head-to-head test.
 
 Arabic and mixed (same design):
 
 | Language | Orchestrator | Citations right, all | Citations right, agent's own messages | Fallbacks | Failed checks | Status |
 |---|---|---|---|---|---|---|
-| ar | qwen/qwen3.8-27b | 20/25 | 8/11 | 16 | 5 | 16 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column |
+| ar | qwen/qwen3.8-27b | 20/25 | 20/25 | 0 | 5 | complete |
 | ar | openai/gpt-oss-20b | 15/25 | 14/24 | 1 | 10 | 1 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column |
-| ar | openai/gpt-oss-120b |  |  |  |  | pending: not run yet (daily token quota of this model) |
-| mixed | qwen/qwen3.8-27b | 19/25 | 3/4 | 23 | 6 | 23 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column |
+| ar | openai/gpt-oss-120b | 19/25 | 19/25 | 0 | 6 | complete |
+| mixed | qwen/qwen3.8-27b | 19/25 | 19/25 | 0 | 7 | complete |
 | mixed | openai/gpt-oss-20b | 16/25 | 16/25 | 0 | 9 | complete |
-| mixed | openai/gpt-oss-120b |  |  |  |  | pending: not run yet (daily token quota of this model) |
+| mixed | openai/gpt-oss-120b | 17/25 | 17/25 | 0 | 8 | complete |
 
-The qwen runs in Arabic and mixed are **not conclusive**: most messages fell back to the fixed flow because qwen's free daily quota ran out. gpt-oss-20b ran cleanly and is weaker in Arabic and mixed than in English. The 120B runs for these languages are pending.[^10]
+The qwen rows are from a second pass: the first pass ran into qwen's daily token limit and most of its messages fell back to the fixed flow (its files are kept as `*_first_run_ratelimited`). The fallback count of every run is in the table; a figure for "the agent's own messages" excludes the messages that fell back.[^10]
 
 **The other jobs, by replaying the same recorded inputs to other models.** Agreement is with the baseline model, not with a ground truth; the writer's wording needs a person (a blinded grading sheet is provided).
 
@@ -260,7 +260,7 @@ The qwen runs in Arabic and mixed are **not conclusive**: most messages fell bac
 | writer | openai/gpt-oss-20b | 11 | 11 | 0 | 100.0 |  |  |  | 776 |
 | writer (baseline) | qwen/qwen3.8-27b | 11 | 11 | 0 | 100.0 |  |  |  |  |
 
-**Reviewer, the safety-relevant job:** an alternative reviewer was more lenient than the baseline on 1 input(s) for openai/gpt-oss-20b in ar; 1 input(s) for openai/gpt-oss-20b in mixed, so a cheaper reviewer is not yet shown to be as strict; it needs a larger test before it is used.
+**Reviewer, the safety-relevant job:** an alternative reviewer was more lenient than the baseline on 1 input(s) for openai/gpt-oss-20b in ar; 1 input(s) for openai/gpt-oss-20b in mixed.
 Failed replays are rate limits (qwen's free daily quota ran out), not wrong answers; a row with many failures is not a result.[^11]
 
 ## 2.3 The models, measured against hypothetical
@@ -268,12 +268,12 @@ Failed replays are rate limits (qwen's free daily quota ran out), not wrong answ
 | Model | Deploy | Role | Status | Latency | Quality fit | USD per 1M tokens in / out |
 |---|---|---|---|---|---|---|
 | Groq gpt-oss-20b | cloud (Groq free tier) | reader candidate, summary, judge, backup of the qwen jobs | measured in this refresh | reader p50 627 ms, p95 866 ms (Groq free tier) | reader intent accuracy 96.1% on 155 messages; orchestrator test (English only): 19 of 25 policy citations; reviewer replays agree 93% with the baseline | 0.075 / 0.3 |
-| Groq qwen3.8-27b | cloud (Groq free tier, preview model) | reader, knowledge, writer, summary (today) | measured in this refresh | reader p50 620 ms, p95 851 ms (Groq free tier) | reader intent accuracy 98.1% (best of the three); as orchestrator on English policy conversations: 22 of 25 and 21 of 25 citations (two clean runs) | 0.8 / 4.0 |
-| Groq gpt-oss-120b | cloud (Groq free tier) | orchestrator, reviewer (today) | measured in this refresh | reader p50 751 ms, p95 1073 ms; agent turn median 6 to 7 s (Groq free tier) | reader intent accuracy 97.4%; orchestrator on English policy conversations: 17 of 25 citations (one run; repeats and Arabic/mixed pending its daily token quota) | 0.15 / 0.6 |
+| Groq qwen3.8-27b | cloud (Groq free tier, preview model) | reader, knowledge, writer, summary (today) | measured in this refresh | reader p50 620 ms, p95 851 ms (Groq free tier) | reader intent accuracy 98.1%; as orchestrator on the policy conversations: English 22, 21 and 21 of 25 citations right (three runs), Arabic and mixed see orchestrator_comparison_ar_mixed.csv | 0.8 / 4.0 |
+| Groq gpt-oss-120b | cloud (Groq free tier) | orchestrator, reviewer (today) | measured in this refresh | reader p50 751 ms, p95 1073 ms; agent turn median 6 to 7 s (Groq free tier) | reader intent accuracy 97.4%; orchestrator on the policy conversations: English 17 of 25 citations right (one run), Arabic and mixed see orchestrator_comparison_ar_mixed.csv | 0.15 / 0.6 |
 | Ollama bge-m3 | local | knowledge service search and document embeddings | in use, local, measured | query p50 103 ms, p95 142 ms | retrieval recall@5 on the held-out test split: shop_001 89.3%, noon_eg 97.5%, telco_001 82.2% | 0 (local) |
 | OpenRouter free: Nemotron 3 Super 120B (and Gemma 4 31B as the second choice) | cloud (OpenRouter free) | knowledge service: rule extraction and risk second opinion | in use, measured (not benchmarked) | rule extraction p50 6832 ms; risk check p50 2136 ms | 36 passages produced 20 candidate rules; all 40 risk checks answered; quality of the rules was not judged | free; paid version 0.08 / 0.45 |
 
-Models that were not run in this refresh appear only in the cost tables below, marked **hypothetical, not tested**; their latency and quality are "not tested". We do not recommend a top-tier model as the default volume stack.
+Models that were not run in this refresh appear only in the cost tables below, marked **hypothetical, not tested**; their latency and quality are "not tested".
 
 ## 2.4 What it would cost with other models (hypothetical, not tested)
 
@@ -282,7 +282,7 @@ The same measured tokens per job, priced for other vendors' models. **None of th
 | Stack | USD per 1,000 messages | USD per month at 10k | USD per month at 100k | Status | Quality / speed |
 |---|---|---|---|---|---|
 | bare-minimum, today: reader+summary gpt-oss-20b, knowledge+writer qwen3.8-27b, orchestrator+reviewer gpt-oss-120b (plan slots) | 2.314 | 23.14 | 231.37 | measured tokens x list price | see models.csv |
-| bare-minimum, best value (recommended in the plan): small GPT-6 Luna, strong Gemini 3.8 Flash (to 31 Dec 2026) | 6.247 | 62.47 | 624.71 | hypothetical, not tested | not tested |
+| bare-minimum, best value (from the plan): small GPT-6 Luna, strong Gemini 3.8 Flash (to 31 Dec 2026) | 6.247 | 62.47 | 624.71 | hypothetical, not tested | not tested |
 | bare-minimum, best value: same, Gemini 3.8 Flash from 1 Jan 2027 | 12.19 | 121.9 | 1219.02 | hypothetical, not tested | not tested |
 | bare-minimum, lowest cost: small Mistral Small 4, strong Mistral Large 3 | 4.126 | 41.26 | 412.55 | hypothetical, not tested | not tested |
 | what-if 1a: GPT-6 Luna for every job | 1.096 | 10.96 | 109.65 | hypothetical, not tested | not tested |
@@ -299,10 +299,10 @@ Every figure below is a count the provider returned, written to a usage log by t
 
 | Service | Logged calls (all attempts) | Tokens measured | First to last call (UTC) |
 |---|---|---|---|
-| conversation service | 14,742 | 11,941,949 | 2026-10-16T20:06 to 2026-10-17T00:41 |
-| knowledge service | 905 | 283,235 | 2026-10-16T19:56 to 2026-10-17T00:31 |
-| tool service | 1 | 5,375 | 2026-10-16T23:32 to 2026-10-16T23:32 |
-| all services | 15,648 | 12,230,559 |  |
+| conversation service | 15,345 | 13,134,496 | 2026-10-16T20:06 to 2026-10-17T12:45 |
+| knowledge service | 976 | 284,259 | 2026-10-16T19:56 to 2026-10-17T12:44 |
+| tool service | 10 | 14,992 | 2026-10-16T23:32 to 2026-10-17T00:42 |
+| all services | 16,331 | 13,433,747 |  |
 
 **Tokens per conversation, by job (agent mode, English + Arabic + mixed, 180 conversations, 213 messages).**
 
@@ -337,7 +337,7 @@ Actual spend so far: **$0**. Every other number is what the same measured tokens
 | agent mode, today's free Groq mix (measured) | 3.843 | 38.43 | 384.26 | 192.18 | measured tokens x list price |
 | agent mode, qwen3.8-27b as orchestrator too | 9.973 | 99.73 | 997.3 | 498.68 | estimate |
 
-The conversation service accounts for all of the AI cost in these rows; the knowledge service's search runs on a local model ($0 API) and its risk second opinion runs on a free model. Qwen as the orchestrator looks expensive at Groq's list price for qwen ($0.80 in / $4.00 out per million tokens, a preview model): about 2.6 times today's mix, because it also uses more tokens per message. At OpenRouter's lower price for the same model family the picture would differ, so the choice of orchestrator should be made on quality first and then priced on the provider actually used.
+The conversation service accounts for all of the AI cost in these rows; the knowledge service's search runs on a local model ($0 API) and its risk second opinion runs on a free model. In the last row, qwen3.8-27b as orchestrator is priced at Groq's list price for qwen ($0.80 in / $4.00 out per million tokens, a preview model) with its measured tokens per message; OpenRouter lists a Qwen3.8 27B at $0.24 / $2.20.
 
 **One business onboarding, measured.**
 
@@ -367,7 +367,7 @@ Onboarding costs cents at list price and was measured on one example API with on
 | qwen3.8-27b | 3 | 1 | 4262 | Order Support Ticket |
 | gpt-oss-20b | 3 | 0 |  |  |
 
-Only gpt-oss-120b produced a valid tool every time. qwen3.8-27b produced one in three attempts and gpt-oss-20b in none: Groq rejected their output as invalid or not matching the required structure. This is a reason to keep the strong model for onboarding even if the cheaper models handle the chat. It is a small test (one example API, three attempts); no model other than the three Groq models was tried, and the local models were not tested.[^14]
+gpt-oss-120b: 2 of 2 attempts accepted. qwen3.8-27b: 1 of 3. gpt-oss-20b: 0 of 3. The rejected attempts were refused by Groq as invalid JSON or JSON that did not match the required structure. It is a small test: one example API and a few attempts per model; the local models were not tested.[^14]
 
 **Rule extraction (knowledge service, free OpenRouter models).** The same 36 policy passages of the example shop were sent to each model; nothing was stored or approved, and the candidate rules were not judged for quality.
 
@@ -377,7 +377,7 @@ Only gpt-oss-120b produced a valid tool every time. qwen3.8-27b produced one in 
 | nvidia/nemotron-3-ultra-550b-a55b:free |  | could not complete |  | 7 | 0 | 0 | 0 | 548 |
 | google/gemma-4-26b-a4b-it:free |  | could not complete |  | 0 | 7 | 0 | 0 |  |
 
-Of the three free models tried, only Nemotron 3 Super gave usable answers. Nemotron 3 Ultra answered every request without a usable body and Gemma 26B was refused with HTTP 429 (Gemma 31B had been refused too in the first measurement), so the free route for rule extraction depends on one model and needs a fallback; the knowledge service tries models in turn but the free choices are fragile.[^14]
+Nemotron 3 Super answered all 36 passages. For Nemotron 3 Ultra, every request returned a response without a usable body; for Gemma 26B, every request was refused with HTTP 429 (Gemma 31B had been refused too in the first measurement). Both were stopped after the retries of the first passage.[^14]
 
 ---
 
@@ -431,6 +431,6 @@ Arabizi (Egyptian Arabic written in Latin letters) is measured so numbers stay c
 
 - The agent-mode runs were made before a rule fix (support-hours questions) and three corrections to the evaluation's own checks; the rules-only table is shown both before and after the rule fix. The corrections only removed false alarms (a greeting saying "today", a reference number the shop really issued, a passage the real service really returned).
 - The conversation tests ran on one business (a fashion shop). A second business, real customer messages and a person-graded sample of replies are not yet included.
-- Pending because of the free daily token limit of gpt-oss-120b: its orchestrator repeats and its Arabic and mixed runs; the qwen Arabic and mixed orchestrator runs need a clean re-run.
+- Not done: repeats of the gpt-oss-120b orchestrator on the English conversations (it was run once) and a run at a higher reasoning level; the Arabic and mixed orchestrator comparisons were run once per model.
 - Onboarding on other models was compared on one small example (three Groq models for tool generation, free OpenRouter models for rule extraction); the quality of what they generated was not judged.
 - The recorded Arabizi sample on the real knowledge service is incomplete (rate limits).

@@ -20,8 +20,44 @@ from pathlib import Path
 sys.path.insert(0, str(Path.cwd() / "src"))
 
 from team_b import eval_conversations as ec  # noqa: E402
+from team_b.adapters.usage_log import current_call  # noqa: E402
 from team_b.config import Settings  # noqa: E402
 from team_b.container import build_container  # noqa: E402
+
+
+RECORDS: list[dict] = []
+
+
+class Recorder:
+    """--record: keeps every AI call (job, prompts, reply) so the same inputs can be replayed to other models."""
+
+    def __init__(self, inner):  # type: ignore[no-untyped-def]
+        self._inner = inner
+
+    async def complete_json(self, *, system, user, schema_hint, temperature=0.0):  # type: ignore[no-untyped-def]
+        record = {"job": current_call()[0], "kind": "json", "system": system, "user": user, "schema_hint": schema_hint, "temperature": temperature}
+        try:
+            record["reply"] = await self._inner.complete_json(system=system, user=user, schema_hint=schema_hint, temperature=temperature)
+        except Exception as exc:
+            record["error"] = type(exc).__name__
+            RECORDS.append(record)
+            raise
+        RECORDS.append(record)
+        return record["reply"]
+
+    async def complete_text(self, *, system, user, temperature=0.0):  # type: ignore[no-untyped-def]
+        record = {"job": current_call()[0], "kind": "text", "system": system, "user": user, "temperature": temperature}
+        try:
+            record["reply"] = await self._inner.complete_text(system=system, user=user, temperature=temperature)
+        except Exception as exc:
+            record["error"] = type(exc).__name__
+            RECORDS.append(record)
+            raise
+        RECORDS.append(record)
+        return record["reply"]
+
+    def __getattr__(self, name):  # type: ignore[no-untyped-def]
+        return getattr(self._inner, name)
 
 
 async def main() -> int:
@@ -34,6 +70,7 @@ async def main() -> int:
     parser.add_argument("--limit", type=int, default=0, help="at most this many conversations (0 = all)")
     parser.add_argument("--concurrency", type=int, default=1)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--record", type=Path, default=None, help="also save every AI call here (for replaying to other models)")
     args = parser.parse_args()
 
     settings = Settings.from_env()
@@ -41,7 +78,10 @@ async def main() -> int:
         raise SystemExit("--llm needs an AI model (see agent_env.sh.example)")
     if not args.llm:
         settings = settings.model_copy(update={"llm": "none", "llm_rewrite": False, "roles": {}})
-    container = build_container(settings.model_copy(update={"fixed_today": ec.EVAL_TODAY, "store": "memory"}))
+    container = build_container(
+        settings.model_copy(update={"fixed_today": ec.EVAL_TODAY, "store": "memory"}),
+        llm_wrapper=(lambda c: Recorder(c)) if args.record else None,
+    )
     if args.agent_mode is not None:
         assert container.orchestrator is not None
         container.orchestrator.set_agent(mode=args.agent_mode, move_picker=None)
@@ -96,6 +136,8 @@ async def main() -> int:
 
     with args.out.open("w", encoding="utf-8") as handle:
         await asyncio.gather(*(one(c, handle) for c in conversations))
+    if args.record:
+        args.record.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in RECORDS) + "\n", encoding="utf-8")
     return 0
 
 

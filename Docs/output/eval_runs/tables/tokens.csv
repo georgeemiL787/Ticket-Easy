@@ -1,0 +1,33 @@
+scope,job,calls,failed_or_rate_limited_attempts,calls_per_message,input_tokens,output_tokens,total_tokens,input_tokens_per_message,output_tokens_per_message,total_tokens_per_message,total_tokens_per_conversation,messages,conversations,source,note
+en,judge,71,0,1.0,38259,9989,48248,539,141,680,804,71,60,usage/agent_live_en.jsonl,evaluation only: not part of the product
+en,knowledge,21,1,0.3,18731,1549,20280,264,22,286,338,71,60,usage/agent_live_en.jsonl,measured
+en,orchestrator,100,46,1.41,379513,11679,391192,5345,164,5510,6520,71,60,usage/agent_live_en.jsonl,measured
+en,reader,71,30,1.0,92427,8876,101303,1302,125,1427,1688,71,60,usage/agent_live_en.jsonl,measured
+en,reviewer,58,4,0.82,62714,4341,67055,883,61,944,1118,71,60,usage/agent_live_en.jsonl,measured
+en,summary,9,0,0.13,5893,1091,6984,83,15,98,116,71,60,usage/agent_live_en.jsonl,measured
+en,writer,79,8,1.11,50638,2740,53378,713,39,752,890,71,60,usage/agent_live_en.jsonl,measured
+en,ALL PRODUCTION JOBS (without the judge),338,89,4.76,609916,30276,640192,8590,426,9017,10670,71,60,usage/agent_live_en.jsonl,measured
+ar,judge,71,0,1.0,39286,10505,49791,553,148,701,830,71,60,usage/agent_live_ar.jsonl,evaluation only: not part of the product
+ar,knowledge,23,0,0.32,20385,2077,22462,287,29,316,374,71,60,usage/agent_live_ar.jsonl,measured
+ar,orchestrator,101,13,1.42,384673,11497,396170,5418,162,5580,6603,71,60,usage/agent_live_ar.jsonl,measured
+ar,reader,71,8,1.0,92793,9007,101800,1307,127,1434,1697,71,60,usage/agent_live_ar.jsonl,measured
+ar,reviewer,68,2,0.96,74768,6024,80792,1053,85,1138,1347,71,60,usage/agent_live_ar.jsonl,measured
+ar,summary,10,1,0.14,6699,1276,7975,94,18,112,133,71,60,usage/agent_live_ar.jsonl,measured
+ar,writer,79,2,1.11,51779,3294,55073,729,46,776,918,71,60,usage/agent_live_ar.jsonl,measured
+ar,ALL PRODUCTION JOBS (without the judge),352,26,4.96,631097,33175,664272,8889,467,9356,11071,71,60,usage/agent_live_ar.jsonl,measured
+mixed,judge,71,0,1.0,40365,11100,51465,569,156,725,858,71,60,usage/agent_live_mixed.jsonl,evaluation only: not part of the product
+mixed,knowledge,20,0,0.28,18207,1776,19983,256,25,281,333,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,orchestrator,99,13,1.39,376069,11619,387688,5297,164,5460,6461,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,reader,71,4,1.0,92675,8996,101671,1305,127,1432,1695,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,reviewer,65,0,0.92,70749,5842,76591,996,82,1079,1277,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,summary,7,1,0.1,4792,911,5703,67,13,80,95,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,writer,80,1,1.13,52470,3309,55779,739,47,786,930,71,60,usage/agent_live_mixed.jsonl,measured
+mixed,ALL PRODUCTION JOBS (without the judge),342,19,4.82,614962,32453,647415,8661,457,9119,10790,71,60,usage/agent_live_mixed.jsonl,measured
+en+ar+mixed,judge,213,0,1.0,117910,31594,149504,554,148,702,831,213,180,usage/agent_live_<style>.jsonl,evaluation only: not part of the product
+en+ar+mixed,knowledge,64,1,0.3,57323,5402,62725,269,25,294,348,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,orchestrator,300,72,1.41,1140255,34795,1175050,5353,163,5517,6528,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,reader,213,42,1.0,277895,26879,304774,1305,126,1431,1693,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,reviewer,191,6,0.9,208231,16207,224438,978,76,1054,1247,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,summary,26,2,0.12,17384,3278,20662,82,15,97,115,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,writer,238,11,1.12,154887,9343,164230,727,44,771,912,213,180,usage/agent_live_<style>.jsonl,measured
+en+ar+mixed,ALL PRODUCTION JOBS (without the judge),1032,134,4.85,1855975,95904,1951879,8713,450,9164,10844,213,180,usage/agent_live_<style>.jsonl,measured

@@ -1,0 +1,72 @@
+{"index": 2, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "نعم، تقدر ترجع المنتج خلال 14 يوم من تاريخ الاستلام. بعد كده ما ينفعش ترجع ولا ترجع المبلغ.", "citations": ["return_policy@v2#s2"], "missing": ""}, "seconds": 1.0}
+{"index": 4, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 1.0}
+{"index": 7, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الـ return window هو 14 يوم من تاريخ الاستلام.", "citations": ["return_policy@v2#s2"], "missing": ""}, "seconds": 0.6}
+{"index": 9, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 12, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "أيوه، تقدر ترجع المنتج لو كان خلال 14 يوم من تاريخ الاستلام. لو فات 14 يوم، ما ينفعش ترجع ولا يرجع المبلغ، بس ممكن تتواصل مع خدمة العملاء لو حابب تعرف حالة طلبك.", "citations": ["return_policy@v2#s2", "refund_policy@v1#s1"], "missing": ""}, "seconds": 0.7}
+{"index": 14, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 17, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "عندك 14 يوم من تاريخ استلام المنتج عشان ترجعاه.", "citations": ["return_policy@v2#s2"], "missing": ""}, "seconds": 0.9}
+{"index": 19, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "how many days to return an item kam yom 3indi 3ashan arja3 el item"}, "seconds": 0.6}
+{"index": 20, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "عندك 14 يوم من تاريخ الاستلام عشان ترجع المنتج.", "citations": ["return_policy@v2#s2"], "missing": ""}, "seconds": 0.7}
+{"index": 21, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 24, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "return policy سياسة الإرجاع"}, "seconds": 0.8}
+{"index": 25, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الرجوع ممكن خلال 14 يوم من استلامك للمنتج. بعد كده ما ينفعش. لازم تبعت طلب الاسترجاع عبر واتساب أو صفحة طلباتي وتذكر رقم الطلب. بعد قبول الطلب، ييجي مندوب شحن يستلم المنتج خلال 3 أيام عمل. لو المنتج تالف أو معيب أو غلط، ما ينقصش مصاريف شحن.", "citations": ["return_policy@v2#s2", "return_policy@v2#s8", "return_policy@v2#s7"], "missing": ""}, "seconds": 0.9}
+{"index": 26, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 29, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "return order two weeks ago ارجع order من اسبوعين"}, "seconds": 0.7}
+{"index": 30, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "أيوه، تقدر ترجع الطلب لو كان خلال 14 يوم من استلامه. لو فات 14 يوم، ما ينفعش ترجع ولا تسترجع المبلغ.", "citations": ["return_policy@v2#s2", "refund_policy@v1#s1"], "missing": ""}, "seconds": 0.8}
+{"index": 31, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 34, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "shipping cost تكلفة الشحن"}, "seconds": 0.8}
+{"index": 36, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الـ شحن بيكلف 50 جنيه لو كنت في القاهرة أو الجيزة، وبـ 70 جنيه لو كنت في أي محافظة تانية. لو طلبك كان 1500 جنيه أو أكثر بعد الخصومات، الشحن مجاني.", "citations": ["shipping_policy@v1#s3"], "missing": ""}, "seconds": 0.8}
+{"index": 37, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 41, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "shipping cost Alexandria مصاريف الشحن Alexandria"}, "seconds": 0.7}
+{"index": 43, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "مصاريف الشحن إلى الإسكندرية 70 جنيه.", "citations": ["shipping_policy@v1#s3"], "missing": ""}, "seconds": 0.8}
+{"index": 44, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 48, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "delivery cost كم على التوصيل"}, "seconds": 0.7}
+{"index": 50, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الـ delivery بتكلف 50 جنيه لو في القاهرة أو الجيزة، و70 جنيه لو في أي محافظة تانية. لو المبلغ بعد الخصم وصل لـ1500 جنيه أو أكثر، الشحن مجاني.", "citations": ["shipping_policy@v1#s3"], "missing": ""}, "seconds": 0.6}
+{"index": 51, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 56, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "delivery fee رسوم التوصيل"}, "seconds": 1.5}
+{"index": 58, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": false, "answer": "", "citations": [], "missing": "delivery fee amount"}, "seconds": 0.8}
+{"index": 60, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"}, "seconds": 0.9}
+{"index": 61, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 65, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "cash on delivery نقد عند التسليم cash on delivery"}, "seconds": 0.7}
+{"index": 66, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "نعم، ممكن الدفع عند الاستلام للطلبات اللي قيمتها 5,000 جنيه أو أقل.", "citations": ["shipping_policy@v1#s4", "faq@v1#q02"], "missing": ""}, "seconds": 0.6}
+{"index": 67, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 70, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "cash payment upon delivery دفع نقدي عند التسليم"}, "seconds": 0.6}
+{"index": 72, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "نعم، تقدر تدفع بالـ cash لما الـ order يوصل، بس بس للطلبات اللي قيمتها 5,000 جنيه أو أقل. لو الطلب أكبر من 5,000 جنيه، لازم تدفع بالبطاقة أو المحفظة الإلكترونية أو InstaPay قبل الشحن.", "citations": ["shipping_policy@v1#s4", "faq@v1#q02"], "missing": ""}, "seconds": 0.8}
+{"index": 73, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 76, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "cash on delivery available الدفع عند الاستلام"}, "seconds": 0.6}
+{"index": 78, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "نعم، الدفع عند الاستلام متاح للطلبات التي لا تتجاوز 5,000 جنيه.", "citations": ["shipping_policy@v1#s4", "faq@v1#q02"], "missing": ""}, "seconds": 0.8}
+{"index": 79, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 83, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟"}, "seconds": 0.5}
+{"index": 84, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 88, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "refund processing time days استرداد الوقت الأيام"}, "seconds": 0.6}
+{"index": 90, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الـ refund بياخد من 3 أيام عمل للمحافظ الإلكترونية، من 5 أيام عمل للطلبات المدفوعة عند الاستلام، ومن 7 إلى 14 يوم عمل للبطاقات البنكية حسب البنك.", "citations": ["refund_policy@v1#s2"], "missing": ""}, "seconds": 0.8}
+{"index": 91, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 95, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "when will I get my money back after a return متى سأنحصل على مبلغ بعد العودة"}, "seconds": 1.0}
+{"index": 96, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "بعد ما نرجع المنتج ونستلمه في المخزن، نبدأ نرجع المبلغ. المبلغ يرجع بنفس وسيلة الدفع. لو كان الدفع بالبطاقة البنكية، عادةً بين 7-14 يوم عمل حسب البنك. لو الدفع بمحفظة إلكترونية، بين 3 أيام عمل. لو الدفع عند الاستلام، يرجع على المحفظة أو إنستاباي خلال 5 أيام عمل.", "citations": ["refund_policy@v1#s1", "refund_policy@v1#s2"], "missing": ""}, "seconds": 0.8}
+{"index": 97, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 1.0}
+{"index": 100, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟"}, "seconds": 0.8}
+{"index": 101, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 1.2}
+{"index": 105, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "تمام، أقدر أساعدك في ده. إيه رقم الأوردر؟"}, "seconds": 0.8}
+{"index": 106, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 112, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "أكيد. هحولك دلوقتي لزميل من فريق خدمة العملاء."}, "seconds": 0.7}
+{"index": 113, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 116, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "gift wrapping policy تغليف هدايا"}, "seconds": 0.8}
+{"index": 118, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "أيوة، ممكن تضيف تغليف هدية مع كارت إهداء، السعر 30 جنيه للطلب.", "citations": ["faq@v1#q05"], "missing": ""}, "seconds": 0.8}
+{"index": 119, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 123, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "ممكن توضحلي أكتر محتاج مساعدة في إيه؟"}, "seconds": 0.6}
+{"index": 124, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 127, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "customer service hours customer service open times ساعات خدمة العملاء"}, "seconds": 0.8}
+{"index": 129, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "فريق خدمة العملاء متاح يوميًا من 10 صباحًا حتى 10 مساءً، والمساعد الآلي متاح 24 ساعة.", "citations": ["faq@v1#q01"], "missing": ""}, "seconds": 0.6}
+{"index": 130, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 134, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "support hours support hours مواعيد الدعم"}, "seconds": 0.8}
+{"index": 136, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "فريق خدمة العملاء متاح يوميًا من 10 صباحًا حتى 10 مساءً، والمساعد الآلي متاح 24 ساعة.", "citations": ["faq@v1#q01"], "missing": ""}, "seconds": 0.9}
+{"index": 137, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.8}
+{"index": 141, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "عشان أقدر أساعدك في طلب الـ refund، ممكن تبعتلي رقم التليفون اللي مسجل على الأوردر؟"}, "seconds": 0.7}
+{"index": 143, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "شكرًا. عشان أتأكد إنه حضرتك، ابعتلي رقم التليفون المسجل على الأوردر."}, "seconds": 0.8}
+{"index": 147, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "للأسف مينفعش أرجّع المبلغ لأن الطلب مر على استلامه أكتر من 14 يوم. أقدر أشوفلك اختيارات تانية بدل كده: استبدال المنتج أو طلب كوبون."}, "seconds": 0.9}
+{"index": 148, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 1.1}
+{"index": 153, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"query": "return window days نافذة الإرجاع أيام"}, "seconds": 0.9}
+{"index": 154, "job": "knowledge", "model": "openai/gpt-oss-20b", "reply": {"answerable": true, "answer": "الـ return window هو 14 يوم من تاريخ الاستلام.", "citations": ["return_policy@v2#s2"], "missing": ""}, "seconds": 0.6}
+{"index": 155, "job": "reviewer", "model": "openai/gpt-oss-20b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 158, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "شكرًا. عشان أتأكد إنه حضرتك، ابعتلي رقم التليفون المسجل على الأوردر."}, "seconds": 0.8}
+{"index": 160, "job": "writer", "model": "openai/gpt-oss-20b", "reply": {"text": "شكرًا. عشان أتأكد إنه حضرتك، ابعتلي رقم التليفون المسجل على الأوردر."}, "seconds": 0.8}

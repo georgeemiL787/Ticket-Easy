@@ -1,0 +1,5 @@
+step,model,input_tokens,output_tokens,list_price_usd,actual_spend_usd,status
+tool generation (tool service),groq/gpt-oss-120b,3980,1395,0.00143,0,measured tokens x list price
+rule extraction (knowledge service),openrouter/nemotron-3-super-120b-a12b (paid),59986,19396,0.01353,0,measured tokens x list price
+document embeddings (knowledge service),bge-m3 on local Ollama,3384,0,0.0,0,measured; $0 API
+ONE ONBOARDING,,67350,20791,0.01496,0,"the example API has only 2 operations, so the tool-generation part is small; a real business costs more"

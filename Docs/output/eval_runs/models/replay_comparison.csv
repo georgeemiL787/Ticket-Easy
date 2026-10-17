@@ -1,10 +1,28 @@
-job,model,is_baseline,inputs,answered,failed,answerable_agrees_pct,same_citations_pct,same_numbers_pct,grounded_pct,avg_tokens_per_call,latency_p50_ms,note,says_ok_pct,agrees_with_baseline_pct,looser_than_baseline,stricter_than_baseline,baseline_blocked_inputs,empty_replies,same_script_as_baseline_pct,avg_reply_chars
-knowledge,openai/gpt-oss-120b,False,22,22,0,100.0,81.8,68.2,100.0,1055,715,replayed on the Groq free tier,,,,,,,,
-knowledge,openai/gpt-oss-20b,False,22,22,0,100.0,68.2,81.8,100.0,1050,641,replayed on the Groq free tier,,,,,,,,
-knowledge,qwen/qwen3.8-27b,True,22,22,0,100.0,100.0,100.0,100.0,,,baseline: the recorded reply,,,,,,,,
-reviewer,openai/gpt-oss-120b,True,29,29,0,,,,,,,baseline: the recorded reply,93.1,100.0,0,0,2,,,
-reviewer,openai/gpt-oss-20b,False,29,29,0,,,,,1188,550,replayed on the Groq free tier,86.2,93.1,0,2,2,,,
-reviewer,qwen/qwen3.8-27b,False,29,29,0,,,,,1089,328,replayed on the Groq free tier,82.8,89.7,0,3,2,,,
-writer,openai/gpt-oss-120b,False,15,15,0,,,,93.3,796,567,replayed on the Groq free tier,,,,,,0,100.0,76
-writer,openai/gpt-oss-20b,False,15,15,0,,,,93.3,772,540,replayed on the Groq free tier,,,,,,0,100.0,93
-writer,qwen/qwen3.8-27b,True,15,15,0,,,,100.0,,,baseline: the recorded reply,,,,,,0,100.0,112
+language,job,model,is_baseline,inputs,answered,failed,answerable_agrees_pct,same_citations_pct,same_numbers_pct,grounded_pct,avg_tokens_per_call,latency_p50_ms,note,says_ok_pct,agrees_with_baseline_pct,looser_than_baseline,stricter_than_baseline,baseline_blocked_inputs,empty_replies,same_script_as_baseline_pct,avg_reply_chars
+en,knowledge,openai/gpt-oss-120b,False,22,22,0,100.0,81.8,68.2,100.0,1055,715,replayed on the Groq free tier,,,,,,,,
+en,knowledge,openai/gpt-oss-20b,False,22,22,0,100.0,68.2,81.8,100.0,1050,641,replayed on the Groq free tier,,,,,,,,
+en,knowledge,qwen/qwen3.8-27b,True,22,22,0,100.0,100.0,100.0,100.0,,,baseline: the recorded reply,,,,,,,,
+en,reviewer,openai/gpt-oss-120b,True,29,29,0,,,,,,,baseline: the recorded reply,93.1,100.0,0,0,2,,,
+en,reviewer,openai/gpt-oss-20b,False,29,29,0,,,,,1188,550,replayed on the Groq free tier,86.2,93.1,0,2,2,,,
+en,reviewer,qwen/qwen3.8-27b,False,29,29,0,,,,,1089,328,replayed on the Groq free tier,82.8,89.7,0,3,2,,,
+en,writer,openai/gpt-oss-120b,False,15,15,0,,,,93.3,796,567,replayed on the Groq free tier,,,,,,0,100.0,76
+en,writer,openai/gpt-oss-20b,False,15,15,0,,,,93.3,772,540,replayed on the Groq free tier,,,,,,0,100.0,93
+en,writer,qwen/qwen3.8-27b,True,15,15,0,,,,100.0,,,baseline: the recorded reply,,,,,,0,100.0,112
+ar,knowledge,openai/gpt-oss-120b,False,35,32,3,100.0,90.6,68.8,88.6,978,584,replayed on the Groq free tier,,,,,,,,
+ar,knowledge,openai/gpt-oss-20b,False,35,35,0,100.0,82.9,68.6,100.0,971,546,replayed on the Groq free tier,,,,,,,,
+ar,knowledge,qwen/qwen3.8-27b,True,35,35,0,100.0,100.0,100.0,100.0,,,baseline: the recorded reply,,,,,,,,
+ar,reviewer,openai/gpt-oss-120b,True,26,26,0,,,,,,,baseline: the recorded reply,88.5,100.0,0,0,3,,,
+ar,reviewer,openai/gpt-oss-20b,False,26,26,0,,,,,1198,536,replayed on the Groq free tier,92.3,96.2,1,0,3,,,
+ar,reviewer,qwen/qwen3.8-27b,False,26,5,21,,,,,1064,211,replayed on the Groq free tier,100.0,100.0,0,0,3,,,
+ar,writer,openai/gpt-oss-120b,False,12,12,0,,,,100.0,824,566,replayed on the Groq free tier,,,,,,0,100.0,52
+ar,writer,openai/gpt-oss-20b,False,12,12,0,,,,100.0,777,519,replayed on the Groq free tier,,,,,,0,100.0,54
+ar,writer,qwen/qwen3.8-27b,True,12,12,0,,,,100.0,,,baseline: the recorded reply,,,,,,0,100.0,81
+mixed,knowledge,openai/gpt-oss-120b,False,36,36,0,100.0,88.9,69.4,97.2,940,579,replayed on the Groq free tier,,,,,,,,
+mixed,knowledge,openai/gpt-oss-20b,False,36,36,0,100.0,94.4,77.8,100.0,926,525,replayed on the Groq free tier,,,,,,,,
+mixed,knowledge,qwen/qwen3.8-27b,True,36,36,0,100.0,100.0,100.0,100.0,,,baseline: the recorded reply,,,,,,,,
+mixed,reviewer,openai/gpt-oss-120b,True,25,25,0,,,,,,,baseline: the recorded reply,96.0,100.0,0,0,1,,,
+mixed,reviewer,openai/gpt-oss-20b,False,25,25,0,,,,,1188,547,replayed on the Groq free tier,100.0,96.0,1,0,1,,,
+mixed,reviewer,qwen/qwen3.8-27b,False,25,3,22,,,,,1058,213,replayed on the Groq free tier,100.0,100.0,0,0,1,,,
+mixed,writer,openai/gpt-oss-120b,False,11,11,0,,,,100.0,801,496,replayed on the Groq free tier,,,,,,0,100.0,56
+mixed,writer,openai/gpt-oss-20b,False,11,11,0,,,,100.0,776,527,replayed on the Groq free tier,,,,,,0,100.0,60
+mixed,writer,qwen/qwen3.8-27b,True,11,11,0,,,,100.0,,,baseline: the recorded reply,,,,,,0,100.0,80

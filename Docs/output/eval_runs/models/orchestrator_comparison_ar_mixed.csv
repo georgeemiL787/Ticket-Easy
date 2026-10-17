@@ -1,0 +1,7 @@
+language,orchestrator_model,conversations,turns,citation_right_all_turns,citation_right_agent_turns_only,turns_with_a_failed_check,decision_checks_failed,fallback_turns,unbacked_fact_turns,ai_requests_per_turn_all_jobs,orchestrator_tokens_per_turn,turn_time_p50_s,status,note
+ar,qwen/qwen3.8-27b,25,27,20/25,8/11,5,5,16,0,18.2,3315,21.9,16 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column,"latency on the Groq free tier; same 25 conversations, only the orchestrator model changed"
+ar,openai/gpt-oss-20b,25,27,15/25,14/24,10,9,1,0,23.1,6220,31.2,1 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column,"latency on the Groq free tier; same 25 conversations, only the orchestrator model changed"
+ar,openai/gpt-oss-120b,,,,,,,,,,,,pending: not run yet (daily token quota of this model),
+mixed,qwen/qwen3.8-27b,25,27,19/25,3/4,6,6,23,0,30.9,1021,32.8,23 of 27 turns fell back to the fixed flow (rate limits): read the agent-turns-only column,"latency on the Groq free tier; same 25 conversations, only the orchestrator model changed"
+mixed,openai/gpt-oss-20b,25,27,16/25,16/25,9,8,0,0,13.6,7114,12.1,complete,"latency on the Groq free tier; same 25 conversations, only the orchestrator model changed"
+mixed,openai/gpt-oss-120b,,,,,,,,,,,,pending: not run yet (daily token quota of this model),

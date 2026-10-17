@@ -1,0 +1,9 @@
+model,attempt,valid_tool_proposals,result,why_rejected,seconds,input_tokens,output_tokens,tool_idea,note
+gpt-oss-120b,try 1,1,accepted,,4.02,3980,1395,Order Lookup & Support Ticket Creator,
+gpt-oss-120b,try 2,1,accepted,,3.87,3966,1389,Order Lookup and Support Ticket Creator,
+qwen3.8-27b,try 1,0,rejected,Groq could not generate valid JSON for the required structure,2.47,0,0,,no tokens are reported for a rejected request
+qwen3.8-27b,try 2,1,accepted,,4.87,2218,2044,Order Support Ticket,
+qwen3.8-27b,try 3,0,rejected,Groq could not generate valid JSON for the required structure,3.55,0,0,,no tokens are reported for a rejected request
+gpt-oss-20b,try 1,0,rejected,the model's JSON did not match the required structure,1.61,0,0,,no tokens are reported for a rejected request
+gpt-oss-20b,try 2,0,rejected,the model's JSON did not match the required structure,1.8,0,0,,no tokens are reported for a rejected request
+gpt-oss-20b,try 3,0,rejected,the model's JSON did not match the required structure,6.96,0,0,,no tokens are reported for a rejected request

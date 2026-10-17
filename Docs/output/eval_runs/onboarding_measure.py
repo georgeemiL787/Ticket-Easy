@@ -49,7 +49,8 @@ if mode == "rules":
     result = {"tenant": TENANT, "per_document": per_document, "passages_failed_after_retries": failed,
               "total_passages": sum(c["passages"] for c in per_document.values()),
               "total_candidate_rules": sum(c["candidate_rules"] for c in per_document.values())}
-    Path("../Docs/output/eval_runs/knowledge/onboarding_rules_result.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    import os
+    Path(os.environ.get("RULES_RESULT", "../Docs/output/eval_runs/knowledge/onboarding_rules_result.json")).write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result, indent=2))
 elif mode == "risk":
     rows = [json.loads(l) for l in Path("../Docs/output/eval_runs/models/sample40.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]

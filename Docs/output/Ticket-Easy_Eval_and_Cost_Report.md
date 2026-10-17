@@ -357,6 +357,28 @@ The conversation service accounts for all of the AI cost in these rows; the know
 
 Onboarding costs cents at list price and was measured on one example API with only 2 operations; a real business with many operations uses more tool-generation tokens. The quality of the generated tool and of the 20 candidate rules was not judged in this refresh.[^13]
 
+## 2.7 Onboarding on other models
+
+**Tool generation (tool service, Groq free tier).** The tool service demands output in a strict structure. Each model got the same example e-commerce API (2 operations) and the same prompt; each attempt is one request, as in the product.
+
+| Model | Attempts | Accepted | Tokens of an accepted run | Tool proposed |
+|---|---|---|---|---|
+| gpt-oss-120b | 2 | 2 | 5375 | Order Lookup & Support Ticket Creator; Order Lookup and Support Ticket Creator |
+| qwen3.8-27b | 3 | 1 | 4262 | Order Support Ticket |
+| gpt-oss-20b | 3 | 0 |  |  |
+
+Only gpt-oss-120b produced a valid tool every time. qwen3.8-27b produced one in three attempts and gpt-oss-20b in none: Groq rejected their output as invalid or not matching the required structure. This is a reason to keep the strong model for onboarding even if the cheaper models handle the chat. It is a small test (one example API, three attempts); no model other than the three Groq models was tried, and the local models were not tested.[^14]
+
+**Rule extraction (knowledge service, free OpenRouter models).** The same 36 policy passages of the example shop were sent to each model; nothing was stored or approved, and the candidate rules were not judged for quality.
+
+| Model | Passages | Passages that failed | Candidate rules | Answered requests | Failed or rate-limited | Input tokens | Output tokens | Median latency ms |
+|---|---|---|---|---|---|---|---|---|
+| nvidia/nemotron-3-super-120b-a12b:free (measured first) | 36 | 0 | 20 | 36 | 0 | 59986 | 19396 | 9626 |
+| nvidia/nemotron-3-ultra-550b-a55b:free |  | could not complete |  | 7 | 0 | 0 | 0 | 548 |
+| google/gemma-4-26b-a4b-it:free |  | could not complete |  | 0 | 7 | 0 | 0 |  |
+
+Of the three free models tried, only Nemotron 3 Super gave usable answers. Nemotron 3 Ultra answered every request without a usable body and Gemma 26B was refused with HTTP 429 (Gemma 31B had been refused too in the first measurement), so the free route for rule extraction depends on one model and needs a fallback; the knowledge service tries models in turn but the free choices are fragile.[^14]
+
 ---
 
 [^8]: `tables/hypothetical.csv`, `tables/local_estimates.csv`, `tables/cost_notes.md`, `tables/prices.csv`.
@@ -364,6 +386,7 @@ Onboarding costs cents at list price and was measured on one example API with on
 [^10]: `models/orchestrator_comparison.csv`, `models/orchestrator_repeats.csv`, `models/orchestrator_comparison_ar_mixed.csv`, `diagnosis/orch_*.jsonl`, `usage/orch_*.jsonl`.
 [^11]: `models/replay_comparison.csv`, `models/writer_replies_to_grade_*.csv`, `usage/replay_*.jsonl`.
 [^12]: `tables/usage_totals.csv`, `tables/tokens.csv`, `tables/tokens_all_services.csv`, `tables/knowledge_per_message.csv`, `usage/*.jsonl`, `USAGE_LOG_FORMAT.md`.
+[^14]: `models/onboarding_models_tools.csv`, `models/onboarding_models_tools_attempts.csv`, `models/onboarding_models_rules.csv`, `knowledge/tool_generation/*.txt`, `knowledge/onboarding_rules_result*.json`, `usage/onboarding_*.jsonl`.
 [^13]: `tables/onboarding.csv`, `tables/onboarding_measured.csv`, `tables/onboarding_cost.csv`, `knowledge/onboarding_rules_result.json`.
 
 # Appendix
@@ -409,5 +432,5 @@ Arabizi (Egyptian Arabic written in Latin letters) is measured so numbers stay c
 - The agent-mode runs were made before a rule fix (support-hours questions) and three corrections to the evaluation's own checks; the rules-only table is shown both before and after the rule fix. The corrections only removed false alarms (a greeting saying "today", a reference number the shop really issued, a passage the real service really returned).
 - The conversation tests ran on one business (a fashion shop). A second business, real customer messages and a person-graded sample of replies are not yet included.
 - Pending because of the free daily token limit of gpt-oss-120b: its orchestrator repeats and its Arabic and mixed runs; the qwen Arabic and mixed orchestrator runs need a clean re-run.
-- Not yet compared across models: tool generation and rule extraction (only one model each was measured).
+- Onboarding on other models was compared on one small example (three Groq models for tool generation, free OpenRouter models for rule extraction); the quality of what they generated was not judged.
 - The recorded Arabizi sample on the real knowledge service is incomplete (rate limits).

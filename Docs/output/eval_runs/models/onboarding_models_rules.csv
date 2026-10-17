@@ -1,0 +1,4 @@
+model,passages,passages_failed_after_retries,candidate_rules,requests,ok_requests,failed_or_rate_limited_requests,input_tokens,output_tokens,latency_p50_ms,per_document,note
+nvidia/nemotron-3-super-120b-a12b:free (measured first),36,0,20,36,36,0,59986,19396,9626,"return_policy: 8, shipping_policy: 5, refund_policy: 6, faq: 1","candidate rules are proposals only: nothing was stored or approved, and their quality was not judged"
+nvidia/nemotron-3-ultra-550b-a55b:free,,could not complete,,7,7,0,0,0,548,,"every request returned a response without a usable answer ('choices' missing), including all retries of the first passage; stopped after the first passage"
+google/gemma-4-26b-a4b-it:free,,could not complete,,7,0,7,0,0,,,"every request was refused with HTTP 429 (rate-limited upstream), including all retries of the first passage; stopped after the first passage"

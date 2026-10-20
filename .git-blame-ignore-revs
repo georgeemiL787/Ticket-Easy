@@ -13,3 +13,6 @@ aa7514a7a1c8ef614144733506970d8c55bb3d46
 
 # Split the agent core into named parts
 b394efb174ee7982fee0b03cec4762143d9d4050
+
+# Rename the agent connections, simulated services, classes and the planner job
+900d17cc51697c83d83f583e636eb030a25b47be

@@ -11,12 +11,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from team_b.brain.handoff import incomplete
-from team_b.brain.redaction import sensitive_kinds
-from team_b.container import Container, build_container, inject
-from team_b.domain.handoff import HandoffCase
-from team_b.domain.reply import AgentReply
-from team_b.domain.trace import DecisionTrace, record_problems
+from agent_service.brain.handoff import incomplete
+from agent_service.brain.redaction import sensitive_kinds
+from agent_service.container import Container, build_container, inject
+from agent_service.domain.handoff import HandoffCase
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.trace import DecisionTrace, record_problems
 from tests.integration.scenario_format import Expect, Final, Inject, Scenario
 from tests.support import make_settings
 

@@ -1,8 +1,8 @@
 """The AI model's part in policy answers: it steers the search and words the reply, but never adds a fact."""
 
-from team_b.brain.knowledge_llm import LLMKnowledgeAssistant
-from team_b.contracts.evidence import Passage
-from team_b.domain.understanding import Locale
+from agent_service.brain.knowledge_llm import LLMKnowledgeAssistant
+from agent_service.contracts.evidence import Passage
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeLLM
 
 PASSAGE = Passage(

@@ -4,16 +4,16 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.llm_nlu import PromptTemplate
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.reviewer import PROMPT, HandoverWatch, Reviewer, blocks_handover
-from team_b.brain.writer import ReplyWriter
-from team_b.container import Container
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.evidence import Passage
-from team_b.contracts.policy import CheckActionRequest, PolicyDecision
-from team_b.domain.agent import HandOver, Reply, ReplyPlan
-from team_b.domain.decision import Decision, EscalationReason
+from agent_service.brain.llm_nlu import PromptTemplate
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.reviewer import PROMPT, HandoverWatch, Reviewer, blocks_handover
+from agent_service.brain.writer import ReplyWriter
+from agent_service.container import Container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.evidence import Passage
+from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.domain.agent import HandOver, Reply, ReplyPlan
+from agent_service.domain.decision import Decision, EscalationReason
 from tests.fakes import FakeEvidence, FakeLLM, FunctionPicker, ScriptedMovePicker
 
 T, C = "shop_001", "conv-review"
@@ -87,8 +87,8 @@ def writer_with(writer_llm: FakeLLM, reviewer_llm: FakeLLM) -> ReplyWriter:
 
 
 async def write(writer: ReplyWriter, **kw: Any) -> Any:
-    return await writer.write(plan(), STATUS, __import__("team_b.domain.understanding", fromlist=["Locale"]).Locale.EN,
-                              message="where is it?", **kw)  # fmt: skip
+    locale = __import__("agent_service.domain.understanding", fromlist=["Locale"]).Locale.EN
+    return await writer.write(plan(), STATUS, locale, message="where is it?", **kw)
 
 
 GOOD = {"text": "Good news: order NS-20877 is on the way, due on 2026-09-24."}
@@ -163,7 +163,7 @@ async def test_a_blocked_reply_never_reaches_the_customer(c: Container) -> None:
 
 
 async def test_a_policy_answer_worded_by_the_model_is_reviewed_against_its_passages(c: Container) -> None:
-    from team_b.brain.knowledge_agent import KnowledgeAgent
+    from agent_service.brain.knowledge_agent import KnowledgeAgent
     from tests.fakes import KnowledgeFakeLLM
 
     block = {"ok": False, "problems": ["a statement the passage does not back"]}

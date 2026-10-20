@@ -44,7 +44,7 @@ To run all three teams together locally, with business tools that Team C generat
 
 Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
 delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.
-The inbox and the dashboard need a sign-in. `make demo` creates the admin `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). More people: `python -m team_b create-user --email ... --name ... --role agent|manager|admin --tenants shop_001`.
+The inbox and the dashboard need a sign-in. `make demo` creates the admin `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). More people: `python -m agent_service create-user --email ... --name ... --role agent|manager|admin --tenants shop_001`.
 
 ---
 

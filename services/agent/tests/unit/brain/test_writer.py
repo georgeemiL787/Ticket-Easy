@@ -4,14 +4,14 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.llm_nlu import PromptTemplate
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.turn import Step
-from team_b.brain.writer import PROMPT, WRITABLE, ReplyWriter, plan_of
-from team_b.container import Container
-from team_b.domain.agent import Reply, ReplyPlan
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.understanding import Locale
+from agent_service.brain.llm_nlu import PromptTemplate
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.turn import Step
+from agent_service.brain.writer import PROMPT, WRITABLE, ReplyWriter, plan_of
+from agent_service.container import Container
+from agent_service.domain.agent import Reply, ReplyPlan
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeEvidence, FakeLLM, FunctionPicker, ScriptedMovePicker
 
 T, C = "shop_001", "conv-writer"
@@ -233,7 +233,7 @@ async def test_policy_passages_are_added_after_the_written_reply_and_never_shown
 
 
 async def test_with_the_agent_off_the_old_rewriter_still_does_the_wording(c: Container) -> None:
-    from team_b.brain.rewrite import LLMRewriter
+    from agent_service.brain.rewrite import LLMRewriter
 
     writer_llm, rewrite_llm = FakeLLM(), FakeLLM({"text": "Hi there! How can I help you today?"})
     bot = orch(c, writer=ReplyWriter(writer_llm), rewriter=LLMRewriter(rewrite_llm), agent_mode="off")
@@ -288,9 +288,9 @@ async def test_a_free_reply_that_talks_business_falls_back_to_the_template(c: Co
 
 
 def test_today_word_passes_in_a_free_reply_but_not_in_a_fact_reply() -> None:
-    from team_b.brain.writer import problems_in
-    from team_b.domain.agent import ReplyPlan
-    from team_b.domain.decision import Decision
+    from agent_service.brain.writer import problems_in
+    from agent_service.domain.agent import ReplyPlan
+    from agent_service.domain.decision import Decision
 
     free = ReplyPlan(decision=Decision.ANSWER, free=True, reply_key="free_reply")
     assert problems_in(free, "How can I help?", "I am the assistant, how can I help today?", "Nile Style") == []

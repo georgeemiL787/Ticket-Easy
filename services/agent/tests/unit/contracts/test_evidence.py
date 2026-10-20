@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from team_b.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
+from agent_service.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 
 PASSAGE = {
     "passage_id": "return_policy@v2#s2",

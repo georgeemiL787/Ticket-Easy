@@ -7,10 +7,10 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from team_b.container import Container
-from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
-from team_b.domain.tenant import DEFAULT_SLA_MINUTES, EscalationConfig
+from agent_service.container import Container
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
+from agent_service.domain.tenant import DEFAULT_SLA_MINUTES, EscalationConfig
 
 T = "shop_001"
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)  # the clock of the test container

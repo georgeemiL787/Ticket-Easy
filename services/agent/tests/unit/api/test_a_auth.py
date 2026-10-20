@@ -14,12 +14,19 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.adapters.user_repository import InMemoryUserStore
-from team_b.api.app import create_app
-from team_b.api.auth import is_public, least_role, parse_chat_keys
-from team_b.auth import COOKIE_NAME, MAX_FAILURES, AuthService, TooManyAttemptsError, hash_password, password_matches
-from team_b.container import Container, build_container
-from team_b.domain.users import User
+from agent_service.adapters.user_repository import InMemoryUserStore
+from agent_service.api.app import create_app
+from agent_service.api.auth import is_public, least_role, parse_chat_keys
+from agent_service.auth import (
+    COOKIE_NAME,
+    MAX_FAILURES,
+    AuthService,
+    TooManyAttemptsError,
+    hash_password,
+    password_matches,
+)
+from agent_service.container import Container, build_container
+from agent_service.domain.users import User
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 
@@ -368,7 +375,7 @@ async def test_emails_and_display_names_are_unique_without_regard_to_case() -> N
     store = InMemoryUserStore()
     auth = AuthService(store, b"k" * 32)
     await auth.create_user("a@example.com", "Ann", "agent", ("shop_001",), PASSWORD)
-    from team_b.ports import AlreadyExistsError
+    from agent_service.ports import AlreadyExistsError
 
     with pytest.raises(AlreadyExistsError):
         await auth.create_user("A@EXAMPLE.COM", "Other", "agent", (), PASSWORD)

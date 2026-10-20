@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from team_b.container import Container
-from team_b.domain.reply import AgentReply
+from agent_service.container import Container
+from agent_service.domain.reply import AgentReply
 from tests.integration.scenario_runner import check_write_safety
 from tests.integration.test_a_leak_scan import BACKEND, TOKENS
 

@@ -5,14 +5,14 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.tenant import (
+from agent_service.domain.tenant import (
     IntentSpec,
     TenantConfig,
     TenantConfigError,
     TenantRegistry,
     UnknownTenantError,
 )
-from team_b.domain.understanding import Locale
+from agent_service.domain.understanding import Locale
 
 
 def config(**over: Any) -> dict[str, Any]:

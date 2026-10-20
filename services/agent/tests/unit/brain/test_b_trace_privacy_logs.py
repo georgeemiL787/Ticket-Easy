@@ -5,13 +5,13 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.pipeline import log_turn_events
-from team_b.brain.redaction import contains_sensitive, redact, redact_mapping, redact_value, sensitive_kinds
-from team_b.brain.turn import PlannedIntent, Step, TurnContext
-from team_b.container import Container
-from team_b.domain.decision import Decision
-from team_b.domain.trace import DecisionTrace, ToolCallRecord, TraceStep, record_problems
-from team_b.observability import EVENTS, configure_logging
+from agent_service.brain.pipeline import log_turn_events
+from agent_service.brain.redaction import contains_sensitive, redact, redact_mapping, redact_value, sensitive_kinds
+from agent_service.brain.turn import PlannedIntent, Step, TurnContext
+from agent_service.container import Container
+from agent_service.domain.decision import Decision
+from agent_service.domain.trace import DecisionTrace, ToolCallRecord, TraceStep, record_problems
+from agent_service.observability import EVENTS, configure_logging
 from tests.integration.scenario_runner import check_record_and_privacy
 from tests.unit.brain.test_pipeline import C, T, last_trace, orch, say
 

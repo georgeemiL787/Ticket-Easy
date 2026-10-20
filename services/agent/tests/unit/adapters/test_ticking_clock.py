@@ -1,6 +1,6 @@
 from datetime import UTC, date, datetime, timedelta
 
-from team_b.adapters.memory_store import TickingClock
+from agent_service.adapters.memory_store import TickingClock
 
 
 def test_the_ticking_clock_starts_at_noon_of_the_pinned_day_and_keeps_running() -> None:

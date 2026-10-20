@@ -8,10 +8,10 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.policy import CheckActionRequest
-from team_b.ports import EvidenceProvider, PolicyGate
+from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.policy import CheckActionRequest
+from agent_service.ports import EvidenceProvider, PolicyGate
 
 EXAMPLES = Path(__file__).resolve().parents[4] / "knowledge" / "contracts" / "examples"
 Handler = Callable[[httpx.Request], httpx.Response]

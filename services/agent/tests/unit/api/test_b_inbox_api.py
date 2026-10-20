@@ -7,10 +7,10 @@ from typing import Any
 import httpx
 from fastapi import FastAPI
 
-from team_b.container import Container
-from team_b.domain.actions import ActionProposal, ActionState
-from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import CaseStatus, HandoffCase, HandoffPackage, PendingApproval
+from agent_service.container import Container
+from agent_service.domain.actions import ActionProposal, ActionState
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.handoff import CaseStatus, HandoffCase, HandoffPackage, PendingApproval
 
 T = "shop_001"
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

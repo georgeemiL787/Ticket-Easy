@@ -1,6 +1,6 @@
 import pytest
 
-from team_b.brain.redaction import redact
+from agent_service.brain.redaction import redact
 
 
 @pytest.mark.parametrize(

@@ -4,8 +4,8 @@ from itertools import product
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import (
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.handoff import (
     ALLOWED_CASE_TRANSITIONS,
     CaseStatus,
     HandoffCase,

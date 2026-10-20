@@ -2,12 +2,12 @@
 
 import pytest
 
-from team_b.brain.orchestrator import CLARIFY_TEXT, Orchestrator
-from team_b.brain.summarizer import LLMHistorySummarizer
-from team_b.brain.transcript import transcript_from_traces
-from team_b.container import Container
-from team_b.domain.tenant import UnknownTenantError
-from team_b.domain.understanding import Language
+from agent_service.brain.orchestrator import CLARIFY_TEXT, Orchestrator
+from agent_service.brain.summarizer import LLMHistorySummarizer
+from agent_service.brain.transcript import transcript_from_traces
+from agent_service.container import Container
+from agent_service.domain.tenant import UnknownTenantError
+from agent_service.domain.understanding import Language
 from tests.fakes import FakeLLM
 
 T, C = "shop_001", "conv-1"
@@ -112,7 +112,7 @@ async def test_the_trace_records_how_the_message_was_understood(c: Container) ->
 
 async def test_an_ai_assisted_turn_records_the_method_and_the_prompt_version(c: Container) -> None:
 
-    from team_b.brain.llm_nlu import LLMNLU
+    from agent_service.brain.llm_nlu import LLMNLU
 
     llm = FakeLLM({"language": "en", "intents": [{"name": "refund_request", "confidence": 0.9}]})
     custom = Orchestrator(
@@ -125,7 +125,7 @@ async def test_an_ai_assisted_turn_records_the_method_and_the_prompt_version(c: 
 
 
 async def test_a_failing_model_still_answers_and_the_trace_says_fallback(c: Container) -> None:
-    from team_b.brain.llm_nlu import LLMNLU
+    from agent_service.brain.llm_nlu import LLMNLU
 
     custom = Orchestrator(
         clock=c.clock, tenants=c.tenants, sessions=c.sessions, traces=c.traces, cases=c.cases,

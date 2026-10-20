@@ -42,4 +42,4 @@ ENV TEAM_B_STORE=sqlite TEAM_B_DB_PATH=/data/team_b.sqlite3 TEAM_B_LOG_JSON=true
 EXPOSE 8010
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
     CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=2).status == 200 else 1)"
-CMD ["uvicorn", "team_b.api.app:app", "--host", "0.0.0.0", "--port", "8010"]
+CMD ["uvicorn", "agent_service.api.app:app", "--host", "0.0.0.0", "--port", "8010"]

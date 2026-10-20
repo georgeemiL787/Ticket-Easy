@@ -2,8 +2,8 @@
 
 import pytest
 
-from team_b.adapters.llm_limits import LimiterRegistry, RateBudgetExceeded, RateLimiter
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.llm_limits import LimiterRegistry, RateBudgetExceeded, RateLimiter
+from agent_service.contracts.errors import UpstreamError
 
 
 class Time:

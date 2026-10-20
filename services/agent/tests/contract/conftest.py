@@ -8,9 +8,9 @@ from typing import Any, Literal
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from team_b.contracts.policy import LocalizedText
-from team_b.contracts.tools import ToolSpec
-from team_b.domain.tenant import TenantConfig, TenantRegistry
+from agent_service.contracts.policy import LocalizedText
+from agent_service.contracts.tools import ToolSpec
+from agent_service.domain.tenant import TenantConfig, TenantRegistry
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "fixtures" / "shop_001"

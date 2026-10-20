@@ -6,11 +6,11 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from team_b.brain.handoff import DEFAULT_PRIORITY, NEXT_STEP, next_step_for, priority_for
-from team_b.config import PROJECT_ROOT
-from team_b.domain.decision import EscalationReason
-from team_b.domain.tenant import EscalationConfig, TenantConfig, TenantConfigError, TenantRegistry
-from team_b.domain.understanding import Language
+from agent_service.brain.handoff import DEFAULT_PRIORITY, NEXT_STEP, next_step_for, priority_for
+from agent_service.config import PROJECT_ROOT
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.tenant import EscalationConfig, TenantConfig, TenantConfigError, TenantRegistry
+from agent_service.domain.understanding import Language
 
 R = EscalationReason
 SHOP = TenantConfig.model_validate_json((PROJECT_ROOT / "config/tenants/shop_001.json").read_text(encoding="utf-8-sig"))

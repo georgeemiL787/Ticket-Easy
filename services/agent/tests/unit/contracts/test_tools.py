@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 
 
 def test_upstream_error_carries_its_fields() -> None:

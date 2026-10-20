@@ -19,8 +19,8 @@ from typing import Any
 
 import pytest
 
-from team_b.container import build_container, inject
-from team_b.domain.agent import (
+from agent_service.container import build_container, inject
+from agent_service.domain.agent import (
     AgentPlan,
     AskCustomer,
     HandOver,
@@ -31,7 +31,7 @@ from team_b.domain.agent import (
     ReplyPlan,
     SearchPolicy,
 )
-from team_b.domain.decision import Decision, EscalationReason
+from agent_service.domain.decision import Decision, EscalationReason
 from tests.fakes import FunctionPicker
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_runner import check_write_safety

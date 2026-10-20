@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.standins.json_schema import validate
-from team_b.adapters.standins.shop import StandinShop
-from team_b.contracts.tools import ToolResult
+from agent_service.adapters.standins.json_schema import validate
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
 T = "shop_001"

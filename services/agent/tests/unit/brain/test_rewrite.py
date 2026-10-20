@@ -4,16 +4,16 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.composer import check_grounded, normalize_digits
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.rewrite import REWRITE_PROMPT, LLMRewriter
-from team_b.brain.turn import PlannedIntent, Step, TurnContext
-from team_b.config import Settings
-from team_b.container import Container, ContainerError, build_container
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.evidence import Passage
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.understanding import Locale
+from agent_service.brain.composer import check_grounded, normalize_digits
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.rewrite import REWRITE_PROMPT, LLMRewriter
+from agent_service.brain.turn import PlannedIntent, Step, TurnContext
+from agent_service.config import Settings
+from agent_service.container import Container, ContainerError, build_container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.evidence import Passage
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeEvidence, FakeLLM
 
 T, C = "shop_001", "conv-1"
@@ -244,7 +244,7 @@ async def test_without_a_rewriter_nothing_is_recorded_and_no_model_is_called(c: 
 
 
 async def test_the_shops_word_is_never_reworded() -> None:
-    from team_b.brain.rewrite import REWRITABLE
+    from agent_service.brain.rewrite import REWRITABLE
 
     assert Decision.EXECUTE not in REWRITABLE
     assert REWRITABLE == {

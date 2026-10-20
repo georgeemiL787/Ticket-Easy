@@ -8,11 +8,11 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.shadow import compare
-from team_b.config import Settings
-from team_b.container import Container, build_container
-from team_b.domain.agent import (
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.shadow import compare
+from agent_service.config import Settings
+from agent_service.container import Container, build_container
+from agent_service.domain.agent import (
     AgentPlan,
     AskCustomer,
     HandOver,
@@ -24,8 +24,8 @@ from team_b.domain.agent import (
     ReplyPlan,
     SearchPolicy,
 )
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.eval_conversations import EvalConversation, EvalTurn, Gold, evaluate, render
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.eval_conversations import EvalConversation, EvalTurn, Gold, evaluate, render
 from tests.fakes import FunctionPicker, ScriptedMovePicker
 from tests.integration.agent_expert import expert
 from tests.integration.test_a_safety_property import script
@@ -272,7 +272,7 @@ async def test_without_shadow_the_report_has_no_agreement_section() -> None:
 
 
 def test_shadow_and_agent_modes_of_the_command_need_the_model(tmp_path: Path) -> None:
-    from team_b import __main__ as cli
+    from agent_service import __main__ as cli
 
     folder = tmp_path / "set"
     folder.mkdir()

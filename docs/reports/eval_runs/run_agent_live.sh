@@ -6,7 +6,7 @@
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RUNS="$ROOT/docs/reports/eval_runs"
-cd "$ROOT/team_b" || exit 1
+cd "$ROOT/services/agent" || exit 1
 source "$RUNS/agent_env.sh.example"
 export TEAM_B_MODE=live TEAM_B_TEAM_A_URL="${TEAM_B_TEAM_A_URL:-http://127.0.0.1:8001}" TEAM_B_TEAM_A_TIMEOUT_S=30
 PY=".venv/Scripts/python"; [ -x "$PY" ] || PY=".venv/bin/python"
@@ -15,7 +15,7 @@ run() {  # style, key numbers, extra args
   local style="$1" ks="$2"; shift 2
   (
     export TEAM_B_LLM_API_KEY="$(keys "$ks")" TEAM_B_USAGE_LOG="$RUNS/usage/agent_live_$style.jsonl" TEAM_B_USAGE_RUN_LABEL="presentation_agent_live_$style"
-    "$PY" -m team_b eval --set "$RUNS/sets/$style" --llm --agent-mode on --judge --resume --label "presentation_agent_live_$style" "$@" \
+    "$PY" -m agent_service eval --set "$RUNS/sets/$style" --llm --agent-mode on --judge --resume --label "presentation_agent_live_$style" "$@" \
       > "$RUNS/logs/live_$style.log" 2>&1
   ) &
 }

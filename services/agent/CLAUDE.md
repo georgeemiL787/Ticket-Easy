@@ -14,7 +14,7 @@ load memory → understand (language, intents, entities, yes/no, wants human, fr
 5. Writes are never retried automatically. Uncertain write outcomes escalate as unverified_result.
 6. A human can never turn a policy "deny" into an execution.
 7. Configuration over code: everything shop-specific lives in config/tenants/<tenant>.json, data/lexicon, data/locales and fixtures/<tenant>. Adding a business must not need brain code changes.
-8. The brain imports only team_b.ports interfaces and team_b.domain / team_b.contracts models. Implementations live in team_b.adapters; container.py wires them from settings.
+8. The brain imports only agent_service.ports interfaces and agent_service.domain / agent_service.contracts models. Implementations live in agent_service.adapters; container.py wires them from settings.
 
 ## Stand-ins
 Team A is reachable over HTTP (TEAM_B_MODE=live) and Team C's sandbox tools over MCP (TEAM_B_TEAM_C_CONFIG, TEST-ONLY; see
@@ -25,11 +25,11 @@ Paths are relative to services/agent/ unless noted. "(planned)" marks anything n
 ```
 services/agent/
   CLAUDE.md  README.md  pyproject.toml  requirements.txt  requirements-dev.txt  Makefile  .env.example
-  src/team_b/
+  src/agent_service/
     config.py         Settings.from_env(): all TEAM_B_* / OLLAMA_* / OPENROUTER_* variables (see .env.example)
     container.py      build_container(settings) -> Container; the only place that picks implementations
     observability.py  structlog setup; bind_context() puts tenant/conversation/request/trace ids on every log line
-    __main__.py       python -m team_b eval-nlu [--mode rules|llm|both] [--save-baseline]
+    __main__.py       python -m agent_service eval-nlu [--mode rules|llm|both] [--save-baseline]
     nlu_eval.py       labelled-message evaluation: accuracy, multi-intent, entities, language, worst misses; baseline in eval/nlu_baseline.json
     contracts/   data formats exchanged with the plugs
                  base (PlugModel ignores extra fields, RequestModel forbids them), errors (UpstreamError),
@@ -90,7 +90,7 @@ services/agent/
                  replies and the traces. Holes they found and code fixed: ProposeAction needs the customer to have asked for that action (check action_was_asked_for; agent mode now keeps
                  session.intents_seen), the trace clips long texts in a move (_clipped), redact() was quadratic on a long run of letters (email pattern) and on many matches (free()) - fixed
                  agent metrics (docs/metrics.md 15-19; MetricsService.agent_summary; /v1/dashboard/agent; forced/chosen split + automate-next on /v1/dashboard/escalations; turn_facts columns from migrations 005 and 006; alerts agent_fallback_spike and reviewer_block_spike with tenant thresholds agent_fallback_* / reviewer_block_*); conversation timeline: DashboardConversation.timeline (api/dashboard.timeline_of) drawn by dashboard components/AgentTimeline.tsx
-                 replay (replay.py; `python -m team_b replay <id> --set KEY=VALUE`; POST /v1/dashboard/conversations/{id}/replay is admin-only because it is not in the role table; fresh stand-in shop + memory stores, never saved; dashboard components/ReplayPanel.tsx)
+                 replay (replay.py; `python -m agent_service replay <id> --set KEY=VALUE`; POST /v1/dashboard/conversations/{id}/replay is admin-only because it is not in the role table; fresh stand-in shop + memory stores, never saved; dashboard components/ReplayPanel.tsx)
                  egyptian writer (optional, job writer_egyptian: its OWN base_url/model must be set, it never borrows the general model): ReplyWriter(egyptian_llm=) words ar and arabizi replies with
                  Nile-Chat via Ollama, answer read as PLAIN TEXT (llm.complete_text, RoleLLM.complete_text; plain_reply strips fences/quotes/labels); same gate, retry, reviewer and template;
                  versions.writer_model="egyptian"; `eval --llm --writer-compare [--judge]` (writer_compare.py) -> reports/writer_compare_<date>.csv with empty rating_* columns
@@ -287,7 +287,7 @@ services/agent/
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
   scenarios/shop_001/  scripted test conversations, one JSON file each (run `make scenarios` to see which are active and which are pending)
   Dockerfile (build from the repo root: node stage builds apps/dashboard/, python:3.12-slim stage, non-root, health check); repo root: docker-compose.yml (profiles light/full, ollama
-               qwen3:8b), Makefile (demo, demo-full, down, logs, reset), .env.example (every TEAM_B_* variable; a test keeps it complete), `python -m team_b seed-demo` (the history ends at the service's own now, TEAM_B_FIXED_TODAY if set; plays an outage so the Alerts page has a resolved service_down)
+               qwen3:8b), Makefile (demo, demo-full, down, logs, reset), .env.example (every TEAM_B_* variable; a test keeps it complete), `python -m agent_service seed-demo` (the history ends at the service's own now, TEAM_B_FIXED_TODAY if set; plays an outage so the Alerts page has a resolved service_down)
   loadtest/    demo.py (the conversation mix), run.py (50 customers in-process or --url, --chaos PLUG:SECONDS@START, p50/p95 per endpoint and stage, checker verdict),
                checker.py (audit log + traces: no unauthorized/duplicate writes, failures as the table says), check.py, locustfile.py, README.md; make loadtest / make chaos
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
@@ -311,13 +311,13 @@ services/agent/
   web/dashboard                                                                            (planned)
   eval/conversations/<style>.jsonl (200 conversations, 50 per style, gold per turn: intents, entities, decision, citations, escalation; written by
   scripts/make_eval_set.py from the policies, not from the brain), eval_baseline.json (what the rules reach; tests/integration/test_b_eval.py holds the
-  20-conversation sample to the targets or the baseline); `python -m team_b eval --set eval/conversations [--llm] [--save-baseline]` writes reports/eval_<date>.md/.json
-  (src/team_b/eval_conversations.py)
+  20-conversation sample to the targets or the baseline); `python -m agent_service eval --set eval/conversations [--llm] [--save-baseline]` writes reports/eval_<date>.md/.json
+  (src/agent_service/eval_conversations.py)
   comparison measures (eval_conversations.py: solved without a person, needless handoffs, missed escalations, wrong or unapproved actions (writes the gold does not expect or sent without a rule check),
   unbacked facts (check_grounded re-run on every sent reply: must be 0), AI calls per message (CountingLLM via build_container(llm_wrapper=)), time per reply p50/p95; `eval --label NAME` saves
-  reports/eval_NAME_<date>.json/.md; `python -m team_b eval-compare A.json B.json` (eval_compare.py) shows two runs side by side; eval/baseline_phase0.json = the rules before the agent upgrade)
-  AI judge (prompts/judge_v1.md, src/team_b/judge.py): `eval --judge` grades clarity, politeness, register, helpfulness 1-5 with one-line reasons per style (advice only,
-  never in pass/fail), writes 10% of judged replies to reports/judge_spotcheck.csv; `python -m team_b judge-agreement <csv>` compares with a person's grades
+  reports/eval_NAME_<date>.json/.md; `python -m agent_service eval-compare A.json B.json` (eval_compare.py) shows two runs side by side; eval/baseline_phase0.json = the rules before the agent upgrade)
+  AI judge (prompts/judge_v1.md, src/agent_service/judge.py): `eval --judge` grades clarity, politeness, register, helpfulness 1-5 with one-line reasons per style (advice only,
+  never in pass/fail), writes 10% of judged replies to reports/judge_spotcheck.csv; `python -m agent_service judge-agreement <csv>` compares with a person's grades
   eval/nlu_labelled.jsonl (151 hand-labelled messages), nlu_baseline.json (recorded intent accuracy; a test fails if it drops 2 points)
 apps/dashboard/   (repo root, next to services/agent/) React + Vite + TypeScript + Recharts app: types generated from contracts/schemas/Dashboard*.schema.json
              (npm run types; the build fails on stale types), EN/AR with RTL, filters in the URL; `npm run build` -> services/agent/web/dashboard (gitignored),
@@ -348,7 +348,7 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 ## Commands
 - Install: `pip install -e . -r requirements-dev.txt`
 - Settings: environment variables listed in `.env.example` (all optional)
-- AI model (optional): TEAM_B_LLM=ollama|openrouter, see .env.example; `python -m team_b eval-nlu --mode llm|both`
+- AI model (optional): TEAM_B_LLM=ollama|openrouter, see .env.example; `python -m agent_service eval-nlu --mode llm|both`
 - Run the suite on SQLite: `TEAM_B_STORE=sqlite make test` (a temp database per test)
 - Demo data for the dashboard: `python scripts/seed_dashboard.py --reset` then `TEAM_B_STORE=sqlite TEAM_B_DB_PATH=var/demo.sqlite3 make run`; slow tests: `python -m pytest -q -m slow` (not in the normal run)
 - Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
@@ -401,7 +401,7 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 ## Tenant bundles, tool setup, knowledge pages and the onboarding wizard (master plan P2 to P5)
 
 - `domain/bundle.py` TenantBundle: a versioned, hash-checked description of a business (embeds the old TenantConfig; profile, knowledge, guardrails, tools with bindings, identities). Secrets never belong in it (a validator refuses secret-like field names). Schema: `contracts/schemas/TenantBundle.schema.json` (`make schemas`). Stores: `adapters/bundle_repository.py` (memory + sqlite, migration 007). Status goes draft -> published -> active -> retired; content never changes.
-- `bundles.py` BundleRegistry = the TenantRegistry the brain reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`TEAM_B_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the Team C tools on a change (`TeamCCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m team_b bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
+- `bundles.py` BundleRegistry = the TenantRegistry the brain reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`TEAM_B_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the Team C tools on a change (`TeamCCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m agent_service bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
 - Tool setup (`api/tool_setup.py`, `tool_setup.py`, `adapters/team_c_admin.py`): `/v1/dashboard/tool-setup` import a spec, operations by class, connection check, batches (prepare / approve with the four effect flags / publish into a DRAFT bundle / activate). The Team C business is found by name `ticket-easy:<tenant>` or created on the first import.
 - Knowledge pages (`api/knowledge.py`, `adapters/team_a_admin.py`, `adapters/standins/knowledge_admin.py`, port `KnowledgeAdmin`): `/v1/dashboard/knowledge/*` and `/guardrails/*`. The reviewer recorded in Team A is the signed-in person. Team A is called with `X-Service-Key` (`TEAM_B_TEAM_A_KEY`) and, for these pages, `X-Admin-Key` (`TEAM_B_TEAM_A_ADMIN_KEY`).
 - Onboarding (`api/onboarding.py`, `onboarding.py`, `domain/onboarding.py`, `adapters/onboarding_repository.py`, migration 008, `preview.py`): `/v1/onboarding` creates a draft business (profile + draft bundle), `.../review` lists what blocks Go live, `.../preview` issues a signed pass for the test chat (`/chat?tenant_id=&preview=`), `.../go-live` generates the final config (an intent per published tool, agent mode on), publishes and activates. The public chat answers TENANT_NOT_LIVE until then. Admin only.

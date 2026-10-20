@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.bundle import TenantBundle, secret_like_keys
+from agent_service.domain.bundle import TenantBundle, secret_like_keys
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "bundles"
 

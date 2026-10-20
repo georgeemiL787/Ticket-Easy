@@ -9,12 +9,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from team_b import replay
-from team_b.api import business_tools, dashboard
-from team_b.domain.bundle import TenantBundle
-from team_b.domain.handoff import HandoffCase, HandoffPackage
-from team_b.domain.reply import AgentReply
-from team_b.domain.trace import DecisionTrace
+from agent_service import replay
+from agent_service.api import business_tools, dashboard
+from agent_service.domain.bundle import TenantBundle
+from agent_service.domain.handoff import HandoffCase, HandoffPackage
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.trace import DecisionTrace
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS: tuple[type[BaseModel], ...] = (

@@ -8,11 +8,11 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.adapters.standins.shop import StandinShop
-from team_b.api.app import create_app
-from team_b.config import Settings
-from team_b.container import Container, build_container
-from team_b.contracts.tools import ToolCallRequest, ToolResult
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.api.app import create_app
+from agent_service.config import Settings
+from agent_service.container import Container, build_container
+from agent_service.contracts.tools import ToolCallRequest, ToolResult
 from tests.support import make_settings
 
 FIXED_TODAY = date(2026, 9, 28)  # the seeded demo data depends on this date

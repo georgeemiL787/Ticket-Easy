@@ -160,8 +160,8 @@ async def main(argv: list[str] | None = None) -> int:
         else:
             import structlog
 
-            from team_b.api.app import create_app
-            from team_b.config import Settings
+            from agent_service.api.app import create_app
+            from agent_service.config import Settings
 
             tmp = stack.enter_context(tempfile.TemporaryDirectory())
             settings = Settings(

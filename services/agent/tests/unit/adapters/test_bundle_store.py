@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.bundle_repository import BundleStateError, InMemoryBundleStore, SqliteBundleStore
-from team_b.adapters.sqlite_store import SqliteDatabase
-from team_b.domain.bundle import TenantBundle
-from team_b.ports import AlreadyExistsError, BundleStore, NotFoundError
+from agent_service.adapters.bundle_repository import BundleStateError, InMemoryBundleStore, SqliteBundleStore
+from agent_service.adapters.sqlite_store import SqliteDatabase
+from agent_service.domain.bundle import TenantBundle
+from agent_service.ports import AlreadyExistsError, BundleStore, NotFoundError
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "bundles" / "valid_minimal.json"
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

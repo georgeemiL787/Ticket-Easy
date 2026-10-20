@@ -2,10 +2,10 @@
 
 from typing import Any
 
-from team_b.brain.handoff import open_case
-from team_b.brain.summarizer import AI_SUGGESTION_LABEL, add_ai_summary
-from team_b.container import Container
-from team_b.domain.decision import EscalationReason
+from agent_service.brain.handoff import open_case
+from agent_service.brain.summarizer import AI_SUGGESTION_LABEL, add_ai_summary
+from agent_service.container import Container
+from agent_service.domain.decision import EscalationReason
 from tests.fakes import FakeLLM
 from tests.unit.brain.test_b_briefing import R, T, rich_context
 from tests.unit.brain.test_pipeline import C, orch, say

@@ -113,7 +113,7 @@ def promote_phase() -> None:
 
 
 async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, promoted: dict[str, dict[str, Any]]) -> None:
-    from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     base = [*binding["command"], "--business-id", business, "--database", binding["database"]]
     if binding.get("sandbox_hosts"):
@@ -212,7 +212,7 @@ def admin(http: httpx.Client) -> dict[str, str]:
     password = key.read_text(encoding="utf-8").strip()
     python = ROOT / "services" / "agent" / ".venv" / "Scripts" / "python.exe"
     env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
-    base = [str(python if python.exists() else sys.executable), "-m", "team_b", "create-user", "--email", "e2e-admin@example.com",
+    base = [str(python if python.exists() else sys.executable), "-m", "agent_service", "create-user", "--email", "e2e-admin@example.com",
             "--name", "E2E Admin", "--role", "admin", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):
         subprocess.run([*base, extra], cwd=ROOT / "services" / "agent", env=env, capture_output=True, check=False)

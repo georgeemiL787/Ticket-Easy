@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from team_b.config import Settings
-from team_b.container import Container
-from team_b.domain.decision import Decision
+from agent_service.config import Settings
+from agent_service.container import Container
+from agent_service.domain.decision import Decision
 from tests.adversarial.support import T, assert_nothing_unauthorized, changes, conversation, writes
 
 RULES = json.loads((Settings().fixtures_dir / T / "rules.json").read_text(encoding="utf-8"))["rules"]

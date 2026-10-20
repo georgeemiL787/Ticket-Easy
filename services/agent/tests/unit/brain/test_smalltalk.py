@@ -4,10 +4,10 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.smalltalk import SmallTalkWriter, problems_with
-from team_b.container import Container
-from team_b.domain.understanding import Locale
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.smalltalk import SmallTalkWriter, problems_with
+from agent_service.container import Container
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeEvidence, FakeLLM
 
 T, C = "shop_001", "conv-st"

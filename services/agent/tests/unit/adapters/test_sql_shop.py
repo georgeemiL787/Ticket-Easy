@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.standins.shop import StandinShop
-from team_b.config import PROJECT_ROOT
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolCallRequest, ToolResult
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.config import PROJECT_ROOT
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.tools import ToolCallRequest, ToolResult
 
 T = "noon_eg"
 FIXTURES = PROJECT_ROOT / "fixtures"

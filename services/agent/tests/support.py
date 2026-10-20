@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Any, Literal, cast
 
-from team_b.config import Settings
+from agent_service.config import Settings
 
 StoreKind = Literal["memory", "sqlite"]
 

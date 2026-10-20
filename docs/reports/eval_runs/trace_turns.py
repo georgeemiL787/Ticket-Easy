@@ -12,9 +12,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from team_b import eval_conversations as ec  # noqa: E402
-from team_b.config import Settings  # noqa: E402
-from team_b.container import build_container  # noqa: E402
+from agent_service import eval_conversations as ec  # noqa: E402
+from agent_service.config import Settings  # noqa: E402
+from agent_service.container import build_container  # noqa: E402
 
 
 async def main() -> None:

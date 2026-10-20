@@ -12,7 +12,7 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RUNS="$ROOT/docs/reports/eval_runs"
 ARABIZI_PER_STYLE="${ARABIZI_PER_STYLE:-15}"
-cd "$ROOT/team_b" || exit 1
+cd "$ROOT/services/agent" || exit 1
 # shellcheck disable=SC1091
 source "$RUNS/agent_env.sh.example"
 mkdir -p "$RUNS/logs" "$RUNS/usage"
@@ -37,7 +37,7 @@ for style in en ar mixed arabizi; do
     export TEAM_B_LLM_API_KEY="$keys"
     export TEAM_B_USAGE_LOG="$RUNS/usage/agent_$style.jsonl"
     export TEAM_B_USAGE_RUN_LABEL="presentation_agent_$style"
-    "$PY" -m team_b eval --set "$RUNS/sets/$style" --llm --agent-mode on --judge --resume \
+    "$PY" -m agent_service eval --set "$RUNS/sets/$style" --llm --agent-mode on --judge --resume \
       --label "presentation_agent_$style" $extra > "$RUNS/logs/$style.log" 2>&1
   ) &
   PIDS[$style]=$!

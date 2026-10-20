@@ -6,12 +6,12 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.multi import assign_order_ids
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.turn import PlannedIntent, Step, TurnContext
-from team_b.container import Container, build_container
-from team_b.domain.decision import Decision
-from team_b.domain.reply import AgentReply
+from agent_service.brain.multi import assign_order_ids
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.turn import PlannedIntent, Step, TurnContext
+from agent_service.container import Container, build_container
+from agent_service.domain.decision import Decision
+from agent_service.domain.reply import AgentReply
 from tests.fakes import ScriptedNLU
 from tests.support import make_settings
 
@@ -172,7 +172,7 @@ async def test_the_cap_limits_how_many_requests_are_chained_in_one_reply(
 
 
 def test_the_cap_is_a_setting(tmp_path: Path) -> None:
-    from team_b.config import Settings
+    from agent_service.config import Settings
 
     assert Settings().queue_max_runs == 3 and Settings.from_env({"TEAM_B_QUEUE_MAX_RUNS": "1"}).queue_max_runs == 1
     built = build_container(make_settings(tmp_path, queue_max_runs=1))
@@ -196,7 +196,7 @@ async def test_an_action_that_needs_a_yes_stops_the_chain(container: Container) 
 
 
 def test_queue_details_are_forgotten_with_the_request(container: Container) -> None:
-    from team_b.domain.session import SessionState
+    from agent_service.domain.session import SessionState
 
     session = SessionState(
         tenant_id=T, conversation_id=C, created_at=container.clock.now(), updated_at=container.clock.now()

@@ -2,7 +2,7 @@
 
 For the person who looks after the service. No coding needed; every step is a command to copy or a page to click.
 In the commands below, `team-b` is the service's name in Docker Compose (`team-b-full` if you started the full mode with
-the AI model). Run them from the project's main folder. Without Docker, run the same `python -m team_b ...` commands in
+the AI model). Run them from the project's main folder. Without Docker, run the same `python -m agent_service ...` commands in
 `services/agent/` with your settings in the environment.
 
 Where to look first, whatever is wrong:
@@ -121,7 +121,7 @@ once on the demo before you rely on it.
 | Secret | Where it lives | How to change it | What it affects |
 |---|---|---|---|
 | `TEAM_B_SECRET_KEY` (signs the sign-in cookie) | `.env` | put a new long random value (for example 40 random characters), restart | everybody is signed out and signs in again |
-| A person's password | the database | `docker compose exec team-b python -m team_b create-user --email <their email> --name <their name> --role <role> --tenants <business> --generate-password --reset-password`, then give them the password printed once | only that person (an existing signed-in session lasts until it expires, up to `TEAM_B_SESSION_HOURS`; to cut it at once, also rotate the secret key) |
+| A person's password | the database | `docker compose exec team-b python -m agent_service create-user --email <their email> --name <their name> --role <role> --tenants <business> --generate-password --reset-password`, then give them the password printed once | only that person (an existing signed-in session lasts until it expires, up to `TEAM_B_SESSION_HOURS`; to cut it at once, also rotate the secret key) |
 | `TEAM_B_CHAT_API_KEYS` | `.env` | change the value, restart, update your website at the same time | the customer chat of that business refuses calls with the old key |
 | `OPENROUTER_API_KEY` | `.env` | create the new key at the provider, put it in, restart, delete the old key at the provider | only the AI model calls |
 | `TEAM_B_ALERT_WEBHOOK` (the address contains a secret) | `.env` | make a new webhook address, put it in, restart | alert delivery |
@@ -133,7 +133,7 @@ If a secret was ever committed or pasted in a chat, treat it as leaked and rotat
 
 Add:
 ```
-docker compose exec team-b python -m team_b create-user --email sara@example.com --name "Sara" --role agent --tenants shop_001 --generate-password
+docker compose exec team-b python -m agent_service create-user --email sara@example.com --name "Sara" --role agent --tenants shop_001 --generate-password
 ```
 - `--role`: `agent` (answers cases), `manager` (also approves refunds, reassigns, sees the dashboard), `admin` (everything,
   every business, set up the others).

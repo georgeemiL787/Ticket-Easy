@@ -6,12 +6,12 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.llm import OpenAICompatibleLLM
-from team_b.adapters.llm_limits import RateBudgetExceeded
-from team_b.adapters.llm_registry import LLMRegistry, RoleLLM, role_provider
-from team_b.config import ROLES, Settings, SettingsError
-from team_b.contracts.errors import UpstreamError
-from team_b.observability import ai_events
+from agent_service.adapters.llm import OpenAICompatibleLLM
+from agent_service.adapters.llm_limits import RateBudgetExceeded
+from agent_service.adapters.llm_registry import LLMRegistry, RoleLLM, role_provider
+from agent_service.config import ROLES, Settings, SettingsError
+from agent_service.contracts.errors import UpstreamError
+from agent_service.observability import ai_events
 from tests.fakes import FakeLLM
 
 GROQ = {

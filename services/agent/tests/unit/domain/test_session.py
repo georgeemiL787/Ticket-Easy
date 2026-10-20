@@ -3,9 +3,9 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.actions import ActionProposal
-from team_b.domain.session import Message, SessionIdentity, SessionState
-from team_b.domain.understanding import Language
+from agent_service.domain.actions import ActionProposal
+from agent_service.domain.session import Message, SessionIdentity, SessionState
+from agent_service.domain.understanding import Language
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 

@@ -2,10 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
-from team_b.domain.trace import DecisionTrace
-from team_b.ports import AlreadyExistsError, CaseStore, NotFoundError, TraceStore
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
+from agent_service.domain.trace import DecisionTrace
+from agent_service.ports import AlreadyExistsError, CaseStore, NotFoundError, TraceStore
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 

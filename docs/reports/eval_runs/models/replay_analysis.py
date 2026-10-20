@@ -15,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, "orchestrator/src")
-from team_b.brain.composer import check_grounded  # noqa: E402
+from agent_service.brain.composer import check_grounded  # noqa: E402
 
 RUNS = Path("docs/reports/eval_runs")
 MODELS = RUNS / "models"

@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from team_b.adapters.standins.shop import StandinShop
-from team_b.contracts.tools import ToolResult
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
 T = "shop_001"
@@ -38,7 +38,7 @@ async def test_a_write_without_a_policy_id_is_refused_and_changes_nothing(
 async def test_an_empty_policy_id_is_not_accepted_by_the_request_model() -> None:
     from pydantic import ValidationError
 
-    from team_b.contracts.tools import ToolCallRequest
+    from agent_service.contracts.tools import ToolCallRequest
 
     with pytest.raises(ValidationError):
         ToolCallRequest(request_id="r", tool="create_refund", idempotency_key="")

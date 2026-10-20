@@ -1,6 +1,6 @@
 import pytest
 
-from team_b.brain.choices import (
+from agent_service.brain.choices import (
     conflicting_pair,
     describe_orders,
     label_of,
@@ -9,10 +9,10 @@ from team_b.brain.choices import (
     says_both,
     short_date,
 )
-from team_b.brain.lexicon import default_lexicon
-from team_b.config import Settings
-from team_b.domain.tenant import TenantRegistry
-from team_b.domain.understanding import IntentCandidate, Locale
+from agent_service.brain.lexicon import default_lexicon
+from agent_service.config import Settings
+from agent_service.domain.tenant import TenantRegistry
+from agent_service.domain.understanding import IntentCandidate, Locale
 
 TENANT = TenantRegistry.from_dir(Settings().config_dir).get("shop_001")
 LEX = default_lexicon()

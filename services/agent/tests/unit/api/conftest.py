@@ -5,8 +5,8 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.api.app import create_app
-from team_b.container import Container, build_container
+from agent_service.api.app import create_app
+from agent_service.container import Container, build_container
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 

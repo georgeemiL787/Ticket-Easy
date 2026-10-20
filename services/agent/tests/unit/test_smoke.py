@@ -1,5 +1,5 @@
-import team_b
+import agent_service
 
 
 def test_package_imports() -> None:
-    assert team_b.__name__ == "team_b"
+    assert agent_service.__name__ == "agent_service"

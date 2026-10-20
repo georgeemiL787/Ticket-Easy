@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.move_picker import LLMMovePicker
-from team_b.container import Container, build_container
+from agent_service.brain.move_picker import LLMMovePicker
+from agent_service.container import Container, build_container
 from tests.adversarial.test_agent_loop_attacks import AttackerLLM, action, after, look_up
 from tests.integration.agent_expert import with_expert
 from tests.support import make_settings

@@ -1,6 +1,6 @@
 """Model comparison helper: the 155 labelled messages through the AI reader of ONE model, with a per-message record.
 
-Same code and prompt as `python -m team_b eval-nlu --mode llm` (nlu_eval.evaluate with brain.llm_nlu.LLMNLU on the reader
+Same code and prompt as `python -m agent_service eval-nlu --mode llm` (nlu_eval.evaluate with brain.llm_nlu.LLMNLU on the reader
 job); it only adds a file with one line per message (expected first intent, the first intent got, whether the AI really
 answered or the rules answered instead, "rules_fallback"). The model is the reader job's model (TEAM_B_LLM_MODEL_READER).
 Run from team_b:
@@ -16,11 +16,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from team_b.adapters.llm_registry import LLMRegistry  # noqa: E402
-from team_b.brain.llm_nlu import LLMNLU  # noqa: E402
-from team_b.config import Settings  # noqa: E402
-from team_b.container import build_container  # noqa: E402
-from team_b.nlu_eval import LABELLED_PATH, evaluate, load_labelled, render  # noqa: E402
+from agent_service.adapters.llm_registry import LLMRegistry  # noqa: E402
+from agent_service.brain.llm_nlu import LLMNLU  # noqa: E402
+from agent_service.config import Settings  # noqa: E402
+from agent_service.container import build_container  # noqa: E402
+from agent_service.nlu_eval import LABELLED_PATH, evaluate, load_labelled, render  # noqa: E402
 
 
 class Recorder:

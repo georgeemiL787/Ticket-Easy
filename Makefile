@@ -12,20 +12,20 @@ COMPOSE = docker compose
 
 demo:
 	$(COMPOSE) --profile light up -d --build --wait
-	$(COMPOSE) --profile light exec team-b python -m team_b seed-demo
-	@$(COMPOSE) --profile light exec team-b python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile light exec team-b python -m agent_service seed-demo
+	@$(COMPOSE) --profile light exec team-b python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 demo-full:
 	$(COMPOSE) --profile full up -d --build --wait
-	$(COMPOSE) --profile full exec team-b-full python -m team_b seed-demo
-	@$(COMPOSE) --profile full exec team-b-full python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile full exec team-b-full python -m agent_service seed-demo
+	@$(COMPOSE) --profile full exec team-b-full python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 demo-live:
 	$(COMPOSE) --profile live up -d --build --wait
-	$(COMPOSE) --profile live exec team-b-live python -m team_b seed-demo
-	@$(COMPOSE) --profile live exec team-b-live python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile live exec team-b-live python -m agent_service seed-demo
+	@$(COMPOSE) --profile live exec team-b-live python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 down:
@@ -47,4 +47,4 @@ urls:
 	@echo "  Manager dashboard http://localhost:$(PORT)/dashboard"
 	@echo "  Health          http://localhost:$(PORT)/health"
 	@echo "Sign in as admin@example.com. Its password was printed above the first time; lost it? run:"
-	@echo "  docker compose exec <service> python -m team_b create-user --email admin@example.com --name Admin --role admin --generate-password --reset-password"
+	@echo "  docker compose exec <service> python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --reset-password"

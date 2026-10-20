@@ -2,7 +2,7 @@
 
 The 20-conversation sample runs in rules mode with the targets of the plan (intent 0.90, decision 0.92, citation 0.95,
 locale 1.0). The rules do not reach them yet: until they do, the test holds the result to the recorded baseline
-(eval/eval_baseline.json, written by `python -m team_b eval --save-baseline`), so it can improve but not slip.
+(eval/eval_baseline.json, written by `python -m agent_service eval --save-baseline`), so it can improve but not slip.
 """
 
 import json
@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
-from team_b import __main__ as cli
-from team_b.config import Settings
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.eval_conversations import (
+from agent_service import __main__ as cli
+from agent_service.config import Settings
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.eval_conversations import (
     BASELINE_PATH,
     CONVERSATIONS_DIR,
     LOCALE_OF_STYLE,

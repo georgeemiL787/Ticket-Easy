@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 
-from team_b.brain.gaps import group_questions, similar, tokens
+from agent_service.brain.gaps import group_questions, similar, tokens
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 

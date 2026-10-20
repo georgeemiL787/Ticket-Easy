@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from team_b.bundles import tools_from_config
-from team_b.container import Container
-from team_b.domain.bundle import BundleProfile, TenantBundle
+from agent_service.bundles import tools_from_config
+from agent_service.container import Container
+from agent_service.domain.bundle import BundleProfile, TenantBundle
 from tests.integration.scenario_format import discover, load_scenario
 from tests.integration.scenario_runner import run_scenario
 

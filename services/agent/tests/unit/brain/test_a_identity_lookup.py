@@ -6,15 +6,15 @@ from typing import Any
 
 import pytest
 
-from team_b.brain import knowledge
-from team_b.brain.lookup import derive_order_facts
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container, build_container, inject
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.evidence import Passage
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.reply import AgentReply
+from agent_service.brain import knowledge
+from agent_service.brain.lookup import derive_order_facts
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container, build_container, inject
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.evidence import Passage
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.reply import AgentReply
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a3"

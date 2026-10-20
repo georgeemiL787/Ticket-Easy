@@ -1,11 +1,11 @@
 """Run conversations and keep EVERYTHING about each turn, so a wrong citation or an unbacked fact can be explained.
 
 The normal evaluation report only counts. This helper runs the same conversations the same way (same container, same
-checks, from orchestrator/src/team_b/eval_conversations.py) and writes one JSON line per turn: what the customer said, the
+checks, from orchestrator/src/agent_service/eval_conversations.py) and writes one JSON line per turn: what the customer said, the
 gold, the decision, the citations, the full reply, the facts the check flagged, the facts the session held, and why
 it was marked wrong. Nothing in the product is changed.
 
-Run from the team_b folder (keys and settings come from the environment, like `python -m team_b eval`):
+Run from the team_b folder (keys and settings come from the environment, like `python -m agent_service eval`):
 
     python ../docs/reports/eval_runs/diagnose_run.py --set eval/conversations --style ar --topics K,T3 --out out.jsonl
     python ../docs/reports/eval_runs/diagnose_run.py --set eval/conversations --llm --agent-mode on --concurrency 4 ...
@@ -19,10 +19,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from team_b import eval_conversations as ec  # noqa: E402
-from team_b.adapters.usage_log import current_call  # noqa: E402
-from team_b.config import Settings  # noqa: E402
-from team_b.container import build_container  # noqa: E402
+from agent_service import eval_conversations as ec  # noqa: E402
+from agent_service.adapters.usage_log import current_call  # noqa: E402
+from agent_service.config import Settings  # noqa: E402
+from agent_service.container import build_container  # noqa: E402
 
 
 RECORDS: list[dict] = []

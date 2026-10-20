@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from team_b.config import PROJECT_ROOT
+from agent_service.config import PROJECT_ROOT
 
 INBOX = PROJECT_ROOT / "web" / "inbox"
 NODE = shutil.which("node")
@@ -76,7 +76,7 @@ def test_the_javascript_has_no_syntax_errors() -> None:
 
 
 def test_the_reason_filter_lists_every_escalation_reason() -> None:
-    from team_b.domain.decision import EscalationReason
+    from agent_service.domain.decision import EscalationReason
 
     source = (INBOX / "inbox.js").read_text(encoding="utf-8")
     assert all(f'"{reason.value}"' in source for reason in EscalationReason)

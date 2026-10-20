@@ -5,20 +5,20 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.composer import default_composer, render
-from team_b.brain.handoff import ESCALATION_DEFAULTS
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.pipeline import STAGES
-from team_b.brain.turn import MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext
-from team_b.container import Container
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.evidence import RiskAssessment
-from team_b.domain.actions import ActionProposal, ActionState
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.handoff import CaseStatus
-from team_b.domain.reply import AgentReply
-from team_b.domain.tenant import TenantRegistry
-from team_b.domain.understanding import IntentCandidate, Language, Locale, NLUResult
+from agent_service.brain.composer import default_composer, render
+from agent_service.brain.handoff import ESCALATION_DEFAULTS
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.pipeline import STAGES
+from agent_service.brain.turn import MAX_QUEUED_RUNS, PlannedIntent, Step, TurnContext
+from agent_service.container import Container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.evidence import RiskAssessment
+from agent_service.domain.actions import ActionProposal, ActionState
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import CaseStatus
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.tenant import TenantRegistry
+from agent_service.domain.understanding import IntentCandidate, Language, Locale, NLUResult
 from tests.fakes import FakeEvidence, ScriptedNLU
 
 T, C = "shop_001", "conv-1"

@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.standins.safety_screen import SafetyScreenStandin
-from team_b.config import Settings
-from team_b.container import Container, inject
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
+from agent_service.config import Settings
+from agent_service.container import Container, inject
+from agent_service.contracts.errors import UpstreamError
 
 FIXTURES = Settings().fixtures_dir
 T = "shop_001"

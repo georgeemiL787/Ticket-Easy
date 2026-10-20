@@ -6,17 +6,17 @@ from typing import Any
 
 import pytest
 
-from team_b.brain import gates
-from team_b.brain.gates import check_tool, configured_capabilities
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.registry import CapabilityRegistry
-from team_b.config import Settings
-from team_b.container import Container, build_container, inject
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.reply import AgentReply
-from team_b.domain.tenant import PermissionsConfig, TenantConfig, TenantRegistry
+from agent_service.brain import gates
+from agent_service.brain.gates import check_tool, configured_capabilities
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.registry import CapabilityRegistry
+from agent_service.config import Settings
+from agent_service.container import Container, build_container, inject
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.tenant import PermissionsConfig, TenantConfig, TenantRegistry
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a4"

@@ -6,7 +6,7 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.api.app import mount_dashboard_app
+from agent_service.api.app import mount_dashboard_app
 
 
 @pytest.fixture

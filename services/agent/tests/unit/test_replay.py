@@ -7,12 +7,12 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b import replay
-from team_b.api.app import create_app
-from team_b.api.auth import least_role
-from team_b.config import Settings
-from team_b.container import Container, build_container
-from team_b.domain.agent import AskCustomer
+from agent_service import replay
+from agent_service.api.app import create_app
+from agent_service.api.auth import least_role
+from agent_service.config import Settings
+from agent_service.container import Container, build_container
+from agent_service.domain.agent import AskCustomer
 from tests.fakes import FunctionPicker, ScriptedMovePicker
 from tests.integration.agent_expert import expert
 from tests.support import make_settings

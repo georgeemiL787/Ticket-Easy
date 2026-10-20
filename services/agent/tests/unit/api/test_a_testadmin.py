@@ -8,8 +8,8 @@ from pathlib import Path
 import httpx
 import pytest
 
-from team_b.api.app import create_app
-from team_b.container import Container, build_container
+from agent_service.api.app import create_app
+from agent_service.container import Container, build_container
 from tests.support import make_settings
 
 T = "shop_001"
@@ -48,7 +48,7 @@ async def test_the_endpoints_do_not_exist_unless_switched_on(tmp_path: Path) -> 
 
 
 def test_the_setting_comes_from_the_environment() -> None:
-    from team_b.config import Settings
+    from agent_service.config import Settings
 
     assert Settings().enable_test_admin is False
     assert Settings.from_env({"TEAM_B_ENABLE_TEST_ADMIN": "1"}).enable_test_admin is True

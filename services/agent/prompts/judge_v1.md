@@ -1,6 +1,6 @@
 # judge_v1
 
-Rubric for the optional AI judge of reply quality (src/team_b/judge.py). The judge scores how natural and clear a reply
+Rubric for the optional AI judge of reply quality (src/agent_service/judge.py). The judge scores how natural and clear a reply
 reads. It never decides whether the reply was right: facts, safety and decisions are checked by code and by the gold
 labels. Its scores are shown in the evaluation report as advice and are never used in a pass or fail test. Ten percent of
 the judged replies are also written to reports/judge_spotcheck.csv for a person to grade, so the judge itself can be

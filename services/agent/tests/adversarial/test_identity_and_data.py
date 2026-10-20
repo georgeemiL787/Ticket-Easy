@@ -2,8 +2,8 @@
 
 import pytest
 
-from team_b.container import Container
-from team_b.domain.decision import Decision
+from agent_service.container import Container
+from agent_service.domain.decision import Decision
 from tests.adversarial.support import (
     ORDERS,
     assert_nothing_unauthorized,

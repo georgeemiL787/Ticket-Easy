@@ -8,12 +8,12 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
-from team_b.adapters.team_c_admin import TeamCAdmin
-from team_b.container import Container, build_container
-from team_b.domain.bundle import BundleTool, ToolBindingRef
-from team_b.domain.onboarding import BusinessProfile, OnboardingDraft
-from team_b.onboarding import generate_config, slug, unique_id
+from agent_service.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
+from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.container import Container, build_container
+from agent_service.domain.bundle import BundleTool, ToolBindingRef
+from agent_service.domain.onboarding import BusinessProfile, OnboardingDraft
+from agent_service.onboarding import generate_config, slug, unique_id
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 from tests.unit.adapters.test_team_c_tools import Fake
@@ -277,7 +277,7 @@ def tool(name: str, kind: str, properties: dict[str, Any], required: list[str]) 
 
 
 def test_the_final_configuration_has_an_intent_for_every_tool_but_the_one_that_checks_the_customer() -> None:
-    from team_b.onboarding import draft_config
+    from agent_service.onboarding import draft_config
 
     profile = BusinessProfile.model_validate(PROFILE)
     base = draft_config(T, profile)

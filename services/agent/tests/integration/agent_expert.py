@@ -13,14 +13,14 @@ import re
 from dataclasses import replace
 from typing import Any
 
-from team_b.brain.freetext import address_from, reason_from
-from team_b.brain.lexicon import default_lexicon
-from team_b.brain.multi import assign_order_ids
-from team_b.brain.stages import THANKS_TERMS
-from team_b.brain.text import find_spans, normalize
-from team_b.config import Settings
-from team_b.container import Container
-from team_b.domain.agent import (
+from agent_service.brain.freetext import address_from, reason_from
+from agent_service.brain.lexicon import default_lexicon
+from agent_service.brain.multi import assign_order_ids
+from agent_service.brain.stages import THANKS_TERMS
+from agent_service.brain.text import find_spans, normalize
+from agent_service.config import Settings
+from agent_service.container import Container
+from agent_service.domain.agent import (
     AgentPlan,
     AgentView,
     AskCustomer,
@@ -33,8 +33,8 @@ from team_b.domain.agent import (
     ReplyPlan,
     SearchPolicy,
 )
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.tenant import TenantRegistry
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.tenant import TenantRegistry
 
 _TENANT = TenantRegistry.from_dir(Settings().config_dir).get("shop_001")
 AMOUNT = re.compile(r"(\d[\d,]*)\s*(?:egp|le|جنيه)", re.IGNORECASE)

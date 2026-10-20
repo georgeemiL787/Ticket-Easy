@@ -2,7 +2,7 @@
 
 import pytest
 
-from team_b.brain.freetext import capture
+from agent_service.brain.freetext import capture
 
 
 @pytest.mark.parametrize(

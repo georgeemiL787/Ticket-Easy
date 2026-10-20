@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.slots import (
+from agent_service.brain.slots import (
     argument_sources,
     next_question,
     order_questions,
@@ -14,10 +14,10 @@ from team_b.brain.slots import (
     required_slots,
     resolve_arguments,
 )
-from team_b.config import PROJECT_ROOT, Settings
-from team_b.contracts.tools import ToolSpec
-from team_b.domain.session import SessionState
-from team_b.domain.tenant import IntentSpec, TenantRegistry
+from agent_service.config import PROJECT_ROOT, Settings
+from agent_service.contracts.tools import ToolSpec
+from agent_service.domain.session import SessionState
+from agent_service.domain.tenant import IntentSpec, TenantRegistry
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 TOOLS = {

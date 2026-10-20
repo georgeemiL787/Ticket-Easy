@@ -4,11 +4,11 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.llm_policy_gate import LLMPolicyGate
-from team_b.brain.llm_nlu import PROMPTS_DIR, PromptTemplate
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.evidence import Passage, RetrievalResult
-from team_b.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.adapters.llm_policy_gate import LLMPolicyGate
+from agent_service.brain.llm_nlu import PROMPTS_DIR, PromptTemplate
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.evidence import Passage, RetrievalResult
+from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
 from tests.fakes import FakeLLM
 
 PASSAGE = Passage(

@@ -4,15 +4,15 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.composer import render
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.contracts.errors import UpstreamError
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.reply import AgentReply
-from team_b.domain.session import SessionIdentity
-from team_b.domain.tenant import TenantRegistry
-from team_b.domain.understanding import Locale
+from agent_service.brain.composer import render
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.session import SessionIdentity
+from agent_service.domain.tenant import TenantRegistry
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeEvidence
 
 T, C = "shop_001", "conv-1"

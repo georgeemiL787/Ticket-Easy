@@ -12,8 +12,8 @@ from typing import Any
 
 import pytest
 
-from team_b.container import Container, build_container, inject
-from team_b.domain.trace import DecisionTrace
+from agent_service.container import Container, build_container, inject
+from agent_service.domain.trace import DecisionTrace
 from tests.integration.agent_expert import with_expert
 from tests.integration.scenario_runner import check_write_safety
 from tests.support import make_settings

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from team_b.config import ENV_VARS
+from agent_service.config import ENV_VARS
 
 ROOT = Path(__file__).resolve().parents[4]
 DOCKERFILE = (ROOT / "services" / "agent" / "Dockerfile").read_text(encoding="utf-8")
@@ -21,7 +21,7 @@ def test_the_root_env_example_documents_every_setting() -> None:
 
 
 def test_the_root_env_example_documents_the_settings_of_every_ai_job() -> None:
-    from team_b.config import ROLE_ENV_VARS, ROLES
+    from agent_service.config import ROLE_ENV_VARS, ROLES
 
     for pattern in ROLE_ENV_VARS.values():
         assert pattern.replace("{ROLE}", "<JOB>") in ENV_EXAMPLE, pattern  # the pattern is explained
@@ -62,7 +62,7 @@ def test_the_root_makefile_has_the_four_commands_and_prints_the_urls() -> None:
 
 
 def test_the_demo_command_exists() -> None:
-    from team_b.__main__ import main
+    from agent_service.__main__ import main
 
     assert callable(main)
 
@@ -70,7 +70,7 @@ def test_the_demo_command_exists() -> None:
 async def test_seed_demo_fills_the_database_once(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from team_b.__main__ import seed_demo
+    from agent_service.__main__ import seed_demo
 
     monkeypatch.setenv("TEAM_B_DB_PATH", str(tmp_path / "demo.sqlite3"))
     assert await seed_demo(6, 2, force=False) == 0
@@ -87,9 +87,9 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
     """The compose demo pins the clock: the history must end there, and the Alerts page needs a resolved outage."""
     from datetime import UTC, date, datetime
 
-    from team_b.__main__ import seed_demo
-    from team_b.config import Settings
-    from team_b.container import build_container
+    from agent_service.__main__ import seed_demo
+    from agent_service.config import Settings
+    from agent_service.container import build_container
 
     monkeypatch.setenv("TEAM_B_DB_PATH", str(tmp_path / "demo.sqlite3"))
     monkeypatch.setenv("TEAM_B_FIXED_TODAY", "2026-09-28")
@@ -105,7 +105,7 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
 
 
 def test_the_demo_env_example_turns_the_ai_replies_on_but_the_code_defaults_stay_off() -> None:
-    from team_b.config import Settings
+    from agent_service.config import Settings
 
     for name in ("TEAM_B_LLM_REWRITE", "TEAM_B_LLM_POLICY", "TEAM_B_LLM_KNOWLEDGE", "TEAM_B_LLM_REVIEW"):
         assert re.search(rf"^{name}=1\b", ENV_EXAMPLE, flags=re.MULTILINE), name

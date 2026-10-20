@@ -4,7 +4,7 @@
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; RUNS="$ROOT/docs/reports/eval_runs"
 slug="$1"; model="$2"; effort="$3"; suffix="$4"; ks="$5"
-cd "$ROOT/team_b" || exit 1
+cd "$ROOT/services/agent" || exit 1
 source "$RUNS/agent_env.sh.example"
 export TEAM_B_MODE=live TEAM_B_TEAM_A_URL=http://127.0.0.1:8001 TEAM_B_TEAM_A_TIMEOUT_S=30 PYTHONUTF8=1
 o=""; for n in $ks; do v="$(printenv "GROQ_KEY_$n")"; o="${o:+$o,}$v"; done

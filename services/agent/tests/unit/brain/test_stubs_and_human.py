@@ -6,18 +6,18 @@ from typing import Any
 
 import pytest
 
-from team_b.brain import actions, identity, knowledge, lookup
-from team_b.brain.handoff import open_case
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.turn import PlannedIntent, Step, TurnContext
-from team_b.container import Container
-from team_b.domain.actions import ActionProposal, ActionState
-from team_b.domain.alerts import Alert
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.handoff import CaseStatus
-from team_b.domain.session import SessionIdentity, SessionState
-from team_b.domain.understanding import Language, NLUResult
-from team_b.ports import NotFoundError
+from agent_service.brain import actions, identity, knowledge, lookup
+from agent_service.brain.handoff import open_case
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.turn import PlannedIntent, Step, TurnContext
+from agent_service.container import Container
+from agent_service.domain.actions import ActionProposal, ActionState
+from agent_service.domain.alerts import Alert
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import CaseStatus
+from agent_service.domain.session import SessionIdentity, SessionState
+from agent_service.domain.understanding import Language, NLUResult
+from agent_service.ports import NotFoundError
 from tests.fakes import FakeEvidence
 
 T, C = "shop_001", "conv-1"
@@ -214,7 +214,7 @@ async def test_resolve_closes_the_case(c: Container) -> None:
 
 
 async def test_the_wrong_moves_are_refused_and_unknown_cases_are_not_found(c: Container) -> None:
-    from team_b.domain.handoff import IllegalCaseTransitionError
+    from agent_service.domain.handoff import IllegalCaseTransitionError
 
     o, case_id = await handed_off(c)
     with pytest.raises(IllegalCaseTransitionError):
@@ -224,7 +224,7 @@ async def test_the_wrong_moves_are_refused_and_unknown_cases_are_not_found(c: Co
 
 
 async def test_human_decide_needs_an_action_waiting_for_approval(c: Container) -> None:
-    from team_b.brain.approval import NothingToDecideError
+    from agent_service.brain.approval import NothingToDecideError
 
     o, case_id = await handed_off(c)  # a customer request for a person: no action is waiting
     with pytest.raises(NothingToDecideError):
@@ -232,7 +232,7 @@ async def test_human_decide_needs_an_action_waiting_for_approval(c: Container) -
 
 
 async def test_only_the_person_who_claimed_the_case_may_work_on_it(c: Container) -> None:
-    from team_b.domain.handoff import CaseOwnershipError, IllegalCaseTransitionError
+    from agent_service.domain.handoff import CaseOwnershipError, IllegalCaseTransitionError
 
     o, case_id = await handed_off(c)
     for unclaimed in (

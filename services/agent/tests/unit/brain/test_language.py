@@ -1,9 +1,9 @@
 import pytest
 
-from team_b.brain.language import LOCALE_FOR, detect_language, locale_for
-from team_b.brain.lexicon import Lexicon, default_lexicon, load_lexicon
-from team_b.config import PROJECT_ROOT
-from team_b.domain.understanding import Language, Locale
+from agent_service.brain.language import LOCALE_FOR, detect_language, locale_for
+from agent_service.brain.lexicon import Lexicon, default_lexicon, load_lexicon
+from agent_service.config import PROJECT_ROOT
+from agent_service.domain.understanding import Language, Locale
 
 EN = [
     "Where is my order?",

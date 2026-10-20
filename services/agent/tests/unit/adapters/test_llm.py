@@ -6,9 +6,9 @@ from collections.abc import Callable
 import httpx
 import pytest
 
-from team_b.adapters.llm import OpenAICompatibleLLM, parse_json_object
-from team_b.contracts.errors import InvalidLLMOutput, UpstreamError
-from team_b.ports import LLMClient
+from agent_service.adapters.llm import OpenAICompatibleLLM, parse_json_object
+from agent_service.contracts.errors import InvalidLLMOutput, UpstreamError
+from agent_service.ports import LLMClient
 
 Handler = Callable[[httpx.Request], httpx.Response]
 

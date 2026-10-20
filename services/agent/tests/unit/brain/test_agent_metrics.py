@@ -7,15 +7,15 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
-from team_b.adapters.sqlite_store import SqliteDatabase, SqliteTraceStore
-from team_b.api.app import create_app
-from team_b.brain.metrics import MetricsService, agent_summary_of
-from team_b.container import build_container
-from team_b.domain.agent import AgentStepRecord
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.facts import TurnFact, agent_worked, facts_from_trace, fallback_category
-from team_b.domain.trace import DecisionTrace, PolicyRecord, TraceStep
+from agent_service.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
+from agent_service.adapters.sqlite_store import SqliteDatabase, SqliteTraceStore
+from agent_service.api.app import create_app
+from agent_service.brain.metrics import MetricsService, agent_summary_of
+from agent_service.container import build_container
+from agent_service.domain.agent import AgentStepRecord
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.facts import TurnFact, agent_worked, facts_from_trace, fallback_category
+from agent_service.domain.trace import DecisionTrace, PolicyRecord, TraceStep
 from tests.support import make_settings
 
 T = "shop_001"

@@ -2,10 +2,10 @@
 
 from datetime import timedelta
 
-from team_b.adapters.memory_store import FixedClock, InMemoryTraceStore
-from team_b.adapters.sqlite_store import SqliteDatabase, SqliteTraceStore
-from team_b.domain.handoff import CaseStatus
-from team_b.ports import CaseStore, SessionStore, TraceStore
+from agent_service.adapters.memory_store import FixedClock, InMemoryTraceStore
+from agent_service.adapters.sqlite_store import SqliteDatabase, SqliteTraceStore
+from agent_service.domain.handoff import CaseStatus
+from agent_service.ports import CaseStore, SessionStore, TraceStore
 from tests.unit.adapters.test_stores_and_clocks import NOW, session
 from tests.unit.adapters.test_trace_case_stores import case, trace
 

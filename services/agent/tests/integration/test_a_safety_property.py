@@ -25,9 +25,9 @@ from typing import Any
 
 import pytest
 
-from team_b.container import Container, build_container, inject
-from team_b.domain.decision import Decision
-from team_b.domain.trace import DecisionTrace
+from agent_service.container import Container, build_container, inject
+from agent_service.domain.decision import Decision
+from agent_service.domain.trace import DecisionTrace
 from tests.integration.scenario_runner import check_write_safety
 from tests.integration.test_a_leak_scan import BACKEND, GATED_TOOLS
 from tests.support import make_settings
@@ -355,7 +355,7 @@ async def count_problems(tmp_path: Path, conversations: int = 120) -> list[str]:
 async def test_the_checks_catch_a_brain_that_skips_the_confirmation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from team_b.brain import actions
+    from agent_service.brain import actions
 
     async def reckless(ctx: Any, intent_spec: Any, tool: Any, decision: Any) -> Any:
         if decision.decision == "deny":
@@ -373,7 +373,7 @@ async def test_the_checks_catch_a_brain_that_skips_the_confirmation(
 async def test_the_checks_catch_a_brain_that_skips_the_ownership_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from team_b.brain import lookup, shopcalls
+    from agent_service.brain import lookup, shopcalls
 
     async def careless(ctx: Any, spec: Any, tools: Any) -> Any:
         tool = tools.get(spec.lookup_tool)
@@ -386,13 +386,13 @@ async def test_the_checks_catch_a_brain_that_skips_the_ownership_check(
         return None
 
     monkeypatch.setattr(lookup, "load_own_order", careless)
-    monkeypatch.setattr("team_b.brain.actions.load_own_order", careless)
+    monkeypatch.setattr("agent_service.brain.actions.load_own_order", careless)
     problems = await count_problems(tmp_path)
     assert any("belongs to" in p or "which is not" in p for p in problems), problems[:3]
 
 
 async def test_the_checks_catch_a_brain_that_ignores_a_deny(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from team_b.brain import actions
+    from agent_service.brain import actions
 
     real = actions.check_policy
 

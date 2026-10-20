@@ -3,24 +3,24 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.llm import OpenAICompatibleLLM
-from team_b.adapters.memory_store import (
+from agent_service.adapters.llm import OpenAICompatibleLLM
+from agent_service.adapters.memory_store import (
     FixedClock,
     InMemoryCaseStore,
     InMemorySessionStore,
     InMemoryTraceStore,
     SystemClock,
 )
-from team_b.adapters.standins.evidence import StandinEvidenceProvider
-from team_b.adapters.standins.shop import StandinShop
-from team_b.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate
-from team_b.brain.llm_nlu import LLMNLU
-from team_b.brain.nlu import RuleBasedNLU
-from team_b.config import Settings
-from team_b.container import Container, build_container
-from team_b.contracts.policy import CheckActionRequest
-from team_b.domain.tenant import TenantConfigError
-from team_b.ports import (
+from agent_service.adapters.standins.evidence import StandinEvidenceProvider
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate
+from agent_service.brain.llm_nlu import LLMNLU
+from agent_service.brain.nlu import RuleBasedNLU
+from agent_service.config import Settings
+from agent_service.container import Container, build_container
+from agent_service.contracts.policy import CheckActionRequest
+from agent_service.domain.tenant import TenantConfigError
+from agent_service.ports import (
     CapabilityClient,
     CaseStore,
     Clock,

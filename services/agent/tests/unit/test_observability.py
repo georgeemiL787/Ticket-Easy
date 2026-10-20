@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from team_b.observability import bind_context, clear_context, configure_logging, get_logger
+from agent_service.observability import bind_context, clear_context, configure_logging, get_logger
 
 
 @pytest.fixture(autouse=True)

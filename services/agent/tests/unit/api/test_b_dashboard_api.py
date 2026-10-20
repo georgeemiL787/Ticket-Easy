@@ -10,13 +10,13 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.api.app import create_app
-from team_b.api.dashboard import METRICS
-from team_b.brain.metrics import MetricsService
-from team_b.container import Container, build_container
-from team_b.demo_seed import DriftClock, seed
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.trace import DecisionTrace, PolicyRecord, ToolCallRecord
+from agent_service.api.app import create_app
+from agent_service.api.dashboard import METRICS
+from agent_service.brain.metrics import MetricsService
+from agent_service.container import Container, build_container
+from agent_service.demo_seed import DriftClock, seed
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.trace import DecisionTrace, PolicyRecord, ToolCallRecord
 from tests.support import make_settings
 
 T = "shop_001"
@@ -369,8 +369,8 @@ async def test_the_conversation_timeline_shows_the_plan_the_moves_and_their_chec
 
 
 async def test_a_refused_move_and_a_fallback_are_visible_in_the_timeline() -> None:
-    from team_b.api.dashboard import timeline_of
-    from team_b.domain.agent import AgentStepRecord, CheckRecord
+    from agent_service.api.dashboard import timeline_of
+    from agent_service.domain.agent import AgentStepRecord, CheckRecord
 
     refused = AgentStepRecord(
         move={"kind": "look_up", "tool": "create_refund"},

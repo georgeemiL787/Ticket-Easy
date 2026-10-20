@@ -3,11 +3,11 @@ from datetime import timedelta
 
 import pytest
 
-from team_b.config import Settings
-from team_b.container import Container
-from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
-from team_b.retention import purge_expired, retention_loop
+from agent_service.config import Settings
+from agent_service.container import Container
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.handoff import CaseStatus, HandoffCase, HandoffPackage
+from agent_service.retention import purge_expired, retention_loop
 
 T = "shop_001"
 
@@ -90,7 +90,7 @@ async def test_the_loop_purges_repeatedly_and_survives_a_failure(c: Container, m
         if calls == 1:
             raise RuntimeError("disk full")
 
-    monkeypatch.setattr("team_b.retention.purge_expired", flaky)
+    monkeypatch.setattr("agent_service.retention.purge_expired", flaky)
     task = asyncio.create_task(retention_loop(c, interval_s=0.01))
     await asyncio.sleep(0.2)
     task.cancel()

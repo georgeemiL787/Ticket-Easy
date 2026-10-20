@@ -4,11 +4,11 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.llm_nlu import PromptTemplate
-from team_b.brain.move_picker import PROMPT, LLMMovePicker, UnusableAnswer, parse_answer
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.domain.agent import (
+from agent_service.brain.llm_nlu import PromptTemplate
+from agent_service.brain.move_picker import PROMPT, LLMMovePicker, UnusableAnswer, parse_answer
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.domain.agent import (
     AgentStepRecord,
     AgentView,
     AskCustomer,
@@ -21,7 +21,7 @@ from team_b.domain.agent import (
     SearchPolicy,
     ToolMenuEntry,
 )
-from team_b.domain.decision import Decision
+from agent_service.domain.decision import Decision
 from tests.fakes import FakeLLM
 
 GOOD = {
@@ -84,7 +84,7 @@ async def test_two_unusable_answers_end_in_an_error_so_the_loop_falls_back() -> 
 
 
 async def test_a_model_error_is_not_swallowed() -> None:
-    from team_b.contracts.errors import UpstreamError
+    from agent_service.contracts.errors import UpstreamError
 
     with pytest.raises(UpstreamError):
         await LLMMovePicker(FakeLLM(UpstreamError("llm", "TIMEOUT", "slow"))).next_move(view())

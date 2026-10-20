@@ -5,7 +5,7 @@
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RUNS="$ROOT/docs/reports/eval_runs"
-cd "$ROOT/team_b" || exit 1
+cd "$ROOT/services/agent" || exit 1
 source "$RUNS/agent_env.sh.example"; export TEAM_B_MODE=live TEAM_B_TEAM_A_URL=http://127.0.0.1:8001 TEAM_B_TEAM_A_TIMEOUT_S=30
 PY=".venv/Scripts/python"; [ -x "$PY" ] || PY=".venv/bin/python"
 keys() { local o="" n; for n in "$@"; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v" ] && o="${o:+$o,}$v"; done; printf '%s' "$o"; }

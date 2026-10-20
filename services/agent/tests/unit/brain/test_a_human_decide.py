@@ -7,12 +7,12 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.approval import CaseNotYoursError, NothingToDecideError
-from team_b.container import Container, build_container, inject
-from team_b.domain.actions import ActionState
-from team_b.domain.decision import Decision
-from team_b.domain.handoff import CaseStatus, HandoffCase
-from team_b.domain.trace import DecisionTrace
+from agent_service.brain.approval import CaseNotYoursError, NothingToDecideError
+from agent_service.container import Container, build_container, inject
+from agent_service.domain.actions import ActionState
+from agent_service.domain.decision import Decision
+from agent_service.domain.handoff import CaseStatus, HandoffCase
+from agent_service.domain.trace import DecisionTrace
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a11"

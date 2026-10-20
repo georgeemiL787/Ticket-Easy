@@ -137,7 +137,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         env["TEAM_B_TEAM_C_CONFIG"] = str(binding)
     if PRODUCTION_ENV.exists():
         env["TEAM_C_ADMIN_TOKEN"] = secret("team_c_admin.key")  # Team B's service credential TO Team C (admin actions)
-    args = ["-m", "uvicorn", "team_b.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
+    args = ["-m", "uvicorn", "agent_service.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
     return [python, *args, "--port", port], ROOT / "services" / "agent", env
 
 

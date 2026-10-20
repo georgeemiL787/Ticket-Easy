@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from team_b.brain.composer import (
+from agent_service.brain.composer import (
     LOCALES_DIR,
     PLACEHOLDERS,
     ResponseComposer,
@@ -16,17 +16,17 @@ from team_b.brain.composer import (
     placeholders_in,
     render,
 )
-from team_b.config import PROJECT_ROOT
-from team_b.contracts.evidence import Passage
-from team_b.contracts.policy import LocalizedText, PolicyDecision
-from team_b.domain.decision import EscalationReason
-from team_b.domain.understanding import Locale
+from agent_service.config import PROJECT_ROOT
+from agent_service.contracts.evidence import Passage
+from agent_service.contracts.policy import LocalizedText, PolicyDecision
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.understanding import Locale
 
 COMPOSER = default_composer()
 FILES = {locale: load_locale(LOCALES_DIR / locale.value) for locale in Locale}
 PART_FILES = ["actions.json", "core.json", "handoff.json", "knowledge.json", "returns.json"]
 ARABIC = re.compile(r"[؀-ۿ]")
-BRAIN = PROJECT_ROOT / "src" / "team_b" / "brain"
+BRAIN = PROJECT_ROOT / "src" / "agent_service" / "brain"
 
 
 # ---- the files ----

@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container, build_container
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container, build_container
 from tests.integration.agent_expert import with_expert
 from tests.support import make_settings
 

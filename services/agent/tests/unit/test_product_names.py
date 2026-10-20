@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from team_b.config import PROJECT_ROOT
+from agent_service.config import PROJECT_ROOT
 
 REPO = PROJECT_ROOT.parent.parent
 NAME = re.compile(r"team[ _-]?[abc]\b", re.IGNORECASE)

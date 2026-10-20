@@ -8,9 +8,9 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.llm_policy_gate import LLMPolicyGate
-from team_b.brain.reviewer import Reviewer
-from team_b.container import Container, build_container
+from agent_service.adapters.llm_policy_gate import LLMPolicyGate
+from agent_service.brain.reviewer import Reviewer
+from agent_service.container import Container, build_container
 from tests.integration.agent_expert import with_expert
 from tests.support import make_settings
 

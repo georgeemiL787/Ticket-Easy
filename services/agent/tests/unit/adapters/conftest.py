@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.memory_store import FixedClock, InMemoryCaseStore, InMemorySessionStore, InMemoryTraceStore
-from team_b.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
-from team_b.ports import CaseStore, SessionStore, TraceStore
+from agent_service.adapters.memory_store import FixedClock, InMemoryCaseStore, InMemorySessionStore, InMemoryTraceStore
+from agent_service.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
+from agent_service.ports import CaseStore, SessionStore, TraceStore
 from tests.conftest import FIXED_TODAY
 
 

@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from team_b.contracts.evidence import RiskAssessment
-from team_b.domain.understanding import NLUResult
+from agent_service.contracts.evidence import RiskAssessment
+from agent_service.domain.understanding import NLUResult
 
 
 class FakeLLM:

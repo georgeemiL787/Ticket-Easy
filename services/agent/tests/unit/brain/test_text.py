@@ -1,6 +1,6 @@
 import pytest
 
-from team_b.brain.text import contains_term, normalize
+from agent_service.brain.text import contains_term, normalize
 
 
 @pytest.mark.parametrize(

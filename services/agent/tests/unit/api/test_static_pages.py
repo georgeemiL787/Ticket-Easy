@@ -9,7 +9,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from team_b.config import PROJECT_ROOT
+from agent_service.config import PROJECT_ROOT
 
 WEB = PROJECT_ROOT / "web"
 LOOKUP = re.compile(r"""(?:getElementById|\$)\(\s*["']([\w-]+)["']\s*\)""")

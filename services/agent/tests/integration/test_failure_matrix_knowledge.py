@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container, build_container
-from team_b.domain.decision import Decision, EscalationReason
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container, build_container
+from agent_service.domain.decision import Decision, EscalationReason
 from tests.conftest import FIXED_TODAY
 from tests.fakes import FakeEvidence
 from tests.support import make_settings

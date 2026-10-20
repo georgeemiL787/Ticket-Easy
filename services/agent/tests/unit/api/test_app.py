@@ -6,14 +6,14 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.api.app import app as module_app
-from team_b.api.app import create_app
-from team_b.api.errors import invalid_request, invalid_state, not_found, tenant_not_found, upstream_unavailable
-from team_b.config import Settings
-from team_b.container import Container, ContainerError, build_container
-from team_b.contracts.errors import UpstreamError
-from team_b.domain.tenant import UnknownTenantError
-from team_b.ports import SessionConflictError
+from agent_service.api.app import app as module_app
+from agent_service.api.app import create_app
+from agent_service.api.errors import invalid_request, invalid_state, not_found, tenant_not_found, upstream_unavailable
+from agent_service.config import Settings
+from agent_service.container import Container, ContainerError, build_container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.domain.tenant import UnknownTenantError
+from agent_service.ports import SessionConflictError
 
 
 @pytest.fixture

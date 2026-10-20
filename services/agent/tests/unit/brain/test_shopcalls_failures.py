@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from team_b.brain import shopcalls
-from team_b.domain.decision import Decision
+from agent_service.brain import shopcalls
+from agent_service.domain.decision import Decision
 
 
 def context(errors):

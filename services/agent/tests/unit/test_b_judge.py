@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from team_b import __main__ as cli
-from team_b.config import Settings
-from team_b.eval_conversations import evaluate, headline, load_set, render
-from team_b.judge import (
+from agent_service import __main__ as cli
+from agent_service.config import Settings
+from agent_service.eval_conversations import evaluate, headline, load_set, render
+from agent_service.judge import (
     CRITERIA,
     SPOTCHECK_COLUMNS,
     Judge,

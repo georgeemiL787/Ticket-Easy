@@ -4,7 +4,7 @@ import re
 from collections import Counter
 from typing import Any
 
-from team_b.contracts.evidence import Passage
+from agent_service.contracts.evidence import Passage
 from tests.contract.conftest import Document, PolicyPassage, RiskCategory, Rule, SynonymEntry, read
 
 RULE_IDS = {

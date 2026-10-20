@@ -4,8 +4,8 @@ import re
 from collections import Counter
 from datetime import date
 
-from team_b.contracts.tools import ToolSpec
-from team_b.domain.tenant import TenantConfig
+from agent_service.contracts.tools import ToolSpec
+from agent_service.domain.tenant import TenantConfig
 from tests.contract.conftest import AS_OF, Customer, Order, Ticket, read
 
 ORDER_RULE_FIELDS = {

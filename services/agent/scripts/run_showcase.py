@@ -33,9 +33,9 @@ def load_env() -> None:
 
 async def main(names: list[str]) -> int:
     load_env()
-    from team_b.config import Settings
-    from team_b.container import build_container
-    from team_b.observability import configure_logging
+    from agent_service.config import Settings
+    from agent_service.container import build_container
+    from agent_service.observability import configure_logging
 
     settings = Settings.from_env()
     configure_logging(json_logs=True, level=logging.ERROR)

@@ -4,17 +4,17 @@ from datetime import UTC, datetime
 
 import pytest
 
-from team_b.brain.handoff import incomplete, mask_phone, open_case
-from team_b.brain.turn import TurnContext
-from team_b.container import Container
-from team_b.contracts.policy import PolicyDecision
-from team_b.contracts.tools import ToolResult
-from team_b.domain.actions import ActionProposal, ActionState
-from team_b.domain.decision import EscalationReason
-from team_b.domain.handoff import FailureRecord, HandoffCase
-from team_b.domain.session import SessionIdentity, SessionState
-from team_b.domain.trace import EvidenceRef
-from team_b.domain.understanding import Language
+from agent_service.brain.handoff import incomplete, mask_phone, open_case
+from agent_service.brain.turn import TurnContext
+from agent_service.container import Container
+from agent_service.contracts.policy import PolicyDecision
+from agent_service.contracts.tools import ToolResult
+from agent_service.domain.actions import ActionProposal, ActionState
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.handoff import FailureRecord, HandoffCase
+from agent_service.domain.session import SessionIdentity, SessionState
+from agent_service.domain.trace import EvidenceRef
+from agent_service.domain.understanding import Language
 from tests.unit.brain.test_pipeline import C, T, last_trace, orch, say
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

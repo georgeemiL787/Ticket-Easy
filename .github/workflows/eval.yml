@@ -33,13 +33,13 @@ jobs:
             services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Evaluate with the rules
-        run: python -m team_b eval --set eval/conversations --out reports
+        run: python -m agent_service eval --set eval/conversations --out reports
       - name: Evaluate with the AI model
         if: ${{ inputs.llm }}
         env:
           TEAM_B_LLM: openrouter
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python -m team_b eval --set eval/conversations --llm --out reports
+        run: python -m agent_service eval --set eval/conversations --llm --out reports
       - name: Put the table in the job summary
         run: |
           for file in reports/eval_*.md; do cat "$file" >> "$GITHUB_STEP_SUMMARY"; done

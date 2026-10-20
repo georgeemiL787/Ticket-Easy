@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.standins.policy_search import PolicySearchStandin
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.standins.policy_search import PolicySearchStandin
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container
+from agent_service.contracts.errors import UpstreamError
 from tests.search_questions import HELD, NEGATIVE, Q
 
 T = "shop_001"

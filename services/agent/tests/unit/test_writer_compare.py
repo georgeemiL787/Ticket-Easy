@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from team_b import writer_compare
-from team_b.config import RoleSettings, Settings
-from team_b.eval_conversations import EvalConversation, EvalTurn, Gold, TurnResult
-from team_b.judge import Judge
+from agent_service import writer_compare
+from agent_service.config import RoleSettings, Settings
+from agent_service.eval_conversations import EvalConversation, EvalTurn, Gold, TurnResult
+from agent_service.judge import Judge
 from tests.fakes import FakeLLM
 from tests.support import make_settings
 

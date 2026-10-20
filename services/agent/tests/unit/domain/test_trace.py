@@ -3,8 +3,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.trace import DecisionTrace
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.trace import DecisionTrace
 
 
 def trace(**over: Any) -> DecisionTrace:

@@ -8,21 +8,21 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.actions import (
+from agent_service.brain.actions import (
     COORDINATOR,
     ActionCoordinator,
     ProposalError,
     approval_id_of,
     idempotency_key_for,
 )
-from team_b.brain.turn import TurnContext
-from team_b.container import Container, build_container, inject
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.policy import HumanApproval, PolicyDecision
-from team_b.domain.actions import ActionProposal, ActionState, ExecutionNotAuthorizedError
-from team_b.domain.decision import Decision
-from team_b.domain.session import SessionIdentity, SessionState
-from team_b.domain.trace import DecisionTrace
+from agent_service.brain.turn import TurnContext
+from agent_service.container import Container, build_container, inject
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.policy import HumanApproval, PolicyDecision
+from agent_service.domain.actions import ActionProposal, ActionState, ExecutionNotAuthorizedError
+from agent_service.domain.decision import Decision
+from agent_service.domain.session import SessionIdentity, SessionState
+from agent_service.domain.trace import DecisionTrace
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a6"

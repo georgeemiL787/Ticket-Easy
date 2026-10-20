@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from team_b.config import PROJECT_ROOT, Settings, SettingsError
+from agent_service.config import PROJECT_ROOT, Settings, SettingsError
 
 
 def test_defaults() -> None:
@@ -15,7 +15,7 @@ def test_defaults() -> None:
     assert s.llm_timeout_s == 20.0 and s.capability_ttl_s == 60.0 and s.log_json is True
     assert s.config_dir == PROJECT_ROOT / "config" / "tenants"
     assert s.data_dir == PROJECT_ROOT / "data" and s.fixtures_dir == PROJECT_ROOT / "fixtures"
-    assert (PROJECT_ROOT / "pyproject.toml").is_file()  # PROJECT_ROOT really is the team_b folder
+    assert (PROJECT_ROOT / "pyproject.toml").is_file()  # PROJECT_ROOT really is the agent service folder
 
 
 def test_every_variable_is_read() -> None:

@@ -4,13 +4,13 @@ from collections import Counter
 
 import pytest
 
-from team_b.__main__ import main
-from team_b.brain.nlu import RuleBasedNLU
-from team_b.config import Settings
-from team_b.domain.session import SessionState
-from team_b.domain.tenant import TenantConfig, TenantRegistry
-from team_b.domain.understanding import IntentCandidate, Language, NLUResult
-from team_b.nlu_eval import (
+from agent_service.__main__ import main
+from agent_service.brain.nlu import RuleBasedNLU
+from agent_service.config import Settings
+from agent_service.domain.session import SessionState
+from agent_service.domain.tenant import TenantConfig, TenantRegistry
+from agent_service.domain.understanding import IntentCandidate, Language, NLUResult
+from agent_service.nlu_eval import (
     ENTITY_TYPES,
     EvalReport,
     LabelledMessage,
@@ -82,11 +82,11 @@ def test_people_requests_are_labelled_with_the_human_intent(messages: list[Label
 
 async def test_rules_intent_accuracy_has_not_dropped(tenant: TenantConfig, messages: list[LabelledMessage]) -> None:
     baseline = load_baseline()
-    assert "rules" in baseline, "record it with: python -m team_b eval-nlu --mode rules --save-baseline"
+    assert "rules" in baseline, "record it with: python -m agent_service eval-nlu --mode rules --save-baseline"
     report = await evaluate(RuleBasedNLU(), tenant, messages)
     assert report.intent.value >= baseline["rules"] - TOLERANCE, (
         f"intent accuracy {report.intent.value:.3f} is more than 2 points below the baseline {baseline['rules']:.3f}; "
-        "run python -m team_b eval-nlu to see the misses"
+        "run python -m agent_service eval-nlu to see the misses"
     )
 
 
@@ -212,8 +212,8 @@ def test_the_llm_mode_explains_what_is_missing() -> None:
 
 
 def test_the_llm_mode_builds_the_ai_assisted_understanding_when_a_model_is_configured() -> None:
-    from team_b.__main__ import build_nlu
-    from team_b.brain.llm_nlu import LLMNLU
+    from agent_service.__main__ import build_nlu
+    from agent_service.brain.llm_nlu import LLMNLU
 
     assert isinstance(build_nlu("rules", Settings(llm="ollama")), RuleBasedNLU)
     assert isinstance(build_nlu("llm", Settings(llm="ollama")), LLMNLU)

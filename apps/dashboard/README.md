@@ -24,7 +24,7 @@ While working on the app: `npm run dev` (http://localhost:5173/dashboard/, proxi
 | `npm test` | Component and helper tests (vitest) |
 | `npm run build` | `typecheck`, then build into `../../services/agent/web/dashboard` (not committed) |
 
-If you change a response model in `services/agent/src/team_b/api/dashboard.py`: run `python scripts/export_schemas.py` in
+If you change a response model in `services/agent/src/agent_service/api/dashboard.py`: run `python scripts/export_schemas.py` in
 `services/agent/`, then `npm run types`, and commit the schemas and the generated types.
 
 ## Structure

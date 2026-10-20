@@ -3,7 +3,7 @@
 import httpx
 import pytest
 
-from team_b.container import Container, inject
+from agent_service.container import Container, inject
 
 T = "shop_001"
 
@@ -44,7 +44,7 @@ async def test_a_shop_that_is_down_serves_the_last_list_marked_stale(
     chat: httpx.AsyncClient, chat_container: Container, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     await chat.get("/v1/capabilities", params={"tenant_id": T})
-    from team_b.contracts.errors import UpstreamError
+    from agent_service.contracts.errors import UpstreamError
 
     async def down(tenant_id: str) -> list:  # type: ignore[type-arg]
         raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "down", retryable=True)
@@ -57,7 +57,7 @@ async def test_a_shop_that_is_down_serves_the_last_list_marked_stale(
 async def test_with_no_list_at_all_the_answer_is_503(
     chat: httpx.AsyncClient, chat_container: Container, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from team_b.contracts.errors import UpstreamError
+    from agent_service.contracts.errors import UpstreamError
 
     async def down(tenant_id: str) -> list:  # type: ignore[type-arg]
         raise UpstreamError("shop", "BACKEND_UNAVAILABLE", "down", retryable=True)

@@ -48,9 +48,9 @@ keep using Team B's stand-in shop.
 
 | Boundary | Protocol | Contract |
 |---|---|---|
-| Browser → Team B | HTTP JSON | `POST /v1/conversations/{id}/messages` → `AgentReply`; staff pages need sign-in (cookie + CSRF), roles in `services/agent/src/team_b/api/auth.py` |
-| Team B → Team A | HTTP JSON | `services/agent/src/team_b/adapters/team_a_http.py` (`TEAM_B_MODE=live`) |
-| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `services/agent/src/team_b/adapters/team_c_mcp.py` (client), `team_c_tools.py` (binding, identity, environment, result mapping) |
+| Browser → Team B | HTTP JSON | `POST /v1/conversations/{id}/messages` → `AgentReply`; staff pages need sign-in (cookie + CSRF), roles in `services/agent/src/agent_service/api/auth.py` |
+| Team B → Team A | HTTP JSON | `services/agent/src/agent_service/adapters/team_a_http.py` (`TEAM_B_MODE=live`) |
+| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `services/agent/src/agent_service/adapters/team_c_mcp.py` (client), `team_c_tools.py` (binding, identity, environment, result mapping) |
 | Team B → Team C management | HTTP JSON, loopback | publications, proposals, connectors, disable, connection check (`team_c_admin.py`) |
 | Team C → API | HTTPS/HTTP JSON, bearer or OAuth2 password per identity | the artifact's steps; no redirects; size and time limits; destination re-checked before each run |
 | Owner → Team C | Team C's own pages / `/api/v1` | request, answer, approve, connector (environment), build, identities, connection check, tests, publish, disable |
@@ -189,7 +189,7 @@ services/agent/.venv/Scripts/python ops/local/live_demo_check.py                
 ```
 
 Restart Team B after a binding changes (`ops/local/var/team_c.json`). Sign-in for the inbox and dashboard:
-`cd services/agent; $env:TEAM_B_STORE="sqlite"; $env:TEAM_B_DB_PATH="../../ops/local/var/team_b.sqlite3"; .venv/Scripts/python -m team_b create-user --email you@example.com --name You --role manager --tenants shop_001 --generate-password`.
+`cd services/agent; $env:TEAM_B_STORE="sqlite"; $env:TEAM_B_DB_PATH="../../ops/local/var/team_b.sqlite3"; .venv/Scripts/python -m agent_service create-user --email you@example.com --name You --role manager --tenants shop_001 --generate-password`.
 Demo customers: C-100 (alice, phone 01012345601), C-101 (bob, 01123456702).
 
 ### Troubleshooting

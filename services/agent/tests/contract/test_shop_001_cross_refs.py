@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from team_b.contracts.tools import ToolSpec
-from team_b.domain.tenant import TenantConfig
+from agent_service.contracts.tools import ToolSpec
+from agent_service.domain.tenant import TenantConfig
 from tests.contract.conftest import Rule, read
 
 RISK_ORDER = {"low": 0, "medium": 1, "high": 2}

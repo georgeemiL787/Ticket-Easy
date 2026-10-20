@@ -9,11 +9,11 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.llm import OpenAICompatibleLLM
-from team_b.adapters.llm_registry import LLMRegistry
-from team_b.adapters.usage_log import UsageLog, provider_host
-from team_b.config import Settings
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.llm import OpenAICompatibleLLM
+from agent_service.adapters.llm_registry import LLMRegistry
+from agent_service.adapters.usage_log import UsageLog, provider_host
+from agent_service.config import Settings
+from agent_service.contracts.errors import UpstreamError
 
 SUMMARY = Path(__file__).resolve().parents[3] / "scripts" / "usage_summary.py"
 SECRET_PROMPT = "my card is 4111-1111 please"

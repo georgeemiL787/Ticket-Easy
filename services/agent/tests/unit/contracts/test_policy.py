@@ -6,8 +6,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from team_b.contracts.evidence import RetrievalResult, RiskAssessment
-from team_b.contracts.policy import CheckActionRequest, HumanApproval, PolicyDecision, ToolContext
+from agent_service.contracts.evidence import RetrievalResult, RiskAssessment
+from agent_service.contracts.policy import CheckActionRequest, HumanApproval, PolicyDecision, ToolContext
 
 
 def _request(**over: object) -> CheckActionRequest:

@@ -4,8 +4,8 @@ from itertools import product
 import pytest
 from pydantic import ValidationError
 
-from team_b.contracts.policy import HumanApproval, PolicyDecision
-from team_b.domain.actions import (
+from agent_service.contracts.policy import HumanApproval, PolicyDecision
+from agent_service.domain.actions import (
     ALLOWED_TRANSITIONS,
     TERMINAL_STATES,
     ActionProposal,

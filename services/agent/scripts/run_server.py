@@ -25,4 +25,6 @@ if __name__ == "__main__":
     load_env()
     import uvicorn
 
-    uvicorn.run("team_b.api.app:app", app_dir=str(ROOT / "src"), port=int(sys.argv[1]) if len(sys.argv) > 1 else 8010)
+    uvicorn.run(
+        "agent_service.api.app:app", app_dir=str(ROOT / "src"), port=int(sys.argv[1]) if len(sys.argv) > 1 else 8010
+    )

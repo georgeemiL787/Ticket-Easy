@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.memory_store import FixedClock
-from team_b.adapters.standins.evidence import StandinEvidenceProvider
-from team_b.adapters.standins.policy_search import PolicySearchStandin
-from team_b.adapters.standins.rule_checker import RuleCheckerStandin
-from team_b.adapters.standins.safety_screen import SafetyScreenStandin
-from team_b.adapters.standins.shop import StandinShop
-from team_b.config import Settings
-from team_b.ports import CapabilityClient, EvidenceProvider, PolicyGate
+from agent_service.adapters.memory_store import FixedClock
+from agent_service.adapters.standins.evidence import StandinEvidenceProvider
+from agent_service.adapters.standins.policy_search import PolicySearchStandin
+from agent_service.adapters.standins.rule_checker import RuleCheckerStandin
+from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.config import Settings
+from agent_service.ports import CapabilityClient, EvidenceProvider, PolicyGate
 from tests.contract import conformance as conf
 
 FIXTURES = Settings().fixtures_dir
@@ -157,7 +157,7 @@ class LyingGate:
     async def check_action(self, request):  # type: ignore[no-untyped-def]
         if request.facts.get("x"):
             raise KeyError("boom")
-        from team_b.contracts.policy import PolicyDecision
+        from agent_service.contracts.policy import PolicyDecision
 
         return PolicyDecision(request_id=request.request_id, decision="allow", reason_code="ALWAYS")
 

@@ -6,19 +6,19 @@ from pathlib import Path
 
 import pytest
 
-from team_b.adapters.memory_store import FixedClock
-from team_b.adapters.sqlite_store import (
+from agent_service.adapters.memory_store import FixedClock
+from agent_service.adapters.sqlite_store import (
     SqliteCaseStore,
     SqliteDatabase,
     SqliteSessionStore,
     SqliteTraceStore,
     migration_files,
 )
-from team_b.config import Settings
-from team_b.container import build_container
-from team_b.domain.decision import Decision
-from team_b.domain.handoff import CaseStatus
-from team_b.domain.trace import DecisionTrace
+from agent_service.config import Settings
+from agent_service.container import build_container
+from agent_service.domain.decision import Decision
+from agent_service.domain.handoff import CaseStatus
+from agent_service.domain.trace import DecisionTrace
 from tests.unit.adapters.test_trace_case_stores import case, trace
 
 T, C = "shop_001", "conv-1"
@@ -67,7 +67,7 @@ def test_migration_files_are_numbered_without_gaps(tmp_path: Path) -> None:
 
 
 async def test_a_later_migration_is_applied_on_top(tmp_path: Path) -> None:
-    from team_b.adapters import sqlite_store
+    from agent_service.adapters import sqlite_store
 
     folder = tmp_path / "migrations"
     folder.mkdir()

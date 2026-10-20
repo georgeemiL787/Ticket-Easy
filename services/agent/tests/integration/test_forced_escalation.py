@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from team_b.container import Container
-from team_b.domain.decision import Decision
-from team_b.domain.trace import DecisionTrace
+from agent_service.container import Container
+from agent_service.domain.decision import Decision
+from agent_service.domain.trace import DecisionTrace
 from tests.fakes import FunctionPicker
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_format import discover, load_scenario

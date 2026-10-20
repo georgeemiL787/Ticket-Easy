@@ -19,14 +19,14 @@ fmt:
 	$(PYTHON) -m ruff format .
 
 run:
-	$(PYTHON) -m uvicorn team_b.api.app:app --app-dir src --port 8010
+	$(PYTHON) -m uvicorn agent_service.api.app:app --app-dir src --port 8010
 
 # Not a pytest marker selection: an empty selection would exit with code 5.
 scenarios:
 	$(PYTHON) -m pytest -q tests/integration/test_scenarios.py && $(PYTHON) scripts/scenario_report.py
 
 cov:
-	$(PYTHON) -m pytest --cov=team_b --cov-report=term-missing -q
+	$(PYTHON) -m pytest --cov=agent_service --cov-report=term-missing -q
 
 schemas:
 	$(PYTHON) scripts/export_schemas.py

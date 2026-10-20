@@ -24,9 +24,9 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
-from team_b.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteTraceStore
-from team_b.brain.metrics import (
+from agent_service.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
+from agent_service.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteTraceStore
+from agent_service.brain.metrics import (
     MAX_BUCKETS,
     MetricFilters,
     MetricsService,
@@ -35,9 +35,9 @@ from team_b.brain.metrics import (
     next_bucket,
     percentile,
 )
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.handoff import HandoffCase, HandoffPackage
-from team_b.domain.trace import DecisionTrace, EvidenceRef, PolicyRecord, ToolCallRecord, TraceStep
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import HandoffCase, HandoffPackage
+from agent_service.domain.trace import DecisionTrace, EvidenceRef, PolicyRecord, ToolCallRecord, TraceStep
 
 T = "shop_001"
 D1 = datetime(2026, 9, 28, tzinfo=UTC)

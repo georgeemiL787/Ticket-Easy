@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from team_b.brain.actions import _deny_step
-from team_b.brain.turn import TurnContext
-from team_b.container import Container, build_container
-from team_b.contracts.policy import PolicyDecision
-from team_b.domain.decision import Decision
-from team_b.domain.session import SessionState
+from agent_service.brain.actions import _deny_step
+from agent_service.brain.turn import TurnContext
+from agent_service.container import Container, build_container
+from agent_service.contracts.policy import PolicyDecision
+from agent_service.domain.decision import Decision
+from agent_service.domain.session import SessionState
 from tests.support import make_settings
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

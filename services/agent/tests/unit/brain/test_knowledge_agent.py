@@ -5,10 +5,10 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.knowledge_agent import Found, KnowledgeAgent, NotFound, latest_versions
-from team_b.brain.llm_nlu import PromptTemplate
-from team_b.contracts.evidence import Passage
-from team_b.domain.understanding import Locale
+from agent_service.brain.knowledge_agent import Found, KnowledgeAgent, NotFound, latest_versions
+from agent_service.brain.llm_nlu import PromptTemplate
+from agent_service.contracts.evidence import Passage
+from agent_service.domain.understanding import Locale
 from tests.fakes import FakeLLM
 
 

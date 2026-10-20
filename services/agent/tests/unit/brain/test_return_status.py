@@ -5,11 +5,11 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.composer import PLACEHOLDERS, default_composer, placeholders_in
-from team_b.brain.nlu import RuleBasedNLU
-from team_b.config import PROJECT_ROOT, Settings
-from team_b.domain.tenant import TenantRegistry
-from team_b.domain.understanding import Locale
+from agent_service.brain.composer import PLACEHOLDERS, default_composer, placeholders_in
+from agent_service.brain.nlu import RuleBasedNLU
+from agent_service.config import PROJECT_ROOT, Settings
+from agent_service.domain.tenant import TenantRegistry
+from agent_service.domain.understanding import Locale
 
 STATUSES = ("requested", "refund_approved", "refund_initiated", "refunded", "partially_refunded", "rejected_in_hub")
 REGISTRY = TenantRegistry.from_dir(Settings().config_dir)
@@ -65,12 +65,12 @@ def test_every_status_has_a_reply_in_every_style_with_the_same_placeholders(loca
 
 
 def test_the_reply_is_built_from_the_returns_table_only() -> None:
-    from team_b.brain.lookup import _return_reply  # the code that fills the template
+    from agent_service.brain.lookup import _return_reply  # the code that fills the template
 
     class Ctx:  # just what the reply needs: the customer's style
         pass
 
-    from team_b.brain import lookup
+    from agent_service.brain import lookup
 
     original = lookup.locale_of
     lookup.locale_of = lambda ctx: Locale.EN  # type: ignore[assignment]

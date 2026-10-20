@@ -15,10 +15,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from team_b import eval_conversations as ec  # noqa: E402
-from team_b.adapters.usage_log import current_call  # noqa: E402
-from team_b.config import Settings  # noqa: E402
-from team_b.container import build_container  # noqa: E402
+from agent_service import eval_conversations as ec  # noqa: E402
+from agent_service.adapters.usage_log import current_call  # noqa: E402
+from agent_service.config import Settings  # noqa: E402
+from agent_service.container import build_container  # noqa: E402
 
 RECORDS: list[dict[str, Any]] = []
 

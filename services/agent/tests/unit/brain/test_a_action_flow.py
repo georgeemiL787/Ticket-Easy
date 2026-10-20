@@ -7,16 +7,16 @@ from typing import Any
 
 import pytest
 
-from team_b.brain import actions, freetext
-from team_b.brain.actions import Verdict, verify_result
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.turn import Step
-from team_b.container import Container, build_container, inject
-from team_b.contracts.policy import CheckActionRequest, PolicyDecision
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.domain.actions import ActionState
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.reply import AgentReply
+from agent_service.brain import actions, freetext
+from agent_service.brain.actions import Verdict, verify_result
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.turn import Step
+from agent_service.container import Container, build_container, inject
+from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.domain.actions import ActionState
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.reply import AgentReply
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a7"
@@ -378,7 +378,7 @@ async def test_a_kind_the_tenant_does_not_confirm_runs_straight_after_the_check(
     relaxed = tenant.model_copy(
         update={"permissions": tenant.permissions.model_copy(update={"confirm_operation_kinds": ("delete",)})}
     )
-    from team_b.domain.tenant import TenantRegistry
+    from agent_service.domain.tenant import TenantRegistry
 
     bot = Orchestrator(
         clock=container.clock, tenants=TenantRegistry({T: relaxed}), sessions=container.sessions,

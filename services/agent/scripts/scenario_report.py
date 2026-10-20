@@ -11,7 +11,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 from tests.integration.scenario_format import discover, load_scenario  # noqa: E402
 from tests.integration.scenario_runner import ScenarioResult, run_scenario  # noqa: E402
 
-from team_b.observability import configure_logging  # noqa: E402
+from agent_service.observability import configure_logging  # noqa: E402
 
 COLUMNS = ("id", "owner", "title", "status", "result", "decision", "escalation")
 

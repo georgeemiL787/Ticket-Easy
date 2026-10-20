@@ -101,7 +101,7 @@ def main(argv=None):
     parser.add_argument("--reports", nargs="+", type=Path)
     parser.add_argument("--styles", default="en,ar,mixed")
     parser.add_argument("--out", type=Path)
-    parser.add_argument("--report-out", type=Path, help="also write the combined result in the shape of a report, so `python -m team_b eval-compare` can read it")
+    parser.add_argument("--report-out", type=Path, help="also write the combined result in the shape of a report, so `python -m agent_service eval-compare` can read it")
     parser.add_argument("--check", type=Path, help="verify one report and print its per-style counts")
     args = parser.parse_args(argv)
     if args.check:

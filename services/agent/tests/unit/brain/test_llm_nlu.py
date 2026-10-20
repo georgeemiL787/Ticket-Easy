@@ -6,13 +6,13 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.llm_nlu import LLMNLU, PromptTemplate
-from team_b.brain.nlu import RuleBasedNLU
-from team_b.config import Settings
-from team_b.contracts.errors import InvalidLLMOutput, UpstreamError
-from team_b.domain.session import Message, SessionState
-from team_b.domain.tenant import TenantConfig, TenantRegistry
-from team_b.domain.understanding import IntentCandidate, Language, NLUResult
+from agent_service.brain.llm_nlu import LLMNLU, PromptTemplate
+from agent_service.brain.nlu import RuleBasedNLU
+from agent_service.config import Settings
+from agent_service.contracts.errors import InvalidLLMOutput, UpstreamError
+from agent_service.domain.session import Message, SessionState
+from agent_service.domain.tenant import TenantConfig, TenantRegistry
+from agent_service.domain.understanding import IntentCandidate, Language, NLUResult
 from tests.fakes import FakeLLM
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.knowledge_agent import KnowledgeAgent
-from team_b.container import Container
+from agent_service.brain.knowledge_agent import KnowledgeAgent
+from agent_service.container import Container
 from tests.fakes import FunctionPicker, KnowledgeFakeLLM
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_format import discover, load_scenario
@@ -51,7 +51,7 @@ async def test_a_policy_found_only_on_the_second_search_is_answered_from_it(tmp_
     of its own and answers from the return policy it finds, quoted word for word. Both modes."""
     from datetime import date
 
-    from team_b.container import build_container
+    from agent_service.container import build_container
     from tests.support import make_settings
 
     container = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))

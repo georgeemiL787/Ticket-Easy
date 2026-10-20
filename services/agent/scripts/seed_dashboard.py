@@ -17,10 +17,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from team_b.config import Settings  # noqa: E402
-from team_b.container import build_container  # noqa: E402
-from team_b.demo_seed import clock_for, seed  # noqa: E402
-from team_b.observability import configure_logging  # noqa: E402
+from agent_service.config import Settings  # noqa: E402
+from agent_service.container import build_container  # noqa: E402
+from agent_service.demo_seed import clock_for, seed  # noqa: E402
+from agent_service.observability import configure_logging  # noqa: E402
 
 
 async def main(argv: list[str] | None = None) -> int:

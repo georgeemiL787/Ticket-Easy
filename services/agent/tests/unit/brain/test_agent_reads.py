@@ -10,9 +10,9 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.domain.agent import (
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.domain.agent import (
     AgentPlan,
     AskCustomer,
     HandOver,
@@ -23,8 +23,8 @@ from team_b.domain.agent import (
     ReplyPlan,
     SearchPolicy,
 )
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.trace import DecisionTrace
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.trace import DecisionTrace
 from tests.fakes import FunctionPicker, ScriptedMovePicker
 
 T, C = "shop_001", "conv-reads"

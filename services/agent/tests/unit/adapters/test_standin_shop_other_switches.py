@@ -4,12 +4,12 @@ from collections.abc import Awaitable, Callable
 
 import pytest
 
-from team_b.adapters.memory_store import FixedClock
-from team_b.adapters.standins.shop import StandinShop
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container, inject
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolCallRequest, ToolResult
+from agent_service.adapters.memory_store import FixedClock
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container, inject
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.tools import ToolCallRequest, ToolResult
 from tests.conftest import FIXED_TODAY
 
 Call = Callable[..., Awaitable[ToolResult]]

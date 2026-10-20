@@ -3,15 +3,15 @@ from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
-from team_b.adapters.memory_store import (
+from agent_service.adapters.memory_store import (
     FixedClock,
     InMemoryCaseStore,
     InMemorySessionStore,
     InMemoryTraceStore,
     SystemClock,
 )
-from team_b.domain.session import SessionState
-from team_b.ports import CaseStore, Clock, SessionConflictError, SessionStore, TraceStore
+from agent_service.domain.session import SessionState
+from agent_service.ports import CaseStore, Clock, SessionConflictError, SessionStore, TraceStore
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 

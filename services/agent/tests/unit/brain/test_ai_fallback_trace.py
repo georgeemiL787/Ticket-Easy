@@ -3,15 +3,15 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from team_b.adapters.llm_limits import RateBudgetExceeded
-from team_b.adapters.llm_registry import RoleLLM
-from team_b.brain.llm_nlu import LLMNLU
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.rewrite import LLMRewriter
-from team_b.brain.smalltalk import SmallTalkWriter
-from team_b.container import Container
-from team_b.contracts.errors import UpstreamError
-from team_b.domain.facts import AI_MODEL_SERVICE, ai_asked, ai_fell_back, facts_from_trace
+from agent_service.adapters.llm_limits import RateBudgetExceeded
+from agent_service.adapters.llm_registry import RoleLLM
+from agent_service.brain.llm_nlu import LLMNLU
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.rewrite import LLMRewriter
+from agent_service.brain.smalltalk import SmallTalkWriter
+from agent_service.container import Container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.domain.facts import AI_MODEL_SERVICE, ai_asked, ai_fell_back, facts_from_trace
 from tests.fakes import FakeEvidence, FakeLLM
 
 T, C = "shop_001", "conv-ai"

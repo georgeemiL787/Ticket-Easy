@@ -61,9 +61,9 @@ The same walk-through runs as an automated test: `tests/integration/test_sync1_d
 API: `GET /v1/handoff/cases?tenant_id=shop_001` and `POST /v1/handoff/cases/{id}/claim|release|reply|decision|resolve|return-to-agent`
 with a body such as `{"agent": "Sara", "text": "Hello"}`.
 
-## Measuring quality (`python -m team_b eval`)
+## Measuring quality (`python -m agent_service eval`)
 
-`python -m team_b eval --set eval/conversations` runs 240 short conversations (60 each in English, Egyptian Arabic, mixed
+`python -m agent_service eval --set eval/conversations` runs 240 short conversations (60 each in English, Egyptian Arabic, mixed
 Arabic-English and Arabizi) through the agent and writes `reports/eval_<date>.md` and `.json`: per style intent accuracy,
 decision accuracy, citation accuracy, reply language match, handoff precision and recall, latency p50 and p95, the
 conversations that went wrong most (with their first wrong turn) and a table by topic. `--llm` uses the configured AI model
@@ -74,11 +74,11 @@ locale 1.0) or, until they are reached, at that baseline.
 
 ### Grading how replies read (`--judge`, optional)
 
-With an AI model configured (`TEAM_B_LLM=ollama` or `openrouter`), `python -m team_b eval --judge` also asks the model to grade
+With an AI model configured (`TEAM_B_LLM=ollama` or `openrouter`), `python -m agent_service eval --judge` also asks the model to grade
 each reply from 1 to 5 for clarity, politeness, register (does it sound like the customer's language and style) and
 helpfulness, with a one-line reason each (rubric: `prompts/judge_v1.md`). The report shows the average per style. These grades
 are advice: they never decide whether a test passes. Ten percent of the graded replies are written to
-`reports/judge_spotcheck.csv`; a person fills in the `human_*` columns, then `python -m team_b judge-agreement reports/judge_spotcheck.csv`
+`reports/judge_spotcheck.csv`; a person fills in the `human_*` columns, then `python -m agent_service judge-agreement reports/judge_spotcheck.csv`
 prints how often the judge is exactly right and within one point.
 
 ### The Egyptian Arabic writer (`writer_egyptian`, optional)
@@ -100,7 +100,7 @@ no `writer_egyptian` settings nothing changes (the job never borrows the general
 
    A small model may not keep a JSON format, so for this job the answer is read as plain text (code fences, quotes and a
    leading "Reply:" or "الرد:" are removed). The trace shows `versions.writer_model = egyptian` for such a reply.
-3. Compare it with the main writer: `python -m team_b eval --llm --writer-compare [--judge]` answers the Arabic and Arabizi
+3. Compare it with the main writer: `python -m agent_service eval --llm --writer-compare [--judge]` answers the Arabic and Arabizi
    conversations twice and writes `reports/writer_compare_<date>.csv`: the customer message and both replies side by side,
    the AI judge's grades when `--judge` is given, and two empty columns, `rating_default` and `rating_egyptian`. Open the file
    in Excel (it is UTF-8), give each reply a whole number from 1 (unnatural or wrong) to 5 (sounds like a native Egyptian
@@ -124,8 +124,8 @@ WRITER_EGYPTIAN, SUMMARY, JUDGE. Jobs on the same model share one per-minute bud
 The free plan (30 requests and 8K tokens a minute, 200K tokens a day per model) is enough to try the agent, not to
 evaluate it on the whole set: use `eval --per-style N`, `--batch N` and `--resume`.
 
-Useful commands: `python -m team_b eval --llm --agent-mode on|off|shadow --label NAME [--per-style N] [--batch N] [--resume]
+Useful commands: `python -m agent_service eval --llm --agent-mode on|off|shadow --label NAME [--per-style N] [--batch N] [--resume]
 [--judge]`, `eval-compare A.json B.json`, `eval --llm --writer-compare` (the Egyptian writer, section above),
-`python -m team_b replay <conversation_id> --set KEY=VALUE` (say a past conversation again with other settings on a
+`python -m agent_service replay <conversation_id> --set KEY=VALUE` (say a past conversation again with other settings on a
 stand-in shop). On the dashboard: the agent timeline of every message, the agent cards on the Overview, forced and chosen
 handoffs and "automate next" on Escalations, and a Replay button (admin).

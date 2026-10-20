@@ -17,8 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from team_b.adapters.llm import OpenAICompatibleLLM  # noqa: E402
-from team_b.adapters.usage_log import UsageLog, tagged  # noqa: E402
+from agent_service.adapters.llm import OpenAICompatibleLLM  # noqa: E402
+from agent_service.adapters.usage_log import UsageLog, tagged  # noqa: E402
 
 
 async def main() -> int:

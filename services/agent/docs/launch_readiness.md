@@ -68,7 +68,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
 | arabizi | 50 | 40.8% | 44.2% | 21.7% | 96.2% | 71.4% / 83.3% |
 | all | 200 | 59.2% | 61.5% | 32.6% | 99.0% | 79.3% / 95.8% |
 
-Source: `python -m team_b eval --set eval/conversations` (rules mode; the AI-model run has not been made). The 200
+Source: `python -m agent_service eval --set eval/conversations` (rules mode; the AI-model run has not been made). The 200
 conversations were written inside the project; the plan asks for native speakers to write or review them, and that
 review has not been done either.
 
@@ -119,7 +119,7 @@ result, restore a backup, rotate secrets, add a support person.
 1. Run `make demo` on a computer with Docker and try the three example conversations (30 minutes).
 2. Two people read 10 handoff briefings and score them (30 minutes).
 3. Raise quality: fix the worst topics, run the evaluation with the AI model on, and have native speakers review the 200
-   conversations. Re-run `python -m team_b eval --set eval/conversations`, update this file.
+   conversations. Re-run `python -m agent_service eval --set eval/conversations`, update this file.
 4. Turn on the GitHub branch rules and check the first `ci.yml` and `safety.yml` runs are green.
 5. Set the secrets listed in item 5 and the runbook, then run the readiness review again.
 

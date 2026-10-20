@@ -4,13 +4,13 @@ from datetime import UTC, datetime
 
 import pytest
 
-from team_b.brain.lexicon import default_lexicon
-from team_b.brain.nlu import RuleBasedNLU, extract_amount, extract_order_ids, extract_phone
-from team_b.brain.text import normalize
-from team_b.config import Settings
-from team_b.domain.session import SessionState
-from team_b.domain.tenant import TenantConfig, TenantRegistry
-from team_b.domain.understanding import Language
+from agent_service.brain.lexicon import default_lexicon
+from agent_service.brain.nlu import RuleBasedNLU, extract_amount, extract_order_ids, extract_phone
+from agent_service.brain.text import normalize
+from agent_service.config import Settings
+from agent_service.domain.session import SessionState
+from agent_service.domain.tenant import TenantConfig, TenantRegistry
+from agent_service.domain.understanding import Language
 
 FIXED_NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
 

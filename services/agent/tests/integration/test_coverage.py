@@ -4,7 +4,7 @@ A value counts as specified when a scenario expects it: expect.decision, expect.
 Values that are not real enum members fail too, so a typo in a scenario cannot hide a gap.
 """
 
-from team_b.domain.decision import Decision, EscalationReason
+from agent_service.domain.decision import Decision, EscalationReason
 from tests.integration.scenario_format import Scenario, discover, load_scenario
 
 

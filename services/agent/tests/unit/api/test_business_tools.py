@@ -13,10 +13,10 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.adapters.team_c_admin import TeamCAdmin
-from team_b.api.app import create_app
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container, build_container
+from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.api.app import create_app
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container, build_container
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 from tests.unit.adapters.test_team_c_tools import BUSINESS, GET_ORDER_PROPOSAL, ORDER_OK, Fake, tool_def

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from team_b.container import Container, build_container
-from team_b.domain.decision import Decision
+from agent_service.container import Container, build_container
+from agent_service.domain.decision import Decision
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-a10"

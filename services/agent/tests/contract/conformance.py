@@ -21,10 +21,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.policy import CheckActionRequest, PolicyDecision
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.ports import CapabilityClient, EvidenceProvider, PolicyGate
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.ports import CapabilityClient, EvidenceProvider, PolicyGate
 
 DECISIONS = {"allow", "deny", "require_human"}
 UNKNOWN_TOOL_CODES = {"TOOL_NOT_PUBLISHED", "NOT_FOUND"}

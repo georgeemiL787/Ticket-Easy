@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from team_b.container import Container
-from team_b.domain.trace import DecisionTrace
+from agent_service.container import Container
+from agent_service.domain.trace import DecisionTrace
 from tests.integration.scenario_format import discover, load_scenario
 from tests.integration.scenario_runner import conversation_id_of, run_scenario
 

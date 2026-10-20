@@ -2,11 +2,11 @@ from datetime import UTC, datetime
 
 import pytest
 
-from team_b.brain.summarizer import LLMHistorySummarizer, TemplateHistorySummarizer, invented_facts
-from team_b.domain.actions import ActionProposal
-from team_b.domain.decision import EscalationReason
-from team_b.domain.session import Message, SessionState
-from team_b.domain.tenant import TenantConfig
+from agent_service.brain.summarizer import LLMHistorySummarizer, TemplateHistorySummarizer, invented_facts
+from agent_service.domain.actions import ActionProposal
+from agent_service.domain.decision import EscalationReason
+from agent_service.domain.session import Message, SessionState
+from agent_service.domain.tenant import TenantConfig
 from tests.fakes import FakeLLM
 
 NOW = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)

@@ -65,7 +65,7 @@ def manager(http: httpx.Client) -> dict[str, str]:
     password = key.read_text(encoding="utf-8").strip()
     python = ROOT / "services" / "agent" / ".venv" / "Scripts" / "python.exe"
     env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
-    base = [str(python if python.exists() else sys.executable), "-m", "team_b", "create-user", "--email", "e2e-manager@example.com",
+    base = [str(python if python.exists() else sys.executable), "-m", "agent_service", "create-user", "--email", "e2e-manager@example.com",
             "--name", "E2E Manager", "--role", "manager", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):
         subprocess.run([*base, extra], cwd=ROOT / "services" / "agent", env=env, capture_output=True, check=False)
@@ -93,7 +93,7 @@ def mcp_executions(team_c: httpx.Client, artifact_id: str) -> list[dict[str, Any
 async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> dict[str, Any]:
     """What Team C's MCP server itself answers (Team B's own client, real server process): the contract checks."""
     sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
-    from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",
                "--database", binding["database"], "--sandbox-hosts", binding["sandbox_hosts"]]  # fmt: skip
@@ -114,7 +114,7 @@ async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str)
 
 async def call_old_name(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> Any:
     sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
-    from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",
                "--database", binding["database"], "--sandbox-hosts", binding["sandbox_hosts"]]  # fmt: skip

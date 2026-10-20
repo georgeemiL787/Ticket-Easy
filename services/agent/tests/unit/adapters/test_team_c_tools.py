@@ -14,13 +14,13 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.memory_store import FixedClock
-from team_b.adapters.standins.shop import StandinShop
-from team_b.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container, build_container
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.tools import ToolCallRequest
+from agent_service.adapters.memory_store import FixedClock
+from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container, build_container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.tools import ToolCallRequest
 from tests.support import make_settings
 
 FAKE = Path(__file__).resolve().parents[2] / "fake_team_c_mcp.py"
@@ -451,7 +451,7 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
 
 
 def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_success() -> None:
-    from team_b.adapters.team_c_tools import ResolvedTool, ToolBinding, _result
+    from agent_service.adapters.team_c_tools import ResolvedTool, ToolBinding, _result
 
     envelope = {
         "status": "succeeded", "execution_id": "e1", "production_ready": False, "environment": "sandbox",
@@ -478,9 +478,9 @@ def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_suc
 def bundle_with(tool: str, proposal: str, business: str = BUSINESS) -> Any:
     from datetime import UTC, datetime
 
-    from team_b.bundles import tools_from_config
-    from team_b.domain.bundle import BundleProfile, BundleTool, TenantBundle, ToolBindingRef
-    from team_b.domain.tenant import TenantRegistry
+    from agent_service.bundles import tools_from_config
+    from agent_service.domain.bundle import BundleProfile, BundleTool, TenantBundle, ToolBindingRef
+    from agent_service.domain.tenant import TenantRegistry
 
     config = TenantRegistry.from_dir(PROJECT_ROOT / "config" / "tenants").get(T)
     others = tuple(t for t in tools_from_config(config) if t.name != tool)

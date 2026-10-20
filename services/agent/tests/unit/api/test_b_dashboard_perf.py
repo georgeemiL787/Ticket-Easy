@@ -9,9 +9,9 @@ from pathlib import Path
 import httpx
 import pytest
 
-from team_b.adapters.sqlite_store import SqliteDatabase
-from team_b.api.app import create_app
-from team_b.container import build_container
+from agent_service.adapters.sqlite_store import SqliteDatabase
+from agent_service.api.app import create_app
+from agent_service.container import build_container
 from tests.support import make_settings
 
 ROWS = 100_000

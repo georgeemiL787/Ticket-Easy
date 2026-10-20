@@ -5,14 +5,14 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.injection import looks_like_override
-from team_b.brain.llm_nlu import LLMNLU
-from team_b.brain.orchestrator import Orchestrator
-from team_b.brain.reviewer import Reviewer
-from team_b.brain.smalltalk import SmallTalkWriter
-from team_b.container import Container
-from team_b.domain.agent import AskCustomer
-from team_b.domain.decision import Decision
+from agent_service.brain.injection import looks_like_override
+from agent_service.brain.llm_nlu import LLMNLU
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.brain.reviewer import Reviewer
+from agent_service.brain.smalltalk import SmallTalkWriter
+from agent_service.container import Container
+from agent_service.domain.agent import AskCustomer
+from agent_service.domain.decision import Decision
 from tests.fakes import FakeEvidence, FakeLLM, ScriptedMovePicker
 
 T, C = "shop_001", "conv-fix"
@@ -150,7 +150,7 @@ async def test_a_phone_that_does_not_match_says_so_and_asks_for_both_numbers(c: 
 
 
 def test_the_writer_is_told_what_an_identity_failure_is_for() -> None:
-    from team_b.brain.writer import PURPOSES
+    from agent_service.brain.writer import PURPOSES
 
     assert dict(PURPOSES)["identity_failed"].startswith("tell the customer the phone number did not match")
 

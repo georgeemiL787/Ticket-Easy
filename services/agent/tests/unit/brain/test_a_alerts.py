@@ -6,16 +6,16 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
-from team_b.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
-from team_b.adapters.sqlite_store import SqliteDatabase
-from team_b.brain.alerts import RULES, AlertEngine, WebhookNotifier, alert_loop
-from team_b.domain.alerts import Alert
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.handoff import HandoffCase, HandoffPackage
-from team_b.domain.tenant import AlertThresholds, TenantRegistry
-from team_b.domain.trace import DecisionTrace, PolicyRecord, ToolCallRecord
-from team_b.ports import AlertStore, AlreadyExistsError, NotFoundError
+from agent_service.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
+from agent_service.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
+from agent_service.adapters.sqlite_store import SqliteDatabase
+from agent_service.brain.alerts import RULES, AlertEngine, WebhookNotifier, alert_loop
+from agent_service.domain.alerts import Alert
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import HandoffCase, HandoffPackage
+from agent_service.domain.tenant import AlertThresholds, TenantRegistry
+from agent_service.domain.trace import DecisionTrace, PolicyRecord, ToolCallRecord
+from agent_service.ports import AlertStore, AlreadyExistsError, NotFoundError
 
 T = "shop_001"
 START = datetime(2026, 9, 28, 12, 0, tzinfo=UTC)
@@ -163,7 +163,7 @@ async def test_knowledge_gap_rate_over_a_day() -> None:
     for _ in range(8):
         await w.turn(evidence_empty_reason="no_match")  # asked, nothing found
     for _ in range(2):
-        from team_b.domain.trace import EvidenceRef
+        from agent_service.domain.trace import EvidenceRef
 
         await w.turn(evidence=(EvidenceRef(citation="a@v1#s1", document_id="a", version="v1", score=1.0),))
     assert await w.evaluate() == (["knowledge_gap"], [])  # 8 of 10 unanswered
@@ -229,7 +229,7 @@ async def test_ai_fallback_when_too_many_ai_turns_fell_back() -> None:
 
 def agent_turn(**kw: Any) -> dict[str, Any]:
     """A turn the agent loop worked: it made one move."""
-    from team_b.domain.agent import AgentStepRecord
+    from agent_service.domain.agent import AgentStepRecord
 
     return {"agent_mode": "on", "agent_steps": (AgentStepRecord(move={"kind": "reply"}),), **kw}
 
@@ -262,7 +262,7 @@ async def test_agent_fallback_needs_enough_agent_turns_and_ignores_turns_the_age
 
 
 async def test_reviewer_block_spike_opens_and_resolves() -> None:
-    from team_b.domain.trace import TraceStep
+    from agent_service.domain.trace import TraceStep
 
     blocked = (TraceStep(stage="review", status="blocked", duration_ms=1.0, detail="says it was refunded"),)
     w = World()
@@ -316,7 +316,7 @@ async def test_queue_backlog_for_an_urgent_case_nobody_took() -> None:
     assert await w.evaluate() == ([], [])  # inside the 15 minute SLA
     w.clock.tick(6)
     assert await w.evaluate() == (["queue_backlog"], [])
-    from team_b.domain.handoff import CaseStatus
+    from agent_service.domain.handoff import CaseStatus
 
     stored = await w.cases.get(T, "k1")
     assert stored is not None
@@ -428,8 +428,8 @@ def test_the_thresholds_have_the_agreed_defaults() -> None:
 def test_the_shop_config_accepts_alert_thresholds(tmp_path: Path) -> None:
     import json
 
-    from team_b.config import Settings
-    from team_b.domain.tenant import TenantConfig
+    from agent_service.config import Settings
+    from agent_service.domain.tenant import TenantConfig
 
     raw = json.loads((Settings().config_dir / "shop_001.json").read_text(encoding="utf-8-sig"))
     raw["alerts"] = {"service_down_errors": 7, "slow_p95_ms": 2500}
@@ -460,7 +460,7 @@ async def test_the_webhook_receives_opened_and_resolved_alerts(monkeypatch: pyte
 
             return R()
 
-    monkeypatch.setattr("team_b.brain.alerts.httpx.AsyncClient", Fake)
+    monkeypatch.setattr("agent_service.brain.alerts.httpx.AsyncClient", Fake)
     w = World()
     w.engine = AlertEngine(traces=w.traces, cases=w.cases, alerts=w.alerts, clock=w.clock, tenants=w.tenants,
                            notifier=WebhookNotifier("https://hook.example/x"))  # fmt: skip
@@ -486,7 +486,7 @@ async def test_a_failing_webhook_never_loses_the_alert(monkeypatch: pytest.Monke
         async def post(self, *a: Any, **k: Any) -> Any:
             raise OSError("down")
 
-    monkeypatch.setattr("team_b.brain.alerts.httpx.AsyncClient", Boom)
+    monkeypatch.setattr("agent_service.brain.alerts.httpx.AsyncClient", Boom)
     w = World()
     w.engine = AlertEngine(traces=w.traces, cases=w.cases, alerts=w.alerts, clock=w.clock, tenants=w.tenants,
                            notifier=WebhookNotifier("https://hook.example/x"))  # fmt: skip

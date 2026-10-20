@@ -7,12 +7,12 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.api.app import create_app
-from team_b.api.chat import event_stream
-from team_b.api.ratelimit import RateLimiter
-from team_b.brain.composer import render
-from team_b.container import Container, build_container
-from team_b.domain.understanding import Locale
+from agent_service.api.app import create_app
+from agent_service.api.chat import event_stream
+from agent_service.api.ratelimit import RateLimiter
+from agent_service.brain.composer import render
+from agent_service.container import Container, build_container
+from agent_service.domain.understanding import Locale
 from tests.support import make_settings
 
 T = "shop_001"
@@ -148,7 +148,7 @@ def test_the_limiter_is_a_sliding_window() -> None:
 
 
 def test_the_limit_is_a_setting() -> None:
-    from team_b.config import Settings
+    from agent_service.config import Settings
 
     assert Settings().rate_limit_per_minute == 20
     assert Settings.from_env({"TEAM_B_RATE_LIMIT_PER_MIN": "5"}).rate_limit_per_minute == 5
@@ -185,7 +185,7 @@ async def test_the_outbox_holds_replies_written_by_a_person(chat: httpx.AsyncCli
 
 
 async def test_pushing_to_a_conversation_that_does_not_exist_is_an_error(chat_container: Container) -> None:
-    from team_b.ports import NotFoundError
+    from agent_service.ports import NotFoundError
 
     assert chat_container.orchestrator is not None
     with pytest.raises(NotFoundError):

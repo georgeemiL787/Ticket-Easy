@@ -5,10 +5,10 @@ import asyncio
 import httpx
 import pytest
 
-from team_b.api.app import create_app
-from team_b.config import Settings
-from team_b.container import Container, build_container
-from team_b.domain.decision import Decision
+from agent_service.api.app import create_app
+from agent_service.config import Settings
+from agent_service.container import Container, build_container
+from agent_service.domain.decision import Decision
 from tests.adversarial.support import T, assert_nothing_unauthorized, changes, conversation, say, writes
 from tests.support import make_settings
 

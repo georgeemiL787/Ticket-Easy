@@ -4,11 +4,11 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.llm_nlu import LLMNLU
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
-from team_b.domain.decision import Decision, EscalationReason
+from agent_service.brain.llm_nlu import LLMNLU
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
+from agent_service.domain.decision import Decision, EscalationReason
 from tests.adversarial.support import T, assert_nothing_unauthorized, leaks, say, verified_as, writes
 
 C101 = "01123456702"

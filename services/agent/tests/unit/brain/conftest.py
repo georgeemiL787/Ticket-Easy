@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from team_b.container import Container, build_container
+from agent_service.container import Container, build_container
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 

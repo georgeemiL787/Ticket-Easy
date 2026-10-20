@@ -7,10 +7,10 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from team_b.container import Container
-from team_b.contracts.tools import ToolCallRequest
-from team_b.domain.decision import Decision
-from team_b.domain.reply import AgentReply
+from agent_service.container import Container
+from agent_service.contracts.tools import ToolCallRequest
+from agent_service.domain.decision import Decision
+from agent_service.domain.reply import AgentReply
 from tests.integration.scenario_format import Inject, Scenario
 from tests.integration.scenario_runner import inject_spec, run_scenario
 

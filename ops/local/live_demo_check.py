@@ -147,7 +147,7 @@ def save_identity(owner: Owner, aid: str, api: dict[str, Any]) -> None:
 
 async def through_mcp(state: dict[str, Any], api: dict[str, Any]) -> dict[str, Any]:
     """Team C's real MCP server, through Team B's own MCP client (the path the assistant uses)."""
-    from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     python = ROOT / "services" / "tools" / ".venv" / ("Scripts/python.exe" if (ROOT / "services" / "tools" / ".venv" / "Scripts").exists() else "bin/python")
     env = {"PYTHONPATH": ".", **{k: v for k, v in live_settings().items() if k.startswith("LIVE_DEMO_") and k in (

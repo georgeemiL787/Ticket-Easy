@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.reply import AgentReply
-from team_b.domain.understanding import IntentCandidate, Language, Locale, NLUResult
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.reply import AgentReply
+from agent_service.domain.understanding import IntentCandidate, Language, Locale, NLUResult
 
 
 def test_language_and_locale_values() -> None:

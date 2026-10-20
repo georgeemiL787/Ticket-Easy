@@ -23,10 +23,10 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.move_picker import LLMMovePicker
-from team_b.container import Container, build_container
-from team_b.contracts.evidence import Passage, RetrievalResult
-from team_b.domain.trace import DecisionTrace, record_problems
+from agent_service.brain.move_picker import LLMMovePicker
+from agent_service.container import Container, build_container
+from agent_service.contracts.evidence import Passage, RetrievalResult
+from agent_service.domain.trace import DecisionTrace, record_problems
 from tests.adversarial.support import (
     ORDERS,
     PHONES,

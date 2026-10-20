@@ -9,9 +9,9 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.domain.agent import (
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.domain.agent import (
     AgentPlan,
     AskCustomer,
     HandOver,
@@ -23,8 +23,8 @@ from team_b.domain.agent import (
     SearchPolicy,
     parse_move,
 )
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.trace import DecisionTrace, record_problems
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.trace import DecisionTrace, record_problems
 from tests.fakes import FakeEvidence, ScriptedMovePicker
 
 T, C = "shop_001", "conv-agent"
@@ -79,7 +79,7 @@ async def test_shadow_answers_like_the_usual_flow_and_only_watches(c: Container)
 
 async def test_a_business_can_set_its_own_mode(c: Container) -> None:
     tenant = c.tenants.get(T)
-    from team_b.domain.tenant import TenantRegistry
+    from agent_service.domain.tenant import TenantRegistry
 
     only_off = TenantRegistry({T: tenant.model_copy(update={"agent_mode": "off"})})
     picker = ScriptedMovePicker()
@@ -300,7 +300,7 @@ async def test_an_old_saved_session_without_the_agent_fields_still_loads(c: Cont
     session = await c.sessions.load(T, C)
     assert session is not None
     data = session.model_dump(mode="json", exclude={"agent_plan", "agent_pending"})
-    from team_b.domain.session import SessionState
+    from agent_service.domain.session import SessionState
 
     old = SessionState.model_validate(data)
     assert old.agent_plan is None and old.agent_pending is None

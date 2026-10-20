@@ -10,12 +10,12 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from team_b.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
-from team_b.adapters.team_a_admin import TeamAAdmin
-from team_b.adapters.team_a_http import TeamAClient
-from team_b.api.app import create_app
-from team_b.container import Container, build_container
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
+from agent_service.adapters.team_a_admin import TeamAAdmin
+from agent_service.adapters.team_a_http import TeamAClient
+from agent_service.api.app import create_app
+from agent_service.container import Container, build_container
+from agent_service.contracts.errors import UpstreamError
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 

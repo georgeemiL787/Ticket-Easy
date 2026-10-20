@@ -8,12 +8,12 @@ from typing import Any
 
 import pytest
 
-from team_b.adapters.standins.rule_checker import RuleCheckerStandin, derive_facts
-from team_b.config import Settings
-from team_b.container import Container, inject
-from team_b.contracts.errors import UpstreamError
-from team_b.contracts.policy import CheckActionRequest, PolicyDecision
-from team_b.ports import PolicyGate
+from agent_service.adapters.standins.rule_checker import RuleCheckerStandin, derive_facts
+from agent_service.config import Settings
+from agent_service.container import Container, inject
+from agent_service.contracts.errors import UpstreamError
+from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.ports import PolicyGate
 
 FIXTURES = Settings().fixtures_dir
 T = "shop_001"

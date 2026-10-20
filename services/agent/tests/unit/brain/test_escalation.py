@@ -10,14 +10,14 @@ from typing import Any
 
 import pytest
 
-from team_b.brain.escalation import FORCED_ONLY, TRIED_FIRST
-from team_b.brain.orchestrator import Orchestrator
-from team_b.container import Container
-from team_b.domain.agent import HandOver, Reply, ReplyPlan
-from team_b.domain.decision import Decision, EscalationReason
-from team_b.domain.session import SessionState
-from team_b.domain.tenant import EscalationConfig
-from team_b.domain.trace import DecisionTrace
+from agent_service.brain.escalation import FORCED_ONLY, TRIED_FIRST
+from agent_service.brain.orchestrator import Orchestrator
+from agent_service.container import Container
+from agent_service.domain.agent import HandOver, Reply, ReplyPlan
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.session import SessionState
+from agent_service.domain.tenant import EscalationConfig
+from agent_service.domain.trace import DecisionTrace
 from tests.fakes import FakeEvidence, ScriptedMovePicker
 
 T, C = "shop_001", "conv-esc"
@@ -156,7 +156,7 @@ async def test_a_refused_hand_over_twice_in_a_row_falls_back_to_the_usual_stages
 
 
 async def test_each_question_the_agent_asks_is_counted_and_an_answer_starts_the_count_again(c: Container) -> None:
-    from team_b.domain.agent import AskCustomer
+    from agent_service.domain.agent import AskCustomer
 
     ask = AskCustomer(question_key="ask_rephrase", why="unclear")
     picker = ScriptedMovePicker(ask, ask, GREETING)

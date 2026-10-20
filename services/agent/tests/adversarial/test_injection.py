@@ -3,9 +3,9 @@
 import httpx
 import pytest
 
-from team_b.api.app import create_app
-from team_b.container import Container
-from team_b.domain.decision import Decision
+from agent_service.api.app import create_app
+from agent_service.container import Container
+from agent_service.domain.decision import Decision
 from tests.adversarial.support import (
     T,
     assert_nothing_unauthorized,

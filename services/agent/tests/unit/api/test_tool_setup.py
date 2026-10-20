@@ -9,9 +9,9 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.team_c_admin import TeamCAdmin
-from team_b.config import PROJECT_ROOT
-from team_b.container import Container
+from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.config import PROJECT_ROOT
+from agent_service.container import Container
 from tests.unit.adapters.test_team_c_tools import Fake
 from tests.unit.api.test_business_tools import TeamCRest, build, serve
 
@@ -358,7 +358,7 @@ async def test_when_the_tools_service_is_down_the_answer_says_so(setup: Any) -> 
 
 
 async def test_without_a_tools_service_the_setup_is_unavailable(tmp_path: Path) -> None:
-    from team_b.container import build_container
+    from agent_service.container import build_container
     from tests.conftest import FIXED_TODAY
     from tests.support import make_settings
 

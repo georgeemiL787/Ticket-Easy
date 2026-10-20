@@ -2,10 +2,10 @@
 
 import pytest
 
-from team_b.adapters.standins.policy_search import PolicySearchStandin
-from team_b.adapters.standins.text_search import build_synonyms, normalize, stem, tokens
-from team_b.container import Container, inject
-from team_b.contracts.errors import UpstreamError
+from agent_service.adapters.standins.policy_search import PolicySearchStandin
+from agent_service.adapters.standins.text_search import build_synonyms, normalize, stem, tokens
+from agent_service.container import Container, inject
+from agent_service.contracts.errors import UpstreamError
 
 T = "shop_001"
 

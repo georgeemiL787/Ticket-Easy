@@ -1,7 +1,7 @@
 """Small helpers shared by Track A's tests."""
 
-from team_b.config import Settings
-from team_b.domain.tenant import AlertThresholds, TenantRegistry
+from agent_service.config import Settings
+from agent_service.domain.tenant import AlertThresholds, TenantRegistry
 
 
 def tenant_registry(thresholds: AlertThresholds | None = None) -> TenantRegistry:

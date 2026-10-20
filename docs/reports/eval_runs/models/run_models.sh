@@ -5,7 +5,7 @@
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 RUNS="$ROOT/docs/reports/eval_runs"
-cd "$ROOT/team_b" || exit 1
+cd "$ROOT/services/agent" || exit 1
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 PY=".venv/Scripts/python"; [ -x "$PY" ] || PY=".venv/bin/python"
 keys() { local o="" n; for n in $1; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v" ] && o="${o:+$o,}$v"; done; printf '%s' "$o"; }

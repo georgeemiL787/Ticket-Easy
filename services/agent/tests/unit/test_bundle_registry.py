@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from team_b.bundles import BundleError, BundleRegistry, import_from_files
-from team_b.container import Container, build_container
-from team_b.domain.bundle import BundleProfile
-from team_b.domain.tenant import TenantRegistry, UnknownTenantError
-from team_b.ports import NotFoundError
+from agent_service.bundles import BundleError, BundleRegistry, import_from_files
+from agent_service.container import Container, build_container
+from agent_service.domain.bundle import BundleProfile
+from agent_service.domain.tenant import TenantRegistry, UnknownTenantError
+from agent_service.ports import NotFoundError
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
 

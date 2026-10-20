@@ -7,17 +7,17 @@ from typing import Any
 import httpx
 import pytest
 
-from team_b.adapters.llm import OpenAICompatibleLLM
-from team_b.adapters.llm_registry import LLMRegistry, RoleLLM
-from team_b.brain.reviewer import Reviewer
-from team_b.brain.writer import ReplyWriter, plain_reply
-from team_b.config import Settings
-from team_b.container import build_container
-from team_b.contracts.errors import UpstreamError
-from team_b.domain.agent import ReplyPlan
-from team_b.domain.decision import Decision
-from team_b.domain.understanding import Locale
-from team_b.observability import ai_events
+from agent_service.adapters.llm import OpenAICompatibleLLM
+from agent_service.adapters.llm_registry import LLMRegistry, RoleLLM
+from agent_service.brain.reviewer import Reviewer
+from agent_service.brain.writer import ReplyWriter, plain_reply
+from agent_service.config import Settings
+from agent_service.container import build_container
+from agent_service.contracts.errors import UpstreamError
+from agent_service.domain.agent import ReplyPlan
+from agent_service.domain.decision import Decision
+from agent_service.domain.understanding import Locale
+from agent_service.observability import ai_events
 from tests.fakes import FakeLLM
 from tests.support import make_settings
 

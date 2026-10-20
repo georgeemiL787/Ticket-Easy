@@ -12,7 +12,7 @@
 {% elif inv.proposal_generation_ready and areas and not areas.selected and areas.fits < areas.in_scope %}{{ m.next("choose the business areas to use", "The AI can review about " ~ areas.fits ~ " of your " ~ areas.in_scope ~ " operations at once. Tick the areas this business needs under Business areas below and press Use these areas. Requests and suggestions then look only there, one batch at a time.") }}
 {% elif inv.proposal_generation_ready %}{{ m.next("go back and ask for a tool", "Return to the business page and use Request a tool or Suggest additional tools. Advanced users can generate proposals from selected operations at the bottom of this page.") }}
 {% else %}{% set blocking = inv.diagnostics|selectattr("severity", "equalto", "error")|selectattr("scope", "equalto", "document")|list %}
-{{ m.next("fix the API description", "No operation can be used for tools" ~ (" because the whole document was rejected: " ~ blocking|map(attribute="message")|join("; ") if blocking else "") ~ "." ~ (" Raise MAX_OPERATIONS in .env, restart Team C and add the description again." if blocking|selectattr("code", "equalto", "operation_limit")|list else "") ~ " Details are under Warnings from discovery below.") }}{% endif %}
+{{ m.next("fix the API description", "No operation can be used for tools" ~ (" because the whole document was rejected: " ~ blocking|map(attribute="message")|join("; ") if blocking else "") ~ "." ~ (" Raise TOOLS_MAX_OPERATIONS in .env, restart Team C and add the description again." if blocking|selectattr("code", "equalto", "operation_limit")|list else "") ~ " Details are under Warnings from discovery below.") }}{% endif %}
 
 {% macro op_row(op) %}
 <tr><td><code>{{ op.method }} {{ op.path }}</code></td>

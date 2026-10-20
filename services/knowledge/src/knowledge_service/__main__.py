@@ -233,7 +233,7 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("export-schemas")
     p.set_defaults(func=cmd_export_schemas)
 
-    p = sub.add_parser("db", help="unified SQLite data layer (var/db/team_a.sqlite)")
+    p = sub.add_parser("db", help="unified SQLite data layer (var/db/knowledge.sqlite)")
     dsub = p.add_subparsers(dest="db_cmd", required=True)
     d = dsub.add_parser("build"); d.add_argument("--tenant", help="default: every tenant in data/corpus")
     d.add_argument("--reset", action="store_true", help="delete the database file first")

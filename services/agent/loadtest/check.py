@@ -3,7 +3,7 @@
     python -m loadtest.check --url http://127.0.0.1:8010 [--csv run_stats.csv]
 
 
-Reads GET /v1/_test/report (the server needs TEAM_B_ENABLE_TEST_ADMIN=1), prints per-stage p50/p95, the decisions
+Reads GET /v1/_test/report (the server needs AGENT_ENABLE_TEST_ADMIN=1), prints per-stage p50/p95, the decisions
 and the reasons the agent handed off, runs the safety checker and a recovery probe, and prints Locust's p50/p95 per
 endpoint from its --csv file when given. Exit code 1 on any problem.
 """

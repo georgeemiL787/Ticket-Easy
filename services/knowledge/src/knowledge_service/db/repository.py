@@ -4,7 +4,7 @@ Every function takes tenant_id and every query filters on it; an unknown tenant 
 missing record returns None. Connections are read-only.
 
 Search does not re-implement retrieval: it rebuilds the existing TenantIndex from database rows and calls
-knowledge_service.search.retrieval, so hybrid fusion, MIN_COSINE / MIN_BM25 and the RetrievalResult / empty-result
+knowledge_service.search.retrieval, so hybrid fusion, KNOWLEDGE_MIN_COSINE / KNOWLEDGE_MIN_BM25 and the RetrievalResult / empty-result
 contracts are exactly those of the file-based index.
 """
 

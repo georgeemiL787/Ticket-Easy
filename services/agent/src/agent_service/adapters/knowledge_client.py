@@ -1,4 +1,4 @@
-"""The real the knowledge service over HTTP: policy search, safety screen and rule checker (TEAM_B_MODE=live).
+"""The real knowledge service over HTTP: policy search, safety screen and rule checker (AGENT_BACKENDS=live).
 
 HttpEvidenceProvider is the EvidenceProvider plug and HttpPolicyGate is the PolicyGate plug. Both talk to the service in
 services/knowledge/ (POST /v1/knowledge/search, GET /v1/knowledge/passages, POST /v1/knowledge/past-tickets/search,

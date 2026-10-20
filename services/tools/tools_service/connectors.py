@@ -1,13 +1,13 @@
 """Connector loading shared by the web app, compiler and MCP executor.
 
 UI-managed destinations are explicitly confirmed and scoped to one connector.
-External connector files retain their existing SANDBOX_HOSTS contract.
+External connector files retain their existing TOOLS_SANDBOX_HOSTS contract.
 
 Every connector has one execution environment:
-- sandbox: the existing test destinations (`"sandbox": true`, SANDBOX_HOSTS or an owner-confirmed sandbox URL).
-- live_demo: an owner-configured REAL API (`"environment": "live_demo"`). It runs only while LIVE_DEMO_ENABLED is on,
-  only to a host listed in LIVE_DEMO_HOSTS, and only when every address the host resolves to is public, unless the
-  host is also listed in LIVE_DEMO_PRIVATE_HOSTS (a narrow exception for a development network). Live connectors keep
+- sandbox: the existing test destinations (`"sandbox": true`, TOOLS_SANDBOX_HOSTS or an owner-confirmed sandbox URL).
+- live_demo: an owner-configured REAL API (`"environment": "live_demo"`). It runs only while TOOLS_LIVE_DEMO_ENABLED is on,
+  only to a host listed in TOOLS_LIVE_DEMO_HOSTS, and only when every address the host resolves to is public, unless the
+  host is also listed in TOOLS_LIVE_DEMO_PRIVATE_HOSTS (a narrow exception for a development network). Live connectors keep
   their own credentials; a sandbox identity is never used against a live API, and the reverse.
 Records saved before environments existed have no `environment` key and keep meaning sandbox.
 """
@@ -141,10 +141,10 @@ def resolve_secret(ref, environ=None):
 def production_destination_problem(settings, url):
     """Why a production connector may not call `url` now, or None. Checked when configuring and again before every call."""
     if not settings.production_enabled:
-        return AppError("production_disabled", "Production execution is switched off (PRODUCTION_ENABLED); no request was sent", 403)
+        return AppError("production_disabled", "Production execution is switched off (TOOLS_PRODUCTION_ENABLED); no request was sent", 403)
     target = host_port(url)
     if target not in listed(settings.production_hosts):
-        return AppError("destination_not_allowed", f"{target} is not listed in PRODUCTION_HOSTS", 403)
+        return AppError("destination_not_allowed", f"{target} is not listed in TOOLS_PRODUCTION_HOSTS", 403)
     if target in listed(settings.production_private_hosts):
         return None  # development only: a local production-like deployment; empty in a real production setup
     host = urlparse(url).hostname or ""
@@ -161,10 +161,10 @@ def production_destination_problem(settings, url):
 def live_destination_problem(settings, url):
     """Why a live connector may not call `url` now, or None. Checked when configuring and again before every run."""
     if not settings.live_demo_enabled:
-        return AppError("live_demo_disabled", "Live Demo execution is switched off (LIVE_DEMO_ENABLED); no request was sent", 403)
+        return AppError("live_demo_disabled", "Live Demo execution is switched off (TOOLS_LIVE_DEMO_ENABLED); no request was sent", 403)
     target = host_port(url)
     if target not in listed(settings.live_demo_hosts):
-        return AppError("destination_not_allowed", f"{target} is not listed in LIVE_DEMO_HOSTS", 403)
+        return AppError("destination_not_allowed", f"{target} is not listed in TOOLS_LIVE_DEMO_HOSTS", 403)
     if target in listed(settings.live_demo_private_hosts):
         return None  # the operator's explicit exception for a development network
     host = urlparse(url).hostname or ""
@@ -175,5 +175,5 @@ def live_destination_problem(settings, url):
     unsafe = sorted(str(a) for a in addresses if not a.is_global or a.is_multicast)
     if not addresses or unsafe:
         return AppError("destination_unsafe", f"{host} resolves to a non-public address ({', '.join(unsafe) or 'none'}); "
-                        "a live connector must reach a public API (or the host must be listed in LIVE_DEMO_PRIVATE_HOSTS)", 403)
+                        "a live connector must reach a public API (or the host must be listed in TOOLS_LIVE_DEMO_PRIVATE_HOSTS)", 403)
     return None

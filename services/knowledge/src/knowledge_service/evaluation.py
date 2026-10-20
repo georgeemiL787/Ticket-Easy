@@ -134,8 +134,8 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
                       f"{r['no_answer_precision']:>8.2f} {r['no_answer_recall']:>7.2f}")
         best_cos, best_bm25 = pick_thresholds(rows)
         print(f"\nBest on dev (most questions correct, plateau centre, then stricter): "
-              f"MIN_COSINE={best_cos} MIN_BM25={best_bm25}")
-        print(f"\nConfidence floor on the top passage's score, at MIN_COSINE={best_cos} MIN_BM25={best_bm25}:")
+              f"KNOWLEDGE_MIN_COSINE={best_cos} KNOWLEDGE_MIN_BM25={best_bm25}")
+        print(f"\nConfidence floor on the top passage's score, at KNOWLEDGE_MIN_COSINE={best_cos} KNOWLEDGE_MIN_BM25={best_bm25}:")
         print(f"{'min_top':>8} {'correct':>8} {'recall@5':>9} {'na_prec':>8} {'na_rec':>7}")
         top_rows = []
         for top in SWEEP_TOP:
@@ -148,7 +148,7 @@ def eval_retrieval(tenant_id: str, split: str = "dev", sweep: bool = False) -> d
     min_cosine, min_bm25 = tenant_thresholds(tenant_id)
     min_top = tenant_min_top_score(tenant_id)
     r = run_retrieval(cases, index, embedder, min_cosine, min_bm25, min_top_score=min_top)
-    print(f"\nThresholds: MIN_COSINE={min_cosine} MIN_BM25={min_bm25}" + (f" min_top_score={min_top}" if min_top else ""))
+    print(f"\nThresholds: KNOWLEDGE_MIN_COSINE={min_cosine} KNOWLEDGE_MIN_BM25={min_bm25}" + (f" min_top_score={min_top}" if min_top else ""))
     print(f"recall@5            {r['recall_at_k']:.2%}  per style: {r['per_style']}")
     print(f"no-answer precision {r['no_answer_precision']:.2%}")
     print(f"no-answer recall    {r['no_answer_recall']:.2%}")

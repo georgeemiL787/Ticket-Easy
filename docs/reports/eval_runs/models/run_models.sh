@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # E5: the 155 labelled messages through the AI reader of each of the three Groq models, three processes at once.
-# Only the reader job's model changes (TEAM_B_LLM_MODEL_READER); same prompt, temperature 0, no backup model (so a failure
+# Only the reader job's model changes (AGENT_LLM_MODEL_READER); same prompt, temperature 0, no backup model (so a failure
 # shows as a failure), reasoning effort low for the gpt-oss models. Needs GROQ_KEY_n in the environment (no keys here).
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
@@ -12,12 +12,12 @@ keys() { local o="" n; for n in $1; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v" 
 run() {  # slug, model, effort, key numbers
   local slug="$1" model="$2" effort="$3" ks="$4"
   (
-    export TEAM_B_LLM=openai TEAM_B_LLM_BASE_URL=https://api.groq.com/openai/v1 TEAM_B_LLM_API_KEY="$(keys "$ks")"
-    export TEAM_B_LLM_MODEL="$model" TEAM_B_LLM_MODEL_READER="$model" TEAM_B_LLM_TIMEOUT_S=60 TEAM_B_LLM_MAX_WAIT_S=120
-    export TEAM_B_LLM_RPM_READER=30 TEAM_B_LLM_TPM_READER=8000
-    [ -n "$effort" ] && export TEAM_B_LLM_REASONING_EFFORT_READER="$effort"
-    export TEAM_B_USAGE_LOG="$RUNS/usage/nlu_$slug.jsonl" TEAM_B_USAGE_RUN_LABEL="nlu_$slug"
-    rm -f "$TEAM_B_USAGE_LOG"
+    export AGENT_LLM=openai AGENT_LLM_BASE_URL=https://api.groq.com/openai/v1 AGENT_LLM_API_KEY="$(keys "$ks")"
+    export AGENT_LLM_MODEL="$model" AGENT_LLM_MODEL_READER="$model" AGENT_LLM_TIMEOUT_S=60 AGENT_LLM_MAX_WAIT_S=120
+    export AGENT_LLM_RPM_READER=30 AGENT_LLM_TPM_READER=8000
+    [ -n "$effort" ] && export AGENT_LLM_REASONING_EFFORT_READER="$effort"
+    export AGENT_USAGE_LOG="$RUNS/usage/nlu_$slug.jsonl" AGENT_USAGE_RUN_LABEL="nlu_$slug"
+    rm -f "$AGENT_USAGE_LOG"
     "$PY" "$RUNS/models/run_nlu_model.py" ${DATA:+--data "$DATA"} --out "$RUNS/models/nlu_$slug.jsonl" > "$RUNS/models/nlu_$slug.txt" 2>&1
     echo "$slug exit=$?"
   ) &

@@ -1,6 +1,6 @@
 """Optional AI rewording of replies, with a fact check that guarantees the model adds nothing.
 
-The agent's replies come from templates. When TEAM_B_LLM_REWRITE=1 the model may reword a reply so it sounds more
+The agent's replies come from templates. When AGENT_LLM_REWRITE=1 the model may reword a reply so it sounds more
 natural, but its text is only used if check_grounded finds no number, date, id, amount, link or citation that is not in
 the original (and none of the original's was dropped). Otherwise, and on any model error, the original template text is
 sent. Only low-stakes replies are eligible (see REWRITABLE): never a confirmation, an execution result, a refusal or a

@@ -31,7 +31,7 @@
 <h3>Fetch from a URL</h3>
 <p class="small muted">Paste the API's docs page (for example <code>/docs</code> or <code>/redoc</code>) or its OpenAPI JSON/YAML link. No redirects, credentials, cookies or proxies; no API operation is called.</p>
 {% if fetch_hosts %}<p class="small muted">Allowed hosts: {{ fetch_hosts|join(', ') }}</p>
-{% else %}<p class="notice small">Fetching is turned off. Add the API's <code>host:port</code> to <code>OPENAPI_FETCH_HOSTS</code> in <code>.env</code> (for example <code>OPENAPI_FETCH_HOSTS=127.0.0.1:8000</code>) and restart Team C.</p>{% endif %}
+{% else %}<p class="notice small">Fetching is turned off. Add the API's <code>host:port</code> to <code>TOOLS_OPENAPI_FETCH_HOSTS</code> in <code>.env</code> (for example <code>TOOLS_OPENAPI_FETCH_HOSTS=127.0.0.1:8000</code>) and restart Team C.</p>{% endif %}
 <form method="post" action="/actions/fetch">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input name="url" type="url" required placeholder="http://{{ fetch_hosts[0] if fetch_hosts else '127.0.0.1:8000' }}/docs"><button {% if not fetch_hosts %}disabled{% endif %}>Fetch and discover</button></form>
 </div>
 </div>

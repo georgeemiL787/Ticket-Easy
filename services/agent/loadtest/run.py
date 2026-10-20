@@ -1,5 +1,5 @@
 """Load and chaos run without Locust: N customers at once, optional failures, then the checker. Works on the app in the
-same process (default) or on a running server (--url, which must run with TEAM_B_ENABLE_TEST_ADMIN=1).
+same process (default) or on a running server (--url, which must run with AGENT_ENABLE_TEST_ADMIN=1).
 
     python -m loadtest.run --customers 50 --conversations 6 --chaos rule_checker:30@5 --chaos shop:30@15
 
@@ -152,7 +152,7 @@ async def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--chaos", action="append", default=[], help="PLUG:SECONDS@START, repeatable")
     parser.add_argument("--p95-limit", type=float, default=3000.0, help="fail above this many ms (0: no limit)")
-    parser.add_argument("--url", help="a running server (needs TEAM_B_ENABLE_TEST_ADMIN=1); default: in this process")
+    parser.add_argument("--url", help="a running server (needs AGENT_ENABLE_TEST_ADMIN=1); default: in this process")
     args = parser.parse_args(argv)
 
     async with AsyncExitStack() as stack:

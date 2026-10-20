@@ -1,7 +1,7 @@
 # Launch readiness review
 
 Checked on 2026-10-06 against the launch checklist in `docs/plan/Ticket-Easy_Implementation_Plan.md` (section 5.6), on
-branch `team-b` at the commit after A16. Every line says what was run or read, so each can be repeated.
+branch `agent` at the commit after A16. Every line says what was run or read, so each can be repeated.
 
 ## Verdict: NOT READY. Do not launch to real customers yet.
 
@@ -30,7 +30,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
    within 5). The agent still fails safe here (it asks or hands off instead of acting), which is why the safety tests
    pass, but too many customers would be asked to repeat themselves or sent to a person.
    Next step: work through the worst topics in the report (K5, K7, K2, T10 and the Arabic and Arabizi order-status
-   phrasings), then run the same set with the AI model on (`make demo-full`, or `TEAM_B_LLM=openrouter`): that run has
+   phrasings), then run the same set with the AI model on (`make demo-full`, or `AGENT_LLM=openrouter`): that run has
    never been made. Owner: Track B (understanding, evidence), with Track A for the action topics.
 2. **Handoff briefings (item 4) are not scored by a person.** The automatic check passes for every case opened in all 45
    scenarios (`tests/integration/test_sync1_briefings.py`, 45 passed), meaning each briefing has the required parts.
@@ -41,7 +41,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
 ## Evidence, item by item
 
 ### 1. All phase goals met and demos working: PARTLY
-- Prompts A1 to A16 and the matching Track B prompts are done and merged on `team-b`.
+- Prompts A1 to A16 and the matching Track B prompts are done and merged on `agent`.
 - Whole test suite after the last merge: 2444 passed (`pytest -q` in `services/agent/`); dashboard: typecheck, build and 38 tests
   passed (`npm run build`, `npm test`).
 - 45 scenarios (the three example conversations among them) all pass: `tests/integration/test_scenarios.py` (part of
@@ -83,15 +83,15 @@ review has not been done either.
   the dashboard, cookies are HttpOnly and SameSite=Lax and signed, writes need the CSRF token, five wrong passwords lock
   that email for 15 minutes.
 - Passwords are stored as argon2 hashes.
-- To do before real use: set `TEAM_B_SECRET_KEY` (otherwise everyone signs in again after each restart) and
-  `TEAM_B_COOKIE_SECURE=1` behind https. Check that `TEAM_B_ENABLE_TEST_ADMIN` is not set.
+- To do before real use: set `AGENT_SECRET_KEY` (otherwise everyone signs in again after each restart) and
+  `AGENT_COOKIE_SECURE=1` behind https. Check that `AGENT_ENABLE_TEST_ADMIN` is not set.
 - `/inbox` stays: the dashboard's Escalations page does claim, assign, approve, release, give back and resolve, but it
   cannot write a reply to the customer. So `/inbox` is not removed.
 
 ### 6. Personal data in logs; deletion on schedule: PASS
 - `handoff/redaction.py` hides phone, email, card, one-time code and address before text goes into a trace or a log;
   covered by the unit tests and the leak scan (no order data in any reply or trace before the customer is verified).
-- `retention.py` deletes conversations, traces and finished cases older than `TEAM_B_RETENTION_DAYS` (default 90) in a
+- `retention.py` deletes conversations, traces and finished cases older than `AGENT_RETENTION_DAYS` (default 90) in a
   loop started with the service; open and claimed cases and their conversations are kept. Tested in
   `tests/unit/brain/test_retention.py` (part of the 2444 passed).
 - Not covered: the server's own web-server logs and any backup file you take (they hold the same data as the database);

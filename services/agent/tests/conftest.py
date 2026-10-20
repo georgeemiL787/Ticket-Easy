@@ -28,12 +28,12 @@ def tenants_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def settings(tenants_dir: Path, tmp_path: Path) -> Settings:
-    return make_settings(tmp_path, mode="standin", fixed_today=FIXED_TODAY, config_dir=tenants_dir)
+    return make_settings(tmp_path, backends="simulated", fixed_today=FIXED_TODAY, config_dir=tenants_dir)
 
 
 @pytest.fixture
 def container(settings: Settings) -> Container:
-    """Simulated mode, the store from TEAM_B_STORE (memory by default), a clock fixed at 2026-09-28."""
+    """Simulated mode, the store from AGENT_STORE (memory by default), a clock fixed at 2026-09-28."""
     return build_container(settings)
 
 

@@ -111,7 +111,7 @@ class Connectors:
     def save(self, pid, url, context_fields, confirmed=False, environment=SANDBOX, fixtures=None, secret_ref=None):
         """Save the owner's destination for this business. A sandbox needs the sandbox confirmation; a Live Demo
         connector needs the owner's confirmation that it is the real API they may call, Live Demo switched on and the
-        host in the operator's LIVE_DEMO_HOSTS (checked again before every call). Each environment keeps its own
+        host in the operator's TOOLS_LIVE_DEMO_HOSTS (checked again before every call). Each environment keeps its own
         connector and credentials. Only a sandbox may declare test fixtures."""
         view = self.proposals.view(pid)
         if fixtures and environment != SANDBOX:
@@ -305,7 +305,7 @@ class Connectors:
         elif environment == LIVE_DEMO:
             problem = live_destination_problem(self.settings, connector["base_url"])
         elif host_port(connector["base_url"]) not in listed(self.settings.sandbox_hosts) and not connector.get("confirmed_by"):
-            problem = AppError("destination_not_allowed", "The sandbox host is neither in SANDBOX_HOSTS nor confirmed by the owner")
+            problem = AppError("destination_not_allowed", "The sandbox host is neither in TOOLS_SANDBOX_HOSTS nor confirmed by the owner")
         add("configuration", "failed" if problem else "ok", f"{problem.code}: {problem.message}" if problem else
             f"{environment} connector to {host_port(connector['base_url'])}")
         reachable = False

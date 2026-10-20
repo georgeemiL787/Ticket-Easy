@@ -138,7 +138,7 @@ def build(tmp_path: Path, fake: Fake, rest: ToolsRestClient, **options: Any) -> 
     config.update(api_url="http://127.0.0.1:9", builder_url="http://127.0.0.1:9")
     path = tmp_path / "team_c.json"
     path.write_text(json.dumps(config), encoding="utf-8")
-    container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, team_c_config=path, **options))
+    container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, tools_config=path, **options))
     assert container.team_c is not None
     container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     return container
@@ -288,7 +288,7 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
     config.update(api_url="http://127.0.0.1:9")
     path = tmp_path / "team_c.json"
     path.write_text(json.dumps(config), encoding="utf-8")
-    container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, team_c_config=path))
+    container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, tools_config=path))
     assert container.team_c is not None
     container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     async for http in serve(container):
@@ -371,11 +371,11 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
         admin = {"X-CSRF-Token": login.json()["csrf_token"]}
         page = (await http.get(URL, params={"tenant_id": T})).json()
         assert page["production_connector"] is True and page["proposals"][0]["promotable"] is True
-        rest.refuse = "This tool cannot be promoted yet: smoke: PRODUCTION_SMOKE_CONTEXT is not configured"
+        rest.refuse = "This tool cannot be promoted yet: smoke: TOOLS_PRODUCTION_SMOKE_CONTEXT is not configured"
         refused = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)
         assert refused.status_code == 409 and refused.json()["error"]["code"] == "PROMOTION_REFUSED"
         assert (
-            "PRODUCTION_SMOKE_CONTEXT is not configured" in refused.json()["error"]["message"]
+            "TOOLS_PRODUCTION_SMOKE_CONTEXT is not configured" in refused.json()["error"]["message"]
         )  # The tools service's own words
         rest.refuse = None
         done = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)

@@ -14,7 +14,7 @@ Two earlier agent runs (`agent_on`, `agent_on_v2`) were thrown away as a measure
 planner call wait about a minute (8K tokens a minute against a 3,500-token prompt), the agent loop's 20-second turn limit
 then cut the turn off, and the message fell back to today's flow with only a phone number to go on. That produced most of the
 "wrong" outcomes (decision accuracy 58% and 71%). Run v3 raised the limit for the evaluation
-(`TEAM_B_AGENT_TURN_TIMEOUT_S=240`, `TEAM_B_LLM_MAX_WAIT_S=120`); the evaluation report now counts the fallbacks and why.
+(`AGENT_PLANNING_TURN_TIMEOUT_S=240`, `AGENT_LLM_MAX_WAIT_S=120`); the evaluation report now counts the fallbacks and why.
 Between the first and second run two small fixes were also made: asking for a phone number is labelled "verify identity" as in
 today's flow, and an out-of-scope reply is a refusal.
 
@@ -53,7 +53,7 @@ Shadow run (4 conversations): the agent was asked on 3 turns and its first move 
 ## Decision: agent mode stays OFF by default
 
 Not every target holds (reply quality, calls and time are worse; escalation recall is equal but not 100%).
-`TEAM_B_AGENT_MODE` keeps its current default and `.env.example` is unchanged.
+`AGENT_PLANNING_MODE` keeps its current default and `.env.example` is unchanged.
 
 Smallest changes that would most likely fix it, to be re-measured:
 1. A shorter planner prompt (send only the tools the message needs): fewer tokens, less waiting under a token limit.

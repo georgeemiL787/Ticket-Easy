@@ -54,7 +54,7 @@ async def test_migrations_run_once_and_are_safe_to_repeat(tmp_path: Path) -> Non
 
 
 async def test_the_database_folder_is_created(tmp_path: Path) -> None:
-    db = SqliteDatabase(tmp_path / "var" / "nested" / "team_b.sqlite3")
+    db = SqliteDatabase(tmp_path / "var" / "nested" / "agent.sqlite3")
     assert await db.schema_version() == 8
 
 
@@ -152,7 +152,7 @@ async def test_a_failed_save_leaves_the_stored_session_untouched(sqlite_db: Sqli
 
 
 async def test_a_conversation_continues_after_the_container_is_rebuilt(tmp_path: Path) -> None:
-    settings = Settings(store="sqlite", db_path=tmp_path / "team_b.sqlite3", fixed_today=date(2026, 9, 28))
+    settings = Settings(store="sqlite", db_path=tmp_path / "agent.sqlite3", fixed_today=date(2026, 9, 28))
     first = build_container(settings)
     assert first.orchestrator is not None
     await first.orchestrator.handle_turn(T, C, "hello")

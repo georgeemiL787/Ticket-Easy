@@ -230,7 +230,7 @@ async def test_a_run_in_batches_gives_the_same_report_as_one_run(tmp_path: Path)
     from agent_service.config import Settings
     from agent_service.evaluation.conversations import evaluate, load_set, sample
 
-    settings = Settings.from_env({"TEAM_B_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
+    settings = Settings.from_env({"AGENT_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
     conversations = sample(load_set(), 2)  # 8 conversations
     whole = await evaluate(conversations, settings)
     checkpoint = tmp_path / "partial.jsonl"
@@ -262,6 +262,6 @@ async def test_a_conversation_during_which_the_budget_ran_out_is_not_recorded(tm
     with pytest.raises(RateBudgetExceeded):
         await counting.complete_json(system="", user="", schema_hint={})
     assert counting.budget_hit
-    settings = Settings.from_env({"TEAM_B_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
+    settings = Settings.from_env({"AGENT_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
     done = await evaluate(sample(load_set(), 1), settings, checkpoint=tmp_path / "p.jsonl", batch=2)
     assert done.remaining == 2 and len((tmp_path / "p.jsonl").read_text(encoding="utf-8").splitlines()) == 2

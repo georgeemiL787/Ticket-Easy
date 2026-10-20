@@ -45,7 +45,7 @@ jobs:
       matrix:
         store: [memory, sqlite]
     env:
-      TEAM_B_STORE: ${{ matrix.store }}
+      AGENT_STORE: ${{ matrix.store }}
     defaults:
       run:
         working-directory: services/agent
@@ -172,6 +172,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the agent image
-        run: docker build -f services/agent/Dockerfile -t ticket-easy-team-b:ci .
+        run: docker build -f services/agent/Dockerfile -t ticket-easy-agent:ci .
       - name: Build the knowledge image
-        run: docker build -f services/knowledge/Dockerfile -t ticket-easy-team-a:ci .
+        run: docker build -f services/knowledge/Dockerfile -t ticket-easy-knowledge:ci .

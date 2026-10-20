@@ -308,13 +308,13 @@ def test_enforcement_needs_review_and_a_change_invalidates_built_artifacts(built
 
 
 def test_normal_flow_never_reviews_enforcement_on_the_owners_behalf(sandbox):
-    """DEV_FAST_TRACK is off by default: nothing on the normal path reviews enforcement for the owner."""
+    """TOOLS_DEV_FAST_TRACK is off by default: nothing on the normal path reviews enforcement for the owner."""
     _, client, settings, _, pid, target = sandbox
     p = approved(client, pid)
     assert settings.dev_fast_track is False
     # A fresh checkout is manual too: the shipped example config keeps the shortcut off.
     example = (Path(__file__).resolve().parents[1] / ".env.example").read_text(encoding="utf-8")
-    assert "DEV_FAST_TRACK=false" in example
+    assert "TOOLS_DEV_FAST_TRACK=false" in example
     # With no configuration at all the build neither invents one nor reviews one; it compiles with
     # every requirement explicitly unenforced, so execution stays refused.
     made = build(client, pid, enforce=False)
@@ -342,7 +342,7 @@ def test_dev_fast_track_is_an_explicitly_labelled_development_shortcut(sandbox):
     caller_only = {r["id"]: dict(mechanism="delegated_user_credential") for r in p["requirements"] if r["kind"] == "caller_access"}
     fast = submit(client, pid, caller_only).json()
     assert fast["id"] != manual["id"] and fast["status"] == "approved"
-    assert "DEV_FAST_TRACK" in (fast["review_note"] or "")
+    assert "TOOLS_DEV_FAST_TRACK" in (fast["review_note"] or "")
 
 
 def test_identity_without_the_checked_context_field_is_refused(built):

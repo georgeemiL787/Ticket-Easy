@@ -45,7 +45,7 @@ jobs:
         working-directory: services/agent
     env:
       # the property test has four fixed seeds; this adds a fifth, so five different seeds must all hold
-      TEAM_B_EXTRA_SEEDS: "424242"
+      AGENT_EXTRA_SEEDS: "424242"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

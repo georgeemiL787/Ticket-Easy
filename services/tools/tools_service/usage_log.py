@@ -1,6 +1,6 @@
 """The token usage log: one JSON line per model request (one per provider attempt).
 
-Switched on by TEAM_C_USAGE_LOG (a file path; empty = off); TEAM_C_USAGE_RUN_LABEL tags a run. The line format is the same
+Switched on by TOOLS_USAGE_LOG (a file path; empty = off); TOOLS_USAGE_RUN_LABEL tags a run. The line format is the same
 as in the conversation and knowledge services (docs/reports/eval_runs/USAGE_LOG_FORMAT.md). A line never holds prompt,
 reply or document text, customer data or an API key (the key is only its position in the list). Writing is append-only and
 never raises: on a failure one warning is logged and the work carries on.

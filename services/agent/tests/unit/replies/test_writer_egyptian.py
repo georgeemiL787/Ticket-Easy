@@ -132,13 +132,13 @@ async def test_the_reviewer_checks_the_egyptian_text_too() -> None:
 
 
 def env(**extra: str) -> Settings:
-    base = {"TEAM_B_LLM": "ollama", "TEAM_B_LLM_MODEL": "qwen3:8b", "TEAM_B_LLM_REWRITE": "1"}
+    base = {"AGENT_LLM": "ollama", "AGENT_LLM_MODEL": "qwen3:8b", "AGENT_LLM_REWRITE": "1"}
     return Settings.from_env({**base, **extra})
 
 
 EGYPTIAN_ENV = {
-    "TEAM_B_LLM_BASE_URL_WRITER_EGYPTIAN": "http://127.0.0.1:11434/v1",
-    "TEAM_B_LLM_MODEL_WRITER_EGYPTIAN": "hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M",
+    "AGENT_LLM_BASE_URL_WRITER_EGYPTIAN": "http://127.0.0.1:11434/v1",
+    "AGENT_LLM_MODEL_WRITER_EGYPTIAN": "hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M",
 }
 
 

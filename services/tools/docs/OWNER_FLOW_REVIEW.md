@@ -38,7 +38,7 @@ On the database from the last E2E run, every approved proposal had 2 reconciliat
 - **Page:** checklist of what blocks approval → summary → *Who can use this tool* → *Questions* (**Save and check answers** in one step) → decision → build. Technical detail is collapsed. A first-pass quality rating is shown as context until a check re-rates it.
 - **Build:** *Save connector and build artifact* in one step. Build errors carry a `recovery_url`. `GET /actions/*` redirects to the matching page. A new `/proposals` overview groups proposals by next step.
 - **Prompts per task:** `system_prompt(kind)` assembles the shared rules plus the task's section (triage 2.3K chars, generation 7.5K, was 12.1K for all).
-- **Retrieval:** index entries list up to 32 response fields. Triage starts from `TRIAGE_INDEX_CHARS` (8,000, never above `CAPABILITY_INDEX_CHARS`).
+- **Retrieval:** index entries list up to 32 response fields. Triage starts from `TOOLS_TRIAGE_INDEX_CHARS` (8,000, never above `TOOLS_CAPABILITY_INDEX_CHARS`).
 
 Unchanged: approval still requires a successful current reconciliation, confirmed requirements and a passing quality gate (`decide`); policies, artifacts and approvals stay hash-bound; sandbox publication stays separate from production (`Runtime-ready: no`).
 
@@ -82,4 +82,4 @@ Visible inputs on an open proposal: 19 → 12; page height 5,669 → 4,620 px.
 2. The answer assistant is unit-tested with a substitute; its live draft quality is not yet evaluated.
 3. Goal ranking is lexical ("delivery" does not find "shipping"), so such requests still need extra retrieval rounds. A synonym/tag pass or embedding ranking would cut them.
 4. A reconciliation that creates a material revision still forces a second check on the new version. Copying findings for unchanged questions across versions would remove it.
-5. The evaluation is small (3 goals, 1 API). Extend it to the NileStay and service-desk fixtures before tuning `TRIAGE_INDEX_CHARS` further.
+5. The evaluation is small (3 goals, 1 API). Extend it to the NileStay and service-desk fixtures before tuning `TOOLS_TRIAGE_INDEX_CHARS` further.

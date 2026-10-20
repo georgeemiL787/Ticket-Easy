@@ -156,7 +156,7 @@ CREATE TABLE policy_passages (
 CREATE INDEX passages_by_document ON policy_passages(tenant_id, document_id, version);
 
 -- Keyword index over the already-normalized tokens. Used for ad-hoc lookups and `db query`;
--- ranking in search_knowledge still uses the existing BM25 + cosine fusion so MIN_BM25 keeps its meaning.
+-- ranking in search_knowledge still uses the existing BM25 + cosine fusion so KNOWLEDGE_MIN_BM25 keeps its meaning.
 CREATE VIRTUAL TABLE passages_fts USING fts5(
     tokens, tenant_id UNINDEXED, passage_id UNINDEXED,
     content='policy_passages', content_rowid='rowid', tokenize='unicode61 remove_diacritics 0'

@@ -36,7 +36,7 @@ def test_the_image_is_built_in_two_stages_and_runs_without_privileges() -> None:
     assert "COPY --from=dashboard" in DOCKERFILE and "npm run build" in DOCKERFILE
     assert re.search(r"^USER app$", DOCKERFILE, flags=re.MULTILINE) and "useradd" in DOCKERFILE
     assert "HEALTHCHECK" in DOCKERFILE and "/health" in DOCKERFILE and "8010" in DOCKERFILE
-    assert "TEAM_B_ENABLE_TEST_ADMIN" not in DOCKERFILE  # the test endpoints are never in the image by default
+    assert "AGENT_ENABLE_TEST_ADMIN" not in DOCKERFILE  # the test endpoints are never in the image by default
 
 
 def test_the_image_installs_the_service_in_place_so_it_finds_its_data_folders() -> None:
@@ -47,10 +47,10 @@ def test_the_image_installs_the_service_in_place_so_it_finds_its_data_folders() 
 
 def test_compose_has_the_two_profiles_and_health_checks() -> None:
     assert 'profiles: ["light"]' in COMPOSE and COMPOSE.count('profiles: ["full"]') == 2
-    assert "ollama/ollama" in COMPOSE and "TEAM_B_LLM: ollama" in COMPOSE and "qwen3:8b" in COMPOSE
+    assert "ollama/ollama" in COMPOSE and "AGENT_LLM: ollama" in COMPOSE and "qwen3:8b" in COMPOSE
     assert COMPOSE.count("healthcheck:") >= 2 and "service_healthy" in COMPOSE
-    assert "team_b_data:/data" in COMPOSE and "TEAM_B_STORE: sqlite" in COMPOSE
-    assert "TEAM_B_ENABLE_TEST_ADMIN" not in COMPOSE
+    assert "agent_data:/data" in COMPOSE and "AGENT_STORE: sqlite" in COMPOSE
+    assert "AGENT_ENABLE_TEST_ADMIN" not in COMPOSE
 
 
 def test_the_root_makefile_has_the_four_commands_and_prints_the_urls() -> None:
@@ -72,7 +72,7 @@ async def test_seed_demo_fills_the_database_once(
 ) -> None:
     from agent_service.__main__ import seed_demo
 
-    monkeypatch.setenv("TEAM_B_DB_PATH", str(tmp_path / "demo.sqlite3"))
+    monkeypatch.setenv("AGENT_DB_PATH", str(tmp_path / "demo.sqlite3"))
     assert await seed_demo(6, 2, force=False) == 0
     assert "seeded 6 conversations" in capsys.readouterr().out
     assert await seed_demo(6, 2, force=False) == 0
@@ -91,8 +91,8 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
     from agent_service.config import Settings
     from agent_service.container import build_container
 
-    monkeypatch.setenv("TEAM_B_DB_PATH", str(tmp_path / "demo.sqlite3"))
-    monkeypatch.setenv("TEAM_B_FIXED_TODAY", "2026-09-28")
+    monkeypatch.setenv("AGENT_DB_PATH", str(tmp_path / "demo.sqlite3"))
+    monkeypatch.setenv("AGENT_FIXED_TODAY", "2026-09-28")
     assert await seed_demo(40, 6, force=False) == 0
     container = build_container(Settings.from_env().model_copy(update={"store": "sqlite"}))  # the clock the service has
     assert container.alerts is not None
@@ -107,7 +107,7 @@ async def test_the_demo_seed_ends_at_the_services_own_now_and_leaves_alerts_to_s
 def test_the_demo_env_example_turns_the_ai_replies_on_but_the_code_defaults_stay_off() -> None:
     from agent_service.config import Settings
 
-    for name in ("TEAM_B_LLM_REWRITE", "TEAM_B_LLM_POLICY", "TEAM_B_LLM_KNOWLEDGE", "TEAM_B_LLM_REVIEW"):
+    for name in ("AGENT_LLM_REWRITE", "AGENT_LLM_POLICY", "AGENT_LLM_KNOWLEDGE", "AGENT_LLM_REVIEW"):
         assert re.search(rf"^{name}=1\b", ENV_EXAMPLE, flags=re.MULTILINE), name
         assert f"{name}: ${{{name}:-1}}" in COMPOSE  # the full profile starts the AI model, so they are on there
     assert "need an AI model" in ENV_EXAMPLE.lower() or "NEED an AI model" in ENV_EXAMPLE

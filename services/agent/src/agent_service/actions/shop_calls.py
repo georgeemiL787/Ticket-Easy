@@ -108,7 +108,7 @@ def output_complete(tool: ToolSpec | None, data: dict[str, Any]) -> bool:
     return all(field in data for field in required)
 
 
-PERMANENT_FAILURES = ("IDENTITY_NOT_MAPPED", "TEAM_C_REJECTED")
+PERMANENT_FAILURES = ("IDENTITY_NOT_MAPPED", "TOOLS_REJECTED")
 
 
 def failed_read(ctx: TurnContext, what: str) -> Step:

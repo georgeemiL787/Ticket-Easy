@@ -171,7 +171,7 @@ class TenantConfig(FrozenModel):
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     intents: dict[str, IntentSpec] = Field(default_factory=dict)
     conflicting_intents: tuple[tuple[str, str], ...] = ()  # pairs that cannot both be wanted: ask which one
-    agent_mode: AgentMode | None = None  # on | off | shadow; unset: the service setting TEAM_B_AGENT_MODE
+    agent_mode: AgentMode | None = None  # on | off | shadow; unset: the service setting AGENT_PLANNING_MODE
     managers: tuple[str, ...] = ()  # names that may reassign cases, until logins give people roles
     # Set by a bundle (domain/bundle.py) when this configuration comes from one; never part of the file or its hash.
     bundle_version: int | None = Field(default=None, exclude=True)

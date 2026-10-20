@@ -53,7 +53,7 @@ export function ReplayPanel({ tenant, conversationId }: { tenant: string; conver
           <p className="muted">{t("replay.explain")}</p>
           <label>
             <span>{t("replay.changes")}</span>
-            <textarea rows={3} dir="ltr" value={text} placeholder="TEAM_B_AGENT_MODE=off" onChange={(e) => setText(e.target.value)} />
+            <textarea rows={3} dir="ltr" value={text} placeholder="AGENT_PLANNING_MODE=off" onChange={(e) => setText(e.target.value)} />
           </label>
           <button type="button" disabled={busy} onClick={run}>
             {busy ? t("replay.running") : t("replay.run")}

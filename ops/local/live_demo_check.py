@@ -8,7 +8,7 @@ provider for the tools service (services/tools/.env). Every owner decision is ma
   2. the owner's tool request; the model triages and proposes    7. The tools service's real connection check
   3. answers, access policy, reconciliation (model), approval    8. a live test: a real call, judged by the tools service
   4. a Live Demo connector to the real base URL (operator's      9. publish as live_demo (never production)
-     LIVE_DEMO_HOSTS + owner confirmation)                       10. The tools service's real MCP server, through the agent's MCP client:
+     TOOLS_LIVE_DEMO_HOSTS + owner confirmation)                       10. The tools service's real MCP server, through the agent's MCP client:
   5. the artifact build (records environment live_demo)              discover, call, compare with an independent read of
                                                                      the same API, invalid arguments, a real not-found,
                                                                      disable -> refused, republish (unless --leave-disabled)
@@ -151,7 +151,7 @@ async def through_mcp(state: dict[str, Any], api: dict[str, Any]) -> dict[str, A
 
     python = ROOT / "services" / "tools" / ".venv" / ("Scripts/python.exe" if (ROOT / "services" / "tools" / ".venv" / "Scripts").exists() else "bin/python")
     env = {"PYTHONPATH": ".", **{k: v for k, v in live_settings().items() if k.startswith("LIVE_DEMO_") and k in (
-        "LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")}}  # fmt: skip
+        "TOOLS_LIVE_DEMO_ENABLED", "TOOLS_LIVE_DEMO_HOSTS", "TOOLS_LIVE_DEMO_PRIVATE_HOSTS", "TOOLS_LIVE_DEMO_CALLS_PER_MINUTE")}}  # fmt: skip
     session = McpStdioSession([str(python), "-m", "tools_service.mcp_server", "--business-id", state["business_id"], "--identity", "demo",
                                "--database", "data/integration.sqlite3"], cwd=str(ROOT / "services" / "tools"), env=env)  # fmt: skip
     await session.start()
@@ -229,8 +229,8 @@ def main() -> int:
         step("4. Live Demo connector (operator allowlist + owner confirmation)")
         r = owner.http.post(f"/api/v1/proposals/{pid}/connectors", json=dict(base_url=api["base_url"], environment="live_demo", confirmed=True))
         if r.status_code != 200:
-            raise SystemExit(f"the Live Demo connector was refused: {r.text[:400]}\nSet LIVE_DEMO_ENABLED=true and add the API's host:port to "
-                             "LIVE_DEMO_HOSTS in ops/local/live_demo.env, then restart Team C.")
+            raise SystemExit(f"the Live Demo connector was refused: {r.text[:400]}\nSet TOOLS_LIVE_DEMO_ENABLED=true and add the API's host:port to "
+                             "TOOLS_LIVE_DEMO_HOSTS in ops/local/live_demo.env, then restart Team C.")
         state["connector_id"] = r.json()["id"]
         save()
     check("the connector is a Live Demo connector to the real API", state["connector_id"].startswith("live-"), state["connector_id"])

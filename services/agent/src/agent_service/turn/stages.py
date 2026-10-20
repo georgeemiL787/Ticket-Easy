@@ -691,7 +691,7 @@ async def handler(ctx: TurnContext) -> str:
 
 
 async def queue(ctx: TurnContext) -> str:
-    """After a completed request, run the next queued one (at most Deps.max_queued_runs, TEAM_B_QUEUE_MAX_RUNS)."""
+    """After a completed request, run the next queued one (at most Deps.max_queued_runs, AGENT_QUEUE_MAX_RUNS)."""
     session, ran = ctx.session, 0
     cap = ctx.deps.max_queued_runs
     while ctx.step is not None and ctx.step.decision in COMPLETED and session.intent_queue and ran < cap:

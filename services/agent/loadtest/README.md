@@ -26,7 +26,7 @@ greetings, in English, Egyptian Arabic and Arabizi), then prints:
 ```bash
 pip install -r loadtest/requirements.txt
 # terminal 1: the demo date, the test-only endpoints and no rate limit
-TEAM_B_FIXED_TODAY=2026-09-28 TEAM_B_ENABLE_TEST_ADMIN=1 TEAM_B_RATE_LIMIT_PER_MIN=100000 make run
+AGENT_FIXED_TODAY=2026-09-28 AGENT_ENABLE_TEST_ADMIN=1 AGENT_RATE_LIMIT_PER_MIN=100000 make run
 # terminal 2: 50 customers for 3 minutes; CHAOS_SECONDS=30 also switches each simulated service off for 30 s, one by one
 CHAOS_SECONDS=30 locust -f loadtest/locustfile.py --headless -u 50 -r 10 -t 3m \
     --host http://127.0.0.1:8010 --csv loadtest/out/run
@@ -34,7 +34,7 @@ CHAOS_SECONDS=30 locust -f loadtest/locustfile.py --headless -u 50 -r 10 -t 3m \
 python -m loadtest.check --url http://127.0.0.1:8010 --csv loadtest/out/run_stats.csv
 ```
 
-`TEAM_B_ENABLE_TEST_ADMIN=1` adds `/v1/_test/*` (switch a plug off for N seconds, read the shop audit log and the traces).
+`AGENT_ENABLE_TEST_ADMIN=1` adds `/v1/_test/*` (switch a plug off for N seconds, read the shop audit log and the traces).
 It must never be set in production. Without it those URLs do not exist.
 
 ## What the checker proves (loadtest/checker.py)

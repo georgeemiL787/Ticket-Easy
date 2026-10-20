@@ -95,7 +95,7 @@ def decode_cursor(cursor: str) -> tuple[int, datetime, str]:
 
 class AgentIn(BaseModel):
     """Who is acting. When people sign in, the signed-in person is the actor and `agent` is ignored; without sign-in
-    (TEAM_B_AUTH_REQUIRED=0) it is a plain name."""
+    (AGENT_AUTH_REQUIRED=0) it is a plain name."""
 
     model_config = ConfigDict(extra="forbid")
 

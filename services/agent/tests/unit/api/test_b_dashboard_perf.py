@@ -42,7 +42,7 @@ async def fill(db: SqliteDatabase, rows: int) -> None:
 @pytest.mark.slow
 async def test_the_overview_of_100k_turns_takes_under_300_ms_on_sqlite(tmp_path: Path) -> None:
     container = build_container(make_settings(tmp_path, store="sqlite"))
-    await fill(SqliteDatabase(tmp_path / "team_b.sqlite3"), ROWS)
+    await fill(SqliteDatabase(tmp_path / "agent.sqlite3"), ROWS)
     app = create_app(container=container)
     params = {
         "tenant_id": T,

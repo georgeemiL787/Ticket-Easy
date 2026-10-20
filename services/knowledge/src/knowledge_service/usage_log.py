@@ -1,6 +1,6 @@
 """The token usage log: one JSON line per request to an AI model or embedding server.
 
-Switched on by TEAM_A_USAGE_LOG (a file path; empty = off); TEAM_A_USAGE_RUN_LABEL tags a run. The line format is the
+Switched on by KNOWLEDGE_USAGE_LOG (a file path; empty = off); KNOWLEDGE_USAGE_RUN_LABEL tags a run. The line format is the
 same as in the conversation and tool services (docs/reports/eval_runs/USAGE_LOG_FORMAT.md). A line never holds prompt,
 reply or document text, customer data or an API key. Writing is append-only and never raises: on a failure one warning
 is logged and the work carries on.

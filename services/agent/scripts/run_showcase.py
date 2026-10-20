@@ -27,8 +27,8 @@ def load_env() -> None:
         if line and not line.startswith("#") and "=" in line:
             key, _, value = line.partition("=")
             os.environ.setdefault(key.strip(), value.strip())
-    os.environ["TEAM_B_STORE"] = "memory"
-    os.environ["TEAM_B_LOG_JSON"] = "true"
+    os.environ["AGENT_STORE"] = "memory"
+    os.environ["AGENT_LOG_JSON"] = "true"
 
 
 async def main(names: list[str]) -> int:
@@ -43,7 +43,7 @@ async def main(names: list[str]) -> int:
         f"# Showcase transcript ({date.today()})\n",
         f"AI model: {settings.llm} / {settings.llm_model}; "
         f"rewrite={settings.llm_rewrite} policy_agent={settings.llm_policy} "
-        f"knowledge={settings.llm_knowledge}; mode={settings.mode}\n",
+        f"knowledge={settings.llm_knowledge}; backends={settings.backends}\n",
     ]
     files = sorted((ROOT / "eval" / "showcase").glob("*.json"))
     for path in files:

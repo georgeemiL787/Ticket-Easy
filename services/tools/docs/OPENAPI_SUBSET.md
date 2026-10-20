@@ -63,7 +63,7 @@ The structured-output schema offers output and previous-output pointers per (ope
 
 ## URL fetch
 
-`POST /api/v1/businesses/{id}/specifications/fetch` with `{"url": ...}` (or the business page form). Requires `OPENAPI_FETCH_HOSTS` (comma-separated `host:port` allowlist); disabled when empty. One `GET`, no redirects, no credentials/cookies/proxy environment, 2 MiB cap, `OPENAPI_FETCH_TIMEOUT` seconds. Content type decides JSON vs YAML (extension only for generic types). The inventory records `source` (URL, fetch time, content type, SHA-256, bytes) and notes that it reflects the running server at fetch time.
+`POST /api/v1/businesses/{id}/specifications/fetch` with `{"url": ...}` (or the business page form). Requires `TOOLS_OPENAPI_FETCH_HOSTS` (comma-separated `host:port` allowlist); disabled when empty. One `GET`, no redirects, no credentials/cookies/proxy environment, 2 MiB cap, `TOOLS_OPENAPI_FETCH_TIMEOUT` seconds. Content type decides JSON vs YAML (extension only for generic types). The inventory records `source` (URL, fetch time, content type, SHA-256, bytes) and notes that it reflects the running server at fetch time.
 
 ## Unchanged from parser 1
 

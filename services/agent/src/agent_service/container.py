@@ -77,12 +77,12 @@ class Container:
     evidence: EvidenceProvider
     policy: PolicyGate
     capabilities: CapabilityClient
-    llm: LLMClient | None  # the general AI model (TEAM_B_LLM_*); None: rules only
+    llm: LLMClient | None  # the general AI model (AGENT_LLM_*); None: rules only
     sessions: SessionStore
     traces: TraceStore
     cases: CaseStore
     shop: SimulatedShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
-    team_c: ToolCapabilities | None = None  # The tools service's sandbox tools (TEAM_B_TEAM_C_CONFIG), wrapping `shop`
+    team_c: ToolCapabilities | None = None  # The tools service's sandbox tools (AGENT_TOOLS_CONFIG), wrapping `shop`
     policy_search: SimulatedPolicySearch | None = None  # the policy search behind `evidence`, same purpose
     rule_checker: SimulatedRuleChecker | None = None  # the rule checker behind `policy`, same purpose
     safety_screen: SimulatedSafetyScreen | None = None  # the safety screen behind `evidence`, same purpose
@@ -109,7 +109,7 @@ def build_container(
     """Wire the service. llm_wrapper (the evaluation uses it to count AI calls) wraps the AI model, if there is one."""
     llms = LLMRegistry(settings, wrapper=llm_wrapper)
     if settings.llm_rewrite and llms.llm_for("writer") is None:
-        raise ContainerError("TEAM_B_LLM_REWRITE=1 needs an AI model: set TEAM_B_LLM=ollama or openrouter.")
+        raise ContainerError("AGENT_LLM_REWRITE=1 needs an AI model: set AGENT_LLM=ollama or openrouter.")
 
     if clock is None:
         if not settings.fixed_today:
@@ -132,25 +132,27 @@ def build_container(
     shop = SimulatedShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
     # The tools service serves the tools its config binds (sandbox publications over MCP); the simulated serves the
     # rest.
-    team_c = ToolCapabilities(shop, ToolsConfig.load(settings.team_c_config)) if settings.team_c_config else None
+    team_c = ToolCapabilities(shop, ToolsConfig.load(settings.tools_config)) if settings.tools_config else None
     capabilities: CapabilityClient = team_c if team_c is not None else shop
     if bundles is not None and team_c is not None:
         bundles.add_listener(team_c.on_bundle_change)  # a new active bundle rebinds that business's tools
-    live = settings.mode == "live"  # The knowledge service is real (policy search, safety screen, rule checker)
+    live = settings.backends == "live"  # The knowledge service is real (policy search, safety screen, rule checker)
     policy_search = None if live else SimulatedPolicySearch(settings.fixtures_dir)
     rule_checker = None if live else SimulatedRuleChecker(settings.fixtures_dir)
     safety_screen = None if live else SimulatedSafetyScreen(settings.fixtures_dir)
     evidence: EvidenceProvider
     policy: PolicyGate
     if live:
-        service_key = settings.team_a_key.get_secret_value() if settings.team_a_key is not None else None
-        team_a = KnowledgeClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s, service_key=service_key)
+        service_key = settings.knowledge_key.get_secret_value() if settings.knowledge_key is not None else None
+        team_a = KnowledgeClient(
+            settings.knowledge_url, timeout_s=settings.knowledge_timeout_s, service_key=service_key
+        )
         evidence, policy = HttpEvidenceProvider(team_a), HttpPolicyGate(team_a)
         knowledge_admin: KnowledgeAdmin | None = (
             KnowledgeAdminClient(
-                settings.team_a_url, settings.team_a_admin_key.get_secret_value(), service_key=service_key
+                settings.knowledge_url, settings.knowledge_admin_key.get_secret_value(), service_key=service_key
             )
-            if settings.team_a_admin_key is not None
+            if settings.knowledge_admin_key is not None
             else None
         )
     else:
@@ -159,11 +161,11 @@ def build_container(
         knowledge_admin = SimulatedKnowledgeAdmin()
     llm = llms.default()
     if settings.llm_policy and llms.llm_for("reviewer") is None:
-        raise ContainerError("TEAM_B_LLM_POLICY needs an AI model: set TEAM_B_LLM.")
+        raise ContainerError("AGENT_LLM_POLICY needs an AI model: set AGENT_LLM.")
     if settings.llm_knowledge and llms.llm_for("knowledge") is None:
-        raise ContainerError("TEAM_B_LLM_KNOWLEDGE needs an AI model: set TEAM_B_LLM.")
+        raise ContainerError("AGENT_LLM_KNOWLEDGE needs an AI model: set AGENT_LLM.")
     if settings.llm_review and llms.llm_for("reviewer") is None:
-        raise ContainerError("TEAM_B_LLM_REVIEW needs an AI model: set TEAM_B_LLM.")
+        raise ContainerError("AGENT_LLM_REVIEW needs an AI model: set AGENT_LLM.")
     reviewer_llm = llms.llm_for("reviewer")
     reviewer = Reviewer(reviewer_llm) if settings.llm_review and reviewer_llm is not None else None
     if (settings.llm_policy or settings.llm_review) and reviewer_llm is not None:
@@ -210,7 +212,7 @@ def build_container(
     )
     secret = (
         settings.secret_key.get_secret_value().encode() if settings.secret_key is not None else secrets.token_bytes(32)
-    )  # without TEAM_B_SECRET_KEY every start signs everybody out
+    )  # without AGENT_SECRET_KEY every start signs everybody out
     alert_engine = AlertEngine(
         traces=traces,
         cases=cases,
@@ -288,14 +290,14 @@ def approved_rules_are_current(admin: KnowledgeAdmin) -> Callable[[Any], Awaitab
 
 
 def build_llm(settings: Settings) -> LLMClient | None:
-    """The general AI model TEAM_B_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no
-    key. `openai` is any OpenAI-format server named by TEAM_B_LLM_BASE_URL and TEAM_B_LLM_MODEL. Each job can have its
+    """The general AI model AGENT_LLM asks for, or None (rules only). OpenRouter needs OPENROUTER_API_KEY, Ollama no
+    key. `openai` is any OpenAI-format server named by AGENT_LLM_BASE_URL and AGENT_LLM_MODEL. Each job can have its
     own model: see LLMRegistry (adapters/llm_registry.py)."""
     return LLMRegistry(settings).default()
 
 
 def build_stores(settings: Settings, clock: Clock) -> tuple[SessionStore, TraceStore, CaseStore]:
-    """The stores TEAM_B_STORE asks for: memory (gone on restart) or sqlite (the file at TEAM_B_DB_PATH)."""
+    """The stores AGENT_STORE asks for: memory (gone on restart) or sqlite (the file at AGENT_DB_PATH)."""
     if settings.store == "sqlite":
         db = SqliteDatabase(settings.db_path)
         return SqliteSessionStore(db), SqliteTraceStore(db, clock), SqliteCaseStore(db)

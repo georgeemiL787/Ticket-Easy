@@ -31,9 +31,9 @@ RESULTS: list[tuple[str, bool, str]] = []
 
 
 def tools_headers() -> dict[str, str]:
-    """The tools service's admin token (ops/local/var/team_c_admin.key, created when production.env is on): once the operator sets one, the tools service
+    """The tools service's admin token (ops/local/var/tools_admin.key, created when production.env is on): once the operator sets one, the tools service
     requires it on every change through its REST API."""
-    key = VAR / "team_c_admin.key"
+    key = VAR / "tools_admin.key"
     return {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
 
 
@@ -64,7 +64,7 @@ def manager(http: httpx.Client) -> dict[str, str]:
         key.write_text(secrets.token_urlsafe(18), encoding="utf-8")
     password = key.read_text(encoding="utf-8").strip()
     python = ROOT / "services" / "agent" / ".venv" / "Scripts" / "python.exe"
-    env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
+    env = dict(os.environ, AGENT_STORE="sqlite", AGENT_DB_PATH=str(VAR / "agent.sqlite3"))
     base = [str(python if python.exists() else sys.executable), "-m", "agent_service", "create-user", "--email", "e2e-manager@example.com",
             "--name", "E2E Manager", "--role", "manager", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):

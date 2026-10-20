@@ -1,37 +1,37 @@
 # Ticket-Easy demo. Two profiles (use `make demo` or `make demo-full`, see the README):
 #   light  the service with the simulated shop and policies, and a SQLite volume. Replies come from the rules.   (no AI model)
-#   full   the same plus Ollama running qwen3:8b: the AI model helps understand messages (TEAM_B_LLM=ollama).
+#   full   the same plus Ollama running qwen3:8b: the AI model helps understand messages (AGENT_LLM=ollama).
 #   live   Team B talks to the real Team A service (policy search, safety screen, rule checker) with the simulated shop.
 #          Team A embeds with bge-m3 from the Ollama on the host (ollama pull bge-m3). No chat AI model.
 # Only one profile runs at a time (all use port 8010).
 
-x-team-b: &team-b
+x-agent: &agent
   build:
     context: .
     dockerfile: services/agent/Dockerfile
-  image: ticket-easy-team-b
+  image: ticket-easy-agent
   ports:
-    - "${TEAM_B_PORT:-8010}:8010"
+    - "${AGENT_PORT:-8010}:8010"
   volumes:
-    - team_b_data:/data
+    - agent_data:/data
   restart: unless-stopped
-  environment: &team-b-env
-    TEAM_B_MODE: standin
-    TEAM_B_STORE: sqlite
-    TEAM_B_DB_PATH: /data/team_b.sqlite3
-    TEAM_B_FIXED_TODAY: ${TEAM_B_FIXED_TODAY:-2026-09-28}   # the demo orders are dated against this day
-    TEAM_B_LOG_JSON: ${TEAM_B_LOG_JSON:-true}
-    TEAM_B_RATE_LIMIT_PER_MIN: ${TEAM_B_RATE_LIMIT_PER_MIN:-20}
-    TEAM_B_RETENTION_DAYS: ${TEAM_B_RETENTION_DAYS:-90}
-    TEAM_B_CAPABILITY_TTL_S: ${TEAM_B_CAPABILITY_TTL_S:-60}
-    TEAM_B_QUEUE_MAX_RUNS: ${TEAM_B_QUEUE_MAX_RUNS:-3}
-    TEAM_B_ALERT_INTERVAL_S: ${TEAM_B_ALERT_INTERVAL_S:-60}
-    TEAM_B_ALERT_WEBHOOK: ${TEAM_B_ALERT_WEBHOOK:-}
-    TEAM_B_AUTH_REQUIRED: ${TEAM_B_AUTH_REQUIRED:-1}
-    TEAM_B_SECRET_KEY: ${TEAM_B_SECRET_KEY:-}
-    TEAM_B_COOKIE_SECURE: ${TEAM_B_COOKIE_SECURE:-0}
-    TEAM_B_SESSION_HOURS: ${TEAM_B_SESSION_HOURS:-12}
-    TEAM_B_CHAT_API_KEYS: ${TEAM_B_CHAT_API_KEYS:-}
+  environment: &agent-env
+    AGENT_BACKENDS: simulated
+    AGENT_STORE: sqlite
+    AGENT_DB_PATH: /data/agent.sqlite3
+    AGENT_FIXED_TODAY: ${AGENT_FIXED_TODAY:-2026-09-28}   # the demo orders are dated against this day
+    AGENT_LOG_JSON: ${AGENT_LOG_JSON:-true}
+    AGENT_RATE_LIMIT_PER_MIN: ${AGENT_RATE_LIMIT_PER_MIN:-20}
+    AGENT_RETENTION_DAYS: ${AGENT_RETENTION_DAYS:-90}
+    AGENT_CAPABILITY_TTL_S: ${AGENT_CAPABILITY_TTL_S:-60}
+    AGENT_QUEUE_MAX_RUNS: ${AGENT_QUEUE_MAX_RUNS:-3}
+    AGENT_ALERT_INTERVAL_S: ${AGENT_ALERT_INTERVAL_S:-60}
+    AGENT_ALERT_WEBHOOK: ${AGENT_ALERT_WEBHOOK:-}
+    AGENT_AUTH_REQUIRED: ${AGENT_AUTH_REQUIRED:-1}
+    AGENT_SECRET_KEY: ${AGENT_SECRET_KEY:-}
+    AGENT_COOKIE_SECURE: ${AGENT_COOKIE_SECURE:-0}
+    AGENT_SESSION_HOURS: ${AGENT_SESSION_HOURS:-12}
+    AGENT_CHAT_API_KEYS: ${AGENT_CHAT_API_KEYS:-}
   healthcheck:
     test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=2).status == 200 else 1)"]
     interval: 10s
@@ -40,24 +40,24 @@ x-team-b: &team-b
     start_period: 15s
 
 services:
-  team-b:
-    <<: *team-b
+  agent:
+    <<: *agent
     profiles: ["light"]
 
-  team-b-full:
-    <<: *team-b
+  agent-full:
+    <<: *agent
     profiles: ["full"]
     environment:
-      <<: *team-b-env
-      TEAM_B_LLM: ollama
+      <<: *agent-env
+      AGENT_LLM: ollama
       OLLAMA_URL: http://ollama:11434
-      TEAM_B_OLLAMA_MODEL: ${TEAM_B_OLLAMA_MODEL:-qwen3:8b}
-      TEAM_B_LLM_TIMEOUT_S: ${TEAM_B_LLM_TIMEOUT_S:-60}
+      AGENT_OLLAMA_MODEL: ${AGENT_OLLAMA_MODEL:-qwen3:8b}
+      AGENT_LLM_TIMEOUT_S: ${AGENT_LLM_TIMEOUT_S:-60}
       # these three need the AI model, which this profile starts: they are on for the demo
-      TEAM_B_LLM_REWRITE: ${TEAM_B_LLM_REWRITE:-1}
-      TEAM_B_LLM_POLICY: ${TEAM_B_LLM_POLICY:-1}
-      TEAM_B_LLM_KNOWLEDGE: ${TEAM_B_LLM_KNOWLEDGE:-1}
-      TEAM_B_LLM_REVIEW: ${TEAM_B_LLM_REVIEW:-1}
+      AGENT_LLM_REWRITE: ${AGENT_LLM_REWRITE:-1}
+      AGENT_LLM_POLICY: ${AGENT_LLM_POLICY:-1}
+      AGENT_LLM_KNOWLEDGE: ${AGENT_LLM_KNOWLEDGE:-1}
+      AGENT_LLM_REVIEW: ${AGENT_LLM_REVIEW:-1}
     depends_on:
       ollama:
         condition: service_healthy
@@ -68,9 +68,9 @@ services:
     volumes:
       - ollama_models:/root/.ollama
     # start the server, make sure the model is there (downloaded once, about 5 GB), then keep serving
-    entrypoint: ["/bin/sh", "-c", "ollama serve & pid=$$!; until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull $${TEAM_B_OLLAMA_MODEL:-qwen3:8b}; touch /tmp/model-ready; wait $$pid"]
+    entrypoint: ["/bin/sh", "-c", "ollama serve & pid=$$!; until ollama list >/dev/null 2>&1; do sleep 1; done; ollama pull $${AGENT_OLLAMA_MODEL:-qwen3:8b}; touch /tmp/model-ready; wait $$pid"]
     environment:
-      TEAM_B_OLLAMA_MODEL: ${TEAM_B_OLLAMA_MODEL:-qwen3:8b}
+      AGENT_OLLAMA_MODEL: ${AGENT_OLLAMA_MODEL:-qwen3:8b}
     healthcheck:
       test: ["CMD", "test", "-f", "/tmp/model-ready"]
       interval: 10s
@@ -79,36 +79,36 @@ services:
       start_period: 20s
 
   # ---- profile "live": Team B + the real Team A and the tools service ----
-  team-b-live:
-    <<: *team-b
+  agent-live:
+    <<: *agent
     profiles: ["live"]
     environment:
-      <<: *team-b-env
-      TEAM_B_MODE: live
-      TEAM_B_TEAM_A_URL: http://team-a:8001
-      TEAM_B_TEAM_A_KEY: ${TEAM_A_SERVICE_API_KEY:-}
-      TEAM_B_TEAM_A_ADMIN_KEY: ${TEAM_A_ADMIN_API_KEY:-}
+      <<: *agent-env
+      AGENT_BACKENDS: live
+      AGENT_KNOWLEDGE_URL: http://knowledge:8001
+      AGENT_KNOWLEDGE_KEY: ${KNOWLEDGE_SERVICE_API_KEY:-}
+      AGENT_KNOWLEDGE_ADMIN_KEY: ${KNOWLEDGE_ADMIN_API_KEY:-}
     depends_on:
-      team-a:
+      knowledge:
         condition: service_healthy
 
-  team-a:
+  knowledge:
     build:
       context: .
       dockerfile: services/knowledge/Dockerfile
-    image: ticket-easy-team-a
+    image: ticket-easy-knowledge
     profiles: ["live"]
     volumes:
-      - team_a_var:/app/services/knowledge/var
+      - knowledge_var:/app/services/knowledge/var
     restart: unless-stopped
     environment:
       # embeddings (bge-m3) come from the Ollama on the host machine: `ollama pull bge-m3` once.
       # Without it Team A builds a keyword-only index and still answers, with weaker search.
-      OLLAMA_URL: ${TEAM_A_OLLAMA_URL:-http://host.docker.internal:11434}
-      EMBED_MODEL: ${TEAM_A_EMBED_MODEL:-bge-m3}
-      ADMIN_API_KEY: ${TEAM_A_ADMIN_API_KEY:-}
+      OLLAMA_URL: ${KNOWLEDGE_OLLAMA_URL:-http://host.docker.internal:11434}
+      KNOWLEDGE_EMBED_MODEL: ${KNOWLEDGE_EMBED_MODEL:-bge-m3}
+      KNOWLEDGE_ADMIN_API_KEY: ${KNOWLEDGE_ADMIN_API_KEY:-}
       # set both and Team A answers only callers that send this key (Team B does); empty: anybody can search (local use only)
-      SERVICE_API_KEY: ${TEAM_A_SERVICE_API_KEY:-}
+      KNOWLEDGE_SERVICE_API_KEY: ${KNOWLEDGE_SERVICE_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
@@ -131,14 +131,14 @@ services:
       - tools_data:/data
     restart: unless-stopped
     environment:
-      DATABASE_PATH: /data/integration.sqlite3
-      OPENAPI_FETCH_HOSTS: ${TOOLS_OPENAPI_FETCH_HOSTS:-loopback:*}
-      SANDBOX_HOSTS: ${TOOLS_SANDBOX_HOSTS:-}
+      TOOLS_DATABASE_PATH: /data/integration.sqlite3
+      TOOLS_OPENAPI_FETCH_HOSTS: ${TOOLS_OPENAPI_FETCH_HOSTS:-loopback:*}
+      TOOLS_SANDBOX_HOSTS: ${TOOLS_SANDBOX_HOSTS:-}
       # secrets come from the environment; empty session secret: a random one per start
-      SESSION_SECRET: ${TOOLS_SESSION_SECRET:-}
-      TEAM_C_ADMIN_TOKEN: ${TOOLS_ADMIN_TOKEN:-}
-      LIVE_DEMO_ENABLED: ${TOOLS_LIVE_DEMO_ENABLED:-false}
-      LIVE_DEMO_HOSTS: ${TOOLS_LIVE_DEMO_HOSTS:-}
+      TOOLS_SESSION_SECRET: ${TOOLS_SESSION_SECRET:-}
+      TOOLS_ADMIN_TOKEN: ${TOOLS_ADMIN_TOKEN:-}
+      TOOLS_LIVE_DEMO_ENABLED: ${TOOLS_LIVE_DEMO_ENABLED:-false}
+      TOOLS_LIVE_DEMO_HOSTS: ${TOOLS_LIVE_DEMO_HOSTS:-}
       # model provider for proposals (Ollama on the host by default; Groq or OpenRouter with their keys)
       LLM_PRIMARY: ${TOOLS_LLM_PRIMARY:-ollama}
       OLLAMA_BASE_URL: ${TOOLS_OLLAMA_URL:-http://host.docker.internal:11434}
@@ -154,7 +154,7 @@ services:
       start_period: 20s
 
 volumes:
-  team_b_data:
+  agent_data:
   ollama_models:
-  team_a_var:
+  knowledge_var:
   tools_data:

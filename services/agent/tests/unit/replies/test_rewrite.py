@@ -324,12 +324,12 @@ async def test_the_passage_is_quoted_verbatim_even_when_the_rewrite_is_rejected(
 
 def test_the_rewrite_switch_defaults_to_off_and_reads_the_environment() -> None:
     assert Settings().llm_rewrite is False
-    assert Settings.from_env({"TEAM_B_LLM_REWRITE": "1"}).llm_rewrite is True
-    assert Settings.from_env({"TEAM_B_LLM_REWRITE": "0"}).llm_rewrite is False
+    assert Settings.from_env({"AGENT_LLM_REWRITE": "1"}).llm_rewrite is True
+    assert Settings.from_env({"AGENT_LLM_REWRITE": "0"}).llm_rewrite is False
 
 
 def test_rewrite_needs_an_ai_model() -> None:
-    with pytest.raises(ContainerError, match="TEAM_B_LLM_REWRITE=1 needs an AI model"):
+    with pytest.raises(ContainerError, match="AGENT_LLM_REWRITE=1 needs an AI model"):
         build_container(Settings(llm_rewrite=True, llm="none"))
 
 

@@ -74,7 +74,7 @@ locale 1.0) or, until they are reached, at that baseline.
 
 ### Grading how replies read (`--judge`, optional)
 
-With an AI model configured (`TEAM_B_LLM=ollama` or `openrouter`), `python -m agent_service eval --judge` also asks the model to grade
+With an AI model configured (`AGENT_LLM=ollama` or `openrouter`), `python -m agent_service eval --judge` also asks the model to grade
 each reply from 1 to 5 for clarity, politeness, register (does it sound like the customer's language and style) and
 helpfulness, with a one-line reason each (rubric: `prompts/judge_v1.md`). The report shows the average per style. These grades
 are advice: they never decide whether a test passes. Ten percent of the graded replies are written to
@@ -91,11 +91,11 @@ no `writer_egyptian` settings nothing changes (the job never borrows the general
 1. Pull a Nile-Chat model into Ollama. The 4B model is on Hugging Face as a GGUF file:
    `ollama pull hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M` (about 2.7 GB; on Windows with a small system drive set
    `OLLAMA_MODELS` to a folder on a bigger drive first and restart Ollama).
-2. In `.env` set (the writer must be on, `TEAM_B_LLM_REWRITE=1`):
+2. In `.env` set (the writer must be on, `AGENT_LLM_REWRITE=1`):
 
    ```text
-   TEAM_B_LLM_BASE_URL_WRITER_EGYPTIAN=http://127.0.0.1:11434/v1
-   TEAM_B_LLM_MODEL_WRITER_EGYPTIAN=hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M
+   AGENT_LLM_BASE_URL_WRITER_EGYPTIAN=http://127.0.0.1:11434/v1
+   AGENT_LLM_MODEL_WRITER_EGYPTIAN=hf.co/mradermacher/Nile-Chat-4B-GGUF:Q4_K_M
    ```
 
    A small model may not keep a JSON format, so for this job the answer is read as plain text (code fences, quotes and a
@@ -108,7 +108,7 @@ no `writer_egyptian` settings nothing changes (the job never borrows the general
 
 ## Agent mode (the AI planner)
 
-With `TEAM_B_AGENT_MODE=on` (or `"agent_mode": "on"` for one shop) an AI **planner** plans each message and proposes one
+With `AGENT_PLANNING_MODE=on` (or `"agent_mode": "on"` for one shop) an AI **planner** plans each message and proposes one
 move at a time (look something up, search the policy, propose an action, ask the customer, hand over, reply); code checks
 every move before it runs. **The model proposes, code decides**: the gates that allow a refund, the customer's yes, the
 identity check, the safety screen and the forced handoffs are the same code with the agent on or off. If the loop cannot
@@ -116,11 +116,11 @@ finish a message it falls back to today's step-by-step flow. Default: **off** (s
 `shadow` lets the agent watch without acting. It needs an AI model for the PLANNER job.
 
 One model per job (Groq's free plan is used in the demo; any OpenAI-compatible server works), each with an optional backup
-model and its own limits: `TEAM_B_LLM_MODEL_<JOB>`, `TEAM_B_LLM_FALLBACK_MODEL_<JOB>`, `TEAM_B_LLM_RPM_<JOB>`,
-`TEAM_B_LLM_TPM_<JOB>`, `TEAM_B_LLM_REASONING_EFFORT_<JOB>`; jobs: READER, PLANNER, KNOWLEDGE, REVIEWER, WRITER,
+model and its own limits: `AGENT_LLM_MODEL_<JOB>`, `AGENT_LLM_FALLBACK_MODEL_<JOB>`, `AGENT_LLM_RPM_<JOB>`,
+`AGENT_LLM_TPM_<JOB>`, `AGENT_LLM_REASONING_EFFORT_<JOB>`; jobs: READER, PLANNER, KNOWLEDGE, REVIEWER, WRITER,
 WRITER_EGYPTIAN, SUMMARY, JUDGE. Jobs on the same model share one per-minute budget; a call that would wait longer than
-`TEAM_B_LLM_MAX_WAIT_S` fails and the message uses the fallback. Switches: `TEAM_B_LLM_REWRITE=1` (the AI writer),
-`TEAM_B_LLM_KNOWLEDGE=1` (the knowledge agent), `TEAM_B_LLM_REVIEW=1` (the reviewer, stricter only), `TEAM_B_LLM_POLICY=1`.
+`AGENT_LLM_MAX_WAIT_S` fails and the message uses the fallback. Switches: `AGENT_LLM_REWRITE=1` (the AI writer),
+`AGENT_LLM_KNOWLEDGE=1` (the knowledge agent), `AGENT_LLM_REVIEW=1` (the reviewer, stricter only), `AGENT_LLM_POLICY=1`.
 The free plan (30 requests and 8K tokens a minute, 200K tokens a day per model) is enough to try the agent, not to
 evaluate it on the whole set: use `eval --per-style N`, `--batch N` and `--resume`.
 

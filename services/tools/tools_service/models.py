@@ -301,7 +301,7 @@ class SandboxTestSubmission(SandboxRunSubmission):
 
 
 class PublicationSubmission(StrictModel):
-    # Must equal the environment the artifact was built for (its connector's); live_demo also needs LIVE_DEMO_ENABLED.
+    # Must equal the environment the artifact was built for (its connector's); live_demo also needs TOOLS_LIVE_DEMO_ENABLED.
     environment: Literal["sandbox", "live_demo"] = "sandbox"
     note: str = Field(min_length=1, max_length=2000)
 

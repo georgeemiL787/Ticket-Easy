@@ -2,10 +2,10 @@
 
 Two stages:
   1. Query gate: the corpus has evidence for the query when the best cosine similarity reaches
-     MIN_COSINE or the best BM25 score reaches MIN_BM25. Otherwise the result is empty with
+     KNOWLEDGE_MIN_COSINE or the best BM25 score reaches KNOWLEDGE_MIN_BM25. Otherwise the result is empty with
      empty_reason="below_threshold"; callers must treat that as "no evidence", never guess.
   2. Passage floor: once the gate passes, passages are ranked by a hybrid score and kept if their
-     cosine is within PASSAGE_COS_MARGIN of MIN_COSINE or they have any keyword match.
+     cosine is within PASSAGE_COS_MARGIN of KNOWLEDGE_MIN_COSINE or they have any keyword match.
 """
 
 import hashlib
@@ -49,7 +49,7 @@ def _manifest_thresholds(tenant_id: str) -> tuple[float | None, float | None, fl
 
 def tenant_thresholds(tenant_id: str) -> tuple[float, float]:
     """(min_cosine, min_bm25) for a tenant: `retrieval_thresholds` in its corpus manifest when set (chosen
-    on that tenant's own dev split), otherwise the global MIN_COSINE / MIN_BM25."""
+    on that tenant's own dev split), otherwise the global KNOWLEDGE_MIN_COSINE / KNOWLEDGE_MIN_BM25."""
     cos, bm25, _ = _manifest_thresholds(tenant_id)
     return (settings.min_cosine if cos is None else float(cos), settings.min_bm25 if bm25 is None else float(bm25))
 

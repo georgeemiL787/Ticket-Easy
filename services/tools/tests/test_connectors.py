@@ -95,9 +95,9 @@ def test_managed_setup_build_identity_and_execution_without_env_or_restart(sandb
     # Confirmation belongs to this connector, business and exact destination.
     altered = deepcopy(artifact["content"])
     altered["proposal"]["business_id"] = "unrelated-business"
-    with pytest.raises(AppError, match="SANDBOX_HOSTS"):
+    with pytest.raises(AppError, match="TOOLS_SANDBOX_HOSTS"):
         destination(connector, altered, settings)
-    with pytest.raises(AppError, match="SANDBOX_HOSTS"):
+    with pytest.raises(AppError, match="TOOLS_SANDBOX_HOSTS"):
         destination(dict(connector, base_url="http://other.test"), artifact["content"], settings)
     with TestClient(create_app(settings, LifecycleSubstitute)) as restarted:
         page = restarted.get(f"/artifacts/{aid}").text

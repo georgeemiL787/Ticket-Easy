@@ -1,6 +1,6 @@
 """The agent loop: one customer message, worked as a few moves proposed one at a time, every move checked by code.
 
-In agent mode (tenant agent_mode / TEAM_B_AGENT_MODE "on", with a model for the planner job) the middle of the
+In agent mode (tenant agent_mode / AGENT_PLANNING_MODE "on", with a model for the planner job) the middle of the
 turn (disambiguate, merge, frustration, plan, handler, queue) is one stage, "agent". It asks a Planner for a move,
 checks the move, works it, and asks again, until a move ends the turn (a Reply that finishes the plan, AskCustomer,
 HandOver). The front stages (handed-off check, understanding, safety screen, wants a person, pending confirmation) run
@@ -15,7 +15,7 @@ so the next message continues it) together with its move. A Reply that answers o
 open step does not end the turn: its text is kept in front of the final one (the way queued requests are today) and the
 picker is asked again.
 
-Limits: at most TEAM_B_AGENT_MAX_MOVES asks of the picker per turn (a plan update counts as one), TEAM_B_AGENT_TURN_
+Limits: at most AGENT_PLANNING_MAX_MOVES asks of the picker per turn (a plan update counts as one), AGENT_PLANNING_TURN_
 TIMEOUT_S seconds for the whole loop. Falling back: a picker error, a time-out, a hit limit, or two refused moves in a
 row raise AgentFallback; the pipeline then runs today's middle stages from their start, on the customer's message as if
 the loop had not run. The saved plan is put back. In this step the loop cannot write: ProposeAction only answers "not

@@ -20,38 +20,38 @@
       "port": 8103
     },
     {
-      "name": "team-c",
+      "name": "tools",
       "runtimeExecutable": "python",
       "runtimeArgs": [
         "ops/local/serve.py",
-        "team-c"
+        "tools"
       ],
       "port": 8101
     },
     {
-      "name": "team-a",
+      "name": "knowledge",
       "runtimeExecutable": "python",
       "runtimeArgs": [
         "ops/local/serve.py",
-        "team-a"
+        "knowledge"
       ],
       "port": 8001
     },
     {
-      "name": "team-b",
+      "name": "agent",
       "runtimeExecutable": "python",
       "runtimeArgs": [
         "ops/local/serve.py",
-        "team-b"
+        "agent"
       ],
       "port": 8010
     },
     {
-      "name": "team-b-noauth-8011",
+      "name": "agent-noauth-8011",
       "runtimeExecutable": "python",
       "runtimeArgs": [
         "ops/local/serve.py",
-        "team-b",
+        "agent",
         "--port",
         "8011",
         "--no-auth"

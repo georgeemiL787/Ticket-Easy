@@ -52,7 +52,7 @@ class EditIn(BaseModel):
 def _admin(request: Request) -> KnowledgeAdmin:
     built: Container = request.app.state.container
     if built.knowledge_admin is None:
-        raise upstream_unavailable("the knowledge service is not connected (TEAM_B_TEAM_A_ADMIN_KEY)")
+        raise upstream_unavailable("the knowledge service is not connected (AGENT_KNOWLEDGE_ADMIN_KEY)")
     return built.knowledge_admin
 
 

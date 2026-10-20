@@ -54,7 +54,7 @@ class Promotion:
 
     def promote(self, source_aid, connector_id, actor, note, rollback_contact, accept_no_idempotency=False):
         if not self.settings.production_enabled:
-            raise AppError("production_disabled", "Production is switched off (PRODUCTION_ENABLED); nothing was promoted", 403)
+            raise AppError("production_disabled", "Production is switched off (TOOLS_PRODUCTION_ENABLED); nothing was promoted", 403)
         source = self.building.artifact(source_aid)
         sc = source["content"]
         if artifact_environment(sc) == PRODUCTION:
@@ -159,11 +159,11 @@ class Promotion:
         except ValueError:
             context = arguments = None
         if not isinstance(context, dict) or not context or not isinstance(arguments, dict):
-            items["smoke"] = dict(ok=False, detail="PRODUCTION_SMOKE_CONTEXT and PRODUCTION_SMOKE_ARGUMENTS (JSON objects naming an internal test customer and that customer's own record) are not configured")
+            items["smoke"] = dict(ok=False, detail="TOOLS_PRODUCTION_SMOKE_CONTEXT and TOOLS_PRODUCTION_SMOKE_ARGUMENTS (JSON objects naming an internal test customer and that customer's own record) are not configured")
             return
         schema = prod["content"]["input_schema"]
         properties = schema.get("properties") or {}
-        # PRODUCTION_SMOKE_ARGUMENTS names the internal test customer's record (it may name inputs this tool does not have: those are
+        # TOOLS_PRODUCTION_SMOKE_ARGUMENTS names the internal test customer's record (it may name inputs this tool does not have: those are
         # ignored); every other required input is filled from the tool's own schema, as the automatic tests do.
         arguments = {k: v for k, v in arguments.items() if k in properties}
         unresolved = []
@@ -175,7 +175,7 @@ class Promotion:
                 else:
                     arguments[name] = value
         if unresolved:
-            items["smoke"] = dict(ok=False, detail="PRODUCTION_SMOKE_ARGUMENTS must also give: " + ", ".join(unresolved))
+            items["smoke"] = dict(ok=False, detail="TOOLS_PRODUCTION_SMOKE_ARGUMENTS must also give: " + ", ".join(unresolved))
             return
         try:
             check = self.connectors.check(connector_id, [], [], transport=self.building.execution_transport)

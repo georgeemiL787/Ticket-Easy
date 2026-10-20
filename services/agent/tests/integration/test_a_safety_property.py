@@ -34,8 +34,8 @@ from tests.support import make_settings
 
 T = "shop_001"
 CONVERSATIONS = 200
-# TEAM_B_EXTRA_SEEDS="1,2" adds seeds on top of the four fixed ones (the safety workflow in CI adds a fifth)
-SEEDS = [20260928, 7, 99, 31337, *(int(x) for x in os.environ.get("TEAM_B_EXTRA_SEEDS", "").split(",") if x.strip())]
+# AGENT_EXTRA_SEEDS="1,2" adds seeds on top of the four fixed ones (the safety workflow in CI adds a fifth)
+SEEDS = [20260928, 7, 99, 31337, *(int(x) for x in os.environ.get("AGENT_EXTRA_SEEDS", "").split(",") if x.strip())]
 TIME_LIMIT_S = 30.0
 READ_TOOLS = {"verify_customer", "get_order", "list_customer_orders"}
 ORDER_ID = re.compile(r"NS-\d{4,6}")

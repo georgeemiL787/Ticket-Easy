@@ -27,7 +27,7 @@ from agent_service.api import (
 )
 from agent_service.api.errors import install_error_handlers
 from agent_service.api.ratelimit import RateLimiter
-from agent_service.config import PROJECT_ROOT, Settings
+from agent_service.config import PROJECT_ROOT, Settings, unknown_setting_warnings
 from agent_service.container import Container, build_container
 from agent_service.monitoring.alerts import alert_loop
 from agent_service.observability import bind_context, clear_context, configure_logging, get_logger
@@ -101,13 +101,15 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
         if built is None:
             resolved = settings or Settings.from_env()
             configure_logging(json_logs=resolved.log_json)
+            for warning in unknown_setting_warnings():
+                log.warning(warning)
             built = build_container(resolved)
         app.state.container = built
         app.state.events = built.events
         if built.bundles is not None:
             await built.bundles.load()  # the active bundle of every business replaces its tenant file
         app.state.rate_limiter = RateLimiter(built.settings.rate_limit_per_minute)
-        log.info("started", mode=built.settings.mode, tenants=list(built.tenants.tenant_ids()))
+        log.info("started", backends=built.settings.backends, tenants=list(built.tenants.tenant_ids()))
         retention = asyncio.create_task(retention_loop(built))
         tasks = [retention]
         if built.alert_engine is not None:
@@ -131,7 +133,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     app.include_router(inbox.router)
     app.include_router(alerts_api.router)
     chosen = container.settings if container is not None else (settings or Settings.from_env())
-    if chosen.enable_test_admin:  # sandbox-only endpoints, off unless TEAM_B_ENABLE_TEST_ADMIN=1
+    if chosen.enable_test_admin:  # sandbox-only endpoints, off unless AGENT_ENABLE_TEST_ADMIN=1
         testadmin.install(app)
     app.include_router(dashboard.router)
     app.include_router(capabilities.router)
@@ -163,7 +165,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
     @app.get("/health")
     async def health(request: Request) -> dict[str, object]:
         built: Container = request.app.state.container
-        return {"status": "ok", "mode": built.settings.mode, "tenants": list(built.tenants.tenant_ids())}
+        return {"status": "ok", "mode": built.settings.backends, "tenants": list(built.tenants.tenant_ids())}
 
     return app
 

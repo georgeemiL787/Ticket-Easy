@@ -21,4 +21,4 @@ take more than a millisecond at the median, `merge` has the longest tail (its p9
 handling for a few long messages). Nothing needed optimising to stay under the 3 s limit.
 
 Not measured here: Locust against a separate server process (use `loadtest/README.md`), and the AI model modes
-(`TEAM_B_LLM=ollama|openrouter`), where the model's own time adds to every turn.
+(`AGENT_LLM=ollama|openrouter`), where the model's own time adds to every turn.

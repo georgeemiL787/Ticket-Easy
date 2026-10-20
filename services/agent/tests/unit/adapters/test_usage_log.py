@@ -108,7 +108,7 @@ async def test_without_a_log_no_file_is_made(tmp_path: Path) -> None:
     client = OpenAICompatibleLLM(base_url="http://x/v1", model="m", transport=httpx.MockTransport(lambda r: ok()))
     await ask(client)
     assert os.listdir(tmp_path) == []
-    registry = LLMRegistry(Settings.from_env({"TEAM_B_LLM": "ollama"}))
+    registry = LLMRegistry(Settings.from_env({"AGENT_LLM": "ollama"}))
     assert registry.llm_for("reader") is not None and Settings.from_env({}).usage_log == ""
 
 
@@ -132,12 +132,12 @@ async def test_the_registry_writes_the_job_and_marks_backup_calls(tmp_path: Path
 
     settings = Settings.from_env(
         {
-            "TEAM_B_LLM": "openai",
-            "TEAM_B_LLM_BASE_URL": "http://x/v1",
-            "TEAM_B_LLM_MODEL": "main",
-            "TEAM_B_LLM_FALLBACK_MODEL_READER": "backup",
-            "TEAM_B_USAGE_LOG": str(path),
-            "TEAM_B_USAGE_RUN_LABEL": "reg",
+            "AGENT_LLM": "openai",
+            "AGENT_LLM_BASE_URL": "http://x/v1",
+            "AGENT_LLM_MODEL": "main",
+            "AGENT_LLM_FALLBACK_MODEL_READER": "backup",
+            "AGENT_USAGE_LOG": str(path),
+            "AGENT_USAGE_RUN_LABEL": "reg",
         }
     )
     registry = LLMRegistry(settings, transport=httpx.MockTransport(server))

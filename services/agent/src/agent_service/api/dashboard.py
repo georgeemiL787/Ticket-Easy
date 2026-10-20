@@ -586,7 +586,7 @@ async def get_conversation(request: Request, conversation_id: CONVERSATION, tena
 
 class ReplayRequest(BaseModel):
     tenant_id: str
-    changes: dict[str, str] = {}  # environment-style names, e.g. {"TEAM_B_LLM_MODEL_PLANNER": "..."}
+    changes: dict[str, str] = {}  # environment-style names, e.g. {"AGENT_LLM_MODEL_PLANNER": "..."}
 
 
 @router.post("/conversations/{conversation_id}/replay", response_model=replay_mod.ReplayResult)

@@ -4,7 +4,7 @@ The customer's messages of a stored conversation are said again, in order, to a 
 shop, the simulated policy search, rules and safety screen, and memory stores that nobody else sees. Nothing here can
 reach the real shop or the real stores, and a replay is never saved as a conversation. The conversation is played twice:
 "before" with the settings as they are, "after" with the changes (--set KEY=VALUE, the same names as the environment:
-TEAM_B_LLM_MODEL_PLANNER, TEAM_B_AGENT_MODE, TEAM_B_LLM_REWRITE, ...). reports/replay_<id>_<date>.md shows each
+AGENT_LLM_MODEL_PLANNER, AGENT_PLANNING_MODE, AGENT_LLM_REWRITE, ...). reports/replay_<id>_<date>.md shows each
 message with both runs' reply, decision and moves, and marks where they differ.
 
 The messages come from the stored session (the words as the customer wrote them); when the session is gone (retention)
@@ -117,7 +117,7 @@ async def play(
     """The messages said to a fresh service built from `settings` (simulated shop, memory stores)."""
     fresh = settings.model_copy(
         update={
-            "mode": "standin",
+            "backends": "simulated",
             "store": "memory",
             "fixed_today": today or settings.fixed_today or TENANT_DEFAULT_TODAY,
         }

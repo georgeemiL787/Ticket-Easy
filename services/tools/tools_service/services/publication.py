@@ -130,12 +130,12 @@ class Publication:
         if row["environment"] != artifact_environment(c):
             raise AppError("environment_mismatch", "The publication's environment differs from the artifact's", 409)
         if row["environment"] == LIVE_DEMO and not self.settings.live_demo_enabled:
-            raise AppError("live_demo_disabled", "Live Demo execution is switched off (LIVE_DEMO_ENABLED)", 409)
+            raise AppError("live_demo_disabled", "Live Demo execution is switched off (TOOLS_LIVE_DEMO_ENABLED)", 409)
         production = row["environment"] == PRODUCTION
         evidence_of = a
         if production:
             if not self.settings.production_enabled:
-                raise AppError("production_disabled", "Production execution is switched off (PRODUCTION_ENABLED)", 409)
+                raise AppError("production_disabled", "Production execution is switched off (TOOLS_PRODUCTION_ENABLED)", 409)
             promo = promotions_repo.for_publication(self.store, row["id"])
             if not promo or promo["status"] != "active" or promo["production_sha256"] != a["sha256"]:
                 raise AppError("promotion_not_active", "This production tool's promotion is not active (rolled back, or it no longer matches the artifact)", 409)

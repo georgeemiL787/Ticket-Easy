@@ -52,7 +52,7 @@ def test_the_setting_comes_from_the_environment() -> None:
     from agent_service.config import Settings
 
     assert Settings().enable_test_admin is False
-    assert Settings.from_env({"TEAM_B_ENABLE_TEST_ADMIN": "1"}).enable_test_admin is True
+    assert Settings.from_env({"AGENT_ENABLE_TEST_ADMIN": "1"}).enable_test_admin is True
 
 
 async def test_a_chaos_on_the_rule_checker_blocks_actions_then_heals_by_itself(

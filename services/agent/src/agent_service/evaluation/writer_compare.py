@@ -55,7 +55,7 @@ async def compare_writers(
     """Run the ar and arabizi conversations with both writers; returns (the CSV path, the number of replies)."""
     chosen = [c for c in conversations if c.language_style in STYLES]
     if not has_egyptian(settings):
-        raise ValueError("set TEAM_B_LLM_BASE_URL_WRITER_EGYPTIAN and TEAM_B_LLM_MODEL_WRITER_EGYPTIAN (see README)")
+        raise ValueError("set AGENT_LLM_BASE_URL_WRITER_EGYPTIAN and AGENT_LLM_MODEL_WRITER_EGYPTIAN (see README)")
     usual = await run_with(without_egyptian(settings), chosen)
     egyptian = await run_with(settings, chosen)
     path = out / f"writer_compare_{(when or date.today()).isoformat()}.csv"

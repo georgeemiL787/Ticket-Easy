@@ -7,8 +7,8 @@
   "cwd": "../../tools",
   "env": {
     "PYTHONPATH": ".",
-    "LIVE_DEMO_ENABLED": "true",
-    "LIVE_DEMO_HOSTS": "api.example.com:443"
+    "TOOLS_LIVE_DEMO_ENABLED": "true",
+    "TOOLS_LIVE_DEMO_HOSTS": "api.example.com:443"
   },
   "database": "data/integration.sqlite3",
   "sandbox_hosts": "127.0.0.1:8102",

@@ -48,7 +48,7 @@ def read(name: str) -> str:
 
 
 def team_c() -> httpx.Client:
-    return httpx.Client(base_url=TOOLS_URL + "/api/v1", headers={"x-team-c-admin-token": read("team_c_admin.key")}, timeout=300, trust_env=False)
+    return httpx.Client(base_url=TOOLS_URL + "/api/v1", headers={"x-team-c-admin-token": read("tools_admin.key")}, timeout=300, trust_env=False)
 
 
 def prod_get(path: str) -> httpx.Response:
@@ -211,7 +211,7 @@ def admin(http: httpx.Client) -> dict[str, str]:
         key.write_text(_secrets.token_urlsafe(18), encoding="utf-8")
     password = key.read_text(encoding="utf-8").strip()
     python = ROOT / "services" / "agent" / ".venv" / "Scripts" / "python.exe"
-    env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
+    env = dict(os.environ, AGENT_STORE="sqlite", AGENT_DB_PATH=str(VAR / "agent.sqlite3"))
     base = [str(python if python.exists() else sys.executable), "-m", "agent_service", "create-user", "--email", "e2e-admin@example.com",
             "--name", "E2E Admin", "--role", "admin", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):

@@ -1,4 +1,5 @@
 """Application construction: wires Store, Providers and Service onto app.state, middleware, error handling and routers."""
+import logging
 import secrets
 from urllib.parse import urlparse
 from fastapi import FastAPI
@@ -6,7 +7,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import ValidationError
-from .config import Settings, AppError
+from .config import Settings, AppError, unknown_setting_warnings
 from .llm.router import Providers
 from .persistence.db import Store
 from .service import Service
@@ -16,6 +17,8 @@ from .web.render import page, templates
 
 
 def create_app(settings=None, provider_factory=None):
+    for warning in unknown_setting_warnings():
+        logging.getLogger("tools_service").warning(warning)
     settings=settings or Settings()
     store=Store(settings.database_path)
     providers=provider_factory(settings,store) if provider_factory else Providers(settings,store)
@@ -39,7 +42,7 @@ def create_app(settings=None, provider_factory=None):
 
     @app.middleware("http")
     async def admin_token(request,call_next):
-        # When the operator sets TEAM_C_ADMIN_TOKEN, every change through the REST API needs it (Team B holds it); production routes
+        # When the operator sets TOOLS_ADMIN_TOKEN, every change through the REST API needs it (Team B holds it); production routes
         # need it always. The tools service's browser pages are not under /api and are never allowed to do production actions.
         if settings.admin_token and request.url.path.startswith("/api/") and request.method in {"POST","PUT","PATCH","DELETE"}:
             if not secrets.compare_digest(request.headers.get("x-team-c-admin-token",""),settings.admin_token):

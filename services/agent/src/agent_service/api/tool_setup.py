@@ -99,7 +99,7 @@ def _admin(request: Request) -> tuple[Container, ToolsAdminClient]:
     built: Container = request.app.state.container
     admin = built.team_c.admin if built.team_c is not None else None
     if admin is None:
-        raise upstream_unavailable("the tools service is not connected (TEAM_B_TEAM_C_CONFIG with api_url)")
+        raise upstream_unavailable("the tools service is not connected (AGENT_TOOLS_CONFIG with api_url)")
     return built, admin
 
 
@@ -306,7 +306,7 @@ async def publish(batch_id: str, tenant_id: TENANT, body: PublishIn, request: Re
     checked_tenant(request, tenant_id)
     built, admin, _batch = await _owned(request, tenant_id, batch_id)
     if built.bundles is None:
-        raise upstream_unavailable("tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        raise upstream_unavailable("tenant bundles are switched off (AGENT_BUNDLES=0)")
     actor = _actor(request)
     try:
         batch = await admin.publish_batch(batch_id, actor)
@@ -358,7 +358,7 @@ async def activate(batch_id: str, tenant_id: TENANT, body: dict[str, int], reque
     checked_tenant(request, tenant_id)
     built, _admin_client, _batch = await _owned(request, tenant_id, batch_id)
     if built.bundles is None:
-        raise upstream_unavailable("tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        raise upstream_unavailable("tenant bundles are switched off (AGENT_BUNDLES=0)")
     version = body.get("bundle_version")
     if not isinstance(version, int):
         raise ApiError(422, "INVALID_REQUEST", "bundle_version is required")

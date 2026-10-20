@@ -81,7 +81,7 @@ async def test_a_second_conflict_is_raised_and_nothing_is_stored(c: Container) -
 
 async def test_two_processes_on_one_database_do_not_lose_turns(tmp_path: Path) -> None:
     """Two containers share one SQLite file (no shared lock): the version check plus one retry keeps both turns."""
-    settings = Settings(store="sqlite", db_path=tmp_path / "team_b.sqlite3", fixed_today=date(2026, 9, 28))
+    settings = Settings(store="sqlite", db_path=tmp_path / "agent.sqlite3", fixed_today=date(2026, 9, 28))
     a, b = build_container(settings), build_container(settings)
     assert a.orchestrator is not None and b.orchestrator is not None
     await a.orchestrator.handle_turn(T, C, "first")  # create the session so both start from version 1

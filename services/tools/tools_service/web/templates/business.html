@@ -27,7 +27,7 @@
 </div>
 <div>
 <h3>Fetch from URL</h3>
-{% if fetch_hosts %}<p class="small muted">{% for host in fetch_hosts %}{{ 'Local services (any port)' if host == 'loopback:*' else host }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% else %}<p class="notice small">Fetching is off. Add the API's <code>host:port</code> to <code>OPENAPI_FETCH_HOSTS</code> and restart.</p>{% endif %}
+{% if fetch_hosts %}<p class="small muted">{% for host in fetch_hosts %}{{ 'Local services (any port)' if host == 'loopback:*' else host }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% else %}<p class="notice small">Fetching is off. Add the API's <code>host:port</code> to <code>TOOLS_OPENAPI_FETCH_HOSTS</code> and restart.</p>{% endif %}
 <form method="post" action="/actions/fetch">{{ m.csrf_field() }}<input type="hidden" name="business_id" value="{{ business.id }}"><input name="url" type="url" required placeholder="http://{{ 'localhost:8080' if 'loopback:*' in fetch_hosts else (fetch_hosts[0] if fetch_hosts else '127.0.0.1:8000') }}/docs"><button {% if not fetch_hosts %}disabled{% endif %}>Fetch and discover</button></form>
 </div>
 </div>

@@ -5,6 +5,7 @@ Every error returns ErrorResponse with a stable code.
 """
 
 import hmac
+import logging
 import threading
 from contextlib import asynccontextmanager
 from datetime import date
@@ -50,6 +51,8 @@ from knowledge_service.schemas import (
 async def _lifespan(_app: FastAPI):
     # Load the embedding model in the background so the first search doesn't pay Ollama's cold start
     # (~13 s for bge-m3). A failure here only means the first search loads it instead.
+    for warning in config.unknown_setting_warnings():
+        logging.getLogger("knowledge_service").warning(warning)
     threading.Thread(target=lambda: _embedder().warm_up(), daemon=True).start()
     yield
 
@@ -114,7 +117,7 @@ def authorize_caller(x_service_key: str | None, tenant_id: str, request_id: str 
 
 
 def require_admin(x_admin_key: str | None = Header(default=None)) -> None:
-    """Gate admin/review endpoints on the X-Admin-Key header. Fails closed if ADMIN_API_KEY is unset."""
+    """Gate admin/review endpoints on the X-Admin-Key header. Fails closed if KNOWLEDGE_ADMIN_API_KEY is unset."""
     expected = config.settings.admin_api_key
     if not expected or not x_admin_key or not hmac.compare_digest(x_admin_key, expected):
         raise ServiceError(401, "UNAUTHORIZED", "Missing or invalid X-Admin-Key")

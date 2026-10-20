@@ -174,7 +174,7 @@ async def test_the_cap_limits_how_many_requests_are_chained_in_one_reply(
 def test_the_cap_is_a_setting(tmp_path: Path) -> None:
     from agent_service.config import Settings
 
-    assert Settings().queue_max_runs == 3 and Settings.from_env({"TEAM_B_QUEUE_MAX_RUNS": "1"}).queue_max_runs == 1
+    assert Settings().queue_max_runs == 3 and Settings.from_env({"AGENT_QUEUE_MAX_RUNS": "1"}).queue_max_runs == 1
     built = build_container(make_settings(tmp_path, queue_max_runs=1))
     assert built.orchestrator is not None and built.orchestrator._deps.max_queued_runs == 1  # type: ignore[attr-defined]
 

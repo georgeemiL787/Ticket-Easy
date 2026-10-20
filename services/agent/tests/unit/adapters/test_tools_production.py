@@ -112,7 +112,7 @@ async def test_a_production_answer_is_trusted_only_for_the_same_production_publi
         client = made(**production_binding())
         await client.list_tools(T)
         result = await client.call_tool(T, request("get_order"))
-        assert result.status == "error" and result.error_code == "TEAM_C_BAD_RESULT"
+        assert result.status == "error" and result.error_code == "TOOLS_BAD_RESULT"
 
 
 async def test_a_refusal_before_any_request_is_a_clean_rejection(fake: Fake, made: Made) -> None:
@@ -133,5 +133,5 @@ async def test_a_refusal_before_any_request_is_a_clean_rejection(fake: Fake, mad
     client = made(**production_binding())
     await client.list_tools(T)
     result = await client.call_tool(T, request("get_order"))
-    assert result.status == "error" and result.error_code == "TEAM_C_REJECTED" and not result.write_may_have_applied
+    assert result.status == "error" and result.error_code == "TOOLS_REJECTED" and not result.write_may_have_applied
     assert "invalid_arguments" in (result.error_message or "")

@@ -1,5 +1,5 @@
 # Ticket-Easy Team B (agent + inbox + dashboard). Build from the repository root:
-#   docker build -f services/agent/Dockerfile -t ticket-easy-team-b .
+#   docker build -f services/agent/Dockerfile -t ticket-easy-agent .
 # (docker compose does this for you: see docker-compose.yml)
 
 # ---- stage 1: build the manager dashboard (React) into services/agent/web/dashboard ----
@@ -38,7 +38,7 @@ COPY --from=dashboard /repo/services/agent/web/dashboard web/dashboard
 RUN useradd --create-home --uid 10001 app && mkdir -p /data && chown app /data
 USER app
 
-ENV TEAM_B_STORE=sqlite TEAM_B_DB_PATH=/data/team_b.sqlite3 TEAM_B_LOG_JSON=true
+ENV AGENT_STORE=sqlite AGENT_DB_PATH=/data/agent.sqlite3 AGENT_LOG_JSON=true
 EXPOSE 8010
 HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=5 \
     CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8010/health', timeout=2).status == 200 else 1)"

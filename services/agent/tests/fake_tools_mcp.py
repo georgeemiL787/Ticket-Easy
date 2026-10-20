@@ -4,7 +4,7 @@ service's code).
 It speaks the same stdio protocol (newline-delimited JSON-RPC: initialize, tools/list, tools/call) and plays a script
 re-read on EVERY request, so a test can change what is published between two calls, the way the tools service re-reads
 its
-database. The script (path in FAKE_TEAM_C_SCRIPT):
+database. The script (path in FAKE_TOOLS_SCRIPT):
 
     {"tools": [<MCP tool definitions>],
      "calls": {"<tool name>": <a structuredContent envelope> | {"rpc_error": {...}} | {"sleep": seconds} | {"exit": 1}},
@@ -16,7 +16,7 @@ server).
 
 A tool that is not in "tools" answers -32602 with data.code "tool_not_published", like the tools service. Every call is
 appended
-to FAKE_TEAM_C_LOG as one JSON line {identity, business_id, tool, arguments} so a test can see what was really sent.
+to FAKE_TOOLS_LOG as one JSON line {identity, business_id, tool, arguments} so a test can see what was really sent.
 Run: python tests/fake_tools_mcp.py --business-id B --identity alice [--database ...]
 """
 
@@ -28,7 +28,7 @@ import time
 
 
 def script() -> dict:
-    with open(os.environ["FAKE_TEAM_C_SCRIPT"], encoding="utf-8") as f:
+    with open(os.environ["FAKE_TOOLS_SCRIPT"], encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -85,7 +85,7 @@ def main() -> None:
         elif method == "tools/call":
             name, arguments = message["params"]["name"], message["params"].get("arguments") or {}
             plan = script()
-            log = os.environ.get("FAKE_TEAM_C_LOG")
+            log = os.environ.get("FAKE_TOOLS_LOG")
             if log:
                 with open(log, "a", encoding="utf-8") as f:
                     entry = {

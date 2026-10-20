@@ -37,7 +37,7 @@ jobs:
       - name: Evaluate with the AI model
         if: ${{ inputs.llm }}
         env:
-          TEAM_B_LLM: openrouter
+          AGENT_LLM: openrouter
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: python -m agent_service eval --set eval/conversations --llm --out reports
       - name: Put the table in the job summary

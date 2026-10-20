@@ -1,7 +1,7 @@
 """Live Demo through the real TicketEasy chat: the knowledge service + the agent + the tools service, calling a Live Demo API with real HTTP.
 
 The Live Demo target here is the separate demo-shop deployment (ops/local/serve.py demo-shop, port 8103: its own
-process, data and credentials, synthetic data on THIS machine), allowed by the explicit LIVE_DEMO_PRIVATE_HOSTS
+process, data and credentials, synthetic data on THIS machine), allowed by the explicit TOOLS_LIVE_DEMO_PRIVATE_HOSTS
 exception. It is NOT an external API; ops/local/live_demo_check.py covers a real external API. What this proves is
 the chat path: the assistant's Live Demo tool calls reach that deployment (never the sandbox), reads and writes are
 real and verified independently, an uncertain live write is never retried, and disabling stops the next call.
@@ -150,7 +150,7 @@ def main() -> int:
         check("the API refused the revoked credential and Team C reports it as failed (never succeeded)",
               len(runs) > before and all(r["status"] == "failed" for r in runs[before:]), [r["status"] for r in runs[before:]])  # fmt: skip
         check("the customer gets no order data, and the trace keeps the failure",
-              reply["decision"] != "answer" and "on its way" not in reply["text"] and bool(calls) and calls[-1]["error_code"] == "TEAM_C_FAILED", (reply, calls[-1:]))  # fmt: skip
+              reply["decision"] != "answer" and "on its way" not in reply["text"] and bool(calls) and calls[-1]["error_code"] == "TOOLS_FAILED", (reply, calls[-1:]))  # fmt: skip
     finally:
         add_identities(owner, order["artifact_id"], DEMO_SHOP, "demo_shop_harness.key")  # the demo account's real token again
 

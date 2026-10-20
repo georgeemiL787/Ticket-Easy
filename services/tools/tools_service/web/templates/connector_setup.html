@@ -7,8 +7,8 @@
 <label><input type="radio" name="environment" value="sandbox" checked> <strong>Sandbox</strong> <span class="small muted">a test API with test accounts</span></label>
 <label><input type="radio" name="environment" value="live_demo" {% if not live_demo.enabled or not live_demo.hosts %}disabled{% endif %}> <strong>Live Demo</strong>
 <span class="small muted">the real API, with real credentials you are allowed to use for this demo. Not a production release.</span></label>
-{% if not live_demo.enabled %}<p class="small muted">Live Demo is switched off on this server (LIVE_DEMO_ENABLED). The operator turns it on and lists the allowed API hosts in LIVE_DEMO_HOSTS.</p>
-{% elif not live_demo.hosts %}<p class="small muted">No live API host is allowed yet: the operator lists them in LIVE_DEMO_HOSTS.</p>
+{% if not live_demo.enabled %}<p class="small muted">Live Demo is switched off on this server (TOOLS_LIVE_DEMO_ENABLED). The operator turns it on and lists the allowed API hosts in TOOLS_LIVE_DEMO_HOSTS.</p>
+{% elif not live_demo.hosts %}<p class="small muted">No live API host is allowed yet: the operator lists them in TOOLS_LIVE_DEMO_HOSTS.</p>
 {% else %}<p class="small muted">Allowed live API hosts: {{ live_demo.hosts|join(', ') }}.</p>{% endif %}
 </fieldset>
 <label>API base URL<input type="url" name="base_url" value="{{ connector_draft.base_url }}" list="api-server-candidates" placeholder="http://localhost:8080" required></label>

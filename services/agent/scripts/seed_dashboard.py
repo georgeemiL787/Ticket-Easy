@@ -6,7 +6,7 @@ The conversations run through the real core and the simulated services (policy a
 staff
 claim and resolve, risky messages, a search outage, ...), spread over the last --days days. Then look at them with:
 
-    TEAM_B_STORE=sqlite TEAM_B_DB_PATH=var/demo.sqlite3 make run      # http://127.0.0.1:8010/dashboard
+    AGENT_STORE=sqlite AGENT_DB_PATH=var/demo.sqlite3 make run      # http://127.0.0.1:8010/dashboard
 """
 
 import argparse

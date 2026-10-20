@@ -54,8 +54,8 @@ def test_the_key_file_is_created_beside_the_database_and_reused(tmp_path):
 def test_the_key_can_come_from_the_environment_or_a_file(tmp_path, monkeypatch):
     from cryptography.fernet import Fernet
     key = Fernet.generate_key().decode()
-    monkeypatch.setenv("MY_TEAM_C_KEY", key)
-    from_env = settings_for(tmp_path, secret_key="env:MY_TEAM_C_KEY")
+    monkeypatch.setenv("MY_TOOLS_KEY", key)
+    from_env = settings_for(tmp_path, secret_key="env:MY_TOOLS_KEY")
     sealed = seal_value(TOKEN, from_env)
     assert open_value(sealed, settings_for(tmp_path, secret_key=key)) == TOKEN
     keyfile = tmp_path / "k.txt"

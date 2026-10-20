@@ -1,6 +1,6 @@
 """Run the tools service's real tool lifecycle for the Nile Style sandbox shop and bind the result into the agent.
 
-Needs the sandbox API (ops/local/serve.py sandbox) and the tools service (ops/local/serve.py team-c) running, and a model
+Needs the sandbox API (ops/local/serve.py sandbox) and the tools service (ops/local/serve.py tools) running, and a model
 provider configured for the tools service (services/tools/.env: Groq, OpenRouter or Ollama). It drives the tools service's own API and forms exactly
 as an owner would in its pages, with every owner decision labelled sandbox-only:
 
@@ -134,7 +134,7 @@ class Owner:
 
     def __init__(self) -> None:
         # The tools service requires its admin token on REST changes once the operator set one (ops/local/production.env switches that on)
-        key = VAR / "team_c_admin.key"
+        key = VAR / "tools_admin.key"
         token = {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
         self.http = httpx.Client(base_url=TOOLS_URL, timeout=600.0, trust_env=False, headers=token)
         self.csrf: str | None = None
@@ -447,7 +447,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
 def live_main(tool: str) -> int:
     """Live Demo for an already approved proposal: a Live Demo connector to the separate demo-shop deployment, a build,
     that deployment's own credentials, tests against it, a live_demo publication, and the agent's binding switched to
-    live_demo for this tool. The demo shop runs on this machine, so LIVE_DEMO_PRIVATE_HOSTS must list it explicitly."""
+    live_demo for this tool. The demo shop runs on this machine, so TOOLS_LIVE_DEMO_PRIVATE_HOSTS must list it explicitly."""
     write = TOOLS[tool]["method"] == "POST"
     base = load_state(False, tool)
     if "proposal_id" not in base:
@@ -459,8 +459,8 @@ def live_main(tool: str) -> int:
         step(f"Live Demo connector to {DEMO_SHOP} and a build on it")
         r = owner.http.post(f"/api/v1/proposals/{pid}/connectors", json=dict(base_url=DEMO_SHOP, context_fields=["customer_id"], environment="live_demo", confirmed=True))
         if r.status_code != 200:
-            raise SystemExit("the Live Demo connector was refused: " + r.text[:400] + "\nList 127.0.0.1:8103 in LIVE_DEMO_HOSTS and "
-                             "LIVE_DEMO_PRIVATE_HOSTS (ops/local/live_demo.env) and restart Team C.")
+            raise SystemExit("the Live Demo connector was refused: " + r.text[:400] + "\nList 127.0.0.1:8103 in TOOLS_LIVE_DEMO_HOSTS and "
+                             "TOOLS_LIVE_DEMO_PRIVATE_HOSTS (ops/local/live_demo.env) and restart Team C.")
         connector = r.json()["id"]
         aid = owner.post(f"/proposals/{pid}/artifacts", {"connector_id": connector})["id"]
         state.update(connector_id=connector, artifact_id=review_enforcement_if_needed(owner, pid, aid))

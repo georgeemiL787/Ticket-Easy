@@ -15,10 +15,10 @@ from agent_service.observability import ai_events
 from tests.fakes import FakeLLM
 
 GROQ = {
-    "TEAM_B_LLM": "openai",
-    "TEAM_B_LLM_BASE_URL": "https://api.groq.com/openai/v1",
-    "TEAM_B_LLM_API_KEY": "gsk-general",
-    "TEAM_B_LLM_MODEL": "qwen/qwen3.8-27b",
+    "AGENT_LLM": "openai",
+    "AGENT_LLM_BASE_URL": "https://api.groq.com/openai/v1",
+    "AGENT_LLM_API_KEY": "gsk-general",
+    "AGENT_LLM_MODEL": "qwen/qwen3.8-27b",
 }
 
 
@@ -83,7 +83,7 @@ def test_without_an_ai_model_no_job_has_one() -> None:
 
 async def test_each_job_can_use_its_own_model() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_MODEL_PLANNER="openai/gpt-oss-120b", TEAM_B_LLM_MODEL_REVIEWER="m-review")
+    reg = registry(server, AGENT_LLM_MODEL_PLANNER="openai/gpt-oss-120b", AGENT_LLM_MODEL_REVIEWER="m-review")
     for role in ("planner", "reviewer", "reader", "writer"):
         await ask(reg.llm_for(role))
     assert server.models() == ["openai/gpt-oss-120b", "m-review", "qwen/qwen3.8-27b", "qwen/qwen3.8-27b"]
@@ -93,8 +93,8 @@ async def test_a_job_with_its_own_server_does_not_borrow_the_general_key() -> No
     server = Server()
     reg = registry(
         server,
-        TEAM_B_LLM_BASE_URL_WRITER_EGYPTIAN="http://127.0.0.1:11434/v1",
-        TEAM_B_LLM_MODEL_WRITER_EGYPTIAN="nile-chat",
+        AGENT_LLM_BASE_URL_WRITER_EGYPTIAN="http://127.0.0.1:11434/v1",
+        AGENT_LLM_MODEL_WRITER_EGYPTIAN="nile-chat",
     )
     await ask(reg.llm_for("writer_egyptian"))
     await ask(reg.llm_for("writer"))
@@ -107,15 +107,15 @@ async def test_a_job_with_its_own_server_does_not_borrow_the_general_key() -> No
 
 async def test_a_job_can_have_its_own_key_on_the_general_server() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_API_KEY_JUDGE="gsk-judge")
+    reg = registry(server, AGENT_LLM_API_KEY_JUDGE="gsk-judge")
     await ask(reg.llm_for("judge"))
     assert server.keys == ["Bearer gsk-judge"]
 
 
 def test_a_job_can_have_a_model_when_there_is_no_general_one_only_with_its_own_server() -> None:
-    only_model = Settings.from_env({"TEAM_B_LLM_MODEL_WRITER": "m"})
+    only_model = Settings.from_env({"AGENT_LLM_MODEL_WRITER": "m"})
     assert LLMRegistry(only_model).llm_for("writer") is None  # a model name alone has no server to go to
-    own = Settings.from_env({"TEAM_B_LLM_BASE_URL_WRITER": "http://x/v1", "TEAM_B_LLM_MODEL_WRITER": "m"})
+    own = Settings.from_env({"AGENT_LLM_BASE_URL_WRITER": "http://x/v1", "AGENT_LLM_MODEL_WRITER": "m"})
     reg = LLMRegistry(own)
     assert reg.llm_for("writer") is not None and reg.llm_for("reader") is None and reg.any_model()
     assert role_provider(own, "writer") is not None and role_provider(own, "judge") is None
@@ -123,27 +123,27 @@ def test_a_job_can_have_a_model_when_there_is_no_general_one_only_with_its_own_s
 
 def test_settings_for_jobs_are_read_and_checked() -> None:
     s = settings(
-        TEAM_B_LLM_FALLBACK_MODEL_READER="openai/gpt-oss-20b",
-        TEAM_B_LLM_REASONING_EFFORT_PLANNER="low",
-        TEAM_B_LLM_RPM_WRITER="25",
-        TEAM_B_LLM_TPM_WRITER="6000",
-        TEAM_B_LLM_MAX_WAIT_S="2.5",
+        AGENT_LLM_FALLBACK_MODEL_READER="openai/gpt-oss-20b",
+        AGENT_LLM_REASONING_EFFORT_PLANNER="low",
+        AGENT_LLM_RPM_WRITER="25",
+        AGENT_LLM_TPM_WRITER="6000",
+        AGENT_LLM_MAX_WAIT_S="2.5",
     )
     assert s.role("reader").fallback_model == "openai/gpt-oss-20b" and s.role("planner").reasoning_effort == "low"
     assert (s.role("writer").rpm, s.role("writer").tpm, s.llm_max_wait_s) == (25, 6000, 2.5)
     assert s.role("judge").model is None  # nothing set: the general one will be used
     assert Settings().llm_max_wait_s == 4.0
     for bad, fragment in (
-        ({"TEAM_B_LLM_RPM_READER": "0"}, "TEAM_B_LLM_RPM_READER"),
-        ({"TEAM_B_LLM_REASONING_EFFORT_READER": "extreme"}, "TEAM_B_LLM_REASONING_EFFORT_READER"),
-        ({"TEAM_B_LLM_BASE_URL_JUDGE": "http://x"}, "JUDGE.*needs its own model"),
+        ({"AGENT_LLM_RPM_READER": "0"}, "AGENT_LLM_RPM_READER"),
+        ({"AGENT_LLM_REASONING_EFFORT_READER": "extreme"}, "AGENT_LLM_REASONING_EFFORT_READER"),
+        ({"AGENT_LLM_BASE_URL_JUDGE": "http://x"}, "JUDGE.*needs its own model"),
     ):
         with pytest.raises(SettingsError, match=fragment):
             Settings.from_env(bad)
 
 
 def test_the_api_keys_never_show_in_the_settings_text() -> None:
-    s = settings(TEAM_B_LLM_API_KEY_JUDGE="gsk-secret-judge")
+    s = settings(AGENT_LLM_API_KEY_JUDGE="gsk-secret-judge")
     assert "gsk-secret-judge" not in repr(s) and "gsk-general" not in repr(s)
 
 
@@ -152,7 +152,7 @@ def test_the_api_keys_never_show_in_the_settings_text() -> None:
 
 async def test_reasoning_effort_is_sent_only_when_set() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_REASONING_EFFORT_PLANNER="low")
+    reg = registry(server, AGENT_LLM_REASONING_EFFORT_PLANNER="low")
     await ask(reg.llm_for("planner"))
     await ask(reg.llm_for("reader"))
     assert server.requests[0]["reasoning_effort"] == "low" and "reasoning_effort" not in server.requests[1]
@@ -162,7 +162,7 @@ async def test_a_model_that_rejects_reasoning_effort_is_asked_without_it_from_th
     server = Server(
         {"m": [httpx.Response(400, text='{"error": "unknown parameter reasoning_effort"}'), answer(), answer()]}
     )
-    reg = registry(server, TEAM_B_LLM_MODEL_PLANNER="m", TEAM_B_LLM_REASONING_EFFORT_PLANNER="low")
+    reg = registry(server, AGENT_LLM_MODEL_PLANNER="m", AGENT_LLM_REASONING_EFFORT_PLANNER="low")
     llm = reg.llm_for("planner")
     assert await ask(llm) == {"ok": True} and await ask(llm) == {"ok": True}
     assert ["reasoning_effort" in r for r in server.requests] == [True, False, False]
@@ -174,9 +174,7 @@ async def test_a_model_that_rejects_reasoning_effort_is_asked_without_it_from_th
 async def test_a_model_that_is_gone_is_replaced_by_the_backup_and_then_left_alone() -> None:
     gone = httpx.Response(404, json={"error": {"message": "The model `qwen/preview` has been decommissioned"}})
     server = Server({"qwen/preview": [gone]})
-    reg = registry(
-        server, TEAM_B_LLM_MODEL_READER="qwen/preview", TEAM_B_LLM_FALLBACK_MODEL_READER="openai/gpt-oss-20b"
-    )
+    reg = registry(server, AGENT_LLM_MODEL_READER="qwen/preview", AGENT_LLM_FALLBACK_MODEL_READER="openai/gpt-oss-20b")
     llm = reg.llm_for("reader")
     assert isinstance(llm, RoleLLM)
     with ai_events() as events:
@@ -237,7 +235,7 @@ async def test_when_the_backup_fails_too_the_job_is_marked_failed() -> None:
 
 async def test_jobs_on_the_same_model_share_one_budget_and_the_extra_call_is_refused_at_once() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_RPM_READER="2", TEAM_B_LLM_MAX_WAIT_S="0")
+    reg = registry(server, AGENT_LLM_RPM_READER="2", AGENT_LLM_MAX_WAIT_S="0")
     await ask(reg.llm_for("reader"))
     await ask(reg.llm_for("knowledge"))  # a different job on the same model: the same budget
     with pytest.raises(RateBudgetExceeded):
@@ -247,7 +245,7 @@ async def test_jobs_on_the_same_model_share_one_budget_and_the_extra_call_is_ref
 
 async def test_a_job_on_another_model_has_its_own_budget() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_RPM_READER="1", TEAM_B_LLM_MAX_WAIT_S="0", TEAM_B_LLM_MODEL_REVIEWER="m-review")
+    reg = registry(server, AGENT_LLM_RPM_READER="1", AGENT_LLM_MAX_WAIT_S="0", AGENT_LLM_MODEL_REVIEWER="m-review")
     await ask(reg.llm_for("reader"))
     await ask(reg.llm_for("reviewer"))
     await ask(reg.llm_for("reviewer"))  # unlimited
@@ -257,7 +255,7 @@ async def test_a_job_on_another_model_has_its_own_budget() -> None:
 
 async def test_the_token_count_the_server_returns_keeps_the_token_budget_honest() -> None:
     server = Server({"qwen/qwen3.8-27b": [answer(tokens=100), answer(tokens=100)]})
-    reg = registry(server, TEAM_B_LLM_TPM_READER="1000", TEAM_B_LLM_MAX_WAIT_S="0")
+    reg = registry(server, AGENT_LLM_TPM_READER="1000", AGENT_LLM_MAX_WAIT_S="0")
     llm = reg.llm_for("reader")
     for _ in range(2):  # each call is estimated at about 400 tokens, so only two fit until the real counts replace them
         await ask(llm)
@@ -268,9 +266,9 @@ async def test_a_rate_limited_job_falls_back_to_its_backup_model_when_it_has_one
     server = Server()
     reg = registry(
         server,
-        TEAM_B_LLM_RPM_WRITER="1",
-        TEAM_B_LLM_MAX_WAIT_S="0",
-        TEAM_B_LLM_FALLBACK_MODEL_WRITER="openai/gpt-oss-20b",
+        AGENT_LLM_RPM_WRITER="1",
+        AGENT_LLM_MAX_WAIT_S="0",
+        AGENT_LLM_FALLBACK_MODEL_WRITER="openai/gpt-oss-20b",
     )
     llm = reg.llm_for("writer")
     with ai_events() as events:
@@ -288,10 +286,10 @@ async def test_the_api_key_never_appears_in_an_error() -> None:
 
 
 def test_several_keys_add_up_their_per_minute_budgets() -> None:
-    env = {"TEAM_B_LLM_RPM_WRITER": "30", "TEAM_B_LLM_TPM_WRITER": "8000"}
+    env = {"AGENT_LLM_RPM_WRITER": "30", "AGENT_LLM_TPM_WRITER": "8000"}
     one = LLMRegistry(settings(**env))
-    three = LLMRegistry(settings(TEAM_B_LLM_API_KEY="gsk-a,gsk-b, gsk-c", **env))
-    url, model = GROQ["TEAM_B_LLM_BASE_URL"], GROQ["TEAM_B_LLM_MODEL"]
+    three = LLMRegistry(settings(AGENT_LLM_API_KEY="gsk-a,gsk-b, gsk-c", **env))
+    url, model = GROQ["AGENT_LLM_BASE_URL"], GROQ["AGENT_LLM_MODEL"]
     first, sum_of_three = one._limiters.get(url, model), three._limiters.get(url, model)
     assert first is not None and sum_of_three is not None
     assert (first.rpm, first.tpm) == (30, 8000)

@@ -151,7 +151,7 @@ def test_the_limit_is_a_setting() -> None:
     from agent_service.config import Settings
 
     assert Settings().rate_limit_per_minute == 20
-    assert Settings.from_env({"TEAM_B_RATE_LIMIT_PER_MIN": "5"}).rate_limit_per_minute == 5
+    assert Settings.from_env({"AGENT_RATE_LIMIT_PER_MIN": "5"}).rate_limit_per_minute == 5
 
 
 # ---- GET conversation, outbox ----

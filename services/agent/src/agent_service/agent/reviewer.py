@@ -1,4 +1,4 @@
-"""The reviewer (job "reviewer", TEAM_B_LLM_REVIEW=1): a second pair of eyes that can only make things stricter.
+"""The reviewer (job "reviewer", AGENT_LLM_REVIEW=1): a second pair of eyes that can only make things stricter.
 
 SAFETY-CRITICAL. Two checks, both after code has done its own:
 

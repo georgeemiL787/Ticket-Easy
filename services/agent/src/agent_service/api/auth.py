@@ -43,7 +43,7 @@ PUBLIC: tuple[tuple[frozenset[str], re.Pattern[str]], ...] = tuple(
         (("GET",), r"^/v1/auth/me$"),
     )
 )
-TEST_ADMIN = re.compile(r"^/v1/_test/")  # only exists when TEAM_B_ENABLE_TEST_ADMIN=1 (never in production)
+TEST_ADMIN = re.compile(r"^/v1/_test/")  # only exists when AGENT_ENABLE_TEST_ADMIN=1 (never in production)
 
 # (methods, path pattern, the least role). Anything protected and not listed needs admin.
 ROLES: tuple[tuple[frozenset[str], re.Pattern[str], str], ...] = tuple(

@@ -66,7 +66,7 @@ def scalar_default(node):
 
 def bounded_path(raw, allowed):
     if not allowed:
-        raise AppError("project_directory_configuration", "Set ALLOWED_PROJECT_DIRECTORY before discovering local projects", 503)
+        raise AppError("project_directory_configuration", "Set TOOLS_ALLOWED_PROJECT_DIRECTORY before discovering local projects", 503)
     try:
         base = Path(allowed)
         target = Path(raw.strip())
@@ -76,7 +76,7 @@ def bounded_path(raw, allowed):
         lexical = Path(os.path.abspath(target))
         base = Path(os.path.abspath(base))
         if not lexical.is_relative_to(base):
-            raise AppError("project_boundary", "Project path is outside ALLOWED_PROJECT_DIRECTORY", 403)
+            raise AppError("project_boundary", "Project path is outside TOOLS_ALLOWED_PROJECT_DIRECTORY", 403)
         for part in [*reversed(base.parents), base, *reversed(list(lexical.parents)[:len(lexical.parts)-len(base.parts)]), lexical]:
             if part.exists() and (part.is_symlink() or getattr(part, "is_junction", lambda: False)()):
                 raise AppError("project_link", "Symlink or junction project paths are unsupported", 403)

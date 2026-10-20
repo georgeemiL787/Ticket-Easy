@@ -144,7 +144,7 @@ def record_all() -> None:
                 resp = client.get(path, params=payload, headers=headers)
                 record = {"request": {"method": "GET", "path": path, "query": payload}}
             if headers:
-                record["request"]["headers"] = {"X-Admin-Key": "<ADMIN_API_KEY>"}
+                record["request"]["headers"] = {"X-Admin-Key": "<KNOWLEDGE_ADMIN_API_KEY>"}
             record["response"] = {"status": resp.status_code, "body": resp.json()}
             file = OUT / f"{name}.{label}.json"
             file.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

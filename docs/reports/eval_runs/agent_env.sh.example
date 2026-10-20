@@ -1,48 +1,48 @@
 # Settings of the agent-mode evaluation on the Groq free plan (source this file in the shell that starts the run).
-# NO KEYS HERE: the keys come from the shell (TEAM_B_LLM_API_KEY is set by run_agent_parallel.sh from GROQ_KEY_N).
+# NO KEYS HERE: the keys come from the shell (AGENT_LLM_API_KEY is set by run_agent_parallel.sh from GROQ_KEY_N).
 # Rate numbers are the free plan's per-model limits as documented in .env.example (30 requests/min, 8,000 tokens/min);
 # with several keys in one process the service multiplies them by the number of keys.
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
-export TEAM_B_LLM=openai
-export TEAM_B_LLM_BASE_URL=https://api.groq.com/openai/v1
-export TEAM_B_LLM_MODEL=qwen/qwen3.8-27b            # reader, knowledge, writer, summary (general model)
-export TEAM_B_LLM_TIMEOUT_S=60
+export AGENT_LLM=openai
+export AGENT_LLM_BASE_URL=https://api.groq.com/openai/v1
+export AGENT_LLM_MODEL=qwen/qwen3.8-27b            # reader, knowledge, writer, summary (general model)
+export AGENT_LLM_TIMEOUT_S=60
 
-export TEAM_B_LLM_MODEL_PLANNER=openai/gpt-oss-120b
-export TEAM_B_LLM_REASONING_EFFORT_PLANNER=low
-export TEAM_B_LLM_RPM_PLANNER=30
-export TEAM_B_LLM_TPM_PLANNER=8000
-export TEAM_B_LLM_MODEL_REVIEWER=openai/gpt-oss-120b
-export TEAM_B_LLM_REASONING_EFFORT_REVIEWER=low
-export TEAM_B_LLM_RPM_REVIEWER=30
-export TEAM_B_LLM_TPM_REVIEWER=8000
-export TEAM_B_LLM_RPM_READER=30
-export TEAM_B_LLM_TPM_READER=8000
-export TEAM_B_LLM_RPM_KNOWLEDGE=30
-export TEAM_B_LLM_TPM_KNOWLEDGE=8000
-export TEAM_B_LLM_RPM_WRITER=30
-export TEAM_B_LLM_TPM_WRITER=8000
-export TEAM_B_LLM_RPM_SUMMARY=30
-export TEAM_B_LLM_TPM_SUMMARY=8000
-export TEAM_B_LLM_MODEL_JUDGE=openai/gpt-oss-20b
-export TEAM_B_LLM_REASONING_EFFORT_JUDGE=low
-export TEAM_B_LLM_RPM_JUDGE=30
-export TEAM_B_LLM_TPM_JUDGE=8000
+export AGENT_LLM_MODEL_PLANNER=openai/gpt-oss-120b
+export AGENT_LLM_REASONING_EFFORT_PLANNER=low
+export AGENT_LLM_RPM_PLANNER=30
+export AGENT_LLM_TPM_PLANNER=8000
+export AGENT_LLM_MODEL_REVIEWER=openai/gpt-oss-120b
+export AGENT_LLM_REASONING_EFFORT_REVIEWER=low
+export AGENT_LLM_RPM_REVIEWER=30
+export AGENT_LLM_TPM_REVIEWER=8000
+export AGENT_LLM_RPM_READER=30
+export AGENT_LLM_TPM_READER=8000
+export AGENT_LLM_RPM_KNOWLEDGE=30
+export AGENT_LLM_TPM_KNOWLEDGE=8000
+export AGENT_LLM_RPM_WRITER=30
+export AGENT_LLM_TPM_WRITER=8000
+export AGENT_LLM_RPM_SUMMARY=30
+export AGENT_LLM_TPM_SUMMARY=8000
+export AGENT_LLM_MODEL_JUDGE=openai/gpt-oss-20b
+export AGENT_LLM_REASONING_EFFORT_JUDGE=low
+export AGENT_LLM_RPM_JUDGE=30
+export AGENT_LLM_TPM_JUDGE=8000
 # backups when the main model is gone or keeps failing
-export TEAM_B_LLM_FALLBACK_MODEL_READER=openai/gpt-oss-20b
-export TEAM_B_LLM_FALLBACK_MODEL_KNOWLEDGE=openai/gpt-oss-20b
-export TEAM_B_LLM_FALLBACK_MODEL_WRITER=openai/gpt-oss-20b
-export TEAM_B_LLM_FALLBACK_MODEL_SUMMARY=openai/gpt-oss-20b
-export TEAM_B_LLM_FALLBACK_MODEL_JUDGE=openai/gpt-oss-20b
+export AGENT_LLM_FALLBACK_MODEL_READER=openai/gpt-oss-20b
+export AGENT_LLM_FALLBACK_MODEL_KNOWLEDGE=openai/gpt-oss-20b
+export AGENT_LLM_FALLBACK_MODEL_WRITER=openai/gpt-oss-20b
+export AGENT_LLM_FALLBACK_MODEL_SUMMARY=openai/gpt-oss-20b
+export AGENT_LLM_FALLBACK_MODEL_JUDGE=openai/gpt-oss-20b
 
 # every AI helper on
-export TEAM_B_LLM_REWRITE=1 TEAM_B_LLM_POLICY=1 TEAM_B_LLM_KNOWLEDGE=1 TEAM_B_LLM_REVIEW=1
-export TEAM_B_AGENT_MODE=on
+export AGENT_LLM_REWRITE=1 AGENT_LLM_POLICY=1 AGENT_LLM_KNOWLEDGE=1 AGENT_LLM_REVIEW=1
+export AGENT_PLANNING_MODE=on
 # free-plan waiting needs a long turn limit (as in orchestrator/docs/agent_comparison.md)
-export TEAM_B_AGENT_TURN_TIMEOUT_S=240
-export TEAM_B_LLM_MAX_WAIT_S=120
+export AGENT_PLANNING_TURN_TIMEOUT_S=240
+export AGENT_LLM_MAX_WAIT_S=120
 
 # token usage log (the run script sets these per style)
-# export TEAM_B_USAGE_LOG=docs/reports/eval_runs/usage/agent_<style>.jsonl
-# export TEAM_B_USAGE_RUN_LABEL=presentation_agent_<style>
+# export AGENT_USAGE_LOG=docs/reports/eval_runs/usage/agent_<style>.jsonl
+# export AGENT_USAGE_RUN_LABEL=presentation_agent_<style>

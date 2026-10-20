@@ -22,7 +22,7 @@ The rules (each reads only counts, never message text; "key" tells apart the ale
 
 It reads through the ports: TraceStore.facts() (the text-free rows of every turn, tool call and rule answer),
 TraceStore.query() and CaseStore.list(). A failing evaluation is logged and tried again next minute; it never crashes
-the service. Optional TEAM_B_ALERT_WEBHOOK receives each opened and resolved alert as JSON.
+the service. Optional AGENT_ALERT_WEBHOOK receives each opened and resolved alert as JSON.
 """
 
 import asyncio

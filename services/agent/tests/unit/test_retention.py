@@ -29,12 +29,12 @@ def make_case(container: Container, conversation_id: str) -> HandoffCase:
 
 def test_retention_defaults_to_90_days_and_reads_the_environment() -> None:
     assert Settings().retention_days == 90
-    assert Settings.from_env({"TEAM_B_RETENTION_DAYS": "30"}).retention_days == 30
+    assert Settings.from_env({"AGENT_RETENTION_DAYS": "30"}).retention_days == 30
 
 
 def test_retention_must_be_at_least_one_day() -> None:
-    with pytest.raises(ValueError, match="TEAM_B_RETENTION_DAYS"):
-        Settings.from_env({"TEAM_B_RETENTION_DAYS": "0"})
+    with pytest.raises(ValueError, match="AGENT_RETENTION_DAYS"):
+        Settings.from_env({"AGENT_RETENTION_DAYS": "0"})
 
 
 async def test_old_conversations_are_purged_and_recent_ones_stay(c: Container) -> None:

@@ -89,7 +89,7 @@ def main(argv=None):
     service.store.one("SELECT id FROM businesses WHERE id=?", (args.business_id,))
     if args.context_from_client:
         if not settings.production_enabled:
-            parser.error("production is switched off (PRODUCTION_ENABLED)")
+            parser.error("production is switched off (TOOLS_PRODUCTION_ENABLED)")
         if not any(c.get("business_id") == args.business_id and c.get("environment") == "production" for c in load_connectors(settings).values()):
             parser.error("this business has no production connector")
         log.info("serving PRODUCTION tools of business %s with the service credential from %s", args.business_id, settings.database_path)

@@ -1,7 +1,7 @@
 # TicketEasy (team_c) End-to-End Flow Final Report
 
 **Date:** 2026-10-09  
-**Environment:** `data/flow4.sqlite3`, port 8101, DEV_FAST_TRACK=false, LLM_PRIMARY=groq, AstroCommerce API on localhost:8080  
+**Environment:** `data/flow4.sqlite3`, port 8101, TOOLS_DEV_FAST_TRACK=false, LLM_PRIMARY=groq, AstroCommerce API on localhost:8080  
 **Test Suite:** 595 tests passing (11m 11s)  
 **E2E:** `scripts/e2e_flow.py` ran start-to-finish unaided — `E2E FLOW COMPLETE [OK]`
 
@@ -31,8 +31,8 @@
 
 ---
 
-## 3. DEV_FAST_TRACK Behavior ✅
-**Status:** `.env` = `DEV_FAST_TRACK=false` (production default)
+## 3. TOOLS_DEV_FAST_TRACK Behavior ✅
+**Status:** `.env` = `TOOLS_DEV_FAST_TRACK=false` (production default)
 
 **Behavior with `false`:**
 - No auto-review of enforcement on owner's behalf (`submit_enforcement` → `awaiting_review`)
@@ -41,12 +41,12 @@
 
 **Regression Tests Added** (`tests/test_artifacts.py`):
 - `test_normal_flow_never_reviews_enforcement_on_the_owners_behalf`: default false, build → all `access_requirements` have `enforcement.status=="missing"`, submit → `awaiting_review`
-- `test_dev_fast_track_is_an_explicitly_labelled_development_shortcut`: manual submit → `awaiting_review`; flag on + different sha → `approved` with `"DEV_FAST_TRACK"` in `review_note`
+- `test_dev_fast_track_is_an_explicitly_labelled_development_shortcut`: manual submit → `awaiting_review`; flag on + different sha → `approved` with `"TOOLS_DEV_FAST_TRACK"` in `review_note`
 
 ---
 
 ## 4. Enforcement Review Result ✅
-**Enforcement submitted & reviewed manually** (DEV_FAST_TRACK=false):
+**Enforcement submitted & reviewed manually** (TOOLS_DEV_FAST_TRACK=false):
 - `caller_access-a178fb`: mechanism `delegated_user_credential` → status `configured`
 - `record_scope-ba87bb`: mechanism `response_field_matches_context` (step s1, 200, `/customer_id`, `customer_id`, after_step, equals) → status `configured`
 - Both approved by `local-owner` via `/enforcement/{eid}/review`
@@ -68,7 +68,7 @@
 - `9191c6c` sandbox-only publication wording
 - final report and `scripts/e2e_flow.py` (this commit)
 
-**Excluded:** `*.sqlite3`, `*.db`, `*.log`, `*.err` via `.gitignore` — no runtime DBs, logs, cache, temp artifacts, credentials, or local `.env` committed. Secret scan (`gsk_`/`sk-or-v1`) clean. Git identity: `Team C local` / `local@team-c.invalid`.
+**Excluded:** `*.sqlite3`, `*.db`, `*.log`, `*.err` via `.gitignore` — no runtime DBs, logs, cache, temp artifacts, credentials, or local `.env` committed. Secret scan (`gsk_`/`sk-or-v1`) clean. Git identity: `Team C local` / `local@tools.invalid`.
 
 ---
 
@@ -101,7 +101,7 @@
 ---
 
 ## 8. Test Results ✅
-**Full suite: 595 passed in 670s** with `.env` at `LLM_PRIMARY=groq` (production default), DEV_FAST_TRACK=false.  
+**Full suite: 595 passed in 670s** with `.env` at `LLM_PRIMARY=groq` (production default), TOOLS_DEV_FAST_TRACK=false.  
 The Groq path is exercised live by `tests/test_groq.py`; no test depends on a paid key being present.
 
 ---
@@ -157,4 +157,4 @@ The Groq path is exercised live by `tests/test_groq.py`; no test depends on a pa
 ---
 
 ## Summary
-All 10 acceptance criteria met. The flow runs start-to-finish unaided on `data/flow4.sqlite3` with `DEV_FAST_TRACK=false` and `LLM_PRIMARY=groq`, and reaches sandbox-only sandbox publication `b8828534-6848-4eb4-8a41-9cd690ff4946` with four passing sandbox tests. Index truncation is fixed with verifiable multi-round retrieval — Request A searched 19/81 operations in 1 round, Request B widened to 61/81 in 3 rounds, and the script asserts that widening. Both structured-output defects (Groq binding target, reconciliation evidence citation) are root-caused and fixed; the model ran with zero failed runs. Enforcement is manually reviewed, sandbox history preserves the superseded audit trail, production activation remains unimplemented, the suite is 595 passing, and git is clean with no secrets, databases or `.env` committed. The only outstanding fragility is upstream: AstroCommerce intermittently returns HTTP 500, which the gate correctly treats as unproven rather than as a refusal.
+All 10 acceptance criteria met. The flow runs start-to-finish unaided on `data/flow4.sqlite3` with `TOOLS_DEV_FAST_TRACK=false` and `LLM_PRIMARY=groq`, and reaches sandbox-only sandbox publication `b8828534-6848-4eb4-8a41-9cd690ff4946` with four passing sandbox tests. Index truncation is fixed with verifiable multi-round retrieval — Request A searched 19/81 operations in 1 round, Request B widened to 61/81 in 3 rounds, and the script asserts that widening. Both structured-output defects (Groq binding target, reconciliation evidence citation) are root-caused and fixed; the model ran with zero failed runs. Enforcement is manually reviewed, sandbox history preserves the superseded audit trail, production activation remains unimplemented, the suite is 595 passing, and git is clean with no secrets, databases or `.env` committed. The only outstanding fragility is upstream: AstroCommerce intermittently returns HTTP 500, which the gate correctly treats as unproven rather than as a refusal.

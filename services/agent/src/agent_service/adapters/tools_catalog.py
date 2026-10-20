@@ -6,7 +6,7 @@ tools service over MCP
 instead. Everything else in the core is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
 the same gates, the same verify_result.
 
-Binding (an operator file, TEAM_B_TEAM_C_CONFIG, see config/team_c.example.json):
+Binding (an operator file, AGENT_TOOLS_CONFIG, see config/team_c.example.json):
 - A the agent tool name is bound to a tools service proposal (`proposal_id`, stable across versions and rebuilds) or to
 one exact
   published tool name. On every listing the published tool of that proposal with the highest version is used; two
@@ -37,12 +37,12 @@ Results (only `succeeded` is a success; nothing is retried here):
 permission_denied,
   not_found, rate_limited, api_unreachable, timeout, ...); a read the tools service answered not_found is NOT_FOUND for
   the core
-- rejected (refused before any request) -> error TEAM_C_REJECTED, nothing applied
-- failed -> error TEAM_C_FAILED; when the API refused a write (write_state rejected_unverified) the tools service does
+- rejected (refused before any request) -> error TOOLS_REJECTED, nothing applied
+- failed -> error TOOLS_FAILED; when the API refused a write (write_state rejected_unverified) the tools service does
 not assert
   that nothing changed, so write_may_have_applied (the core escalates as unverified_result, never says "not done")
 - partial / outcome_unknown -> error PARTIAL_WRITE / OUTCOME_UNKNOWN, write_may_have_applied
-- error -> error TEAM_C_ERROR, write_may_have_applied for a write tool
+- error -> error TOOLS_ERROR, write_may_have_applied for a write tool
 - JSON-RPC tool_not_published -> error TOOL_NOT_PUBLISHED (the registry forgets its list); the request was not run
 - request sent but no answer (timeout, process exit) -> UpstreamError TIMEOUT / CONNECTION_LOST: the core reports a
   write as uncertain (never BACKEND_UNAVAILABLE, which means "certainly not applied"); a read may be asked again
@@ -135,7 +135,7 @@ class TenantBinding(BaseModel):
 
 
 class ToolsConfig(BaseModel):
-    """The operator's the tools service connection (TEAM_B_TEAM_C_CONFIG). Paths may be relative to the file's
+    """The operator's the tools service connection (AGENT_TOOLS_CONFIG). Paths may be relative to the file's
     folder."""
 
     model_config = ConfigDict(extra="forbid")
@@ -467,7 +467,7 @@ class ToolCapabilities:
             return _error("TOOL_NOT_PUBLISHED", f"{tool}: Team C says the tool is not published (disabled or replaced)")
         # -32602 / -32601 are refusals before the tool ran; any other protocol error may have happened mid-call.
         before_run = exc.code in (-32602, -32601, -32600)
-        return _error("TEAM_C_PROTOCOL_ERROR", f"Team C answered {exc.code}", unclear=writes and not before_run)
+        return _error("TOOLS_PROTOCOL_ERROR", f"Team C answered {exc.code}", unclear=writes and not before_run)
 
 
 def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: ToolSpec | None) -> ResolvedTool:
@@ -578,11 +578,11 @@ def _result(
         err: dict[str, Any] = found_err if isinstance(found_err, dict) else {}
         why = err.get("category") or err.get("code") or "rejected"
         return ToolResult(
-            status="error", error_code="TEAM_C_REJECTED", error_message=f"{why}: {str(envelope.get('message'))[:200]}"
+            status="error", error_code="TOOLS_REJECTED", error_message=f"{why}: {str(envelope.get('message'))[:200]}"
         )
     if envelope is None or envelope.get("production_ready") is not production:
         return _error(
-            "TEAM_C_BAD_RESULT",
+            "TOOLS_BAD_RESULT",
             "Team C's answer is not a production execution result"
             if production
             else "Team C's answer is not a sandbox or Live Demo execution result",
@@ -590,10 +590,10 @@ def _result(
         )
     if envelope.get("environment", "sandbox") != (resolved.environment or "sandbox"):
         return _error(
-            "TEAM_C_BAD_RESULT", "Team C answered from another environment than the tool was listed in", unclear=writes
+            "TOOLS_BAD_RESULT", "Team C answered from another environment than the tool was listed in", unclear=writes
         )
     if production and envelope.get("publication_id") != resolved.publication_id:
-        return _error("TEAM_C_BAD_RESULT", "Team C answered for another production publication", unclear=writes)
+        return _error("TOOLS_BAD_RESULT", "Team C answered for another production publication", unclear=writes)
     status = envelope.get("status")
     execution = envelope.get("execution_id")
     audit = f"{AUDIT_PREFIX}{execution}" if execution else None
@@ -603,7 +603,7 @@ def _result(
     detail = f"{category or error.get('code') or status}: {str(envelope.get('message') or '')[:200]}"
     if status == "succeeded" and raw.get("isError") is not True:
         if envelope.get("publication_id") not in (None, resolved.publication_id):
-            return _error("TEAM_C_BAD_RESULT", "Team C answered for another publication", unclear=writes)
+            return _error("TOOLS_BAD_RESULT", "Team C answered for another publication", unclear=writes)
         found_output = envelope.get("output")
         output: dict[str, Any] = found_output if isinstance(found_output, dict) else {}
         picked = {mine: _pick(output, theirs) for mine, theirs in bound.fields.items()}
@@ -622,11 +622,11 @@ def _result(
     writes_seen = [w for w in envelope.get("writes") or [] if isinstance(w, dict)]
     touched = any(w.get("write_state") not in NOT_SENT_STATES for w in writes_seen)
     if status == "rejected":
-        return ToolResult(status="error", error_code="TEAM_C_REJECTED", error_message=detail, audit_id=audit)
+        return ToolResult(status="error", error_code="TOOLS_REJECTED", error_message=detail, audit_id=audit)
     if status == "failed":
         return ToolResult(
             status="error",
-            error_code="NOT_FOUND" if category == "not_found" and not writes else "TEAM_C_FAILED",
+            error_code="NOT_FOUND" if category == "not_found" and not writes else "TOOLS_FAILED",
             error_message=detail,
             audit_id=audit,
             write_may_have_applied=touched,
@@ -637,7 +637,7 @@ def _result(
             status="error", error_code=code, error_message=detail, audit_id=audit, write_may_have_applied=True
         )
     # "error" (the server failed while handling the call) and anything unknown: a write may have happened.
-    code = "TEAM_C_ERROR" if status == "error" else "TEAM_C_BAD_RESULT"
+    code = "TOOLS_ERROR" if status == "error" else "TOOLS_BAD_RESULT"
     return ToolResult(
         status="error", error_code=code, error_message=detail, audit_id=audit, write_may_have_applied=writes or touched
     )

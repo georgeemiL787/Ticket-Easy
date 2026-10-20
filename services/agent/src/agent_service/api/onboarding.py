@@ -43,7 +43,7 @@ class StepIn(BaseModel):
 def _built(request: Request) -> Container:
     built: Container = request.app.state.container
     if built.bundles is None or built.drafts is None:
-        raise upstream_unavailable("tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        raise upstream_unavailable("tenant bundles are switched off (AGENT_BUNDLES=0)")
     return built
 
 

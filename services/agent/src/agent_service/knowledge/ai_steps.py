@@ -1,4 +1,4 @@
-"""The AI model's part in answering policy questions (TEAM_B_LLM_KNOWLEDGE=1).
+"""The AI model's part in answering policy questions (AGENT_LLM_KNOWLEDGE=1).
 
 Two steps around the policy search, both optional and both checked by code:
 - search_query: turns a messy message (Arabizi, a follow-up, mixed languages) into one standalone query. Its text only

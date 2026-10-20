@@ -11,11 +11,11 @@ The backend currently runs on Windows. `/workspace/target-system` is not availab
 ```powershell
 Set-Location 'D:\nti project\team_c'
 uv sync --locked
-$env:ALLOWED_PROJECT_DIRECTORY='D:\target-system'
+$env:TOOLS_ALLOWED_PROJECT_DIRECTORY='D:\target-system'
 uv run uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-The equivalent persistent setting is `ALLOWED_PROJECT_DIRECTORY=D:\target-system` in `.env`. Local discovery is disabled when this setting is empty. On a Linux backend use an actual accessible allowed root such as `/workspace`, and enter `/workspace/target-system` in the UI. Paths always refer to the backend filesystem.
+The equivalent persistent setting is `TOOLS_ALLOWED_PROJECT_DIRECTORY=D:\target-system` in `.env`. Local discovery is disabled when this setting is empty. On a Linux backend use an actual accessible allowed root such as `/workspace`, and enter `/workspace/target-system` in the UI. Paths always refer to the backend filesystem.
 
 Create/open a business, choose **Local project**, enter the absolute repository path, and select **Discover local project**. Inspect supported operations, partial-coverage diagnostics and **Inspectable code evidence**. Select **Explain selected code with live model** to add grounded AI explanations. This creates a new immutable source inventory; it preserves the earlier facts snapshot. Then select **Generate proposals with live model**, inspect inputs/dependencies, answer questions, reconcile revisions and make per-proposal decisions. The existing OpenAPI upload option remains available.
 
@@ -37,7 +37,7 @@ Dependencies and declared scopes are observations, not verified authentication, 
 
 ## Read boundaries, limits and caching
 
-- Absolute project paths must lie within `ALLOWED_PROJECT_DIRECTORY` both lexically and after resolution. Links/junctions in the project path are rejected; indexed symlinks/junctions are excluded. File identities and boundaries are rechecked around bounded reads.
+- Absolute project paths must lie within `TOOLS_ALLOWED_PROJECT_DIRECTORY` both lexically and after resolution. Links/junctions in the project path are rejected; indexed symlinks/junctions are excluded. File identities and boundaries are rechecked around bounded reads.
 - Hidden files/directories, `.env`, common secrets/credential filenames, `.git`, dependencies, virtual environments, caches, binaries, build/output trees, tests and migrations are excluded. Only `.py` files are indexed. README/documents are not sent to the model in this subset.
 - Source snippets come from AST nodes. Comments/docstrings are omitted and string/numeric literals are redacted. Literal route paths, schema enums and supported schema constraints remain extracted facts. Raw project files, default values and environment values are not stored or sent as source snippets. Hashes describe original source bytes; snippets are visibly sanitized evidence, not byte-for-byte copies.
 - Defaults: 200 Python files, 3,000 directory entries, 128 KiB/file, 2 MiB total, 50 operations, 8 router levels and at most 200 router expansions, two call-trace steps, 12 selected snippets and 8,000 code-context characters. Individual snippets cap at 3,000 characters and disclose truncation. Exhausted limits and omitted coverage are reported.

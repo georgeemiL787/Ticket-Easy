@@ -49,7 +49,7 @@ class Discovery:
         self.store.one("SELECT * FROM businesses WHERE id=?", (business_id,))
         allowed = {h.strip().lower() for h in self.settings.openapi_fetch_hosts.split(",") if h.strip()}
         if not allowed:
-            raise AppError("fetch_disabled", "Set OPENAPI_FETCH_HOSTS (host:port list) to allow fetching OpenAPI descriptions", 403)
+            raise AppError("fetch_disabled", "Set TOOLS_OPENAPI_FETCH_HOSTS (host:port list) to allow fetching OpenAPI descriptions", 403)
         url = self._fetch_url(url.strip(), allowed)
         raw, media = self._fetch_get(url)
         docs_page = None
@@ -87,7 +87,7 @@ class Discovery:
         except ValueError:
             loopback = hostname == "localhost"
         if host not in allowed and not ("loopback:*" in allowed and loopback):
-            raise AppError("fetch_host", f"{host} is not listed in OPENAPI_FETCH_HOSTS", 403)
+            raise AppError("fetch_host", f"{host} is not listed in TOOLS_OPENAPI_FETCH_HOSTS", 403)
         return url
 
     def _fetch_get(self, url):

@@ -12,20 +12,20 @@ COMPOSE = docker compose
 
 demo:
 	$(COMPOSE) --profile light up -d --build --wait
-	$(COMPOSE) --profile light exec team-b python -m agent_service seed-demo
-	@$(COMPOSE) --profile light exec team-b python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile light exec agent python -m agent_service seed-demo
+	@$(COMPOSE) --profile light exec agent python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 demo-full:
 	$(COMPOSE) --profile full up -d --build --wait
-	$(COMPOSE) --profile full exec team-b-full python -m agent_service seed-demo
-	@$(COMPOSE) --profile full exec team-b-full python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile full exec agent-full python -m agent_service seed-demo
+	@$(COMPOSE) --profile full exec agent-full python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 demo-live:
 	$(COMPOSE) --profile live up -d --build --wait
-	$(COMPOSE) --profile live exec team-b-live python -m agent_service seed-demo
-	@$(COMPOSE) --profile live exec team-b-live python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
+	$(COMPOSE) --profile live exec agent-live python -m agent_service seed-demo
+	@$(COMPOSE) --profile live exec agent-live python -m agent_service create-user --email admin@example.com --name Admin --role admin --generate-password --if-missing
 	@$(MAKE) --no-print-directory urls
 
 down:

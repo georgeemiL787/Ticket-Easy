@@ -67,7 +67,7 @@ def app(container: Container) -> FastAPI:
 async def test_health(client: httpx.AsyncClient) -> None:
     response = await client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "mode": "standin", "tenants": []}
+    assert response.json() == {"status": "ok", "mode": "simulated", "tenants": []}
 
 
 async def test_health_lists_loaded_tenants(settings: Settings, tenants_dir: Path) -> None:

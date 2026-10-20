@@ -101,7 +101,7 @@ class Fake:
         }  # fmt: skip
         return {
             "command": [sys.executable, str(FAKE)], "list_timeout_s": 10, "call_timeout_s": 3, "start_timeout_s": 15,
-            "env": {"FAKE_TEAM_C_SCRIPT": str(self.script_path), "FAKE_TEAM_C_LOG": str(self.log_path)},
+            "env": {"FAKE_TOOLS_SCRIPT": str(self.script_path), "FAKE_TOOLS_LOG": str(self.log_path)},
             "tenants": {T: binding},
         }  # fmt: skip
 
@@ -241,12 +241,12 @@ async def test_arguments_cannot_choose_the_identity(fake: Fake, made: Made) -> N
 @pytest.mark.parametrize(
     ("status", "writes", "code", "uncertain"),
     [
-        ("rejected", [], "TEAM_C_REJECTED", False),
-        ("failed", [{"step_id": "s1", "write_state": "not_attempted"}], "TEAM_C_FAILED", False),
-        ("failed", [{"step_id": "s1", "write_state": "rejected_unverified"}], "TEAM_C_FAILED", True),
+        ("rejected", [], "TOOLS_REJECTED", False),
+        ("failed", [{"step_id": "s1", "write_state": "not_attempted"}], "TOOLS_FAILED", False),
+        ("failed", [{"step_id": "s1", "write_state": "rejected_unverified"}], "TOOLS_FAILED", True),
         ("partial", [{"step_id": "s1", "write_state": "applied"}], "PARTIAL_WRITE", True),
         ("outcome_unknown", [{"step_id": "s1", "write_state": "unknown"}], "OUTCOME_UNKNOWN", True),
-        ("error", [], "TEAM_C_ERROR", True),
+        ("error", [], "TOOLS_ERROR", True),
     ],
 )
 async def test_only_succeeded_is_a_success_and_an_unclear_write_is_never_reported_as_not_done(
@@ -269,7 +269,7 @@ async def test_an_error_on_a_read_is_not_an_unclear_write(fake: Fake, made: Made
     client = made()
     await client.list_tools(T)
     result = await client.call_tool(T, request("get_order"))
-    assert result.error_code == "TEAM_C_ERROR" and not result.write_may_have_applied
+    assert result.error_code == "TOOLS_ERROR" and not result.write_may_have_applied
 
 
 async def test_a_disabled_tool_answers_not_published_and_the_next_call_asks_team_c_again(
@@ -327,7 +327,7 @@ async def test_a_result_that_claims_production_is_not_trusted(fake: Fake, made: 
     )
     client = made()
     await client.list_tools(T)
-    assert (await client.call_tool(T, request("get_order"))).error_code == "TEAM_C_BAD_RESULT"
+    assert (await client.call_tool(T, request("get_order"))).error_code == "TOOLS_BAD_RESULT"
 
 
 def test_the_example_config_is_valid_and_its_paths_are_relative_to_the_file() -> None:
@@ -376,12 +376,12 @@ async def test_a_result_from_another_environment_is_not_trusted(fake: Fake, made
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL, live=True), get_order_v1_aa=ORDER_OK)  # says sandbox
     client = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["live_demo"]}})
     await client.list_tools(T)
-    assert (await client.call_tool(T, request("get_order"))).error_code == "TEAM_C_BAD_RESULT"
+    assert (await client.call_tool(T, request("get_order"))).error_code == "TOOLS_BAD_RESULT"
 
 
 @pytest.mark.parametrize(
     ("category", "code"),
-    [("not_found", "NOT_FOUND"), ("rate_limited", "TEAM_C_FAILED"), ("authentication_failed", "TEAM_C_FAILED")],
+    [("not_found", "NOT_FOUND"), ("rate_limited", "TOOLS_FAILED"), ("authentication_failed", "TOOLS_FAILED")],
 )
 async def test_a_read_failure_keeps_team_cs_category(fake: Fake, made: Made, category: str, code: str) -> None:
     failed = envelope("get_order_v1_aa", "failed") | {"error": {"code": "rejected_by_api", "category": category}}
@@ -404,7 +404,7 @@ def test_a_binding_names_exactly_one_tool() -> None:
 def core(tmp_path: Path, fake: Fake) -> Container:
     path = tmp_path / "team_c.json"
     path.write_text(json.dumps(fake.config()), encoding="utf-8")
-    return build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28), team_c_config=path))
+    return build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28), tools_config=path))
 
 
 async def test_the_agent_answers_an_order_question_from_team_cs_tool_as_the_verified_customer(

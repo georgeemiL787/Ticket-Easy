@@ -106,7 +106,7 @@ def destination(connector, artifact: Artifact, settings):
     else:
         allowed = {h.strip().lower() for h in settings.sandbox_hosts.split(",") if h.strip()}
         if host.split("://", 1)[1] not in allowed and not confirmed_destination(settings, connector, artifact):
-            raise AppError("destination_not_allowed", f"{host} is not listed in SANDBOX_HOSTS", 403)
+            raise AppError("destination_not_allowed", f"{host} is not listed in TOOLS_SANDBOX_HOSTS", 403)
         if environment != SANDBOX:
             raise AppError("not_sandbox", "Only connectors marked sandbox or explicitly configured for Live Demo may execute", 403)
         if artifact_environment(artifact) != SANDBOX:

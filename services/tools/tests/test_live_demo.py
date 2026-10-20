@@ -1,7 +1,7 @@
 """Live Demo execution: environment-aware connectors, artifacts, publications, MCP results and connection checks.
 
 MOCKED / AUTHORED: the "real API" here is the in-process service-desk fixture behind a mock transport (helpers/desk.py),
-registered as a Live Demo connector. Its host is therefore listed in LIVE_DEMO_PRIVATE_HOSTS (the explicit exception a
+registered as a Live Demo connector. Its host is therefore listed in TOOLS_LIVE_DEMO_PRIVATE_HOSTS (the explicit exception a
 development network needs); the public-address guard itself is tested with a patched resolver. These tests prove the
 gates and the contract; a call against a real external API is exercised by ops/local/live_demo_check.py.
 """

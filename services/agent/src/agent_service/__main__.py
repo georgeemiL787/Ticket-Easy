@@ -29,7 +29,7 @@ def build_nlu(mode: str, settings: Settings) -> NLU:
         return RuleBasedNLU()
     llm = LLMRegistry(settings).llm_for("reader")
     if llm is None:
-        raise SystemExit("--mode llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
+        raise SystemExit("--mode llm needs an AI model: set AGENT_LLM=ollama or openrouter (see .env.example).")
     return LLMNLU(llm)
 
 
@@ -63,14 +63,14 @@ async def eval_conversations(
 ) -> int:
     settings = Settings.from_env()
     if use_llm and settings.llm == "none":
-        raise SystemExit("--llm needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
+        raise SystemExit("--llm needs an AI model: set AGENT_LLM=ollama or openrouter (see .env.example).")
     if not use_llm:
         settings = settings.model_copy(update={"llm": "none", "llm_rewrite": False, "roles": {}})
     judge = None
     if use_judge:
         llm = LLMRegistry(Settings.from_env()).llm_for("judge")
         if llm is None:
-            raise SystemExit("--judge needs an AI model: set TEAM_B_LLM=ollama or openrouter (see .env.example).")
+            raise SystemExit("--judge needs an AI model: set AGENT_LLM=ollama or openrouter (see .env.example).")
         judge = Judge(llm)
     conversations = convo.load_set(directory)
     if per_style is not None:
@@ -78,7 +78,7 @@ async def eval_conversations(
     if writer_compare:
         if not use_llm or not settings.llm_rewrite:
             raise SystemExit(
-                "--writer-compare needs --llm and the AI writer on (TEAM_B_LLM_REWRITE=1, see .env.example)."
+                "--writer-compare needs --llm and the AI writer on (AGENT_LLM_REWRITE=1, see .env.example)."
             )
         try:
             path, rows = await compare_writers(conversations, settings, out, judge=judge)
@@ -146,7 +146,7 @@ async def replay_cmd(args: argparse.Namespace) -> int:
 async def seed_demo(conversations: int, days: int, force: bool) -> int:
     """Fill the SQLite database with synthetic conversations for the dashboard, unless it already has some.
 
-    The timeline ends at the service's own "now" (the fixed demo day if TEAM_B_FIXED_TODAY is set, else today), so the
+    The timeline ends at the service's own "now" (the fixed demo day if AGENT_FIXED_TODAY is set, else today), so the
     dashboard's windows contain it. Two days from the end a short outage of the policy search is played with the
     alert engine watching: the Alerts page then shows a resolved "service down"; what holds at the end stays open."""
     import logging
@@ -204,7 +204,7 @@ async def bundle_cmd(args: argparse.Namespace) -> int:
     container = build_container(Settings.from_env())
     registry = container.bundles
     if registry is None:
-        print("tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        print("tenant bundles are switched off (AGENT_BUNDLES=0)")
         return 1
     await registry.load()
     actor = "cli"
@@ -319,7 +319,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--writer-compare",
         action="store_true",
         help="answer the ar and arabizi conversations with the usual writer and with the Egyptian-Arabic model "
-        "(TEAM_B_LLM_*_WRITER_EGYPTIAN) and save both to reports/writer_compare_<date>.csv to rate; needs --llm",
+        "(AGENT_LLM_*_WRITER_EGYPTIAN) and save both to reports/writer_compare_<date>.csv to rate; needs --llm",
     )
     full.add_argument(
         "--per-style",
@@ -350,7 +350,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     replay_p.add_argument("--tenant", default="shop_001")
     replay_p.add_argument(
         "--set", action="append", metavar="KEY=VALUE",
-        help="a change for the second run, in the environment's names (repeat it), e.g. TEAM_B_AGENT_MODE=off",
+        help="a change for the second run, in the environment's names (repeat it), e.g. AGENT_PLANNING_MODE=off",
     )  # fmt: skip
     replay_p.add_argument("--out", type=Path, default=Path("reports"), help="where the report goes")
     agree = commands.add_parser(

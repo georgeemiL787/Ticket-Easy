@@ -1,44 +1,48 @@
 from pathlib import Path
-from pydantic import AliasChoices, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+PREFIX = "TOOLS_"  # every setting of this service starts with it, except the shared AI provider settings below
+SIBLING_PREFIXES = ("AGENT_", "KNOWLEDGE_", "TOOLS_")
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
-    database_path: str = "data/team_c.sqlite3"
+    model_config = SettingsConfigDict(env_file=".env", env_prefix=PREFIX, extra="ignore", populate_by_name=True)
+    database_path: str = "data/tools.sqlite3"
     dev_reviewer_id: str = "local-owner"
     session_secret: str = ""
-    llm_primary: str = "ollama"
-    llm_fallback: str = "none"
-    ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_model: str = "qwen3:8b"
-    ollama_timeout: float = 240
-    ollama_context: int = 32768
-    ollama_think: bool = False
-    groq_base_url: str = "https://api.groq.com/openai/v1"
-    groq_model: str = "openai/gpt-oss-120b"
-    groq_api_key: str = ""
-    groq_api_key_2: str = ""
-    groq_api_key_3: str = ""
-    groq_api_key_4: str = ""
-    groq_api_key_5: str = ""
-    groq_api_key_6: str = ""
-    groq_api_key_7: str = ""
-    groq_api_key_8: str = ""
-    groq_api_key_9: str = ""
-    groq_api_key_10: str = ""
-    groq_timeout: float = 120
-    groq_reasoning_effort: str = "low"
-    groq_input_tokens: int = 8000
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    openrouter_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
-    openrouter_api_key: str = ""
-    openrouter_timeout: float = 120
-    openrouter_input_tokens: int = 24000
+    llm_primary: str = Field("ollama", validation_alias="LLM_PRIMARY")
+    llm_fallback: str = Field("none", validation_alias="LLM_FALLBACK")
+    ollama_base_url: str = Field("http://127.0.0.1:11434", validation_alias="OLLAMA_BASE_URL")
+    ollama_model: str = Field("qwen3:8b", validation_alias="OLLAMA_MODEL")
+    ollama_timeout: float = Field(240, validation_alias="OLLAMA_TIMEOUT")
+    ollama_context: int = Field(32768, validation_alias="OLLAMA_CONTEXT")
+    ollama_think: bool = Field(False, validation_alias="OLLAMA_THINK")
+    groq_base_url: str = Field("https://api.groq.com/openai/v1", validation_alias="GROQ_BASE_URL")
+    groq_model: str = Field("openai/gpt-oss-120b", validation_alias="GROQ_MODEL")
+    groq_api_key: str = Field("", validation_alias="GROQ_API_KEY")
+    groq_api_key_2: str = Field("", validation_alias="GROQ_API_KEY_2")
+    groq_api_key_3: str = Field("", validation_alias="GROQ_API_KEY_3")
+    groq_api_key_4: str = Field("", validation_alias="GROQ_API_KEY_4")
+    groq_api_key_5: str = Field("", validation_alias="GROQ_API_KEY_5")
+    groq_api_key_6: str = Field("", validation_alias="GROQ_API_KEY_6")
+    groq_api_key_7: str = Field("", validation_alias="GROQ_API_KEY_7")
+    groq_api_key_8: str = Field("", validation_alias="GROQ_API_KEY_8")
+    groq_api_key_9: str = Field("", validation_alias="GROQ_API_KEY_9")
+    groq_api_key_10: str = Field("", validation_alias="GROQ_API_KEY_10")
+    groq_timeout: float = Field(120, validation_alias="GROQ_TIMEOUT")
+    groq_reasoning_effort: str = Field("low", validation_alias="GROQ_REASONING_EFFORT")
+    groq_input_tokens: int = Field(8000, validation_alias="GROQ_INPUT_TOKENS")
+    openrouter_base_url: str = Field("https://openrouter.ai/api/v1", validation_alias="OPENROUTER_BASE_URL")
+    openrouter_model: str = Field("nvidia/nemotron-3-super-120b-a12b:free", validation_alias="OPENROUTER_MODEL")
+    openrouter_api_key: str = Field("", validation_alias="OPENROUTER_API_KEY")
+    openrouter_timeout: float = Field(120, validation_alias="OPENROUTER_TIMEOUT")
+    openrouter_input_tokens: int = Field(24000, validation_alias="OPENROUTER_INPUT_TOKENS")
     max_upload_bytes: int = 10 * 1024 * 1024
-    usage_log: str = Field("", validation_alias=AliasChoices("TEAM_C_USAGE_LOG", "USAGE_LOG"))  # a file path: one JSON line per model request (tokens only, never text or keys); empty = off
-    usage_run_label: str = Field("", validation_alias=AliasChoices("TEAM_C_USAGE_RUN_LABEL", "USAGE_RUN_LABEL"))  # free text written into every usage line
-    secret_key: str = Field("", validation_alias=AliasChoices("TEAM_C_SECRET_KEY", "SECRET_KEY"))  # encrypts stored test credentials: a Fernet key, env:NAME or file:PATH; empty: a key file beside the database
+    usage_log: str = ""  # a file path: one JSON line per model request (tokens only, never text or keys); empty = off
+    usage_run_label: str = ""  # free text written into every usage line
+    secret_key: str = ""  # encrypts stored test credentials: a Fernet key, env:NAME or file:PATH; empty: a key file beside the database
     max_operations: int = 1000
     max_model_chars: int = 100_000
     openapi_fetch_hosts: str = ""
@@ -66,11 +70,11 @@ class Settings(BaseSettings):
     production_smoke_context: str = ""  # JSON object: the internal test customer's trusted context used by the promotion smoke check
     production_smoke_arguments: str = ""  # JSON object: that customer's tool arguments (e.g. an order that customer owns)
     production_audit_dir: str = "data/audit"  # append-only daily log of production executions (ids and hashes, no values)
-    # TEAM_C_ADMIN_TOKEN: required (header x-team-c-admin-token) for production actions on /api/v1
-    admin_token: str = Field("", validation_alias=AliasChoices("TEAM_C_ADMIN_TOKEN", "ADMIN_TOKEN"))
+    # TOOLS_ADMIN_TOKEN: required (header x-team-c-admin-token) for production actions on /api/v1
+    admin_token: str = ""
     connection_check_timeout: float = 10
-    # TEAM_C_PRODUCT_URL: where the guided flow lives (the dashboard). Set: this app's start page sends owners there and every page links to it.
-    product_url: str = Field("", validation_alias=AliasChoices("TEAM_C_PRODUCT_URL", "PRODUCT_URL"))
+    # TOOLS_PRODUCT_URL: where the guided flow lives (the dashboard). Set: this app's start page sends owners there and every page links to it.
+    product_url: str = ""
     allowed_project_directory: str = ""
     code_max_files: int = 200
     code_max_entries: int = 3000
@@ -110,3 +114,33 @@ class AppError(Exception):
         self.code, self.message, self.status = code, message, status
         self.details = details or {}
         super().__init__(message)
+
+
+def setting_names() -> tuple[frozenset[str], frozenset[str]]:
+    """(this service's own variable names, the shared provider names it also reads)."""
+    own, shared = set(), set()
+    for name, field in Settings.model_fields.items():
+        alias = field.validation_alias
+        if isinstance(alias, str):
+            shared.add(alias.upper())
+        else:
+            own.add(PREFIX + name.upper())
+    return frozenset(own), frozenset(shared)
+
+
+def unknown_setting_warnings(environ=None) -> list[str]:
+    """A variable that ends like one of our settings but starts differently is probably an old or mistyped name."""
+    import os
+
+    own, shared = setting_names()
+    warnings = []
+    for name in sorted(os.environ if environ is None else environ):
+        upper = name.upper()
+        if upper in own or upper in shared or upper.startswith(SIBLING_PREFIXES):
+            continue
+        for setting in sorted(own, key=len, reverse=True):
+            tail = setting[len(PREFIX):]
+            if upper == tail or (upper.endswith("_" + tail) and 1 <= len(upper[: -len(tail) - 1].split("_")) <= 2):
+                warnings.append(f"Setting {name} is not used. Did you mean {setting}?")
+                break
+    return warnings

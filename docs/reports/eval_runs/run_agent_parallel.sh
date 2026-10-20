@@ -34,9 +34,9 @@ for style in en ar mixed arabizi; do
   if [ -z "$keys" ]; then echo "no key for $style: GROQ_KEY_${KEYS[$style]// /, GROQ_KEY_} not set"; continue; fi
   extra=""; [ "$style" = "arabizi" ] && extra="--per-style $ARABIZI_PER_STYLE"
   (
-    export TEAM_B_LLM_API_KEY="$keys"
-    export TEAM_B_USAGE_LOG="$RUNS/usage/agent_$style.jsonl"
-    export TEAM_B_USAGE_RUN_LABEL="presentation_agent_$style"
+    export AGENT_LLM_API_KEY="$keys"
+    export AGENT_USAGE_LOG="$RUNS/usage/agent_$style.jsonl"
+    export AGENT_USAGE_RUN_LABEL="presentation_agent_$style"
     "$PY" -m agent_service eval --set "$RUNS/sets/$style" --llm --agent-mode on --judge --resume \
       --label "presentation_agent_$style" $extra > "$RUNS/logs/$style.log" 2>&1
   ) &

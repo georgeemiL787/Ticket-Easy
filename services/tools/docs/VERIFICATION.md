@@ -14,7 +14,7 @@ The Petstore 3.0.4 snapshot is tested unchanged: the binary-only operation is re
 
 Local environment: Windows, Python 3.13.2 virtual environment, approximately 32 GB RAM, NVIDIA RTX 2070 Max-Q 8 GB. Actual inference used the locally installed models, never a canned substitute. No business API endpoint was called.
 
-The e-commerce walkthrough in `data/team_c.sqlite3` used **qwen3:4b** with reasoning disabled. It reached **approved_to_build** through real generation and reconciliation, with manual browser answer editing and approval:
+The e-commerce walkthrough in `data/tools.sqlite3` used **qwen3:4b** with reasoning disabled. It reached **approved_to_build** through real generation and reconciliation, with manual browser answer editing and approval:
 
 - Business: `26a4d005-a59b-4e10-9d9f-62c59305f86e` (Manual walkthrough — Small Shop).
 - Specification: `423e508e-4a04-4eda-bfd9-8e05e05e5de3`.

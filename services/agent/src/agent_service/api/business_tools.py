@@ -19,7 +19,7 @@ service credential; the tools service scopes every call to the verified customer
 tools service says so
 for a promoted, active publication.
 
-The tools service has no list_changed notifications: the agent re-lists every TEAM_B_CAPABILITY_TTL_S and on refresh,
+The tools service has no list_changed notifications: the agent re-lists every AGENT_CAPABILITY_TTL_S and on refresh,
 and the tools service
 re-checks publication, approval, enforcement, evidence and hashes on every call anyway. A disable is checked here first:
 the publication must belong to this business's the tools service business (else 404, as if it did not exist). Disabling

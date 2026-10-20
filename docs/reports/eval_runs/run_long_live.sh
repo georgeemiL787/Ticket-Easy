@@ -6,13 +6,13 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RUNS="$ROOT/docs/reports/eval_runs"
 cd "$ROOT/services/agent" || exit 1
-source "$RUNS/agent_env.sh.example"; export TEAM_B_MODE=live TEAM_B_TEAM_A_URL=http://127.0.0.1:8001 TEAM_B_TEAM_A_TIMEOUT_S=30
+source "$RUNS/agent_env.sh.example"; export AGENT_BACKENDS=live AGENT_KNOWLEDGE_URL=http://127.0.0.1:8001 AGENT_KNOWLEDGE_TIMEOUT_S=30
 PY=".venv/Scripts/python"; [ -x "$PY" ] || PY=".venv/bin/python"
 keys() { local o="" n; for n in "$@"; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v" ] && o="${o:+$o,}$v"; done; printf '%s' "$o"; }
 run() {  # style, keys...
   local style="$1"; shift
   (
-    export TEAM_B_LLM_API_KEY="$(keys "$@")" TEAM_B_USAGE_LOG="$RUNS/usage/longlive_$style.jsonl" TEAM_B_USAGE_RUN_LABEL="longlive_$style"
+    export AGENT_LLM_API_KEY="$(keys "$@")" AGENT_USAGE_LOG="$RUNS/usage/longlive_$style.jsonl" AGENT_USAGE_RUN_LABEL="longlive_$style"
     "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/orchestrator/eval/long" --llm --agent-mode on --style "$style" --concurrency 1 \
       --out "$RUNS/diagnosis/longlive_$style.jsonl" > "$RUNS/logs/longlive_$style.log" 2>&1
   ) &

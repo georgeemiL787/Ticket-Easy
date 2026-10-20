@@ -1,7 +1,7 @@
 """Records every AI call of a normal agent run (job, prompts, schema, the model's reply) so the SAME inputs can be replayed to
 other models for the other jobs (writer, reviewer, knowledge, summary). Test conversations only (synthetic customers).
 
-Run from team_b like diagnose_run.py; TEAM_B_USAGE_LOG must be set (it makes each call carry its job name):
+Run from team_b like diagnose_run.py; AGENT_USAGE_LOG must be set (it makes each call carry its job name):
 
     python ../docs/reports/eval_runs/models/record_run.py --set eval/conversations --style en --topics K,T17,T22 --out <calls.jsonl>
 """

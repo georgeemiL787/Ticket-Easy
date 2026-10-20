@@ -12,7 +12,7 @@ keys() { local o="" n; for n in "$@"; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v
 run() {  # style, keys...
   local style="$1"; shift
   (
-    export TEAM_B_LLM_API_KEY="$(keys "$@")" TEAM_B_USAGE_LOG="$RUNS/usage/long_$style.jsonl" TEAM_B_USAGE_RUN_LABEL="long_$style"
+    export AGENT_LLM_API_KEY="$(keys "$@")" AGENT_USAGE_LOG="$RUNS/usage/long_$style.jsonl" AGENT_USAGE_RUN_LABEL="long_$style"
     "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/orchestrator/eval/long" --llm --agent-mode on --style "$style" --concurrency 1 \
       --out "$RUNS/diagnosis/long_$style.jsonl" > "$RUNS/logs/long_$style.log" 2>&1
   ) &

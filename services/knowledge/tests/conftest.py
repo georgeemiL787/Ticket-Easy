@@ -49,6 +49,6 @@ def built_db(tmp_path_factory, telecom_db):
     """Keyword-only SQLite build of every tenant in a temp dir (no Ollama needed)."""
     from knowledge_service.db import loader
 
-    path = tmp_path_factory.mktemp("db") / "team_a.sqlite"
+    path = tmp_path_factory.mktemp("db") / "knowledge.sqlite"
     loader.build(embedder=None, db_path=path, telecom_dbs={"telco_001": telecom_db})
     return path

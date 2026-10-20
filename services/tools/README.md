@@ -13,13 +13,13 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 uv run python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-Put the generated value in `SESSION_SECRET` in `.env`. Do not overwrite an existing `.env`; retain its credentials/settings. Then:
+Put the generated value in `TOOLS_SESSION_SECRET` in `.env`. Do not overwrite an existing `.env`; retain its credentials/settings. Then:
 
 ```powershell
 uv run uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Open <http://127.0.0.1:8000>. API documentation is at <http://127.0.0.1:8000/docs>. Use one server process/worker. Stop with Ctrl+C. Data stays in `data/team_c.sqlite3`; restart with the same command/path.
+Open <http://127.0.0.1:8000>. API documentation is at <http://127.0.0.1:8000/docs>. Use one server process/worker. Stop with Ctrl+C. Data stays in `data/tools.sqlite3`; restart with the same command/path.
 
 The default is **Ollama only**, requiring no cloud API key. Empty model configuration is an error when generation/reconciliation is requested, not a reason to serve canned proposals. If `.env` is absent, the app uses Ollama defaults and generates an ephemeral session secret; restarting loses browser sessions, not persisted work.
 
@@ -34,7 +34,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m uvicorn tools_service.web:cre
 $env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --business-id <business-id> --identity <identity>
 ```
 
-`tools_service.app:create_app` is the same factory as `tools_service.web:create_app`; either works with `--factory`. Any free port works (the examples elsewhere use 8000). The MCP server reads `DATABASE_PATH`, `CONNECTORS_FILE` and `SANDBOX_HOSTS` from the settings unless `--database`, `--connectors` or `--sandbox-hosts` override them; see "Sandbox MCP publication".
+`tools_service.app:create_app` is the same factory as `tools_service.web:create_app`; either works with `--factory`. Any free port works (the examples elsewhere use 8000). The MCP server reads `TOOLS_DATABASE_PATH`, `TOOLS_CONNECTORS_FILE` and `TOOLS_SANDBOX_HOSTS` from the settings unless `--database`, `--connectors` or `--sandbox-hosts` override them; see "Sandbox MCP publication".
 
 ## Architecture
 
@@ -42,7 +42,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --bu
 
 ## Discovery input
 
-OpenAPI is the discovery source: upload a JSON/YAML file, or fetch it from a running system (set `OPENAPI_FETCH_HOSTS`, for example `127.0.0.1:8001`). The URL may be the OpenAPI JSON/YAML itself or a Swagger UI / ReDoc page such as FastAPI's `/docs`; the page is followed to the OpenAPI URL it names (same allowlist, at most two GETs). See [the OpenAPI subset and per-operation contract](docs/OPENAPI_SUBSET.md). On the inventory page, select which eligible operations to send to the model.
+OpenAPI is the discovery source: upload a JSON/YAML file, or fetch it from a running system (set `TOOLS_OPENAPI_FETCH_HOSTS`, for example `127.0.0.1:8001`). The URL may be the OpenAPI JSON/YAML itself or a Swagger UI / ReDoc page such as FastAPI's `/docs`; the page is followed to the OpenAPI URL it names (same allowlist, at most two GETs). See [the OpenAPI subset and per-operation contract](docs/OPENAPI_SUBSET.md). On the inventory page, select which eligible operations to send to the model.
 
 ### Business areas and batches
 
@@ -50,7 +50,7 @@ Large APIs do not fit one model input, so the inventory page groups operations i
 
 - **Areas come from each API, not from a fixed list.** Each operation's base group is its first OpenAPI tag. An untagged operation uses its first path segment after the leading segments most paths share (e.g. `/api/v1`), and only when the paths below them split into several groups. **Organize by business area (AI)** runs two small steps with a short dedicated prompt. An `area_naming` run sees only group names and counts and returns up to 8 business areas ranked by usefulness for tools serving the customers, each with an audience hint (customer, staff, internal, mixed). Then `area_assignment` runs place 10 groups at a time; their response schema has one required property per group whose value must be a named area, so each group is assigned exactly once. Areas that receive no group are dropped. With no saved choice, the top-ranked areas that fit about one batch are pre-ticked. Any failure keeps the API's own groups and shows why; only one organize runs at a time (`409 areas_busy`).
 - **The owner chooses areas** (**Use these areas**). Only operations in the chosen areas are shown to the model for Request a tool and Suggest additional tools. With no choice saved, every operation is used. Areas and audience are hints: they never change whether an operation is eligible, restricted or unsupported. Reorganizing clears the choice.
-- **Batches always fit.** The operation list is built until the complete model input passes the same size checks the provider applies (`MAX_MODEL_CHARS` and the Ollama context bound), shrinking `CAPABILITY_INDEX_CHARS` when needed. An unavailable request offers **Look in the next batch**, and suggestions offer **Suggest from the next batch**; both skip operations already considered. On the inventory page, Advanced generate starts unticked; **Select the next batch that fits** ticks operations not yet sent to the AI (recorded per run in `generation_batches`).
+- **Batches always fit.** The operation list is built until the complete model input passes the same size checks the provider applies (`TOOLS_MAX_MODEL_CHARS` and the Ollama context bound), shrinking `TOOLS_CAPABILITY_INDEX_CHARS` when needed. An unavailable request offers **Look in the next batch**, and suggestions offer **Suggest from the next batch**; both skip operations already considered. On the inventory page, Advanced generate starts unticked; **Select the next batch that fits** ticks operations not yet sent to the AI (recorded per run in `generation_batches`).
 - **Live progress.** Browser AI actions (request, clarify, next batch, suggest, accept a suggestion, organize, generate, reconcile, revise) run in a background thread. If one is still running after 2 seconds, the browser moves to `/live/{id}`, which polls `GET /api/v1/live/{id}` and shows each model step, elapsed time and the streamed reasoning, then opens the result. **Stop** (`POST /live/{id}/cancel`) ends the model call at the next streamed chunk with `409 cancelled`, without trying a fallback provider; the run is recorded as failed. Only one browser AI action runs at a time: pressing another AI button while one runs opens the running job's page instead, and every page shows an "AI is busy" banner linking to it. If a reasoning step reaches the `num_predict` limit, the same input is sent once more without reasoning (diagnostic `thinking_retry`). Progress entries live in memory for up to an hour and are lost on restart; the work itself is recorded as usual.
 - API: `GET`/`POST /api/v1/specifications/{id}/areas` (body `area_ids`), `POST /api/v1/specifications/{id}/areas/organize`, `GET /api/v1/specifications/{id}/generation-batch`, `POST /api/v1/tool-requests/{id}/next-batch`, and `next_batch: true` on suggestion runs.
 
@@ -78,19 +78,19 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 | `OPENROUTER_BASE_URL` | Default `https://openrouter.ai/api/v1` |
 | `OPENROUTER_TIMEOUT` | Seconds; default 120 |
 | `GROQ_INPUT_TOKENS`, `OPENROUTER_INPUT_TOKENS` | Input tokens the provider accepts in one request (default 8000 / 24000). Batches are sized against the primary provider's ceiling, so a request that cannot fit is refused instead of spending credentials on HTTP 413. A provider's own output and context limits are unchanged |
-| `OPENAPI_FETCH_HOSTS` | Comma-separated allowlist for OpenAPI URL fetch. `loopback:*` allows `localhost`, `127.x.x.x`, and `::1` on any port; remote hosts require explicit `host:port` entries. Empty disables fetch |
-| `OPENAPI_FETCH_TIMEOUT` | Seconds; default 15 |
-| `DATABASE_PATH` | Persistent SQLite file, relative to working directory or absolute |
-| `CONNECTORS_FILE` | JSON file of sandbox connectors and trusted execution identities (see below); empty disables building and running artifacts |
-| `SANDBOX_HOSTS` | Comma-separated `host:port` allowlist of destinations artifacts may call, for example `127.0.0.1:8001` |
-| `DEV_REVIEWER_ID` | Server-derived development audit identity |
-| `SESSION_SECRET` | Local browser session signing secret |
+| `TOOLS_OPENAPI_FETCH_HOSTS` | Comma-separated allowlist for OpenAPI URL fetch. `loopback:*` allows `localhost`, `127.x.x.x`, and `::1` on any port; remote hosts require explicit `host:port` entries. Empty disables fetch |
+| `TOOLS_OPENAPI_FETCH_TIMEOUT` | Seconds; default 15 |
+| `TOOLS_DATABASE_PATH` | Persistent SQLite file, relative to working directory or absolute |
+| `TOOLS_CONNECTORS_FILE` | JSON file of sandbox connectors and trusted execution identities (see below); empty disables building and running artifacts |
+| `TOOLS_SANDBOX_HOSTS` | Comma-separated `host:port` allowlist of destinations artifacts may call, for example `127.0.0.1:8001` |
+| `TOOLS_DEV_REVIEWER_ID` | Server-derived development audit identity |
+| `TOOLS_SESSION_SECRET` | Local browser session signing secret |
 
 The usual cloud-then-local order is `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrouter,ollama`. With all four Groq keys configured, Groq credentials are tried first (`GROQ_API_KEY` → `GROQ_API_KEY_2` → `GROQ_API_KEY_3` → `GROQ_API_KEY_4`), then OpenRouter, then the local Ollama model. All Groq keys use the same Groq model. Only rate limits, timeout/connection failures and HTTP 5xx advance to the next key or provider. Rate limits include HTTP 429 and Groq HTTP 413 with the explicit `rate_limit_exceeded` code (TPM allowance); ordinary HTTP 413 still stops. Other rejected requests, invalid output and cancellation stop immediately. Blank or duplicate Groq keys are skipped. Each new call starts with the first Groq key again; no key is permanently disabled after a failure or daily rate limit. Each credential attempt is recorded as its provider without storing the key.
 
 All configured Groq keys are tried before OpenRouter and Ollama on service failures. The Ollama context budget (including its token-count call) is checked only when Ollama is actually attempted, so an offline local fallback never blocks a successful Groq or OpenRouter request. If the fallback input does not fit, the run fails with `model_input_limit`. Selected providers must be configured and distinct; unused providers are ignored. Invalid output, refusals, bad bindings, rejected requests, configuration failures and cancellation stop the chain. Every attempted provider is recorded on the run. There are no automatic repair/retry loops or cross-model replacement on invalid content.
 
-The proposal-design system prompt is assembled per task (`system_prompt(kind)` in `tool_generation_mcp/llm/prompts.py`): every call carries the shared role and safety rules, generation/revision/repair add the binding rules, and triage and suggestion carry only their own section. Triage starts from a `TRIAGE_INDEX_CHARS` slice (default 8000, never above `CAPABILITY_INDEX_CHARS`), and further slices are retrieved when the model reports an operation absent. Index entries list up to 32 top-level response fields, so a wide record is not misread as lacking a field. “Check answers” uses a dedicated reconciliation prompt and compact JSON; it sends only the answers it assesses. Groq schemas share binding definitions and omit annotations and unused definitions; the original full schema still validates every response. A token-limit HTTP 413 reports requested and allowed token counts when supplied by Groq. Rotating keys cannot make an oversized request fit an identical token allowance.
+The proposal-design system prompt is assembled per task (`system_prompt(kind)` in `tool_generation_mcp/llm/prompts.py`): every call carries the shared role and safety rules, generation/revision/repair add the binding rules, and triage and suggestion carry only their own section. Triage starts from a `TOOLS_TRIAGE_INDEX_CHARS` slice (default 8000, never above `TOOLS_CAPABILITY_INDEX_CHARS`), and further slices are retrieved when the model reports an operation absent. Index entries list up to 32 top-level response fields, so a wide record is not misread as lacking a field. “Check answers” uses a dedicated reconciliation prompt and compact JSON; it sends only the answers it assesses. Groq schemas share binding definitions and omit annotations and unused definitions; the original full schema still validates every response. A token-limit HTTP 413 reports requested and allowed token counts when supplied by Groq. Rotating keys cannot make an oversized request fit an identical token allowance.
 
 
 The UI shows the primary/fallback configuration; each run records actual provider/model attempts. A successful provider response is not the same as accepted generation: grounding can still fail the overall run.
@@ -160,13 +160,13 @@ Separate real-generation smoke commands (write a dedicated database):
 uv run python -m scripts.live_smoke --provider ollama --example ecommerce
 uv run python -m scripts.live_smoke --provider ollama --example room-booking
 # Running target system; the item scope fits OLLAMA_CONTEXT=40960 (all 13 eligible operations do not):
-$env:OPENAPI_FETCH_HOSTS="127.0.0.1:8001"; $env:OLLAMA_CONTEXT="40960"
+$env:TOOLS_OPENAPI_FETCH_HOSTS="127.0.0.1:8001"; $env:OLLAMA_CONTEXT="40960"
 uv run python -m scripts.live_smoke --url http://127.0.0.1:8001/api/v1/openapi.json --business-file examples/target-items-business.txt --path-prefix /api/v1/items --database data/openapi-live.sqlite3
 # Requires your configured Groq key/model:
 uv run python -m scripts.live_smoke --provider groq --example ecommerce
 ```
 
-These commands perform real inference, print outcomes/run IDs, and exit nonzero on failure. They do not claim reconciliation or approval coverage; use the manual workflow above for that. Inspect their saved records by starting the app with `DATABASE_PATH=data/live-smoke.sqlite3` if desired. Never run two app processes on the same database while testing restart behavior.
+These commands perform real inference, print outcomes/run IDs, and exit nonzero on failure. They do not claim reconciliation or approval coverage; use the manual workflow above for that. Inspect their saved records by starting the app with `TOOLS_DATABASE_PATH=data/live-smoke.sqlite3` if desired. Never run two app processes on the same database while testing restart behavior.
 
 To test real fallback without making a paid primary request, run a separate local HTTP stub that returns 503, configure it as the Groq base URL with nonsecret test credentials/model, explicitly enable Ollama fallback, and generate. This is **simulated primary failure plus live Ollama inference**, not a live Groq test. Do not point failure tests at business endpoints.
 
@@ -223,7 +223,7 @@ Supported mechanisms, and nothing else:
   - If the value differs from the identity's trusted context value, no later step runs.
 - **Not supported:** service-account execution on behalf of many users, organization/team membership or role checks, list/set comparisons, and checks after a write. Such requirements stay blocked; they are not forced into equality checks.
 
-`CONNECTORS_FILE` format (keep it out of version control; credentials never enter artifacts, prompts, arguments or reports):
+`TOOLS_CONNECTORS_FILE` format (keep it out of version control; credentials never enter artifacts, prompts, arguments or reports):
 
 ```json
 {"connectors": {"target-sandbox": {"business_id": "<business id>", "base_url": "http://127.0.0.1:8001", "sandbox": true, "context_fields": ["user_id"],
@@ -232,7 +232,7 @@ Supported mechanisms, and nothing else:
 
 Use `"token": "..."` instead of `username`/`password` for HTTP bearer APIs.
 
-The executor (`executor.py`) validates arguments against the input schema before any request and rejects unknown arguments, so identity cannot be passed as an argument. Its host must be in `SANDBOX_HOSTS` and match the base URL recorded in the artifact. It obtains tokens from the spec's OAuth2 password `tokenUrl`, which must be a path on the connector origin, or uses a bearer token. Path values are percent-encoded and `.`/`..` are refused. Each step's request body carries whether it is required and its complete request schema. An optional body is omitted when no value for it is supplied. A body that is sent (a required one, an optional one with any supplied value, or an explicitly supplied whole body such as `{}`) is first validated against the complete schema in write mode (required `readOnly` properties are not expected). An invalid body fails the step with `invalid_request` and is not sent. This catches, for example, an optional body whose fields are optional runtime arguments but which requires `title` once sent (discovery marks such inputs `required_when_body_sent`). Artifacts built before this keep their earlier behavior: they always send a body and skip that validation. Redirects are never followed. Requests and responses are bounded, and each response's status, media type and schema are checked. It stops at the first failure and never retries. Run statuses:
+The executor (`executor.py`) validates arguments against the input schema before any request and rejects unknown arguments, so identity cannot be passed as an argument. Its host must be in `TOOLS_SANDBOX_HOSTS` and match the base URL recorded in the artifact. It obtains tokens from the spec's OAuth2 password `tokenUrl`, which must be a path on the connector origin, or uses a bearer token. Path values are percent-encoded and `.`/`..` are refused. Each step's request body carries whether it is required and its complete request schema. An optional body is omitted when no value for it is supplied. A body that is sent (a required one, an optional one with any supplied value, or an explicitly supplied whole body such as `{}`) is first validated against the complete schema in write mode (required `readOnly` properties are not expected). An invalid body fails the step with `invalid_request` and is not sent. This catches, for example, an optional body whose fields are optional runtime arguments but which requires `title` once sent (discovery marks such inputs `required_when_body_sent`). Artifacts built before this keep their earlier behavior: they always send a body and skip that validation. Redirects are never followed. Requests and responses are bounded, and each response's status, media type and schema are checked. It stops at the first failure and never retries. Run statuses:
 
 - `succeeded`: every step and output completed.
 - `failed`: no write was sent, or the API rejected the write with a 4xx. A rejected write has `write_state: rejected_unverified`: the rejection was observed, but that nothing changed is not asserted without independent state verification.
@@ -306,7 +306,7 @@ Live demonstration against the local target, on a copy of the sandbox-only appro
 $env:PYTHONPATH="."; .\.venv\Scripts\python.exe scripts/sandbox_demo.py > data/sandbox-demo.log.json
 ```
 
-It copies the database read-only to `data/sandbox-demo.sqlite3`. It creates two disposable non-superuser accounts with one item each through public signup, writes `data/sandbox-connectors.json`, builds the artifact and runs the scenarios. It checks backend state with an independent client, then deletes the items and accounts; pass `--keep` to keep them for manual runs in the UI. To browse the result: `$env:DATABASE_PATH="data/sandbox-demo.sqlite3"; $env:CONNECTORS_FILE="data/sandbox-connectors.json"; $env:SANDBOX_HOSTS="127.0.0.1:8001"`, then start the app.
+It copies the database read-only to `data/sandbox-demo.sqlite3`. It creates two disposable non-superuser accounts with one item each through public signup, writes `data/sandbox-connectors.json`, builds the artifact and runs the scenarios. It checks backend state with an independent client, then deletes the items and accounts; pass `--keep` to keep them for manual runs in the UI. To browse the result: `$env:TOOLS_DATABASE_PATH="data/sandbox-demo.sqlite3"; $env:TOOLS_CONNECTORS_FILE="data/sandbox-connectors.json"; $env:TOOLS_SANDBOX_HOSTS="127.0.0.1:8001"`, then start the app.
 
 #### Sandbox MCP publication (sandbox-only, local development only)
 
@@ -402,7 +402,7 @@ A **production** tool is a tested sandbox or Live Demo tool that an admin has **
 | published by | the owner, after tests | the owner, after tests | an **admin's promotion** (`POST /artifacts/{id}/promotions`), never `publish` |
 | `production_ready` | false | false | true only while the promotion is active and every re-check holds |
 
-**Switches (operator, `.env`)**: `PRODUCTION_ENABLED` (kill switch, off), `PRODUCTION_HOSTS` (exact host:port; every address must be public), `PRODUCTION_CALLS_PER_MINUTE` / `PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE`, `PRODUCTION_SMOKE_CONTEXT` / `PRODUCTION_SMOKE_ARGUMENTS`, `PRODUCTION_AUTO_DISABLE_FAILURES` / `_WINDOW_SECONDS`, `PRODUCTION_AUDIT_DIR`, and `TEAM_C_ADMIN_TOKEN`. `PRODUCTION_PRIVATE_HOSTS` is a **development-only** exception (a local production-like deployment) and must be empty in a real setup; it is the one place this deviates from "no private-host exception".
+**Switches (operator, `.env`)**: `TOOLS_PRODUCTION_ENABLED` (kill switch, off), `TOOLS_PRODUCTION_HOSTS` (exact host:port; every address must be public), `TOOLS_PRODUCTION_CALLS_PER_MINUTE` / `TOOLS_PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE`, `TOOLS_PRODUCTION_SMOKE_CONTEXT` / `TOOLS_PRODUCTION_SMOKE_ARGUMENTS`, `TOOLS_PRODUCTION_AUTO_DISABLE_FAILURES` / `_WINDOW_SECONDS`, `TOOLS_PRODUCTION_AUDIT_DIR`, and `TOOLS_ADMIN_TOKEN`. `TOOLS_PRODUCTION_PRIVATE_HOSTS` is a **development-only** exception (a local production-like deployment) and must be empty in a real setup; it is the one place this deviates from "no private-host exception".
 
 **Why it is safe to use one credential for everyone** (all enforced by Team C, tested in `tests/test_production.py`):
 - the tool needs an accepted structured access policy; every record-scope requirement must be a `response_field_matches_context` check (after the record is read, its owner field must equal the customer's context); a write must come after such a checked read. `unrestricted`, `api_filtered` and list/data-scope requirements are **execution blockers** in production (a list the API filters by caller would return everyone's rows);
@@ -414,7 +414,7 @@ A **production** tool is a tested sandbox or Live Demo tool that an admin has **
 
 **Rollback / disable**: `POST /promotions/{id}/rollback` disables the production publication and leaves the sandbox / Live Demo publications alone; an **error spike** (API or integration failures: unavailable, timeout, bad response, partial or unknown writes, bad login, within the window) rolls the tool back automatically as `auto-disable`. A customer refused by a Team C check never counts. (The plan's Team B `action_failing` hook is not used: this is Team C's own watch.)
 
-**Who may do what**: promote, roll back and save a production connector need the operator's `x-team-c-admin-token` on the REST API (`TEAM_C_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
+**Who may do what**: promote, roll back and save a production connector need the operator's `x-team-c-admin-token` on the REST API (`TOOLS_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
 
 **Not done / limits**: no per-customer OAuth (D1 default); list/data-scope tools cannot be promoted yet (`output_rows_match_context` was not built); the idempotency header path is unit-tested but no real API in this repository declares one; nothing was run against a real external production API (only the local Nile "production" deployment, `integration/production_check.py`).
 
@@ -427,25 +427,25 @@ What separates the two, everywhere:
 | | Sandbox | Live Demo |
 |---|---|---|
 | Connector | `"sandbox": true` (records without `environment` keep meaning this) | `"environment": "live_demo"`, id `live-…`, its own identities and credentials |
-| Destination | `SANDBOX_HOSTS` or an owner-confirmed sandbox URL | `LIVE_DEMO_ENABLED=true`, the exact `host:port` in `LIVE_DEMO_HOSTS`, the owner's confirmation, the connector's business, and every resolved address public unless the host is in `LIVE_DEMO_PRIVATE_HOSTS` (development networks only) |
+| Destination | `TOOLS_SANDBOX_HOSTS` or an owner-confirmed sandbox URL | `TOOLS_LIVE_DEMO_ENABLED=true`, the exact `host:port` in `TOOLS_LIVE_DEMO_HOSTS`, the owner's confirmation, the connector's business, and every resolved address public unless the host is in `TOOLS_LIVE_DEMO_PRIVATE_HOSTS` (development networks only) |
 | Artifact | unchanged content and hash | `connector.environment: "live_demo"` (part of the hash), `activation.permitted_uses` = creation, live testing, live execution |
-| Tests and calls | executions `sandbox` / `mcp_sandbox` | `live_demo` / `mcp_live_demo`, at most `LIVE_DEMO_CALLS_PER_MINUTE` per connector (counted in the shared database) |
+| Tests and calls | executions `sandbox` / `mcp_sandbox` | `live_demo` / `mcp_live_demo`, at most `TOOLS_LIVE_DEMO_CALLS_PER_MINUTE` per connector (counted in the shared database) |
 | Publication | `environment: "sandbox"` | `environment: "live_demo"`: must equal the artifact's; refused otherwise |
 | MCP `_meta.team_c` | `environment: sandbox` | `environment: live_demo`, `api_host`, the description says it calls the real API |
 
-Every gate is checked again before each run, right before the request: switching `LIVE_DEMO_ENABLED` off or removing the host blocks the next call and hides the tool from `tools/list` (`effective_status: blocked`, `problem.code: live_demo_disabled`). A sandbox artifact never runs on a live connector, nor the reverse (`environment_mismatch`). The URL in an uploaded specification is only a suggestion: calls go only to the URL the owner confirms on the connector.
+Every gate is checked again before each run, right before the request: switching `TOOLS_LIVE_DEMO_ENABLED` off or removing the host blocks the next call and hides the tool from `tools/list` (`effective_status: blocked`, `problem.code: live_demo_disabled`). A sandbox artifact never runs on a live connector, nor the reverse (`environment_mismatch`). The URL in an uploaded specification is only a suggestion: calls go only to the URL the owner confirms on the connector.
 
 Owner workflow (Team C pages or `/api/v1`): upload the API's OpenAPI → request a tool → answer, accept the access policy, approve → under **Set up the API connector** choose **Live Demo**, confirm it is the real API you may call (`POST /proposals/{id}/connectors` `{base_url, environment: "live_demo", confirmed: true}`) → build → add the demo account's identity on the artifact page → **Check connection** (`POST /connectors/{id}/check`) → **Run live test** → **Publish as Live Demo** (`POST /artifacts/{id}/publications` `{environment: "live_demo", note}`) → disable any time.
 
 The connection check reports each step separately: `configuration` (allowed in its environment; nothing is sent if not), `reachable` (one GET to the base URL, no credentials, no redirects), `authentication` (OAuth2 password: each identity obtains a token; bearer tokens stay `unknown` until an operation proves them), `permissions` (only what passing tests proved, per identity) and `executable` (published tools that pass every re-check). A passing check never claims every operation will succeed. `GET /businesses/{id}/connectors` lists connectors with environment, host, identity names and the last check, never credentials.
 
-Live Demo configuration lives in `.env` (or the environment): `LIVE_DEMO_ENABLED`, `LIVE_DEMO_HOSTS`, `LIVE_DEMO_PRIVATE_HOSTS`, `LIVE_DEMO_CALLS_PER_MINUTE` (see `.env.example`). Credentials are entered on the artifact page and stored in the local database, never in artifacts, tool definitions, prompts or logs. Tests: `tests/test_live_demo.py` (mocked target; the address guard with a patched resolver). A real external API run: `integration/live_demo_check.py` at the repository root.
+Live Demo configuration lives in `.env` (or the environment): `TOOLS_LIVE_DEMO_ENABLED`, `TOOLS_LIVE_DEMO_HOSTS`, `TOOLS_LIVE_DEMO_PRIVATE_HOSTS`, `TOOLS_LIVE_DEMO_CALLS_PER_MINUTE` (see `.env.example`). Credentials are entered on the artifact page and stored in the local database, never in artifacts, tool definitions, prompts or logs. Tests: `tests/test_live_demo.py` (mocked target; the address guard with a patched resolver). A real external API run: `integration/live_demo_check.py` at the repository root.
 
 ### Owner-requested tools and suggestions
 
 Both features use the latest valid OpenAPI inventory of the business. The model sees a **compact operation index**:
 - per operation: id, method, path, short summary, status (`eligible`, `restricted` or `unsupported`), declared auth status, input names and top-level return names;
-- eligible operations come first, and the index is cut off at `CAPABILITY_INDEX_CHARS` (default 16000);
+- eligible operations come first, and the index is cut off at `TOOLS_CAPABILITY_INDEX_CHARS` (default 16000);
 - the considered and omitted operation ids are stored, and a cut shows as incomplete coverage.
 
 Detailed schemas are sent only for the operations chosen for generation. Model output may only name operation ids from the index and ids of existing tools; this is enforced in the decoding schema and again by deterministic checks.
@@ -463,7 +463,7 @@ Detailed schemas are sent only for the operations chosen for generation. Model o
 6. Each request stores its status (`processing`, `needs_clarification`, `proposed`, `existing_tool`, `unavailable`, `failed`), model runs, linked proposals, unresolved needs, coverage and outcome. The owner can answer and reprocess a request that is not yet proposed.
 
 **Suggest additional tools** (business page):
-1. The model receives the business description, recent request goals, the index, existing tools (state, built, published) and earlier suggestions, and returns at most N ideas (`SUGGESTION_COUNT` default 3, capped at `SUGGESTION_MAX` 5). Each idea has a purpose, benefit, business reason, supporting operations, relationship to existing tools and missing information.
+1. The model receives the business description, recent request goals, the index, existing tools (state, built, published) and earlier suggestions, and returns at most N ideas (`TOOLS_SUGGESTION_COUNT` default 3, capped at `TOOLS_SUGGESTION_MAX` 5). Each idea has a purpose, benefit, business reason, supporting operations, relationship to existing tools and missing information.
 2. Screening withholds, with a reason:
    - invented operations;
    - restricted operations used as steps (restricted operations stay restricted);
@@ -538,4 +538,4 @@ Under **Build and test**, the app prepares a connector from the imported API's s
 
 After building, use **Add or replace a test identity** on the artifact page to enter the existing test account's credentials, actual account type and trusted context. Then run the sandbox test. Credentials are stored in the local SQLite database (including its backups), not in artifacts or model prompts. Connector setup does not approve a proposal, resolve protected input mappings or bypass an access policy.
 
-Migration 7 adds `sandbox_connectors`. The web app and MCP executor share these saved connectors. A confirmed destination is permitted only for its connector and business. Existing `CONNECTORS_FILE` entries retain precedence and still require `SANDBOX_HOSTS`; the app never edits that file.
+Migration 7 adds `sandbox_connectors`. The web app and MCP executor share these saved connectors. A confirmed destination is permitted only for its connector and business. Existing `TOOLS_CONNECTORS_FILE` entries retain precedence and still require `TOOLS_SANDBOX_HOSTS`; the app never edits that file.

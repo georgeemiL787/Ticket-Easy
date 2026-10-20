@@ -9,7 +9,7 @@
       "risk_categories": []
     },
     "headers": {
-      "X-Admin-Key": "<ADMIN_API_KEY>"
+      "X-Admin-Key": "<KNOWLEDGE_ADMIN_API_KEY>"
     }
   },
   "response": {

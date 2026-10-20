@@ -30,7 +30,7 @@ from agent_service.observability import get_logger
 log = get_logger(__name__)
 
 PROTOCOL_VERSION = "2025-06-18"  # an initialize-handshake revision the tools service's SDK (mcp 2.2.0) negotiates
-CLIENT_INFO = {"name": "ticket-easy-team-b", "version": "0.1.0"}
+CLIENT_INFO = {"name": "ticket-easy-agent", "version": "0.1.0"}
 # the server's last log lines, kept for diagnostics (the tools service logs no request URLs or credentials)
 STDERR_LINES = 40
 # Environment variables passed through to the server process; the agent's own settings (keys) are never passed on.

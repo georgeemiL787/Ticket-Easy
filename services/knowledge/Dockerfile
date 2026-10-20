@@ -1,5 +1,5 @@
 # Ticket-Easy knowledge service (policy search + safety/rule checker). Build from the repository root:
-#   docker build -f services/knowledge/Dockerfile -t ticket-easy-team-a .
+#   docker build -f services/knowledge/Dockerfile -t ticket-easy-knowledge .
 # (docker compose does this for you: see docker-compose.yml, profile "live")
 
 FROM python:3.12-slim

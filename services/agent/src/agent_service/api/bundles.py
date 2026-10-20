@@ -75,7 +75,7 @@ class DraftIn(BaseModel):
 def registry_of(request: Request) -> BundleRegistry:
     built: Container = request.app.state.container
     if built.bundles is None:
-        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "tenant bundles are switched off (TEAM_B_BUNDLES=0)")
+        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "tenant bundles are switched off (AGENT_BUNDLES=0)")
     return built.bundles
 
 

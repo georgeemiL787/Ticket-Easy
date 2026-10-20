@@ -39,7 +39,7 @@ def test_simulated_container_wires_every_dependency(container: Container) -> Non
     assert isinstance(container.sessions, SessionStore)
     assert isinstance(container.traces, TraceStore)
     assert isinstance(container.cases, CaseStore)
-    if container.settings.store == "memory":  # the suite can also run with TEAM_B_STORE=sqlite
+    if container.settings.store == "memory":  # the suite can also run with AGENT_STORE=sqlite
         assert isinstance(container.sessions, InMemorySessionStore)
         assert isinstance(container.traces, InMemoryTraceStore)
         assert isinstance(container.cases, InMemoryCaseStore)
@@ -59,7 +59,9 @@ def test_without_a_fixed_date_the_real_clock_is_used(tenants_dir: Path) -> None:
 
 
 def test_live_mode_plugs_in_the_real_team_a_and_keeps_the_shop_simulated(tenants_dir: Path) -> None:
-    built = build_container(Settings(mode="live", team_a_url="http://team-a.test:8001", config_dir=tenants_dir))
+    built = build_container(
+        Settings(backends="live", knowledge_url="http://knowledge.test:8001", config_dir=tenants_dir)
+    )
     assert isinstance(built.evidence, HttpEvidenceProvider) and isinstance(built.policy, HttpPolicyGate)
     assert isinstance(built.capabilities, SimulatedShop)  # The tools service's tools are not connected yet
     assert built.policy_search is None and built.rule_checker is None and built.safety_screen is None

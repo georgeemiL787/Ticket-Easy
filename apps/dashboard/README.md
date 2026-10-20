@@ -7,7 +7,7 @@ served by that service at `/dashboard`.
 
 ```bash
 cd services/agent && python scripts/seed_dashboard.py --reset                       # demo data (a few hundred conversations)
-TEAM_B_STORE=sqlite TEAM_B_DB_PATH=var/demo.sqlite3 make run                 # API on http://127.0.0.1:8010
+AGENT_STORE=sqlite AGENT_DB_PATH=var/demo.sqlite3 make run                 # API on http://127.0.0.1:8010
 cd ../../apps/dashboard && npm ci && npm run build                                   # writes services/agent/web/dashboard
 # open http://127.0.0.1:8010/dashboard
 ```

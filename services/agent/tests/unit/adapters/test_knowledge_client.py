@@ -28,7 +28,7 @@ def recorded(name: str) -> httpx.Response:
 
 
 def team_a(handler: Handler) -> KnowledgeClient:
-    return KnowledgeClient("http://team-a.test/", timeout_s=1.0, transport=httpx.MockTransport(handler))
+    return KnowledgeClient("http://knowledge.test/", timeout_s=1.0, transport=httpx.MockTransport(handler))
 
 
 def evidence(handler: Handler) -> HttpEvidenceProvider:

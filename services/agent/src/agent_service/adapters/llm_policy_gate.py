@@ -8,7 +8,7 @@ the search cannot answer, an allowed write goes to a person (fail closed). A rec
 model's require_human into allow, never a deny. Reads and denials pass through untouched.
 
 The decision logic lives in Reviewer.review_action; this class only finds the passages. (It was the "policy agent";
-TEAM_B_LLM_POLICY=1 still switches it on, as does TEAM_B_LLM_REVIEW=1.)
+AGENT_LLM_POLICY=1 still switches it on, as does AGENT_LLM_REVIEW=1.)
 """
 
 import asyncio

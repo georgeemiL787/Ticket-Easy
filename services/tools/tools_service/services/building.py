@@ -75,10 +75,10 @@ class Building:
         with self.store.connect(write=True) as c:
             c.execute("INSERT INTO enforcement_configs(id,proposal_id,version,connector_id,content,sha256,submitted_by,submitted_at) VALUES(?,?,?,?,?,?,?,?)",
                       (eid, pid, row["version"], submission.connector_id, dump(dict(connector=connector, enforcement=submission.enforcement)), sha, self.settings.dev_reviewer_id, now()))
-            # DEV_FAST_TRACK: auto-review enforcement on submission (no separate review step).
+            # TOOLS_DEV_FAST_TRACK: auto-review enforcement on submission (no separate review step).
             if self.settings.dev_fast_track:
                 c.execute("UPDATE enforcement_configs SET reviewed_by=?,reviewed_at=?,review_note=? WHERE id=? AND reviewed_at IS NULL",
-                          (self.settings.dev_reviewer_id, now(), "Auto-reviewed (DEV_FAST_TRACK)", eid))
+                          (self.settings.dev_reviewer_id, now(), "Auto-reviewed (TOOLS_DEV_FAST_TRACK)", eid))
         return self.enforcement(eid)
 
     def review_enforcement(self, eid, submission):
@@ -117,7 +117,7 @@ class Building:
         if fields["blockers"]:
             raise AppError("artifact_not_approved", "Grounding reports blockers: " + "; ".join(fields["blockers"]))
         config = self.current_enforcement(pid, row["version"])
-        # DEV_FAST_TRACK: auto-create and auto-review enforcement if none exists.
+        # TOOLS_DEV_FAST_TRACK: auto-create and auto-review enforcement if none exists.
         if not config and self.settings.dev_fast_track and view["requirements"]:
             enforcement_data = {r["id"]: {"mechanism": "delegated_user_credential"} for r in view["requirements"]}
             sha = digest(dict(connector=connector, enforcement=enforcement_data))
@@ -125,7 +125,7 @@ class Building:
             with self.store.connect(write=True) as c:
                 c.execute("INSERT INTO enforcement_configs(id,proposal_id,version,connector_id,content,sha256,submitted_by,submitted_at,reviewed_by,reviewed_at,review_note) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                           (eid, pid, row["version"], submission.connector_id, dump(dict(connector=connector, enforcement=enforcement_data)), sha,
-                           self.settings.dev_reviewer_id, now(), self.settings.dev_reviewer_id, now(), "Auto-generated and reviewed (DEV_FAST_TRACK)"))
+                           self.settings.dev_reviewer_id, now(), self.settings.dev_reviewer_id, now(), "Auto-generated and reviewed (TOOLS_DEV_FAST_TRACK)"))
             config = self.current_enforcement(pid, row["version"])
         if config and config["content"]["connector"] != connector:
             raise AppError("enforcement_connector", "The reviewed enforcement was configured for a different connector or connector context; submit it again for review", 409)
@@ -246,14 +246,14 @@ class Building:
             raise AppError("context_invalid", "Trusted context values must be non-empty strings or integers; no request was sent", 422)
 
     def check_production_budget(self, connector_id, context_sha256):
-        """PRODUCTION_CALLS_PER_MINUTE per connector and PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE per customer (counted by
+        """TOOLS_PRODUCTION_CALLS_PER_MINUTE per connector and TOOLS_PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE per customer (counted by
         context hash), across every tool, read from the shared database so separate MCP processes count together."""
         since = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
         base = ("SELECT COUNT(*) AS n FROM executions e JOIN artifacts a ON a.id=e.artifact_id WHERE json_extract(a.content,'$.connector.id')=? "
                 "AND e.created_at>=? AND e.status!='rejected' AND e.mode LIKE '%production%'")
         used = self.store.one(base, (connector_id, since))["n"]
         if used >= self.settings.production_calls_per_minute:
-            raise AppError("rate_limited", f"This production connector already made {used} calls in the last minute (PRODUCTION_CALLS_PER_MINUTE); try again shortly", 429)
+            raise AppError("rate_limited", f"This production connector already made {used} calls in the last minute (TOOLS_PRODUCTION_CALLS_PER_MINUTE); try again shortly", 429)
         mine = self.store.one(base + " AND json_extract(e.report,'$.context_sha256')=?", (connector_id, since, context_sha256))["n"]
         if mine >= self.settings.production_calls_per_customer_per_minute:
             raise AppError("rate_limited", f"This customer already made {mine} production calls in the last minute; try again shortly", 429)
@@ -271,13 +271,13 @@ class Building:
             pass  # the execution itself is already recorded in the database; a full disk must not turn a done write into an error
 
     def check_live_budget(self, connector_id):
-        """LIVE_DEMO_CALLS_PER_MINUTE across every artifact and identity of one live connector (read from the shared
+        """TOOLS_LIVE_DEMO_CALLS_PER_MINUTE across every artifact and identity of one live connector (read from the shared
         database, so separate MCP processes count together). Over the budget nothing is sent; the caller may try later."""
         since = (datetime.now(timezone.utc) - timedelta(seconds=60)).isoformat()
         used = self.store.one("SELECT COUNT(*) AS n FROM executions e JOIN artifacts a ON a.id=e.artifact_id WHERE json_extract(a.content,'$.connector.id')=? "
                               "AND e.created_at>=? AND e.status!='rejected'", (connector_id, since))["n"]
         if used >= self.settings.live_demo_calls_per_minute:
-            raise AppError("rate_limited", f"This Live Demo connector already made {used} calls in the last minute (LIVE_DEMO_CALLS_PER_MINUTE); try again shortly", 429)
+            raise AppError("rate_limited", f"This Live Demo connector already made {used} calls in the last minute (TOOLS_LIVE_DEMO_CALLS_PER_MINUTE); try again shortly", 429)
 
     def run_sandbox_test(self, aid, submission):
         """One sandbox run judged against an operator-authored expectation; failures get a structured report."""

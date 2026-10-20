@@ -47,9 +47,9 @@ def snapshot(container: Container) -> tuple[Any, ...]:
 
 
 def test_changes_are_read_as_key_value_pairs() -> None:
-    assert replay.parse_changes(["TEAM_B_AGENT_MODE=off", " TEAM_B_LLM_REWRITE = 1 "]) == {
-        "TEAM_B_AGENT_MODE": "off",
-        "TEAM_B_LLM_REWRITE": "1",
+    assert replay.parse_changes(["AGENT_PLANNING_MODE=off", " AGENT_LLM_REWRITE = 1 "]) == {
+        "AGENT_PLANNING_MODE": "off",
+        "AGENT_LLM_REWRITE": "1",
     }
     with pytest.raises(ValueError, match="KEY=VALUE"):
         replay.parse_changes(["nonsense"])
@@ -58,14 +58,14 @@ def test_changes_are_read_as_key_value_pairs() -> None:
 def test_changes_are_put_on_top_of_the_settings_and_a_jobs_settings_field_by_field(tmp_path: Path) -> None:
     base = Settings.from_env(
         {
-            "TEAM_B_LLM": "openai",
-            "TEAM_B_LLM_BASE_URL": "http://x/v1",
-            "TEAM_B_LLM_MODEL": "m",
-            "TEAM_B_LLM_MODEL_WRITER": "w1",
-            "TEAM_B_LLM_RPM_WRITER": "20",
+            "AGENT_LLM": "openai",
+            "AGENT_LLM_BASE_URL": "http://x/v1",
+            "AGENT_LLM_MODEL": "m",
+            "AGENT_LLM_MODEL_WRITER": "w1",
+            "AGENT_LLM_RPM_WRITER": "20",
         }  # fmt: skip
     )
-    changed = replay.apply_changes(base, {"TEAM_B_AGENT_MODE": "off", "TEAM_B_LLM_MODEL_WRITER": "w2"})
+    changed = replay.apply_changes(base, {"AGENT_PLANNING_MODE": "off", "AGENT_LLM_MODEL_WRITER": "w2"})
     assert changed.agent_mode == "off" and base.agent_mode != "off"  # the original is untouched
     assert changed.roles["writer"].model == "w2" and changed.roles["writer"].rpm == 20  # only the model changed
     assert changed.llm_model == "m"
@@ -105,7 +105,7 @@ async def test_a_replay_never_touches_the_real_shop_or_the_real_stores(live: Con
     before = snapshot(live)
     sessions = await live.sessions.load(T, "past")
     traces = await live.traces.for_conversation(T, "past")
-    await replay.replay(live, settings_of(live), T, "past", {"TEAM_B_AGENT_MODE": "off"})
+    await replay.replay(live, settings_of(live), T, "past", {"AGENT_PLANNING_MODE": "off"})
     assert snapshot(live) == before
     assert len(await live.traces.for_conversation(T, "past")) == len(traces)
     assert (await live.sessions.load(T, "past")) == sessions
@@ -131,13 +131,13 @@ def test_the_report_puts_both_runs_side_by_side(tmp_path: Path) -> None:
     )  # fmt: skip
     other = turn.model_copy(update={"reply": "Hello!", "decision": "clarify"})
     result = replay.ReplayResult(
-        conversation_id="c1", tenant_id=T, messages_from="session", changes={"TEAM_B_AGENT_MODE": "off"},
+        conversation_id="c1", tenant_id=T, messages_from="session", changes={"AGENT_PLANNING_MODE": "off"},
         before=replay.ReplayRun(label="before", turns=[turn], writes=0),
         after=replay.ReplayRun(label="after", turns=[other], writes=0), differing_turns=[1],
     )  # fmt: skip
     path = replay.write_report(result, tmp_path, TODAY)
     text = path.read_text(encoding="utf-8")
-    assert path.name == "replay_c1_2026-09-28.md" and "TEAM_B_AGENT_MODE=off" in text
+    assert path.name == "replay_c1_2026-09-28.md" and "AGENT_PLANNING_MODE=off" in text
     assert "| 1 | hello \\| there |" in text and "**answer**" in text and "**clarify**" in text and "differs" in text
 
 
@@ -154,7 +154,7 @@ async def test_the_replay_endpoint_returns_both_runs_and_needs_the_admin_role(li
         missing = await http.post("/v1/dashboard/conversations/nope/replay", json={"tenant_id": T, "changes": {}})
         bad = await http.post(
             "/v1/dashboard/conversations/past/replay",
-            json={"tenant_id": T, "changes": {"TEAM_B_AGENT_MODE": "sideways"}},
+            json={"tenant_id": T, "changes": {"AGENT_PLANNING_MODE": "sideways"}},
         )
     assert ok.status_code == 200
     body = ok.json()

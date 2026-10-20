@@ -3,7 +3,7 @@
 Every step of a turn has a ReplyPlan (plan_of): the decision, what the reply is for, the facts it may hold (only values
 code verified), the question it must ask, and the citations. Code that makes a Step does not change: the plan is read
 off its reply key and values, or chosen by the planner (Reply move, including a "free" reply to an off-topic
-message). With an AI model for the job "writer" (TEAM_B_LLM_REWRITE=1) the ReplyWriter writes the words freely from the
+message). With an AI model for the job "writer" (AGENT_LLM_REWRITE=1) the ReplyWriter writes the words freely from the
 plan, in the customer's language and tone, reacting to what they said (prompts/writer_v1.md).
 
 Code is the gate. The text is used only if check_grounded finds no number, date, id, amount, link, citation or time

@@ -30,7 +30,7 @@ def fixtures_problem(settings, connector, fixtures):
         return exc
     target = host_port(url)
     if target != host_port(connector.get("base_url", "")) and target not in listed(settings.sandbox_hosts):
-        return AppError("fixtures_destination", f"{target} is neither the connector's own host nor listed in SANDBOX_HOSTS", 403)
+        return AppError("fixtures_destination", f"{target} is neither the connector's own host nor listed in TOOLS_SANDBOX_HOSTS", 403)
     return None
 
 

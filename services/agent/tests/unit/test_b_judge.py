@@ -208,7 +208,7 @@ def test_stats_average_only_what_was_judged() -> None:
 
 
 def test_the_command_line_needs_a_model_for_the_judge(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    for name in ("TEAM_B_LLM", "OPENROUTER_API_KEY"):
+    for name in ("AGENT_LLM", "OPENROUTER_API_KEY"):
         monkeypatch.delenv(name, raising=False)
     with pytest.raises(SystemExit, match="--judge needs an AI model"):
         cli.main(["eval", "--judge", "--out", str(tmp_path)])

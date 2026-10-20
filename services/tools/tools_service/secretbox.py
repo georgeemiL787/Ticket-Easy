@@ -1,6 +1,6 @@
 """Encryption at rest for the credentials of managed connectors (test identities: tokens and passwords).
 
-Values are stored as `enc:v1:<fernet token>`. The key comes from TEAM_C_SECRET_KEY: a Fernet key, `env:NAME` (a variable
+Values are stored as `enc:v1:<fernet token>`. The key comes from TOOLS_SECRET_KEY: a Fernet key, `env:NAME` (a variable
 of the tools service process) or `file:PATH` (a file only the tools service can read). With nothing set a key file is created next to the
 database (`<database folder>/secret.key`) the first time a credential is saved, so a copy of the database file alone does
 not reveal credentials. Production service credentials are never stored: connectors name them by `secret_ref`.
@@ -25,13 +25,13 @@ def key_for(settings, create=True):
     if ref.startswith("env:"):
         value = os.environ.get(ref[4:], "").strip()
         if not value:
-            raise AppError("secret_key_missing", f"TEAM_C_SECRET_KEY names {ref}, which is not set", 500)
+            raise AppError("secret_key_missing", f"TOOLS_SECRET_KEY names {ref}, which is not set", 500)
         return value.encode()
     path = Path(ref[5:]) if ref.startswith("file:") else None
     if ref and path is None:
         return ref.encode()
     if path is None:
-        path = Path(getattr(settings, "database_path", "data/team_c.sqlite3")).resolve().parent / KEY_FILE
+        path = Path(getattr(settings, "database_path", "data/tools.sqlite3")).resolve().parent / KEY_FILE
     if path.is_file():
         return path.read_text(encoding="utf-8").strip().encode()
     if not create:
@@ -57,11 +57,11 @@ def open_value(value, settings):
         return value
     key = key_for(settings, create=False)
     if key is None:
-        raise AppError("secret_key_missing", "Credentials are stored encrypted but no key is available (TEAM_C_SECRET_KEY)", 500)
+        raise AppError("secret_key_missing", "Credentials are stored encrypted but no key is available (TOOLS_SECRET_KEY)", 500)
     try:
         return Fernet(key).decrypt(value[len(PREFIX):].encode("ascii")).decode("utf-8")
     except (InvalidToken, ValueError):
-        raise AppError("secret_key_wrong", "The stored credentials cannot be decrypted with the configured key (TEAM_C_SECRET_KEY)", 500)
+        raise AppError("secret_key_wrong", "The stored credentials cannot be decrypted with the configured key (TOOLS_SECRET_KEY)", 500)
 
 
 def _map(content, settings, convert):

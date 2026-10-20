@@ -2,14 +2,14 @@
 
 The jobs (config.ROLES): reader (understands the message), planner, knowledge (policy search and answers), reviewer
 (the policy agent), writer (words replies and small talk), writer_egyptian, summary (history and handoff summaries) and
-judge (grades replies in the evaluation). Each reads its own TEAM_B_LLM_*_<ROLE> settings and, for anything it does not
-set, the general TEAM_B_LLM_* ones: so with no per-job settings every job gets the same client as before.
+judge (grades replies in the evaluation). Each reads its own AGENT_LLM_*_<ROLE> settings and, for anything it does not
+set, the general AGENT_LLM_* ones: so with no per-job settings every job gets the same client as before.
 
 llm_for(role) returns the client of a job, or None when the job has no AI model (the rules or templates are used):
-- a job with a backup model (TEAM_B_LLM_FALLBACK_MODEL_<ROLE>) uses it when the main model is gone ("not found",
+- a job with a backup model (AGENT_LLM_FALLBACK_MODEL_<ROLE>) uses it when the main model is gone ("not found",
   "decommissioned") or keeps failing; a model that keeps failing is left alone for a minute before it is tried again;
 - jobs on the same model share one RateLimiter, so together they stay inside the provider's requests and tokens per
-  minute; a call that would wait longer than TEAM_B_LLM_MAX_WAIT_S raises RateBudgetExceeded at once, which every caller
+  minute; a call that would wait longer than AGENT_LLM_MAX_WAIT_S raises RateBudgetExceeded at once, which every caller
   treats like any model error (rules or template), and the turn's trace says which job fell back and why.
 """
 
@@ -47,7 +47,7 @@ class Provider:
 
 
 def general_provider(settings: Settings) -> Provider | None:
-    """The provider TEAM_B_LLM asks for, or None (no AI model)."""
+    """The provider AGENT_LLM asks for, or None (no AI model)."""
     if settings.llm == "ollama":
         return Provider(settings.ollama_url.rstrip("/") + "/v1", settings.llm_model or settings.ollama_model, None)
     if settings.llm == "openrouter":
@@ -200,7 +200,7 @@ class LLMRegistry:
         return self._roles[role]
 
     def default(self) -> LLMClient | None:
-        """The general AI model (TEAM_B_LLM_*), the one a job without its own settings uses."""
+        """The general AI model (AGENT_LLM_*), the one a job without its own settings uses."""
         provider = general_provider(self._settings)
         return self._tag(self._client(provider, None), "default") if provider is not None else None
 

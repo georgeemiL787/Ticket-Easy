@@ -14,11 +14,11 @@ from pathlib import Path
 
 import numpy as np
 
-from team_a.config import ROOT, settings
-from team_a.db import SCHEMA_FILE, SCHEMA_VERSION, connect, telecom
-from team_a.db.sources import MockData, read_mock
-from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
-from team_a.knowledge.index import (
+from knowledge_service.config import ROOT, settings
+from knowledge_service.db import SCHEMA_FILE, SCHEMA_VERSION, connect, telecom
+from knowledge_service.db.sources import MockData, read_mock
+from knowledge_service.search.embeddings import Embedder, EmbeddingUnavailable
+from knowledge_service.search.index import (
     TenantNotFound,
     build_passages,
     load_manifest,
@@ -27,10 +27,10 @@ from team_a.knowledge.index import (
     passage_embed_text,
     ticket_embed_text,
 )
-from team_a.knowledge.resolutions import is_safe_to_persist
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import ResolvedEscalationRequest
-from team_a.text import normalize, tokenize
+from knowledge_service.search.resolutions import is_safe_to_persist
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import ResolvedEscalationRequest
+from knowledge_service.text import normalize, tokenize
 
 # Children before parents, so deleting a tenant never trips a foreign key.
 TENANT_TABLES = (
@@ -98,7 +98,7 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     row = conn.execute("SELECT value FROM db_meta WHERE key='schema_version'").fetchone()
     if row is None or row[0] != SCHEMA_VERSION:
         raise RuntimeError(f"Database schema version {row[0] if row else None} != {SCHEMA_VERSION}; "
-                           "rebuild with: python -m team_a db build --reset")
+                           "rebuild with: python -m knowledge_service db build --reset")
 
 
 # ------------------------------------------------------------------ embeddings

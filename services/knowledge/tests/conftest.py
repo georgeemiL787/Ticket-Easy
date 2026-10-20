@@ -3,10 +3,10 @@ import shutil
 
 import pytest
 
-from team_a import config
-from team_a.knowledge import index as index_module
-from team_a.knowledge.index import TenantIndex, build_index
-from team_a.policy import rules_store as rules_module
+from knowledge_service import config
+from knowledge_service.search import index as index_module
+from knowledge_service.search.index import TenantIndex, build_index
+from knowledge_service.policy import rules_store as rules_module
 
 TENANT = "shop_001"
 
@@ -47,7 +47,7 @@ def telecom_db(tmp_path_factory):
 @pytest.fixture(scope="session")
 def built_db(tmp_path_factory, telecom_db):
     """Keyword-only SQLite build of every tenant in a temp dir (no Ollama needed)."""
-    from team_a.db import loader
+    from knowledge_service.db import loader
 
     path = tmp_path_factory.mktemp("db") / "team_a.sqlite"
     loader.build(embedder=None, db_path=path, telecom_dbs={"telco_001": telecom_db})

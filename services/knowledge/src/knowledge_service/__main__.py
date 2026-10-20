@@ -1,17 +1,17 @@
-"""Team A command line.
+"""Knowledge service command line.
 
-  python -m team_a ingest --tenant shop_001 [--no-embeddings]
-  python -m team_a search --tenant shop_001 "momken araga3 el 7aga?"
-  python -m team_a tickets --tenant shop_001 "el order et2akhar"
-  python -m team_a risk "عايز تعويض"
-  python -m team_a check path/to/check_action_request.json
-  python -m team_a rules list|approve|reject|edit|extract ...
-  python -m team_a explain R-RETURN-14D --tenant shop_001
-  python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
-  python -m team_a eval-guardrails
-  python -m team_a eval-scenarios [--tenant noon_eg]              (needs: db build)
-  python -m team_a export-schemas
-  python -m team_a db build [--tenant X] [--reset] [--no-embeddings] | db stats | db query "<sql>"
+  python -m knowledge_service ingest --tenant shop_001 [--no-embeddings]
+  python -m knowledge_service search --tenant shop_001 "momken araga3 el 7aga?"
+  python -m knowledge_service tickets --tenant shop_001 "el order et2akhar"
+  python -m knowledge_service risk "عايز تعويض"
+  python -m knowledge_service check path/to/check_action_request.json
+  python -m knowledge_service rules list|approve|reject|edit|extract ...
+  python -m knowledge_service explain R-RETURN-14D --tenant shop_001
+  python -m knowledge_service eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
+  python -m knowledge_service eval-guardrails
+  python -m knowledge_service eval-scenarios [--tenant noon_eg]              (needs: db build)
+  python -m knowledge_service export-schemas
+  python -m knowledge_service db build [--tenant X] [--reset] [--no-embeddings] | db stats | db query "<sql>"
 """
 
 import argparse
@@ -20,7 +20,7 @@ import sys
 import uuid
 from pathlib import Path
 
-from team_a.config import ROOT
+from knowledge_service.config import ROOT
 
 
 def _print(model) -> None:
@@ -29,18 +29,18 @@ def _print(model) -> None:
 
 
 def cmd_ingest(args) -> None:
-    from team_a.knowledge.embeddings import OllamaEmbedder
-    from team_a.knowledge.index import build_index
+    from knowledge_service.search.embeddings import OllamaEmbedder
+    from knowledge_service.search.index import build_index
 
     embedder = None if args.no_embeddings else OllamaEmbedder()
     _print(build_index(args.tenant, embedder))
 
 
 def cmd_search(args) -> None:
-    from team_a.knowledge.embeddings import OllamaEmbedder
-    from team_a.knowledge.index import TenantIndex
-    from team_a.knowledge.retrieval import search_knowledge
-    from team_a.schemas import SearchKnowledgeRequest
+    from knowledge_service.search.embeddings import OllamaEmbedder
+    from knowledge_service.search.index import TenantIndex
+    from knowledge_service.search.retrieval import search_knowledge
+    from knowledge_service.schemas import SearchKnowledgeRequest
 
     req = SearchKnowledgeRequest(request_id=f"cli-{uuid.uuid4().hex[:8]}", tenant_id=args.tenant,
                                  query=args.query, top_k=args.top_k)
@@ -48,10 +48,10 @@ def cmd_search(args) -> None:
 
 
 def cmd_tickets(args) -> None:
-    from team_a.knowledge.embeddings import OllamaEmbedder
-    from team_a.knowledge.index import TenantIndex
-    from team_a.knowledge.retrieval import search_past_tickets
-    from team_a.schemas import SearchPastTicketsRequest
+    from knowledge_service.search.embeddings import OllamaEmbedder
+    from knowledge_service.search.index import TenantIndex
+    from knowledge_service.search.retrieval import search_past_tickets
+    from knowledge_service.schemas import SearchPastTicketsRequest
 
     req = SearchPastTicketsRequest(request_id=f"cli-{uuid.uuid4().hex[:8]}", tenant_id=args.tenant,
                                    query=args.query)
@@ -59,8 +59,8 @@ def cmd_tickets(args) -> None:
 
 
 def cmd_risk(args) -> None:
-    from team_a.policy.risk import classify_risk
-    from team_a.schemas import ClassifyRiskRequest
+    from knowledge_service.policy.risk import classify_risk
+    from knowledge_service.schemas import ClassifyRiskRequest
 
     req = ClassifyRiskRequest(request_id=f"cli-{uuid.uuid4().hex[:8]}", tenant_id=args.tenant,
                               message=args.message, use_llm=not args.no_llm)
@@ -68,23 +68,23 @@ def cmd_risk(args) -> None:
 
 
 def cmd_check(args) -> None:
-    from team_a.policy.check import check_action
-    from team_a.policy.rules_store import RuleStore
-    from team_a.schemas import CheckActionRequest
+    from knowledge_service.policy.check import check_action
+    from knowledge_service.policy.rules_store import RuleStore
+    from knowledge_service.schemas import CheckActionRequest
 
     req = CheckActionRequest.model_validate_json(Path(args.request_file).read_text(encoding="utf-8"))
     _print(check_action(req, RuleStore(req.tenant_id)))
 
 
 def cmd_explain(args) -> None:
-    from team_a.policy.explain import explain_rule
-    from team_a.policy.rules_store import RuleStore
+    from knowledge_service.policy.explain import explain_rule
+    from knowledge_service.policy.rules_store import RuleStore
 
     _print(explain_rule(RuleStore(args.tenant), args.rule_id))
 
 
 def cmd_rules(args) -> None:
-    from team_a.policy.rules_store import RuleStore
+    from knowledge_service.policy.rules_store import RuleStore
 
     store = RuleStore(args.tenant)
     if args.rules_cmd == "list":
@@ -93,7 +93,7 @@ def cmd_rules(args) -> None:
                 continue
             print(f"{r.approval_status:9} {r.rule_id:28} {r.action:24} {r.source.citation}")
     elif args.rules_cmd == "approve":
-        from team_a.policy.guardrails import GuardrailRegression
+        from knowledge_service.policy.guardrails import GuardrailRegression
 
         try:
             _print(store.approve(args.rule_id, args.reviewer))
@@ -105,35 +105,35 @@ def cmd_rules(args) -> None:
         changes = json.loads(Path(args.changes_file).read_text(encoding="utf-8"))
         _print(store.edit(args.rule_id, changes))
     elif args.rules_cmd == "extract":
-        from team_a.policy.extract import extract_candidates
+        from knowledge_service.policy.extract import extract_candidates
 
         added = store.add_proposed(extract_candidates(args.tenant, args.document))
-        print(f"Added {len(added)} proposed rule(s). Review with: python -m team_a rules list --status proposed")
+        print(f"Added {len(added)} proposed rule(s). Review with: python -m knowledge_service rules list --status proposed")
         for r in added:
             print(f"  {r.rule_id}: {r.action} <- \"{r.source.quote[:70]}\"")
 
 
 def cmd_eval_retrieval(args) -> None:
-    from team_a.evaluation import eval_retrieval
+    from knowledge_service.evaluation import eval_retrieval
 
     eval_retrieval(args.tenant, split=args.split, sweep=args.sweep)
 
 
 def cmd_eval_scenarios(args) -> None:
-    from team_a.evaluation import eval_scenarios
+    from knowledge_service.evaluation import eval_scenarios
 
     eval_scenarios(args.tenant)
 
 
 def cmd_eval_guardrails(args) -> None:
-    from team_a.evaluation import eval_guardrails
+    from knowledge_service.evaluation import eval_guardrails
 
     if not eval_guardrails(args.tenant):
         sys.exit(1)
 
 
 def cmd_export_schemas(_args) -> None:
-    from team_a import schemas as s
+    from knowledge_service import schemas as s
 
     out = ROOT / "contracts" / "schemas"
     out.mkdir(parents=True, exist_ok=True)
@@ -150,10 +150,10 @@ def cmd_export_schemas(_args) -> None:
 
 
 def cmd_db(args) -> None:
-    from team_a.db import loader
+    from knowledge_service.db import loader
 
     if args.db_cmd == "build":
-        from team_a.knowledge.embeddings import OllamaEmbedder
+        from knowledge_service.search.embeddings import OllamaEmbedder
 
         embedder = None if args.no_embeddings else OllamaEmbedder()
         report = loader.build([args.tenant] if args.tenant else None, embedder, reset=args.reset)
@@ -182,7 +182,7 @@ def cmd_db(args) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     sys.stdout.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(prog="team_a")
+    parser = argparse.ArgumentParser(prog="knowledge_service")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     def tenant(p):

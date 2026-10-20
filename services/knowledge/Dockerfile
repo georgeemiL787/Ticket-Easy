@@ -1,4 +1,4 @@
-# Ticket-Easy Team A (policy search + safety/rule checker). Build from the repository root:
+# Ticket-Easy knowledge service (policy search + safety/rule checker). Build from the repository root:
 #   docker build -f services/knowledge/Dockerfile -t ticket-easy-team-a .
 # (docker compose does this for you: see docker-compose.yml, profile "live")
 

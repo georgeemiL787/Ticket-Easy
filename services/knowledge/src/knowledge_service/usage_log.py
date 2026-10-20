@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 log = logging.getLogger(__name__)
 SERVICE_NAME = "knowledge"

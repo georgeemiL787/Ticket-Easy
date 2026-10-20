@@ -7,12 +7,12 @@ from datetime import date
 import pytest
 from fastapi.testclient import TestClient
 
-from team_a import config, db, service
-from team_a.config import settings
-from team_a.db import repository as repo
-from team_a.knowledge.index import TenantNotFound
-from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
-from team_a.schemas import RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
+from knowledge_service import api, config, db
+from knowledge_service.config import settings
+from knowledge_service.db import repository as repo
+from knowledge_service.search.index import TenantNotFound
+from knowledge_service.search.retrieval import get_passage, search_knowledge, search_past_tickets
+from knowledge_service.schemas import RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
 
 
 def _benchmark_questions() -> list[dict]:
@@ -146,7 +146,7 @@ def client(built_db, monkeypatch):
     monkeypatch.setattr(config, "settings", patched)
     monkeypatch.setattr(db, "settings", patched)
     monkeypatch.setattr(repo, "settings", patched)
-    return TestClient(service.app)
+    return TestClient(api.app)
 
 
 @pytest.mark.parametrize("url", [
@@ -183,5 +183,5 @@ def test_data_endpoint_errors_use_the_error_contract(client, url, code):
 
 
 def test_no_write_endpoints_on_the_data_layer():
-    data_routes = [r for r in service.app.routes if getattr(r, "path", "").startswith("/v1/data/")]
+    data_routes = [r for r in api.app.routes if getattr(r, "path", "").startswith("/v1/data/")]
     assert data_routes and all(r.methods == {"GET"} for r in data_routes)

@@ -9,12 +9,12 @@ import httpx
 import numpy as np
 import pytest
 
-from team_a import llm, usage_log
-from team_a.config import settings as real_settings
-from team_a.knowledge.embeddings import EmbeddingUnavailable, OllamaEmbedder
-from team_a.knowledge.retrieval import _cosines
-from team_a.policy.risk import classify_risk
-from team_a.schemas import ClassifyRiskRequest
+from knowledge_service import llm, usage_log
+from knowledge_service.config import settings as real_settings
+from knowledge_service.search.embeddings import EmbeddingUnavailable, OllamaEmbedder
+from knowledge_service.search.retrieval import _cosines
+from knowledge_service.policy.risk import classify_risk
+from knowledge_service.schemas import ClassifyRiskRequest
 
 SUMMARY = Path(__file__).resolve().parents[2] / "agent" / "scripts" / "usage_summary.py"
 KEY = "sk-or-v1-very-secret"

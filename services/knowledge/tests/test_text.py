@@ -1,4 +1,4 @@
-from team_a.text import detect_language, expand_query, normalize, tokenize
+from knowledge_service.text import detect_language, expand_query, normalize, tokenize
 
 
 def test_normalize_unifies_arabic_letter_variants_and_digits():

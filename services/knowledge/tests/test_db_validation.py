@@ -5,10 +5,10 @@ import sqlite3
 
 import pytest
 
-from team_a.config import settings
-from team_a.db import connect
-from team_a.db import repository as repo
-from team_a.schemas import SearchKnowledgeRequest, SearchPastTicketsRequest
+from knowledge_service.config import settings
+from knowledge_service.db import connect
+from knowledge_service.db import repository as repo
+from knowledge_service.schemas import SearchKnowledgeRequest, SearchPastTicketsRequest
 
 TENANTS = ("noon_eg", "shop_001", "telco_001")
 PAIRS = [(a, b) for a in TENANTS for b in TENANTS if a != b]
@@ -211,13 +211,13 @@ def test_resolutions_mirror_equals_the_jsonl_file(built_db, tenant):
 
 def test_check_action_never_reads_the_database(monkeypatch, tmp_path):
     """Guardrail cases still pass with every SQLite connection refused, and the policy code has no db import."""
-    import team_a.policy.check as check
-    import team_a.policy.rules_store as rules_store
-    from team_a.policy.guardrails import load_cases, run_cases
+    import knowledge_service.policy.check as check
+    import knowledge_service.policy.rules_store as rules_store
+    from knowledge_service.policy.guardrails import load_cases, run_cases
 
     for module in (check, rules_store):
         source = open(module.__file__, encoding="utf-8").read()
-        assert "team_a.db" not in source and "sqlite" not in source
+        assert "knowledge_service.db" not in source and "sqlite" not in source
 
     def refuse(*_a, **_kw):
         raise AssertionError("check_action opened a database")

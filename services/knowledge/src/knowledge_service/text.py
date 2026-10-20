@@ -8,7 +8,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 _DIACRITICS = re.compile(r"[ؐ-ًؚ-ٰٟۖ-ۭ]")
 _TATWEEL = "ـ"

@@ -1,4 +1,4 @@
-"""Benchmarks for both Team A workstreams.
+"""Benchmarks for both knowledge service workstreams.
 
 Retrieval: recall@5 on answerable questions, per writing style, plus no-answer metrics.
   The question set is split (stratified by style and answerability) into dev, used to sweep
@@ -13,13 +13,13 @@ from collections import defaultdict
 
 import numpy as np
 
-from team_a.config import settings
-from team_a.knowledge.embeddings import OllamaEmbedder
-from team_a.knowledge.index import TenantIndex
-from team_a.knowledge.retrieval import search_knowledge, tenant_min_top_score, tenant_thresholds
-from team_a.policy.guardrails import load_cases, run_cases
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import SearchKnowledgeRequest
+from knowledge_service.config import settings
+from knowledge_service.search.embeddings import OllamaEmbedder
+from knowledge_service.search.index import TenantIndex
+from knowledge_service.search.retrieval import search_knowledge, tenant_min_top_score, tenant_thresholds
+from knowledge_service.policy.guardrails import load_cases, run_cases
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import SearchKnowledgeRequest
 
 
 class CachedEmbedder:
@@ -167,7 +167,7 @@ def eval_scenarios(tenant_id: str, db_path=None) -> dict:
     no_evidence (e.g. a cancellation the policy does not cover). Answerable: share of expected sections
     in the top 5. no_evidence: the result must be explicitly empty.
     """
-    from team_a.db import connect, repository
+    from knowledge_service.db import connect, repository
 
     conn = connect(db_path)
     try:

@@ -1,6 +1,6 @@
 """E5b helpers for the knowledge service (run from team_a with PYTHONPATH=src). Nothing is stored or approved.
 
-    rules : runs the rule extraction (the same function `python -m team_a rules extract` uses) for each shop_001
+    rules : runs the rule extraction (the same function `python -m knowledge_service rules extract` uses) for each shop_001
             document WITHOUT storing the candidates, and prints how many candidate rules came back.
     risk  : classifies the 40 sample messages with the AI second opinion on (the risk check), one call each.
 """
@@ -9,19 +9,19 @@ import sys
 import time
 from pathlib import Path
 
-from team_a.knowledge.index import load_manifest
-from team_a.policy.extract import extract_candidates
-from team_a.policy.risk import classify_risk
-from team_a.schemas import ClassifyRiskRequest
+from knowledge_service.search.index import load_manifest
+from knowledge_service.policy.extract import extract_candidates
+from knowledge_service.policy.risk import classify_risk
+from knowledge_service.schemas import ClassifyRiskRequest
 
 TENANT = "shop_001"
 mode = sys.argv[1]
 if mode == "rules":
-    # the same loop as team_a.policy.extract.extract_candidates, one passage at a time, with retries, nothing stored
-    from team_a import llm
-    from team_a.knowledge.index import build_passages
-    from team_a.policy.extract import _system_prompt, _validate_candidate
-    from team_a.usage_log import usage_job
+    # the same loop as knowledge_service.policy.extract.extract_candidates, one passage at a time, with retries, nothing stored
+    from knowledge_service import llm
+    from knowledge_service.search.index import build_passages
+    from knowledge_service.policy.extract import _system_prompt, _validate_candidate
+    from knowledge_service.usage_log import usage_job
 
     manifest = load_manifest(TENANT)
     effective = {(d["document_id"], d["version"]): d.get("effective_date") for d in manifest["documents"]}

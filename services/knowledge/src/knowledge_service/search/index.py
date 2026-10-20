@@ -18,12 +18,12 @@ from pathlib import Path
 
 import numpy as np
 
-from team_a.config import settings
-from team_a.knowledge.bm25 import BM25
-from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
-from team_a.knowledge.parsers import Section, parse
-from team_a.schemas import ResolvedEscalation
-from team_a.text import detect_language, tokenize
+from knowledge_service.config import settings
+from knowledge_service.search.bm25 import BM25
+from knowledge_service.search.embeddings import Embedder, EmbeddingUnavailable
+from knowledge_service.search.parsers import Section, parse
+from knowledge_service.schemas import ResolvedEscalation
+from knowledge_service.text import detect_language, tokenize
 
 log = logging.getLogger(__name__)
 MAX_PASSAGE_CHARS = 1500
@@ -238,7 +238,7 @@ class TenantIndex:
         if not (root / "meta.json").exists():
             if not settings.corpus_dir(tenant_id).exists():
                 raise TenantNotFound(f"Unknown tenant '{tenant_id}'")
-            raise IndexNotBuilt(f"Index for '{tenant_id}' not built. Run: python -m team_a ingest --tenant {tenant_id}")
+            raise IndexNotBuilt(f"Index for '{tenant_id}' not built. Run: python -m knowledge_service ingest --tenant {tenant_id}")
         passages = _read_jsonl(root / "passages.jsonl")
         tickets = _read_jsonl(root / "tickets.jsonl")
         pv = np.load(root / "passages.npy") if (root / "passages.npy").exists() else None

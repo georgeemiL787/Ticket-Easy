@@ -4,8 +4,8 @@ import json
 
 import pytest
 
-from team_a.config import settings
-from team_a.knowledge.index import build_passages
+from knowledge_service.config import settings
+from knowledge_service.search.index import build_passages
 
 STYLES = {"ar", "en", "arabizi"}
 TENANTS = ["shop_001", "noon_eg", "telco_001"]

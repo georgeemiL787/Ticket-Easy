@@ -6,5 +6,5 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 TEAM_A=$(cd "$HERE/../../../.." && pwd)
 python "$HERE/generate.py"
-(cd "$TEAM_A" && PYTHONPATH=src python -m team_a db build --tenant noon_eg > /dev/null)
+(cd "$TEAM_A" && PYTHONPATH=src python -m knowledge_service db build --tenant noon_eg > /dev/null)
 python "$HERE/verify.py" --db "$TEAM_A/var/db/team_a.sqlite"

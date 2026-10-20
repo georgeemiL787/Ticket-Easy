@@ -19,29 +19,29 @@ ollama pull bge-m3
 copy .env.example .env          # add OPENROUTER_API_KEY (free) if you want rule extraction / LLM risk
 $env:PYTHONPATH = "src"
 python scripts\make_seed_docs.py          # regenerates the PDF/DOCX/XLSX seed documents
-python -m team_a ingest --tenant shop_001 # builds var/index/shop_001 (add --no-embeddings to skip Ollama)
+python -m knowledge_service ingest --tenant shop_001 # builds var/index/shop_001 (add --no-embeddings to skip Ollama)
 python -m pytest                          # 262 tests, no Ollama or API key needed
-uvicorn team_a.service:app --app-dir src --port 8001
+uvicorn knowledge_service.api:app --app-dir src --port 8001
 ```
 
 ## CLI
 
 | Command | What it does |
 |---|---|
-| `python -m team_a ingest --tenant shop_001` | Parse the corpus in `data/corpus/<tenant>/manifest.json`, embed, and index it. Reproducible; source hashes go to `meta.json`. |
-| `python -m team_a search "momken araga3 el 7aga?"` | Hybrid retrieval with citations |
-| `python -m team_a tickets "el order et2akhar"` | Past-ticket search |
-| `python -m team_a risk "عايز تعويض" [--no-llm]` | Mandatory-escalation classification |
-| `python -m team_a check request.json` | Run `check_action` on a request body |
-| `python -m team_a explain R-REFUND-14D` | Explain a rule |
-| `python -m team_a rules list [--status proposed]` | Review queue |
-| `python -m team_a rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
-| `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
-| `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
-| `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
-| `python -m team_a db build [--tenant X] [--reset] [--no-embeddings]` / `db stats` / `db query "<sql>"` | Build, count, or query (read-only) the SQLite data layer; see below |
-| `python -m team_a eval-scenarios [--tenant noon_eg]` | Retrieval smoke test on a tenant's scenarios, read from the database |
-| `python -m team_a export-schemas` | Write JSON Schemas to `contracts/schemas/` |
+| `python -m knowledge_service ingest --tenant shop_001` | Parse the corpus in `data/corpus/<tenant>/manifest.json`, embed, and index it. Reproducible; source hashes go to `meta.json`. |
+| `python -m knowledge_service search "momken araga3 el 7aga?"` | Hybrid retrieval with citations |
+| `python -m knowledge_service tickets "el order et2akhar"` | Past-ticket search |
+| `python -m knowledge_service risk "عايز تعويض" [--no-llm]` | Mandatory-escalation classification |
+| `python -m knowledge_service check request.json` | Run `check_action` on a request body |
+| `python -m knowledge_service explain R-REFUND-14D` | Explain a rule |
+| `python -m knowledge_service rules list [--status proposed]` | Review queue |
+| `python -m knowledge_service rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
+| `python -m knowledge_service rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
+| `python -m knowledge_service eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
+| `python -m knowledge_service eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
+| `python -m knowledge_service db build [--tenant X] [--reset] [--no-embeddings]` / `db stats` / `db query "<sql>"` | Build, count, or query (read-only) the SQLite data layer; see below |
+| `python -m knowledge_service eval-scenarios [--tenant noon_eg]` | Retrieval smoke test on a tenant's scenarios, read from the database |
+| `python -m knowledge_service export-schemas` | Write JSON Schemas to `contracts/schemas/` |
 
 ## HTTP API (for Team C's MCP adapter)
 
@@ -67,7 +67,7 @@ Schemas are in [contracts/schemas/](contracts/schemas/), and real recorded succe
 
 ## Precedents from resolved escalations
 
-Redacted records of how humans resolved escalated cases, so a reviewer handling a similar case sees "N similar cases were resolved this way". They live in a separate corpus, `data/resolutions/<tenant>.jsonl`; code is in [knowledge/resolutions.py](src/team_a/knowledge/resolutions.py).
+Redacted records of how humans resolved escalated cases, so a reviewer handling a similar case sees "N similar cases were resolved this way". They live in a separate corpus, `data/resolutions/<tenant>.jsonl`; code is in [knowledge/resolutions.py](src/knowledge_service/search/resolutions.py).
 
 1. **Mandatory-risk cases are never stored or offered.** A write is refused if `risk_categories` (required) has any entry, if `escalation_reason` is `mandatory_category`, or if the stored text triggers the risk keywords. Search also requires `risk_categories` and returns nothing for such a case.
 2. **No personal data is stored.** Only category, redacted summary, resolution, cited rule and tags are kept. `is_safe_to_persist()` refuses (never scrubs) text with an email, phone, order or reference id, payment details, address, name or transcript text. Its reasons name the kind of data, never the value.
@@ -140,11 +140,11 @@ No-answer recall is the weak spot: off-topic questions that share words with the
 
 ## Data layer (SQLite)
 
-One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant's structured data and knowledge. Build it with `python -m team_a db build` (add `--no-embeddings` without Ollama; if Ollama is down the build stores that tenant keyword-only and says so). Rebuilding is idempotent.
+One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant's structured data and knowledge. Build it with `python -m knowledge_service db build` (add `--no-embeddings` without Ollama; if Ollama is down the build stores that tenant keyword-only and says so). Rebuilding is idempotent.
 
 - **Tenants:** `shop_001` (Nile Style; customers/orders from Team B's fixture, `data/mock/shop_001/backend.json`) and `noon_eg` (noon's real public return policy, with fictional customers/orders/returns/scenarios in `data/mock/noon_eg/`, regenerated by `build_noon_mock_data.py`).
-- **Tables:** `tenants`, `customers`, `orders`, `order_items`, `returns`, `policy_documents`, `policy_passages` (+ `passages_fts`, `passage_embeddings`), `past_tickets` (+ `ticket_embeddings`), `rules_mirror`, `resolutions_mirror`, `eval_scenarios`, `eval_scenario_sections`, `benchmark_questions`, `db_meta`, `db_sources`. Schema: [src/team_a/db/schema.sql](src/team_a/db/schema.sql).
-- **Repository** ([db/repository.py](src/team_a/db/repository.py)), all tenant-scoped: `get_customer`, `list_orders_for_customer`, `get_order` (with items), `get_return`, `build_check_action_facts`, `search_knowledge`, `get_passage`, `search_past_tickets`. Search uses the same retrieval code, thresholds and result contracts as the file index.
+- **Tables:** `tenants`, `customers`, `orders`, `order_items`, `returns`, `policy_documents`, `policy_passages` (+ `passages_fts`, `passage_embeddings`), `past_tickets` (+ `ticket_embeddings`), `rules_mirror`, `resolutions_mirror`, `eval_scenarios`, `eval_scenario_sections`, `benchmark_questions`, `db_meta`, `db_sources`. Schema: [src/knowledge_service/db/schema.sql](src/knowledge_service/db/schema.sql).
+- **Repository** ([db/repository.py](src/knowledge_service/db/repository.py)), all tenant-scoped: `get_customer`, `list_orders_for_customer`, `get_order` (with items), `get_return`, `build_check_action_facts`, `search_knowledge`, `get_passage`, `search_past_tickets`. Search uses the same retrieval code, thresholds and result contracts as the file index.
 - **Tenant isolation:** `tenant_id` leads every primary key and foreign key, so a row cannot reference another tenant's row.
 - **Source of truth stays in files.** `rules_mirror` and `resolutions_mirror` are read-only copies for joins and reporting (writes are rejected); resolutions are re-checked by `is_safe_to_persist` on import. `check_action` never reads the database.
 - **Per-tenant retrieval:** a tenant may set `retrieval_thresholds` in its manifest and add `data/synonyms/<tenant>.json`; tenants without them use the global values (shop_001 is unchanged).

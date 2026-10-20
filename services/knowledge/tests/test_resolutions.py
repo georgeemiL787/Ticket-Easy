@@ -7,14 +7,14 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from team_a import config
-from team_a.knowledge import index as index_module
-from team_a.knowledge import resolutions as res
-from team_a.knowledge.index import TenantIndex, build_index, load_resolutions
-from team_a.policy import check as check_module
-from team_a.policy.check import check_action
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import (
+from knowledge_service import config
+from knowledge_service.search import index as index_module
+from knowledge_service.search import resolutions as res
+from knowledge_service.search.index import TenantIndex, build_index, load_resolutions
+from knowledge_service.policy import check as check_module
+from knowledge_service.policy.check import check_action
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import (
     MANDATORY_ESCALATION,
     CheckActionRequest,
     RedactionCheck,

@@ -6,7 +6,7 @@ import httpx
 import numpy as np
 import pytest
 
-from team_a.knowledge.embeddings import EmbeddingUnavailable, OllamaEmbedder
+from knowledge_service.search.embeddings import EmbeddingUnavailable, OllamaEmbedder
 
 
 def fake_ollama(calls: list):
@@ -68,7 +68,7 @@ def test_outage_raises_embedding_unavailable_and_warm_up_does_not():
 
 
 def test_index_cache_hit_does_not_open_the_database(built_db, monkeypatch):
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     first = repository.load_index("noon_eg", None, built_db)
     monkeypatch.setattr(repository, "_open", lambda *a: (_ for _ in ()).throw(AssertionError("opened")))

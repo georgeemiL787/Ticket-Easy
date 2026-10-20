@@ -4,12 +4,12 @@ import sqlite3
 
 import pytest
 
-from team_a.db import loader
-from team_a.db import repository as repo
-from team_a.db import telecom
-from team_a.policy.check import check_action
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import CheckActionRequest, SearchKnowledgeRequest
+from knowledge_service.db import loader
+from knowledge_service.db import repository as repo
+from knowledge_service.db import telecom
+from knowledge_service.policy.check import check_action
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import CheckActionRequest, SearchKnowledgeRequest
 
 T = "telco_001"
 

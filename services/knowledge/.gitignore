@@ -1,7 +1,7 @@
 # Office lock files (created while a .docx/.xlsx is open)
 ~$*
 
-# Built search index (rebuild with: python -m team_a ingest --tenant <tenant>)
+# Built search index (rebuild with: python -m knowledge_service ingest --tenant <tenant>)
 var/
 
 # Local environment
@@ -10,7 +10,7 @@ var/
 __pycache__/
 *.pyc
 
-# Generated SQLite data layer (rebuild with: python -m team_a db build)
+# Generated SQLite data layer (rebuild with: python -m knowledge_service db build)
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

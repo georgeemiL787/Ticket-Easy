@@ -165,7 +165,7 @@ OpenRouter / Ollama). Ollama with `bge-m3` is optional for Team A (keyword searc
 python -m venv services/knowledge/.venv; services/knowledge/.venv/Scripts/python -m pip install -r services/knowledge/requirements.txt
 python -m venv services/agent/.venv; services/agent/.venv/Scripts/python -m pip install -e services/agent -r services/agent/requirements-dev.txt
 cd services/tools; uv sync --locked; cd ..
-cd services/knowledge; $env:PYTHONPATH="src"; .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings; cd ..
+cd services/knowledge; $env:PYTHONPATH="src"; .venv/Scripts/python -m knowledge_service ingest --tenant shop_001 --no-embeddings; cd ..
 cd apps/dashboard; npm ci; npm run build; cd ..
 copy ops/local/live_demo.example.env ops/local/live_demo.env   # optional: Live Demo
 ```

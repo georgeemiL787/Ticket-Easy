@@ -1,7 +1,7 @@
-"""Convert the telecom business rules (Team B fixture format) into Team A rules, all as `proposed`.
+"""Convert the telecom business rules (agent fixture format) into knowledge service rules, all as `proposed`.
 
 Source: data/telecom/telco_001/fixtures/telco_001/rules.json. Output: data/telecom/telco_001/rules.json.
-The source marks them "approved", but in Team A only an explicit `rules approve` (which runs the guardrail
+The source marks them "approved", but in the knowledge service only an explicit `rules approve` (which runs the guardrail
 gate) makes a rule active, so every imported rule starts as proposed and has no effect until reviewed.
 Each quote must appear in the cited passage, the same grounding check the rule extractor applies.
 
@@ -14,11 +14,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from team_a.config import settings  # noqa: E402
-from team_a.knowledge.index import build_passages  # noqa: E402
-from team_a.policy.rules_store import RuleStore  # noqa: E402
-from team_a.schemas import Rule  # noqa: E402
-from team_a.text import normalize  # noqa: E402
+from knowledge_service.config import settings  # noqa: E402
+from knowledge_service.search.index import build_passages  # noqa: E402
+from knowledge_service.policy.rules_store import RuleStore  # noqa: E402
+from knowledge_service.schemas import Rule  # noqa: E402
+from knowledge_service.text import normalize  # noqa: E402
 
 TENANT = "telco_001"
 

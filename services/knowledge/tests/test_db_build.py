@@ -7,8 +7,8 @@ import sqlite3
 import numpy as np
 import pytest
 
-from team_a.db import connect, loader, sources
-from team_a.knowledge.embeddings import EmbeddingUnavailable
+from knowledge_service.db import connect, loader, sources
+from knowledge_service.search.embeddings import EmbeddingUnavailable
 
 
 class FakeEmbedder:
@@ -143,7 +143,7 @@ def test_unsafe_resolution_is_not_mirrored(tmp_path, monkeypatch):
 def test_unmapped_source_field_fails_loudly(tmp_path, monkeypatch):
     import dataclasses
 
-    from team_a import config
+    from knowledge_service import config
 
     folder = tmp_path / "e-commerce" / "noon_eg" / "mock"
     folder.mkdir(parents=True)
@@ -180,15 +180,15 @@ def test_schema_version_mismatch_asks_for_reset(tmp_path):
 
 
 def test_unknown_tenant_is_rejected(tmp_path):
-    from team_a.knowledge.index import TenantNotFound
+    from knowledge_service.search.index import TenantNotFound
 
     with pytest.raises(TenantNotFound):
         loader.build(["nobody"], embedder=None, db_path=tmp_path / "x.sqlite")
 
 
 def test_a_business_added_through_the_admin_api_is_not_part_of_the_database_build(monkeypatch):
-    from team_a.config import settings
-    from team_a.db import loader
+    from knowledge_service.config import settings
+    from knowledge_service.db import loader
 
     monkeypatch.setattr(type(settings), "tenants", lambda self: ["shipped_one", "added_later"])
     monkeypatch.setattr(type(settings), "category", lambda self, tenant: "e-commerce" if tenant == "shipped_one" else None)

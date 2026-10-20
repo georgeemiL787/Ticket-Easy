@@ -11,13 +11,14 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from team_a import config, jobs, service
-from team_a.knowledge import documents as documents_module
-from team_a.knowledge import index as index_module
-from team_a.knowledge import retrieval as retrieval_module
-from team_a.knowledge.parsers import parse
-from team_a.policy import extract as extract_module
-from team_a.policy import rules_store as rules_module
+from knowledge_service import api as routes
+from knowledge_service import config, jobs
+from knowledge_service.search import documents as documents_module
+from knowledge_service.search import index as index_module
+from knowledge_service.search import retrieval as retrieval_module
+from knowledge_service.search.parsers import parse
+from knowledge_service.policy import extract as extract_module
+from knowledge_service.policy import rules_store as rules_module
 
 ADMIN = {"X-Admin-Key": "test-admin-key"}
 T = "new_shop"
@@ -36,9 +37,9 @@ def api(tmp_path, monkeypatch):
     )
     for module in (config, documents_module, index_module, rules_module, retrieval_module):
         monkeypatch.setattr(module, "settings", patched)
-    service._index.cache_clear()
-    yield TestClient(service.app)
-    service._index.cache_clear()
+    routes._index.cache_clear()
+    yield TestClient(routes.app)
+    routes._index.cache_clear()
 
 
 def upload(client, name, content, **extra):

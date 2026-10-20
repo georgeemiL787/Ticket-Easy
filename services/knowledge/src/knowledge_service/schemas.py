@@ -1,4 +1,4 @@
-"""Public contracts owned by Team A: RetrievalResult, Rule and PolicyDecision.
+"""Public contracts owned by the knowledge service: RetrievalResult, Rule and PolicyDecision.
 
 Frozen in week 1. Any breaking change bumps SCHEMA_VERSION and is announced to Teams B and C.
 """
@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-from team_a import SCHEMA_VERSION
+from knowledge_service import SCHEMA_VERSION
 
 TENANT_PATTERN = r"^[a-z0-9_]{1,64}$"
 
@@ -293,7 +293,7 @@ class RuleExplanation(BaseModel):
 # ------------------------------------------------------- resolved escalations
 # Precedents from cases a human resolved. Advisory only: shown to a human reviewer, never read by
 # check_action, never a reason to execute an action. Mandatory-risk cases and personal data are
-# refused at write time (team_a.knowledge.resolutions.is_safe_to_persist).
+# refused at write time (knowledge_service.search.resolutions.is_safe_to_persist).
 
 # Team B's escalation reason taxonomy (project plan, Member 5).
 EscalationReason = Literal[

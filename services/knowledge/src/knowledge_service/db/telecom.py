@@ -9,7 +9,7 @@ date, gender, home address, SIM secrets) are never read.
 import sqlite3
 from pathlib import Path
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 # (destination, source table), parents before children so every foreign key resolves as rows arrive.
 TABLES = (

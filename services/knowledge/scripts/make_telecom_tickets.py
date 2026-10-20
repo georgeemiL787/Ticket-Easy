@@ -16,10 +16,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from team_a.config import settings  # noqa: E402
-from team_a.knowledge.resolutions import personal_data_reasons  # noqa: E402
-from team_a.schemas import ResolvedEscalationRequest  # noqa: E402
-from team_a.text import normalize  # noqa: E402
+from knowledge_service.config import settings  # noqa: E402
+from knowledge_service.search.resolutions import personal_data_reasons  # noqa: E402
+from knowledge_service.schemas import ResolvedEscalationRequest  # noqa: E402
+from knowledge_service.text import normalize  # noqa: E402
 
 TENANT = "telco_001"
 OUTCOMES = ("resolved", "refused", "escalated")

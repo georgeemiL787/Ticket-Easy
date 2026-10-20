@@ -1,4 +1,4 @@
--- Team A unified data layer (SQLite). Built by: python -m team_a db build
+-- Knowledge service unified data layer (SQLite). Built by: python -m knowledge_service db build
 --
 -- Every tenant-owned table has tenant_id in its primary key, and every foreign key includes
 -- tenant_id, so a row can only ever reference rows of its own tenant.
@@ -135,7 +135,7 @@ CREATE TABLE policy_documents (
     PRIMARY KEY (tenant_id, document_id, version)
 );
 
--- Rows come from team_a.knowledge.index.build_passages (same parsers, same citations).
+-- Rows come from knowledge_service.search.index.build_passages (same parsers, same citations).
 CREATE TABLE policy_passages (
     tenant_id      TEXT NOT NULL,
     passage_id     TEXT NOT NULL,    -- == citation, e.g. return_policy@v2#s2
@@ -147,8 +147,8 @@ CREATE TABLE policy_passages (
     current        INTEGER NOT NULL CHECK (current IN (0, 1)),
     effective_date TEXT,
     text           TEXT NOT NULL,
-    text_norm      TEXT NOT NULL,    -- team_a.text.normalize(section + "\n" + text)
-    tokens         TEXT NOT NULL,    -- team_a.text.tokenize(...) joined by spaces; what FTS5 indexes
+    text_norm      TEXT NOT NULL,    -- knowledge_service.text.normalize(section + "\n" + text)
+    tokens         TEXT NOT NULL,    -- knowledge_service.text.tokenize(...) joined by spaces; what FTS5 indexes
     PRIMARY KEY (tenant_id, passage_id),
     UNIQUE (tenant_id, ordinal),
     FOREIGN KEY (tenant_id, document_id, version) REFERENCES policy_documents(tenant_id, document_id, version)

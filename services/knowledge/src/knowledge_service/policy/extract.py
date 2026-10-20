@@ -12,12 +12,12 @@ from functools import lru_cache
 
 from pydantic import ValidationError
 
-from team_a import llm
-from team_a.config import settings
-from team_a.knowledge.index import build_passages, load_manifest
-from team_a.schemas import Rule
-from team_a.text import normalize
-from team_a.usage_log import usage_job
+from knowledge_service import llm
+from knowledge_service.config import settings
+from knowledge_service.search.index import build_passages, load_manifest
+from knowledge_service.schemas import Rule
+from knowledge_service.text import normalize
+from knowledge_service.usage_log import usage_job
 
 log = logging.getLogger(__name__)
 

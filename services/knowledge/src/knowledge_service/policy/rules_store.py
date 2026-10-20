@@ -10,8 +10,8 @@ import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from team_a.config import settings
-from team_a.schemas import Rule
+from knowledge_service.config import settings
+from knowledge_service.schemas import Rule
 
 
 class RuleNotFound(KeyError):
@@ -126,7 +126,7 @@ class RuleStore:
 
     def approve(self, rule_id: str, reviewer: str) -> Rule:
         """Approve a rule, unless doing so would break a guardrail case (GuardrailRegression)."""
-        from team_a.policy.guardrails import GuardrailRegression, failures_if_approved  # avoids an import cycle
+        from knowledge_service.policy.guardrails import GuardrailRegression, failures_if_approved  # avoids an import cycle
 
         rules = self.all()
         if rule_id not in {r.rule_id for r in rules}:

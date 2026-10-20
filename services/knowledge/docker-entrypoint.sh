@@ -5,10 +5,10 @@ set -e
 for tenant in shop_001 noon_eg; do
   if [ ! -f "var/index/$tenant/meta.json" ]; then
     echo "building the index of $tenant"
-    python -m team_a ingest --tenant "$tenant" || {
+    python -m knowledge_service ingest --tenant "$tenant" || {
       echo "embeddings unavailable: building a keyword-only index of $tenant"
-      python -m team_a ingest --tenant "$tenant" --no-embeddings
+      python -m knowledge_service ingest --tenant "$tenant" --no-embeddings
     }
   fi
 done
-exec uvicorn team_a.service:app --host 0.0.0.0 --port 8001
+exec uvicorn knowledge_service.api:app --host 0.0.0.0 --port 8001

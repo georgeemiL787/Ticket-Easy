@@ -1,6 +1,6 @@
-"""Record real success / empty / failure responses for every Team A endpoint into contracts/examples/.
+"""Record real success / empty / failure responses for every knowledge service endpoint into contracts/examples/.
 
-Needs the hybrid index (python -m team_a ingest) and Ollama running.
+Needs the hybrid index (python -m knowledge_service ingest) and Ollama running.
 Run: python scripts/make_contract_examples.py
 """
 
@@ -10,10 +10,10 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from team_a import config
-from team_a.knowledge.embeddings import OllamaEmbedder
-from team_a.knowledge.index import index_resolutions
-from team_a.service import app
+from knowledge_service import config
+from knowledge_service.search.embeddings import OllamaEmbedder
+from knowledge_service.search.index import index_resolutions
+from knowledge_service.api import app
 
 OUT = Path(__file__).resolve().parents[1] / "contracts" / "examples"
 client = TestClient(app)

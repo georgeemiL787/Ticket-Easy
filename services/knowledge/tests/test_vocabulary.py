@@ -2,7 +2,7 @@
 
 import json
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 VOCAB = json.loads((settings.shared_dir / "vocabulary.json").read_text(encoding="utf-8"))
 

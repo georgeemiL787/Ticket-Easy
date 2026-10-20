@@ -2,11 +2,11 @@
 
 import dataclasses
 
-from team_a import config
-from team_a.knowledge import retrieval
-from team_a.knowledge.retrieval import tenant_thresholds
-from team_a.schemas import SearchKnowledgeRequest
-from team_a.text import expand_query, normalize
+from knowledge_service import config
+from knowledge_service.search import retrieval
+from knowledge_service.search.retrieval import tenant_thresholds
+from knowledge_service.schemas import SearchKnowledgeRequest
+from knowledge_service.text import expand_query, normalize
 
 
 def test_tenant_without_override_uses_the_global_thresholds(monkeypatch):
@@ -21,7 +21,7 @@ def test_tenant_override_comes_from_its_manifest():
 
 
 def test_explicit_thresholds_still_win(built_db):
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     req = SearchKnowledgeRequest(request_id="t", tenant_id="noon_eg", query="EMI refund to the same credit card")
     strict = repository.search_knowledge(req, None, built_db, min_bm25=1000.0)
@@ -30,8 +30,8 @@ def test_explicit_thresholds_still_win(built_db):
 
 
 def test_confidence_floor_is_off_unless_configured(built_db, monkeypatch):
-    from team_a.db import repository
-    from team_a.knowledge.retrieval import tenant_min_top_score
+    from knowledge_service.db import repository
+    from knowledge_service.search.retrieval import tenant_min_top_score
 
     assert tenant_min_top_score("shop_001") == 0.0 and tenant_min_top_score("noon_eg") == 0.0
     req = SearchKnowledgeRequest(request_id="t", tenant_id="noon_eg", query="EMI refund to the same credit card")
@@ -44,7 +44,7 @@ def test_confidence_floor_is_off_unless_configured(built_db, monkeypatch):
 
 
 def test_top_score_picker_prefers_a_plateau_over_a_spike():
-    from team_a.evaluation import SWEEP_TOP, pick_top_score
+    from knowledge_service.evaluation import SWEEP_TOP, pick_top_score
 
     correct = dict(zip(SWEEP_TOP, [5, 5, 6, 6, 6, 5, 5, 5, 5, 5]))
     assert pick_top_score([(t, {"correct": c}) for t, c in correct.items()]) == 0.48
@@ -62,7 +62,7 @@ def test_shared_synonyms_still_apply_for_a_tenant_with_its_own_file():
 
 
 def test_arabic_question_reaches_the_english_noon_passage(built_db):
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     req = SearchKnowledgeRequest(request_id="t", tenant_id="noon_eg", query="الحفاضات ينفع ترجع؟")
     citations = [p.citation for p in repository.search_knowledge(req, None, built_db).passages]

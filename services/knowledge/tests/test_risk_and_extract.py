@@ -1,10 +1,10 @@
 import pytest
 
-from team_a import llm
-from team_a.knowledge.index import build_passages
-from team_a.policy import risk
-from team_a.policy.extract import _validate_candidate
-from team_a.schemas import ClassifyRiskRequest
+from knowledge_service import llm
+from knowledge_service.search.index import build_passages
+from knowledge_service.policy import risk
+from knowledge_service.policy.extract import _validate_candidate
+from knowledge_service.schemas import ClassifyRiskRequest
 
 
 def classify(message: str, use_llm: bool = False):
@@ -124,7 +124,7 @@ def test_rule_id_without_applies_if_is_unchanged(return_window_passage):
 
 
 def test_only_free_models_are_used(monkeypatch):
-    from team_a import config
+    from knowledge_service import config
     import dataclasses
 
     patched = dataclasses.replace(config.settings, openrouter_api_key="k",

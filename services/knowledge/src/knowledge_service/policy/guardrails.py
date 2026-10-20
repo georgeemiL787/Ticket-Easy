@@ -1,6 +1,6 @@
 """Guardrail cases: expected check_action decisions that any approved rule set must keep.
 
-Used by `python -m team_a eval-guardrails` and as a gate in RuleStore.approve(): a proposed rule
+Used by `python -m knowledge_service eval-guardrails` and as a gate in RuleStore.approve(): a proposed rule
 is only approved if every case still passes with it active.
 """
 
@@ -10,10 +10,10 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-from team_a.config import settings
-from team_a.policy.check import check_action
-from team_a.policy.risk import keyword_scan
-from team_a.schemas import CheckActionRequest
+from knowledge_service.config import settings
+from knowledge_service.policy.check import check_action
+from knowledge_service.policy.risk import keyword_scan
+from knowledge_service.schemas import CheckActionRequest
 
 
 class GuardrailRegression(ValueError):

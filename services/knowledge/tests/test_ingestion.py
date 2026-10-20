@@ -1,6 +1,6 @@
-from team_a.config import settings
-from team_a.knowledge.index import build_passages
-from team_a.knowledge.parsers import parse
+from knowledge_service.config import settings
+from knowledge_service.search.index import build_passages
+from knowledge_service.search.parsers import parse
 
 CORPUS = settings.corpus_dir("shop_001")
 

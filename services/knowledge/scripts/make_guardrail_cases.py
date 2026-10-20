@@ -1,7 +1,7 @@
 """Generate data/benchmark/guardrails_shop_001.jsonl (checked-in; re-run only to regenerate).
 
 Each case is a CheckActionRequest body plus the customer message (fed through the keyword risk
-scan) and the expected decision. Evaluated by: python -m team_a eval-guardrails
+scan) and the expected decision. Evaluated by: python -m knowledge_service eval-guardrails
 """
 
 import json

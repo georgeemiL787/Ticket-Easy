@@ -111,7 +111,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         env["PYTHONPATH"] = "src"
         env["ADMIN_API_KEY"] = secret("team_a_admin.key")  # the knowledge pages (documents, index, rules) go through it
         env["SERVICE_API_KEY"] = secret("team_a_service.key")  # only a caller that sends it may search or check actions
-        args = ["-m", "uvicorn", "team_a.service:app", "--app-dir", "src", "--host", "127.0.0.1"]
+        args = ["-m", "uvicorn", "knowledge_service.api:app", "--app-dir", "src", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "services" / "knowledge", env
     # Team B reads only the process environment, so load its own .env here (AI model, per-job models, agent mode).
     # A variable already set in the shell wins, and the fixed values below (mode, database, keys) win over the file.
@@ -197,7 +197,7 @@ def preflight() -> list[str]:
         if venv_python(team) is None:
             problems.append(f"ERROR   {team}/.venv is missing (docs/INTEGRATION.md, 'Run it locally')")
     if not (ROOT / "services" / "knowledge" / "var" / "index" / "shop_001").exists():
-        problems.append("ERROR   Team A has no index for shop_001: cd services/knowledge; PYTHONPATH=src .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings")
+        problems.append("ERROR   Team A has no index for shop_001: cd services/knowledge; PYTHONPATH=src .venv/Scripts/python -m knowledge_service ingest --tenant shop_001 --no-embeddings")
     if not (ROOT / "services" / "agent" / "web" / "dashboard" / "index.html").exists():
         problems.append("WARNING the dashboard is not built (cd apps/dashboard; npm ci; npm run build): /dashboard will say so")
     if not (ROOT / "services" / "tools" / ".env").exists():

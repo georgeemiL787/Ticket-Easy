@@ -17,10 +17,10 @@ import threading
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from team_a.config import settings
-from team_a.knowledge.embeddings import EmbeddingUnavailable, OllamaEmbedder
-from team_a.knowledge.index import build_index, swap_index
-from team_a.knowledge.parsers import PARSERS, parse
+from knowledge_service.config import settings
+from knowledge_service.search.embeddings import EmbeddingUnavailable, OllamaEmbedder
+from knowledge_service.search.index import build_index, swap_index
+from knowledge_service.search.parsers import PARSERS, parse
 
 STATUSES = ("uploaded", "parsing", "indexed", "failed", "removed")
 SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.()-]{0,120}$")

@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 
 @dataclass

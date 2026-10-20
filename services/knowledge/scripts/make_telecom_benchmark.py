@@ -15,8 +15,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from team_a.config import settings  # noqa: E402
-from team_a.knowledge.index import build_passages  # noqa: E402
+from knowledge_service.config import settings  # noqa: E402
+from knowledge_service.search.index import build_passages  # noqa: E402
 
 TENANT = "telco_001"
 STYLES = (("en", "question_en"), ("ar", "question_ar"), ("arabizi", "question_arabizi"))

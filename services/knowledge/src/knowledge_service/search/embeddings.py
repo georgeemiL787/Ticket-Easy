@@ -7,8 +7,8 @@ from typing import Protocol
 import httpx
 import numpy as np
 
-from team_a import usage_log
-from team_a.config import settings
+from knowledge_service import usage_log
+from knowledge_service.config import settings
 
 
 class EmbeddingUnavailable(RuntimeError):

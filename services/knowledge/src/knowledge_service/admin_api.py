@@ -1,6 +1,6 @@
 """Onboarding endpoints of the knowledge service: documents, re-index, rule extraction and the rule list with its history.
 
-All of them need X-Admin-Key. They are included by service.py (imported at its end, after the names used here exist).
+All of them need X-Admin-Key. They are included by api.py (imported at its end, after the names used here exist).
   POST   /v1/admin/tenants/{t}/documents          store one document (JSON: filename + content_base64)
   GET    /v1/admin/tenants/{t}/documents          every upload with its status
   DELETE /v1/admin/tenants/{t}/documents/{id}     stop using a document (re-index to take it out of the search)
@@ -18,11 +18,11 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from team_a import config, jobs
-from team_a.knowledge.documents import DocumentError, DocumentLibrary
-from team_a.knowledge.index import TenantNotFound, load_manifest
-from team_a.schemas import TENANT_PATTERN
-from team_a.service import ServiceError, _index, _store, require_admin
+from knowledge_service import config, jobs
+from knowledge_service.search.documents import DocumentError, DocumentLibrary
+from knowledge_service.search.index import TenantNotFound, load_manifest
+from knowledge_service.schemas import TENANT_PATTERN
+from knowledge_service.api import ServiceError, _index, _store, require_admin
 
 router = APIRouter(dependencies=[Depends(require_admin)])
 
@@ -64,7 +64,7 @@ def upload_document(tenant_id: str, req: UploadRequest) -> dict:
 
 @router.get("/v1/admin/tenants/{tenant_id}/documents")
 def list_documents(tenant_id: str) -> dict:
-    if _shipped(tenant_id):  # a shipped business: its manifest, read-only (indexed with `python -m team_a ingest`)
+    if _shipped(tenant_id):  # a shipped business: its manifest, read-only (indexed with `python -m knowledge_service ingest`)
         manifest = load_manifest(tenant_id)
         return {"tenant_id": tenant_id, "managed": False, "documents": [
             {"document_id": d["document_id"], "version": d["version"], "file": d["file"], "current": bool(d.get("current")),
@@ -93,7 +93,7 @@ def reindex(tenant_id: str, embeddings: bool = True) -> dict:
     """Build the tenant's index again in the background and swap it in when it is complete (searches keep using the old
     one until then). Poll GET /v1/admin/jobs/{job_id}."""
     if _shipped(tenant_id):
-        raise ServiceError(409, "INVALID_STATE", "this business ships with its own index: use `python -m team_a ingest`")
+        raise ServiceError(409, "INVALID_STATE", "this business ships with its own index: use `python -m knowledge_service ingest`")
     library = DocumentLibrary(tenant_id)
     if not library.exists():
         raise ServiceError(404, "TENANT_NOT_FOUND", f"No documents for '{tenant_id}' yet")
@@ -123,7 +123,7 @@ def get_job(job_id: str) -> dict:
 def extract_rules(tenant_id: str, req: ExtractRequest) -> dict:
     """Ask the model to propose rules from the business's current documents. Every result is only `proposed`: a person
     approves it before it has any effect."""
-    from team_a.policy.extract import extract_candidates
+    from knowledge_service.policy.extract import extract_candidates
 
     try:
         load_manifest(tenant_id)

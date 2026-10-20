@@ -4,7 +4,7 @@ Every service publishes its data formats as JSON Schemas generated from its own 
 
 | Service | Folder | Regenerate |
 |---|---|---|
-| Knowledge (`services/knowledge/`) | `services/knowledge/contracts/schemas/` | `python -m team_a export-schemas` |
+| Knowledge (`services/knowledge/`) | `services/knowledge/contracts/schemas/` | `python -m knowledge_service export-schemas` |
 | Agent (`services/agent/`) | `services/agent/contracts/schemas/` (traces, handoff, dashboard, `TenantBundle`) | `make schemas` in `services/agent/` |
 | Tools (`services/tools/`) | its REST/MCP contracts are in `services/tools/team_c/contracts.py` | tests in `services/tools/tests/test_contracts.py` |
 

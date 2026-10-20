@@ -3,12 +3,12 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from team_a.evaluation import eval_guardrails
-from team_a.policy.check import check_action
-from team_a.policy.explain import explain_rule
-from team_a.policy.guardrails import GuardrailRegression
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import CheckActionRequest, Condition, Rule
+from knowledge_service.evaluation import eval_guardrails
+from knowledge_service.policy.check import check_action
+from knowledge_service.policy.explain import explain_rule
+from knowledge_service.policy.guardrails import GuardrailRegression
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import CheckActionRequest, Condition, Rule
 
 AS_OF = date(2026, 9, 28)
 

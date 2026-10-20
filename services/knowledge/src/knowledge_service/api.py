@@ -1,6 +1,6 @@
-"""HTTP service exposing Team A capabilities to Team C's MCP adapter.
+"""HTTP service exposing the knowledge service's capabilities to the tools service's MCP adapter.
 
-Run: uvicorn team_a.service:app --port 8001   (from services/knowledge/ with src on PYTHONPATH)
+Run: uvicorn knowledge_service.api:app --port 8001   (from services/knowledge/ with src on PYTHONPATH)
 Every error returns ErrorResponse with a stable code.
 """
 
@@ -15,17 +15,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from team_a import config
-from team_a.knowledge.embeddings import OllamaEmbedder
-from team_a.knowledge.index import IndexNotBuilt, TenantIndex, TenantNotFound, load_manifest
-from team_a.knowledge.resolutions import add_resolution, search_resolutions
-from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
-from team_a.policy.check import check_action
-from team_a.policy.explain import explain_rule
-from team_a.policy.guardrails import GuardrailRegression
-from team_a.policy.risk import classify_risk
-from team_a.policy.rules_store import RuleNotFound, RuleStore
-from team_a.schemas import (
+from knowledge_service import config
+from knowledge_service.search.embeddings import OllamaEmbedder
+from knowledge_service.search.index import IndexNotBuilt, TenantIndex, TenantNotFound, load_manifest
+from knowledge_service.search.resolutions import add_resolution, search_resolutions
+from knowledge_service.search.retrieval import get_passage, search_knowledge, search_past_tickets
+from knowledge_service.policy.check import check_action
+from knowledge_service.policy.explain import explain_rule
+from knowledge_service.policy.guardrails import GuardrailRegression
+from knowledge_service.policy.risk import classify_risk
+from knowledge_service.policy.rules_store import RuleNotFound, RuleStore
+from knowledge_service.schemas import (
     TENANT_PATTERN,
     CheckActionRequest,
     ClassifyRiskRequest,
@@ -183,10 +183,10 @@ def reload_indexes() -> dict:
 
 # --------------------------------------------------------- data layer (read-only)
 # Structured lookups over the SQLite data layer. They return customer data, so all need X-Admin-Key.
-# There are no write endpoints: the database is rebuilt from data/ with `python -m team_a db build`.
+# There are no write endpoints: the database is rebuilt from data/ with `python -m knowledge_service db build`.
 
 def _data(lookup, tenant_id: str, *args, what: str, **kwargs):
-    from team_a.db import DatabaseNotBuilt
+    from knowledge_service.db import DatabaseNotBuilt
 
     try:
         found = lookup(tenant_id, *args, **kwargs)
@@ -201,14 +201,14 @@ def _data(lookup, tenant_id: str, *args, what: str, **kwargs):
 
 @app.get("/v1/data/customers/{customer_id}", dependencies=[Depends(require_admin)])
 def get_customer_endpoint(customer_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.get_customer, tenant_id, customer_id, what=f"customer '{customer_id}'")
 
 
 @app.get("/v1/data/customers/{customer_id}/orders", dependencies=[Depends(require_admin)])
 def list_customer_orders_endpoint(customer_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     customer = _data(repository.get_customer, tenant_id, customer_id, what=f"customer '{customer_id}'")
     return {"customer_id": customer["customer_id"],
@@ -217,7 +217,7 @@ def list_customer_orders_endpoint(customer_id: str, tenant_id: str = Query(patte
 
 @app.get("/v1/data/orders/{order_id}", dependencies=[Depends(require_admin)])
 def get_order_endpoint(order_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.get_order, tenant_id, order_id, what=f"order '{order_id}'")
 
@@ -225,7 +225,7 @@ def get_order_endpoint(order_id: str, tenant_id: str = Query(pattern=TENANT_PATT
 @app.get("/v1/data/orders/{order_id}/items/{item_id}/facts", dependencies=[Depends(require_admin)])
 def get_check_action_facts_endpoint(order_id: str, item_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN),
                                     as_of: date | None = None, include_derived: bool = False) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.build_check_action_facts, tenant_id, order_id, item_id, as_of=as_of,
                  include_derived=include_derived, what=f"item '{item_id}' on order '{order_id}'")
@@ -234,14 +234,14 @@ def get_check_action_facts_endpoint(order_id: str, item_id: str, tenant_id: str 
 @app.get("/v1/data/lines/{number}", dependencies=[Depends(require_admin)])
 def get_line_endpoint(number: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
     """Telecom: a line by its number or home landline, with plan and active bundles."""
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.get_line, tenant_id, msisdn=number, what=f"line '{number}'")
 
 
 @app.get("/v1/data/accounts/{account_id}", dependencies=[Depends(require_admin)])
 def get_account_endpoint(account_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     account = _data(repository.get_account, tenant_id, account_id, what=f"account '{account_id}'")
     account["recent_invoices"] = repository.list_invoices(tenant_id, account_id)
@@ -250,14 +250,14 @@ def get_account_endpoint(account_id: str, tenant_id: str = Query(pattern=TENANT_
 
 @app.get("/v1/data/invoices/{invoice_id}", dependencies=[Depends(require_admin)])
 def get_invoice_endpoint(invoice_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.get_invoice, tenant_id, invoice_id, what=f"invoice '{invoice_id}'")
 
 
 @app.get("/v1/data/returns/{return_id}", dependencies=[Depends(require_admin)])
 def get_return_endpoint(return_id: str, tenant_id: str = Query(pattern=TENANT_PATTERN)) -> dict:
-    from team_a.db import repository
+    from knowledge_service.db import repository
 
     return _data(repository.get_return, tenant_id, return_id, what=f"return '{return_id}'")
 
@@ -341,6 +341,6 @@ def edit_rule(rule_id: str, req: EditRequest) -> Rule:
         raise ServiceError(422, "INVALID_REQUEST", str(exc))
 
 
-from team_a import admin_api  # noqa: E402  (after the names it imports exist)
+from knowledge_service import admin_api  # noqa: E402  (after the names it imports exist)
 
 app.include_router(admin_api.router)

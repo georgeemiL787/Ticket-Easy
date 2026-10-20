@@ -10,8 +10,8 @@ import re
 
 import httpx
 
-from team_a import usage_log
-from team_a.config import settings
+from knowledge_service import usage_log
+from knowledge_service.config import settings
 
 log = logging.getLogger(__name__)
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"

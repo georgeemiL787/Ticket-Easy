@@ -16,12 +16,12 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
-from team_a.config import settings
-from team_a.knowledge.embeddings import Embedder
-from team_a.knowledge.index import TenantIndex, index_resolutions, load_resolutions
-from team_a.knowledge.retrieval import _cosines, _rank, tenant_thresholds
-from team_a.policy.risk import keyword_scan
-from team_a.schemas import (
+from knowledge_service.config import settings
+from knowledge_service.search.embeddings import Embedder
+from knowledge_service.search.index import TenantIndex, index_resolutions, load_resolutions
+from knowledge_service.search.retrieval import _cosines, _rank, tenant_thresholds
+from knowledge_service.policy.risk import keyword_scan
+from knowledge_service.schemas import (
     MANDATORY_ESCALATION,
     Precedent,
     RedactionCheck,
@@ -31,7 +31,7 @@ from team_a.schemas import (
     ResolvedEscalationRequest,
     SearchResolutionsRequest,
 )
-from team_a.text import expand_query, normalize, tokenize
+from knowledge_service.text import expand_query, normalize, tokenize
 
 
 @dataclass

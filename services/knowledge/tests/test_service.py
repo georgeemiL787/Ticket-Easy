@@ -3,9 +3,9 @@ import dataclasses
 import pytest
 from fastapi.testclient import TestClient
 
-from team_a import config, service
+from knowledge_service import api, config
 
-client = TestClient(service.app)
+client = TestClient(api.app)
 ADMIN = {"X-Admin-Key": "test-admin-key"}
 
 
@@ -89,7 +89,7 @@ def test_admin_endpoints_fail_closed_when_key_unset(monkeypatch):
 
 
 def test_admin_endpoint_accepts_valid_key(monkeypatch, rule_store):
-    monkeypatch.setattr(service, "_store", lambda _tenant: rule_store)
+    monkeypatch.setattr(api, "_store", lambda _tenant: rule_store)
     resp = client.post(
         "/v1/policy/rules/R-DEFECT-48H/approve", json={"tenant_id": "shop_001", "reviewer": "ops"}, headers=ADMIN
     )
@@ -97,7 +97,7 @@ def test_admin_endpoint_accepts_valid_key(monkeypatch, rule_store):
 
 
 def test_approve_endpoint_refuses_rule_that_breaks_guardrails(monkeypatch, rule_store):
-    monkeypatch.setattr(service, "_store", lambda _tenant: rule_store)
+    monkeypatch.setattr(api, "_store", lambda _tenant: rule_store)
     block_all = rule_store.get("R-RETURN-14D").model_copy(update={
         "rule_id": "P-BLOCK-RETURNS", "conditions": [], "effect": "deny",
         "approval_status": "proposed", "approved_by": None, "approved_at": None,

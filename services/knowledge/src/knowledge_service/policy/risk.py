@@ -11,11 +11,11 @@ import logging
 import re
 from functools import lru_cache
 
-from team_a import llm
-from team_a.config import settings
-from team_a.schemas import MANDATORY_ESCALATION, ClassifyRiskRequest, RiskAssessment
-from team_a.text import normalize
-from team_a.usage_log import usage_job
+from knowledge_service import llm
+from knowledge_service.config import settings
+from knowledge_service.schemas import MANDATORY_ESCALATION, ClassifyRiskRequest, RiskAssessment
+from knowledge_service.text import normalize
+from knowledge_service.usage_log import usage_job
 
 log = logging.getLogger(__name__)
 

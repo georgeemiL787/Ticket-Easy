@@ -1,10 +1,10 @@
-"""Keyword-only retrieval tests (the hybrid path is measured by `python -m team_a eval-retrieval`)."""
+"""Keyword-only retrieval tests (the hybrid path is measured by `python -m knowledge_service eval-retrieval`)."""
 
 import pytest
 from pydantic import ValidationError
 
-from team_a.knowledge.retrieval import get_passage, search_knowledge, search_past_tickets
-from team_a.schemas import RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
+from knowledge_service.search.retrieval import get_passage, search_knowledge, search_past_tickets
+from knowledge_service.schemas import RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
 
 
 def search(index, query, **kw):

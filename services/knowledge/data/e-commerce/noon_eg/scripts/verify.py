@@ -29,7 +29,7 @@ def d(s):
 def main():
     ap = argparse.ArgumentParser()
     tenant_dir = Path(__file__).resolve().parents[1]  # data/e-commerce/noon_eg
-    team_a = tenant_dir.parents[2]
+    service_root = tenant_dir.parents[2]
     ap.add_argument("--data", type=Path, default=tenant_dir)
     ap.add_argument("--db", type=Path)
     a = ap.parse_args()
@@ -42,7 +42,7 @@ def main():
     T_new, T_old = tk(a.data / "tickets.jsonl"), tk(seed / "tickets.jsonl")
     ref = runpy.run_path(str(seed / "build_noon_mock_data.py"))
     decide = ref["decide_return"]
-    vocab = json.loads((team_a / "data" / "shared" / "vocabulary.json").read_text(encoding="utf-8"))["facts"]
+    vocab = json.loads((service_root / "data" / "shared" / "vocabulary.json").read_text(encoding="utf-8"))["facts"]
     headings = set(re.findall(r"^## (.+)$", (tenant_dir / "corpus" / "noon_egypt_return_policy.md")
                               .read_text(encoding="utf-8"), re.M))
 
@@ -166,8 +166,8 @@ def main():
               and q("select count(*) from eval_scenarios where tenant_id='noon_eg'") == len(S)
               and q("select count(*) from past_tickets where tenant_id='noon_eg'") == len(T_new))
         check("db: no foreign key problems", not con.execute("pragma foreign_key_check").fetchall())
-        schema = (team_a / "src" / "team_a" / "db" / "schema.sql").read_text(encoding="utf-8")
-        version = re.search(r'SCHEMA_VERSION = "(\w+)"', (team_a / "src" / "team_a" / "db" / "__init__.py")
+        schema = (service_root / "src" / "knowledge_service" / "db" / "schema.sql").read_text(encoding="utf-8")
+        version = re.search(r'SCHEMA_VERSION = "(\w+)"', (service_root / "src" / "knowledge_service" / "db" / "__init__.py")
                             .read_text(encoding="utf-8")).group(1)
         tables = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE (\w+)", schema))
         have = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}

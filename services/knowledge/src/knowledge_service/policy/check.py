@@ -17,8 +17,8 @@ No LLM is involved anywhere in this module.
 from datetime import date
 from typing import Any
 
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import (
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import (
     MANDATORY_ESCALATION,
     CheckActionRequest,
     Condition,

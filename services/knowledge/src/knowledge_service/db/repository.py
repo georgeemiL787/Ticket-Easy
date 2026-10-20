@@ -4,7 +4,7 @@ Every function takes tenant_id and every query filters on it; an unknown tenant 
 missing record returns None. Connections are read-only.
 
 Search does not re-implement retrieval: it rebuilds the existing TenantIndex from database rows and calls
-team_a.knowledge.retrieval, so hybrid fusion, MIN_COSINE / MIN_BM25 and the RetrievalResult / empty-result
+knowledge_service.search.retrieval, so hybrid fusion, MIN_COSINE / MIN_BM25 and the RetrievalResult / empty-result
 contracts are exactly those of the file-based index.
 """
 
@@ -16,14 +16,14 @@ from typing import Any
 
 import numpy as np
 
-from team_a.config import settings
-from team_a.db import connect
-from team_a.knowledge import retrieval
-from team_a.knowledge.bm25 import BM25
-from team_a.knowledge.embeddings import Embedder
-from team_a.knowledge.index import TenantIndex, TenantNotFound
-from team_a.policy.check import derive_facts
-from team_a.schemas import Passage, PastTicketResult, RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
+from knowledge_service.config import settings
+from knowledge_service.db import connect
+from knowledge_service.search import retrieval
+from knowledge_service.search.bm25 import BM25
+from knowledge_service.search.embeddings import Embedder
+from knowledge_service.search.index import TenantIndex, TenantNotFound
+from knowledge_service.policy.check import derive_facts
+from knowledge_service.schemas import Passage, PastTicketResult, RetrievalResult, SearchKnowledgeRequest, SearchPastTicketsRequest
 
 _BOOL_COLUMNS = {"verified", "is_clearance", "return_eligible_tag", "warranty_tag", "current", "fictional"}
 # check_action facts in the order the scenarios list them. The first three are always present (None when

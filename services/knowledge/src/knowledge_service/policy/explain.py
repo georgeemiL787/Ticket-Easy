@@ -1,8 +1,8 @@
 from datetime import date
 
-from team_a.policy.check import describe
-from team_a.policy.rules_store import RuleStore
-from team_a.schemas import RuleExplanation
+from knowledge_service.policy.check import describe
+from knowledge_service.policy.rules_store import RuleStore
+from knowledge_service.schemas import RuleExplanation
 
 
 def explain_rule(store: RuleStore, rule_id: str, as_of: date | None = None) -> RuleExplanation:

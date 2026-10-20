@@ -15,11 +15,11 @@ from functools import lru_cache
 
 import numpy as np
 
-from team_a.config import settings
-from team_a.usage_log import usage_job
-from team_a.knowledge.embeddings import Embedder, EmbeddingUnavailable
-from team_a.knowledge.index import TenantIndex, TenantNotFound, load_manifest
-from team_a.schemas import (
+from knowledge_service.config import settings
+from knowledge_service.usage_log import usage_job
+from knowledge_service.search.embeddings import Embedder, EmbeddingUnavailable
+from knowledge_service.search.index import TenantIndex, TenantNotFound, load_manifest
+from knowledge_service.schemas import (
     Passage,
     PastTicket,
     PastTicketResult,
@@ -27,7 +27,7 @@ from team_a.schemas import (
     SearchKnowledgeRequest,
     SearchPastTicketsRequest,
 )
-from team_a.text import expand_query, normalize, tokenize
+from knowledge_service.text import expand_query, normalize, tokenize
 
 log = logging.getLogger(__name__)
 

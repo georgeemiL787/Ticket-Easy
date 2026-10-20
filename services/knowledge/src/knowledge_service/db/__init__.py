@@ -1,13 +1,13 @@
 """Unified SQLite data layer: structured backend data, the knowledge corpus and read-only mirrors.
 
-Build with `python -m team_a db build`. The database is derived data: the files under data/ stay the
+Build with `python -m knowledge_service db build`. The database is derived data: the files under data/ stay the
 source of truth, and check_action never reads it.
 """
 
 import sqlite3
 from pathlib import Path
 
-from team_a.config import settings
+from knowledge_service.config import settings
 
 SCHEMA_VERSION = "2"
 SCHEMA_FILE = Path(__file__).with_name("schema.sql")
@@ -22,7 +22,7 @@ def connect(db_path: Path | None = None, readonly: bool = True) -> sqlite3.Conne
     path = Path(db_path or settings.db_path)
     if readonly:
         if not path.exists():
-            raise DatabaseNotBuilt(f"No database at {path}. Run: python -m team_a db build")
+            raise DatabaseNotBuilt(f"No database at {path}. Run: python -m knowledge_service db build")
         conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
         conn.execute("PRAGMA query_only = ON")
     else:

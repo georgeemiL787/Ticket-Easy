@@ -5,14 +5,14 @@ from typing import Any
 
 import pytest
 
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
 T = "shop_001"
 
 
-async def test_cancel_order_only_before_shipping(call: Call, shop: StandinShop) -> None:
+async def test_cancel_order_only_before_shipping(call: Call, shop: SimulatedShop) -> None:
     ok = await call("cancel_order", {"order_id": "NS-20960"})
     order = shop.order(T, "NS-20960")
     assert ok.data["status"] == "cancelled" and order is not None
@@ -23,7 +23,7 @@ async def test_cancel_order_only_before_shipping(call: Call, shop: StandinShop) 
     assert shop.change_count(T) == 1
 
 
-async def test_update_delivery_address_only_before_shipping(call: Call, shop: StandinShop) -> None:
+async def test_update_delivery_address_only_before_shipping(call: Call, shop: SimulatedShop) -> None:
     await call("update_delivery_address", {"order_id": "NS-20955", "new_address": "  5 Nile Corniche  "})
     order = shop.order(T, "NS-20955")
     assert order is not None and order["delivery_address"]["street"] == "5 Nile Corniche"
@@ -35,7 +35,7 @@ async def test_update_delivery_address_only_before_shipping(call: Call, shop: St
     assert missing.error_code == "NOT_FOUND"
 
 
-async def test_apply_voucher_once_per_order(call: Call, shop: StandinShop) -> None:
+async def test_apply_voucher_once_per_order(call: Call, shop: SimulatedShop) -> None:
     ok = await call("apply_voucher", {"order_id": "NS-20877", "amount": 100, "reason": "late_delivery"})
     assert ok.data["voucher_code"] == "NILE-30001" and shop.records(T, "voucher")[0]["amount"] == 100
     assert (await call("apply_voucher", {"order_id": "NS-20877", "amount": 50, "reason": "x"})).error_code == "REJECTED"
@@ -43,14 +43,14 @@ async def test_apply_voucher_once_per_order(call: Call, shop: StandinShop) -> No
     assert (await call("apply_voucher", {"order_id": "NS-00000", "amount": 5, "reason": "x"})).error_code == "NOT_FOUND"
 
 
-async def test_create_ticket_with_and_without_an_order(call: Call, shop: StandinShop) -> None:
+async def test_create_ticket_with_and_without_an_order(call: Call, shop: SimulatedShop) -> None:
     assert (await call("create_ticket", {"subject": "Hello", "description": "No order"})).data["status"] == "open"
     unknown = await call("create_ticket", {"subject": "s", "description": "d", "order_id": "NS-00000"})
     assert unknown.error_code == "NOT_FOUND"
     assert len(shop.records(T, "ticket")) == 1
 
 
-async def test_delete_customer_is_human_only_and_needs_no_open_orders(call: Call, shop: StandinShop) -> None:
+async def test_delete_customer_is_human_only_and_needs_no_open_orders(call: Call, shop: SimulatedShop) -> None:
     by_agent = await call("delete_customer", {"customer_id": "C-102"})
     assert by_agent.error_code == "HUMAN_ONLY" and shop.change_count(T) == 0
     open_orders = await call("delete_customer", {"customer_id": "C-100"}, actor="human")  # has a shipped order
@@ -72,7 +72,7 @@ INVALID = [
 
 @pytest.mark.parametrize(("tool", "arguments", "fragment"), INVALID)
 async def test_invalid_arguments_are_refused_and_change_nothing(
-    call: Call, shop: StandinShop, tool: str, arguments: dict[str, Any], fragment: str
+    call: Call, shop: SimulatedShop, tool: str, arguments: dict[str, Any], fragment: str
 ) -> None:
     result = await call(tool, arguments)
     assert result.error_code == "INVALID_ARGUMENTS" and fragment in str(result.error_message)

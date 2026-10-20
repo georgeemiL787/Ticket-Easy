@@ -1,4 +1,4 @@
-"""Asking instead of guessing, with the stand-in shop: "return or exchange?" and "which of your orders?"."""
+"""Asking instead of guessing, with the simulated shop: "return or exchange?" and "which of your orders?"."""
 
 from typing import Any
 

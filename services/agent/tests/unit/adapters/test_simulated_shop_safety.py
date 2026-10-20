@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
@@ -26,7 +26,7 @@ WRITES = [
 
 @pytest.mark.parametrize(("tool", "arguments"), WRITES, ids=[w[0] for w in WRITES])
 async def test_a_write_without_a_policy_id_is_refused_and_changes_nothing(
-    call: Call, shop: StandinShop, tool: str, arguments: dict
+    call: Call, shop: SimulatedShop, tool: str, arguments: dict
 ) -> None:
     result = await call(tool, arguments, policy=None, actor="human")
     assert (result.status, result.error_code) == ("error", "POLICY_REQUIRED")
@@ -49,12 +49,12 @@ async def test_the_policy_check_comes_before_argument_validation(call: Call) -> 
     assert result.error_code == "POLICY_REQUIRED"
 
 
-async def test_a_human_approval_id_does_not_replace_the_policy_id(call: Call, shop: StandinShop) -> None:
+async def test_a_human_approval_id_does_not_replace_the_policy_id(call: Call, shop: SimulatedShop) -> None:
     result = await call("create_refund", REFUND, policy=None, approval="appr-1", actor="human")
     assert result.error_code == "POLICY_REQUIRED" and shop.change_count(T) == 0
 
 
-async def test_the_same_key_replays_the_original_result_without_a_second_write(call: Call, shop: StandinShop) -> None:
+async def test_the_same_key_replays_the_original_result_without_a_second_write(call: Call, shop: SimulatedShop) -> None:
     first = await call("create_refund", REFUND, key="refund-1")
     second = await call("create_refund", REFUND, key="refund-1")
     assert first.status == "success" and second == first  # same reference id, same audit id
@@ -64,14 +64,14 @@ async def test_the_same_key_replays_the_original_result_without_a_second_write(c
     assert log[1].reference_id == first.reference_id
 
 
-async def test_a_replay_is_not_blocked_by_a_changed_order(call: Call, shop: StandinShop) -> None:
+async def test_a_replay_is_not_blocked_by_a_changed_order(call: Call, shop: SimulatedShop) -> None:
     first = await call("create_refund", REFUND, key="k")
     third = await call("create_refund", REFUND, key="k")  # a plain second refund would be REJECTED (already refunded)
     assert third.status == "success" and third.reference_id == first.reference_id
 
 
 async def test_a_key_reused_for_different_arguments_or_another_tool_is_a_conflict(
-    call: Call, shop: StandinShop
+    call: Call, shop: SimulatedShop
 ) -> None:
     await call("create_refund", REFUND, key="k")
     other_args = await call("create_refund", {"order_id": "NS-20745", "amount": 100}, key="k")
@@ -86,7 +86,7 @@ async def test_argument_order_does_not_matter_for_a_replay(call: Call) -> None:
     assert again == first
 
 
-async def test_failed_writes_are_not_remembered(call: Call, shop: StandinShop) -> None:
+async def test_failed_writes_are_not_remembered(call: Call, shop: SimulatedShop) -> None:
     rejected = await call("cancel_order", {"order_id": "NS-20877"}, key="k")  # shipped: REJECTED
     assert rejected.error_code == "REJECTED"
     retry = await call("cancel_order", {"order_id": "NS-20960"}, key="k")  # same key, now a valid request
@@ -100,7 +100,7 @@ async def test_reads_are_never_replayed(call: Call) -> None:
     assert before.data["order_status"] == "pending" and after.data["order_status"] == "cancelled"
 
 
-async def test_audit_log_records_every_call(call: Call, shop: StandinShop) -> None:
+async def test_audit_log_records_every_call(call: Call, shop: SimulatedShop) -> None:
     await call("get_order", {"order_id": "NS-20877"}, key="k1", policy=None)
     await call("create_refund", REFUND, key="k2", policy="pol-9", approval="appr-1", actor="human")
     await call("create_refund", {"order_id": "NS-20512"}, key="k3")  # invalid arguments
@@ -128,7 +128,7 @@ async def test_audit_log_records_every_call(call: Call, shop: StandinShop) -> No
     assert [e.request_id for e in log] == ["req-1", "req-2", "req-3", "req-4"]
 
 
-async def test_audit_entries_are_copies(call: Call, shop: StandinShop) -> None:
+async def test_audit_entries_are_copies(call: Call, shop: SimulatedShop) -> None:
     arguments = {"order_id": "NS-20512", "amount": 800}
     await call("create_refund", arguments)
     arguments["amount"] = 1

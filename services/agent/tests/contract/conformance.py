@@ -1,8 +1,9 @@
-"""Conformance checks for the plugs: what any implementation of a port must do, stand-in or real service.
+"""Conformance checks for the plugs: what any implementation of a port must do, simulated or real service.
 
 Each check is an async function that takes the object to test (and a ConformanceCase naming the demo data to use),
 and fails with an AssertionError that says which rule was broken. They use only the port's public methods, so the same
-functions run unchanged against the stand-ins now and against Team A's and Team C's real services in Phase 6.
+functions run unchanged against the simulated services now and against the knowledge service's and the tools service's
+real services in Phase 6.
 
 Ports and what is checked:
   EvidenceProvider  search returns passages with citations or an empty_reason (never both, never neither); an unknown

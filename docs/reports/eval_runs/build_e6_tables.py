@@ -92,7 +92,7 @@ for s in STYLES:
                    "unbacked_facts": c["unbacked_facts"], "agent_fallbacks": c["agent_fallbacks"], "time_p50_s": round(c["latency_p50_ms"] / 1000, 1), "time_p95_s": round(c["latency_p95_ms"] / 1000, 1)})
 for label, path, note in (
     ("rules only (before the fix)", RULES_BEFORE, "all 60 conversations"),
-    ("agent mode, keyword stand-in, SAMPLE of 15 conversations", REPORTS / "eval_presentation_agent_arabizi_2026-10-16.json", "appendix: a sample, not the full set"),
+    ("agent mode, keyword simulated service, SAMPLE of 15 conversations", REPORTS / "eval_presentation_agent_arabizi_2026-10-16.json", "appendix: a sample, not the full set"),
 ):
     e = load(path)["styles"]["arabizi"]
     ps.append({"style": "arabizi", "run": label, "appendix": "yes: " + note, "conversations": e["conversations"], "turns": e["turns"],
@@ -104,10 +104,10 @@ write("per_style.csv", ps)
 # ---- safety: every run, wrong actions and unbacked facts ----
 safety = []
 for label, path, note in (
-    ("rules only, keyword stand-in search", REPORTS / "eval_presentation_rules_2026-10-16.json", ""),
+    ("rules only, keyword simulated search", REPORTS / "eval_presentation_rules_2026-10-16.json", ""),
     ("rules only, real knowledge service (before the fix)", RULES_BEFORE, "the 1 unbacked fact was a passage the real service returned and the evaluation did not know; fixed in the check"),
     ("rules only, real knowledge service (after the fix)", RULES_AFTER, "the same single case as before the fix; the evaluation check was corrected afterwards"),
-    ("agent mode, keyword stand-in (first run)", None, "the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed"),
+    ("agent mode, keyword simulated service (first run)", None, "the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed"),
     ("agent mode, real knowledge service (headline)", None, ""),
 ):
     if label.startswith("agent mode, keyword"):

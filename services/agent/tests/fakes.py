@@ -79,8 +79,8 @@ class ScriptedNLU:
         return self.result
 
 
-class ScriptedMovePicker:
-    """A MovePicker that returns prepared moves (or plans, or raises), one per ask. Records every view it was given.
+class ScriptedPlanner:
+    """A Planner that returns prepared moves (or plans, or raises), one per ask. Records every view it was given.
 
     With repeat_last=True the last prepared answer is given again for as long as it is asked (an endless loop)."""
 
@@ -92,15 +92,15 @@ class ScriptedMovePicker:
     async def next_move(self, view: Any) -> Any:
         self.views.append(view)
         if not self._answers:
-            raise AssertionError("ScriptedMovePicker has no prepared answer left")
+            raise AssertionError("ScriptedPlanner has no prepared answer left")
         answer = self._answers[0] if (self._repeat_last and len(self._answers) == 1) else self._answers.pop(0)
         if isinstance(answer, Exception):
             raise answer
         return answer
 
 
-class FunctionPicker:
-    """A MovePicker that decides with a function of the view (a tiny scripted orchestrator). Records the views."""
+class FunctionPlanner:
+    """A Planner that decides with a function of the view (a tiny scripted planner). Records the views."""
 
     def __init__(self, decide: Any) -> None:
         self._decide = decide
@@ -112,7 +112,7 @@ class FunctionPicker:
 
 
 class KnowledgeFakeLLM:
-    """A deterministic stand-in for the knowledge agent's model: it reads the task and answers like a careful one.
+    """A deterministic simulated for the knowledge agent's model: it reads the task and answers like a careful one.
 
     query: the customer's message; requery: the same words again unless told otherwise (a real model would also give
     up on a question the documents do not cover); answer: the first passage, word for word, cited."""

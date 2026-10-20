@@ -469,7 +469,7 @@ async def plan(ctx: TurnContext) -> str:
 
 def small_talk_only(ctx: TurnContext) -> PlannedIntent | None:
     """The plan for a message that is only a greeting, a check-in or thanks (agent mode answers it without the
-    orchestrator: no request is hiding in it, so a small, checked wording is all it needs). None for anything else."""
+    planner: no request is hiding in it, so a small, checked wording is all it needs). None for anything else."""
     reading = ctx.understanding
     session = ctx.session
     if (

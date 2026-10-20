@@ -1,4 +1,5 @@
-"""The Team A HTTP adapters against a fake server (httpx.MockTransport) that replays Team A's recorded examples."""
+"""The the knowledge service HTTP adapters against a fake server (httpx.MockTransport) that replays the knowledge
+service's recorded examples."""
 
 import json
 from collections.abc import Callable
@@ -8,7 +9,7 @@ from typing import Any
 import httpx
 import pytest
 
-from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
+from agent_service.adapters.knowledge_client import HttpEvidenceProvider, HttpPolicyGate, KnowledgeClient
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.policy import CheckActionRequest
 from agent_service.ports import EvidenceProvider, PolicyGate
@@ -26,8 +27,8 @@ def recorded(name: str) -> httpx.Response:
     return httpx.Response(response["status"], json=response["body"])
 
 
-def team_a(handler: Handler) -> TeamAClient:
-    return TeamAClient("http://team-a.test/", timeout_s=1.0, transport=httpx.MockTransport(handler))
+def team_a(handler: Handler) -> KnowledgeClient:
+    return KnowledgeClient("http://team-a.test/", timeout_s=1.0, transport=httpx.MockTransport(handler))
 
 
 def evidence(handler: Handler) -> HttpEvidenceProvider:

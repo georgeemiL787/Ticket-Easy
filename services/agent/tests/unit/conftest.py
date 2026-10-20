@@ -9,7 +9,7 @@ from tests.support import make_settings
 
 @pytest.fixture
 def container_with_tenants(tmp_path: Path) -> Container:
-    """Stand-in container with the real tenant config (shop_001), clock fixed at 2026-09-28."""
+    """Simulated container with the real tenant config (shop_001), clock fixed at 2026-09-28."""
     return build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY))
 
 

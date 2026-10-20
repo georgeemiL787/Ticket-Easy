@@ -59,7 +59,7 @@ describe("business tools", () => {
     expect(screen.queryByText(/Sandbox-only/)).not.toBeInTheDocument();
     expect(within(tools).getByText("Tool service")).toBeInTheDocument();
     expect(within(tools).getByText("SANDBOX")).toBeInTheDocument();
-    expect(within(tools).getByText("Stand-in shop")).toBeInTheDocument();
+    expect(within(tools).getByText("Simulated shop")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the advanced tool builder" })).toHaveAttribute("href", "http://127.0.0.1:8101/businesses/biz-1");
     expect(screen.getByText("Ready for your decision")).toBeInTheDocument();
 

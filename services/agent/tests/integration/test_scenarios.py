@@ -1,9 +1,9 @@
 """Scripted conversations: the acceptance test for every later step.
 
-Each file scenarios/<tenant>/*.json holds one scenario. A scenario runs on a fresh container (stand-in mode, memory
+Each file scenarios/<tenant>/*.json holds one scenario. A scenario runs on a fresh container (simulated mode, memory
 stores, clock fixed at setup.today). "pending" scenarios are skipped with their reason, so the suite stays green while
 features are missing; flip them to "active" when the feature lands. Every active scenario also passes the global safety
-check: every write in the stand-in shop's audit log has a matching allow (or require_human + approval) policy entry in
+check: every write in the simulated shop's audit log has a matching allow (or require_human + approval) policy entry in
 that conversation's traces.
 
 Format (strict: an unknown field is an error; models in scenario_format.py):
@@ -25,7 +25,7 @@ Format (strict: an unknown field is an error; models in scenario_format.py):
                           "text_contains_any",    # at least one of these
                           "text_not_contains"}}], # none of these
    "final":  {"executed_tools": [...],   # successful, non-replayed writes, in order
-              "audit_count": N,          # write calls that reached the stand-in shop
+              "audit_count": N,          # write calls that reached the simulated shop
               "no_writes": true,         # no write call reached the shop at all
               "case_reason", "case_priority",   # of the conversation's handoff case; null = no case
               "case_has_pending_approval": bool,

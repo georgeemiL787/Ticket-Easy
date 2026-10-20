@@ -1,4 +1,4 @@
-"""The real Team A service over HTTP: policy search, safety screen and rule checker (TEAM_B_MODE=live).
+"""The real the knowledge service over HTTP: policy search, safety screen and rule checker (TEAM_B_MODE=live).
 
 HttpEvidenceProvider is the EvidenceProvider plug and HttpPolicyGate is the PolicyGate plug. Both talk to the service in
 services/knowledge/ (POST /v1/knowledge/search, GET /v1/knowledge/passages, POST /v1/knowledge/past-tickets/search,
@@ -6,7 +6,8 @@ POST /v1/policy/classify-risk, POST /v1/policy/check-action). Failures follow th
 reached, is too slow, refuses us or answers nonsense raises UpstreamError, and the core then hands the case to a human
 (nothing is executed on a failed rule check).
 
-Team A does not know human approvals. HttpPolicyGate applies them here, exactly as the stand-in does: a recorded
+The knowledge service does not know human approvals. HttpPolicyGate applies them here, exactly as the simulated does: a
+recorded
 approval turns require_human into allow, and never a deny.
 """
 
@@ -26,7 +27,7 @@ log = get_logger(__name__)
 _T = TypeVar("_T", bound=PlugModel)
 
 
-class TeamAClient:
+class KnowledgeClient:
     """The HTTP settings both plugs share. Every call opens a short-lived client, like the AI model client."""
 
     def __init__(
@@ -40,7 +41,8 @@ class TeamAClient:
         self._base = base_url.rstrip("/")
         self._timeout = timeout_s
         self._transport = transport
-        # Who we are to Team A: it answers only a caller whose key is bound to the business (X-Service-Key).
+        # Who we are to the knowledge service: it answers only a caller whose key is bound to the business
+        # (X-Service-Key).
         self._headers = {"X-Service-Key": service_key} if service_key else {}
 
     async def request(
@@ -90,7 +92,8 @@ class TeamAClient:
 
 
 def _error_of(response: httpx.Response) -> tuple[str, str]:
-    """Team A's {"error": {"code", "message"}} body, or empty strings when the answer is something else."""
+    """The knowledge service's {"error": {"code", "message"}} body, or empty strings when the answer is something
+    else."""
     try:
         error = response.json()["error"]
         return str(error.get("code", "")), str(error.get("message", ""))[:200]
@@ -108,7 +111,7 @@ def _parse(model: type[_T], response: httpx.Response) -> _T:
 
 
 class HttpEvidenceProvider:
-    def __init__(self, client: TeamAClient) -> None:
+    def __init__(self, client: KnowledgeClient) -> None:
         self._client = client
 
     async def search_knowledge(
@@ -168,7 +171,7 @@ class HttpEvidenceProvider:
 
 
 class HttpPolicyGate:
-    def __init__(self, client: TeamAClient) -> None:
+    def __init__(self, client: KnowledgeClient) -> None:
         self._client = client
 
     async def check_action(self, request: CheckActionRequest) -> PolicyDecision:
@@ -190,7 +193,8 @@ class HttpPolicyGate:
 
 
 def _check_action_body(request: CheckActionRequest) -> dict[str, Any]:
-    """Team A's CheckActionRequest: it has no action, side_effects or human_approval; the tool name is the action."""
+    """The knowledge service's CheckActionRequest: it has no action, side_effects or human_approval; the tool name is
+    the action."""
     return {
         "request_id": request.request_id,
         "tenant_id": request.tenant_id,

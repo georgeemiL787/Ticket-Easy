@@ -26,10 +26,10 @@ from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.evaluation.conversations import EvalConversation, EvalTurn, Gold, evaluate, render
 from agent_service.turn.handler import Orchestrator
 from agent_service.turn.shadow import compare
-from tests.fakes import FunctionPicker, ScriptedMovePicker
+from tests.fakes import FunctionPlanner, ScriptedPlanner
 from tests.integration.agent_expert import expert
 from tests.integration.test_a_safety_property import script
-from tests.integration.test_agent_safety_property import ChaosPicker
+from tests.integration.test_agent_safety_property import ChaosPlanner
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-shadow"
@@ -40,7 +40,7 @@ TACTICS = ["Hello", "Where is my order NS-20877?", "01012345601", "I want a refu
 def build(tmp: Path, mode: str, picker: Any = None) -> Container:
     container = build_container(make_settings(tmp, fixed_today=date(2026, 9, 28)))
     assert container.orchestrator is not None
-    container.orchestrator.set_agent(mode=mode, move_picker=picker)  # type: ignore[arg-type]
+    container.orchestrator.set_agent(mode=mode, planner=picker)  # type: ignore[arg-type]
     return container
 
 
@@ -67,11 +67,11 @@ async def session_of(container: Container, conversation: str = C) -> dict[str, A
 async def test_shadow_never_changes_the_reply_the_session_or_the_shop(tmp_path: Path, picker_kind: str) -> None:
     def picker() -> Any:
         if picker_kind == "honest":
-            return FunctionPicker(expert)
+            return FunctionPlanner(expert)
         if picker_kind == "chaotic":
-            return ChaosPicker("shadow-1")
+            return ChaosPlanner("shadow-1")
         move = ProposeAction(intent="refund_request", arguments={"order_id": "NS-20512", "amount": 5000})
-        return ScriptedMovePicker(move, repeat_last=True)
+        return ScriptedPlanner(move, repeat_last=True)
 
     off, shadow = build(tmp_path / "a", "off"), build(tmp_path / "b", "shadow", picker())
     for container in (off, shadow):
@@ -92,7 +92,7 @@ async def test_shadow_survives_many_random_conversations_without_changing_them(t
         texts = script(random.Random(f"shadow-{number}"))
         off, shadow = (
             build(tmp_path / f"a{number}", "off"),
-            build(tmp_path / f"b{number}", "shadow", ChaosPicker(f"s-{number}")),
+            build(tmp_path / f"b{number}", "shadow", ChaosPlanner(f"s-{number}")),
         )
         first, second = await run(off, texts, f"c{number}"), await run(shadow, texts, f"c{number}")
         assert [(r.text, r.decision) for r in first] == [(r.text, r.decision) for r in second], number
@@ -100,7 +100,7 @@ async def test_shadow_survives_many_random_conversations_without_changing_them(t
 
 
 async def test_shadow_sends_no_extra_message_to_the_customer(tmp_path: Path) -> None:
-    shadow = build(tmp_path, "shadow", FunctionPicker(expert))
+    shadow = build(tmp_path, "shadow", FunctionPlanner(expert))
     replies = await run(shadow, ["Hello"])
     session = await shadow.sessions.load(T, C)
     assert session is not None and [m.role for m in session.history] == ["customer", "agent"] and len(replies) == 1
@@ -112,7 +112,7 @@ async def test_shadow_sends_no_extra_message_to_the_customer(tmp_path: Path) -> 
 
 async def test_the_plan_and_first_move_are_on_the_trace_with_the_checks_but_were_not_worked(tmp_path: Path) -> None:
     plan = AgentPlan(steps=[PlanStep(text="answer the greeting")])
-    shadow = build(tmp_path, "shadow", ScriptedMovePicker(MoveProposal(plan=plan, move=GREETING)))
+    shadow = build(tmp_path, "shadow", ScriptedPlanner(MoveProposal(plan=plan, move=GREETING)))
     await run(shadow, ["Hello"])
     trace = (await shadow.traces.for_conversation(T, C))[-1]
     assert trace.shadow_plan is not None and trace.shadow_plan.steps[0].text == "answer the greeting"
@@ -124,7 +124,7 @@ async def test_the_plan_and_first_move_are_on_the_trace_with_the_checks_but_were
 
 async def test_a_move_code_would_refuse_is_recorded_with_the_failed_check(tmp_path: Path) -> None:
     bad = ProposeAction(intent="made_up", arguments={})
-    shadow = build(tmp_path, "shadow", ScriptedMovePicker(bad))
+    shadow = build(tmp_path, "shadow", ScriptedPlanner(bad))
     await run(shadow, ["Hello"])
     record = (await shadow.traces.for_conversation(T, C))[-1].shadow_move
     assert record is not None and any(not c.passed and c.name == "intent_is_an_action" for c in record.checks)
@@ -132,7 +132,7 @@ async def test_a_move_code_would_refuse_is_recorded_with_the_failed_check(tmp_pa
 
 async def test_personal_values_are_hidden_in_the_recorded_move(tmp_path: Path) -> None:
     move = LookUp(tool="verify_customer", arguments={"order_id": "NS-20877", "phone": "01012345601"}, why="01012345601")
-    shadow = build(tmp_path, "shadow", ScriptedMovePicker(move))
+    shadow = build(tmp_path, "shadow", ScriptedPlanner(move))
     await run(shadow, ["Where is my order NS-20877? My phone is 01012345601"])
     trace = (await shadow.traces.for_conversation(T, C))[-1]
     assert "01012345601" not in trace.model_dump_json()
@@ -141,7 +141,7 @@ async def test_personal_values_are_hidden_in_the_recorded_move(tmp_path: Path) -
 async def test_the_agent_is_asked_once_per_turn_and_only_when_the_front_stages_left_the_decision_open(
     tmp_path: Path,
 ) -> None:
-    picker = ScriptedMovePicker(GREETING, repeat_last=True)
+    picker = ScriptedPlanner(GREETING, repeat_last=True)
     shadow = build(tmp_path, "shadow", picker)
     await run(shadow, ["Hello", "thanks", "I want to talk to a human"])
     traces = await shadow.traces.for_conversation(T, C)
@@ -152,7 +152,7 @@ async def test_the_agent_is_asked_once_per_turn_and_only_when_the_front_stages_l
 
 async def test_the_plan_is_remembered_between_turns_on_the_traces_not_on_the_session(tmp_path: Path) -> None:
     plan = AgentPlan(steps=[PlanStep(text="verify and look up NS-20877")])
-    picker = ScriptedMovePicker(
+    picker = ScriptedPlanner(
         MoveProposal(plan=plan, move=AskCustomer(question_key="ask_phone", slot="phone")), GREETING
     )
     shadow = build(tmp_path, "shadow", picker)
@@ -168,7 +168,7 @@ async def test_the_plan_is_remembered_between_turns_on_the_traces_not_on_the_ses
 
 @pytest.mark.parametrize("error", [RuntimeError("model down"), ValueError("bad json")])
 async def test_a_failing_agent_is_noted_and_the_customer_never_notices(tmp_path: Path, error: Exception) -> None:
-    shadow = build(tmp_path, "shadow", ScriptedMovePicker(error))
+    shadow = build(tmp_path, "shadow", ScriptedPlanner(error))
     reply = (await run(shadow, ["Hello"]))[0]
     trace = (await shadow.traces.for_conversation(T, C))[-1]
     assert reply.text == "Hello! How can I help you today?" and trace.shadow_error == type(error).__name__
@@ -185,7 +185,7 @@ async def test_a_slow_agent_is_cut_off(tmp_path: Path) -> None:
         clock=container.clock, tenants=container.tenants, sessions=container.sessions, traces=container.traces,
         cases=container.cases, evidence=container.evidence, capabilities=container.capabilities,
         policy=container.policy,
-        move_picker=Slow(), agent_mode="shadow", agent_turn_timeout_s=0.05,
+        planner=Slow(), agent_mode="shadow", agent_turn_timeout_s=0.05,
     )  # fmt: skip
     reply = await bot.handle_turn(T, C, "Hello")
     trace = (await container.traces.for_conversation(T, C))[-1]
@@ -205,7 +205,7 @@ async def test_shadow_without_a_model_does_nothing_and_says_so(tmp_path: Path) -
 
 
 async def test_the_honest_agent_agrees_on_the_typical_turns(tmp_path: Path) -> None:
-    shadow = build(tmp_path, "shadow", FunctionPicker(expert))
+    shadow = build(tmp_path, "shadow", FunctionPlanner(expert))
     await run(
         shadow, ["Hello", "What is your return policy?", "Where is my order NS-20877?", "I want to talk to a human"]
     )
@@ -217,7 +217,7 @@ async def test_the_honest_agent_agrees_on_the_typical_turns(tmp_path: Path) -> N
 
 
 async def test_a_different_first_move_is_a_disagreement_with_both_sides_named(tmp_path: Path) -> None:
-    picker = ScriptedMovePicker(HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["x"]), SearchPolicy(query="q"))
+    picker = ScriptedPlanner(HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["x"]), SearchPolicy(query="q"))
     shadow = build(tmp_path, "shadow", picker)
     await run(shadow, ["Hello", "Hello"])
     traces = await shadow.traces.for_conversation(T, C)
@@ -233,7 +233,7 @@ async def test_a_different_first_move_is_a_disagreement_with_both_sides_named(tm
 
 async def test_the_same_move_that_code_would_refuse_does_not_count_as_agreement(tmp_path: Path) -> None:
     bad = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="action_done"))
-    shadow = build(tmp_path, "shadow", ScriptedMovePicker(bad))
+    shadow = build(tmp_path, "shadow", ScriptedPlanner(bad))
     await run(shadow, ["Hello"])
     verdict = compare((await shadow.traces.for_conversation(T, C))[-1], {})
     assert verdict is not None and not verdict.agrees and "refused" in verdict.why
@@ -249,12 +249,12 @@ def conv(cid: str, *says: str) -> EvalConversation:
 
 
 async def test_the_evaluation_counts_agreement_and_lists_the_disagreements() -> None:
-    picker = ScriptedMovePicker(GREETING, HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["t"]), GREETING)
+    picker = ScriptedPlanner(GREETING, HandOver(reason=EscalationReason.NO_EVIDENCE, tried=["t"]), GREETING)
     report = await evaluate(
         [conv("a", "Hello", "Hello"), conv("b", "Hello")],
         Settings(llm="none", llm_rewrite=False),
         agent_mode="shadow",
-        move_picker=picker,
+        planner=picker,
         when=date(2026, 10, 1),
     )
     assert (report.overall.shadow_asked, report.overall.shadow_agreed) == (3, 2)
@@ -280,6 +280,6 @@ def test_shadow_and_agent_modes_of_the_command_need_the_model(tmp_path: Path) ->
         '{"id": "en-1", "language_style": "en", "turns": [{"say": "Hello", "gold": {}}]}\n', encoding="utf-8"
     )
     for mode in ("shadow", "on"):
-        with pytest.raises(SystemExit, match="needs the orchestrator"):
+        with pytest.raises(SystemExit, match="needs the planner"):
             cli.main(["eval", "--set", str(folder), "--out", str(tmp_path / "o"), "--agent-mode", mode])
     assert cli.main(["eval", "--set", str(folder), "--out", str(tmp_path / "o"), "--agent-mode", "off"]) == 0

@@ -2,15 +2,15 @@
 
 The "production" API here is the Nile shop started as a SEPARATE deployment on this machine (ops/local/serve.py nile-prod, port 8104,
 synthetic data), with ONE service token that may act for any customer, which is how a real API treats a back-office credential. It is
-NOT a real production API; it proves the part that matters: nothing in the API keeps customers apart, Team C does. To start it copy
+NOT a real production API; it proves the part that matters: nothing in the API keeps customers apart, the tools service does. To start it copy
 ops/local/production.example.env to ops/local/production.env and restart the services (serve.py up). Run the phases in order:
 
-  services/agent/.venv/Scripts/python.exe ops/local/production_check.py --phase promote   # Team C only: connector, promotion, the real production MCP process
-  services/agent/.venv/Scripts/python.exe ops/local/production_check.py --phase bind      # write Team B's binding for production; then RESTART Team B
+  services/agent/.venv/Scripts/python.exe ops/local/production_check.py --phase promote   # The tools service only: connector, promotion, the real production MCP process
+  services/agent/.venv/Scripts/python.exe ops/local/production_check.py --phase bind      # write the agent's binding for production; then RESTART the agent
   services/agent/.venv/Scripts/python.exe ops/local/production_check.py --phase chat      # the customer chat, the dashboard promote/rollback, rollback
 
-Needs: sandbox, nile-prod, Team C (with the PRODUCTION_* settings), Team A and Team B running, and the sandbox lifecycle done for the order and
-ticket tools (ops/local/team_c_lifecycle.py), whose sandbox-published, tested artifacts are what gets promoted. Every owner decision is
+Needs: sandbox, nile-prod, the tools service (with the PRODUCTION_* settings), the knowledge service and the agent running, and the sandbox lifecycle done for the order and
+ticket tools (ops/local/tools_lifecycle.py), whose sandbox-published, tested artifacts are what gets promoted. Every owner decision is
 labelled sandbox-only. Credentials are read from ops/local/var and never printed. Prints PASS/FAIL per check; exits 1 when any failed.
 """
 
@@ -30,10 +30,10 @@ VAR = ROOT / "ops" / "local" / "var"
 sys.path.insert(0, str(ROOT / "ops" / "local"))
 sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
 import serve  # noqa: E402
-import team_c_lifecycle as lifecycle  # noqa: E402
+import tools_lifecycle as lifecycle  # noqa: E402
 from e2e_chat import RESULTS, Chat, check  # noqa: E402
 
-TEAM_B, TEAM_C, NILE_PROD = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8104"
+AGENT_URL, TOOLS_URL, NILE_PROD = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8104"
 T = "shop_001"
 ACTOR = "Production check (ops/local/production_check.py, sandbox-only)"
 CONTACT = "oncall@example.com"
@@ -48,7 +48,7 @@ def read(name: str) -> str:
 
 
 def team_c() -> httpx.Client:
-    return httpx.Client(base_url=TEAM_C + "/api/v1", headers={"x-team-c-admin-token": read("team_c_admin.key")}, timeout=300, trust_env=False)
+    return httpx.Client(base_url=TOOLS_URL + "/api/v1", headers={"x-team-c-admin-token": read("team_c_admin.key")}, timeout=300, trust_env=False)
 
 
 def prod_get(path: str) -> httpx.Response:
@@ -67,10 +67,10 @@ def promote_phase() -> None:
     tc = team_c()
     states = {t: lifecycle.load_state(False, t) for t in ("order", "ticket")}
     if not all("publication_id" in s for s in states.values()):
-        raise SystemExit("run the sandbox lifecycle for the order and ticket tools first (ops/local/team_c_lifecycle.py --tool order|ticket)")
+        raise SystemExit("run the sandbox lifecycle for the order and ticket tools first (ops/local/tools_lifecycle.py --tool order|ticket)")
     business = states["order"]["business_id"]
     check("the services are up (nile-prod, Team C)", httpx.get(NILE_PROD + "/health", timeout=5, trust_env=False).status_code == 200 and tc.get("/businesses").status_code == 200)
-    no_token = httpx.post(f"{TEAM_C}/api/v1/artifacts/{states['order']['artifact_id']}/promotions", json={}, timeout=10, trust_env=False)
+    no_token = httpx.post(f"{TOOLS_URL}/api/v1/artifacts/{states['order']['artifact_id']}/promotions", json={}, timeout=10, trust_env=False)
     check("production actions are refused without the operator's admin token", no_token.status_code == 403, no_token.text[:200])
 
     for old in tc.get(f"/businesses/{business}/promotions").json():  # a clean slate: promotions an earlier run left active
@@ -105,7 +105,7 @@ def promote_phase() -> None:
     if len(promoted) < 2:
         return
 
-    # the REAL production MCP process, started the way Team B starts it
+    # the REAL production MCP process, started the way the agent starts it
     binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
     serve.sync_live_settings(VAR / "team_c.json")
     binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
@@ -113,7 +113,7 @@ def promote_phase() -> None:
 
 
 async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, promoted: dict[str, dict[str, Any]]) -> None:
-    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.tools_mcp_client import McpRemoteError, McpStdioSession
 
     base = [*binding["command"], "--business-id", business, "--database", binding["database"]]
     if binding.get("sandbox_hosts"):
@@ -223,7 +223,7 @@ def admin(http: httpx.Client) -> dict[str, str]:
 
 def chat_phase() -> None:
     tc = team_c()
-    http = httpx.Client(base_url=TEAM_B, timeout=300, trust_env=False)
+    http = httpx.Client(base_url=AGENT_URL, timeout=300, trust_env=False)
     csrf = admin(http)
     tools = http.get("/v1/dashboard/business-tools", params={"tenant_id": T}).json()
     served = {t["name"]: t for t in tools["tools"] if t["source"] == "team_c"}

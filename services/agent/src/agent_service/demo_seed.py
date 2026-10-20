@@ -1,4 +1,5 @@
-"""Synthetic conversations for the dashboard: real turns through the real core and the stand-ins, spread over days.
+"""Synthetic conversations for the dashboard: real turns through the real core and the simulated services, spread over
+days.
 
 Everything here goes through the orchestrator, so every number the dashboard shows comes from genuine traces, cases and
 summary rows (not hand-written rows). A clock that jumps forward between and inside conversations gives the data its

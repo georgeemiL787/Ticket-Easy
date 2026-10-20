@@ -2,7 +2,7 @@
 
 Every step of a turn has a ReplyPlan (plan_of): the decision, what the reply is for, the facts it may hold (only values
 code verified), the question it must ask, and the citations. Code that makes a Step does not change: the plan is read
-off its reply key and values, or chosen by the orchestrator (Reply move, including a "free" reply to an off-topic
+off its reply key and values, or chosen by the planner (Reply move, including a "free" reply to an off-topic
 message). With an AI model for the job "writer" (TEAM_B_LLM_REWRITE=1) the ReplyWriter writes the words freely from the
 plan, in the customer's language and tone, reacting to what they said (prompts/writer_v1.md).
 
@@ -86,7 +86,7 @@ def purpose_of(step: "Step") -> str:
 
 
 def plan_of(step: "Step") -> ReplyPlan:
-    """The ReplyPlan of a step: the plan the orchestrator chose, else one read off the step's key and values."""
+    """The ReplyPlan of a step: the plan the planner chose, else one read off the step's key and values."""
     if step.plan is not None:
         return step.plan
     must = QUESTION_FOR.get(step.decision)

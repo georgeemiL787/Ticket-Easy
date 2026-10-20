@@ -8,7 +8,7 @@
 
 A customer = one Locust user. Each task plays one conversation of loadtest/demo.py with a fresh conversation id, so
 the failures to test are the system's, not the rate limit's. With --chaos-seconds the first user also switches the
-stand-in services off for a while, one after the other (see loadtest/README.md).
+simulated services off for a while, one after the other (see loadtest/README.md).
 """
 
 import os

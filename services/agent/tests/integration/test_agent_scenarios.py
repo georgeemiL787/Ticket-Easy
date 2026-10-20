@@ -1,8 +1,8 @@
-"""The lookup and knowledge scenarios, run again in agent mode with a scripted orchestrator (the "agent" runner).
+"""The lookup and knowledge scenarios, run again in agent mode with a scripted planner (the "agent" runner).
 
 The original runner (test_scenarios.py) keeps running every scenario with the usual flow (agent off). Here the same
 scripts, with the same expectations, run through the agent loop: a scripted picker (agent_expert.py) proposes the moves,
-the real loop checks and works them, and the stand-in shop, policy search and rule checker answer. Each of these
+the real loop checks and works them, and the simulated shop, policy search and rule checker answer. Each of these
 scenarios must end the same way in both modes.
 """
 
@@ -47,7 +47,7 @@ ACTIONS = (
     "S04", "S05", "S06", "S06b", "S11", "S13", "S14", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "S26", "S27",
     "S30", "S31", "S32", "S38", "S60", "S62", "S65",
 )  # fmt: skip
-NOON = tuple(f"N{n:02d}" for n in range(1, 17))  # the Noon shop (SQLite stand-in)
+NOON = tuple(f"N{n:02d}" for n in range(1, 17))  # the Noon shop (SQLite simulated service)
 AGENT_SCENARIOS = (*LOOKUPS_AND_KNOWLEDGE, *ACTIONS, *NOON)
 CASES = [(tenant, path) for tenant, path in discover() if path.name.split("_")[0] in AGENT_SCENARIOS]
 ACTION_CASES = [(t, p) for t, p in CASES if p.name.split("_")[0] in ACTIONS]

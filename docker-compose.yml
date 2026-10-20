@@ -1,7 +1,7 @@
 # Ticket-Easy demo. Two profiles (use `make demo` or `make demo-full`, see the README):
-#   light  the service with the stand-in shop and policies, and a SQLite volume. Replies come from the rules.   (no AI model)
+#   light  the service with the simulated shop and policies, and a SQLite volume. Replies come from the rules.   (no AI model)
 #   full   the same plus Ollama running qwen3:8b: the AI model helps understand messages (TEAM_B_LLM=ollama).
-#   live   Team B talks to the real Team A service (policy search, safety screen, rule checker) with the stand-in shop.
+#   live   Team B talks to the real Team A service (policy search, safety screen, rule checker) with the simulated shop.
 #          Team A embeds with bge-m3 from the Ollama on the host (ollama pull bge-m3). No chat AI model.
 # Only one profile runs at a time (all use port 8010).
 

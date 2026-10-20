@@ -22,7 +22,7 @@ from agent_service.domain.tenant import TenantConfig, TenantRegistry, UnknownTen
 from agent_service.ports import AlreadyExistsError, BundleStore, Clock, NotFoundError, StoreError
 
 if TYPE_CHECKING:
-    from agent_service.adapters.team_c_tools import TenantBinding
+    from agent_service.adapters.tools_catalog import TenantBinding
 
 Listener = Callable[[TenantBundle | None, str], Awaitable[None]]  # (new active bundle or None, tenant id)
 PublishCheck = Callable[[TenantBundle], Awaitable[list[str]]]  # problems that stop a publication (empty: fine)

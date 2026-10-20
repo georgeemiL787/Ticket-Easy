@@ -14,7 +14,7 @@ from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.replies.writer import ReplyWriter
 from agent_service.turn.handler import Orchestrator
 from agent_service.understanding.ai_reader import PromptTemplate
-from tests.fakes import FakeEvidence, FakeLLM, FunctionPicker, ScriptedMovePicker
+from tests.fakes import FakeEvidence, FakeLLM, FunctionPlanner, ScriptedPlanner
 
 T, C = "shop_001", "conv-review"
 PASSAGE = Passage(passage_id="refund_policy@v1#s1", document_id="refund_policy", version="v1", section="s1",
@@ -191,8 +191,8 @@ def test_an_empty_tried_list_is_sent_back_once_per_turn_then_it_goes_through() -
 
 async def test_the_orchestrator_is_sent_back_once_when_it_hands_over_without_saying_what_it_tried(c: Container) -> None:
     empty = HandOver(reason=EscalationReason.UNSUPPORTED, why="gave up")
-    picker = ScriptedMovePicker(empty, empty)
-    reply = await orch(c, move_picker=picker, reviewer=Reviewer(FakeLLM())).handle_turn(T, C, "do you ship to mars?")
+    picker = ScriptedPlanner(empty, empty)
+    reply = await orch(c, planner=picker, reviewer=Reviewer(FakeLLM())).handle_turn(T, C, "do you ship to mars?")
     trace = await trace_of(c)
     assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.UNSUPPORTED
     assert trace.agent_steps[0].refused and "say what was tried" in picker.views[1].refused
@@ -201,16 +201,14 @@ async def test_the_orchestrator_is_sent_back_once_when_it_hands_over_without_say
 
 async def test_with_the_reviewer_off_an_empty_hand_over_goes_straight_through(c: Container) -> None:
     empty = HandOver(reason=EscalationReason.UNSUPPORTED)
-    picker = ScriptedMovePicker(empty)
-    reply = await orch(c, move_picker=picker).handle_turn(T, C, "do you ship to mars?")
+    picker = ScriptedPlanner(empty)
+    reply = await orch(c, planner=picker).handle_turn(T, C, "do you ship to mars?")
     assert reply.decision is Decision.HANDOFF and len(picker.views) == 1
 
 
 async def test_the_forced_handoffs_never_wait_for_the_reviewer(c: Container) -> None:
-    picker = FunctionPicker(lambda v: Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
-    reply = await orch(c, move_picker=picker, reviewer=Reviewer(FakeLLM())).handle_turn(
-        T, C, "I want to talk to a human"
-    )
+    picker = FunctionPlanner(lambda v: Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
+    reply = await orch(c, planner=picker, reviewer=Reviewer(FakeLLM())).handle_turn(T, C, "I want to talk to a human")
     assert reply.decision is Decision.HANDOFF and picker.views == []
 
 

@@ -1,7 +1,9 @@
-"""A stand-in for Team C's sandbox MCP server, for Team B's tests (Team B tests never start Team C's code).
+"""A simulated for the tools service's sandbox MCP server, for the agent's tests (the agent tests never start the tools
+service's code).
 
 It speaks the same stdio protocol (newline-delimited JSON-RPC: initialize, tools/list, tools/call) and plays a script
-re-read on EVERY request, so a test can change what is published between two calls, the way Team C re-reads its
+re-read on EVERY request, so a test can change what is published between two calls, the way the tools service re-reads
+its
 database. The script (path in FAKE_TEAM_C_SCRIPT):
 
     {"tools": [<MCP tool definitions>],
@@ -9,11 +11,13 @@ database. The script (path in FAKE_TEAM_C_SCRIPT):
      "refuse_identities": ["mallory"], "split_production": true}
 
 With "split_production" the process started with --context-from-client lists and runs only tools whose
-_meta.team_c.environment is "production", and an ordinary one only the others (like Team C's two kinds of server).
+_meta.team_c.environment is "production", and an ordinary one only the others (like the tools service's two kinds of
+server).
 
-A tool that is not in "tools" answers -32602 with data.code "tool_not_published", like Team C. Every call is appended
+A tool that is not in "tools" answers -32602 with data.code "tool_not_published", like the tools service. Every call is
+appended
 to FAKE_TEAM_C_LOG as one JSON line {identity, business_id, tool, arguments} so a test can see what was really sent.
-Run: python tests/fake_team_c_mcp.py --business-id B --identity alice [--database ...]
+Run: python tests/fake_tools_mcp.py --business-id B --identity alice [--database ...]
 """
 
 import argparse

@@ -1,4 +1,4 @@
-"""Start TicketEasy for a local run: Team A, Team B, Team C and the APIs they call.
+"""Start TicketEasy for a local run: the knowledge service, the agent, the tools service and the APIs they call.
 
     python ops/local/serve.py up          # check the setup, start everything in order, wait for health, report
     python ops/local/serve.py status      # which services answer, and the Live Demo settings
@@ -8,16 +8,16 @@ Services (each with its own team's virtualenv, working directory, port and an is
     sandbox    Nile Style sandbox shop API (test data, TEST-ONLY)        http://127.0.0.1:8102
     demo-shop  a second, separate Nile shop API with its own credentials  http://127.0.0.1:8103
                (synthetic data on THIS machine; usable as a Live Demo target only through LIVE_DEMO_PRIVATE_HOSTS)
-    team-c     Team C tool builder + REST API (+ its MCP server, started by Team B)  http://127.0.0.1:8101
-    team-a     Team A safety + RAG                                       http://127.0.0.1:8001
-    team-b     Team B: chat, inbox, dashboard                            http://127.0.0.1:8010
+    team-c     the tools service tool builder + REST API (+ its MCP server, started by the agent)  http://127.0.0.1:8101
+    team-a     the knowledge service safety + RAG                                       http://127.0.0.1:8001
+    team-b     the agent: chat, inbox, dashboard                            http://127.0.0.1:8010
 
 Configuration without editing source files:
-- ops/local/live_demo.env (git-ignored; copy ops/local/live_demo.example.env): LIVE_DEMO_* settings for Team C
-  and the credentials the Live Demo scripts store into Team C (never printed, never committed).
-- ops/local/var/ (git-ignored): generated local keys, Team B's database, Team B's Team C binding (team_c.json,
-  written by ops/local/team_c_lifecycle.py / live_demo_check.py). Without a binding Team B uses its stand-in shop.
-Nothing here touches another Team C instance (for example one on port 8000 with data/team_c.sqlite3).
+- ops/local/live_demo.env (git-ignored; copy ops/local/live_demo.example.env): LIVE_DEMO_* settings for the tools service
+  and the credentials the Live Demo scripts store into the tools service (never printed, never committed).
+- ops/local/var/ (git-ignored): generated local keys, the agent's database, the agent's the tools service binding (team_c.json,
+  written by ops/local/tools_lifecycle.py / live_demo_check.py). Without a binding the agent uses its simulated shop.
+Nothing here touches another the tools service instance (for example one on port 8000 with data/team_c.sqlite3).
 """
 
 import argparse
@@ -41,7 +41,7 @@ PORTS = {"sandbox": 8102, "demo-shop": 8103, "nile-prod": 8104, "team-c": 8101, 
 ORDER = ("sandbox", "demo-shop", *(("nile-prod",) if PRODUCTION_ENV.exists() else ()), "team-c", "team-a", "team-b")
 TEAMS = {"sandbox": "services/agent", "demo-shop": "services/agent", "nile-prod": "services/agent", "team-c": "services/tools", "team-a": "services/knowledge", "team-b": "services/agent"}
 LIVE_KEYS = ("LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")
-# the PRODUCTION_* lines of ops/local/production.env; the smoke settings belong to Team C's web app only
+# the PRODUCTION_* lines of ops/local/production.env; the smoke settings belong to the tools service's web app only
 PRODUCTION_KEYS = ("PRODUCTION_ENABLED", "PRODUCTION_HOSTS", "PRODUCTION_PRIVATE_HOSTS", "PRODUCTION_CALLS_PER_MINUTE",
                    "PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE")
 SMOKE_KEYS = ("PRODUCTION_SMOKE_CONTEXT", "PRODUCTION_SMOKE_ARGUMENTS")
@@ -76,7 +76,7 @@ def live_settings(path: Path = LIVE_ENV) -> dict[str, str]:
     return values
 
 
-def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
+def command(service: str, simulated: bool = False, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
     python = venv_python(TEAMS[service])
     if python is None:
         raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (docs/INTEGRATION.md, 'Run it locally')")
@@ -88,12 +88,12 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
             env["NILE_SANDBOX_TITLE"] = "Nile Style demo shop (local deployment, synthetic data)"
         if service == "nile-prod":
             env["NILE_SANDBOX_TITLE"] = "Nile Style production deployment (LOCAL, synthetic data, service token)"
-            env["NILE_SANDBOX_SERVICE_TOKEN"] = secret("prod_service.key")  # the one service credential; Team C reads the same file
+            env["NILE_SANDBOX_SERVICE_TOKEN"] = secret("prod_service.key")  # the one service credential; the tools service reads the same file
         args = ["-m", "uvicorn", "ops.local.nile_sandbox.app:create_app", "--factory", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT, env
     if service == "team-c":
         env.update(
-            DATABASE_PATH="data/integration.sqlite3",  # its own database, next to Team C's others (git-ignored)
+            DATABASE_PATH="data/integration.sqlite3",  # its own database, next to the tools service's others (git-ignored)
             SANDBOX_HOSTS=f"127.0.0.1:{PORTS['sandbox']}",
             OPENAPI_FETCH_HOSTS="loopback:*",  # any API running on this machine (a stack for local use only)
             SESSION_SECRET=secret("team_c_session.key"),
@@ -113,13 +113,13 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         env["SERVICE_API_KEY"] = secret("team_a_service.key")  # only a caller that sends it may search or check actions
         args = ["-m", "uvicorn", "knowledge_service.api:app", "--app-dir", "src", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "services" / "knowledge", env
-    # Team B reads only the process environment, so load its own .env here (AI model, per-job models, agent mode).
+    # The agent reads only the process environment, so load its own .env here (AI model, per-job models, agent mode).
     # A variable already set in the shell wins, and the fixed values below (mode, database, keys) win over the file.
     for key, value in live_settings(ROOT / "services" / "agent" / ".env").items():
         if key.startswith("TEAM_B_") and key not in os.environ and value:
             env[key] = value.split(" #", 1)[0].strip()
     env.update(
-        TEAM_B_MODE="standin" if standin else "live",
+        TEAM_B_MODE="standin" if simulated else "live",
         TEAM_B_TEAM_A_URL=f"http://127.0.0.1:{PORTS['team-a']}",
         TEAM_B_TEAM_A_KEY=secret("team_a_service.key"),
         TEAM_B_TEAM_A_ADMIN_KEY=secret("team_a_admin.key"),
@@ -136,18 +136,18 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
         sync_live_settings(binding)
         env["TEAM_B_TEAM_C_CONFIG"] = str(binding)
     if PRODUCTION_ENV.exists():
-        env["TEAM_C_ADMIN_TOKEN"] = secret("team_c_admin.key")  # Team B's service credential TO Team C (admin actions)
+        env["TEAM_C_ADMIN_TOKEN"] = secret("team_c_admin.key")  # The agent's service credential TO the tools service (admin actions)
     args = ["-m", "uvicorn", "agent_service.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
     return [python, *args, "--port", port], ROOT / "services" / "agent", env
 
 
 def sync_live_settings(binding: Path) -> None:
-    """Team B starts Team C's MCP server itself; give that process the same LIVE_DEMO_* settings as Team C's web app
-    (ops/local/live_demo.env is the one source). Without them Team C keeps every Live Demo tool switched off."""
+    """The agent starts the tools service's MCP server itself; give that process the same LIVE_DEMO_* settings as the tools service's web app
+    (ops/local/live_demo.env is the one source). Without them the tools service keeps every Live Demo tool switched off."""
     config = json.loads(binding.read_text(encoding="utf-8"))
     env = {k: v for k, v in (config.get("env") or {}).items() if k not in LIVE_KEYS + PRODUCTION_KEYS + ("PRODUCTION_AUDIT_DIR",)}
     env.update({k: v for k, v in live_settings().items() if k in LIVE_KEYS})
-    if PRODUCTION_ENV.exists():  # the production MCP process Team B starts needs the same switches (never a secret: it reads the file)
+    if PRODUCTION_ENV.exists():  # the production MCP process the agent starts needs the same switches (never a secret: it reads the file)
         env.update({k: v for k, v in live_settings(PRODUCTION_ENV).items() if k in PRODUCTION_KEYS})
         env["PRODUCTION_AUDIT_DIR"] = str(VAR / "audit")
         config["admin_token_env"] = "TEAM_C_ADMIN_TOKEN"
@@ -203,14 +203,14 @@ def preflight() -> list[str]:
     if not (ROOT / "services" / "tools" / ".env").exists():
         problems.append("WARNING services/tools/.env is missing: Team C runs, but proposal generation needs a model provider (services/tools/.env.example)")
     if not (VAR / "team_c.json").exists():
-        problems.append("WARNING no Team C binding (ops/local/var/team_c.json): Team B serves every tool from its stand-in shop")
+        problems.append("WARNING no Team C binding (ops/local/var/team_c.json): Team B serves every tool from its simulated shop")
     live = live_settings()
     if live.get("LIVE_DEMO_ENABLED", "").lower() in ("1", "true", "yes") and not live.get("LIVE_DEMO_HOSTS"):
         problems.append("WARNING LIVE_DEMO_ENABLED is on but LIVE_DEMO_HOSTS is empty: no live connector can be saved")
     return problems
 
 
-def up(standin: bool) -> int:
+def up(simulated: bool) -> int:
     issues = preflight()
     for line in issues:
         print(line)
@@ -228,7 +228,7 @@ def up(standin: bool) -> int:
             print(f"ERROR   {service:<9} port {port} is used by another program (not TicketEasy's {service}); stop it or free the port")
             stop(children)
             return 1
-        cmd, cwd, env = command(service, standin)
+        cmd, cwd, env = command(service, simulated)
         log = open(logs / f"{service}.log", "ab")  # noqa: SIM115 - kept open for the child's lifetime
         children.append((service, subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT)))
         deadline = time.monotonic() + 90
@@ -294,17 +294,17 @@ def status() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("service", choices=["up", "status", *ORDER])
-    parser.add_argument("--standin", action="store_true", help="team-b: use Team B's stand-in safety/RAG, not Team A")
+    parser.add_argument("--simulated", action="store_true", help="team-b: use Team B's simulated safety/RAG, not Team A")
     parser.add_argument("--port", type=int, help="another port (e.g. a second team-b for looking at the pages)")
     parser.add_argument("--no-auth", action="store_true", help="team-b: sign-in off (TEAM_B_AUTH_REQUIRED=0); local only")
     args = parser.parse_args()
     if args.service == "up":
-        return up(args.standin)
+        return up(args.simulated)
     if args.service == "status":
         return status()
     if args.port:
         PORTS[args.service] = args.port
-    cmd, cwd, env = command(args.service, args.standin, args.no_auth)
+    cmd, cwd, env = command(args.service, args.simulated, args.no_auth)
     if args.service == "team-b" and args.port:
         env["TEAM_B_DB_PATH"] = str(VAR / f"team_b_{args.port}.sqlite3")
     print(f"starting {args.service} on http://127.0.0.1:{PORTS[args.service]} (cwd {cwd})", flush=True)

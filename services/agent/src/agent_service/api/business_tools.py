@@ -1,25 +1,31 @@
-"""Business tools: which shop tools the agent uses, which of them Team C serves (sandbox or Live Demo), and their state.
+"""Business tools: which shop tools the agent uses, which of them the tools service serves (sandbox or Live Demo), and
+their state.
 
 GET  /v1/dashboard/business-tools?tenant_id=                         the page (manager, like every dashboard read)
-POST /v1/dashboard/business-tools/refresh?tenant_id=                 ask the shop and Team C for the tool list again
-POST /v1/dashboard/business-tools/publications/{id}/disable?tenant_id= {"note"}   stop a Team C tool (manager)
-POST /v1/dashboard/business-tools/connectors/{id}/check?tenant_id=   Team C's real connection check (manager)
+POST /v1/dashboard/business-tools/refresh?tenant_id=                 ask the shop and the tools service for the tool
+list again
+POST /v1/dashboard/business-tools/publications/{id}/disable?tenant_id= {"note"}   stop a tools service tool (manager)
+POST /v1/dashboard/business-tools/connectors/{id}/check?tenant_id=   the tools service's real connection check (manager)
 POST /v1/dashboard/business-tools/artifacts/{id}/auto-test?tenant_id=   automatic tests of one built tool (manager)
 POST /v1/dashboard/business-tools/artifacts/{id}/promote?tenant_id= {"note","rollback_contact","accept_no_idempotency"}
-     promote a tested tool to PRODUCTION (admin, signed in: the promotion records who decided it; Team C refuses
+     promote a tested tool to PRODUCTION (admin, signed in: the promotion records who decided it; the tools service
+     refuses
      unless its whole checklist passes)
 POST /v1/dashboard/business-tools/promotions/{id}/rollback?tenant_id= {"note"}   switch a production tool off (admin)
 
 Environments are shown as they are: SANDBOX (sandbox-only destinations and identities), LIVE DEMO (calls the
 owner-configured real API) or PRODUCTION (a promoted tool that acts on real customers' data with the business's
-service credential; Team C scopes every call to the verified customer). A tool is production only if Team C says so
+service credential; the tools service scopes every call to the verified customer). A tool is production only if the
+tools service says so
 for a promoted, active publication.
 
-Team C has no list_changed notifications: the agent re-lists every TEAM_B_CAPABILITY_TTL_S and on refresh, and Team C
+The tools service has no list_changed notifications: the agent re-lists every TEAM_B_CAPABILITY_TTL_S and on refresh,
+and the tools service
 re-checks publication, approval, enforcement, evidence and hashes on every call anyway. A disable is checked here first:
-the publication must belong to this business's Team C business (else 404, as if it did not exist). Disabling blocks the
+the publication must belong to this business's the tools service business (else 404, as if it did not exist). Disabling
+blocks the
 next call; it cannot undo a write that already happened. Everything else in the tool workflow (request, answers,
-approval, build, sandbox tests, publish) happens in Team C's own pages, linked as builder_url.
+approval, build, sandbox tests, publish) happens in the tools service's own pages, linked as builder_url.
 """
 
 from datetime import UTC, datetime
@@ -40,7 +46,7 @@ router = APIRouter(prefix="/v1/dashboard/business-tools", tags=["business tools"
 PUBLICATION_ID = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
 log = get_logger(__name__)
 
-# What a Team C problem means, in words a business owner can act on.
+# What a tools service problem means, in words a business owner can act on.
 PROBLEMS = {
     "not_published": "no sandbox publication of this tool is active in the tool service",
     "ambiguous": "two artifacts of the same version are published: disable one in the tool service",
@@ -54,9 +60,11 @@ PROBLEMS = {
 class BusinessTool(BaseModel):
     name: str  # the tool name the agent's intents use
     used_by: list[str]  # intents (or "identity") that rely on it
-    source: Literal["team_c", "standin"]  # Team C sandbox publication, or the built-in stand-in shop
+    source: Literal["team_c", "standin"]  # The tools service sandbox publication, or the built-in simulated shop
     status: Literal["available", "missing", "blocked"]
-    reason: str | None = None  # a gate reason (disabled, not_allowed, ...) or a Team C problem (not_published, ...)
+    reason: str | None = (
+        None  # a gate reason (disabled, not_allowed, ...) or a tools service problem (not_published, ...)
+    )
     detail: str = ""
     operation_kind: str | None = None
     team_c_tool: str | None = None
@@ -64,7 +72,7 @@ class BusinessTool(BaseModel):
     proposal_id: str | None = None
     proposal_version: int | None = None
     artifact_sha256: str | None = None  # the first 12 characters
-    environment: str | None = None  # Team C tools: sandbox | live_demo
+    environment: str | None = None  # The tools service tools: sandbox | live_demo
     api_host: str | None = None  # live_demo: the real API this tool calls
 
 
@@ -74,7 +82,7 @@ class PromotionCheck(BaseModel):
     detail: str = ""
 
 
-class TeamCPromotion(BaseModel):
+class ToolPromotion(BaseModel):
     id: str
     source_artifact_id: str
     production_artifact_id: str | None = None
@@ -90,14 +98,16 @@ class TeamCPromotion(BaseModel):
     checklist: list[PromotionCheck] = []
 
 
-class TeamCPublication(BaseModel):
+class ToolPublication(BaseModel):
     id: str
     tool_name: str
     status: str  # published | disabled
-    effective_status: str  # published | blocked (Team C's recheck failed) | disabled
+    effective_status: str  # published | blocked (the tools service's recheck failed) | disabled
     problem: str | None = None
     environment: str  # sandbox | live_demo | production
-    execution_enabled: bool = False  # Team C would run a call right now (published and every re-check passes)
+    execution_enabled: bool = (
+        False  # The tools service would run a call right now (published and every re-check passes)
+    )
     production_ready: bool  # true only for a promoted production publication that is active and passes every re-check
     promotion_id: str | None = None
     published_at: str | None = None
@@ -113,49 +123,56 @@ class ConnectorCheck(BaseModel):
     detail: str = ""
 
 
-class TeamCConnector(BaseModel):
+class ToolConnector(BaseModel):
     id: str
     environment: str | None  # sandbox | live_demo
     host: str
-    identities: int  # how many identities (credentials) it holds; names and secrets stay in Team C
+    identities: int  # how many identities (credentials) it holds; names and secrets stay in the tools service
     checked_at: str | None = None
     ready: bool | None = None  # every step of the last check was ok
     checks: list[ConnectorCheck] = []
 
 
-class TeamCProposal(BaseModel):
+class ToolProposal(BaseModel):
     id: str
     name: str
     version: int
     state: str  # needs_clarification | needs_reconciliation | ready_for_review | approved_to_build | rejected | ...
-    # The newest built tool of this proposal (Team C): not_tested | testing | needs_owner | ready_to_publish | published
+    # The newest built tool of this proposal (the tools service): not_tested | testing | needs_owner | ready_to_publish
+    # | published
     artifact_id: str | None = None
     readiness_state: str | None = None
     auto_test_status: str | None = None  # running | succeeded | failed (the latest automatic test run)
-    auto_test_question: str | None = None  # what the owner still has to do, in Team C's words
+    auto_test_question: str | None = None  # what the owner still has to do, in the tools service's words
     promotable: bool = False  # tested (ready or published), a production connector exists, not promoted yet
     promoted: bool = False  # an active promotion exists for this tool
 
 
 class DashboardBusinessTools(BaseModel):
     tenant_id: str
-    configured: bool  # is any tool of this business served by Team C?
-    sandbox_only: bool = True  # no tool the agent uses calls a real API (every Team C tool in use is a sandbox one)
-    production_connector: bool = False  # the business has a production connector in Team C (so a tool can be promoted)
+    configured: bool  # is any tool of this business served by the tools service?
+    sandbox_only: bool = (
+        True  # no tool the agent uses calls a real API (every the tools service tool in use is a sandbox one)
+    )
+    production_connector: bool = (
+        False  # the business has a production connector in the tools service (so a tool can be promoted)
+    )
     live_tools: int = 0  # tools the agent uses that call an owner-configured real API (Live Demo)
     production_tools: int = 0  # tools the agent uses that act on real customers' data (promoted to production)
     business_id: str | None = None
-    builder_url: str | None = None  # Team C's owner pages for this business (request, review, build, test, publish)
-    builder_base: str | None = None  # Team C's pages root: <base>/proposals/<id>, <base>/artifacts/<id>
-    listed_at: datetime | None = None  # when Team C's tools were last listed
+    builder_url: str | None = (
+        None  # The tools service's owner pages for this business (request, review, build, test, publish)
+    )
+    builder_base: str | None = None  # The tools service's pages root: <base>/proposals/<id>, <base>/artifacts/<id>
+    listed_at: datetime | None = None  # when the tools service's tools were last listed
     team_c_error: str | None = None
     mapped_customers: int = 0  # verified customers that have a sandbox identity
     tools: list[BusinessTool]
-    publications: list[TeamCPublication] = []
+    publications: list[ToolPublication] = []
     publications_error: str | None = None
-    proposals: list[TeamCProposal] = []
-    connectors: list[TeamCConnector] = []
-    promotions: list[TeamCPromotion] = []
+    proposals: list[ToolProposal] = []
+    connectors: list[ToolConnector] = []
+    promotions: list[ToolPromotion] = []
 
 
 class DisableIn(BaseModel):
@@ -247,9 +264,9 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
     return out
 
 
-def _publication(p: dict[str, Any], by_proposal: dict[str, str]) -> TeamCPublication:
+def _publication(p: dict[str, Any], by_proposal: dict[str, str]) -> ToolPublication:
     problem = p.get("problem") if isinstance(p.get("problem"), dict) else None
-    return TeamCPublication(
+    return ToolPublication(
         id=str(p.get("id")),
         tool_name=str(p.get("tool_name") or ""),
         status=str(p.get("status") or ""),
@@ -267,10 +284,10 @@ def _publication(p: dict[str, Any], by_proposal: dict[str, str]) -> TeamCPublica
     )
 
 
-def _connector(c: dict[str, Any]) -> TeamCConnector:
+def _connector(c: dict[str, Any]) -> ToolConnector:
     found = c.get("last_check")
     last: dict[str, Any] = found if isinstance(found, dict) else {}
-    return TeamCConnector(
+    return ToolConnector(
         id=str(c["id"]),
         environment=c.get("environment"),
         host=str(c.get("host") or ""),
@@ -287,10 +304,10 @@ def _connector(c: dict[str, Any]) -> TeamCConnector:
     )
 
 
-def _promotion(p: dict[str, Any]) -> TeamCPromotion:
+def _promotion(p: dict[str, Any]) -> ToolPromotion:
     found = p.get("checklist")
     checklist: dict[str, Any] = found if isinstance(found, dict) else {}
-    return TeamCPromotion(
+    return ToolPromotion(
         id=str(p["id"]),
         source_artifact_id=str(p.get("source_artifact_id") or ""),
         production_artifact_id=p.get("production_artifact_id"),
@@ -311,16 +328,16 @@ def _promotion(p: dict[str, Any]) -> TeamCPromotion:
     )
 
 
-def _proposal(p: dict[str, Any], built: dict[str, dict[str, Any]]) -> TeamCProposal:
+def _proposal(p: dict[str, Any], built: dict[str, dict[str, Any]]) -> ToolProposal:
     found = p.get("content")
     content: dict[str, Any] = found if isinstance(found, dict) else {}
-    pid = str(p.get("proposal_id") or p.get("id"))  # Team C's proposal view names it proposal_id
+    pid = str(p.get("proposal_id") or p.get("id"))  # The tools service's proposal view names it proposal_id
     artifact = built.get(pid) or {}
     found_run = artifact.get("auto_test")
     run: dict[str, Any] = found_run if isinstance(found_run, dict) else {}
     asks = run.get("needs_owner") if isinstance(run.get("needs_owner"), list) else []
     first = asks[0] if asks and isinstance(asks[0], dict) else {}
-    return TeamCProposal(
+    return ToolProposal(
         id=pid,
         name=str(content.get("name") or p.get("name") or ""),
         version=int(p.get("version") or 0),
@@ -339,7 +356,7 @@ async def business_tools(tenant_id: TENANT, request: Request) -> DashboardBusine
 
 @router.post("/refresh", response_model=DashboardBusinessTools)
 async def refresh(tenant_id: TENANT, request: Request) -> DashboardBusinessTools:
-    """List the tools again now (Team C sends no change notifications)."""
+    """List the tools again now (the tools service sends no change notifications)."""
     return await _overview(checked_tenant(request, tenant_id), tenant_id, refresh=True)
 
 
@@ -347,7 +364,8 @@ async def refresh(tenant_id: TENANT, request: Request) -> DashboardBusinessTools
 async def disable(
     publication_id: PUBLICATION_ID, tenant_id: TENANT, body: DisableIn, request: Request
 ) -> DashboardBusinessTools:
-    """Stop one Team C tool of this business. Its next call is refused; a write that already happened stays."""
+    """Stop one the tools service tool of this business. Its next call is refused; a write that already happened
+    stays."""
     built = checked_tenant(request, tenant_id)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None:
@@ -373,7 +391,8 @@ CONNECTOR_ID = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
 
 @router.post("/connectors/{connector_id}/check", response_model=DashboardBusinessTools)
 async def check_connector(connector_id: CONNECTOR_ID, tenant_id: TENANT, request: Request) -> DashboardBusinessTools:
-    """Ask Team C to check one of this business's connectors for real (configuration, reachability, login)."""
+    """Ask the tools service to check one of this business's connectors for real (configuration, reachability,
+    login)."""
     built = checked_tenant(request, tenant_id)
     binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
     if built.team_c is None or binding is None or built.team_c.admin is None:
@@ -395,9 +414,11 @@ ARTIFACT_ID = Annotated[str, Path(pattern=r"^[A-Za-z0-9_-]{1,64}$")]
 
 @router.post("/artifacts/{artifact_id}/auto-test", response_model=DashboardBusinessTools)
 async def auto_test(artifact_id: ARTIFACT_ID, tenant_id: TENANT, request: Request) -> DashboardBusinessTools:
-    """Start Team C's automatic tests for one built tool of this business (accounts, records, scenarios, evidence).
+    """Start the tools service's automatic tests for one built tool of this business (accounts, records, scenarios,
+    evidence).
 
-    It only tests: nothing is approved or published from here, and Team C runs it against a sandbox only. The page polls
+    It only tests: nothing is approved or published from here, and the tools service runs it against a sandbox only. The
+    page polls
     the proposal's readiness_state until the run is over.
     """
     built = checked_tenant(request, tenant_id)
@@ -446,7 +467,7 @@ def _admin_name(request: Request) -> str:
 
 def _team_c_failure(exc: UpstreamError) -> ApiError:
     if exc.code in ("PROMOTION_REFUSED", "PRODUCTION_DISABLED", "PROMOTION_NOT_ACTIVE"):
-        return ApiError(409, exc.code, exc.message)  # Team C's own words: which checks failed
+        return ApiError(409, exc.code, exc.message)  # The tools service's own words: which checks failed
     return upstream_unavailable(f"The tool service could not be asked ({exc.code})")
 
 
@@ -454,7 +475,8 @@ def _team_c_failure(exc: UpstreamError) -> ApiError:
 async def promote(
     artifact_id: ARTIFACT_ID, tenant_id: TENANT, body: PromoteIn, request: Request
 ) -> DashboardBusinessTools:
-    """Promote one tested tool of this business to production (admin). Team C builds the production twin and runs its
+    """Promote one tested tool of this business to production (admin). The tools service builds the production twin and
+    runs its
     whole checklist (evidence, scoping, identical content, secret, smoke check, idempotency, rollback contact)."""
     built = checked_tenant(request, tenant_id)
     actor = _admin_name(request)

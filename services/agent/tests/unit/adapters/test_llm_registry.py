@@ -83,8 +83,8 @@ def test_without_an_ai_model_no_job_has_one() -> None:
 
 async def test_each_job_can_use_its_own_model() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_MODEL_ORCHESTRATOR="openai/gpt-oss-120b", TEAM_B_LLM_MODEL_REVIEWER="m-review")
-    for role in ("orchestrator", "reviewer", "reader", "writer"):
+    reg = registry(server, TEAM_B_LLM_MODEL_PLANNER="openai/gpt-oss-120b", TEAM_B_LLM_MODEL_REVIEWER="m-review")
+    for role in ("planner", "reviewer", "reader", "writer"):
         await ask(reg.llm_for(role))
     assert server.models() == ["openai/gpt-oss-120b", "m-review", "qwen/qwen3.8-27b", "qwen/qwen3.8-27b"]
 
@@ -124,12 +124,12 @@ def test_a_job_can_have_a_model_when_there_is_no_general_one_only_with_its_own_s
 def test_settings_for_jobs_are_read_and_checked() -> None:
     s = settings(
         TEAM_B_LLM_FALLBACK_MODEL_READER="openai/gpt-oss-20b",
-        TEAM_B_LLM_REASONING_EFFORT_ORCHESTRATOR="low",
+        TEAM_B_LLM_REASONING_EFFORT_PLANNER="low",
         TEAM_B_LLM_RPM_WRITER="25",
         TEAM_B_LLM_TPM_WRITER="6000",
         TEAM_B_LLM_MAX_WAIT_S="2.5",
     )
-    assert s.role("reader").fallback_model == "openai/gpt-oss-20b" and s.role("orchestrator").reasoning_effort == "low"
+    assert s.role("reader").fallback_model == "openai/gpt-oss-20b" and s.role("planner").reasoning_effort == "low"
     assert (s.role("writer").rpm, s.role("writer").tpm, s.llm_max_wait_s) == (25, 6000, 2.5)
     assert s.role("judge").model is None  # nothing set: the general one will be used
     assert Settings().llm_max_wait_s == 4.0
@@ -152,8 +152,8 @@ def test_the_api_keys_never_show_in_the_settings_text() -> None:
 
 async def test_reasoning_effort_is_sent_only_when_set() -> None:
     server = Server()
-    reg = registry(server, TEAM_B_LLM_REASONING_EFFORT_ORCHESTRATOR="low")
-    await ask(reg.llm_for("orchestrator"))
+    reg = registry(server, TEAM_B_LLM_REASONING_EFFORT_PLANNER="low")
+    await ask(reg.llm_for("planner"))
     await ask(reg.llm_for("reader"))
     assert server.requests[0]["reasoning_effort"] == "low" and "reasoning_effort" not in server.requests[1]
 
@@ -162,8 +162,8 @@ async def test_a_model_that_rejects_reasoning_effort_is_asked_without_it_from_th
     server = Server(
         {"m": [httpx.Response(400, text='{"error": "unknown parameter reasoning_effort"}'), answer(), answer()]}
     )
-    reg = registry(server, TEAM_B_LLM_MODEL_ORCHESTRATOR="m", TEAM_B_LLM_REASONING_EFFORT_ORCHESTRATOR="low")
-    llm = reg.llm_for("orchestrator")
+    reg = registry(server, TEAM_B_LLM_MODEL_PLANNER="m", TEAM_B_LLM_REASONING_EFFORT_PLANNER="low")
+    llm = reg.llm_for("planner")
     assert await ask(llm) == {"ok": True} and await ask(llm) == {"ok": True}
     assert ["reasoning_effort" in r for r in server.requests] == [True, False, False]
 

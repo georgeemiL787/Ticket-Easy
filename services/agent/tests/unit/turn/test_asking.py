@@ -1,4 +1,4 @@
-"""Asking for missing details through the orchestrator (S03's first two turns, clarification limits, unsupported)."""
+"""Asking for missing details through the planner (S03's first two turns, clarification limits, unsupported)."""
 
 from typing import Any
 

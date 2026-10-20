@@ -1,4 +1,4 @@
-"""Try-first escalation (safety-critical): the orchestrator hands over only after trying, code decides the forced cases.
+"""Try-first escalation (safety-critical): the planner hands over only after trying, code decides the forced cases.
 
 The moves are scripted (no AI model). The session is seeded with the counts the loop would have kept from earlier
 messages, then a hand-over is proposed; the check "handover_after_trying" must refuse it too early and let it through
@@ -18,7 +18,7 @@ from agent_service.domain.session import SessionState
 from agent_service.domain.tenant import EscalationConfig
 from agent_service.domain.trace import DecisionTrace
 from agent_service.turn.handler import Orchestrator
-from tests.fakes import FakeEvidence, ScriptedMovePicker
+from tests.fakes import FakeEvidence, ScriptedPlanner
 
 T, C = "shop_001", "conv-esc"
 NOW = datetime(2026, 9, 28, 10, 0, tzinfo=UTC)
@@ -29,7 +29,7 @@ R = EscalationReason
 
 def orch(c: Container, picker: Any) -> Orchestrator:
     return Orchestrator(
-        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, move_picker=picker,
+        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, planner=picker,
         evidence=FakeEvidence(), tenants=c.tenants, capabilities=c.capabilities,
     )  # fmt: skip
 
@@ -43,7 +43,7 @@ async def hand_over(
 ) -> tuple[Any, Any, DecisionTrace]:
     """Seed the session, propose a hand-over (then a greeting if it was refused). Returns (reply, picker, trace)."""
     await seed(c, **session)
-    picker = ScriptedMovePicker(HandOver(reason=reason, tried=["did my best"], why="stuck"), GREETING)
+    picker = ScriptedPlanner(HandOver(reason=reason, tried=["did my best"], why="stuck"), GREETING)
     reply = await orch(c, picker).handle_turn(T, C, message)
     trace = (await c.traces.for_conversation(T, C))[-1]
     return reply, picker, trace
@@ -146,7 +146,7 @@ async def test_an_unclear_request_is_handed_over_only_after_two_questions(
 async def test_a_refused_hand_over_twice_in_a_row_falls_back_to_the_usual_stages(c: Container) -> None:
     await seed(c)
     early = HandOver(reason=R.NO_EVIDENCE, tried=["x"])
-    picker = ScriptedMovePicker(early, early)
+    picker = ScriptedPlanner(early, early)
     reply = await orch(c, picker).handle_turn(T, C, "do you ship to the moon?")
     trace = (await c.traces.for_conversation(T, C))[-1]
     assert trace.fallback_reason and "two refused" in trace.fallback_reason and reply.text  # nobody is left waiting
@@ -159,7 +159,7 @@ async def test_each_question_the_agent_asks_is_counted_and_an_answer_starts_the_
     from agent_service.domain.agent import AskCustomer
 
     ask = AskCustomer(question_key="ask_rephrase", why="unclear")
-    picker = ScriptedMovePicker(ask, ask, GREETING)
+    picker = ScriptedPlanner(ask, ask, GREETING)
     bot = orch(c, picker)
     await bot.handle_turn(T, C, "hmm")
     await bot.handle_turn(T, C, "hmm hmm")
@@ -180,7 +180,7 @@ async def test_the_briefing_lists_what_was_tried_in_plain_words(c: Container) ->
     case = await c.cases.get(T, trace.handoff_case_id or "")
     assert case is not None
     tried = case.package.tried
-    assert "did my best" in tried  # what the orchestrator said
+    assert "did my best" in tried  # what the planner said
     assert any("found nothing 2 time(s)" in t for t in tried) and any(
         "asked the customer 1 question" in t for t in tried
     )
@@ -189,7 +189,7 @@ async def test_the_briefing_lists_what_was_tried_in_plain_words(c: Container) ->
 
 async def test_a_forced_handoff_has_a_tried_list_too(c: Container) -> None:
     await seed(c, no_evidence_count=1, tool_failures=1)
-    reply = await orch(c, ScriptedMovePicker()).handle_turn(T, C, "I want to talk to a human")
+    reply = await orch(c, ScriptedPlanner()).handle_turn(T, C, "I want to talk to a human")
     trace = (await c.traces.for_conversation(T, C))[-1]
     case = await c.cases.get(T, trace.handoff_case_id or "")
     assert reply.decision is Decision.HANDOFF and trace.escalation_kind == "forced" and case is not None

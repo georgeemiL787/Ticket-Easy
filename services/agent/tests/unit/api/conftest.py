@@ -15,7 +15,7 @@ T = "shop_001"
 
 @pytest.fixture
 def chat_container(tmp_path: Path) -> Container:
-    """The real tenant (shop_001), stand-ins, and a generous rate limit unless a test lowers it."""
+    """The real tenant (shop_001), simulated services, and a generous rate limit unless a test lowers it."""
     return build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, rate_limit_per_minute=1000))
 
 

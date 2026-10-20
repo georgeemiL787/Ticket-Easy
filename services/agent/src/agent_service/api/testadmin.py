@@ -1,6 +1,6 @@
 """Endpoints for the load and chaos tests. They exist only when TEAM_B_ENABLE_TEST_ADMIN=1.
 
-OWNER: Track A. Never enable this in production: it switches stand-in services off and shows the shop audit log.
+OWNER: Track A. Never enable this in production: it switches simulated services off and shows the shop audit log.
 
   POST /v1/_test/chaos   {"plug": "shop"|"policy_search"|"rule_checker"|"safety_screen", "seconds": 30}
                          the plug fails every call, then recovers by itself after `seconds`

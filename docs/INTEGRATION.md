@@ -31,8 +31,8 @@ browser /chat ──POST /v1/conversations/{id}/messages──► Team B pipelin
   understand ─► Team A classify_risk (flagged → handoff)
   knowledge question ─► Team A search_knowledge → cited passages → answer
   order / action:
-     identity: verify_customer (order id + phone)                              [Team B's stand-in shop]
-     read:     get_order ─► TeamCCapabilities ─► MCP tools/call ─► Team C re-checks publication, approval, enforcement,
+     identity: verify_customer (order id + phone)                              [Team B's simulated shop]
+     read:     get_order ─► ToolCapabilities ─► MCP tools/call ─► Team C re-checks publication, approval, enforcement,
                evidence, artifact hash, environment (Live Demo: switched on, host allowed, public address, call budget)
                ─► executor, as the verified customer's own identity ─► the sandbox or the real API
      write:    permission gate ─► Team A check_action ─► customer "yes" ─► check_action again ─► create_ticket via
@@ -42,16 +42,16 @@ browser /chat ──POST /v1/conversations/{id}/messages──► Team B pipelin
 ```
 
 Team C is reached only through Team B's `CapabilityClient` port, so every gate of Team B is unchanged. Unbound tools
-keep using Team B's stand-in shop.
+keep using Team B's simulated shop.
 
 ## 3. Contracts
 
 | Boundary | Protocol | Contract |
 |---|---|---|
 | Browser → Team B | HTTP JSON | `POST /v1/conversations/{id}/messages` → `AgentReply`; staff pages need sign-in (cookie + CSRF), roles in `services/agent/src/agent_service/api/auth.py` |
-| Team B → Team A | HTTP JSON | `services/agent/src/agent_service/adapters/team_a_http.py` (`TEAM_B_MODE=live`) |
-| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `services/agent/src/agent_service/adapters/team_c_mcp.py` (client), `team_c_tools.py` (binding, identity, environment, result mapping) |
-| Team B → Team C management | HTTP JSON, loopback | publications, proposals, connectors, disable, connection check (`team_c_admin.py`) |
+| Team B → Team A | HTTP JSON | `services/agent/src/agent_service/adapters/knowledge_client.py` (`TEAM_B_MODE=live`) |
+| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `services/agent/src/agent_service/adapters/tools_mcp_client.py` (client), `tools_catalog.py` (binding, identity, environment, result mapping) |
+| Team B → Team C management | HTTP JSON, loopback | publications, proposals, connectors, disable, connection check (`tools_admin_client.py`) |
 | Team C → API | HTTPS/HTTP JSON, bearer or OAuth2 password per identity | the artifact's steps; no redirects; size and time limits; destination re-checked before each run |
 | Owner → Team C | Team C's own pages / `/api/v1` | request, answer, approve, connector (environment), build, identities, connection check, tests, publish, disable |
 
@@ -62,7 +62,7 @@ keep using Team B's stand-in shop.
 Team C identity name) and `tools` (Team B tool name → Team C `proposal_id`, optional `arguments` / `fields` renames,
 `reference_field` for creates, `environments`). The adapter enforces:
 
-- a bound tool is served **only** by Team C; if Team C does not list it, the agent says so or hands over (never the stand-in);
+- a bound tool is served **only** by Team C; if Team C does not list it, the agent says so or hands over (never the simulated service);
 - `environments` defaults to `["sandbox"]`; a tool uses Live Demo only when the operator lists `"live_demo"` there. If
   publications exist in two allowed environments at once the tool is ambiguous and not used: there is **no silent
   fallback** from live to sandbox data (or back);
@@ -134,7 +134,7 @@ Local setup: copy `ops/local/production.example.env` to `ops/local/production.en
 
 ### Automatic tool tests
 
-`ops/local/team_c_lifecycle.py` no longer hard-codes test identities and order ids: after the build it declares the Nile sandbox's fixture endpoints on the connector (`NILE_SANDBOX_FIXTURE_KEY`, set for Team C by `ops/local/serve.py`), saves the demo customers' identities (needed by Team B's chat), and makes one `POST /artifacts/{id}/auto-test` call. `--manual-tests` keeps the old hand-written tests. `ops/local/autotest_check.py` runs this for every Nile tool and checks that each reaches ready_to_publish with only `auto.*` evidence tests. The dashboard's Business tools page shows each built tool's state (Not tested / Testing… / Needs you / Ready to publish / Published) and a **Run automatic tests** button (manager; `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test`, which only tests: it never approves or publishes).
+`ops/local/tools_lifecycle.py` no longer hard-codes test identities and order ids: after the build it declares the Nile sandbox's fixture endpoints on the connector (`NILE_SANDBOX_FIXTURE_KEY`, set for Team C by `ops/local/serve.py`), saves the demo customers' identities (needed by Team B's chat), and makes one `POST /artifacts/{id}/auto-test` call. `--manual-tests` keeps the old hand-written tests. `ops/local/autotest_check.py` runs this for every Nile tool and checks that each reaches ready_to_publish with only `auto.*` evidence tests. The dashboard's Business tools page shows each built tool's state (Not tested / Testing… / Needs you / Ready to publish / Published) and a **Run automatic tests** button (manager; `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test`, which only tests: it never approves or publishes).
 
 ## 5. The interface
 
@@ -181,10 +181,10 @@ python ops/local/serve.py status     # in another terminal: what runs, Live Demo
 Create tools (once; both resume where they stopped):
 
 ```powershell
-services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool order     # sandbox: model proposal → … → publish
-services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool ticket
-services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool order --environment live_demo   # Live Demo on demo-shop
-services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool ticket --environment live_demo
+services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool order     # sandbox: model proposal → … → publish
+services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool ticket
+services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool order --environment live_demo   # Live Demo on demo-shop
+services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool ticket --environment live_demo
 services/agent/.venv/Scripts/python ops/local/live_demo_check.py                   # Live Demo on GitHub's real public API
 ```
 

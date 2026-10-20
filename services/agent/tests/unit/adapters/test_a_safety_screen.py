@@ -1,11 +1,11 @@
-"""Safety screen stand-in: flagged and clean messages in every style, precision and recall, failure switch."""
+"""Safety screen simulated service: flagged and clean messages in every style, precision and recall, failure switch."""
 
 import json
 from pathlib import Path
 
 import pytest
 
-from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
+from agent_service.adapters.simulated.safety_screen import SimulatedSafetyScreen
 from agent_service.config import Settings
 from agent_service.container import Container, inject
 from agent_service.contracts.errors import UpstreamError
@@ -90,11 +90,11 @@ CLEAN = [
 
 
 @pytest.fixture
-def screen() -> SafetyScreenStandin:
-    return SafetyScreenStandin(FIXTURES)
+def screen() -> SimulatedSafetyScreen:
+    return SimulatedSafetyScreen(FIXTURES)
 
 
-async def classify(screen: SafetyScreenStandin, message: str):  # type: ignore[no-untyped-def]
+async def classify(screen: SimulatedSafetyScreen, message: str):  # type: ignore[no-untyped-def]
     return await screen.classify_risk(T, message, request_id="r1")
 
 
@@ -103,7 +103,7 @@ def test_enough_test_messages() -> None:
 
 
 @pytest.mark.parametrize(("message", "category"), FLAGGED)
-async def test_flagged_message(screen: SafetyScreenStandin, message: str, category: str) -> None:
+async def test_flagged_message(screen: SimulatedSafetyScreen, message: str, category: str) -> None:
     result = await classify(screen, message)
     assert result.flagged, message
     assert category in result.categories, (message, result.categories)
@@ -111,29 +111,29 @@ async def test_flagged_message(screen: SafetyScreenStandin, message: str, catego
 
 
 @pytest.mark.parametrize("message", CLEAN)
-async def test_clean_message(screen: SafetyScreenStandin, message: str) -> None:
+async def test_clean_message(screen: SimulatedSafetyScreen, message: str) -> None:
     result = await classify(screen, message)
     assert (result.flagged, result.categories, result.matched_terms) == (False, (), ()), message
 
 
-async def test_precision_and_recall_on_the_test_messages(screen: SafetyScreenStandin) -> None:
+async def test_precision_and_recall_on_the_test_messages(screen: SimulatedSafetyScreen) -> None:
     true_pos = sum([(await classify(screen, m)).flagged for m, _ in FLAGGED])
     false_pos = sum([(await classify(screen, m)).flagged for m in CLEAN])
     assert true_pos == len(FLAGGED) and false_pos == 0  # precision 100%, recall 100%
 
 
-async def test_several_categories_are_all_reported(screen: SafetyScreenStandin) -> None:
+async def test_several_categories_are_all_reported(screen: SimulatedSafetyScreen) -> None:
     result = await classify(screen, "This is fraud and I will sue you, I want compensation")
     assert set(result.categories) == {"fraud_suspected", "legal_regulatory", "compensation_demand"}
     assert {"fraud", "sue you", "compensation"} <= set(result.matched_terms)
 
 
-async def test_matching_ignores_case_and_punctuation(screen: SafetyScreenStandin) -> None:
+async def test_matching_ignores_case_and_punctuation(screen: SimulatedSafetyScreen) -> None:
     assert (await classify(screen, "FRAUD!!!")).categories == ("fraud_suspected",)
     assert (await classify(screen, "...Lawyer?")).categories == ("legal_regulatory",)
 
 
-async def test_empty_message_is_clear(screen: SafetyScreenStandin) -> None:
+async def test_empty_message_is_clear(screen: SimulatedSafetyScreen) -> None:
     assert not (await classify(screen, "")).flagged
     assert not (await classify(screen, "   ")).flagged
 
@@ -143,7 +143,7 @@ async def test_a_non_mandatory_category_is_listed_but_does_not_flag(tmp_path: Pa
     folder.mkdir()
     risk = {"categories": {"mild": {"mandatory_escalation": False, "en": ["grumpy"]}, "bad": {"en": ["fraud"]}}}
     (folder / "risk.json").write_text(json.dumps(risk), encoding="utf-8")
-    screen = SafetyScreenStandin(tmp_path)
+    screen = SimulatedSafetyScreen(tmp_path)
     mild = await classify(screen, "I am grumpy")
     assert (mild.flagged, mild.categories) == (False, ("mild",))
     both = await classify(screen, "grumpy about fraud")
@@ -152,16 +152,16 @@ async def test_a_non_mandatory_category_is_listed_but_does_not_flag(tmp_path: Pa
 
 async def test_unknown_tenant_and_unreadable_file_raise_upstream_error(tmp_path: Path) -> None:
     with pytest.raises(UpstreamError) as caught:
-        await SafetyScreenStandin(tmp_path).classify_risk("shop_001", "hi", request_id="r")
+        await SimulatedSafetyScreen(tmp_path).classify_risk("shop_001", "hi", request_id="r")
     assert caught.value.code == "TENANT_NOT_FOUND"
     (tmp_path / T).mkdir()
     (tmp_path / T / "risk.json").write_text("{not json", encoding="utf-8")
     with pytest.raises(UpstreamError) as broken:
-        await SafetyScreenStandin(tmp_path).classify_risk(T, "hi", request_id="r")
+        await SimulatedSafetyScreen(tmp_path).classify_risk(T, "hi", request_id="r")
     assert broken.value.code == "RISK_INVALID"
 
 
-async def test_failure_switch(screen: SafetyScreenStandin) -> None:
+async def test_failure_switch(screen: SimulatedSafetyScreen) -> None:
     screen.fail_next(2)
     for _ in range(2):
         with pytest.raises(UpstreamError) as caught:
@@ -187,7 +187,7 @@ async def test_inject_and_container_plug(container: Container) -> None:
         inject(container, "safety_screen", {"switch": "fail_next", "operation": "other"})
 
 
-# The same everyday messages Team A's keyword screen must leave alone
+# The same everyday messages the knowledge service's keyword screen must leave alone
 # (services/knowledge/tests/test_risk_and_extract.py):
 # a risk word sitting inside a longer word is not a risk phrase, on both screens.
 EVERYDAY = [
@@ -229,7 +229,7 @@ EVERYDAY = [
 
 @pytest.mark.parametrize("message", EVERYDAY)
 async def test_everyday_message_with_a_risk_word_inside_a_longer_word_is_clear(
-    screen: SafetyScreenStandin, message: str
+    screen: SimulatedSafetyScreen, message: str
 ) -> None:
     result = await classify(screen, message)
     assert (result.flagged, result.categories, result.matched_terms) == (False, (), ()), message

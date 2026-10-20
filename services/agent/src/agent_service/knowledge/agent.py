@@ -7,7 +7,7 @@ research() does three things around the policy search, each a small checked step
      search once (other words, English words for an Arabizi question, the policy topic name) and search again;
   3. answer from the passages, naming the ones used, or say what was missing. It never guesses: no passage, no answer.
 
-It is the runner of the SearchPolicy move (agent mode: NotFound goes back to the orchestrator, which may ask a
+It is the runner of the SearchPolicy move (agent mode: NotFound goes back to the planner, which may ask a
 clarifying question or offer a person) and of knowledge.answer (usual flow: NotFound keeps today's sequence, ask to
 rephrase, offer a colleague, hand over the third time). Every safeguard stays: only retrieved passages can be cited, an
 older version of a document is never used next to a newer one, the worded answer must pass check_grounded against the
@@ -37,7 +37,7 @@ Search = Callable[[str], Awaitable[Sequence[Passage]]]
 
 @dataclass(frozen=True)
 class NotFound:
-    """The documents do not answer the question. `what_was_missing` is a few plain words for the orchestrator."""
+    """The documents do not answer the question. `what_was_missing` is a few plain words for the planner."""
 
     what_was_missing: str
     queries: tuple[str, ...] = ()
@@ -121,9 +121,9 @@ class KnowledgeAgent:
             tried.append(query)
             return latest_versions([p for p in await search(query) if p.score >= min_score])
 
-        first: str | None = first_query  # the orchestrator may have written the search already
+        first: str | None = first_query  # the planner may have written the search already
         if first:
-            steps.append("searched the orchestrator's query")
+            steps.append("searched the planner's query")
         else:
             first = await self._query("query", message, session)
             steps.append("wrote a search" if first else "model gave no search: the customer's words are searched")

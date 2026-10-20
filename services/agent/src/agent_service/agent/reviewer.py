@@ -15,7 +15,7 @@ needs none); if the reviewer cannot answer, an allowed write becomes require_hum
 human approval still turns the model's require_human into allow, never a deny. (This is the former policy agent of
 adapters/llm_policy_gate.py, moved here; the gate now calls it.)
 
-blocks_handover: a hand-over that lists nothing that was tried is sent back to the orchestrator once per turn; the
+blocks_handover: a hand-over that lists nothing that was tried is sent back to the planner once per turn; the
 second time it goes through (the forced cases never wait for this: they are decided by the front stages).
 """
 
@@ -220,7 +220,7 @@ class Reviewer:
 
 
 def blocks_handover(move: HandOver, watch: HandoverWatch) -> bool:
-    """A hand-over that lists nothing tried goes back to the orchestrator once per turn, then it goes through."""
+    """A hand-over that lists nothing tried goes back to the planner once per turn, then it goes through."""
     if move.tried or watch.sent_back:
         return False
     watch.sent_back = True

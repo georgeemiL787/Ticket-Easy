@@ -1,4 +1,5 @@
-"""The SQLite stand-in shop for Noon: the tools' physical rules, persistence, and the same switches as the JSON shop."""
+"""The SQLite simulated shop for Noon: the tools' physical rules, persistence, and the same switches as the JSON
+shop."""
 
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -6,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.config import PROJECT_ROOT
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolCallRequest, ToolResult
@@ -23,12 +24,12 @@ class Clock:
         return datetime(2026, 10, 8, 12, 0, tzinfo=UTC)
 
 
-def shop(db_dir: Path | None = None) -> StandinShop:
-    return StandinShop(FIXTURES, Clock(), [T], db_dir=db_dir)  # type: ignore[arg-type]
+def shop(db_dir: Path | None = None) -> SimulatedShop:
+    return SimulatedShop(FIXTURES, Clock(), [T], db_dir=db_dir)  # type: ignore[arg-type]
 
 
 async def call(
-    s: StandinShop, tool: str, args: dict[str, Any], *, key: str | None = None, policy: bool = False
+    s: SimulatedShop, tool: str, args: dict[str, Any], *, key: str | None = None, policy: bool = False
 ) -> ToolResult:
     request = ToolCallRequest(
         request_id="r", tool=tool, arguments=args, idempotency_key=key or f"{tool}-{sorted(args.items())}",

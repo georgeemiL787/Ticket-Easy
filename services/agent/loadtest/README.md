@@ -1,18 +1,18 @@
 # Load and chaos tests
 
 Two questions: **how fast is it** with 50 customers at once, and **does it stay safe and recover** when the parts it depends
-on fail. Everything runs on the stand-ins (no AI model: rules mode).
+on fail. Everything runs on the simulated services (no AI model: rules mode).
 
 ## The quick way (no extra install)
 
 ```bash
 make loadtest                      # 50 customers, no failures
-make chaos                         # 50 customers, each stand-in switched off for 30 seconds, one after another
+make chaos                         # 50 customers, each simulated service switched off for 30 seconds, one after another
 python -m loadtest.run --customers 50 --conversations 150 \
     --chaos rule_checker:30@5 --chaos safety_screen:30@35 --chaos shop:30@65 --chaos policy_search:30@95
 ```
 
-`--chaos PLUG:SECONDS@START` switches the stand-in off START seconds into the run for SECONDS seconds; it heals itself, nobody
+`--chaos PLUG:SECONDS@START` switches the simulated service off START seconds into the run for SECONDS seconds; it heals itself, nobody
 restarts anything. The runner starts the app in the same process, plays the demo conversations (`loadtest/demo.py`: status
 lookups, policy questions, confirmed returns, exchanges and address changes, vouchers, a refund that needs a person,
 greetings, in English, Egyptian Arabic and Arabizi), then prints:
@@ -27,7 +27,7 @@ greetings, in English, Egyptian Arabic and Arabizi), then prints:
 pip install -r loadtest/requirements.txt
 # terminal 1: the demo date, the test-only endpoints and no rate limit
 TEAM_B_FIXED_TODAY=2026-09-28 TEAM_B_ENABLE_TEST_ADMIN=1 TEAM_B_RATE_LIMIT_PER_MIN=100000 make run
-# terminal 2: 50 customers for 3 minutes; CHAOS_SECONDS=30 also switches each stand-in off for 30 s, one by one
+# terminal 2: 50 customers for 3 minutes; CHAOS_SECONDS=30 also switches each simulated service off for 30 s, one by one
 CHAOS_SECONDS=30 locust -f loadtest/locustfile.py --headless -u 50 -r 10 -t 3m \
     --host http://127.0.0.1:8010 --csv loadtest/out/run
 # when it has finished and the last failure has healed (about 30 s later):

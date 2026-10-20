@@ -1,14 +1,14 @@
-"""End-to-end check of the integrated TicketEasy with REAL services: Team A, Team B, Team C and the sandbox API.
+"""End-to-end check of the integrated TicketEasy with REAL services: the knowledge service, the agent, the tools service and the sandbox API.
 
-Needs the four services of ops/local/serve.py running and the lifecycle done (ops/local/team_c_lifecycle.py), so
-Team B's get_order is bound to Team C's published order-lookup tool. Every customer message goes through Team B's real
-chat API; the business-tools calls go through Team B as a signed-in manager; Team C's own records (executions) and the
+Needs the four services of ops/local/serve.py running and the lifecycle done (ops/local/tools_lifecycle.py), so
+the agent's get_order is bound to the tools service's published order-lookup tool. Every customer message goes through the agent's real
+chat API; the business-tools calls go through the agent as a signed-in manager; the tools service's own records (executions) and the
 sandbox's harness state are read independently. Prints PASS/FAIL per check and exits 1 when any check failed.
 
     services/agent/.venv/Scripts/python.exe ops/local/e2e_chat.py
 
-It changes state on purpose: it disables the order-lookup publication through Team B, checks the agent
-stops using it, then publishes the same tested artifact again through Team C's API and checks Team B discovers it.
+It changes state on purpose: it disables the order-lookup publication through the agent, checks the agent
+stops using it, then publishes the same tested artifact again through the tools service's API and checks the agent discovers it.
 """
 
 import asyncio
@@ -25,13 +25,13 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 VAR = ROOT / "ops" / "local" / "var"
-TEAM_B, TEAM_C, TEAM_A, SANDBOX = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8001", "http://127.0.0.1:8102"
+AGENT_URL, TOOLS_URL, KNOWLEDGE_URL, SANDBOX = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8001", "http://127.0.0.1:8102"
 T = "shop_001"
 RESULTS: list[tuple[str, bool, str]] = []
 
 
-def team_c_headers() -> dict[str, str]:
-    """Team C's admin token (ops/local/var/team_c_admin.key, created when production.env is on): once the operator sets one, Team C
+def tools_headers() -> dict[str, str]:
+    """The tools service's admin token (ops/local/var/team_c_admin.key, created when production.env is on): once the operator sets one, the tools service
     requires it on every change through its REST API."""
     key = VAR / "team_c_admin.key"
     return {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
@@ -44,7 +44,7 @@ def check(name: str, ok: bool, detail: Any = "") -> bool:
 
 
 class Chat:
-    """One customer conversation through Team B's public chat API."""
+    """One customer conversation through the agent's public chat API."""
 
     def __init__(self, http: httpx.Client) -> None:
         self.http, self.id = http, f"e2e-{uuid.uuid4().hex[:10]}"
@@ -91,9 +91,9 @@ def mcp_executions(team_c: httpx.Client, artifact_id: str) -> list[dict[str, Any
 
 
 async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> dict[str, Any]:
-    """What Team C's MCP server itself answers (Team B's own client, real server process): the contract checks."""
+    """What the tools service's MCP server itself answers (the agent's own client, real server process): the contract checks."""
     sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
-    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.tools_mcp_client import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",
                "--database", binding["database"], "--sandbox-hosts", binding["sandbox_hosts"]]  # fmt: skip
@@ -114,7 +114,7 @@ async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str)
 
 async def call_old_name(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> Any:
     sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
-    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    from agent_service.adapters.tools_mcp_client import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",
                "--database", binding["database"], "--sandbox-hosts", binding["sandbox_hosts"]]  # fmt: skip
@@ -182,11 +182,11 @@ def main() -> int:
     tenant = binding["tenants"][T]
     state = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
     artifact_id, tool_name = state["artifact_id"], state["tool_name"]
-    http = httpx.Client(base_url=TEAM_B, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False, headers=team_c_headers())
+    http = httpx.Client(base_url=AGENT_URL, timeout=120, trust_env=False)
+    team_c = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
 
     print("\n== Services")
-    for name, url in (("Team A", TEAM_A), ("Team B", TEAM_B), ("Team C", TEAM_C), ("sandbox", SANDBOX)):
+    for name, url in (("Team A", KNOWLEDGE_URL), ("Team B", AGENT_URL), ("Team C", TOOLS_URL), ("sandbox", SANDBOX)):
         check(f"{name} is up", httpx.get(url + "/health", timeout=5, trust_env=False).status_code == 200)
     check("Team B runs against the real Team A (live mode)", http.get("/health").json().get("mode") == "live")
 

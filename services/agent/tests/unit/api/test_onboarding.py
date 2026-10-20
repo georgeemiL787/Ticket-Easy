@@ -1,4 +1,4 @@
-"""The onboarding wizard from nothing to live, in process: stand-in knowledge service and a scripted tools service."""
+"""The onboarding wizard from nothing to live, in process: simulated knowledge service and a scripted tools service."""
 
 import base64
 from collections.abc import AsyncIterator
@@ -8,15 +8,15 @@ from typing import Any
 import httpx
 import pytest
 
-from agent_service.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
-from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.adapters.simulated.knowledge_admin import SimulatedKnowledgeAdmin
+from agent_service.adapters.tools_admin_client import ToolsAdminClient
 from agent_service.container import Container, build_container
 from agent_service.domain.bundle import BundleTool, ToolBindingRef
 from agent_service.domain.onboarding import BusinessProfile, OnboardingDraft
 from agent_service.onboarding import generate_config, slug, unique_id
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
-from tests.unit.adapters.test_team_c_tools import Fake
+from tests.unit.adapters.test_tools_catalog import Fake
 from tests.unit.api.test_business_tools import build, serve
 from tests.unit.api.test_tool_setup import ARTIFACT, ITEM, ToolsService
 
@@ -30,7 +30,7 @@ async def wizard(tmp_path: Path) -> AsyncIterator[tuple[httpx.AsyncClient, Tools
     service = ToolsService()
     container = build(tmp_path, Fake(tmp_path), service)
     assert container.team_c is not None
-    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     async for http in serve(container):
         yield http, service, container
 
@@ -82,7 +82,7 @@ async def test_the_test_chat_uses_the_draft_and_marks_its_traces(wizard: Any) ->
     other = await http.get("/v1/tenants/shop_001/welcome", headers={"X-Preview-Token": token})
     assert other.status_code == 200  # a live business never needed a pass
     reply = await chat(http, token=token)
-    assert reply.status_code == 200  # (the stand-in safety screen has no data for a new business and fails closed)
+    assert reply.status_code == 200  # (the simulated safety screen has no data for a new business and fails closed)
     traces = await container.traces.query(T, limit=5)
     assert traces and all(t.versions.get("preview") == "1" and t.versions.get("bundle_version") == "1" for t in traces)
     assert (await chat(http, "hello", token="1.deadbeef")).status_code == 404  # a forged or expired pass opens nothing
@@ -156,7 +156,7 @@ async def test_the_knowledge_steps_work_for_a_business_that_is_not_live(wizard: 
     }
     await http.post("/v1/dashboard/knowledge/reindex", params=params)
     admin = container.knowledge_admin
-    assert isinstance(admin, StandinKnowledgeAdmin)
+    assert isinstance(admin, SimulatedKnowledgeAdmin)
     admin.propose(T, "R-ONE", "Returns within 14 days.")
     approved = await http.post("/v1/dashboard/guardrails/R-ONE/approve", params=params)
     assert approved.status_code == 200
@@ -180,7 +180,7 @@ async def test_a_resume_after_a_restart_finds_the_draft_and_its_bundle(tmp_path:
 async def test_go_live_is_blocked_until_everything_is_ready_and_then_the_business_answers(wizard: Any) -> None:
     http, service, container = wizard
     admin = container.knowledge_admin
-    assert isinstance(admin, StandinKnowledgeAdmin) and container.bundles is not None
+    assert isinstance(admin, SimulatedKnowledgeAdmin) and container.bundles is not None
     await create(http)
     params = {"tenant_id": T}
     blocked = await http.post(f"/v1/onboarding/{T}/go-live")
@@ -249,7 +249,7 @@ async def test_go_live_is_blocked_until_everything_is_ready_and_then_the_busines
 async def test_when_the_knowledge_service_is_down_the_review_says_so_and_blocks(wizard: Any) -> None:
     http, _, container = wizard
     await create(http)
-    assert isinstance(container.knowledge_admin, StandinKnowledgeAdmin)
+    assert isinstance(container.knowledge_admin, SimulatedKnowledgeAdmin)
     container.knowledge_admin.fail_next = "BACKEND_UNAVAILABLE"
     review = (await http.get(f"/v1/onboarding/{T}/review")).json()
     assert "knowledge_unavailable" in {b["code"] for b in review["blockers"]} and review["ready"] is False

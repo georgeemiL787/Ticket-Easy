@@ -1,7 +1,8 @@
 """A small MCP client over stdio: start one server process, initialize, list tools, call a tool.
 
-It speaks the MCP JSON-RPC protocol (newline-delimited JSON on the process's stdin/stdout) to Team C's sandbox server
-(`python -m tools_service.mcp_server`). Only what Team B needs is here: the initialize handshake, tools/list with
+It speaks the MCP JSON-RPC protocol (newline-delimited JSON on the process's stdin/stdout) to the tools service's
+sandbox server
+(`python -m tools_service.mcp_server`). Only what the agent needs is here: the initialize handshake, tools/list with
 paging and tools/call. The server's own requests (ping) are answered; anything else it asks is refused politely.
 
 The process runs under subprocess.Popen with reader threads, so it works under every asyncio event loop (uvicorn on
@@ -28,10 +29,11 @@ from agent_service.observability import get_logger
 
 log = get_logger(__name__)
 
-PROTOCOL_VERSION = "2025-06-18"  # an initialize-handshake revision Team C's SDK (mcp 2.2.0) negotiates
+PROTOCOL_VERSION = "2025-06-18"  # an initialize-handshake revision the tools service's SDK (mcp 2.2.0) negotiates
 CLIENT_INFO = {"name": "ticket-easy-team-b", "version": "0.1.0"}
-STDERR_LINES = 40  # the server's last log lines, kept for diagnostics (Team C logs no request URLs or credentials)
-# Environment variables passed through to the server process; Team B's own settings (keys) are never passed on.
+# the server's last log lines, kept for diagnostics (the tools service logs no request URLs or credentials)
+STDERR_LINES = 40
+# Environment variables passed through to the server process; the agent's own settings (keys) are never passed on.
 PASS_THROUGH_ENV = (
     "PATH",
     "SYSTEMROOT",
@@ -124,7 +126,7 @@ class McpStdioSession:
         """Every tool the server lists now (all pages)."""
         tools: list[dict[str, Any]] = []
         cursor: str | None = None
-        for _ in range(100):  # a runaway guard; Team C lists one page
+        for _ in range(100):  # a runaway guard; the tools service lists one page
             params: dict[str, Any] = {"cursor": cursor} if cursor else {}
             result = await self.request("tools/list", params, timeout_s=timeout_s)
             tools.extend(t for t in result.get("tools") or [] if isinstance(t, dict))

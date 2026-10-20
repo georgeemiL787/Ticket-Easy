@@ -1,10 +1,13 @@
-"""Copy Team A's Noon (noon_eg) mock data into Team B's fixtures: Team B stays self-contained, tests repeatable.
+"""Copy the knowledge service's Noon (noon_eg) mock data into the agent's fixtures: the agent stays self-contained,
+tests repeatable.
 
 Usage: python scripts/build_noon_fixtures.py [--source ../knowledge/data/e-commerce/noon_eg/seed]
 
-Team A owns the data (customers, orders, returns). This writes fixtures/noon_eg/seed.json, which the stand-in shop loads
-into a SQLite database (adapters/standins/sql_shop.py). Run it again whenever Team A updates the Noon data; the tools
-(fixtures/noon_eg/tools.json) are Team B's and are not touched.
+the knowledge service owns the data (customers, orders, returns). This writes fixtures/noon_eg/seed.json, which the
+simulated shop loads
+into a SQLite database (adapters/simulated/sql_shop.py). Run it again whenever the knowledge service updates the Noon
+data; the tools
+(fixtures/noon_eg/tools.json) are the agent's and are not touched.
 """
 
 import argparse
@@ -40,7 +43,8 @@ def keywords_of(title: str) -> list[str]:
 
 
 def policy_passages(source: Path) -> dict[str, object]:
-    """The Noon return policy as passages numbered like Team A's index: one per "## " heading (…#s<n>)."""
+    """The Noon return policy as passages numbered like the knowledge service's index: one per "## " heading
+    (…#s<n>)."""
     text = (source.parent / "corpus" / "noon_egypt_return_policy.md").read_text(encoding="utf-8")
     sections: list[tuple[str, list[str]]] = []
     for line in text.splitlines():
@@ -70,9 +74,10 @@ def policy_passages(source: Path) -> dict[str, object]:
 
 
 def write_stand_ins(folder: Path, source: Path) -> None:
-    """What the offline stand-ins (policy search, safety screen, rule checker) need so Noon also runs without Team A:
+    """What the offline simulated services (policy search, safety screen, rule checker) need so Noon also runs without
+    the knowledge service:
     the policy passages, the same danger words as Nile Style, and NO approved rules (a change then goes to a person,
-    exactly as Team A's rule checker answers a shop with no rules)."""
+    exactly as the knowledge service's rule checker answers a shop with no rules)."""
     shop = ROOT / "fixtures" / "shop_001"
     risk = json.loads((shop / "risk.json").read_text(encoding="utf-8-sig"))
     risk["tenant_id"] = "noon_eg"

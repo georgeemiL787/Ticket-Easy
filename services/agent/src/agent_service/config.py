@@ -67,7 +67,7 @@ ENV_VARS: dict[str, str] = {
 
 # The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
 ROLES: tuple[str, ...] = (
-    "reader", "orchestrator", "knowledge", "reviewer", "writer", "writer_egyptian", "summary", "judge",
+    "reader", "planner", "knowledge", "reviewer", "writer", "writer_egyptian", "summary", "judge",
 )  # fmt: skip
 # RoleSettings field -> the variable's name; {ROLE} is the role in capitals (TEAM_B_LLM_MODEL_WRITER_EGYPTIAN).
 ROLE_ENV_VARS: dict[str, str] = {
@@ -109,17 +109,21 @@ class RoleSettings(BaseModel):
 class Settings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    mode: Mode = "standin"  # standin: Team B own fake services. live: the real Team A (policy search, safety, rules)
-    team_a_url: str = "http://127.0.0.1:8001"  # TEAM_B_MODE=live: where Team A's service listens
+    # standin: the agent's own fake services. live: the real knowledge service (policy search, safety, rules)
+    mode: Mode = "standin"
+    team_a_url: str = "http://127.0.0.1:8001"  # TEAM_B_MODE=live: where the knowledge service listens
     team_a_timeout_s: float = Field(default=10.0, gt=0)
     team_a_key: SecretStr | None = (
-        None  # sent as X-Service-Key on every call to Team A (needed when Team A has service keys)
+        # sent as X-Service-Key on every call to the knowledge service (needed when the knowledge service has service
+        # keys)
+        None
     )
     team_a_admin_key: SecretStr | None = (
         None  # X-Admin-Key for documents and rules (the knowledge pages); unset: those pages are off
     )
-    # Team C's sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
-    # stand-in shop serves every tool. Set: the tools it binds are served by Team C, the rest by the stand-in.
+    # The tools service's sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
+    # simulated shop serves every tool. Set: the tools it binds are served by the tools service, the rest by the
+    # simulated service.
     team_c_config: Path | None = None
     config_dir: Path = PROJECT_ROOT / "config" / "tenants"
     data_dir: Path = PROJECT_ROOT / "data"
@@ -138,9 +142,9 @@ class Settings(BaseModel):
         default=4.0, ge=0
     )  # a call waits at most this long for its rate-limit slot, else it falls back
     agent_mode: AgentMode = (
-        "on"  # the default for businesses that do not set agent_mode; needs a model for the orchestrator job
+        "on"  # the default for businesses that do not set agent_mode; needs a model for the planner job
     )
-    agent_max_moves: int = Field(default=5, ge=1)  # asks of the orchestrator per message, then the usual stages run
+    agent_max_moves: int = Field(default=5, ge=1)  # asks of the planner per message, then the usual stages run
     agent_turn_timeout_s: float = Field(default=20.0, gt=0)  # seconds the agent loop may take for one message
     roles: dict[str, RoleSettings] = Field(default_factory=dict)  # only the roles that have settings of their own
     fixed_today: date | None = None  # pins the date for demos and tests, e.g. 2026-09-28

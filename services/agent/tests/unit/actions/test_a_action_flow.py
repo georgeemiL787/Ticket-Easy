@@ -495,18 +495,18 @@ async def test_a_smaller_stated_voucher_amount_is_used(container: Container) -> 
     assert reply.decision is Decision.CONFIRM and "50" in reply.text and "100" not in reply.text
 
 
-# ---- topic change and the safety screen, with a stand-in for the knowledge answers (Track B's) ----
+# ---- topic change and the safety screen, with a simulated service for the knowledge answers (Track B's) ----
 
 
-async def knowledge_standin(ctx: Any, planned: Any) -> Step:
-    return Step(Decision.ANSWER, reason="stand-in", reply_key="greeting", citations=("shipping_policy@v1#s3",))
+async def knowledge_simulated(ctx: Any, planned: Any) -> Step:
+    return Step(Decision.ANSWER, reason="simulated service", reply_key="greeting", citations=("shipping_policy@v1#s3",))
 
 
 def with_knowledge(container: Container) -> Orchestrator:
     return Orchestrator(
         clock=container.clock, tenants=container.tenants, sessions=container.sessions, traces=container.traces,
         cases=container.cases, evidence=container.evidence, capabilities=container.capabilities,
-        policy=container.policy, handlers={"knowledge": knowledge_standin},
+        policy=container.policy, handlers={"knowledge": knowledge_simulated},
     )  # fmt: skip
 
 

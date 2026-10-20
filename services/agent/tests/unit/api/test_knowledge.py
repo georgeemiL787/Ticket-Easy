@@ -1,4 +1,4 @@
-"""The knowledge and guardrail pages over the stand-in knowledge service, and the HTTP client for the real one."""
+"""The knowledge and guardrail pages over the simulated knowledge service, and the HTTP client for the real one."""
 
 import base64
 import json
@@ -10,9 +10,9 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from agent_service.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
-from agent_service.adapters.team_a_admin import TeamAAdmin
-from agent_service.adapters.team_a_http import TeamAClient
+from agent_service.adapters.knowledge_admin_client import KnowledgeAdminClient
+from agent_service.adapters.knowledge_client import KnowledgeClient
+from agent_service.adapters.simulated.knowledge_admin import SimulatedKnowledgeAdmin
 from agent_service.api.app import create_app
 from agent_service.container import Container, build_container
 from agent_service.contracts.errors import UpstreamError
@@ -51,8 +51,8 @@ async def sign_in(
     return {"X-CSRF-Token": reply.json()["csrf_token"]}
 
 
-def admin_of(container: Container) -> StandinKnowledgeAdmin:
-    assert isinstance(container.knowledge_admin, StandinKnowledgeAdmin)
+def admin_of(container: Container) -> SimulatedKnowledgeAdmin:
+    assert isinstance(container.knowledge_admin, SimulatedKnowledgeAdmin)
     return container.knowledge_admin
 
 
@@ -226,14 +226,16 @@ async def test_the_admin_client_sends_its_keys_and_reads_a_snapshot() -> None:
             200, json={"ruleset_version": "abc123", "ruleset_sha256": "f" * 64, "approved_rule_ids": ["R-1"]}
         )
 
-    admin = TeamAAdmin("http://a.test", "admin-key", service_key="svc-key", transport=httpx.MockTransport(respond))
+    admin = KnowledgeAdminClient(
+        "http://a.test", "admin-key", service_key="svc-key", transport=httpx.MockTransport(respond)
+    )
     snapshot = await admin.snapshot(T)
     assert snapshot["knowledge"]["documents"] == [{"document_id": "returns", "version": 2, "status": "indexed"}]
     assert (
         snapshot["guardrails"]["approved_rule_ids"] == ["R-1"] and snapshot["guardrails"]["ruleset_version"] == "abc123"
     )
     assert all(r.headers["x-admin-key"] == "admin-key" and r.headers["x-service-key"] == "svc-key" for r in seen)
-    sent = TeamAAdmin("http://a.test", "k", transport=httpx.MockTransport(handler(seen)))
+    sent = KnowledgeAdminClient("http://a.test", "k", transport=httpx.MockTransport(handler(seen)))
     await sent.upload(T, "a.md", b"hello", "doc_a")
     body = json.loads(seen[-1].content)
     assert body == {"filename": "a.md", "content_base64": b64("hello"), "document_id": "doc_a"}
@@ -262,7 +264,7 @@ async def test_the_admin_client_sends_its_keys_and_reads_a_snapshot() -> None:
 async def test_the_admin_client_keeps_the_reason_team_a_gave(
     status: int, body: dict[str, Any], code: str, retryable: bool
 ) -> None:
-    admin = TeamAAdmin("http://a.test", "k", transport=httpx.MockTransport(handler([], body, status)))
+    admin = KnowledgeAdminClient("http://a.test", "k", transport=httpx.MockTransport(handler([], body, status)))
     with pytest.raises(UpstreamError) as error:
         await admin.documents(T)
     assert error.value.code == code and error.value.retryable is retryable
@@ -275,19 +277,19 @@ async def test_an_unreachable_team_a_is_a_retryable_failure() -> None:
         raise httpx.ConnectError("down", request=request)
 
     with pytest.raises(UpstreamError) as error:
-        await TeamAAdmin("http://a.test", "k", transport=httpx.MockTransport(refuse)).documents(T)
+        await KnowledgeAdminClient("http://a.test", "k", transport=httpx.MockTransport(refuse)).documents(T)
     assert error.value.code == "BACKEND_UNAVAILABLE" and error.value.retryable
 
 
 async def test_the_search_client_sends_the_service_key_when_there_is_one() -> None:
     seen: list[httpx.Request] = []
-    keyed = TeamAClient("http://a.test", transport=httpx.MockTransport(handler(seen)), service_key="svc-key")
+    keyed = KnowledgeClient("http://a.test", transport=httpx.MockTransport(handler(seen)), service_key="svc-key")
     await keyed.request("GET", "/v1/knowledge/passages", params={"tenant_id": T, "citation": "x@v1#s1"})
     assert seen[0].headers["x-service-key"] == "svc-key"
-    plain = TeamAClient("http://a.test", transport=httpx.MockTransport(handler(seen)))
+    plain = KnowledgeClient("http://a.test", transport=httpx.MockTransport(handler(seen)))
     await plain.request("GET", "/health")
     assert "x-service-key" not in seen[1].headers
-    refused = TeamAClient(
+    refused = KnowledgeClient(
         "http://a.test",
         transport=httpx.MockTransport(handler([], {"error": {"code": "FORBIDDEN", "message": "no"}}, 403)),
     )

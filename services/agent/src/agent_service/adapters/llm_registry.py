@@ -1,6 +1,6 @@
 """One AI model per job, with a backup model and the provider's per-minute limits.
 
-The jobs (config.ROLES): reader (understands the message), orchestrator, knowledge (policy search and answers), reviewer
+The jobs (config.ROLES): reader (understands the message), planner, knowledge (policy search and answers), reviewer
 (the policy agent), writer (words replies and small talk), writer_egyptian, summary (history and handoff summaries) and
 judge (grades replies in the evaluation). Each reads its own TEAM_B_LLM_*_<ROLE> settings and, for anything it does not
 set, the general TEAM_B_LLM_* ones: so with no per-job settings every job gets the same client as before.

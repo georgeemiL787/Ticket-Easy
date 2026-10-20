@@ -23,7 +23,7 @@ from agent_service.ports import (
     Clock,
     EvidenceProvider,
     LLMClient,
-    MovePicker,
+    Planner,
     PolicyGate,
     SessionStore,
     TraceStore,
@@ -55,9 +55,9 @@ class Step:
     passages: tuple[Passage, ...] = ()  # policy passages quoted verbatim after the reply; never sent to the AI model
     knowledge: bool = False  # a policy answer: the trace must then show the evidence it came from
     text: str | None = None  # a policy answer worded by the AI model (fact-checked); replaces the template
-    plan: ReplyPlan | None = None  # the reply plan the orchestrator chose; else it is read off the key and values
-    escalation_kind: Literal["forced", "chosen"] = "forced"  # a handoff decided by code, or chosen by the orchestrator
-    tried: tuple[str, ...] = ()  # what the orchestrator says it tried before handing over (plain words)
+    plan: ReplyPlan | None = None  # the reply plan the planner chose; else it is read off the key and values
+    escalation_kind: Literal["forced", "chosen"] = "forced"  # a handoff decided by code, or chosen by the planner
+    tried: tuple[str, ...] = ()  # what the planner says it tried before handing over (plain words)
 
     def __post_init__(self) -> None:
         if self.decision is Decision.HANDOFF and self.escalation is None:
@@ -148,7 +148,7 @@ class Deps:
     knowledge_agent: KnowledgeAgent | None = None  # optional AI agent: searches (twice if needed), answers or not found
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     policy: PolicyGate | None = None  # the rule checker; without it no action can be checked, so none runs
-    move_picker: MovePicker | None = None  # the orchestrator; without it the agent is unavailable
+    planner: Planner | None = None  # the planner; without it the agent is unavailable
     agent_mode: AgentMode = "on"  # the service default; a tenant may set its own
     agent_max_moves: int = 5
     agent_turn_timeout_s: float = 20.0

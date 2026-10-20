@@ -1,21 +1,21 @@
-"""Run Team C's real tool lifecycle for the Nile Style sandbox shop and bind the result into Team B.
+"""Run the tools service's real tool lifecycle for the Nile Style sandbox shop and bind the result into the agent.
 
-Needs the sandbox API (ops/local/serve.py sandbox) and Team C (ops/local/serve.py team-c) running, and a model
-provider configured for Team C (services/tools/.env: Groq, OpenRouter or Ollama). It drives Team C's own API and forms exactly
+Needs the sandbox API (ops/local/serve.py sandbox) and the tools service (ops/local/serve.py team-c) running, and a model
+provider configured for the tools service (services/tools/.env: Groq, OpenRouter or Ollama). It drives the tools service's own API and forms exactly
 as an owner would in its pages, with every owner decision labelled sandbox-only:
 
   business -> upload the sandbox OpenAPI -> request a tool (the model triages and generates a proposal)
   -> answer questions and access requirements -> accept the access policy -> reconcile (model) -> confirm requirements
   -> approve to build -> save the sandbox connector (with its test-fixture endpoints) -> build the artifact -> save the demo
-  customers' identities for Team B's chat (alice = C-100, bob = C-101, ...) -> ONE automatic-test call (Team C creates its own
+  customers' identities for the agent's chat (alice = C-100, bob = C-101, ...) -> ONE automatic-test call (the tools service creates its own
   test accounts and records, runs the policy tests and the own-record / cross-customer scenarios) -> publish to the sandbox-only
-  sandbox MCP -> write Team B's binding (ops/local/var/team_c.json). `--manual-tests` keeps the old hand-written tests.
+  sandbox MCP -> write the agent's binding (ops/local/var/team_c.json). `--manual-tests` keeps the old hand-written tests.
 
-Nothing here approves on anyone's behalf without saying so: approvals are recorded by Team C with this script's notes.
+Nothing here approves on anyone's behalf without saying so: approvals are recorded by the tools service with this script's notes.
 Progress is kept in ops/local/var/lifecycle.json so a failed run resumes without asking the model again; --fresh
-starts over. Credentials (sandbox tokens) are written only to Team C's database through its form, never printed.
+starts over. Credentials (sandbox tokens) are written only to the tools service's database through its form, never printed.
 
-    services/agent/.venv/Scripts/python.exe ops/local/team_c_lifecycle.py [--fresh] [--tool order|ticket]
+    services/agent/.venv/Scripts/python.exe ops/local/tools_lifecycle.py [--fresh] [--tool order|ticket]
 """
 
 import argparse
@@ -31,12 +31,12 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 VAR = ROOT / "ops" / "local" / "var"
-TEAM_C = "http://127.0.0.1:8101"
-API = TEAM_C + "/api/v1"
+TOOLS_URL = "http://127.0.0.1:8101"
+API = TOOLS_URL + "/api/v1"
 SANDBOX = "http://127.0.0.1:8102"
 DEMO_SHOP = "http://127.0.0.1:8103"  # a second, separate deployment of the shop API (ops/local/serve.py demo-shop)
-LABEL = "sandbox-only integration run (ops/local/team_c_lifecycle.py):"
-# Team B's own customers (services/agent/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
+LABEL = "sandbox-only integration run (ops/local/tools_lifecycle.py):"
+# The agent's own customers (services/agent/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in the tools service.
 IDENTITIES = {
     "alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790"),
     "carol": ("C-105", "NS-20955"), "dan": ("C-104", "NS-20960"),  # carol: a processing order, dan: a pending one
@@ -130,13 +130,13 @@ OWNER_POLICY = (
 
 
 class Owner:
-    """Team C's API and its browser forms (which need the page's CSRF token)."""
+    """The tools service's API and its browser forms (which need the page's CSRF token)."""
 
     def __init__(self) -> None:
-        # Team C requires its admin token on REST changes once the operator set one (ops/local/production.env switches that on)
+        # The tools service requires its admin token on REST changes once the operator set one (ops/local/production.env switches that on)
         key = VAR / "team_c_admin.key"
         token = {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
-        self.http = httpx.Client(base_url=TEAM_C, timeout=600.0, trust_env=False, headers=token)
+        self.http = httpx.Client(base_url=TOOLS_URL, timeout=600.0, trust_env=False, headers=token)
         self.csrf: str | None = None
 
     def get(self, path: str) -> Any:
@@ -219,8 +219,8 @@ def accept_policy(owner: Owner, pid: str, sid: str, write: bool, financial: bool
         named = [s for s in reads if f'{ops[s["operation_id"]]["method"]} {ops[s["operation_id"]]["path"]}' in req["operations"]]
         step_for = (named or reads or [None])[0]  # the order read that proves ownership before any write
         if step_for is None:
-            # No read step to check on: Team C cannot check ownership itself. The sandbox API refuses another
-            # customer's order (403); Team C records this as an unrestricted scope (no Team C record check).
+            # No read step to check on: the tools service cannot check ownership itself. The sandbox API refuses another
+            # customer's order (403); the tools service records this as an unrestricted scope (no the tools service record check).
             scopes.append({"requirement_id": req["id"], "mode": "unrestricted",
                            "reason": f"{LABEL} no read step; the sandbox API answers 403 for another customer's order."})
             continue
@@ -259,7 +259,7 @@ def reconcile_until_ready(owner: Owner, pid: str) -> dict[str, Any]:
         print(f"  reconcile #{i}: state={p['state']}")
     p = owner.get(f"/proposals/{pid}")
     if p["state"] != "ready_for_review":
-        raise SystemExit(f"the proposal is {p['state']} after 5 reconciliations; open {TEAM_C}/proposals/{pid} to see why")
+        raise SystemExit(f"the proposal is {p['state']} after 5 reconciliations; open {TOOLS_URL}/proposals/{pid} to see why")
     return p
 
 
@@ -290,7 +290,7 @@ def review_enforcement_if_needed(owner: Owner, pid: str, aid: str) -> str:
         aid = owner.post(f"/proposals/{pid}/artifacts", {"connector_id": a["content"]["connector"]["id"]})["id"]
     blockers = owner.get(f"/artifacts/{aid}")["content"].get("execution_blockers")
     if blockers:
-        raise SystemExit(f"execution is still blocked: {blockers}; open {TEAM_C}/artifacts/{aid}")
+        raise SystemExit(f"execution is still blocked: {blockers}; open {TOOLS_URL}/artifacts/{aid}")
     return aid
 
 
@@ -331,7 +331,7 @@ def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[s
 
 
 def ensure_fixtures(owner: Owner, business_id: str, connector_id: str) -> None:
-    """Tell Team C where the sandbox's test-fixture endpoints are (the key is only an environment variable NAME)."""
+    """Tell the tools service where the sandbox's test-fixture endpoints are (the key is only an environment variable NAME)."""
     r = owner.http.put(f"/api/v1/businesses/{business_id}/connectors/{connector_id}/fixtures",
                        json={"base_url": SANDBOX, "key_ref": "NILE_SANDBOX_FIXTURE_KEY"})
     _ok(r, "declare fixtures")
@@ -339,14 +339,14 @@ def ensure_fixtures(owner: Owner, business_id: str, connector_id: str) -> None:
 
 
 def automatic_tests(owner: Owner, aid: str) -> None:
-    """One call: accounts, records, scenarios, guard tests and the evidence check. Fails with Team C's own questions."""
+    """One call: accounts, records, scenarios, guard tests and the evidence check. Fails with the tools service's own questions."""
     result = owner.post(f"/artifacts/{aid}/auto-test", {"wait": True})
     for t in result["plan"]["tests"]:
         verdicts = [a["verdict"] for a in result["attempts"] if a.get("test") == t["name"]]
         print(f"  {t['name']} ({t['purpose']}): {verdicts[-1] if verdicts else 'diagnostic'}")
     if result["outcome"] not in ("ready_to_publish", "published"):
         asks = " | ".join(q["question"] for q in result["needs_owner"]) or "; ".join(result["problems"])
-        raise SystemExit(f"automatic tests did not reach ready_to_publish ({result['outcome']}): {asks}; open {TEAM_C}/artifacts/{aid}")
+        raise SystemExit(f"automatic tests did not reach ready_to_publish ({result['outcome']}): {asks}; open {TOOLS_URL}/artifacts/{aid}")
     print(f"automatic tests: {result['outcome']}")
 
 
@@ -368,7 +368,7 @@ def sandbox_tests(owner: Owner, aid: str, write: bool, tests: list | None = None
 
 
 def publish(owner: Owner, aid: str, environment: str = "sandbox") -> dict[str, Any]:
-    note = f"{LABEL} sandbox publication for Team B" if environment == "sandbox" else "Live Demo publication for Team B (ops/local/team_c_lifecycle.py)"
+    note = f"{LABEL} sandbox publication for Team B" if environment == "sandbox" else "Live Demo publication for Team B (ops/local/tools_lifecycle.py)"
     r = owner.http.post(f"/api/v1/artifacts/{aid}/publications", json={"note": note, "environment": environment})
     if r.status_code == 409:
         problems = (r.json().get("details") or {}).get("problems") or [r.text]
@@ -378,7 +378,7 @@ def publish(owner: Owner, aid: str, environment: str = "sandbox") -> dict[str, A
 
 
 def output_fields(content: dict[str, Any], wanted: list[str]) -> dict[str, str]:
-    """Team B's output names -> Team C output name or /pointer, from the reviewed artifact's declared outputs."""
+    """The agent's output names -> the tools service output name or /pointer, from the reviewed artifact's declared outputs."""
     fields: dict[str, str] = {}
     for o in content.get("outputs") or []:
         pointer = o.get("pointer") or ""
@@ -395,8 +395,8 @@ def output_fields(content: dict[str, Any], wanted: list[str]) -> dict[str, str]:
 
 
 def fill_missing_outputs(binding: dict[str, Any], declared: dict[str, Any]) -> None:
-    """Team B requires some output fields the model-written Team C tool may not return: an input it was given
-    (order_id) is echoed from the call, a plain status becomes a fixed value. Applied only after Team C reports success."""
+    """The agent requires some output fields the model-written the tools service tool may not return: an input it was given
+    (order_id) is echoed from the call, a plain status becomes a fixed value. Applied only after the tools service reports success."""
     inputs = set(declared["input_schema"].get("properties") or {})
     for name in declared["output_schema"].get("required") or []:
         if name in binding["fields"]:
@@ -410,13 +410,13 @@ def fill_missing_outputs(binding: dict[str, Any], declared: dict[str, Any]) -> N
 def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], environment: str = "sandbox") -> Path:
     path = VAR / "team_c.json"
     config = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    team_c_dir = ROOT / "services" / "tools"
-    python = team_c_dir / ".venv" / "Scripts" / "python.exe"
+    tools_dir = ROOT / "services" / "tools"
+    python = tools_dir / ".venv" / "Scripts" / "python.exe"
     if not python.exists():
-        python = team_c_dir / ".venv" / "bin" / "python"
+        python = tools_dir / ".venv" / "bin" / "python"
     config.update(
-        command=[str(python), "-m", "tools_service.mcp_server"], cwd=str(team_c_dir), env={"PYTHONPATH": "."},
-        database="data/integration.sqlite3", sandbox_hosts="127.0.0.1:8102", api_url=TEAM_C, builder_url=TEAM_C,
+        command=[str(python), "-m", "tools_service.mcp_server"], cwd=str(tools_dir), env={"PYTHONPATH": "."},
+        database="data/integration.sqlite3", sandbox_hosts="127.0.0.1:8102", api_url=TOOLS_URL, builder_url=TOOLS_URL,
     )  # fmt: skip
     tenant = config.setdefault("tenants", {}).setdefault("shop_001", {})
     tenant["business_id"] = state["business_id"]
@@ -446,7 +446,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
 
 def live_main(tool: str) -> int:
     """Live Demo for an already approved proposal: a Live Demo connector to the separate demo-shop deployment, a build,
-    that deployment's own credentials, tests against it, a live_demo publication, and Team B's binding switched to
+    that deployment's own credentials, tests against it, a live_demo publication, and the agent's binding switched to
     live_demo for this tool. The demo shop runs on this machine, so LIVE_DEMO_PRIVATE_HOSTS must list it explicitly."""
     write = TOOLS[tool]["method"] == "POST"
     base = load_state(False, tool)

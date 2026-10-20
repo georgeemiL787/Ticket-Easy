@@ -41,7 +41,7 @@ STAGE_NAMES = [
 
 
 def orch(c: Container, **kw: Any) -> Orchestrator:
-    """An orchestrator on the container's stores; the safety screen defaults to one that finds nothing."""
+    """An planner on the container's stores; the safety screen defaults to one that finds nothing."""
     options: dict[str, Any] = {"evidence": FakeEvidence(), "tenants": c.tenants, **kw}
     return Orchestrator(clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, **options)
 

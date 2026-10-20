@@ -137,7 +137,7 @@ async def test_c_the_model_can_raise_them(tenant: TenantConfig) -> None:
 
 
 class RulesWithFlags:
-    """A rules stand-in that has already raised safety flags."""
+    """A rules simulated that has already raised safety flags."""
 
     def understand_sync(self, text: str, session: SessionState | None, tenant: TenantConfig) -> NLUResult:
         return NLUResult(

@@ -1,7 +1,7 @@
 """The knowledge scenarios in both modes with the knowledge agent switched on (a deterministic fake model).
 
 S01, S02, S10, S17, S25, S34, S39 and S41 run through knowledge.answer (the usual flow, agent mode off) and again
-through the agent loop (agent mode on, with the scripted orchestrator). The fake model writes the search, gives up on
+through the agent loop (agent mode on, with the scripted planner). The fake model writes the search, gives up on
 a question the documents do not cover, and answers with the first passage word for word, so the expectations of the
 scenario files hold unchanged. (The second search is covered in test_knowledge_agent.py.)
 """
@@ -13,7 +13,7 @@ import pytest
 
 from agent_service.container import Container
 from agent_service.knowledge.agent import KnowledgeAgent
-from tests.fakes import FunctionPicker, KnowledgeFakeLLM
+from tests.fakes import FunctionPlanner, KnowledgeFakeLLM
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_format import discover, load_scenario
 from tests.integration.scenario_runner import run_scenario
@@ -27,7 +27,7 @@ def with_agent(container: Container, *, agent_mode: str) -> Container:
     bot: Any = container.orchestrator
     changes: dict[str, Any] = {"knowledge_agent": KnowledgeAgent(KnowledgeFakeLLM()), "agent_mode": agent_mode}
     if agent_mode == "on":
-        changes["move_picker"] = FunctionPicker(expert)
+        changes["planner"] = FunctionPlanner(expert)
     bot._deps = replace(bot._deps, **changes)
     return container
 
@@ -59,7 +59,7 @@ async def test_a_policy_found_only_on_the_second_search_is_answered_from_it(tmp_
     bot: Any = container.orchestrator
     changes: dict[str, Any] = {"knowledge_agent": KnowledgeAgent(llm), "agent_mode": mode}
     if mode == "on":
-        changes["move_picker"] = FunctionPicker(expert)
+        changes["planner"] = FunctionPlanner(expert)
     bot._deps = replace(bot._deps, **changes)
     reply = await bot.handle_turn("shop_001", "k2", "What is the policy on sending stuff back?")
     trace = (await container.traces.for_conversation("shop_001", "k2"))[-1]

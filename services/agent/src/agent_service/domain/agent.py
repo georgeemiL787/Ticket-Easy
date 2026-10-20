@@ -1,6 +1,6 @@
 """The agent's vocabulary: the moves it may propose, the plan it keeps, and the record it leaves on the trace.
 
-In agent mode a turn is a short loop. The orchestrator (an AI model, later) proposes ONE move at a time from this menu;
+In agent mode a turn is a short loop. The planner (an AI model, later) proposes ONE move at a time from this menu;
 code validates the move and decides whether it runs. A move is only a proposal: it never calls a tool by itself, never
 clears a safety flag and never skips a gate (CLAUDE.md rule 1). The menu:
 
@@ -107,7 +107,7 @@ class AgentPlan(FrozenModel):
 
 
 class MoveProposal(FrozenModel):
-    """What the orchestrator answers in one ask: the plan as it now stands (None: unchanged) and the next move."""
+    """What the planner answers in one ask: the plan as it now stands (None: unchanged) and the next move."""
 
     plan: AgentPlan | None = None
     move: AnyMove
@@ -146,7 +146,7 @@ class PassageBrief(FrozenModel):
 
 
 class AgentView(FrozenModel):
-    """What the move picker sees. Built by code; personal values (phone, email, card, address) are already hidden."""
+    """What the planner sees. Built by code; personal values (phone, email, card, address) are already hidden."""
 
     message: str
     turn_id: str = ""

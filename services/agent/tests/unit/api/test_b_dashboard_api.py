@@ -342,12 +342,12 @@ async def test_a_passage_is_served_by_its_citation(small: Any) -> None:
 async def test_the_conversation_timeline_shows_the_plan_the_moves_and_their_checks(tmp_path: Path) -> None:
     from dataclasses import replace
 
-    from tests.fakes import FunctionPicker
+    from tests.fakes import FunctionPlanner
     from tests.integration.agent_expert import expert
 
     container = build_container(make_settings(tmp_path, fixed_today=datetime(2026, 9, 28, tzinfo=UTC).date()))
     bot: Any = container.orchestrator
-    bot._deps = replace(bot._deps, move_picker=FunctionPicker(expert), agent_mode="on")
+    bot._deps = replace(bot._deps, planner=FunctionPlanner(expert), agent_mode="on")
     await bot.handle_turn(T, "tl", "Where is my order NS-20877? My phone is 01012345601")
     await bot.handle_turn(T, "tl", "I want to talk to a human")
     app, http = await client_for(container)

@@ -1,8 +1,8 @@
-"""A scripted orchestrator that follows the expected path of the lookup, knowledge and action scenarios (no AI model).
+"""A scripted planner that follows the expected path of the lookup, knowledge and action scenarios (no AI model).
 
-It plays the part the real orchestrator will: it reads the AgentView (what the reader understood, what is verified, the
+It plays the part the real planner will: it reads the AgentView (what the reader understood, what is verified, the
 plan it saved, the moves already made) and proposes one move at a time. The loop, the checks, the whole gate order of
-actions.py and the stand-in shop, policy search and rule checker are the real ones; only the choosing is scripted. Its
+actions.py and the simulated shop, policy search and rule checker are the real ones; only the choosing is scripted. Its
 plan steps carry its memory between messages:
   "status:<order id>"  an order status is wanted        "policy"  a policy question
   "action:<intent>:<order id>"  an action is wanted      "lookup:?"  the order number is still missing
@@ -213,10 +213,10 @@ def expert(view: AgentView) -> MoveProposal:
 
 
 def with_expert(container: Container) -> Container:
-    """The same container, with the real orchestrator now working in agent mode with the scripted picker."""
-    from tests.fakes import FunctionPicker
+    """The same container, with the real planner now working in agent mode with the scripted picker."""
+    from tests.fakes import FunctionPlanner
 
     assert container.orchestrator is not None
     bot: Any = container.orchestrator
-    bot._deps = replace(bot._deps, move_picker=FunctionPicker(expert), agent_mode="on")
+    bot._deps = replace(bot._deps, planner=FunctionPlanner(expert), agent_mode="on")
     return container

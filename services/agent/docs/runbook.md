@@ -153,7 +153,7 @@ session they have open. Ask a developer to add the command.
 
 ## 8. The agent keeps giving up (the fallback rate rises)
 
-In agent mode the AI orchestrator plans each message and code checks every move. When the loop cannot finish a message it
+In agent mode the AI planner plans each message and code checks every move. When the loop cannot finish a message it
 **falls back** to the usual step-by-step flow, so the customer still gets an answer. A few fallbacks are normal; the
 **Overview** page ("How the agent is doing") and the alert `agent_fallback_spike` show when there are too many.
 
@@ -174,7 +174,7 @@ Each AI job has its own model setting, and an optional backup (`TEAM_B_LLM_FALLB
 answers "not found" or "decommissioned", the backup is used at once and the main one is left alone for ten minutes; the
 trace shows `ai_backup_model`.
 
-1. Change the job's model in `.env`: `TEAM_B_LLM_MODEL_<JOB>=<new model id>` (jobs: READER, ORCHESTRATOR, KNOWLEDGE,
+1. Change the job's model in `.env`: `TEAM_B_LLM_MODEL_<JOB>=<new model id>` (jobs: READER, PLANNER, KNOWLEDGE,
    REVIEWER, WRITER, SUMMARY, JUDGE).
 2. Make the backup the new main model if it works well, and set a new backup (a production model, not a preview).
 3. Restart (`make down`, then `make demo-full`). Check the Overview: the fallback rate should be back to normal.

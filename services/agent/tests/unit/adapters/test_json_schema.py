@@ -1,4 +1,4 @@
-from agent_service.adapters.standins.json_schema import validate
+from agent_service.adapters.simulated.json_schema import validate
 
 SCHEMA = {
     "type": "object",

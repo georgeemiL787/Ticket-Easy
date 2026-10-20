@@ -81,7 +81,7 @@ def test_policy_decision_values() -> None:
         PolicyDecision.model_validate({"request_id": "r", "decision": "maybe", "reason_code": "X"})
 
 
-# Recorded Team A examples must parse (skipped if the team_a folder is not in this checkout).
+# Recorded the knowledge service examples must parse (skipped if the team_a folder is not in this checkout).
 EXAMPLES = Path(__file__).resolve().parents[4] / "knowledge" / "contracts" / "examples"
 needs_team_a = pytest.mark.skipif(not EXAMPLES.is_dir(), reason="team_a examples not available")
 
@@ -94,10 +94,11 @@ def _body(name: str, part: str) -> dict[str, Any]:
 
 @needs_team_a
 @pytest.mark.parametrize("name", ["allow", "deny", "require_human", "missing_context"])
-def test_team_a_check_action_examples_parse(name: str) -> None:
+def test_knowledge_check_action_examples_parse(name: str) -> None:
     file = f"check_action.{name}.json"
     request = _body(file, "request")
-    # Team A has no `action` field: its rules are keyed by tool.name, so the Phase 6 adapter must send the
+    # The knowledge service has no `action` field: its rules are keyed by tool.name, so the Phase 6 adapter must send
+    # the
     # capability as tool.name. Here we add `action` the way the adapter will derive it.
     CheckActionRequest.model_validate({**request, "action": request["tool"]["name"]})
     decision = PolicyDecision.model_validate(_body(file, "response"))
@@ -105,7 +106,7 @@ def test_team_a_check_action_examples_parse(name: str) -> None:
 
 
 @needs_team_a
-def test_team_a_search_and_risk_examples_parse() -> None:
+def test_knowledge_search_and_risk_examples_parse() -> None:
     result = RetrievalResult.model_validate(_body("search_knowledge.success.json", "response"))
     assert result.passages and result.passages[0].citation == result.passages[0].passage_id
     assert RetrievalResult.model_validate(_body("search_knowledge.empty.json", "response")).empty_reason

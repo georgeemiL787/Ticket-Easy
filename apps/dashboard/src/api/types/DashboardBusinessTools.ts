@@ -15,7 +15,7 @@ export type Host = string;
 export type Id = string;
 export type Identities = number;
 export type Ready = boolean | null;
-export type Connectors = TeamCConnector[];
+export type Connectors = ToolConnector[];
 export type ListedAt = string | null;
 export type LiveTools = number;
 export type MappedCustomers = number;
@@ -37,7 +37,7 @@ export type RolledBackAt = string | null;
 export type RolledBackBy = string | null;
 export type SourceArtifactId = string;
 export type Status1 = string;
-export type Promotions = TeamCPromotion[];
+export type Promotions = ToolPromotion[];
 export type ArtifactId = string | null;
 export type AutoTestQuestion = string | null;
 export type AutoTestStatus = string | null;
@@ -48,7 +48,7 @@ export type Promoted = boolean;
 export type ReadinessState = string | null;
 export type State = string;
 export type Version = number;
-export type Proposals = TeamCProposal[];
+export type Proposals = ToolProposal[];
 export type BoundTo = string | null;
 export type DisabledAt = string | null;
 export type EffectiveStatus = string;
@@ -63,7 +63,7 @@ export type PublishedAt = string | null;
 export type Status2 = string;
 export type ToolName = string;
 export type Version1 = number;
-export type Publications = TeamCPublication[];
+export type Publications = ToolPublication[];
 export type PublicationsError = string | null;
 export type SandboxOnly = boolean;
 export type TeamCError = string | null;
@@ -104,7 +104,7 @@ export interface DashboardBusinessTools {
   tenant_id: TenantId;
   tools: Tools;
 }
-export interface TeamCConnector {
+export interface ToolConnector {
   checked_at?: CheckedAt;
   checks?: Checks;
   environment: Environment;
@@ -118,7 +118,7 @@ export interface ConnectorCheck {
   detail?: Detail;
   status: Status;
 }
-export interface TeamCPromotion {
+export interface ToolPromotion {
   actor: Actor;
   checklist?: Checklist;
   created_at?: CreatedAt;
@@ -138,7 +138,7 @@ export interface PromotionCheck {
   name: Name;
   ok: Ok;
 }
-export interface TeamCProposal {
+export interface ToolProposal {
   artifact_id?: ArtifactId;
   auto_test_question?: AutoTestQuestion;
   auto_test_status?: AutoTestStatus;
@@ -150,7 +150,7 @@ export interface TeamCProposal {
   state: State;
   version: Version;
 }
-export interface TeamCPublication {
+export interface ToolPublication {
   bound_to?: BoundTo;
   disabled_at?: DisabledAt;
   effective_status: EffectiveStatus;

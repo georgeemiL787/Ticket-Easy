@@ -10,7 +10,7 @@ from agent_service.contracts.base import PlugModel
 
 EmptyReason = Literal[
     "below_threshold", "no_documents", "no_match"
-]  # no_match: Team B stand-in; Team A says below_threshold
+]  # no_match: the agent simulated service; the knowledge service says below_threshold
 
 
 class Passage(PlugModel):
@@ -20,13 +20,15 @@ class Passage(PlugModel):
     document_id: str
     version: str
     section: str
-    language: str  # Team A sends ar | en | mixed. Kept open so a new value from a plug does not break us.
+    language: (
+        str  # The knowledge service sends ar | en | mixed. Kept open so a new value from a plug does not break us.
+    )
     text: str
     score: float
 
     @property
     def citation(self) -> str:
-        """Team A also sends a citation field, and it always equals passage_id."""
+        """The knowledge service also sends a citation field, and it always equals passage_id."""
         return self.passage_id
 
 
@@ -76,7 +78,8 @@ class PastTicketResult(PlugModel):
 
 
 class RiskAssessment(PlugModel):
-    """Answer of the safety screen. Team A names the flagged field mandatory_escalation; both names are accepted."""
+    """Answer of the safety screen. The knowledge service names the flagged field mandatory_escalation; both names are
+    accepted."""
 
     flagged: bool = Field(validation_alias=AliasChoices("flagged", "mandatory_escalation"))
     categories: tuple[str, ...] = ()

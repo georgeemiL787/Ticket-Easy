@@ -1,8 +1,10 @@
-"""Team A's onboarding API: the documents of a business, the index, and the rules the model proposes.
+"""The knowledge service's onboarding API: the documents of a business, the index, and the rules the model proposes.
 
 Used only by the dashboard's knowledge and guardrail pages (X-Admin-Key). The person who approves or rejects a rule is
-the signed-in reviewer, passed in by the API layer: Team A records that name in the rule and its history. A refusal by
-Team A (an unreadable file, a rule that would break a guardrail case) is returned as an UpstreamError carrying Team A's
+the signed-in reviewer, passed in by the API layer: the knowledge service records that name in the rule and its history.
+A refusal by
+the knowledge service (an unreadable file, a rule that would break a guardrail case) is returned as an UpstreamError
+carrying the knowledge service's
 own message, so the page can show it; an unreachable service is a retryable UpstreamError.
 """
 
@@ -17,7 +19,7 @@ SERVICE = "team_a"
 REFUSALS = {"INVALID_REQUEST", "INVALID_STATE", "NOT_FOUND", "TENANT_NOT_FOUND", "FORBIDDEN"}
 
 
-class TeamAAdmin:
+class KnowledgeAdminClient:
     def __init__(
         self,
         base_url: str,
@@ -81,7 +83,7 @@ class TeamAAdmin:
         return await self._call("GET", "/v1/policy/rules/ruleset", params={"tenant_id": tenant_id})
 
     async def snapshot(self, tenant_id: str) -> dict[str, Any]:
-        """The bundle's knowledge and guardrails sections as they stand in Team A right now."""
+        """The bundle's knowledge and guardrails sections as they stand in the knowledge service right now."""
         docs = await self.documents(tenant_id)
         ruleset = await self.ruleset(tenant_id)
         current = [d for d in docs.get("documents", []) if d.get("current")]

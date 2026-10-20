@@ -586,7 +586,7 @@ async def get_conversation(request: Request, conversation_id: CONVERSATION, tena
 
 class ReplayRequest(BaseModel):
     tenant_id: str
-    changes: dict[str, str] = {}  # environment-style names, e.g. {"TEAM_B_LLM_MODEL_ORCHESTRATOR": "..."}
+    changes: dict[str, str] = {}  # environment-style names, e.g. {"TEAM_B_LLM_MODEL_PLANNER": "..."}
 
 
 @router.post("/conversations/{conversation_id}/replay", response_model=replay_mod.ReplayResult)
@@ -594,7 +594,8 @@ async def replay_conversation(
     request: Request, conversation_id: CONVERSATION, body: ReplayRequest
 ) -> replay_mod.ReplayResult:
     """Say the conversation again with other settings and return both runs. Admin only (a route not listed in the role
-    table needs the admin role). The replay runs on a fresh stand-in shop with memory stores: the real shop and the real
+    table needs the admin role). The replay runs on a fresh simulated shop with memory stores: the real shop and the
+    real
     conversations are never touched, and nothing is saved."""
     b = built(request, body.tenant_id)
     try:

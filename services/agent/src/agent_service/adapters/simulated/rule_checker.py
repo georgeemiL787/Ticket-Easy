@@ -1,4 +1,4 @@
-"""Stand-in for the Team A rule checker: may this action happen? Yes, no, or only with a human.
+"""Simulated for the knowledge service rule checker: may this action happen? Yes, no, or only with a human.
 
 Deterministic, no AI. The first decisive step wins:
   1. record of another tenant                              -> deny TENANT_MISMATCH
@@ -90,7 +90,7 @@ _MESSAGES: dict[str, LocalizedText] = {
 }
 
 
-class RuleCheckerStandin:
+class SimulatedRuleChecker:
     def __init__(self, fixtures_dir: Path) -> None:
         self._dir = fixtures_dir
         self._books: dict[str, _RuleBook] = {}

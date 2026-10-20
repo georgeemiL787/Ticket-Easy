@@ -6,7 +6,7 @@
 
 Before, the assistant followed a fixed path for every message: understand, check safety, find the request, run its handler.
 Now it can also work like a person at a help desk: **make a plan, take a step, look at what happened, change the plan**.
-An AI model, the **orchestrator**, chooses the next step. **Everything it chooses is checked by code before it happens.**
+An AI model, the **planner**, chooses the next step. **Everything it chooses is checked by code before it happens.**
 
 ## Three agents and four helpers
 
@@ -26,7 +26,7 @@ Helpers (they do one small job):
 
 ## Plan, act, re-plan
 
-For "where is my order and cancel it", the plan has two steps. The orchestrator looks up the order (first step), answers the
+For "where is my order and cancel it", the plan has two steps. The planner looks up the order (first step), answers the
 status, then proposes the cancellation (second step). The customer's yes is still needed; the plan waits for it and continues
 afterwards. If the customer changes their mind or the shop says no, the plan changes, and the dashboard shows each plan and
 each move.

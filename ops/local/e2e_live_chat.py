@@ -1,4 +1,4 @@
-"""Live Demo through the real TicketEasy chat: Team A + Team B + Team C, calling a Live Demo API with real HTTP.
+"""Live Demo through the real TicketEasy chat: the knowledge service + the agent + the tools service, calling a Live Demo API with real HTTP.
 
 The Live Demo target here is the separate demo-shop deployment (ops/local/serve.py demo-shop, port 8103: its own
 process, data and credentials, synthetic data on THIS machine), allowed by the explicit LIVE_DEMO_PRIVATE_HOSTS
@@ -6,8 +6,8 @@ exception. It is NOT an external API; ops/local/live_demo_check.py covers a real
 the chat path: the assistant's Live Demo tool calls reach that deployment (never the sandbox), reads and writes are
 real and verified independently, an uncertain live write is never retried, and disabling stops the next call.
 
-Needs: ops/local/serve.py up (with demo-shop), ops/local/team_c_lifecycle.py --tool order|ticket --environment
-live_demo, and Team B restarted after that. Prints PASS/FAIL per check; exits 1 when any failed.
+Needs: ops/local/serve.py up (with demo-shop), ops/local/tools_lifecycle.py --tool order|ticket --environment
+live_demo, and the agent restarted after that. Prints PASS/FAIL per check; exits 1 when any failed.
 """
 
 import asyncio
@@ -20,10 +20,10 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ops" / "local"))
-from e2e_chat import RESULTS, Chat, call_old_name, check, manager, mcp_executions, sandbox_state, team_c_headers, traces  # noqa: E402
+from e2e_chat import RESULTS, Chat, call_old_name, check, manager, mcp_executions, sandbox_state, tools_headers, traces  # noqa: E402
 
 VAR = ROOT / "ops" / "local" / "var"
-TEAM_B, TEAM_C, DEMO_SHOP = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8103"
+AGENT_URL, TOOLS_URL, DEMO_SHOP = "http://127.0.0.1:8010", "http://127.0.0.1:8101", "http://127.0.0.1:8103"
 T = "shop_001"
 
 
@@ -47,8 +47,8 @@ def main() -> int:
     order = json.loads((VAR / "lifecycle_order_live.json").read_text(encoding="utf-8"))
     ticket = json.loads((VAR / "lifecycle_ticket_live.json").read_text(encoding="utf-8"))
     sandbox_order = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
-    http = httpx.Client(base_url=TEAM_B, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TEAM_C, timeout=60, trust_env=False, headers=team_c_headers())
+    http = httpx.Client(base_url=AGENT_URL, timeout=120, trust_env=False)
+    team_c = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
     headers = manager(http)
 
     print("\n== The Business tools page tells the truth about Live Demo")
@@ -134,7 +134,7 @@ def main() -> int:
     check("republished and discovered again after a refresh", r.status_code == 200 and {t["name"]: t["status"] for t in page["tools"]}["get_order"] == "available")
 
     print("\n== A revoked Live Demo credential fails honestly (no data, no retry)")
-    from team_c_lifecycle import IDENTITIES, Owner, add_identities
+    from tools_lifecycle import IDENTITIES, Owner, add_identities
 
     owner = Owner()
     owner.form(f"/artifacts/{order['artifact_id']}", "/actions/save_test_identity",

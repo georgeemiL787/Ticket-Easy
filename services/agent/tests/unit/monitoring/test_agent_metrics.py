@@ -107,9 +107,9 @@ def test_automate_next_ranks_request_types_by_handoffs() -> None:
     ("reason", "versions", "category"),
     [
         (None, {}, None),
-        ("move picker error: UpstreamError", {}, "model_error"),
-        ("move picker error: RateBudgetExceeded", {}, "rate_limit"),
-        ("move picker error: UpstreamError", {"ai_fallback": "orchestrator: RATE_BUDGET"}, "rate_limit"),
+        ("planner error: UpstreamError", {}, "model_error"),
+        ("planner error: RateBudgetExceeded", {}, "rate_limit"),
+        ("planner error: UpstreamError", {"ai_fallback": "planner: RATE_BUDGET"}, "rate_limit"),
         ("two refused moves in a row", {}, "refused_moves"),
         ("more than 5 moves without an answer", {}, "too_many_moves"),
         ("the turn took longer than 30 seconds", {}, "too_slow"),
@@ -146,7 +146,7 @@ def test_a_trace_becomes_the_agent_columns_of_its_turn_row() -> None:
 async def test_the_new_columns_survive_the_sqlite_round_trip(tmp_path: Path) -> None:
     clock = Clock()
     store = SqliteTraceStore(SqliteDatabase(tmp_path / "m.sqlite3"), clock)  # type: ignore[arg-type]
-    await store.add(trace(1, fallback_reason="move picker error: x", escalation_reason=EscalationReason.NO_EVIDENCE,
+    await store.add(trace(1, fallback_reason="planner error: x", escalation_reason=EscalationReason.NO_EVIDENCE,
                           escalation_kind="chosen"))  # fmt: skip
     facts = await store.facts(T, START - timedelta(hours=1), START + timedelta(hours=1))
     [row] = facts.turns
@@ -161,7 +161,7 @@ async def test_the_service_and_the_dashboard_endpoints_agree(tmp_path: Path) -> 
     traces = InMemoryTraceStore(clock)  # type: ignore[arg-type]
     for n in range(4):
         await traces.add(trace(n))
-    await traces.add(trace(10, fallback_reason="move picker error: x"))
+    await traces.add(trace(10, fallback_reason="planner error: x"))
     await traces.add(
         trace(
             11,

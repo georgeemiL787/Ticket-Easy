@@ -1,12 +1,12 @@
-"""Real check of Team C's automatic tests against the Nile sandbox shop (TEST-ONLY, needs a model provider for Team C).
+"""Real check of the tools service's automatic tests against the Nile sandbox shop (TEST-ONLY, needs a model provider for the tools service).
 
 For every Nile tool (order, ticket, orders, return, exchange, refund, cancel, address, voucher) it drives the real lifecycle
-(ops/local/team_c_lifecycle.py: business -> model proposal -> scripted, labelled owner approval -> build) and then ONE
+(ops/local/tools_lifecycle.py: business -> model proposal -> scripted, labelled owner approval -> build) and then ONE
 automatic-test call, with no hand-written test identities, order ids or scenarios. It passes when each tool reaches
 ready_to_publish (the lifecycle then publishes it to the sandbox) and every evidence test of the artifact is an
 `auto.*` test.
 
-Needs the sandbox and Team C running (ops/local/serve.py up):
+Needs the sandbox and the tools service running (ops/local/serve.py up):
 
     services/agent/.venv/Scripts/python.exe ops/local/autotest_check.py [--fresh] [--tool order ...]
 """
@@ -20,7 +20,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ops" / "local"))
-import team_c_lifecycle as lifecycle  # noqa: E402
+import tools_lifecycle as lifecycle  # noqa: E402
 
 
 def main() -> int:
@@ -33,7 +33,7 @@ def main() -> int:
     failures: list[str] = []
     for n, tool in enumerate(tools):
         print(f"\n##### {tool}", flush=True)
-        cmd = [sys.executable, str(ROOT / "ops" / "local" / "team_c_lifecycle.py"), "--tool", tool]
+        cmd = [sys.executable, str(ROOT / "ops" / "local" / "tools_lifecycle.py"), "--tool", tool]
         if args.fresh:  # every tool starts over; the first one (order) creates the business the others share
             cmd.append("--fresh")
         if args.variant:

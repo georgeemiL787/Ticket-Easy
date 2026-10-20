@@ -1,10 +1,15 @@
-"""Team C's REST API (/api/v1), read for the Business tools page and used for two owner actions: disabling a publication
+"""The tools service's REST API (/api/v1), read for the Business tools page and used for two owner actions: disabling a
+publication
 and checking a connector's connection.
 
-Team C's own pages stay the place where an owner requests tools, answers questions, approves, builds, tests and
-publishes (TeamCConfig.builder_url links there); nothing of that workflow is repeated in Team B. This client only reads
-publications and proposals and forwards a disable, which blocks the tool's next call in Team C (it cannot undo a write
-that already happened). Team C accepts loopback hosts only and no cross-origin mutations; a server-side call sends no
+The tools service's own pages stay the place where an owner requests tools, answers questions, approves, builds, tests
+and
+publishes (ToolsConfig.builder_url links there); nothing of that workflow is repeated in the agent. This client only
+reads
+publications and proposals and forwards a disable, which blocks the tool's next call in the tools service (it cannot
+undo a write
+that already happened). The tools service accepts loopback hosts only and no cross-origin mutations; a server-side call
+sends no
 Origin header. Failures raise UpstreamError("team_c", ...).
 """
 
@@ -17,7 +22,7 @@ from agent_service.contracts.errors import UpstreamError
 SERVICE = "team_c"
 
 
-class TeamCAdmin:
+class ToolsAdminClient:
     def __init__(
         self,
         base_url: str,
@@ -29,7 +34,7 @@ class TeamCAdmin:
         self._base = base_url.rstrip("/") + "/api/v1"
         self._timeout = timeout_s
         self._transport = transport
-        # Team B's service credential TO Team C (never a production secret), sent on every call when set.
+        # The agent's service credential TO the tools service (never a production secret), sent on every call when set.
         self._headers = {"x-team-c-admin-token": admin_token} if admin_token else {}
 
     async def publications(self, business_id: str) -> list[dict[str, Any]]:
@@ -45,12 +50,13 @@ class TeamCAdmin:
         return found if isinstance(found, dict) else {}
 
     async def connectors(self, business_id: str) -> list[dict[str, Any]]:
-        """Team C's connectors of a business (environment, host, identity names, last check); never credentials."""
+        """The tools service's connectors of a business (environment, host, identity names, last check); never
+        credentials."""
         found = await self._call("GET", f"/businesses/{business_id}/connectors")
         return [c for c in found if isinstance(c, dict)] if isinstance(found, list) else []
 
     async def check_connector(self, connector_id: str) -> dict[str, Any]:
-        """Team C's real connection check of one connector (it may send one GET and logins to that API)."""
+        """The tools service's real connection check of one connector (it may send one GET and logins to that API)."""
         found = await self._call("POST", f"/connectors/{connector_id}/check")
         return found if isinstance(found, dict) else {}
 
@@ -65,7 +71,8 @@ class TeamCAdmin:
     async def promote(
         self, artifact_id: str, *, actor: str, note: str, rollback_contact: str, accept_no_idempotency: bool
     ) -> dict[str, Any]:
-        """An admin promotes a tested tool to production; Team C refuses (409) unless its whole checklist passes."""
+        """An admin promotes a tested tool to production; the tools service refuses (409) unless its whole checklist
+        passes."""
         body = {
             "actor": actor,
             "note": note,
@@ -80,14 +87,17 @@ class TeamCAdmin:
         return found if isinstance(found, dict) else {}
 
     async def artifacts(self, business_id: str) -> list[dict[str, Any]]:
-        """The newest artifact of each proposal with its readiness_state and latest automatic test. An older Team C
+        """The newest artifact of each proposal with its readiness_state and latest automatic test. An older the tools
+        service
         without this endpoint answers 404: no artifacts are shown then."""
         found = await self._call("GET", f"/businesses/{business_id}/artifacts", missing_ok=True)
         return [a for a in found if isinstance(a, dict)] if isinstance(found, list) else []
 
     async def auto_test(self, artifact_id: str) -> dict[str, Any]:
-        """Start Team C's automatic tests for one artifact (in the background). Team B never asks to publish:
-        whether a passing tool is published to the sandbox is the owner's setting for the business in Team C."""
+        """Start the tools service's automatic tests for one artifact (in the background). The agent never asks to
+        publish:
+        whether a passing tool is published to the sandbox is the owner's setting for the business in the tools
+        service."""
         found = await self._call("POST", f"/artifacts/{artifact_id}/auto-test", body={})
         return found if isinstance(found, dict) else {}
 
@@ -95,7 +105,7 @@ class TeamCAdmin:
         found = await self._call("GET", f"/auto-test-runs/{run_id}", missing_ok=True)
         return found if isinstance(found, dict) else None
 
-    # ---- the guided tool setup: import a description, choose operations, batches (Team C api/batches.py) ----
+    # ---- the guided tool setup: import a description, choose operations, batches (tools service api/batches.py) ----
 
     async def businesses(self) -> list[dict[str, Any]]:
         found = await self._call("GET", "/businesses")
@@ -114,7 +124,7 @@ class TeamCAdmin:
         return found if isinstance(found, dict) else {}
 
     async def upload_spec(self, business_id: str, filename: str, content: bytes) -> dict[str, Any]:
-        """Hand over an OpenAPI/Swagger file. Team C reads it offline; nothing it describes is called."""
+        """Hand over an OpenAPI/Swagger file. The tools service reads it offline; nothing it describes is called."""
         found = await self._call(
             "POST", f"/businesses/{business_id}/specifications", files={"file": (filename, content)}, long=True
         )

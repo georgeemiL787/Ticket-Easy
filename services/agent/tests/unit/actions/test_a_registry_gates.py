@@ -94,7 +94,7 @@ def allowing(tenant: TenantConfig, *names: str, max_risk: str = "high") -> Tenan
 
 
 def bot_for(container: Container, tenant: TenantConfig | None = None, shop: Any = None) -> Orchestrator:
-    """An orchestrator on the container's stores with a changed tenant configuration and/or shop."""
+    """An planner on the container's stores with a changed tenant configuration and/or shop."""
     return Orchestrator(
         clock=container.clock,
         tenants=TenantRegistry({T: tenant}) if tenant is not None else container.tenants,

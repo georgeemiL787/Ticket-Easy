@@ -199,7 +199,7 @@
       "title": "PromotionCheck",
       "type": "object"
     },
-    "TeamCConnector": {
+    "ToolConnector": {
       "properties": {
         "checked_at": {
           "anyOf": [
@@ -263,10 +263,10 @@
         "host",
         "identities"
       ],
-      "title": "TeamCConnector",
+      "title": "ToolConnector",
       "type": "object"
     },
-    "TeamCPromotion": {
+    "ToolPromotion": {
       "properties": {
         "actor": {
           "title": "Actor",
@@ -381,10 +381,10 @@
         "note",
         "rollback_contact"
       ],
-      "title": "TeamCPromotion",
+      "title": "ToolPromotion",
       "type": "object"
     },
-    "TeamCProposal": {
+    "ToolProposal": {
       "properties": {
         "artifact_id": {
           "anyOf": [
@@ -467,10 +467,10 @@
         "version",
         "state"
       ],
-      "title": "TeamCProposal",
+      "title": "ToolProposal",
       "type": "object"
     },
-    "TeamCPublication": {
+    "ToolPublication": {
       "properties": {
         "bound_to": {
           "anyOf": [
@@ -580,7 +580,7 @@
         "proposal_id",
         "version"
       ],
-      "title": "TeamCPublication",
+      "title": "ToolPublication",
       "type": "object"
     }
   },
@@ -628,7 +628,7 @@
     "connectors": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/TeamCConnector"
+        "$ref": "#/$defs/ToolConnector"
       },
       "title": "Connectors",
       "type": "array"
@@ -669,7 +669,7 @@
     "promotions": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/TeamCPromotion"
+        "$ref": "#/$defs/ToolPromotion"
       },
       "title": "Promotions",
       "type": "array"
@@ -677,7 +677,7 @@
     "proposals": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/TeamCProposal"
+        "$ref": "#/$defs/ToolProposal"
       },
       "title": "Proposals",
       "type": "array"
@@ -685,7 +685,7 @@
     "publications": {
       "default": [],
       "items": {
-        "$ref": "#/$defs/TeamCPublication"
+        "$ref": "#/$defs/ToolPublication"
       },
       "title": "Publications",
       "type": "array"

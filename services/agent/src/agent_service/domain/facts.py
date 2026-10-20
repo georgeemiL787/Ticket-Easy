@@ -34,7 +34,7 @@ def fallback_category(trace: DecisionTrace) -> str | None:
         return None
     if "ratebudget" in reason or "rate_budget" in reason or "RATE_BUDGET" in trace.versions.get("ai_fallback", ""):
         return "rate_limit"
-    if "move picker" in reason:
+    if "planner" in reason:
         return "model_error"
     if "refused" in reason:
         return "refused_moves"

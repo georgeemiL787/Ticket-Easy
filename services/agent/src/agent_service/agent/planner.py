@@ -1,6 +1,6 @@
-"""The orchestrator: an AI model that plans the message and proposes the next move (job "orchestrator").
+"""The planner: an AI model that plans the message and proposes the next move (job "planner").
 
-LLMMovePicker implements the MovePicker port. Each ask it receives an AgentView (built by code, personal values hidden:
+LLMPlanner implements the Planner port. Each ask it receives an AgentView (built by code, personal values hidden:
 no phone, email, card or address), shows it to the model as sections (customer message, recent history, what the reader
 understood, what is verified, the plan, the moves already made with their results, the tools), and parses the answer
 {"plan": [...], "move": {...}} into a MoveProposal. The plan and the move come from the one model call, so a simple
@@ -21,7 +21,7 @@ from agent_service.ports import LLMClient
 from agent_service.understanding.ai_reader import PromptTemplate
 
 log = get_logger(__name__)
-PROMPT = "orchestrator_v1"
+PROMPT = "planner_v1"
 SCHEMA_HINT = {"plan": [{"text": "step", "status": "open|done|dropped"}], "move": {"kind": "reply"}}
 MAX_RESULT_SHOWN = 1200
 
@@ -55,7 +55,7 @@ def _move_line(number: int, record: AgentStepRecord) -> str:
     return f"{number}. {shown} -> {outcome}\n<tool_result>{result}</tool_result>"
 
 
-class LLMMovePicker:
+class LLMPlanner:
     def __init__(self, llm: LLMClient, prompt: PromptTemplate | None = None) -> None:
         self._llm = llm
         self._prompt = prompt or PromptTemplate.load(PROMPT)
@@ -117,5 +117,5 @@ class LLMMovePicker:
                 return parse_answer(data)
             except (UnusableAnswer, ValidationError, ValueError) as exc:
                 problem = str(exc).splitlines()[0][:200]
-                log.warning("orchestrator_answer_unusable", problem=problem)
+                log.warning("planner_answer_unusable", problem=problem)
         raise UnusableAnswer(problem)

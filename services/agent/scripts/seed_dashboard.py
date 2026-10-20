@@ -2,7 +2,8 @@
 
 Usage: python scripts/seed_dashboard.py [--db var/demo.sqlite3] [--conversations 300] [--days 14] [--seed 1] [--reset]
 
-The conversations run through the real core and the stand-ins (policy answers, unknown questions, handoffs that staff
+The conversations run through the real core and the simulated services (policy answers, unknown questions, handoffs that
+staff
 claim and resolve, risky messages, a search outage, ...), spread over the last --days days. Then look at them with:
 
     TEAM_B_STORE=sqlite TEAM_B_DB_PATH=var/demo.sqlite3 make run      # http://127.0.0.1:8010/dashboard

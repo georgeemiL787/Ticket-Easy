@@ -34,10 +34,10 @@ class EagerReviewerLLM:
 
 @pytest.fixture(params=["usual", "agent", "reviewed"])
 def container(request: pytest.FixtureRequest, tmp_path: Path) -> Container:
-    """The demo shop (real tenant config, stand-ins, rules), clock fixed at 2026-09-28.
+    """The demo shop (real tenant config, simulated services, rules), clock fixed at 2026-09-28.
 
     Every attack runs three times: against the usual step-by-step flow, against the agent loop with a scripted
-    orchestrator (tests/integration/agent_expert.py) that does the requested work through the same gates, and
+    planner (tests/integration/agent_expert.py) that does the requested work through the same gates, and
     against that loop with an over-eager reviewer model in front of the gates and the replies."""
     built = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))
     if request.param == "usual":

@@ -236,7 +236,7 @@ async def test_the_decision_needs_an_action_that_is_waiting(chat: httpx.AsyncCli
 
 
 class FakeOrchestrator:
-    """Stands in for the real orchestrator to test the decision endpoint on its own."""
+    """Stands in for the real planner to test the decision endpoint on its own."""
 
     def __init__(self, real: Any) -> None:
         self.real, self.decisions = real, []

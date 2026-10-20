@@ -8,6 +8,8 @@ from typing import Any
 from agent_service.actions.tool_registry import CapabilityRegistry
 from agent_service.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
 from agent_service.adapters.bundle_repository import InMemoryBundleStore, SqliteBundleStore
+from agent_service.adapters.knowledge_admin_client import KnowledgeAdminClient
+from agent_service.adapters.knowledge_client import HttpEvidenceProvider, HttpPolicyGate, KnowledgeClient
 from agent_service.adapters.llm_policy_gate import LLMPolicyGate
 from agent_service.adapters.llm_registry import LLMRegistry
 from agent_service.adapters.memory_store import (
@@ -19,18 +21,16 @@ from agent_service.adapters.memory_store import (
     TickingClock,
 )
 from agent_service.adapters.onboarding_repository import InMemoryDraftStore, SqliteDraftStore
+from agent_service.adapters.simulated.evidence import SimulatedEvidenceProvider
+from agent_service.adapters.simulated.knowledge_admin import SimulatedKnowledgeAdmin
+from agent_service.adapters.simulated.policy_search import SimulatedPolicySearch
+from agent_service.adapters.simulated.rule_checker import SimulatedRuleChecker
+from agent_service.adapters.simulated.safety_screen import SimulatedSafetyScreen
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteSessionStore, SqliteTraceStore
-from agent_service.adapters.standins.evidence import StandinEvidenceProvider
-from agent_service.adapters.standins.knowledge_admin import StandinKnowledgeAdmin
-from agent_service.adapters.standins.policy_search import PolicySearchStandin
-from agent_service.adapters.standins.rule_checker import RuleCheckerStandin
-from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
-from agent_service.adapters.standins.shop import StandinShop
-from agent_service.adapters.team_a_admin import TeamAAdmin
-from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
-from agent_service.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
+from agent_service.adapters.tools_catalog import ToolCapabilities, ToolsConfig
 from agent_service.adapters.user_repository import InMemoryUserStore, SqliteUserStore
-from agent_service.agent.planner import LLMMovePicker
+from agent_service.agent.planner import LLMPlanner
 from agent_service.agent.reviewer import Reviewer
 from agent_service.auth import AuthService
 from agent_service.bundles import BundleRegistry
@@ -81,11 +81,11 @@ class Container:
     sessions: SessionStore
     traces: TraceStore
     cases: CaseStore
-    shop: StandinShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
-    team_c: TeamCCapabilities | None = None  # Team C's sandbox tools (TEAM_B_TEAM_C_CONFIG), wrapping `shop`
-    policy_search: PolicySearchStandin | None = None  # the policy search behind `evidence`, same purpose
-    rule_checker: RuleCheckerStandin | None = None  # the rule checker behind `policy`, same purpose
-    safety_screen: SafetyScreenStandin | None = None  # the safety screen behind `evidence`, same purpose
+    shop: SimulatedShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
+    team_c: ToolCapabilities | None = None  # The tools service's sandbox tools (TEAM_B_TEAM_C_CONFIG), wrapping `shop`
+    policy_search: SimulatedPolicySearch | None = None  # the policy search behind `evidence`, same purpose
+    rule_checker: SimulatedRuleChecker | None = None  # the rule checker behind `policy`, same purpose
+    safety_screen: SimulatedSafetyScreen | None = None  # the safety screen behind `evidence`, same purpose
     registry: CapabilityRegistry | None = None  # the cached list of published shop tools
     orchestrator: Orchestrator | None = None  # handles every customer message and human action
     nlu: NLU | None = None  # rule-based, or AI-assisted when an AI model is configured
@@ -129,31 +129,34 @@ def build_container(
         )
         tenants = bundles
     shops_dir = settings.db_path.parent / "shops" if settings.store == "sqlite" else None  # SQLite shops keep files
-    shop = StandinShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
-    # Team C serves the tools its config binds (sandbox publications over MCP); the stand-in serves the rest.
-    team_c = TeamCCapabilities(shop, TeamCConfig.load(settings.team_c_config)) if settings.team_c_config else None
+    shop = SimulatedShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
+    # The tools service serves the tools its config binds (sandbox publications over MCP); the simulated serves the
+    # rest.
+    team_c = ToolCapabilities(shop, ToolsConfig.load(settings.team_c_config)) if settings.team_c_config else None
     capabilities: CapabilityClient = team_c if team_c is not None else shop
     if bundles is not None and team_c is not None:
         bundles.add_listener(team_c.on_bundle_change)  # a new active bundle rebinds that business's tools
-    live = settings.mode == "live"  # Team A is real (policy search, safety screen, rule checker)
-    policy_search = None if live else PolicySearchStandin(settings.fixtures_dir)
-    rule_checker = None if live else RuleCheckerStandin(settings.fixtures_dir)
-    safety_screen = None if live else SafetyScreenStandin(settings.fixtures_dir)
+    live = settings.mode == "live"  # The knowledge service is real (policy search, safety screen, rule checker)
+    policy_search = None if live else SimulatedPolicySearch(settings.fixtures_dir)
+    rule_checker = None if live else SimulatedRuleChecker(settings.fixtures_dir)
+    safety_screen = None if live else SimulatedSafetyScreen(settings.fixtures_dir)
     evidence: EvidenceProvider
     policy: PolicyGate
     if live:
         service_key = settings.team_a_key.get_secret_value() if settings.team_a_key is not None else None
-        team_a = TeamAClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s, service_key=service_key)
+        team_a = KnowledgeClient(settings.team_a_url, timeout_s=settings.team_a_timeout_s, service_key=service_key)
         evidence, policy = HttpEvidenceProvider(team_a), HttpPolicyGate(team_a)
         knowledge_admin: KnowledgeAdmin | None = (
-            TeamAAdmin(settings.team_a_url, settings.team_a_admin_key.get_secret_value(), service_key=service_key)
+            KnowledgeAdminClient(
+                settings.team_a_url, settings.team_a_admin_key.get_secret_value(), service_key=service_key
+            )
             if settings.team_a_admin_key is not None
             else None
         )
     else:
         assert policy_search is not None and rule_checker is not None and safety_screen is not None
-        evidence, policy = StandinEvidenceProvider(policy_search, safety_screen), rule_checker
-        knowledge_admin = StandinKnowledgeAdmin()
+        evidence, policy = SimulatedEvidenceProvider(policy_search, safety_screen), rule_checker
+        knowledge_admin = SimulatedKnowledgeAdmin()
     llm = llms.default()
     if settings.llm_policy and llms.llm_for("reviewer") is None:
         raise ContainerError("TEAM_B_LLM_POLICY needs an AI model: set TEAM_B_LLM.")
@@ -193,7 +196,7 @@ def build_container(
     writer_llm = llms.llm_for("writer") if settings.llm_rewrite else None
     own = settings.role("writer_egyptian")  # only when this job has its own server or model: it never borrows
     egyptian_llm = llms.llm_for("writer_egyptian") if settings.llm_rewrite and (own.base_url or own.model) else None
-    orchestrator_llm = llms.llm_for("orchestrator")
+    planner_llm = llms.llm_for("planner")
     summarizer: HistorySummarizer = (
         LLMHistorySummarizer(summary_llm) if summary_llm is not None else TemplateHistorySummarizer()
     )
@@ -247,7 +250,7 @@ def build_container(
             smalltalk=SmallTalkWriter(writer_llm) if writer_llm is not None else None,
             events=container.events,
             llm=summary_llm,
-            move_picker=LLMMovePicker(orchestrator_llm) if orchestrator_llm is not None else None,
+            planner=LLMPlanner(planner_llm) if planner_llm is not None else None,
             knowledge_agent=knowledge,
             registry=registry,
             policy=container.policy,
@@ -300,7 +303,8 @@ def build_stores(settings: Settings, clock: Clock) -> tuple[SessionStore, TraceS
 
 
 def inject(container: Container, plug: str, spec: Mapping[str, Any]) -> None:
-    """Flip a failure switch on a stand-in, for the scenario runner: inject: {plug: shop, switch: fail_next, ...}."""
+    """Flip a failure switch on a simulated service, for the scenario runner: inject: {plug: shop, switch: fail_next,
+    ...}."""
     if plug == "shop" and container.shop is not None:
         container.shop.inject(spec)
         return

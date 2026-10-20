@@ -1,4 +1,4 @@
-"""Attacks on the agent loop for the Noon shop (SQLite stand-in): the same promises as for Nile Style."""
+"""Attacks on the agent loop for the Noon shop (SQLite simulated service): the same promises as for Nile Style."""
 
 import re
 from dataclasses import replace
@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from agent_service.agent.planner import LLMMovePicker
+from agent_service.agent.planner import LLMPlanner
 from agent_service.container import Container, build_container
 from tests.adversarial.test_agent_loop_attacks import AttackerLLM, action, after, look_up
 from tests.integration.agent_expert import with_expert
@@ -27,7 +27,7 @@ async def play(
         await bot.handle_turn(T, CONV, "Where is my order ORD-30001?")
         await bot.handle_turn(T, CONV, PHONE_C1001)
     llm = AttackerLLM(decide)
-    bot._deps = replace(bot._deps, move_picker=LLMMovePicker(llm))
+    bot._deps = replace(bot._deps, planner=LLMPlanner(llm))
     return c, [await bot.handle_turn(T, CONV, m) for m in messages], llm
 
 

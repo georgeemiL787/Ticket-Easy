@@ -82,14 +82,14 @@ async def agent_stage(ctx: TurnContext) -> str:
         stages.resolve_order_choice(ctx)  # "the second" picks one of the orders that were offered
     if session.awaiting == "intent_choice" and len(session.choice_options) == 2:
         stages.resolve_intent_choice(ctx)  # "the second" picks one of the two requests that were offered
-    if (small_talk := stages.small_talk_only(ctx)) is not None:  # a greeting or thanks: no orchestrator call
+    if (small_talk := stages.small_talk_only(ctx)) is not None:  # a greeting or thanks: no planner call
         ctx.plan = small_talk
         ctx.step = await ctx.deps.handlers.get("smalltalk", stages.placeholder_handler)(ctx, small_talk)
         ctx.versions["agent"] = "skipped: small talk"
-        return "small talk answered without the orchestrator"
-    version = getattr(ctx.deps.move_picker, "prompt_version", None)
+        return "small talk answered without the planner"
+    version = getattr(ctx.deps.planner, "prompt_version", None)
     if version:
-        ctx.versions["orchestrator_prompt"] = str(version)
+        ctx.versions["planner_prompt"] = str(version)
     before = (session.agent_plan, list(session.denied_actions), session.active_intent, dict(session.slots))
     counts = (session.frustration_strikes, session.agent_questions, session.clarifications, ctx.apologise)
     escalation.note_turn_start(ctx)
@@ -140,7 +140,7 @@ def resume_plan_after_confirmation(ctx: TurnContext) -> None:
 
 
 async def shadow_stage(ctx: TurnContext) -> str:
-    """Shadow mode: ask the orchestrator for its first move on a copy; the real turn goes on untouched."""
+    """Shadow mode: ask the planner for its first move on a copy; the real turn goes on untouched."""
     return await run_shadow(ctx)
 
 
@@ -150,12 +150,12 @@ SHADOW_STAGES: tuple[Stage, ...] = (*STAGES[:5], SHADOW_STAGE, *STAGES[5:])
 
 def agent_flow(ctx: TurnContext) -> str:
     """How this turn runs: "agent" (the loop works it), "shadow" (the usual flow answers, the agent only watches) or
-    "usual". The mode is the tenant's, else the service's; the agent and its shadow need a move picker (a model for the
-    orchestrator job): without one the usual flow runs and the trace says so."""
+    "usual". The mode is the tenant's, else the service's; the agent and its shadow need a planner (a model for the
+    planner job): without one the usual flow runs and the trace says so."""
     ctx.agent_mode = ctx.tenant.agent_mode or ctx.deps.agent_mode
     if ctx.agent_mode not in ("on", "shadow"):
         return "usual"
-    if ctx.deps.move_picker is None:
+    if ctx.deps.planner is None:
         ctx.versions["agent"] = "unavailable: no model"
         return "usual"
     return "agent" if ctx.agent_mode == "on" else "shadow"

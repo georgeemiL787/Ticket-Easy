@@ -1,6 +1,8 @@
-"""TeamCCapabilities: Team C's sandbox tools over MCP, against a scripted fake server (tests/fake_team_c_mcp.py).
+"""ToolCapabilities: the tools service's sandbox tools over MCP, against a scripted fake server
+(tests/fake_tools_mcp.py).
 
-What must hold: a bound tool is served only while Team C lists it (never by the stand-in), with the business's own
+What must hold: a bound tool is served only while the tools service lists it (never by the simulated service), with the
+business's own
 ToolSpec; the identity comes from the verified customer, never from arguments; only `succeeded` is a success; partial,
 outcome_unknown, error and a lost answer are never reported as "not done"; tool_not_published drops the cached list.
 """
@@ -15,15 +17,15 @@ from typing import Any
 import pytest
 
 from agent_service.adapters.memory_store import FixedClock
-from agent_service.adapters.standins.shop import StandinShop
-from agent_service.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
+from agent_service.adapters.simulated.shop import SimulatedShop
+from agent_service.adapters.tools_catalog import ToolCapabilities, ToolsConfig
 from agent_service.config import PROJECT_ROOT
 from agent_service.container import Container, build_container
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolCallRequest
 from tests.support import make_settings
 
-FAKE = Path(__file__).resolve().parents[2] / "fake_team_c_mcp.py"
+FAKE = Path(__file__).resolve().parents[2] / "fake_tools_mcp.py"
 T = "shop_001"
 BUSINESS = "biz-nile"
 GET_ORDER_PROPOSAL = "prop-order"
@@ -35,7 +37,7 @@ ORDER = {
     "is_clearance": False, "item_condition": "unused", "tracking_number": "TRK-20877",
 }  # fmt: skip
 VOUCHER_ARGS = {"order_id": "NS-20877", "amount": 100, "reason": "late"}
-Made = Callable[..., TeamCCapabilities]
+Made = Callable[..., ToolCapabilities]
 
 
 def tool_def(
@@ -70,7 +72,7 @@ ORDER_OK = envelope("get_order_v1_aa", "succeeded", ORDER)
 
 
 class Fake:
-    """The fake server's script and call log, and a TeamCCapabilities wired to it."""
+    """The fake server's script and call log, and a ToolCapabilities wired to it."""
 
     def __init__(self, tmp_path: Path) -> None:
         self.script_path = tmp_path / "script.json"
@@ -103,9 +105,9 @@ class Fake:
             "tenants": {T: binding},
         }  # fmt: skip
 
-    def client(self, **tenant: Any) -> TeamCCapabilities:
-        shop = StandinShop(PROJECT_ROOT / "fixtures", FixedClock(date(2026, 9, 28)), [T])
-        return TeamCCapabilities(shop, TeamCConfig.model_validate(self.config(**tenant)))
+    def client(self, **tenant: Any) -> ToolCapabilities:
+        shop = SimulatedShop(PROJECT_ROOT / "fixtures", FixedClock(date(2026, 9, 28)), [T])
+        return ToolCapabilities(shop, ToolsConfig.model_validate(self.config(**tenant)))
 
 
 @pytest.fixture
@@ -115,9 +117,9 @@ def fake(tmp_path: Path) -> Fake:
 
 @pytest.fixture
 async def made(fake: Fake) -> Any:
-    clients: list[TeamCCapabilities] = []
+    clients: list[ToolCapabilities] = []
 
-    def make(**tenant: Any) -> TeamCCapabilities:
+    def make(**tenant: Any) -> ToolCapabilities:
         clients.append(fake.client(**tenant))
         return clients[-1]
 
@@ -142,10 +144,12 @@ async def test_a_published_tool_is_served_with_the_businesss_own_spec_and_unboun
     fake.publish(tool_def("order_v2_aa", GET_ORDER_PROPOSAL, 2), tool_def("order_v1_bb", GET_ORDER_PROPOSAL, 1))
     client = made()
     tools = {t.name: t for t in await client.list_tools(T)}
-    assert "verify_customer" in tools and "create_return" in tools  # still the stand-in's
+    assert "verify_customer" in tools and "create_return" in tools  # still the simulated service's
     assert tools["get_order"].operation_kind == "read"
-    assert "order_status" in tools["get_order"].output_schema["required"]  # Team B's own declaration
-    assert "apply_voucher" not in tools  # bound to Team C and not published there: never the stand-in's
+    assert "order_status" in tools["get_order"].output_schema["required"]  # The agent's own declaration
+    assert (
+        "apply_voucher" not in tools
+    )  # bound to the tools service and not published there: never the simulated service's
     state = client.status(T)
     assert state is not None and state.resolved["get_order"].team_c_tool == "order_v2_aa"  # newest version
     assert state.resolved["apply_voucher"].problem == "not_published"
@@ -170,7 +174,7 @@ async def test_a_doubtful_publication_is_not_used(
     assert state is not None and state.resolved["get_order"].problem == problem
 
 
-async def test_team_c_down_hides_its_tools_but_the_stand_ins_stay(fake: Fake, made: Made) -> None:
+async def test_tools_down_hides_its_tools_but_the_simulated_services_stay(fake: Fake, made: Made) -> None:
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL))
     fake.script["refuse_identities"] = ["alice", "bob"]
     fake.save()
@@ -229,7 +233,9 @@ async def test_arguments_cannot_choose_the_identity(fake: Fake, made: Made) -> N
     client = made()
     await client.list_tools(T)
     await client.call_tool(T, request("get_order", {"order_id": "NS-20877", "identity": "bob", "user": "bob"}))
-    assert [c["identity"] for c in fake.calls()] == ["alice"]  # extra arguments are passed on for Team C to refuse
+    assert [c["identity"] for c in fake.calls()] == [
+        "alice"
+    ]  # extra arguments are passed on for the tools service to refuse
 
 
 @pytest.mark.parametrize(
@@ -273,7 +279,7 @@ async def test_a_disabled_tool_answers_not_published_and_the_next_call_asks_team
     client = made()
     await client.list_tools(T)
     assert (await client.call_tool(T, request("get_order"))).status == "success"
-    fake.publish()  # disabled in Team C: the old tool list in Team B does not let the call through
+    fake.publish()  # disabled in the tools service: the old tool list in the agent does not let the call through
     result = await client.call_tool(T, request("get_order"))
     assert result.error_code == "TOOL_NOT_PUBLISHED" and not result.write_may_have_applied
     again = await client.call_tool(T, request("get_order"))  # re-listed: nothing is published, nothing is sent
@@ -325,7 +331,7 @@ async def test_a_result_that_claims_production_is_not_trusted(fake: Fake, made: 
 
 
 def test_the_example_config_is_valid_and_its_paths_are_relative_to_the_file() -> None:
-    config = TeamCConfig.load(PROJECT_ROOT / "config" / "team_c.example.json")
+    config = ToolsConfig.load(PROJECT_ROOT / "config" / "team_c.example.json")
     assert set(config.tenants["shop_001"].tools) == {"get_order", "create_ticket"}
     team_c = (PROJECT_ROOT.parent / "tools").resolve()
     assert config.cwd == str(team_c) and Path(config.command[0]).is_relative_to(team_c)
@@ -389,7 +395,7 @@ async def test_a_read_failure_keeps_team_cs_category(fake: Fake, made: Made, cat
 
 def test_a_binding_names_exactly_one_tool() -> None:
     with pytest.raises(ValueError):
-        TeamCConfig.model_validate({"command": ["x"], "tenants": {T: {"business_id": "b", "tools": {"get_order": {}}}}})
+        ToolsConfig.model_validate({"command": ["x"], "tenants": {T: {"business_id": "b", "tools": {"get_order": {}}}}})
 
 
 # ---- through the core ----
@@ -414,7 +420,9 @@ async def test_the_agent_answers_an_order_question_from_team_cs_tool_as_the_veri
         second = await c.orchestrator.handle_turn(T, "tc1", "01012345601")
     finally:
         await c.team_c.aclose()
-    assert first.decision.value == "verify_identity"  # the stand-in's verify_customer: identity first, nothing read
+    assert (
+        first.decision.value == "verify_identity"
+    )  # the simulated service's verify_customer: identity first, nothing read
     assert second.decision.value == "answer"
     assert [x["identity"] for x in fake.calls()] == ["alice"]  # C-100, verified by phone, acts as alice
     traces = await c.traces.for_conversation(T, "tc1")
@@ -447,11 +455,11 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
     assert last.escalation_reason.value == "unverified_result" and replies[-1].handoff_case_id
     writes = [x for x in fake.calls() if x["tool"] == name]
     assert len(writes) == 1 and writes[0]["identity"] == "alice"  # exactly once, never retried, as the verified C-100
-    assert c.shop is not None and not any(e.tool == "apply_voucher" for e in c.shop.audit_log(T))  # not the stand-in
+    assert c.shop is not None and not any(e.tool == "apply_voucher" for e in c.shop.audit_log(T))  # not the simulated
 
 
 def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_success() -> None:
-    from agent_service.adapters.team_c_tools import ResolvedTool, ToolBinding, _result
+    from agent_service.adapters.tools_catalog import ResolvedTool, ToolBinding, _result
 
     envelope = {
         "status": "succeeded", "execution_id": "e1", "production_ready": False, "environment": "sandbox",

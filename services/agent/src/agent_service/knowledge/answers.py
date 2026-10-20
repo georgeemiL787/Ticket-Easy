@@ -2,7 +2,7 @@
 
 OWNER: Track B (fills this module).
 
-Signatures are fixed; the orchestrator calls answer() for every intent of kind "knowledge", and other tracks call
+Signatures are fixed; the planner calls answer() for every intent of kind "knowledge", and other tracks call
 quote_for() to add a policy quote to their own replies (for example the late-delivery policy next to an order status).
 
 Never invent policy: a reply is built only from passages the policy search returned, quoted verbatim with their
@@ -141,7 +141,7 @@ async def _find(ctx: TurnContext, query_hint: str | None) -> tuple[Passage, ...]
 async def research(ctx: TurnContext, message: str, hint: str | None, *, query: str | None = None) -> Found | NotFound:
     """The knowledge agent's answer to `message` from the policy search (SearchUnavailable when the search is down).
 
-    `query` is a search the orchestrator already wrote; the agent then skips writing one."""
+    `query` is a search the planner already wrote; the agent then skips writing one."""
     agent = ctx.deps.knowledge_agent
     assert agent is not None
 

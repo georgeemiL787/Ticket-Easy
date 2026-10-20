@@ -1,6 +1,7 @@
 """Measure the whole agent on short conversations, separately for English, Egyptian Arabic, mixed and Arabizi.
 
-Each conversation in eval/conversations/*.jsonl is run turn by turn through the real core (stand-ins for the shop and
+Each conversation in eval/conversations/*.jsonl is run turn by turn through the real core (simulated services for the
+shop and
 the policy search) and every turn is compared with its gold labels:
 
 - intent accuracy: the first intent understood equals the first gold intent ("none" when the gold list is empty);
@@ -41,7 +42,7 @@ from agent_service.domain.base import FrozenModel
 from agent_service.domain.understanding import Locale
 from agent_service.evaluation.judge import CRITERIA, Judge, JudgedTurn, JudgeScore, JudgeStats
 from agent_service.monitoring.metrics import percentile
-from agent_service.ports import LLMClient, MovePicker
+from agent_service.ports import LLMClient, Planner
 from agent_service.replies.composer import check_grounded, default_composer
 from agent_service.replies.smalltalk import TODAY_WORDS
 from agent_service.turn.shadow import Agreement, compare
@@ -178,7 +179,7 @@ def fallback_kind(reason: str) -> str:
     lowered = reason.lower()
     if "longer than" in lowered:
         return "too_slow"
-    if "move picker" in lowered:
+    if "planner" in lowered:
         return "model_error"
     if "refused" in lowered:
         return "refused_moves"
@@ -491,7 +492,7 @@ async def evaluate(
     judge: Judge | None = None,
     label: str = "",
     agent_mode: AgentMode | None = None,
-    move_picker: MovePicker | None = None,
+    planner: Planner | None = None,
     checkpoint: Path | None = None,
     batch: int | None = None,
 ) -> EvalReport:
@@ -511,8 +512,8 @@ async def evaluate(
         settings.model_copy(update={"fixed_today": EVAL_TODAY, "store": "memory"}), llm_wrapper=count
     )
     assert container.shop is not None and container.orchestrator is not None
-    if agent_mode is not None or move_picker is not None:
-        container.orchestrator.set_agent(mode=agent_mode, move_picker=move_picker)
+    if agent_mode is not None or planner is not None:
+        container.orchestrator.set_agent(mode=agent_mode, planner=planner)
     disagreements: list[dict[str, Any]] = []
     kinds = {t.name: t.operation_kind for t in await container.capabilities.list_tools(TENANT)}
     styles = {s: StyleReport(s) for s in STYLES}

@@ -1,7 +1,7 @@
 """The agent loop: one customer message, worked as a few moves proposed one at a time, every move checked by code.
 
-In agent mode (tenant agent_mode / TEAM_B_AGENT_MODE "on", with a model for the orchestrator job) the middle of the
-turn (disambiguate, merge, frustration, plan, handler, queue) is one stage, "agent". It asks a MovePicker for a move,
+In agent mode (tenant agent_mode / TEAM_B_AGENT_MODE "on", with a model for the planner job) the middle of the
+turn (disambiguate, merge, frustration, plan, handler, queue) is one stage, "agent". It asks a Planner for a move,
 checks the move, works it, and asks again, until a move ends the turn (a Reply that finishes the plan, AskCustomer,
 HandOver). The front stages (handed-off check, understanding, safety screen, wants a person, pending confirmation) run
 before it exactly as always, and the handoff stage and the reply composer run after it.
@@ -359,7 +359,7 @@ def _apply_plan(ctx: TurnContext, update: AgentPlan, started: float) -> None:
 
 async def _loop(ctx: TurnContext) -> Step:
     deps, session = ctx.deps, ctx.session
-    picker = deps.move_picker
+    picker = deps.planner
     assert picker is not None
     seen: set[str] = set()
     refused: str | None = None
@@ -375,10 +375,10 @@ async def _loop(ctx: TurnContext) -> Step:
         except (TimeoutError, asyncio.CancelledError):
             raise
         except Exception as exc:  # the model or its parsing failed: today's stages take over
-            ctx.agent_steps.append(_record(None, "the move picker failed", [], type(exc).__name__, started))
+            ctx.agent_steps.append(_record(None, "the planner failed", [], type(exc).__name__, started))
             if not ctx.agent_wrote:
-                raise AgentFallback(f"move picker error: {type(exc).__name__}") from exc
-            return _give_up(ctx, f"move picker error: {type(exc).__name__}")
+                raise AgentFallback(f"planner error: {type(exc).__name__}") from exc
+            return _give_up(ctx, f"planner error: {type(exc).__name__}")
         if isinstance(proposal, MoveProposal):  # a plan and a move in one answer
             if proposal.plan is not None:
                 _apply_plan(ctx, proposal.plan, started)

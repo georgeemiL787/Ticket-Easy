@@ -8,7 +8,7 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.api.app import create_app
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
@@ -33,7 +33,7 @@ def settings(tenants_dir: Path, tmp_path: Path) -> Settings:
 
 @pytest.fixture
 def container(settings: Settings) -> Container:
-    """Stand-in mode, the store from TEAM_B_STORE (memory by default), a clock fixed at 2026-09-28."""
+    """Simulated mode, the store from TEAM_B_STORE (memory by default), a clock fixed at 2026-09-28."""
     return build_container(settings)
 
 
@@ -53,13 +53,13 @@ async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
 
 
 @pytest.fixture
-def shop(container: Container) -> StandinShop:
+def shop(container: Container) -> SimulatedShop:
     assert container.shop is not None
     return container.shop
 
 
 @pytest.fixture
-def call(shop: StandinShop) -> Callable[..., Awaitable[ToolResult]]:
+def call(shop: SimulatedShop) -> Callable[..., Awaitable[ToolResult]]:
     """call("get_order", {"order_id": "NS-20877"}): a call with fresh ids; policy=None omits the policy id."""
     numbers = itertools.count(1)
 

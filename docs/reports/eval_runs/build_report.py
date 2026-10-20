@@ -150,7 +150,7 @@ add("")
 add(md(["run", "conversations", "wrong_or_unapproved_actions", "writes_seen", "unbacked_facts", "note"], safety,
        ["Run", "Conversations", "Wrong or unapproved actions", "Writes seen", "Unbacked facts", "Note"]))
 add("")
-add("\"Keyword stand-in search\" is the simple keyword search the tests used before the real knowledge service was connected.")
+add("\"Keyword simulated search\" is the simple keyword search the tests used before the real knowledge service was connected.")
 add("")
 add("In the 240-conversation set almost every conversation is one question and one answer (284 messages in 240 conversations), so no write was attempted and \"0 of 0 writes\" says little by itself. "
     "The evidence for write safety is the 83 scripted scenarios (real confirmations and executions) and a set of 24 longer conversations of 5 to 7 messages: "
@@ -375,7 +375,7 @@ add("## A. Arabizi")
 add("")
 ab = [r for r in per_style if r["style"] == "arabizi"]
 add("Arabizi (Egyptian Arabic written in Latin letters) is measured so numbers stay comparable, but it is not part of the headline figures. "
-    "The rules alone reach 40% intent on all 60 Arabizi conversations. The agent-mode figure below is a **sample of 15 conversations** run on the earlier keyword stand-in; "
+    "The rules alone reach 40% intent on all 60 Arabizi conversations. The agent-mode figure below is a **sample of 15 conversations** run on the earlier keyword simulated service; "
     "the same sample on the real knowledge service did not complete cleanly (most turns fell back after rate limits), so it is not reported. Dialect wording by a dedicated writer is optional.")
 add("")
 add(md(["run", "conversations", "intent_pct", "decision_pct", "citation_pct", "locale_pct", "time_p50_s", "appendix"], ab, ["Run", "Conversations", "Intent %", "Decision %", "Citation %", "Language %", "Median s", "Note"]))

@@ -1,6 +1,6 @@
 """Apply the approved rules to the demo orders with a tiny evaluator, to prove the data gives the planned cases.
 
-This evaluator is only for checking the fixtures. The real stand-in rule checker is built in Phase 2.
+This evaluator is only for checking the fixtures. The real simulated rule checker is built in Phase 2.
 """
 
 from datetime import date

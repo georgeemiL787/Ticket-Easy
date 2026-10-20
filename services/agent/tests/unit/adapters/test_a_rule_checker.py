@@ -1,4 +1,5 @@
-"""Rule checker stand-in: every step of the evaluation order, and an allow and a fail case for each rules.json rule."""
+"""Rule checker simulated service: every step of the evaluation order, and an allow and a fail case for each rules.json
+rule."""
 
 import json
 import shutil
@@ -8,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from agent_service.adapters.standins.rule_checker import RuleCheckerStandin, derive_facts
+from agent_service.adapters.simulated.rule_checker import SimulatedRuleChecker, derive_facts
 from agent_service.config import Settings
 from agent_service.container import Container, inject
 from agent_service.contracts.errors import UpstreamError
@@ -65,8 +66,8 @@ def baseline_request(
 
 
 @pytest.fixture
-def checker() -> RuleCheckerStandin:
-    return RuleCheckerStandin(FIXTURES)
+def checker() -> SimulatedRuleChecker:
+    return SimulatedRuleChecker(FIXTURES)
 
 
 def outcome(decision: PolicyDecision, rule_id: str) -> Any:
@@ -77,13 +78,13 @@ def outcome(decision: PolicyDecision, rule_id: str) -> Any:
 
 def custom_checker(
     tmp_path: Path, rules: list[dict[str, Any]], risk: dict[str, Any] | None = None
-) -> RuleCheckerStandin:
+) -> SimulatedRuleChecker:
     folder = tmp_path / T
     folder.mkdir()
     (folder / "rules.json").write_text(json.dumps({"tenant_id": T, "rules": rules}), encoding="utf-8")
     if risk is not None:
         (folder / "risk.json").write_text(json.dumps({"categories": risk}), encoding="utf-8")
-    return RuleCheckerStandin(tmp_path)
+    return SimulatedRuleChecker(tmp_path)
 
 
 def rule(rule_id: str, action: str, **kw: Any) -> dict[str, Any]:
@@ -122,7 +123,7 @@ def test_every_approved_rule_has_a_case_and_nothing_else_does() -> None:
 
 
 @pytest.mark.parametrize("rule_id", sorted(RULE_CASES))
-async def test_rule_allows_when_it_holds(checker: RuleCheckerStandin, rule_id: str) -> None:
+async def test_rule_allows_when_it_holds(checker: SimulatedRuleChecker, rule_id: str) -> None:
     spec = APPROVED[rule_id]
     d = await checker.check_action(baseline_request(spec["action"]))
     assert (d.decision, d.reason_code, d.user_message) == ("allow", "RULES_PASSED", None)
@@ -131,7 +132,7 @@ async def test_rule_allows_when_it_holds(checker: RuleCheckerStandin, rule_id: s
 
 
 @pytest.mark.parametrize("rule_id", sorted(RULE_CASES))
-async def test_rule_fails_with_its_else_effect(checker: RuleCheckerStandin, rule_id: str) -> None:
+async def test_rule_fails_with_its_else_effect(checker: SimulatedRuleChecker, rule_id: str) -> None:
     spec = APPROVED[rule_id]
     facts, args = RULE_CASES[rule_id]
     d = await checker.check_action(baseline_request(spec["action"], facts, args))
@@ -144,12 +145,12 @@ async def test_rule_fails_with_its_else_effect(checker: RuleCheckerStandin, rule
     assert all(o.effect_applied == "allow" for o in d.rule_outcomes if o.rule_id != rule_id)
 
 
-async def test_return_excluded_also_blocks_clearance_items(checker: RuleCheckerStandin) -> None:
+async def test_return_excluded_also_blocks_clearance_items(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_return", {"is_clearance": True}))
     assert (d.decision, outcome(d, "R-RETURN-EXCLUDED").held) == ("deny", False)
 
 
-async def test_ticket_rule_allows_and_has_no_failing_case(checker: RuleCheckerStandin) -> None:
+async def test_ticket_rule_allows_and_has_no_failing_case(checker: SimulatedRuleChecker) -> None:
     # R-TICKET-ALLOWED has no conditions, so only the earlier steps can stop a ticket (see the next tests).
     d = await checker.check_action(baseline_request("create_ticket"))
     assert (d.decision, d.reason_code, d.citations) == ("allow", "RULES_PASSED", ("faq@v1#q01",))
@@ -159,21 +160,21 @@ async def test_ticket_rule_allows_and_has_no_failing_case(checker: RuleCheckerSt
 
 
 @pytest.mark.parametrize("days,decision", [(0, "allow"), (14, "allow"), (15, "deny")])
-async def test_fourteen_day_boundary(checker: RuleCheckerStandin, days: int, decision: str) -> None:
+async def test_fourteen_day_boundary(checker: SimulatedRuleChecker, days: int, decision: str) -> None:
     assert (
         await checker.check_action(baseline_request("create_return", {"days_since_delivery": days}))
     ).decision == decision
 
 
 @pytest.mark.parametrize("amount,decision", [(3000, "allow"), (3000.5, "require_human")])
-async def test_refund_limit_boundary(checker: RuleCheckerStandin, amount: float, decision: str) -> None:
+async def test_refund_limit_boundary(checker: SimulatedRuleChecker, amount: float, decision: str) -> None:
     assert (await checker.check_action(baseline_request("create_refund", args={"amount": amount}))).decision == decision
 
 
 # ---------------------------------------------------------------- the unapproved rule has no effect
 
 
-async def test_proposed_rule_has_no_effect(checker: RuleCheckerStandin) -> None:
+async def test_proposed_rule_has_no_effect(checker: SimulatedRuleChecker) -> None:
     assert APPROVED.get("R-DEFECT-48H") is None
     facts = {
         "item_condition": "defective",
@@ -192,12 +193,12 @@ async def test_the_same_rule_does_count_once_approved(tmp_path: Path) -> None:
     (folder / "rules.json").write_text(json.dumps({"tenant_id": T, "rules": flipped}), encoding="utf-8")
     shutil.copy(FIXTURES / T / "risk.json", folder / "risk.json")
     facts = {"item_condition": "defective", "hours_since_delivery": 500}
-    d = await RuleCheckerStandin(tmp_path).check_action(baseline_request("create_return", facts))
+    d = await SimulatedRuleChecker(tmp_path).check_action(baseline_request("create_return", facts))
     assert (d.decision, d.reason_code) == ("require_human", "RULE_REQUIRES_HUMAN")
     assert outcome(d, "R-DEFECT-48H").effect_applied == "require_human"
 
 
-async def test_proposed_rule_with_a_missing_fact_cannot_block_either(checker: RuleCheckerStandin) -> None:
+async def test_proposed_rule_with_a_missing_fact_cannot_block_either(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_return", {"item_condition": "defective"}))  # no hours fact
     assert (d.decision, d.missing_fields) == ("allow", ())
 
@@ -205,13 +206,13 @@ async def test_proposed_rule_with_a_missing_fact_cannot_block_either(checker: Ru
 # ---------------------------------------------------------------- step 1: tenant
 
 
-async def test_step1_tenant_mismatch_denies_and_comes_first(checker: RuleCheckerStandin) -> None:
+async def test_step1_tenant_mismatch_denies_and_comes_first(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_refund", verified=False, resource_tenant_id="shop_002"))
     assert (d.decision, d.reason_code, d.rule_outcomes) == ("deny", "TENANT_MISMATCH", ())
     assert d.user_message is not None and d.user_message.en and d.user_message.ar
 
 
-async def test_step1_same_resource_tenant_is_fine(checker: RuleCheckerStandin) -> None:
+async def test_step1_same_resource_tenant_is_fine(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_ticket", resource_tenant_id=T))
     assert d.decision == "allow"
 
@@ -219,17 +220,17 @@ async def test_step1_same_resource_tenant_is_fine(checker: RuleCheckerStandin) -
 # ---------------------------------------------------------------- step 2: identity
 
 
-async def test_step2_side_effect_without_identity_is_denied(checker: RuleCheckerStandin) -> None:
+async def test_step2_side_effect_without_identity_is_denied(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_refund", verified=False))
     assert (d.decision, d.reason_code) == ("deny", "IDENTITY_REQUIRED")
 
 
-async def test_step2_personal_data_read_without_identity_is_denied(checker: RuleCheckerStandin) -> None:
+async def test_step2_personal_data_read_without_identity_is_denied(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("get_order", kind="read", verified=False))  # personal_data defaults to true
     assert (d.decision, d.reason_code) == ("deny", "IDENTITY_REQUIRED")
 
 
-async def test_step2_harmless_read_needs_no_identity(checker: RuleCheckerStandin) -> None:
+async def test_step2_harmless_read_needs_no_identity(checker: SimulatedRuleChecker) -> None:
     req = CheckActionRequest.model_validate(
         {
             "request_id": "r", "tenant_id": T, "action": "get_store_hours",
@@ -240,7 +241,7 @@ async def test_step2_harmless_read_needs_no_identity(checker: RuleCheckerStandin
     assert (d.decision, d.reason_code) == ("allow", "NO_RULE_READ_ONLY")
 
 
-async def test_step2_comes_before_the_mandatory_risk_step(checker: RuleCheckerStandin) -> None:
+async def test_step2_comes_before_the_mandatory_risk_step(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(
         baseline_request("create_refund", verified=False, risk_categories=("fraud_suspected",))
     )
@@ -250,25 +251,25 @@ async def test_step2_comes_before_the_mandatory_risk_step(checker: RuleCheckerSt
 # ---------------------------------------------------------------- step 3: mandatory risk
 
 
-async def test_step3_mandatory_risk_on_a_write_needs_a_human(checker: RuleCheckerStandin) -> None:
+async def test_step3_mandatory_risk_on_a_write_needs_a_human(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_ticket", risk_categories=("fraud_suspected",)))
     assert (d.decision, d.reason_code) == ("require_human", "MANDATORY_RISK")
     assert "fraud_suspected" in d.rationale and d.user_message is not None
 
 
-async def test_step3_comes_before_the_rules(checker: RuleCheckerStandin) -> None:
+async def test_step3_comes_before_the_rules(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(
         baseline_request("create_return", {"days_since_delivery": 90}, risk_categories=("legal_regulatory",))
     )  # the 14-day rule would deny
     assert (d.decision, d.reason_code, d.rule_outcomes) == ("require_human", "MANDATORY_RISK", ())
 
 
-async def test_step3_does_not_stop_a_read(checker: RuleCheckerStandin) -> None:
+async def test_step3_does_not_stop_a_read(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("get_order", kind="read", risk_categories=("fraud_suspected",)))
     assert d.reason_code == "NO_RULE_READ_ONLY"
 
 
-async def test_step3_unknown_category_counts_as_mandatory(checker: RuleCheckerStandin) -> None:
+async def test_step3_unknown_category_counts_as_mandatory(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_ticket", risk_categories=("brand_new_category",)))
     assert d.reason_code == "MANDATORY_RISK"
 
@@ -294,7 +295,7 @@ async def test_step3_unreadable_risk_file_means_every_category_is_mandatory(tmp_
 # ---------------------------------------------------------------- step 4: rules
 
 
-async def test_step4_deny_beats_require_human_beats_allow(checker: RuleCheckerStandin) -> None:
+async def test_step4_deny_beats_require_human_beats_allow(checker: SimulatedRuleChecker) -> None:
     both = await checker.check_action(baseline_request("create_refund", {"days_since_delivery": 20}, {"amount": 5000}))
     assert (both.decision, both.reason_code) == ("deny", "RULE_BLOCKED")
     assert {o.rule_id: o.effect_applied for o in both.rule_outcomes} == {
@@ -305,14 +306,14 @@ async def test_step4_deny_beats_require_human_beats_allow(checker: RuleCheckerSt
     assert (human.decision, human.reason_code) == ("require_human", "RULE_REQUIRES_HUMAN")
 
 
-async def test_step4_rule_whose_applies_if_is_false_is_skipped(checker: RuleCheckerStandin) -> None:
+async def test_step4_rule_whose_applies_if_is_false_is_skipped(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(
         baseline_request("create_refund", {"order_status": "cancelled", "days_since_delivery": 99})
     )
     assert d.decision == "allow" and "R-REFUND-14D" not in {o.rule_id for o in d.rule_outcomes}
 
 
-async def test_step4_missing_fact_denies_with_missing_context(checker: RuleCheckerStandin) -> None:
+async def test_step4_missing_fact_denies_with_missing_context(checker: SimulatedRuleChecker) -> None:
     req = request("create_return", {"days_since_delivery": 3}, {})  # category, clearance and condition facts are absent
     d = await checker.check_action(req)
     assert (d.decision, d.reason_code) == ("deny", "MISSING_CONTEXT")
@@ -322,25 +323,25 @@ async def test_step4_missing_fact_denies_with_missing_context(checker: RuleCheck
 
 
 @pytest.mark.parametrize("bad", [None, "ten", True, [3], {"n": 3}, float("nan"), "3"])
-async def test_step4_malformed_numeric_fact_fails_closed(checker: RuleCheckerStandin, bad: Any) -> None:
+async def test_step4_malformed_numeric_fact_fails_closed(checker: SimulatedRuleChecker, bad: Any) -> None:
     d = await checker.check_action(baseline_request("create_exchange", {"days_since_delivery": bad}))
     assert (d.decision, d.reason_code, d.missing_fields) == ("deny", "MISSING_CONTEXT", ("days_since_delivery",))
 
 
 @pytest.mark.parametrize("bad", ["no", 0, "false", None])
-async def test_step4_malformed_boolean_fact_fails_closed(checker: RuleCheckerStandin, bad: Any) -> None:
+async def test_step4_malformed_boolean_fact_fails_closed(checker: SimulatedRuleChecker, bad: Any) -> None:
     d = await checker.check_action(baseline_request("create_return", {"is_clearance": bad}))
     assert (d.decision, d.reason_code) == ("deny", "MISSING_CONTEXT")
 
 
-async def test_step4_missing_applies_if_fact_fails_closed(checker: RuleCheckerStandin) -> None:
+async def test_step4_missing_applies_if_fact_fails_closed(checker: SimulatedRuleChecker) -> None:
     req = request("create_refund", {"days_since_delivery": 3}, {"amount": 100})  # no order_status
     d = await checker.check_action(req)
     assert (d.decision, d.reason_code) == ("deny", "MISSING_CONTEXT")
     assert "order_status" in d.missing_fields
 
 
-async def test_step4_another_definite_deny_wins_over_missing_context(checker: RuleCheckerStandin) -> None:
+async def test_step4_another_definite_deny_wins_over_missing_context(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(
         request("create_return", {"days_since_delivery": 90}, {})
     )  # 14d denies, rest missing
@@ -349,31 +350,31 @@ async def test_step4_another_definite_deny_wins_over_missing_context(checker: Ru
 
 
 async def test_step4_missing_fact_with_only_require_human_elsewhere_is_still_a_deny(
-    checker: RuleCheckerStandin,
+    checker: SimulatedRuleChecker,
 ) -> None:
     d = await checker.check_action(baseline_request("create_refund", {"order_status": None}, {"amount": 5000}))
     assert (d.decision, d.reason_code) == ("deny", "MISSING_CONTEXT")
 
 
-async def test_step4_an_argument_never_stands_in_for_a_fact(checker: RuleCheckerStandin) -> None:
+async def test_step4_an_argument_never_stands_in_for_a_fact(checker: SimulatedRuleChecker) -> None:
     req = request("create_exchange", {}, {"days_since_delivery": 1})  # the customer says "yesterday"
     d = await checker.check_action(req)
     assert (d.decision, d.reason_code, d.missing_fields) == ("deny", "MISSING_CONTEXT", ("days_since_delivery",))
 
 
-async def test_step4_a_fact_does_not_stand_in_for_an_argument(checker: RuleCheckerStandin) -> None:
+async def test_step4_a_fact_does_not_stand_in_for_an_argument(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("apply_voucher", {"days_late": 5, "amount": 10}, {}))
     assert (d.decision, d.missing_fields) == ("deny", ("arguments.amount",))
 
 
-async def test_step4_an_argument_cannot_override_a_fact(checker: RuleCheckerStandin) -> None:
+async def test_step4_an_argument_cannot_override_a_fact(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(
         baseline_request("create_exchange", {"days_since_delivery": 40}, {"days_since_delivery": 1})
     )
     assert (d.decision, d.reason_code) == ("deny", "RULE_BLOCKED")
 
 
-async def test_step4_rules_of_other_actions_do_not_apply(checker: RuleCheckerStandin) -> None:
+async def test_step4_rules_of_other_actions_do_not_apply(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("cancel_order"))
     assert {o.rule_id for o in d.rule_outcomes} == {"R-CANCEL-BEFORE-SHIP"}
 
@@ -384,7 +385,7 @@ async def test_step4_wrong_type_condition_in_rule_file_is_unreadable(tmp_path: P
     bad = rule("R-X", "create_ticket", conditions=[cond("a", "~=", 1)])
     (folder / "rules.json").write_text(json.dumps({"tenant_id": T, "rules": [bad]}), encoding="utf-8")
     with pytest.raises(UpstreamError) as caught:
-        await RuleCheckerStandin(tmp_path).check_action(baseline_request("create_ticket"))
+        await SimulatedRuleChecker(tmp_path).check_action(baseline_request("create_ticket"))
     assert caught.value.code == "RULES_INVALID"
 
 
@@ -396,28 +397,28 @@ async def test_step4_wrong_type_condition_in_rule_file_is_unreadable(tmp_path: P
     [("2026-09-18", "allow"), ("2026-09-14", "allow"), ("2026-09-13", "deny"), ("2026-09-18T10:00:00Z", "allow")],
 )
 async def test_days_since_delivery_is_derived_from_the_date(
-    checker: RuleCheckerStandin, delivered: str, decision: str
+    checker: SimulatedRuleChecker, delivered: str, decision: str
 ) -> None:
     d = await checker.check_action(request("create_exchange", {"delivered_at": delivered}))
     assert d.decision == decision
 
 
-async def test_derived_days_replace_a_number_the_backend_sent(checker: RuleCheckerStandin) -> None:
+async def test_derived_days_replace_a_number_the_backend_sent(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("create_exchange", {"delivered_at": "2026-08-01", "days_since_delivery": 2}))
     assert (d.decision, d.reason_code) == ("deny", "RULE_BLOCKED")
 
 
-async def test_a_supplied_day_count_is_used_when_there_is_no_date(checker: RuleCheckerStandin) -> None:
+async def test_a_supplied_day_count_is_used_when_there_is_no_date(checker: SimulatedRuleChecker) -> None:
     assert (await checker.check_action(request("create_exchange", {"days_since_delivery": 2}))).decision == "allow"
 
 
 @pytest.mark.parametrize("delivered", ["yesterday", "2026-10-05", 20260918, ""])
-async def test_unusable_delivery_date_fails_closed(checker: RuleCheckerStandin, delivered: Any) -> None:
+async def test_unusable_delivery_date_fails_closed(checker: SimulatedRuleChecker, delivered: Any) -> None:
     d = await checker.check_action(request("create_exchange", {"delivered_at": delivered, "days_since_delivery": 1}))
     assert (d.decision, d.reason_code) == ("deny", "MISSING_CONTEXT")
 
 
-async def test_without_as_of_nothing_is_derived(checker: RuleCheckerStandin) -> None:
+async def test_without_as_of_nothing_is_derived(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("create_exchange", {"delivered_at": "2026-09-27"}, as_of=None))
     assert (d.decision, d.missing_fields) == ("deny", ("days_since_delivery",))
 
@@ -438,7 +439,7 @@ def test_derive_facts_days_late() -> None:
     "delivered,expected,decision", [("2026-09-25", "2026-09-20", "allow"), ("2026-09-22", "2026-09-20", "deny")]
 )
 async def test_late_voucher_uses_derived_days_late(
-    checker: RuleCheckerStandin, delivered: str, expected: str, decision: str
+    checker: SimulatedRuleChecker, delivered: str, expected: str, decision: str
 ) -> None:
     facts = {"delivered_at": delivered, "expected_delivery_date": expected}
     d = await checker.check_action(request("apply_voucher", facts, {"amount": 100}))
@@ -448,17 +449,17 @@ async def test_late_voucher_uses_derived_days_late(
 # ---------------------------------------------------------------- step 5: no rule
 
 
-async def test_step5_read_without_rule_is_allowed(checker: RuleCheckerStandin) -> None:
+async def test_step5_read_without_rule_is_allowed(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("get_order", kind="read"))
     assert (d.decision, d.reason_code, d.user_message) == ("allow", "NO_RULE_READ_ONLY", None)
 
 
-async def test_step5_high_risk_write_without_rule_needs_a_human(checker: RuleCheckerStandin) -> None:
+async def test_step5_high_risk_write_without_rule_needs_a_human(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("close_account", kind="delete", risk="high"))
     assert (d.decision, d.reason_code) == ("require_human", "HIGH_RISK_DEFAULT") and d.user_message is not None
 
 
-async def test_step5_other_write_without_rule_needs_a_human(checker: RuleCheckerStandin) -> None:
+async def test_step5_other_write_without_rule_needs_a_human(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(request("rename_wishlist", kind="update", risk="low"))
     assert (d.decision, d.reason_code) == ("require_human", "NO_RULE_SIDE_EFFECT")
 
@@ -487,7 +488,9 @@ async def test_step5_a_proposed_rule_alone_leaves_the_action_without_a_rule(tmp_
         (lambda: request("rename_wishlist", kind="update", risk="low"), "NO_RULE_SIDE_EFFECT"),
     ],
 )
-async def test_step6_approval_turns_require_human_into_allow(checker: RuleCheckerStandin, build: Any, was: str) -> None:
+async def test_step6_approval_turns_require_human_into_allow(
+    checker: SimulatedRuleChecker, build: Any, was: str
+) -> None:
     before = await checker.check_action(build())
     assert (before.decision, before.reason_code) == ("require_human", was)
     after = await checker.check_action(build().model_copy(update={"human_approval": _approval()}))
@@ -510,14 +513,14 @@ def _approval() -> Any:
     ],
 )
 async def test_step6_approval_never_turns_a_deny_into_an_allow(
-    checker: RuleCheckerStandin, build: Any, code: str
+    checker: SimulatedRuleChecker, build: Any, code: str
 ) -> None:
     req = build().model_copy(update={"human_approval": _approval()})
     d = await checker.check_action(req)
     assert (d.decision, d.reason_code) == ("deny", code)
 
 
-async def test_step6_an_allow_stays_as_it_was(checker: RuleCheckerStandin) -> None:
+async def test_step6_an_allow_stays_as_it_was(checker: SimulatedRuleChecker) -> None:
     req = baseline_request("create_ticket").model_copy(update={"human_approval": _approval()})
     assert (await checker.check_action(req)).reason_code == "RULES_PASSED"
 
@@ -525,7 +528,7 @@ async def test_step6_an_allow_stays_as_it_was(checker: RuleCheckerStandin) -> No
 # ---------------------------------------------------------------- the answer, the plug, the failure switch
 
 
-async def test_every_non_allow_answer_has_both_languages(checker: RuleCheckerStandin) -> None:
+async def test_every_non_allow_answer_has_both_languages(checker: SimulatedRuleChecker) -> None:
     requests = [
         baseline_request("create_ticket", resource_tenant_id="x"), baseline_request("create_ticket", verified=False),
         baseline_request("create_ticket", risk_categories=("fraud_suspected",)),
@@ -540,12 +543,12 @@ async def test_every_non_allow_answer_has_both_languages(checker: RuleCheckerSta
         assert d.user_message.en.strip() and d.user_message.ar.strip(), d.reason_code
 
 
-async def test_answer_echoes_the_request(checker: RuleCheckerStandin) -> None:
+async def test_answer_echoes_the_request(checker: SimulatedRuleChecker) -> None:
     d = await checker.check_action(baseline_request("create_ticket"))
     assert (d.request_id, d.tenant_id, d.conversation_id, d.action) == ("req-1", T, "c1", "create_ticket")
 
 
-async def test_checker_does_not_change_the_request(checker: RuleCheckerStandin) -> None:
+async def test_checker_does_not_change_the_request(checker: SimulatedRuleChecker) -> None:
     req = baseline_request("create_exchange", {"delivered_at": "2026-09-18"})
     before = req.model_dump()
     await checker.check_action(req)
@@ -554,7 +557,7 @@ async def test_checker_does_not_change_the_request(checker: RuleCheckerStandin) 
 
 async def test_unknown_tenant_fails_closed(tmp_path: Path) -> None:
     with pytest.raises(UpstreamError) as caught:
-        await RuleCheckerStandin(tmp_path).check_action(baseline_request("create_ticket"))
+        await SimulatedRuleChecker(tmp_path).check_action(baseline_request("create_ticket"))
     assert caught.value.code == "TENANT_NOT_FOUND"
 
 
@@ -562,10 +565,10 @@ async def test_rules_file_naming_another_tenant_is_refused(tmp_path: Path) -> No
     (tmp_path / T).mkdir()
     (tmp_path / T / "rules.json").write_text(json.dumps({"tenant_id": "other", "rules": []}), encoding="utf-8")
     with pytest.raises(UpstreamError, match="another tenant"):
-        await RuleCheckerStandin(tmp_path).check_action(baseline_request("create_ticket"))
+        await SimulatedRuleChecker(tmp_path).check_action(baseline_request("create_ticket"))
 
 
-async def test_failure_switch(checker: RuleCheckerStandin) -> None:
+async def test_failure_switch(checker: SimulatedRuleChecker) -> None:
     checker.fail_next(2)
     for _ in range(2):
         with pytest.raises(UpstreamError) as caught:
@@ -576,7 +579,7 @@ async def test_failure_switch(checker: RuleCheckerStandin) -> None:
         checker.fail_next(0)
 
 
-async def test_switch_applies_even_to_checks_that_would_deny(checker: RuleCheckerStandin) -> None:
+async def test_switch_applies_even_to_checks_that_would_deny(checker: SimulatedRuleChecker) -> None:
     checker.fail_next()
     with pytest.raises(UpstreamError):
         await checker.check_action(baseline_request("create_ticket", verified=False))

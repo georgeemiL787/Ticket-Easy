@@ -104,7 +104,7 @@ review has not been done either.
 - **Not done:** the image was never built and the compose stack never started here, so "starts on a clean computer and
   the three example conversations work in the browser" is not shown. The load test was the in-process runner, not
   Locust against a running container.
-- Load and resilience (phase 5.3), in-process, 50 customers at once, each stand-in switched off for 30 s in turn
+- Load and resilience (phase 5.3), in-process, 50 customers at once, each simulated service switched off for 30 s in turn
   (`loadtest/RESULTS.md`): 16,808 messages, endpoint p95 **721 ms** (limit 3,000 ms), the checker says **PASS** (no write
   without a policy answer, no duplicate write, no write for someone else's order, nothing called done without a proven
   write, recovery probe OK). Not measured: the AI-on 6-second limit.

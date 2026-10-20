@@ -1,33 +1,45 @@
-"""Team C's published business tools behind Team B's CapabilityClient plug (sandbox, or Live Demo when allowed).
+"""The tools service's published business tools behind the agent's CapabilityClient plug (sandbox, or Live Demo when
+allowed).
 
-TeamCCapabilities wraps the existing shop client (the stand-in) and sends the tools a business BINDS to Team C over MCP
+ToolCapabilities wraps the existing shop client (the simulated service) and sends the tools a business BINDS to the
+tools service over MCP
 instead. Everything else in the core is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
 the same gates, the same verify_result.
 
 Binding (an operator file, TEAM_B_TEAM_C_CONFIG, see config/team_c.example.json):
-- A Team B tool name is bound to a Team C proposal (`proposal_id`, stable across versions and rebuilds) or to one exact
+- A the agent tool name is bound to a tools service proposal (`proposal_id`, stable across versions and rebuilds) or to
+one exact
   published tool name. On every listing the published tool of that proposal with the highest version is used; two
-  published artifacts of the same version are ambiguous and nothing is used (disable one in Team C).
-- Environments: a binding accepts sandbox publications; a Live Demo publication (Team C calls the owner-configured REAL
+  published artifacts of the same version are ambiguous and nothing is used (disable one in the tools service).
+- Environments: a binding accepts sandbox publications; a Live Demo publication (the tools service calls the
+owner-configured REAL
   API) is used only when the operator lists "live_demo" in that binding's `environments`. A publication that claims
   production readiness is never used (no production release process exists).
-- A bound tool is NEVER served by the stand-in: when Team C does not list it (not published, disabled, blocked, Team C
+- A bound tool is NEVER served by the simulated service: when the tools service does not list it (not published,
+disabled, blocked, the tools service
   down), the core sees it as not published and says so or hands over.
-- The ToolSpec the core sees is the business's own declaration (the stand-in's spec of that name, or `spec` in the
-  binding). A Team C tool that writes while the declaration says read (or the reverse) is not used (fail closed).
-- `arguments` / `fields` rename Team B's argument and output names to Team C's; outputs not named are dropped.
+- The ToolSpec the core sees is the business's own declaration (the simulated service's spec of that name, or `spec` in
+the
+  binding). A the tools service tool that writes while the declaration says read (or the reverse) is not used (fail
+  closed).
+- `arguments` / `fields` rename the agent's argument and output names to the tools service's; outputs not named are
+dropped.
 
-Identity: Team C's MCP server is bound to one sandbox identity per process. The identity of a call is chosen from the
+Identity: the tools service's MCP server is bound to one sandbox identity per process. The identity of a call is chosen
+from the
 customer the core VERIFIED (ToolCallRequest.acting_customer_id, set by code) through the operator's `identities` map,
 one process per (business, identity). Arguments never choose it. With no verified or mapped customer the call is not
 sent (IDENTITY_NOT_MAPPED), except a tool that needs no identity may use `anonymous_identity` when one is configured.
 
 Results (only `succeeded` is a success; nothing is retried here):
 - succeeded -> success, audit_id "team-c:<execution_id>", reference_id from `reference_field` for creates
-- every error message starts with Team C's category (invalid_arguments, authentication_failed, permission_denied,
-  not_found, rate_limited, api_unreachable, timeout, ...); a read Team C answered not_found is NOT_FOUND for the core
+- every error message starts with the tools service's category (invalid_arguments, authentication_failed,
+permission_denied,
+  not_found, rate_limited, api_unreachable, timeout, ...); a read the tools service answered not_found is NOT_FOUND for
+  the core
 - rejected (refused before any request) -> error TEAM_C_REJECTED, nothing applied
-- failed -> error TEAM_C_FAILED; when the API refused a write (write_state rejected_unverified) Team C does not assert
+- failed -> error TEAM_C_FAILED; when the API refused a write (write_state rejected_unverified) the tools service does
+not assert
   that nothing changed, so write_may_have_applied (the core escalates as unverified_result, never says "not done")
 - partial / outcome_unknown -> error PARTIAL_WRITE / OUTCOME_UNKNOWN, write_may_have_applied
 - error -> error TEAM_C_ERROR, write_may_have_applied for a write tool
@@ -47,8 +59,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from agent_service.adapters.team_c_admin import TeamCAdmin
-from agent_service.adapters.team_c_mcp import McpLost, McpRemoteError, McpStdioSession, McpUnavailable
+from agent_service.adapters.tools_admin_client import ToolsAdminClient
+from agent_service.adapters.tools_mcp_client import McpLost, McpRemoteError, McpStdioSession, McpUnavailable
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from agent_service.domain.bundle import TenantBundle
@@ -71,22 +83,27 @@ def _sandbox_only() -> list[Environment]:
 
 
 class ToolBinding(BaseModel):
-    """One Team B tool served by a Team C publication."""
+    """One the agent tool served by a tools service publication."""
 
     model_config = ConfigDict(extra="forbid")
 
-    proposal_id: str | None = None  # the Team C tool across versions: its newest published version is used
+    proposal_id: str | None = None  # the tools service tool across versions: its newest published version is used
     tool: str | None = None  # or one exact published tool name (<slug>_v<n>_<artifact hex>)
-    arguments: dict[str, str] = Field(default_factory=dict)  # Team B argument name -> Team C input name
-    fields: dict[str, str] = Field(default_factory=dict)  # Team B output field -> Team C output name or /json/pointer
-    reference_field: str | None = None  # for a create: the (Team B) output field that is the new record's reference
-    # Output fields Team B requires that the Team C tool does not return, filled only after Team C reports success:
+    arguments: dict[str, str] = Field(default_factory=dict)  # The agent argument name -> the tools service input name
+    fields: dict[str, str] = Field(
+        default_factory=dict
+    )  # The agent output field -> the tools service output name or /json/pointer
+    reference_field: str | None = None  # for a create: the (the agent) output field that is the new record's reference
+    # Output fields the agent requires that the tools service tool does not return, filled only after the tools service
+    # reports success:
     echo: list[str] = Field(default_factory=list)  # taken from the call's own arguments (e.g. order_id)
     constants: dict[str, str] = Field(default_factory=dict)  # a fixed value (e.g. status "created")
-    spec: dict[str, Any] | None = None  # the ToolSpec when the stand-in has none of this name (capability, kind, ...)
-    # Which Team C environments this tool may use. live_demo = calls reach the owner-configured REAL API: the operator
+    spec: dict[str, Any] | None = None  # the ToolSpec when the simulated has none of this name (capability, kind, ...)
+    # Which the tools service environments this tool may use. live_demo = calls reach the owner-configured REAL API: the
+    # operator
     # opts in per tool. production = a promoted tool that acts on real customers' data with the business's service
-    # credential; Team C scopes every call to the VERIFIED customer whose id Team B sends as trusted context.
+    # credential; the tools service scopes every call to the VERIFIED customer whose id the agent sends as trusted
+    # context.
     environments: list[Environment] = Field(default_factory=_sandbox_only, min_length=1)
 
     @model_validator(mode="after")
@@ -97,16 +114,19 @@ class ToolBinding(BaseModel):
 
 
 class TenantBinding(BaseModel):
-    """A business served by Team C: its Team C business, who acts for whom, and which tools Team C serves."""
+    """A business served by the tools service: its tools service business, who acts for whom, and which tools the tools
+    service serves."""
 
     model_config = ConfigDict(extra="forbid")
 
     business_id: str = Field(min_length=1)
-    identities: dict[str, str] = Field(default_factory=dict)  # verified customer_id -> Team C sandbox identity name
+    identities: dict[str, str] = Field(
+        default_factory=dict
+    )  # verified customer_id -> the tools service sandbox identity name
     anonymous_identity: str | None = None  # only for tools that need no identity (requires_identity false)
     list_identity: str | None = None  # the process that lists tools (default: the first mapped identity)
     production_context_field: str = (
-        "customer_id"  # the Team C connector context field the verified customer id is sent as
+        "customer_id"  # the tools service connector context field the verified customer id is sent as
     )
     tools: dict[str, ToolBinding] = Field(default_factory=dict)
 
@@ -114,30 +134,31 @@ class TenantBinding(BaseModel):
         return self.list_identity or next(iter(sorted(self.identities.values())), None) or self.anonymous_identity
 
 
-class TeamCConfig(BaseModel):
-    """The operator's Team C connection (TEAM_B_TEAM_C_CONFIG). Paths may be relative to the file's folder."""
+class ToolsConfig(BaseModel):
+    """The operator's the tools service connection (TEAM_B_TEAM_C_CONFIG). Paths may be relative to the file's
+    folder."""
 
     model_config = ConfigDict(extra="forbid")
 
     # e.g. [".../services/tools/.venv/Scripts/python.exe", "-m", "tools_service.mcp_server"]
     command: list[str] = Field(min_length=1)
-    cwd: str | None = None  # Team C's folder (the server imports team_c from there)
+    cwd: str | None = None  # The tools service's folder (the server imports team_c from there)
     env: dict[str, str] = Field(default_factory=dict)  # e.g. {"PYTHONPATH": "."}
-    database: str | None = None  # --database (Team C's SQLite file)
+    database: str | None = None  # --database (the tools service's SQLite file)
     connectors: str | None = None  # --connectors (optional trusted connectors file)
     sandbox_hosts: str | None = None  # --sandbox-hosts
-    api_url: str | None = None  # Team C's REST API (http://127.0.0.1:<port>) for the Business tools page
+    api_url: str | None = None  # The tools service's REST API (http://127.0.0.1:<port>) for the Business tools page
     admin_token_env: str | None = (
-        None  # NAME of the environment variable holding Team C's admin token (production actions)
+        None  # NAME of the environment variable holding the tools service's admin token (production actions)
     )
-    builder_url: str | None = None  # Team C's owner pages, linked from the Business tools page
+    builder_url: str | None = None  # The tools service's owner pages, linked from the Business tools page
     list_timeout_s: float = Field(default=15.0, gt=0)
     call_timeout_s: float = Field(default=30.0, gt=0)
     start_timeout_s: float = Field(default=30.0, gt=0)
     tenants: dict[str, TenantBinding] = Field(default_factory=dict)
 
     @classmethod
-    def load(cls, path: Path) -> "TeamCConfig":
+    def load(cls, path: Path) -> "ToolsConfig":
         config = cls.model_validate(json.loads(path.read_text(encoding="utf-8")))
         base = path.resolve().parent
         resolve = lambda p: str((base / p).resolve()) if p and not Path(p).is_absolute() else p  # noqa: E731
@@ -159,9 +180,9 @@ class TeamCConfig(BaseModel):
 
 @dataclass
 class ResolvedTool:
-    """What a Team B tool name points at right now in Team C (or why it points at nothing)."""
+    """What a agent tool name points at right now in the tools service (or why it points at nothing)."""
 
-    name: str  # Team B's name
+    name: str  # The agent's name
     team_c_tool: str | None = None
     publication_id: str | None = None
     artifact_id: str | None = None
@@ -169,7 +190,7 @@ class ResolvedTool:
     proposal_id: str | None = None
     proposal_version: int | None = None
     read_only: bool | None = None
-    environment: str | None = None  # sandbox | live_demo (Team C's _meta.team_c.environment)
+    environment: str | None = None  # sandbox | live_demo (the tools service's _meta.team_c.environment)
     api_host: str | None = None  # live_demo: the real API's host
     problem: str | None = (
         None  # not_published | ambiguous | kind_mismatch | environment_not_allowed | no_spec | team_c_unavailable
@@ -181,14 +202,16 @@ class TenantState:
     listed_at: float | None = None  # time.time() of the last successful listing
     error: str | None = None  # why the last listing failed
     resolved: dict[str, ResolvedTool] = field(default_factory=dict)
-    tools: list[dict[str, Any]] = field(default_factory=list)  # every Team C tool the last listing returned
-    declared: dict[str, ToolSpec] = field(default_factory=dict)  # the business's own ToolSpecs (the stand-in's)
+    tools: list[dict[str, Any]] = field(default_factory=list)  # every the tools service tool the last listing returned
+    declared: dict[str, ToolSpec] = field(
+        default_factory=dict
+    )  # the business's own ToolSpecs (the simulated service's)
 
 
-class TeamCCapabilities:
-    """CapabilityClient: tools bound to Team C go over MCP; every other tool goes to `fallback` unchanged."""
+class ToolCapabilities:
+    """CapabilityClient: tools bound to the tools service go over MCP; every other tool goes to `fallback` unchanged."""
 
-    def __init__(self, fallback: CapabilityClient, config: TeamCConfig) -> None:
+    def __init__(self, fallback: CapabilityClient, config: ToolsConfig) -> None:
         self._fallback = fallback
         self.config = config
         self._sessions: dict[tuple[str, str], McpStdioSession] = {}
@@ -196,9 +219,12 @@ class TeamCCapabilities:
         self._start_failed: dict[tuple[str, str], tuple[float, str]] = {}
         self._state: dict[str, TenantState] = {}
         self._file_bindings: dict[str, TenantBinding] = dict(config.tenants)  # as the operator's file says
-        # Team C's REST API, for the Business tools page (publications, proposals, disable); None without api_url.
+        # The tools service's REST API, for the Business tools page (publications, proposals, disable); None without
+        # api_url.
         token = os.environ.get(config.admin_token_env or "") or None
-        self.admin: TeamCAdmin | None = TeamCAdmin(config.api_url, admin_token=token) if config.api_url else None
+        self.admin: ToolsAdminClient | None = (
+            ToolsAdminClient(config.api_url, admin_token=token) if config.api_url else None
+        )
 
     # ---- the CapabilityClient plug ----
 
@@ -242,7 +268,8 @@ class TeamCCapabilities:
         production = resolved.environment == "production"
         if production:
             # One service credential serves every customer, so the VERIFIED customer (set by code, never by the model
-            # or an argument) travels as trusted context and Team C scopes the call to them. None: nothing is sent.
+            # or an argument) travels as trusted context and the tools service scopes the call to them. None: nothing is
+            # sent.
             if not request.acting_customer_id:
                 return _error("IDENTITY_NOT_MAPPED", "a production tool needs a verified customer; not sent")
             identity: str | None = PRODUCTION_KEY
@@ -275,8 +302,9 @@ class TeamCCapabilities:
 
     @staticmethod
     def _without_undeclared_identity(state: TenantState, team_c_tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        """The customer travels by the identity of the call. A tool that declares no customer input (Team C's order
-        list reads the caller's own orders) would reject the customer_id Team B always adds, so it is left out for
+        """The customer travels by the identity of the call. A tool that declares no customer input (the tools service's
+        order
+        list reads the caller's own orders) would reject the customer_id the agent always adds, so it is left out for
         that tool."""
         listed = next((t for t in state.tools if t.get("name") == team_c_tool), None)
         properties = ((listed or {}).get("inputSchema") or {}).get("properties")
@@ -287,7 +315,7 @@ class TeamCCapabilities:
     # ---- discovery ----
 
     async def refresh(self, tenant_id: str, declared: dict[str, ToolSpec] | None = None) -> TenantState:
-        """List Team C's tools again (no list_changed notifications exist) and resolve every binding."""
+        """List the tools service's tools again (no list_changed notifications exist) and resolve every binding."""
         binding = self.config.tenants[tenant_id]
         if declared is None:
             declared = {t.name: t for t in await self._own_tools(tenant_id)}
@@ -384,7 +412,8 @@ class TeamCCapabilities:
     # ---- internals ----
 
     def _spec(self, tenant_id: str, name: str) -> ToolSpec | None:
-        """The business's own declaration of this tool: the binding's `spec`, else the stand-in's spec of that name."""
+        """The business's own declaration of this tool: the binding's `spec`, else the simulated service's spec of that
+        name."""
         bound = self.config.tenants[tenant_id].tools[name]
         if bound.spec is not None:
             return ToolSpec.model_validate({"name": name, "capability": name, **bound.spec})
@@ -434,7 +463,7 @@ class TeamCCapabilities:
         if data.get("code") == "tool_not_published":
             state = self._state.get(tenant_id)
             if state is not None:
-                state.resolved.pop(tool, None)  # the next call or listing asks Team C again
+                state.resolved.pop(tool, None)  # the next call or listing asks the tools service again
             return _error("TOOL_NOT_PUBLISHED", f"{tool}: Team C says the tool is not published (disabled or replaced)")
         # -32602 / -32601 are refusals before the tool ran; any other protocol error may have happened mid-call.
         before_run = exc.code in (-32602, -32601, -32600)
@@ -485,7 +514,8 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
 
 def _usable(tool: dict[str, Any], bound: ToolBinding) -> bool:
     """Is this publication in an environment the operator allows for the tool, with the right production flag? A
-    sandbox or Live Demo publication must NOT claim production readiness; a production one must (Team C sets it for a
+    sandbox or Live Demo publication must NOT claim production readiness; a production one must (the tools service sets
+    it for a
     promoted, active one)."""
     meta = _meta(tool)
     environment = meta.get("environment")
@@ -508,7 +538,7 @@ _MISSING = object()
 
 
 def _pick(output: dict[str, Any], where: str) -> Any:
-    """Team C output `where` (a name, or a /json/pointer into the outputs); _MISSING when it is not there."""
+    """The tools service output `where` (a name, or a /json/pointer into the outputs); _MISSING when it is not there."""
     value: Any = output
     for part in where.strip("/").split("/") if where.startswith("/") else [where]:
         if not isinstance(value, dict) or part not in value:
@@ -542,7 +572,8 @@ def _result(
     envelope = _envelope(raw)
     production = resolved.environment == "production"
     if production and envelope is not None and envelope.get("status") == "rejected" and envelope.get("tool") is None:
-        # refused by Team C before any request (e.g. no context, rate limit): nothing was sent, nothing applied
+        # refused by the tools service before any request (e.g. no context, rate limit): nothing was sent, nothing
+        # applied
         found_err = envelope.get("error")
         err: dict[str, Any] = found_err if isinstance(found_err, dict) else {}
         why = err.get("category") or err.get("code") or "rejected"
@@ -577,7 +608,9 @@ def _result(
         output: dict[str, Any] = found_output if isinstance(found_output, dict) else {}
         picked = {mine: _pick(output, theirs) for mine, theirs in bound.fields.items()}
         data = {k: v for k, v in picked.items() if v is not _MISSING} if bound.fields else dict(output)
-        for name in bound.echo:  # the order the customer named is the order Team C acted on (it checked ownership)
+        for (
+            name
+        ) in bound.echo:  # the order the customer named is the order the tools service acted on (it checked ownership)
             if name not in data and arguments and name in arguments:
                 data[name] = arguments[name]
         for name, value in bound.constants.items():

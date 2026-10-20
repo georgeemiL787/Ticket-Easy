@@ -1,6 +1,8 @@
-"""The Business tools page API: Team C's sandbox tools as the agent sees them, refresh, and disable (manager only).
+"""The Business tools page API: the tools service's sandbox tools as the agent sees them, refresh, and disable (manager
+only).
 
-Team C is the scripted fake MCP server plus a mocked REST API (httpx.MockTransport): Team B's tests never start Team C.
+The tools service is the scripted fake MCP server plus a mocked REST API (httpx.MockTransport): the agent's tests never
+start the tools service.
 """
 
 import json
@@ -13,21 +15,21 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.adapters.tools_admin_client import ToolsAdminClient
 from agent_service.api.app import create_app
 from agent_service.config import PROJECT_ROOT
 from agent_service.container import Container, build_container
 from tests.conftest import FIXED_TODAY
 from tests.support import make_settings
-from tests.unit.adapters.test_team_c_tools import BUSINESS, GET_ORDER_PROPOSAL, ORDER_OK, Fake, tool_def
+from tests.unit.adapters.test_tools_catalog import BUSINESS, GET_ORDER_PROPOSAL, ORDER_OK, Fake, tool_def
 
 PASSWORD = "correct horse battery"
 T = "shop_001"
 URL = "/v1/dashboard/business-tools"
 
 
-class TeamCRest:
-    """Team C's /api/v1 for publications and proposals, as data the test changes."""
+class ToolsRestClient:
+    """The tools service's /api/v1 for publications and proposals, as data the test changes."""
 
     def __init__(self) -> None:
         self.publications: dict[str, dict[str, Any]] = {}
@@ -49,7 +51,7 @@ class TeamCRest:
             {"id": "promo-other", "status": "active", "source_artifact_id": "art-other", "actor": "x", "note": "n",
              "rollback_contact": "c", "checklist": {}},
         ]}  # fmt: skip
-        self.refuse: str | None = None  # Team C's refusal text for the next promotion
+        self.refuse: str | None = None  # The tools service's refusal text for the next promotion
         self.connectors: dict[str, list[dict[str, Any]]] = {
             BUSINESS: [{"id": "live-abc", "environment": "live_demo", "host": "api.example.com:443",
                         "identities": [{"name": "alice", "scope": "end_user"}], "last_check": None}],
@@ -127,18 +129,18 @@ class TeamCRest:
 
 
 @pytest.fixture
-def rest() -> TeamCRest:
-    return TeamCRest()
+def rest() -> ToolsRestClient:
+    return ToolsRestClient()
 
 
-def build(tmp_path: Path, fake: Fake, rest: TeamCRest, **options: Any) -> Container:
+def build(tmp_path: Path, fake: Fake, rest: ToolsRestClient, **options: Any) -> Container:
     config = fake.config()
     config.update(api_url="http://127.0.0.1:9", builder_url="http://127.0.0.1:9")
     path = tmp_path / "team_c.json"
     path.write_text(json.dumps(config), encoding="utf-8")
     container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, team_c_config=path, **options))
     assert container.team_c is not None
-    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
+    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     return container
 
 
@@ -151,7 +153,9 @@ async def serve(container: Container) -> AsyncIterator[httpx.AsyncClient]:
 
 
 @pytest.fixture
-async def open_client(tmp_path: Path, rest: TeamCRest) -> AsyncIterator[tuple[httpx.AsyncClient, Fake, TeamCRest]]:
+async def open_client(
+    tmp_path: Path, rest: ToolsRestClient
+) -> AsyncIterator[tuple[httpx.AsyncClient, Fake, ToolsRestClient]]:
     fake = Fake(tmp_path)
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=ORDER_OK)
     rest.add("pub-get_order_v1_aa", BUSINESS, "get_order_v1_aa")
@@ -160,7 +164,7 @@ async def open_client(tmp_path: Path, rest: TeamCRest) -> AsyncIterator[tuple[ht
 
 
 async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_publications(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, _ = open_client
     reply = await http.get(URL, params={"tenant_id": T})
@@ -187,11 +191,11 @@ async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_public
 
 
 async def test_disable_stops_the_tool_and_the_page_shows_the_new_state(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, fake, rest = open_client
     await http.get(URL, params={"tenant_id": T})
-    fake.publish()  # what Team C's MCP server lists once the publication is disabled
+    fake.publish()  # what the tools service's MCP server lists once the publication is disabled
     reply = await http.post(
         f"{URL}/publications/pub-get_order_v1_aa/disable", params={"tenant_id": T}, json={"note": "stop it"}
     )
@@ -205,7 +209,7 @@ async def test_disable_stops_the_tool_and_the_page_shows_the_new_state(
 
 
 async def test_another_businesss_publication_cannot_be_disabled_from_here(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, rest = open_client
     rest.add("pub-other", "biz-someone-else", "their_tool_v1_ff")
@@ -223,7 +227,7 @@ async def test_a_business_without_team_c_shows_the_stand_in_tools(tmp_path: Path
         assert reply.status_code == 404
 
 
-async def test_only_a_signed_in_manager_may_see_refresh_or_disable(tmp_path: Path, rest: TeamCRest) -> None:
+async def test_only_a_signed_in_manager_may_see_refresh_or_disable(tmp_path: Path, rest: ToolsRestClient) -> None:
     config = tmp_path / "tenants"
     shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
     fake = Fake(tmp_path)
@@ -256,11 +260,11 @@ async def test_only_a_signed_in_manager_may_see_refresh_or_disable(tmp_path: Pat
         login = await http.post("/v1/auth/login", json={"email": "agent@example.com", "password": PASSWORD})
         agent_csrf = {"X-CSRF-Token": login.json()["csrf_token"]}
         check = await http.post(f"{URL}/connectors/live-abc/check", params={"tenant_id": T}, headers=agent_csrf)
-        assert check.status_code == 403  # an agent may not make Team C call the API
+        assert check.status_code == 403  # an agent may not make the tools service call the API
 
 
 async def test_a_manager_checks_this_businesss_connector_and_sees_each_step(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, rest = open_client
     body = (await http.get(URL, params={"tenant_id": T})).json()
@@ -275,7 +279,7 @@ async def test_a_manager_checks_this_businesss_connector_and_sees_each_step(
     assert other.status_code == 404 and len(rest.posts) == 1  # another business's connector is never checked from here
 
 
-async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path, rest: TeamCRest) -> None:
+async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path, rest: ToolsRestClient) -> None:
     fake = Fake(tmp_path)
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL, live=True), get_order_v1_aa=ORDER_OK)
     rest.add("pub-get_order_v1_aa", BUSINESS, "get_order_v1_aa")
@@ -286,7 +290,7 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
     path.write_text(json.dumps(config), encoding="utf-8")
     container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, team_c_config=path))
     assert container.team_c is not None
-    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
+    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     async for http in serve(container):
         body = (await http.get(URL, params={"tenant_id": T})).json()
         tool = {t["name"]: t for t in body["tools"]}["get_order"]
@@ -299,14 +303,14 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
 
 
 async def test_a_manager_starts_automatic_tests_for_this_businesss_tool_only(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, rest = open_client
     reply = await http.post(f"{URL}/artifacts/art-1/auto-test", params={"tenant_id": T})
     assert reply.status_code == 200, reply.text
     assert rest.posts == [
         ("/artifacts/art-1/auto-test", {})
-    ]  # never asks to publish: Team C's business setting decides
+    ]  # never asks to publish: the tools service's business setting decides
     [proposal] = reply.json()["proposals"]
     assert proposal["readiness_state"] == "testing" and proposal["auto_test_status"] == "running"
     for other in ("art-other", "art-missing"):
@@ -314,7 +318,7 @@ async def test_a_manager_starts_automatic_tests_for_this_businesss_tool_only(
     assert len(rest.posts) == 1
 
 
-async def test_only_a_manager_may_start_automatic_tests(tmp_path: Path, rest: TeamCRest) -> None:
+async def test_only_a_manager_may_start_automatic_tests(tmp_path: Path, rest: ToolsRestClient) -> None:
     config = tmp_path / "tenants"
     shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
     fake = Fake(tmp_path)
@@ -339,7 +343,7 @@ async def test_only_a_manager_may_start_automatic_tests(tmp_path: Path, rest: Te
 
 
 async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries_their_name(
-    tmp_path: Path, rest: TeamCRest
+    tmp_path: Path, rest: ToolsRestClient
 ) -> None:
     config = tmp_path / "tenants"
     shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
@@ -370,7 +374,9 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
         rest.refuse = "This tool cannot be promoted yet: smoke: PRODUCTION_SMOKE_CONTEXT is not configured"
         refused = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)
         assert refused.status_code == 409 and refused.json()["error"]["code"] == "PROMOTION_REFUSED"
-        assert "PRODUCTION_SMOKE_CONTEXT is not configured" in refused.json()["error"]["message"]  # Team C's own words
+        assert (
+            "PRODUCTION_SMOKE_CONTEXT is not configured" in refused.json()["error"]["message"]
+        )  # The tools service's own words
         rest.refuse = None
         done = await http.post(url, params={"tenant_id": T}, json=body, headers=admin)
         assert done.status_code == 200, done.text
@@ -409,7 +415,7 @@ async def test_a_signed_in_admin_promotes_a_tested_tool_and_the_decision_carries
 
 
 async def test_an_open_dashboard_without_sign_in_cannot_promote(
-    open_client: tuple[httpx.AsyncClient, Fake, TeamCRest],
+    open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, rest = open_client
     body = {"note": "sandbox-only go-live", "rollback_contact": "oncall@example.com"}

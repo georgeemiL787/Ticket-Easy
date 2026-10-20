@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
-from agent_service.adapters.standins.json_schema import validate
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.json_schema import validate
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
@@ -26,7 +26,7 @@ HAPPY = [
 
 @pytest.mark.parametrize(("tool", "arguments", "prefix"), HAPPY, ids=[h[0] for h in HAPPY])
 async def test_every_write_returns_a_reference_and_an_audit_id(
-    shop: StandinShop, call: Call, tool: str, arguments: dict[str, Any], prefix: str
+    shop: SimulatedShop, call: Call, tool: str, arguments: dict[str, Any], prefix: str
 ) -> None:
     spec = next(t for t in await shop.list_tools(T) if t.name == tool)
     result = await call(tool, arguments, actor="human" if spec.human_only else "customer")
@@ -44,7 +44,7 @@ async def test_reference_numbers_count_up_per_kind(call: Call) -> None:
     assert (first.reference_id, second.reference_id) == ("TKT-30001", "TKT-30002")
 
 
-async def test_create_return_only_for_delivered_orders_and_only_once(call: Call, shop: StandinShop) -> None:
+async def test_create_return_only_for_delivered_orders_and_only_once(call: Call, shop: SimulatedShop) -> None:
     ok = await call("create_return", {"order_id": "NS-20745", "reason": "x"})
     assert ok.data["status"] == "created" and shop.records(T, "return")[0]["order_id"] == "NS-20745"
     again = await call("create_return", {"order_id": "NS-20745", "reason": "y"})
@@ -57,13 +57,13 @@ async def test_create_return_only_for_delivered_orders_and_only_once(call: Call,
     assert shop.change_count(T) == 1
 
 
-async def test_create_exchange_records_the_new_size(call: Call, shop: StandinShop) -> None:
+async def test_create_exchange_records_the_new_size(call: Call, shop: SimulatedShop) -> None:
     await call("create_exchange", {"order_id": "NS-20790", "reason": "small", "new_size": "XL"})
     assert shop.records(T, "exchange")[0]["new_size"] == "XL"
     assert (await call("create_exchange", {"order_id": "NS-20877", "reason": "x"})).error_code == "REJECTED"
 
 
-async def test_create_refund_marks_the_order_refunded_once(call: Call, shop: StandinShop) -> None:
+async def test_create_refund_marks_the_order_refunded_once(call: Call, shop: SimulatedShop) -> None:
     ok = await call("create_refund", {"order_id": "NS-20512", "amount": 800})
     assert ok.data["status"] == "refunded" and ok.data["amount"] == 800
     order = shop.order(T, "NS-20512")
@@ -84,7 +84,7 @@ REFUND_LIMITS = [
     ("order_id", "amount", "fragment"), REFUND_LIMITS, ids=["above total", "zero", "negative", "cod"]
 )
 async def test_create_refund_physical_limits(
-    call: Call, shop: StandinShop, order_id: str, amount: float, fragment: str
+    call: Call, shop: SimulatedShop, order_id: str, amount: float, fragment: str
 ) -> None:
     result = await call("create_refund", {"order_id": order_id, "amount": amount})
     assert result.error_code == "REJECTED" and fragment in str(result.error_message)

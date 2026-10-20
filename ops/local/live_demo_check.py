@@ -1,14 +1,14 @@
 """Live Demo, end to end against a REAL external API: configure, check, generate, approve, build, test, publish, call.
 
-Needs Team C running with Live Demo switched on (ops/local/live_demo.env, see live_demo.example.env) and a model
-provider for Team C (services/tools/.env). Every owner decision is made through Team C's own API and labelled LIVE DEMO
+Needs the tools service running with Live Demo switched on (ops/local/live_demo.env, see live_demo.example.env) and a model
+provider for the tools service (services/tools/.env). Every owner decision is made through the tools service's own API and labelled LIVE DEMO
 (owner decision recorded by ops/local/live_demo_check.py). Nothing here is simulated:
 
   1. a Live Demo business and the owner's OpenAPI file           6. the owner's identity (credential) for that API
-  2. the owner's tool request; the model triages and proposes    7. Team C's real connection check
-  3. answers, access policy, reconciliation (model), approval    8. a live test: a real call, judged by Team C
+  2. the owner's tool request; the model triages and proposes    7. The tools service's real connection check
+  3. answers, access policy, reconciliation (model), approval    8. a live test: a real call, judged by the tools service
   4. a Live Demo connector to the real base URL (operator's      9. publish as live_demo (never production)
-     LIVE_DEMO_HOSTS + owner confirmation)                       10. Team C's real MCP server, through Team B's MCP client:
+     LIVE_DEMO_HOSTS + owner confirmation)                       10. The tools service's real MCP server, through the agent's MCP client:
   5. the artifact build (records environment live_demo)              discover, call, compare with an independent read of
                                                                      the same API, invalid arguments, a real not-found,
                                                                      disable -> refused, republish (unless --leave-disabled)
@@ -19,7 +19,7 @@ provider for Team C (services/tools/.env). Every owner decision is made through 
 The default API is GitHub's public REST API (unauthenticated reads of public repositories: real responses, no account,
 no personal data; GitHub allows 60 such calls per hour per address). --api custom uses LIVE_DEMO_BASE_URL,
 LIVE_DEMO_SPEC, LIVE_DEMO_GOAL, LIVE_DEMO_TEST_ARGUMENTS and the demo account's LIVE_DEMO_TOKEN (or USERNAME/PASSWORD).
-Credentials are only written into Team C's identity form; this script never prints them. Writes it never makes.
+Credentials are only written into the tools service's identity form; this script never prints them. Writes it never makes.
 Progress is kept in ops/local/var/live_demo_<api>.json; --fresh starts over.
 """
 
@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ops" / "local"))
 sys.path.insert(0, str(ROOT / "services" / "agent" / "src"))
 from serve import live_settings  # noqa: E402
-from team_c_lifecycle import TEAM_C, Owner, step, wait_for_proposal  # noqa: E402
+from tools_lifecycle import TOOLS_URL, Owner, step, wait_for_proposal  # noqa: E402
 
 VAR = ROOT / "ops" / "local" / "var"
 LABEL = "LIVE DEMO owner decision recorded by ops/local/live_demo_check.py:"
@@ -103,7 +103,7 @@ def owner_review(owner: Owner, pid: str, sid: str, api: dict[str, Any]) -> None:
                for r in p["requirements"] if r["kind"] == "data_scope"]
     if not public and not (p.get("policy") or {}).get("accepted_at") and any(r["kind"] == "record_scope" for r in p["requirements"]):
         # Which response field proves ownership is the owner's decision; this script never guesses it.
-        raise SystemExit(f"Accept the access policy (who may use the tool, which records) at {TEAM_C}/proposals/{pid}#structured-policy, "
+        raise SystemExit(f"Accept the access policy (who may use the tool, which records) at {TOOLS_URL}/proposals/{pid}#structured-policy, "
                          "then run this script again: it continues from there.")
     if not (p.get("policy") or {}).get("accepted_at"):
         policy = {"principals": ["public"] if public else ["end_user", "resource_owner"], "authentication": "none" if public else "required",
@@ -126,7 +126,7 @@ def owner_review(owner: Owner, pid: str, sid: str, api: dict[str, Any]) -> None:
         print(f"  reconcile #{i}: {owner.get(f'/proposals/{pid}')['state']}")
     p = owner.get(f"/proposals/{pid}")
     if p["state"] != "ready_for_review":
-        raise SystemExit(f"the proposal is {p['state']}; open {TEAM_C}/proposals/{pid}")
+        raise SystemExit(f"the proposal is {p['state']}; open {TOOLS_URL}/proposals/{pid}")
     for req in p.get("requirements", []):
         if req.get("status") == "answer_sufficient":
             p = owner.get(f"/proposals/{pid}")
@@ -146,8 +146,8 @@ def save_identity(owner: Owner, aid: str, api: dict[str, Any]) -> None:
 
 
 async def through_mcp(state: dict[str, Any], api: dict[str, Any]) -> dict[str, Any]:
-    """Team C's real MCP server, through Team B's own MCP client (the path the assistant uses)."""
-    from agent_service.adapters.team_c_mcp import McpRemoteError, McpStdioSession
+    """The tools service's real MCP server, through the agent's own MCP client (the path the assistant uses)."""
+    from agent_service.adapters.tools_mcp_client import McpRemoteError, McpStdioSession
 
     python = ROOT / "services" / "tools" / ".venv" / ("Scripts/python.exe" if (ROOT / "services" / "tools" / ".venv" / "Scripts").exists() else "bin/python")
     env = {"PYTHONPATH": ".", **{k: v for k, v in live_settings().items() if k.startswith("LIVE_DEMO_") and k in (
@@ -214,7 +214,7 @@ def main() -> int:
             req = owner.get(f"/tool-requests/{req['id']}")
         ids = req.get("proposal_ids") or req.get("existing_proposal_ids") or []
         if not ids:
-            raise SystemExit(f"no proposal ({req['status']}); open {TEAM_C}/businesses/{state['business_id']}")
+            raise SystemExit(f"no proposal ({req['status']}); open {TOOLS_URL}/businesses/{state['business_id']}")
         state["proposal_id"] = ids[0]
         save()
     pid = state["proposal_id"]

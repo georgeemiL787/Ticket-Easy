@@ -36,7 +36,7 @@ __all__ = [
     "EvidenceProvider",
     "KnowledgeAdmin",
     "LLMClient",
-    "MovePicker",
+    "Planner",
     "NotFoundError",
     "PolicyGate",
     "SessionConflictError",
@@ -118,8 +118,8 @@ class LLMClient(Protocol):
 
 
 @runtime_checkable
-class MovePicker(Protocol):
-    """The orchestrator: proposes the next move (or a changed plan). It only proposes; code checks and decides."""
+class Planner(Protocol):
+    """The planner: proposes the next move (or a changed plan). It only proposes; code checks and decides."""
 
     async def next_move(self, view: AgentView) -> AnyMove | AgentPlan | MoveProposal: ...
 

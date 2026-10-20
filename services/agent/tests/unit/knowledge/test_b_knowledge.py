@@ -21,7 +21,7 @@ RETURN_POLICY = "What is your return policy?"
 
 
 class CountingSearch:
-    """Wraps the stand-in search and records the queries it was asked."""
+    """Wraps the simulated search and records the queries it was asked."""
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner

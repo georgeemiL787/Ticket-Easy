@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from agent_service.adapters.knowledge_client import HttpEvidenceProvider, HttpPolicyGate
 from agent_service.adapters.llm import OpenAICompatibleLLM
 from agent_service.adapters.memory_store import (
     FixedClock,
@@ -11,9 +12,8 @@ from agent_service.adapters.memory_store import (
     InMemoryTraceStore,
     SystemClock,
 )
-from agent_service.adapters.standins.evidence import StandinEvidenceProvider
-from agent_service.adapters.standins.shop import StandinShop
-from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate
+from agent_service.adapters.simulated.evidence import SimulatedEvidenceProvider
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.contracts.policy import CheckActionRequest
@@ -32,7 +32,7 @@ from agent_service.understanding.ai_reader import LLMNLU
 from agent_service.understanding.rules import RuleBasedNLU
 
 
-def test_standin_container_wires_every_dependency(container: Container) -> None:
+def test_simulated_container_wires_every_dependency(container: Container) -> None:
     assert isinstance(container.evidence, EvidenceProvider)
     assert isinstance(container.policy, PolicyGate)
     assert isinstance(container.capabilities, CapabilityClient)
@@ -58,16 +58,16 @@ def test_without_a_fixed_date_the_real_clock_is_used(tenants_dir: Path) -> None:
     assert isinstance(built.clock, SystemClock)
 
 
-def test_live_mode_plugs_in_the_real_team_a_and_keeps_the_shop_standin(tenants_dir: Path) -> None:
+def test_live_mode_plugs_in_the_real_team_a_and_keeps_the_shop_simulated(tenants_dir: Path) -> None:
     built = build_container(Settings(mode="live", team_a_url="http://team-a.test:8001", config_dir=tenants_dir))
     assert isinstance(built.evidence, HttpEvidenceProvider) and isinstance(built.policy, HttpPolicyGate)
-    assert isinstance(built.capabilities, StandinShop)  # Team C's tools are not connected yet
+    assert isinstance(built.capabilities, SimulatedShop)  # The tools service's tools are not connected yet
     assert built.policy_search is None and built.rule_checker is None and built.safety_screen is None
 
 
-def test_standin_mode_uses_the_standin_services(tenants_dir: Path) -> None:
+def test_simulated_mode_uses_the_simulated_services(tenants_dir: Path) -> None:
     built = build_container(Settings(config_dir=tenants_dir))
-    assert isinstance(built.evidence, StandinEvidenceProvider) and built.rule_checker is built.policy
+    assert isinstance(built.evidence, SimulatedEvidenceProvider) and built.rule_checker is built.policy
 
 
 def test_no_llm_means_rules_only(tenants_dir: Path) -> None:
@@ -98,7 +98,7 @@ def test_a_missing_tenant_directory_fails_clearly(tmp_path: Path) -> None:
         build_container(Settings(config_dir=tmp_path / "nope"))
 
 
-async def test_evidence_plug_screens_with_the_safety_standin(container: Container) -> None:
+async def test_evidence_plug_screens_with_the_safety_simulated(container: Container) -> None:
     assert not (await container.evidence.classify_risk("shop_001", "hello", request_id="r")).flagged
     assert (await container.evidence.classify_risk("shop_001", "this is fraud", request_id="r")).flagged
 

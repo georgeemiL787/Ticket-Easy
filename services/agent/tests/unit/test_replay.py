@@ -1,4 +1,5 @@
-"""Replay: a past conversation said again with other settings, on a fresh stand-in shop, never touching the real one."""
+"""Replay: a past conversation said again with other settings, on a fresh simulated shop, never touching the real
+one."""
 
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -13,7 +14,7 @@ from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.domain.agent import AskCustomer
 from agent_service.evaluation import replay
-from tests.fakes import FunctionPicker, ScriptedMovePicker
+from tests.fakes import FunctionPlanner, ScriptedPlanner
 from tests.integration.agent_expert import expert
 from tests.support import make_settings
 
@@ -82,11 +83,11 @@ async def test_the_customers_own_words_are_replayed_not_the_hidden_ones(live: Co
 
 
 async def test_a_replay_with_a_different_picker_differs_where_expected(live: Container) -> None:
-    ask = ScriptedMovePicker(
+    ask = ScriptedPlanner(
         AskCustomer(question_key="ask_rephrase", why="unclear"), AskCustomer(question_key="ask_rephrase", why="unclear")
     )
     result = await replay.replay(
-        live, settings_of(live), T, "past", {}, pickers=replay.Pickers(before=FunctionPicker(expert), after=ask)
+        live, settings_of(live), T, "past", {}, pickers=replay.Pickers(before=FunctionPlanner(expert), after=ask)
     )
     assert result.messages_from == "session" and len(result.before.turns) == len(result.after.turns) == 2
     assert result.before.turns[0].decision == "answer" and "NS-20877" in result.before.turns[0].reply

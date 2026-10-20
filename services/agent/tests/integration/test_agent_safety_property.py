@@ -1,13 +1,13 @@
-"""The safety property in agent mode (safety-critical): a hostile orchestrator cannot get anything past code.
+"""The safety property in agent mode (safety-critical): a hostile planner cannot get anything past code.
 
-The conversations are the random ones of test_a_safety_property.py. This time an orchestrator that proposes random,
+The conversations are the random ones of test_a_safety_property.py. This time an planner that proposes random,
 often absurd moves runs the agent loop: write tools named in look-ups, order numbers nobody wrote, other
 customers' orders, replies with invented facts, hand-overs, malformed moves, plans with too many steps. The shop's own
 audit log and the stored traces are checked afterwards with the same checks as the original property:
 
   - nothing reaches the shop without authorization (the shared write check), no order data before verification and
     never another customer's;
-  - and, specific to the agent: the orchestrator can start any action it likes (it is a ProposeAction through all the
+  - and, specific to the agent: the planner can start any action it likes (it is a ProposeAction through all the
     gates), but a change still needs the customer's yes in a later message, which the shared write check verifies.
 """
 
@@ -32,7 +32,7 @@ from agent_service.domain.agent import (
     SearchPolicy,
 )
 from agent_service.domain.decision import Decision, EscalationReason
-from tests.fakes import FunctionPicker
+from tests.fakes import FunctionPlanner
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_runner import check_write_safety
 from tests.integration.test_a_safety_property import (
@@ -59,7 +59,7 @@ REPLY_KEYS = [
 QUESTIONS = ["ask_order_id", "ask_phone", "ask_reason", "ask_rephrase", "greeting", "disambiguate_order", "made_up"]
 
 
-class ChaosPicker(FunctionPicker):
+class ChaosPlanner(FunctionPlanner):
     """Proposes a random move each ask. It sometimes reads the customer's own order numbers, sometimes invents them."""
 
     def __init__(self, seed: str) -> None:
@@ -107,8 +107,8 @@ async def run_conversation(seed: int, number: int, tmp: Path, honest: bool = Fal
     container = build_container(make_settings(tmp, fixed_today=date(2026, 9, 28), store="memory"))
     assert container.orchestrator is not None
     bot: Any = container.orchestrator
-    picker = FunctionPicker(expert) if honest else ChaosPicker(f"{seed}-{number}")
-    bot._deps = replace(bot._deps, move_picker=picker, agent_mode="on")
+    picker = FunctionPlanner(expert) if honest else ChaosPlanner(f"{seed}-{number}")
+    bot._deps = replace(bot._deps, planner=picker, agent_mode="on")
     for _ in range(rng.choice([0, 0, 0, 1, 1, 2])):
         if rng.random() < 0.75:
             inject(container, "shop", rng.choice(INJECTIONS))
@@ -147,7 +147,7 @@ async def test_the_chaos_really_reaches_the_checks(tmp_path: Path) -> None:
         container = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28), store="memory"))
         assert container.orchestrator is not None
         bot: Any = container.orchestrator
-        bot._deps = replace(bot._deps, move_picker=ChaosPicker(f"x-{number}"), agent_mode="on")
+        bot._deps = replace(bot._deps, planner=ChaosPlanner(f"x-{number}"), agent_mode="on")
         for text in script(random.Random(f"x-{number}")):
             await container.orchestrator.handle_turn(T, f"c-{number}", text)
         for trace in await container.traces.for_conversation(T, f"c-{number}"):

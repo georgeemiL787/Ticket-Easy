@@ -1,7 +1,7 @@
-"""Shadow mode: the orchestrator watches. Safe to leave on in a demo.
+"""Shadow mode: the planner watches. Safe to leave on in a demo.
 
 With agent_mode "shadow" the turn runs the usual stages and answers as always. Right after the front stages (where the
-agent loop would start) the orchestrator is asked ONCE for its plan and first move, on a deep copy of the turn: its
+agent loop would start) the planner is asked ONCE for its plan and first move, on a deep copy of the turn: its
 session, lists and counters are copies, no tool is called, nothing is sent to the customer, and the real session is not
 touched (the plan it would keep is remembered only on the trace, and read back from the conversation's last trace so a
 follow-up message is seen with its plan). The move is not worked at all; it is only checked the way the loop would check
@@ -75,8 +75,8 @@ def _redacted(plan: AgentPlan | None) -> AgentPlan | None:
 
 
 async def run_shadow(ctx: TurnContext) -> str:
-    """Ask the orchestrator for its plan and first move on a copy; record both on the context. Never raises."""
-    picker = ctx.deps.move_picker
+    """Ask the planner for its plan and first move on a copy; record both on the context. Never raises."""
+    picker = ctx.deps.planner
     assert picker is not None
     started = time.perf_counter()
     try:
@@ -97,7 +97,7 @@ async def run_shadow(ctx: TurnContext) -> str:
     except Exception as exc:  # shadow must never disturb the real turn
         ctx.shadow_error = type(exc).__name__
         log.warning("shadow_failed", reason=type(exc).__name__)
-        return f"the orchestrator failed ({type(exc).__name__}): ignored"
+        return f"the planner failed ({type(exc).__name__}): ignored"
     ctx.shadow_plan = _redacted(plan)
     if move is not None:
         shown = redact_mapping(move.model_dump(mode="json", exclude={"why"}))
@@ -110,7 +110,7 @@ async def run_shadow(ctx: TurnContext) -> str:
         )
     version = getattr(picker, "prompt_version", None)
     if version:
-        ctx.versions["orchestrator_prompt"] = str(version)
+        ctx.versions["planner_prompt"] = str(version)
     return f"first move: {shown['kind'] if move is not None else 'plan only'}"
 
 

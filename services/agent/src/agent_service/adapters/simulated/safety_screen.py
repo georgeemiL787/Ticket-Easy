@@ -1,4 +1,4 @@
-"""Stand-in for the Team A safety screen: topics that must always go to a human.
+"""Simulated for the knowledge service safety screen: topics that must always go to a human.
 
 Keyword and phrase matching over fixtures/<tenant>/risk.json, per category and per style (en, ar, arabizi).
 Text and terms are normalized (spelling variants, diacritics, digits) and matched as whole words or phrases; an
@@ -110,7 +110,7 @@ class _Category:
         ]
 
 
-class SafetyScreenStandin:
+class SimulatedSafetyScreen:
     def __init__(self, fixtures_dir: Path) -> None:
         self._dir = fixtures_dir
         self._tenants: dict[str, list[_Category]] = {}

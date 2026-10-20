@@ -1,4 +1,5 @@
-"""The guided tool setup API against a scripted tools service (httpx.MockTransport); no real Team C is started."""
+"""The guided tool setup API against a scripted tools service (httpx.MockTransport); no real the tools service is
+started."""
 
 import json
 import shutil
@@ -9,11 +10,11 @@ from typing import Any
 import httpx
 import pytest
 
-from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.adapters.tools_admin_client import ToolsAdminClient
 from agent_service.config import PROJECT_ROOT
 from agent_service.container import Container
-from tests.unit.adapters.test_team_c_tools import Fake
-from tests.unit.api.test_business_tools import TeamCRest, build, serve
+from tests.unit.adapters.test_tools_catalog import Fake
+from tests.unit.api.test_business_tools import ToolsRestClient, build, serve
 
 T = "noon_eg"  # a business with no tools-service binding yet
 BOUND = "shop_001"  # already bound to the tools-service business biz-nile by the operator's file
@@ -48,7 +49,7 @@ ARTIFACT = {
 }
 
 
-class ToolsService(TeamCRest):
+class ToolsService(ToolsRestClient):
     """The tools service's new endpoints, kept as data."""
 
     def __init__(self) -> None:
@@ -163,7 +164,7 @@ async def setup(
     fake = Fake(tmp_path)
     container = build(tmp_path, fake, service)
     assert container.team_c is not None
-    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     async for http in serve(container):
         yield http, service, container
 
@@ -371,7 +372,7 @@ async def test_only_a_signed_in_manager_may_use_it(tmp_path: Path, service: Tool
     shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
     container = build(tmp_path, Fake(tmp_path), service, auth_required=True, secret_key="k" * 32, config_dir=config)
     assert container.auth is not None and container.team_c is not None
-    container.team_c.admin = TeamCAdmin("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     await container.auth.create_user("agent@example.com", "Agent", "agent", (T,), PASSWORD)
     await container.auth.create_user("mona@example.com", "Mona", "manager", (T,), PASSWORD)
     async for http in serve(container):

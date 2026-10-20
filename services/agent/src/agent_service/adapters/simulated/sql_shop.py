@@ -1,14 +1,16 @@
-"""A stand-in shop that keeps its data in SQLite: used for Noon (noon_eg). Same tool contract as the JSON stand-in.
+"""A simulated shop that keeps its data in SQLite: used for Noon (noon_eg). Same tool contract as the JSON simulated
+service.
 
-The StandinShop (shop.py) handles everything that is not about data: the published tools, idempotency, the failure
+The SimulatedShop (shop.py) handles everything that is not about data: the published tools, idempotency, the failure
 switches, the audit log. For a tenant whose folder has a `seed.json` it uses this module instead of the in-memory
 Backend of shop_backend.py: the tables are loaded from the seed, every tool reads and writes real rows, and the audit
 log and the idempotency memory are rows too, so a change survives a restart (when a database folder is given; without
 one the database lives in memory and every shop starts from the seed, which is what tests want).
 
-Like the JSON stand-in this is only the shop's PHYSICAL rules (a return needs a delivered order, one open return per
+Like the JSON simulated this is only the shop's PHYSICAL rules (a return needs a delivered order, one open return per
 order). The business policy (return window, excluded categories, refund destinations) belongs to the rule checker.
-The data belongs to Team A's Noon mock data (scripts/build_noon_fixtures.py copies it); the real shop is Team C's.
+The data belongs to the knowledge service's Noon mock data (scripts/build_noon_fixtures.py copies it); the real shop is
+the tools service's.
 """
 
 import json
@@ -19,7 +21,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from agent_service.adapters.standins.shop_backend import Fail, Ok, Outcome
+from agent_service.adapters.simulated.shop_backend import Fail, Ok, Outcome
 
 SCHEMA = """
 CREATE TABLE customers (
@@ -120,7 +122,7 @@ class SqlBackend:
             )  # fmt: skip
         db.commit()
 
-    # ---- what the stand-in shop needs besides the tools ----
+    # ---- what the simulated shop needs besides the tools ----
 
     def next_reference(self, prefix: str) -> str:
         row = self._db.execute("SELECT last FROM counters WHERE prefix = ?", (prefix,)).fetchone()
@@ -151,7 +153,7 @@ class SqlBackend:
         }  # fmt: skip
 
     def records(self, kind: str) -> list[dict[str, Any]]:
-        """Created returns and tickets (the kinds of the JSON stand-in that this shop has)."""
+        """Created returns and tickets (the kinds of the JSON simulated that this shop has)."""
         if kind == "return":
             rows = self._db.execute("SELECT * FROM returns WHERE reason IS NOT NULL ORDER BY return_id").fetchall()
             return [{"reference_id": r["return_id"], "order_id": r["order_id"], "reason": r["reason"]} for r in rows]

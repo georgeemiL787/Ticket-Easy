@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ApiError, apiPost, withQuery } from "../api/client";
-import type { DashboardBusinessTools, TeamCConnector, TeamCPromotion, TeamCProposal, TeamCPublication } from "../api/types/DashboardBusinessTools";
+import type { DashboardBusinessTools, ToolConnector, ToolPromotion, ToolProposal, ToolPublication } from "../api/types/DashboardBusinessTools";
 import { useAuth } from "../auth";
 import { useApi } from "../api/useApi";
 import { Async } from "../components/Async";
@@ -22,7 +22,7 @@ function label(t: (key: TextKey) => string, prefix: string, code: string | null 
 }
 
 /** One publication's disable control: a required note, then the real call; the page reloads from the service after. */
-function DisableForm({ tenant, publication, onDone }: { tenant: string; publication: TeamCPublication; onDone: () => void }) {
+function DisableForm({ tenant, publication, onDone }: { tenant: string; publication: ToolPublication; onDone: () => void }) {
   const { t } = useI18n();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -67,7 +67,7 @@ function EnvBadge({ environment }: { environment: string | null | undefined }) {
 }
 
 /** One Team C connector: its environment, host, the steps of its last real check, and a button to check it again. */
-function ConnectorCard({ tenant, connector, onDone }: { tenant: string; connector: TeamCConnector; onDone: () => void }) {
+function ConnectorCard({ tenant, connector, onDone }: { tenant: string; connector: ToolConnector; onDone: () => void }) {
   const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +132,7 @@ function useIsAdmin(): boolean {
 }
 
 /** Promote a tested tool to production: a note, a rollback contact and (for writes) the idempotency acceptance. Team C may refuse; its words are shown. */
-function Promote({ tenant, proposal, reload }: { tenant: string; proposal: TeamCProposal; reload: () => void }) {
+function Promote({ tenant, proposal, reload }: { tenant: string; proposal: ToolProposal; reload: () => void }) {
   const { t } = useI18n();
   const [note, setNote] = useState("");
   const [contact, setContact] = useState("");
@@ -182,7 +182,7 @@ function Promote({ tenant, proposal, reload }: { tenant: string; proposal: TeamC
 }
 
 /** One promotion: who decided it and why, its checklist with the evidence of each item, and (when active) the rollback. */
-function PromotionCard({ tenant, promotion, admin, reload }: { tenant: string; promotion: TeamCPromotion; admin: boolean; reload: () => void }) {
+function PromotionCard({ tenant, promotion, admin, reload }: { tenant: string; promotion: ToolPromotion; admin: boolean; reload: () => void }) {
   const { t, lang } = useI18n();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -245,7 +245,7 @@ function PromotionCard({ tenant, promotion, admin, reload }: { tenant: string; p
 const READY_BADGE: Record<string, string> = { ready_to_publish: "ok", published: "ok", needs_owner: "problem", testing: "decision-handoff" };
 
 /** The state of a built tool and the button that starts Team C's automatic tests; polls while a run is going. */
-function AutoTest({ tenant, proposal, reload }: { tenant: string; proposal: TeamCProposal; reload: () => void }) {
+function AutoTest({ tenant, proposal, reload }: { tenant: string; proposal: ToolProposal; reload: () => void }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -391,7 +391,7 @@ export default function BusinessTools() {
                       </td>
                       <td>{tool.used_by.join(", ") || t("common.noData")}</td>
                       <td>
-                        <span className="chip">{t(tool.source === "team_c" ? "bt.sourceTeamC" : "bt.sourceStandin")}</span>{" "}
+                        <span className="chip">{t(tool.source === "team_c" ? "bt.sourceTools" : "bt.sourceSimulated")}</span>{" "}
                         <EnvBadge environment={tool.source === "team_c" ? tool.environment : null} />
                         {tool.api_host ? <div className="muted small">{t("bt.callsApi", { host: tool.api_host })}</div> : null}
                       </td>

@@ -1,6 +1,6 @@
 # Agent mode against today's flow (U6.3)
 
-Run on 2026-10-10 with the real Groq models (orchestrator `gpt-oss-120b`; reviewer, knowledge and writer on `qwen3.8-27b`
+Run on 2026-10-10 with the real Groq models (planner `gpt-oss-120b`; reviewer, knowledge and writer on `qwen3.8-27b`
 with `gpt-oss-20b` as backup; reader, summary and judge on `gpt-oss-20b`). Every model is on the free plan:
 30 requests/min, 8K tokens/min, 200K tokens/day.
 
@@ -11,7 +11,7 @@ points. Nile-Chat (Egyptian writer) was left out so the timings only reflect the
 
 Runs: `off_ai` (agent mode off, AI on), `agent_on_v3` (agent mode on, the run in the table), `shadow` (the agent only watches).
 Two earlier agent runs (`agent_on`, `agent_on_v2`) were thrown away as a measure of the agent: the free plan makes a second
-orchestrator call wait about a minute (8K tokens a minute against a 3,500-token prompt), the agent loop's 20-second turn limit
+planner call wait about a minute (8K tokens a minute against a 3,500-token prompt), the agent loop's 20-second turn limit
 then cut the turn off, and the message fell back to today's flow with only a phone number to go on. That produced most of the
 "wrong" outcomes (decision accuracy 58% and 71%). Run v3 raised the limit for the evaluation
 (`TEAM_B_AGENT_TURN_TIMEOUT_S=240`, `TEAM_B_LLM_MAX_WAIT_S=120`); the evaluation report now counts the fallbacks and why.
@@ -40,7 +40,7 @@ Shadow run (4 conversations): the agent was asked on 3 turns and its first move 
 ## Reading it
 
 - **Safety holds in both modes:** nothing wrong was done, nothing unbacked was said.
-- **The time is the free plan,** not the agent's thinking: the orchestrator prompt is about 3,500 tokens and the plan allows
+- **The time is the free plan,** not the agent's thinking: the planner prompt is about 3,500 tokens and the plan allows
   8K tokens a minute, so about two calls a minute, and one message takes two to four calls. On a paid plan the same calls take
   a few seconds. The agent does use about twice as many AI calls per message.
 - **What is still wrong in the sample (4 of 24 messages):** one message was cut off by the time limit even at 240 s (en-53);
@@ -56,7 +56,7 @@ Not every target holds (reply quality, calls and time are worse; escalation reca
 `TEAM_B_AGENT_MODE` keeps its current default and `.env.example` is unchanged.
 
 Smallest changes that would most likely fix it, to be re-measured:
-1. A shorter orchestrator prompt (send only the tools the message needs): fewer tokens, less waiting under a token limit.
+1. A shorter planner prompt (send only the tools the message needs): fewer tokens, less waiting under a token limit.
 2. Run on a plan whose token limit fits the prompt (or one model per job with its own limit) and set the turn limit to
    match the provider; the default 20 s is for a paid plan.
 3. Keep the customer's language style when the loop gives up (carry the session's style into the fallback), and let a second

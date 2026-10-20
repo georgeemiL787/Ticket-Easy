@@ -1,4 +1,5 @@
-"""Stand-in for Team A policy search: keyword search over the Nile Style policies, with Arabizi synonym expansion.
+"""Simulated for the knowledge service policy search: keyword search over the Nile Style policies, with Arabizi synonym
+expansion.
 
 Scoring: normalized tokens, synonym expansion (araga3 means return, flousi means refund), passage keywords and
 BM25-like weights. Superseded passages (return policy v1) are never searched and never returned.
@@ -11,7 +12,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from agent_service.adapters.standins.text_search import Document, Hit, Index, build_synonyms
+from agent_service.adapters.simulated.text_search import Document, Hit, Index, build_synonyms
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.evidence import EmptyReason, Passage, PastTicket, PastTicketResult, RetrievalResult
 
@@ -48,7 +49,7 @@ class _Corpus:
         self.ticket_index = Index([_ticket_document(t) for t in tickets], synonyms)
 
 
-class PolicySearchStandin:
+class SimulatedPolicySearch:
     # Calibrated on the sample questions: the weakest correct hit scores 5.27, unrelated questions stay at or below 5.0.
     MIN_SCORE = 5.1  # below this the question is treated as not covered by the policies
     MIN_TICKET_SCORE = 4.0
@@ -85,7 +86,7 @@ class PolicySearchStandin:
     async def get_passage(self, tenant_id: str, citation: str) -> Passage | None:
         self._maybe_fail("get_passage")
         raw = self._corpus(tenant_id).passages.get(citation)
-        # Unlike Team A (which returns any citation), the old return policy is never handed out.
+        # Unlike the knowledge service (which returns any citation), the old return policy is never handed out.
         return None if raw is None or raw["superseded"] else self._passage(raw, 1.0)
 
     async def search_past_tickets(

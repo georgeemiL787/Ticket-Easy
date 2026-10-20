@@ -93,7 +93,7 @@ async def eval_conversations(
         if not resume and checkpoint.exists():
             checkpoint.unlink()  # a new run starts from the first conversation; --resume keeps the earlier ones
     if agent_mode in ("on", "shadow") and not use_llm:
-        raise SystemExit(f"--agent-mode {agent_mode} needs the orchestrator's AI model: add --llm (see .env.example).")
+        raise SystemExit(f"--agent-mode {agent_mode} needs the planner's AI model: add --llm (see .env.example).")
     report = await convo.evaluate(
         conversations,
         settings,
@@ -129,7 +129,7 @@ async def eval_conversations(
 
 
 async def replay_cmd(args: argparse.Namespace) -> int:
-    """Say a stored conversation again with other settings, against a fresh stand-in shop, and write the comparison."""
+    """Say a stored conversation again with other settings, against a fresh simulated shop, and write the comparison."""
     settings = Settings.from_env()
     live = build_container(settings)  # only read: for the customer's messages
     try:
@@ -343,7 +343,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     compare.add_argument("first", type=Path, help="a report .json written by `eval` (the one to compare against)")
     compare.add_argument("second", type=Path, help="the report .json to compare")
     replay_p = commands.add_parser(
-        "replay", help="say a past conversation again with other settings and compare the two runs (stand-in shop only)"
+        "replay",
+        help="say a past conversation again with other settings and compare the two runs (simulated shop only)",
     )
     replay_p.add_argument("conversation_id")
     replay_p.add_argument("--tenant", default="shop_001")

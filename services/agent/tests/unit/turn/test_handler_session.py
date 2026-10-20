@@ -1,4 +1,4 @@
-"""Session lifecycle in the orchestrator: create, remember, trim, summarize, store the transcript."""
+"""Session lifecycle in the planner: create, remember, trim, summarize, store the transcript."""
 
 import pytest
 

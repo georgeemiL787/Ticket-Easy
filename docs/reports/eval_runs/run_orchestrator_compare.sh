@@ -13,7 +13,7 @@ keys() { local o="" n; for n in $1; do v="$(printenv "GROQ_KEY_$n")"; [ -n "$v" 
 run() {  # slug, model, effort, key numbers
   local slug="$1" model="$2" effort="$3" ks="$4"
   (
-    export TEAM_B_LLM_API_KEY="$(keys "$ks")" TEAM_B_LLM_MODEL_ORCHESTRATOR="$model" TEAM_B_LLM_REASONING_EFFORT_ORCHESTRATOR="$effort"
+    export TEAM_B_LLM_API_KEY="$(keys "$ks")" TEAM_B_LLM_MODEL_PLANNER="$model" TEAM_B_LLM_REASONING_EFFORT_PLANNER="$effort"
     export TEAM_B_USAGE_LOG="$RUNS/usage/orch_$slug.jsonl" TEAM_B_USAGE_RUN_LABEL="orch_$slug"
     rm -f "$TEAM_B_USAGE_LOG"
     "$PY" "$RUNS/diagnose_run.py" --set eval/conversations --llm --agent-mode on --style en --topics K,T17,T22 --concurrency 1 \

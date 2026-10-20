@@ -17,7 +17,7 @@ Settings, Branches, add a protection rule for `main`:
 
 1. **Require a pull request before merging**, with **Require approvals: 2**.
 2. **Require review from Code Owners**. `.github/CODEOWNERS` names the files that need it: `actions/flow.py`, `domain/actions.py`,
-   `domain/trace.py`, `adapters/standins/rule_checker.py`, and `.github/`. With 2 approvals required, those changes cannot merge
+   `domain/trace.py`, `adapters/simulated/rule_checker.py`, and `.github/`. With 2 approvals required, those changes cannot merge
    on one person's say-so.
 3. **Require status checks to pass before merging**, and pick these checks: `Lint and types`, `Tests (memory store)`,
    `Tests (sqlite store)`, `Knowledge service tests`, `Tools service tests`, `Scenario report`,

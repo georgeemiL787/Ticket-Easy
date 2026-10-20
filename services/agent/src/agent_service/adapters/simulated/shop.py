@@ -1,4 +1,4 @@
-"""StandinShop: the fake shops (Nile Style, Noon Egypt) behind the CapabilityClient plug.
+"""SimulatedShop: the fake shops (Nile Style, Noon Egypt) behind the CapabilityClient plug.
 
 It serves the tools of fixtures/<tenant>/tools.json over the data in backend.json (a fresh deep copy per instance, so
 tests never share state), keeps an audit log of every call, replays idempotent writes, refuses writes that carry no
@@ -19,9 +19,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from agent_service.adapters.standins import shop_backend as backend
-from agent_service.adapters.standins import sql_shop
-from agent_service.adapters.standins.json_schema import validate
+from agent_service.adapters.simulated import shop_backend as backend
+from agent_service.adapters.simulated import sql_shop
+from agent_service.adapters.simulated.json_schema import validate
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from agent_service.ports import Clock
@@ -81,7 +81,7 @@ def _error(code: str, message: str, *, unclear: bool = False) -> ToolResult:
     )
 
 
-class StandinShop:
+class SimulatedShop:
     def __init__(
         self, fixtures_dir: Path, clock: Clock, tenant_ids: Iterable[str] = (), *, db_dir: Path | None = None
     ) -> None:

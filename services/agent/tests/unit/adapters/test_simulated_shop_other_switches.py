@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 import pytest
 
 from agent_service.adapters.memory_store import FixedClock
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.config import PROJECT_ROOT
 from agent_service.container import Container, inject
 from agent_service.contracts.errors import UpstreamError
@@ -18,7 +18,7 @@ REFUND = {"order_id": "NS-20512", "amount": 800}
 ORDER = {"order_id": "NS-20877"}
 
 
-async def test_no_audit_succeeds_without_an_audit_id(call: Call, shop: StandinShop) -> None:
+async def test_no_audit_succeeds_without_an_audit_id(call: Call, shop: SimulatedShop) -> None:
     shop.no_audit("create_refund")
     result = await call("create_refund", REFUND)
     assert result.status == "success" and result.audit_id is None and result.reference_id == "REF-30001"
@@ -26,7 +26,7 @@ async def test_no_audit_succeeds_without_an_audit_id(call: Call, shop: StandinSh
     assert (await call("get_order", ORDER)).audit_id  # other tools are untouched
 
 
-async def test_unpublish_hides_the_tool_and_refuses_calls(call: Call, shop: StandinShop) -> None:
+async def test_unpublish_hides_the_tool_and_refuses_calls(call: Call, shop: SimulatedShop) -> None:
     shop.unpublish("create_refund")
     assert "create_refund" not in [t.name for t in await shop.list_tools(T)]
     result = await call("create_refund", REFUND)
@@ -40,7 +40,7 @@ async def test_an_unknown_tool_is_not_published(call: Call) -> None:
     assert (await call("make_coffee", {})).error_code == "TOOL_NOT_PUBLISHED"
 
 
-async def test_reset_clears_switches_data_audit_and_idempotency(call: Call, shop: StandinShop) -> None:
+async def test_reset_clears_switches_data_audit_and_idempotency(call: Call, shop: SimulatedShop) -> None:
     shop.fail_next("get_order", "TIMEOUT")
     shop.uncertain("create_ticket")
     shop.no_audit("create_return")
@@ -56,8 +56,8 @@ async def test_reset_clears_switches_data_audit_and_idempotency(call: Call, shop
 
 
 async def test_two_shops_never_share_state() -> None:
-    a = StandinShop(PROJECT_ROOT / "fixtures", FixedClock(FIXED_TODAY), [T])
-    b = StandinShop(PROJECT_ROOT / "fixtures", FixedClock(FIXED_TODAY), [T])
+    a = SimulatedShop(PROJECT_ROOT / "fixtures", FixedClock(FIXED_TODAY), [T])
+    b = SimulatedShop(PROJECT_ROOT / "fixtures", FixedClock(FIXED_TODAY), [T])
     a.unpublish("get_order")
     request = ToolCallRequest(
         request_id="r", tool="create_ticket", idempotency_key="k", policy_request_id="p",
@@ -68,7 +68,7 @@ async def test_two_shops_never_share_state() -> None:
     assert "get_order" in [t.name for t in await b.list_tools(T)]
 
 
-async def test_inject_applies_each_switch_from_a_dict(call: Call, shop: StandinShop) -> None:
+async def test_inject_applies_each_switch_from_a_dict(call: Call, shop: SimulatedShop) -> None:
     shop.inject({"switch": "fail_next", "tool": "get_order", "code": "NOT_FOUND", "times": 2})
     assert [(await call("get_order", ORDER)).error_code for _ in range(3)] == ["NOT_FOUND", "NOT_FOUND", None]
     shop.inject({"switch": "uncertain", "tool": "create_refund", "applied": True})

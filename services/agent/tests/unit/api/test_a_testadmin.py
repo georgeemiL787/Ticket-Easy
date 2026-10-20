@@ -1,4 +1,5 @@
-"""The sandbox-only admin endpoint: off by default, and when on it switches stand-ins off, heals them, and reports."""
+"""The sandbox-only admin endpoint: off by default, and when on it switches simulated services off, heals them, and
+reports."""
 
 import asyncio
 from collections.abc import AsyncIterator

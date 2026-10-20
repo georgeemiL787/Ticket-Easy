@@ -31,10 +31,10 @@ cov:
 schemas:
 	$(PYTHON) scripts/export_schemas.py
 
-# 50 customers at once on the stand-ins (rules mode); see loadtest/README.md
+# 50 customers at once on the simulated services (rules mode); see loadtest/README.md
 loadtest:
 	$(PYTHON) -m loadtest.run --customers 50 --conversations 20
 
-# the same, with every stand-in switched off for 30 seconds in turn (they heal by themselves)
+# the same, with every simulated switched off for 30 seconds in turn (they heal by themselves)
 chaos:
 	$(PYTHON) -m loadtest.run --customers 50 --conversations 150 --chaos rule_checker:30@5 --chaos safety_screen:30@35 --chaos shop:30@65 --chaos policy_search:30@95

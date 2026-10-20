@@ -1,4 +1,4 @@
-"""Alerts end to end: a seeded run, the policy search stand-in switched to failing, then the alerts API."""
+"""Alerts end to end: a seeded run, the policy search simulated switched to failing, then the alerts API."""
 
 import random
 from collections.abc import AsyncIterator
@@ -13,7 +13,7 @@ from agent_service.container import Container, build_container
 from tests.support import make_settings
 
 T = "shop_001"
-QUESTIONS = [  # all answered by the stand-in policy search
+QUESTIONS = [  # all answered by the simulated policy search
     "What is your return policy?",
     "How many days do I have to return an item?",
     "can I pay cash on delivery?",

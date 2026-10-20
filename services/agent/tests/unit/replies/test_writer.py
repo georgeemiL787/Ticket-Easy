@@ -12,7 +12,7 @@ from agent_service.replies.writer import PROMPT, WRITABLE, ReplyWriter, plan_of
 from agent_service.turn.context import Step
 from agent_service.turn.handler import Orchestrator
 from agent_service.understanding.ai_reader import PromptTemplate
-from tests.fakes import FakeEvidence, FakeLLM, FunctionPicker, ScriptedMovePicker
+from tests.fakes import FakeEvidence, FakeLLM, FunctionPlanner, ScriptedPlanner
 
 T, C = "shop_001", "conv-writer"
 STATUS = "Your order NS-20877 is on its way. It is expected on 2026-09-24."
@@ -248,7 +248,7 @@ async def test_without_a_model_nothing_is_written_and_no_write_step_is_recorded(
     assert all(s.stage != "write" for s in (await last_trace(c)).steps)
 
 
-# ---- the orchestrator's free reply ----
+# ---- the planner's free reply ----
 
 
 FREE = Reply(
@@ -258,7 +258,7 @@ FREE = Reply(
 
 async def test_an_unexpected_message_gets_a_free_reply_written_by_the_writer(c: Container) -> None:
     llm = FakeLLM({"text": "Ha, that made me smile! I'm here for your shop questions: what can I help with?"})
-    bot = orch(c, writer=ReplyWriter(llm), move_picker=ScriptedMovePicker(FREE))
+    bot = orch(c, writer=ReplyWriter(llm), planner=ScriptedPlanner(FREE))
     reply = await bot.handle_turn(T, C, "tell me a joke about cats")
     trace = await last_trace(c)
     assert reply.decision is Decision.ANSWER and reply.text.startswith("Ha, that made me smile")
@@ -267,22 +267,22 @@ async def test_an_unexpected_message_gets_a_free_reply_written_by_the_writer(c: 
 
 
 async def test_a_free_reply_without_a_model_is_the_plain_question(c: Container) -> None:
-    reply = await orch(c, move_picker=ScriptedMovePicker(FREE)).handle_turn(T, C, "tell me a joke about cats")
+    reply = await orch(c, planner=ScriptedPlanner(FREE)).handle_turn(T, C, "tell me a joke about cats")
     assert reply.text == "Could you tell me a little more about what you need help with?"
 
 
 async def test_a_free_reply_cannot_carry_facts_or_be_anything_but_an_answer(c: Container) -> None:
     facts = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="free_reply", facts={"amount": "5000"}))
     clarify = Reply(plan=ReplyPlan(decision=Decision.CLARIFY, reply_key="free_reply"))
-    picker = ScriptedMovePicker(facts, clarify, FREE)
-    reply = await orch(c, move_picker=picker).handle_turn(T, C, "joke")
+    picker = ScriptedPlanner(facts, clarify, FREE)
+    reply = await orch(c, planner=picker).handle_turn(T, C, "joke")
     trace = await last_trace(c)
     assert trace.fallback_reason == "two refused moves in a row" and "5000" not in reply.text
 
 
 async def test_a_free_reply_that_talks_business_falls_back_to_the_template(c: Container) -> None:
     bad = {"text": "Sorry! Your order will arrive tomorrow."}
-    bot = orch(c, writer=ReplyWriter(FakeLLM(bad, bad)), move_picker=FunctionPicker(lambda v: FREE))
+    bot = orch(c, writer=ReplyWriter(FakeLLM(bad, bad)), planner=FunctionPlanner(lambda v: FREE))
     reply = await bot.handle_turn(T, C, "tell me a joke about cats")
     assert reply.text == "Could you tell me a little more about what you need help with?"
 

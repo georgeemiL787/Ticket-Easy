@@ -1,4 +1,4 @@
-"""Actions through the agent loop (safety-critical): the orchestrator chooses, every gate of actions.py still decides.
+"""Actions through the agent loop (safety-critical): the planner chooses, every gate of actions.py still decides.
 
 Scripted moves stand in for the model. What must hold whatever it proposes: a write needs the customer's yes (or a
 person's approval) and a rule check that allowed it; details the customer never gave are dropped; a refusal reaches the
@@ -26,7 +26,7 @@ from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.domain.tenant import TenantRegistry
 from agent_service.domain.trace import DecisionTrace
 from agent_service.turn.handler import Orchestrator
-from tests.fakes import FunctionPicker, ScriptedMovePicker
+from tests.fakes import FunctionPlanner, ScriptedPlanner
 
 T, C = "shop_001", "conv-actions"
 RETURN = "I want to return order NS-20790, the size is wrong. My phone is 01123456702"  # C-101, 10 days: allowed
@@ -42,7 +42,7 @@ def orch(c: Container, picker: Any, **options: Any) -> Orchestrator:
         "policy": c.policy,
     }
     return Orchestrator(
-        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, move_picker=picker, **{**base, **options}
+        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, planner=picker, **{**base, **options}
     )
 
 
@@ -63,7 +63,7 @@ def propose(intent: str = "return_request", order: str = "NS-20790", **arguments
 
 
 async def test_a_proposal_ends_in_a_confirmation_and_nothing_is_written_before_the_yes(c: Container) -> None:
-    reply = await orch(c, ScriptedMovePicker(propose())).handle_turn(T, C, RETURN)
+    reply = await orch(c, ScriptedPlanner(propose())).handle_turn(T, C, RETURN)
     trace = await trace_of(c)
     assert reply.decision is Decision.CONFIRM and reply.awaiting == "confirmation"
     assert writes(c) == [] and [p.decision for p in trace.policy] == [
@@ -76,20 +76,20 @@ async def test_a_proposal_ends_in_a_confirmation_and_nothing_is_written_before_t
 
 
 async def test_the_customers_yes_executes_once_through_the_usual_confirmation_flow(c: Container) -> None:
-    await orch(c, ScriptedMovePicker(propose())).handle_turn(T, C, RETURN)
-    picker = ScriptedMovePicker()
+    await orch(c, ScriptedPlanner(propose())).handle_turn(T, C, RETURN)
+    picker = ScriptedPlanner()
     done = await orch(c, picker).handle_turn(T, C, "yes")
     assert done.decision is Decision.EXECUTE and "RET-" in done.text and len(writes(c)) == 1
     assert picker.views == []  # the yes is handled by the front stage; no plan is open, so the agent is not asked
-    again = await orch(c, ScriptedMovePicker()).handle_turn(T, C, "yes")
+    again = await orch(c, ScriptedPlanner()).handle_turn(T, C, "yes")
     assert len(writes(c)) == 1 and again.decision is not Decision.EXECUTE  # a second yes does nothing
 
 
 async def test_a_no_cancels_and_a_yes_from_before_never_covers_a_new_action(c: Container) -> None:
-    await orch(c, ScriptedMovePicker(propose())).handle_turn(T, C, RETURN)
-    await orch(c, ScriptedMovePicker()).handle_turn(T, C, "yes")
+    await orch(c, ScriptedPlanner(propose())).handle_turn(T, C, RETURN)
+    await orch(c, ScriptedPlanner()).handle_turn(T, C, "yes")
     assert len(writes(c)) == 1
-    fresh = await orch(c, ScriptedMovePicker(propose("cancel_order", "NS-20790"))).handle_turn(
+    fresh = await orch(c, ScriptedPlanner(propose("cancel_order", "NS-20790"))).handle_turn(
         T, C, "and cancel order NS-20790 too"
     )
     assert writes(c).__len__() == 1 and fresh.decision in (
@@ -98,7 +98,7 @@ async def test_a_no_cancels_and_a_yes_from_before_never_covers_a_new_action(c: C
         Decision.CLARIFY,
         Decision.HANDOFF,
     )
-    declined = await orch(c, ScriptedMovePicker()).handle_turn(T, C, "no")
+    declined = await orch(c, ScriptedPlanner()).handle_turn(T, C, "no")
     assert len(writes(c)) == 1 and declined.decision is not Decision.EXECUTE
 
 
@@ -111,7 +111,7 @@ async def test_a_no_cancels_and_a_yes_from_before_never_covers_a_new_action(c: C
     ],
 )
 async def test_a_model_cannot_execute_or_claim_done_without_the_customers_yes(c: Container, bad: Any) -> None:
-    picker = ScriptedMovePicker(bad, bad, propose())
+    picker = ScriptedPlanner(bad, bad, propose())
     reply = await orch(c, picker).handle_turn(T, C, RETURN)
     trace = await trace_of(c)
     assert writes(c) == [] and "RET-" not in reply.text
@@ -124,7 +124,7 @@ async def test_a_model_cannot_execute_or_claim_done_without_the_customers_yes(c:
 async def test_an_amount_the_customer_never_said_is_dropped_and_the_default_stands(c: Container) -> None:
     message = "My order NS-20877 is 4 days late, I want a compensation voucher. My phone is 01012345601"
     move = propose("voucher_request", "NS-20877", amount=5000)
-    reply = await orch(c, ScriptedMovePicker(move)).handle_turn(T, C, message)
+    reply = await orch(c, ScriptedPlanner(move)).handle_turn(T, C, message)
     trace = await trace_of(c)
     assert reply.decision is Decision.CONFIRM and "5000" not in reply.text and "100" in reply.text
     dropped = [ch for ch in trace.agent_steps[-1].checks if ch.name.startswith("detail_dropped")]
@@ -134,7 +134,7 @@ async def test_an_amount_the_customer_never_said_is_dropped_and_the_default_stan
 
 async def test_an_amount_the_customer_did_say_is_used_and_the_rules_judge_it(c: Container) -> None:
     message = "My order NS-20877 is 4 days late, I want a compensation voucher of 300 EGP. My phone is 01012345601"
-    reply = await orch(c, ScriptedMovePicker(propose("voucher_request", "NS-20877", amount=300))).handle_turn(
+    reply = await orch(c, ScriptedPlanner(propose("voucher_request", "NS-20877", amount=300))).handle_turn(
         T, C, message
     )
     assert (
@@ -146,7 +146,7 @@ async def test_an_amount_the_customer_did_say_is_used_and_the_rules_judge_it(c: 
 
 async def test_a_refund_amount_comes_from_the_shops_order_whatever_the_model_proposes(c: Container) -> None:
     message = "I want a refund of 5000 EGP for order NS-20745. My phone is 01012345601"
-    reply = await orch(c, ScriptedMovePicker(propose("refund_request", "NS-20745", amount=5000))).handle_turn(
+    reply = await orch(c, ScriptedPlanner(propose("refund_request", "NS-20745", amount=5000))).handle_turn(
         T, C, message
     )
     assert reply.decision is Decision.CONFIRM and "1250" in reply.text and "5000" not in reply.text.replace("1250", "")
@@ -157,7 +157,7 @@ async def test_a_refund_amount_comes_from_the_shops_order_whatever_the_model_pro
 
 async def test_an_order_the_customer_never_named_is_dropped_and_never_read(c: Container) -> None:
     assert c.shop is not None
-    picker = ScriptedMovePicker(propose("cancel_order", "NS-20960"))  # a real order, but nobody wrote its number
+    picker = ScriptedPlanner(propose("cancel_order", "NS-20960"))  # a real order, but nobody wrote its number
     reply = await orch(c, picker).handle_turn(T, C, "I want to cancel my order. My phone is 01098765405")
     trace = await trace_of(c)
     assert reply.decision is Decision.VERIFY_IDENTITY or reply.awaiting == "slot:order_id"
@@ -166,17 +166,17 @@ async def test_an_order_the_customer_never_named_is_dropped_and_never_read(c: Co
 
 
 async def test_an_intent_that_is_not_an_action_is_refused(c: Container) -> None:
-    picker = ScriptedMovePicker(propose("greeting"), propose("made_up"))
+    picker = ScriptedPlanner(propose("greeting"), propose("made_up"))
     await orch(c, picker).handle_turn(T, C, RETURN)
     trace = await trace_of(c)
     assert trace.fallback_reason == "two refused moves in a row" and writes(c) == []
 
 
-# ---- a "no" from the rules goes back to the orchestrator ----
+# ---- a "no" from the rules goes back to the planner ----
 
 
 async def test_a_refusal_comes_back_with_the_rules_words_and_the_alternatives(c: Container) -> None:
-    picker = FunctionPicker(lambda v: propose("refund_request", "NS-20512") if not v.moves else OUTCOME)
+    picker = FunctionPlanner(lambda v: propose("refund_request", "NS-20512") if not v.moves else OUTCOME)
     reply = await orch(c, picker).handle_turn(T, C, REFUND_OLD)
     trace = await trace_of(c)
     shown = json.loads(picker.views[1].moves[0].result)
@@ -190,9 +190,9 @@ async def test_a_refusal_comes_back_with_the_rules_words_and_the_alternatives(c:
 
 
 async def test_the_second_request_for_the_same_denied_action_is_still_a_handoff(c: Container) -> None:
-    refuse = FunctionPicker(lambda v: propose("refund_request", "NS-20512") if not v.moves else OUTCOME)
+    refuse = FunctionPlanner(lambda v: propose("refund_request", "NS-20512") if not v.moves else OUTCOME)
     await orch(c, refuse).handle_turn(T, C, REFUND_OLD)
-    again = await orch(c, ScriptedMovePicker(propose("refund_request", "NS-20512"))).handle_turn(
+    again = await orch(c, ScriptedPlanner(propose("refund_request", "NS-20512"))).handle_turn(
         T, C, "I want a refund for order NS-20512 anyway"
     )
     assert (
@@ -219,7 +219,7 @@ async def test_the_plan_continues_after_the_yes_with_the_next_request(c: Contain
         answer = ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer", citations=[view.passages[0].id])
         return MoveProposal(plan=done, move=Reply(plan=answer))
 
-    picker = FunctionPicker(decide)
+    picker = FunctionPlanner(decide)
     asked = await orch(c, picker).handle_turn(T, C, message)
     assert asked.decision is Decision.CONFIRM and writes(c) == []
     session = await c.sessions.load(T, C)
@@ -234,13 +234,13 @@ async def test_the_plan_continues_after_the_yes_with_the_next_request(c: Contain
 
 async def test_a_step_that_waited_for_a_yes_is_dropped_when_the_customer_changes_topic(c: Container) -> None:
     plan = AgentPlan(steps=[PlanStep(text="return NS-20790")])
-    await orch(c, ScriptedMovePicker(MoveProposal(plan=plan, move=propose()))).handle_turn(T, C, RETURN)
+    await orch(c, ScriptedPlanner(MoveProposal(plan=plan, move=propose()))).handle_turn(T, C, RETURN)
 
     def decide(view: Any) -> Any:
         assert view.plan is not None and [s.status for s in view.plan.steps] == ["dropped"]
         return Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting"))
 
-    reply = await orch(c, FunctionPicker(decide)).handle_turn(T, C, "actually, hello")
+    reply = await orch(c, FunctionPlanner(decide)).handle_turn(T, C, "actually, hello")
     assert reply.decision is Decision.ANSWER and writes(c) == []
 
 
@@ -248,11 +248,11 @@ async def test_a_step_that_waited_for_a_yes_is_dropped_when_the_customer_changes
 
 
 async def test_a_fallback_never_counts_a_refusal_the_loop_recorded(c: Container) -> None:
-    picker = ScriptedMovePicker(propose("refund_request", "NS-20512"), RuntimeError("model down"))
+    picker = ScriptedPlanner(propose("refund_request", "NS-20512"), RuntimeError("model down"))
     reply = await orch(c, picker).handle_turn(T, C, REFUND_OLD)
     session = await c.sessions.load(T, C)
     trace = await trace_of(c)
-    assert trace.fallback_reason == "move picker error: RuntimeError"
+    assert trace.fallback_reason == "planner error: RuntimeError"
     assert reply.decision is Decision.REFUSE  # the usual stages refused it once, as they would have anyway
     assert session is not None and session.denied_actions == ["create_refund"]  # once, not twice
 
@@ -262,7 +262,7 @@ async def test_once_the_shop_was_asked_to_change_something_the_loop_never_runs_t
     direct = tenant.model_copy(
         update={"permissions": tenant.permissions.model_copy(update={"confirm_operation_kinds": ()})}
     )
-    picker = ScriptedMovePicker(propose("cancel_order", "NS-20960"), RuntimeError("model down"))
+    picker = ScriptedPlanner(propose("cancel_order", "NS-20960"), RuntimeError("model down"))
     reply = await orch(c, picker, tenants=TenantRegistry({T: direct})).handle_turn(
         T, C, "cancel order NS-20960. My phone is 01098765405"
     )
@@ -273,7 +273,7 @@ async def test_once_the_shop_was_asked_to_change_something_the_loop_never_runs_t
 
 
 async def test_an_outcome_the_orchestrator_forgot_is_still_told(c: Container) -> None:
-    picker = FunctionPicker(
+    picker = FunctionPlanner(
         lambda v: (
             propose("refund_request", "NS-20512")
             if not v.moves

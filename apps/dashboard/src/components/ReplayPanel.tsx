@@ -16,7 +16,7 @@ function parse(text: string): Record<string, string> {
   return changes;
 }
 
-/** Run the conversation again with other settings on a stand-in shop (admins only) and see both runs side by side. */
+/** Run the conversation again with other settings on a simulated shop (admins only) and see both runs side by side. */
 export function ReplayPanel({ tenant, conversationId }: { tenant: string; conversationId: string }) {
   const { t } = useI18n();
   const auth = useAuth();

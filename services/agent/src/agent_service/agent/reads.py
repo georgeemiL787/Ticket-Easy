@@ -1,4 +1,4 @@
-"""What the agent loop does with the read moves, and what it shows the orchestrator: the checks are all code.
+"""What the agent loop does with the read moves, and what it shows the planner: the checks are all code.
 
 LookUp(tool, arguments) is worked like this, and the first failing check refuses the move (the picker is told why):
   the tool is published, allowed by the permission gate (gates.check_tool) and only READS (a write is refused here: a
@@ -273,7 +273,7 @@ def _shortlist(tools: dict[str, ToolSpec], ctx: TurnContext) -> list[ToolSpec]:
 
 
 async def build_view(ctx: TurnContext, refused: str | None, moves: list[Any]) -> AgentView:
-    """Everything the orchestrator may see this ask, built by code with personal values hidden."""
+    """Everything the planner may see this ask, built by code with personal values hidden."""
     from agent_service.turn.stages import _tools  # imported here: stages imports the agent module through the pipeline
 
     session, reading = ctx.session, ctx.understanding

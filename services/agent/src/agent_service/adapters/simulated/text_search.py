@@ -1,4 +1,5 @@
-"""Small text-search engine for the policy search stand-in: normalizing, synonym expansion and BM25-like scoring.
+"""Small text-search engine for the policy search simulated service: normalizing, synonym expansion and BM25-like
+scoring.
 
 It handles English, Egyptian Arabic and Arabizi (Arabic written with Latin letters and digits, like 3ayez or araga3).
 """

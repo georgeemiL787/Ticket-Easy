@@ -3,7 +3,8 @@ same process (default) or on a running server (--url, which must run with TEAM_B
 
     python -m loadtest.run --customers 50 --conversations 6 --chaos rule_checker:30@5 --chaos shop:30@15
 
---chaos PLUG:SECONDS@START  switches the stand-in off START seconds into the run for SECONDS seconds (it heals itself).
+--chaos PLUG:SECONDS@START  switches the simulated service off START seconds into the run for SECONDS seconds (it heals
+itself).
 Prints p50/p95 per endpoint and per stage, what the agent did when parts failed, and the checker's verdict.
 Exit code 1 when the checker finds a problem, a recovery probe fails, or --p95-limit is exceeded.
 """

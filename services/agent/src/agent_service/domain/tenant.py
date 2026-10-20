@@ -41,7 +41,7 @@ class EscalationConfig(FrozenModel):
     min_intent_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     escalate_on_deny: bool = True  # a no from the rule checker always goes to a human
     escalate_on_high_frustration: bool = True
-    # Agent mode: what the orchestrator must try before it may choose to hand over (agent/escalation.py).
+    # Agent mode: what the planner must try before it may choose to hand over (agent/escalation.py).
     frustration_attempts: int = Field(default=1, ge=1)  # attempts to solve it while the customer stays very frustrated
     policy_questions: int = Field(default=1, ge=1)  # clarifying questions after a policy search found nothing
     outage_retries: int = Field(default=1, ge=1)  # retries of a system that is down

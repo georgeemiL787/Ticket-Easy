@@ -32,8 +32,8 @@ from agent_service.ports import (
     Clock,
     EvidenceProvider,
     LLMClient,
-    MovePicker,
     NotFoundError,
+    Planner,
     PolicyGate,
     SessionConflictError,
     SessionStore,
@@ -104,7 +104,7 @@ class Orchestrator:
         registry: CapabilityRegistry | None = None,
         policy: PolicyGate | None = None,
         max_queued_runs: int | None = None,
-        move_picker: MovePicker | None = None,
+        planner: Planner | None = None,
         agent_mode: AgentMode = "on",
         agent_max_moves: int = 5,
         agent_turn_timeout_s: float = 20.0,
@@ -132,19 +132,19 @@ class Orchestrator:
             registry=registry or (CapabilityRegistry(capabilities, clock) if capabilities is not None else None),
             policy=policy,
             max_queued_runs=MAX_QUEUED_RUNS if max_queued_runs is None else max_queued_runs,
-            move_picker=move_picker,
+            planner=planner,
             agent_mode=agent_mode,
             agent_max_moves=agent_max_moves,
             agent_turn_timeout_s=agent_turn_timeout_s,
         )
 
-    def set_agent(self, *, mode: AgentMode | None = None, move_picker: MovePicker | None = None) -> None:
-        """Change how the agent runs (used by the evaluation and the tests): its mode and/or its move picker."""
+    def set_agent(self, *, mode: AgentMode | None = None, planner: Planner | None = None) -> None:
+        """Change how the agent runs (used by the evaluation and the tests): its mode and/or its planner."""
         changes: dict[str, Any] = {}
         if mode is not None:
             changes["agent_mode"] = mode
-        if move_picker is not None:
-            changes["move_picker"] = move_picker
+        if planner is not None:
+            changes["planner"] = planner
         self._deps = replace(self._deps, **changes)
 
     async def handle_turn(

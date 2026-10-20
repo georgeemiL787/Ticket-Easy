@@ -1,8 +1,8 @@
 """Real check of the guided tool setup (the three screens' API) against the Nile sandbox shop. TEST-ONLY.
 
-Needs ops/local/serve.py up (sandbox, Team C with a model provider, Team B signed in) and the Team C binding file
-(ops/local/var/team_c.json: run ops/local/team_c_lifecycle.py once, or copy the example). It drives exactly what the
-three dashboard screens call, as a signed-in manager, with the owner's own choices (no scripted shortcuts inside Team C):
+Needs ops/local/serve.py up (sandbox, the tools service with a model provider, the agent signed in) and the tools service binding file
+(ops/local/var/team_c.json: run ops/local/tools_lifecycle.py once, or copy the example). It drives exactly what the
+three dashboard screens call, as a signed-in manager, with the owner's own choices (no scripted shortcuts inside the tools service):
 
   1 import      the sandbox's OpenAPI by address -> classes of its operations
   2 connect     the sandbox as the API address, a connection check
@@ -12,7 +12,7 @@ three dashboard screens call, as a signed-in manager, with the owner's own choic
   6 publish     the tools that passed -> a DRAFT bundle (nothing in use yet)
   7 activate    the bundle becomes the one in use; the agent lists the new tools
 
-It counts the POSTs the owner needs (the plan's goal: at most 5) and fails if a plaintext credential is found in Team C's
+It counts the POSTs the owner needs (the plan's goal: at most 5) and fails if a plaintext credential is found in the tools service's
 database. It changes state on purpose (a new tools-service business is NOT created: it reuses shop_001's binding).
 
     services/agent/.venv/Scripts/python.exe ops/local/tools_flow_check.py [--tenant shop_001]
@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "ops" / "local"))
 import e2e_chat  # noqa: E402  (its manager() signs a test manager in)
 
-TEAM_B, SANDBOX = e2e_chat.TEAM_B, e2e_chat.SANDBOX
+AGENT_URL, SANDBOX = e2e_chat.AGENT_URL, e2e_chat.SANDBOX
 POSTS: list[str] = []
 
 
@@ -63,7 +63,7 @@ def main() -> int:
     parser.add_argument("--tenant", default="shop_001")
     args = parser.parse_args()
     tenant, base = args.tenant, "/v1/dashboard/tool-setup"
-    with httpx.Client(base_url=TEAM_B, trust_env=False) as http:
+    with httpx.Client(base_url=AGENT_URL, trust_env=False) as http:
         headers = e2e_chat.manager(http)
 
         step("1 import the sandbox's OpenAPI by address")

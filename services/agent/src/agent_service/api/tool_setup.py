@@ -6,14 +6,15 @@ Every route is under /v1/dashboard/tool-setup with ?tenant_id= (managers, like t
   GET  /operations                 the operations of a description, grouped read / write / risky, paginated
   POST /connection-check           is the API reachable? (no credentials are sent)
   POST /batches                    the owner's selection: one tool is prepared for each operation
-  GET  /batches/{id}               its state (Team C prepares, builds and tests in the background)
+  GET  /batches/{id}               its state (the tools service prepares, builds and tests in the background)
   POST /batches/{id}/approve       the owner's confirmations; writes need the four effect flags
   POST /batches/{id}/retry/{op}    prepare one tool again
   POST /batches/{id}/publish       publish what passed to the sandbox and write it into a DRAFT bundle
   POST /batches/{id}/activate      make that bundle the one in use (the owner's step; the next message uses it)
 
 The business in the tools service is found by name (ticket-easy:<tenant>) or created on the first import, so there is
-nothing to set up by hand. Credentials entered here go to the tools service once, sealed there; Team B never stores or
+nothing to set up by hand. Credentials entered here go to the tools service once, sealed there; the agent never stores
+or
 logs them. Everything the tools service decides (access policy, tests, publication gates) stays decided there.
 """
 
@@ -22,7 +23,7 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from agent_service.adapters.team_c_admin import TeamCAdmin
+from agent_service.adapters.tools_admin_client import ToolsAdminClient
 from agent_service.api.auth import current_user
 from agent_service.api.chat import TENANT, checked_tenant
 from agent_service.api.errors import ApiError, invalid_state, not_found, upstream_unavailable
@@ -94,7 +95,7 @@ class ConnectionCheckIn(BaseModel):
     base_url: str = Field(min_length=8, max_length=500)
 
 
-def _admin(request: Request) -> tuple[Container, TeamCAdmin]:
+def _admin(request: Request) -> tuple[Container, ToolsAdminClient]:
     built: Container = request.app.state.container
     admin = built.team_c.admin if built.team_c is not None else None
     if admin is None:
@@ -134,7 +135,7 @@ def _failure(exc: UpstreamError) -> ApiError:
     return invalid_state(said or f"this could not be done ({exc.code.lower()})")
 
 
-async def _business(built: Container, admin: TeamCAdmin, tenant_id: str, *, create: bool) -> str | None:
+async def _business(built: Container, admin: ToolsAdminClient, tenant_id: str, *, create: bool) -> str | None:
     """The tools-service business of this tenant: the one its tools are already bound to, else the one named
     ticket-easy:<tenant>, else (when `create`) a new one."""
     bound = built.team_c.binding(tenant_id) if built.team_c is not None else None
@@ -159,7 +160,7 @@ async def _business(built: Container, admin: TeamCAdmin, tenant_id: str, *, crea
     return str(made["id"])
 
 
-async def _owned(request: Request, tenant_id: str, batch_id: str) -> tuple[Container, TeamCAdmin, dict[str, Any]]:
+async def _owned(request: Request, tenant_id: str, batch_id: str) -> tuple[Container, ToolsAdminClient, dict[str, Any]]:
     """The batch, only if it belongs to this tenant's business (else 404, as if it did not exist)."""
     built, admin = _admin(request)
     business = await _business(built, admin, tenant_id, create=False)

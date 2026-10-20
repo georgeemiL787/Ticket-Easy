@@ -1,16 +1,17 @@
-# ruff: noqa: F811  (the fixtures are imported from test_team_c_tools and used by name)
-"""Production tools through TeamCCapabilities: one service-credential process per business, customer as context.
+# ruff: noqa: F811  (the fixtures are imported from test_tools_catalog and used by name)
+"""Production tools through ToolCapabilities: one service-credential process per business, customer as context.
 
-Against the scripted fake server (tests/fake_team_c_mcp.py, "split_production": the process started with
+Against the scripted fake server (tests/fake_tools_mcp.py, "split_production": the process started with
 --context-from-client lists and runs only production tools). What must hold: production is used only when the operator
-allows it for that tool AND Team C marks the publication production_ready; no verified customer means nothing is sent;
+allows it for that tool AND the tools service marks the publication production_ready; no verified customer means nothing
+is sent;
 the customer id and idempotency key travel in _meta.ticketeasy, never in the arguments; a production result is trusted
 only when it says production for the same publication.
 """
 
 from typing import Any
 
-from tests.unit.adapters.test_team_c_tools import (  # noqa: F401  (fake and made are fixtures)
+from tests.unit.adapters.test_tools_catalog import (  # noqa: F401  (fake and made are fixtures)
     GET_ORDER_PROPOSAL,
     ORDER,
     Fake,

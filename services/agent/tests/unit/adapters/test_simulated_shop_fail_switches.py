@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 
 import pytest
 
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolResult
 
@@ -15,7 +15,7 @@ ORDER = {"order_id": "NS-20877"}
 
 
 @pytest.mark.parametrize("code", ["BACKEND_UNAVAILABLE", "TIMEOUT"])
-async def test_fail_next_unreachable_raises_and_nothing_changes(call: Call, shop: StandinShop, code: str) -> None:
+async def test_fail_next_unreachable_raises_and_nothing_changes(call: Call, shop: SimulatedShop, code: str) -> None:
     shop.fail_next("create_refund", code)
     with pytest.raises(UpstreamError) as info:
         await call("create_refund", REFUND)
@@ -24,14 +24,14 @@ async def test_fail_next_unreachable_raises_and_nothing_changes(call: Call, shop
     assert (await call("create_refund", REFUND)).status == "success"  # the switch was used up
 
 
-async def test_fail_next_not_found_comes_back_as_an_error_result(call: Call, shop: StandinShop) -> None:
+async def test_fail_next_not_found_comes_back_as_an_error_result(call: Call, shop: SimulatedShop) -> None:
     shop.fail_next("get_order", "NOT_FOUND")
     result = await call("get_order", ORDER)
     assert (result.status, result.error_code, result.retryable) == ("error", "NOT_FOUND", False)
     assert (await call("get_order", ORDER)).status == "success"
 
 
-async def test_fail_next_counts_calls_and_queues_in_order(call: Call, shop: StandinShop) -> None:
+async def test_fail_next_counts_calls_and_queues_in_order(call: Call, shop: SimulatedShop) -> None:
     shop.fail_next("get_order", "TIMEOUT", times=2)
     shop.fail_next("get_order", "NOT_FOUND")
     outcomes = []
@@ -43,7 +43,7 @@ async def test_fail_next_counts_calls_and_queues_in_order(call: Call, shop: Stan
     assert outcomes == ["TIMEOUT", "TIMEOUT", "NOT_FOUND", "ok"]
 
 
-async def test_fail_next_only_hits_its_tool_and_is_logged(call: Call, shop: StandinShop) -> None:
+async def test_fail_next_only_hits_its_tool_and_is_logged(call: Call, shop: SimulatedShop) -> None:
     shop.fail_next("get_order", "BACKEND_UNAVAILABLE")
     assert (await call("list_customer_orders", {"customer_id": "C-100"})).status == "success"
     with pytest.raises(UpstreamError):
@@ -57,7 +57,7 @@ async def test_fail_next_only_hits_its_tool_and_is_logged(call: Call, shop: Stan
     )
 
 
-async def test_fail_next_rejects_bad_input(shop: StandinShop) -> None:
+async def test_fail_next_rejects_bad_input(shop: SimulatedShop) -> None:
     with pytest.raises(ValueError, match="code"):
         shop.fail_next("get_order", "OOPS")
     with pytest.raises(ValueError, match="times"):
@@ -66,7 +66,7 @@ async def test_fail_next_rejects_bad_input(shop: StandinShop) -> None:
         shop.fail_next("make_coffee", "TIMEOUT")
 
 
-async def test_uncertain_write_that_did_not_happen(call: Call, shop: StandinShop) -> None:
+async def test_uncertain_write_that_did_not_happen(call: Call, shop: SimulatedShop) -> None:
     shop.uncertain("create_refund")
     result = await call("create_refund", REFUND)
     assert (result.status, result.error_code, result.write_may_have_applied) == ("error", "OUTCOME_UNKNOWN", True)
@@ -74,7 +74,7 @@ async def test_uncertain_write_that_did_not_happen(call: Call, shop: StandinShop
     assert shop.change_count(T) == 0 and shop.records(T, "refund") == []
 
 
-async def test_uncertain_write_that_really_happened(call: Call, shop: StandinShop) -> None:
+async def test_uncertain_write_that_really_happened(call: Call, shop: SimulatedShop) -> None:
     shop.uncertain("create_refund", applied=True)
     result = await call("create_refund", REFUND)
     assert result.error_code == "OUTCOME_UNKNOWN" and result.write_may_have_applied is True
@@ -82,7 +82,7 @@ async def test_uncertain_write_that_really_happened(call: Call, shop: StandinSho
     assert shop.audit_log(T)[-1].applied is True
 
 
-async def test_uncertain_results_are_not_replayed_as_success(call: Call, shop: StandinShop) -> None:
+async def test_uncertain_results_are_not_replayed_as_success(call: Call, shop: SimulatedShop) -> None:
     shop.uncertain("create_refund", applied=True)
     await call("create_refund", REFUND, key="k")
     again = await call("create_refund", REFUND, key="k")
@@ -90,7 +90,7 @@ async def test_uncertain_results_are_not_replayed_as_success(call: Call, shop: S
     assert again.status == "error"
 
 
-async def test_uncertain_only_for_write_tools_and_known_tools(shop: StandinShop) -> None:
+async def test_uncertain_only_for_write_tools_and_known_tools(shop: SimulatedShop) -> None:
     with pytest.raises(ValueError, match="write tool"):
         shop.uncertain("get_order")
     with pytest.raises(ValueError, match="unknown tool"):

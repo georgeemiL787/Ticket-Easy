@@ -1,4 +1,5 @@
-"""The stand-ins pass the plug conformance checks (the same checks will run against the real services in Phase 6)."""
+"""The simulated services pass the plug conformance checks (the same checks will run against the real services in Phase
+6)."""
 
 from datetime import date
 from pathlib import Path
@@ -6,11 +7,11 @@ from pathlib import Path
 import pytest
 
 from agent_service.adapters.memory_store import FixedClock
-from agent_service.adapters.standins.evidence import StandinEvidenceProvider
-from agent_service.adapters.standins.policy_search import PolicySearchStandin
-from agent_service.adapters.standins.rule_checker import RuleCheckerStandin
-from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.evidence import SimulatedEvidenceProvider
+from agent_service.adapters.simulated.policy_search import SimulatedPolicySearch
+from agent_service.adapters.simulated.rule_checker import SimulatedRuleChecker
+from agent_service.adapters.simulated.safety_screen import SimulatedSafetyScreen
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.config import Settings
 from agent_service.ports import CapabilityClient, EvidenceProvider, PolicyGate
 from tests.contract import conformance as conf
@@ -20,35 +21,35 @@ CASE = conf.ConformanceCase()
 
 
 @pytest.fixture
-def search() -> PolicySearchStandin:
-    return PolicySearchStandin(FIXTURES)
+def search() -> SimulatedPolicySearch:
+    return SimulatedPolicySearch(FIXTURES)
 
 
 @pytest.fixture
-def screen() -> SafetyScreenStandin:
-    return SafetyScreenStandin(FIXTURES)
+def screen() -> SimulatedSafetyScreen:
+    return SimulatedSafetyScreen(FIXTURES)
 
 
 @pytest.fixture
-def evidence(search: PolicySearchStandin, screen: SafetyScreenStandin) -> EvidenceProvider:
-    return StandinEvidenceProvider(search, screen)
+def evidence(search: SimulatedPolicySearch, screen: SimulatedSafetyScreen) -> EvidenceProvider:
+    return SimulatedEvidenceProvider(search, screen)
 
 
 @pytest.fixture
-def rules() -> RuleCheckerStandin:
-    return RuleCheckerStandin(FIXTURES)
+def rules() -> SimulatedRuleChecker:
+    return SimulatedRuleChecker(FIXTURES)
 
 
 @pytest.fixture
-def shop(tmp_path: Path) -> StandinShop:
-    return StandinShop(FIXTURES, FixedClock(date(2026, 9, 28)), [CASE.tenant_id])
+def shop(tmp_path: Path) -> SimulatedShop:
+    return SimulatedShop(FIXTURES, FixedClock(date(2026, 9, 28)), [CASE.tenant_id])
 
 
-# ---- the stand-ins are what the ports say they are ----
+# ---- the simulated services are what the ports say they are ----
 
 
-def test_the_standins_satisfy_their_ports(
-    evidence: EvidenceProvider, rules: RuleCheckerStandin, shop: StandinShop
+def test_the_simulated_services_satisfy_their_ports(
+    evidence: EvidenceProvider, rules: SimulatedRuleChecker, shop: SimulatedShop
 ) -> None:
     assert (
         isinstance(evidence, EvidenceProvider) and isinstance(rules, PolicyGate) and isinstance(shop, CapabilityClient)
@@ -75,7 +76,7 @@ async def test_evidence_conformance(evidence: EvidenceProvider, check) -> None: 
 
 
 async def test_evidence_search_failures_are_upstream_errors(
-    evidence: EvidenceProvider, search: PolicySearchStandin
+    evidence: EvidenceProvider, search: SimulatedPolicySearch
 ) -> None:
     await conf.check_upstream_failures_only(
         lambda: evidence.search_knowledge(CASE.tenant_id, CASE.query, request_id="r"),
@@ -91,7 +92,7 @@ async def test_evidence_search_failures_are_upstream_errors(
 
 
 async def test_safety_screen_failures_are_upstream_errors(
-    evidence: EvidenceProvider, screen: SafetyScreenStandin
+    evidence: EvidenceProvider, screen: SimulatedSafetyScreen
 ) -> None:
     await conf.check_upstream_failures_only(
         lambda: evidence.classify_risk(CASE.tenant_id, CASE.risky_message, request_id="r"), screen.fail_next
@@ -112,15 +113,15 @@ async def test_safety_screen_failures_are_upstream_errors(
     ],
     ids=lambda f: f.__name__,
 )
-async def test_policy_gate_conformance(rules: RuleCheckerStandin, check) -> None:  # type: ignore[no-untyped-def]
+async def test_policy_gate_conformance(rules: SimulatedRuleChecker, check) -> None:  # type: ignore[no-untyped-def]
     await check(rules, CASE)
 
 
-async def test_rule_checker_failures_are_upstream_errors(rules: RuleCheckerStandin) -> None:
+async def test_rule_checker_failures_are_upstream_errors(rules: SimulatedRuleChecker) -> None:
     await conf.check_upstream_failures_only(lambda: rules.check_action(conf._request(CASE)), rules.fail_next)
 
 
-# ---- CapabilityClient: the stand-in shop ----
+# ---- CapabilityClient: the simulated shop ----
 
 
 @pytest.mark.parametrize(
@@ -134,11 +135,11 @@ async def test_rule_checker_failures_are_upstream_errors(rules: RuleCheckerStand
     ],
     ids=lambda f: f.__name__,
 )
-async def test_capability_client_conformance(shop: StandinShop, check) -> None:  # type: ignore[no-untyped-def]
+async def test_capability_client_conformance(shop: SimulatedShop, check) -> None:  # type: ignore[no-untyped-def]
     await check(shop, CASE)
 
 
-async def test_shop_failures_are_upstream_errors(shop: StandinShop) -> None:
+async def test_shop_failures_are_upstream_errors(shop: SimulatedShop) -> None:
     request = conf.ToolCallRequest(
         request_id="r", tool=CASE.read_tool, arguments=CASE.read_arguments, idempotency_key="k"
     )

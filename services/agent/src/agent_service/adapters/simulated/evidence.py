@@ -1,12 +1,12 @@
 """The EvidenceProvider plug: policy search and the safety screen behind one interface."""
 
-from agent_service.adapters.standins.policy_search import PolicySearchStandin
-from agent_service.adapters.standins.safety_screen import SafetyScreenStandin
+from agent_service.adapters.simulated.policy_search import SimulatedPolicySearch
+from agent_service.adapters.simulated.safety_screen import SimulatedSafetyScreen
 from agent_service.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 
 
-class StandinEvidenceProvider:
-    def __init__(self, search: PolicySearchStandin, safety: SafetyScreenStandin) -> None:
+class SimulatedEvidenceProvider:
+    def __init__(self, search: SimulatedPolicySearch, safety: SimulatedSafetyScreen) -> None:
         self._search = search
         self._safety = safety
 

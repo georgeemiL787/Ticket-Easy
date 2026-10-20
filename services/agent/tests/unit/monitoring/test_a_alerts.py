@@ -238,7 +238,7 @@ async def test_agent_fallback_spike_opens_with_the_reasons_and_resolves() -> Non
     w = World()
     for _ in range(8):
         await w.turn(**agent_turn())
-    await w.turn(**agent_turn(fallback_reason="move picker error: UpstreamError"))
+    await w.turn(**agent_turn(fallback_reason="planner error: UpstreamError"))
     assert await w.evaluate() == ([], [])  # 1 of 9: 11%, under 20%
     await w.turn(**agent_turn(fallback_reason="two refused moves in a row"))
     await w.turn(**agent_turn(fallback_reason="two refused moves in a row"))
@@ -254,7 +254,7 @@ async def test_agent_fallback_spike_opens_with_the_reasons_and_resolves() -> Non
 async def test_agent_fallback_needs_enough_agent_turns_and_ignores_turns_the_agent_did_not_work() -> None:
     w = World()
     for _ in range(3):
-        await w.turn(**agent_turn(fallback_reason="move picker error: x"))
+        await w.turn(**agent_turn(fallback_reason="planner error: x"))
     assert await w.evaluate() == ([], [])  # only 3 agent turns: too few to tell
     for _ in range(30):
         await w.turn(agent_mode="off")  # the usual flow: not agent turns

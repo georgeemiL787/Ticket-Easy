@@ -2,8 +2,8 @@
 
 import pytest
 
-from agent_service.adapters.standins.policy_search import PolicySearchStandin
-from agent_service.adapters.standins.text_search import build_synonyms, normalize, stem, tokens
+from agent_service.adapters.simulated.policy_search import SimulatedPolicySearch
+from agent_service.adapters.simulated.text_search import build_synonyms, normalize, stem, tokens
 from agent_service.container import Container, inject
 from agent_service.contracts.errors import UpstreamError
 
@@ -11,12 +11,12 @@ T = "shop_001"
 
 
 @pytest.fixture
-def search(container: Container) -> PolicySearchStandin:
+def search(container: Container) -> SimulatedPolicySearch:
     assert container.policy_search is not None
     return container.policy_search
 
 
-async def test_past_tickets_find_a_similar_case(search: PolicySearchStandin) -> None:
+async def test_past_tickets_find_a_similar_case(search: SimulatedPolicySearch) -> None:
     result = await search.search_past_tickets(T, "my order is 5 days late and nobody answers", request_id="r")
     assert result.empty_reason is None and result.tickets[0].category == "late_delivery"
     ticket = result.tickets[0]
@@ -25,7 +25,7 @@ async def test_past_tickets_find_a_similar_case(search: PolicySearchStandin) -> 
     assert arabic.tickets and arabic.tickets[0].category == "late_delivery"
 
 
-async def test_past_tickets_no_match_and_top_k(search: PolicySearchStandin) -> None:
+async def test_past_tickets_no_match_and_top_k(search: SimulatedPolicySearch) -> None:
     nothing = await search.search_past_tickets(T, "what is the weather in Cairo today", request_id="r")
     assert nothing.tickets == () and nothing.empty_reason == "no_match"
     some = await search.search_past_tickets(T, "refund return order", request_id="r", top_k=2)
@@ -34,7 +34,7 @@ async def test_past_tickets_no_match_and_top_k(search: PolicySearchStandin) -> N
 
 @pytest.mark.parametrize("operation", ["search_knowledge", "get_passage", "search_past_tickets"])
 async def test_fail_next_raises_a_retryable_upstream_error_then_recovers(
-    search: PolicySearchStandin, operation: str
+    search: SimulatedPolicySearch, operation: str
 ) -> None:
     async def run() -> object:
         if operation == "search_knowledge":
@@ -55,7 +55,7 @@ async def test_fail_next_raises_a_retryable_upstream_error_then_recovers(
     assert await run() is not None  # recovered by itself
 
 
-async def test_fail_next_only_affects_its_operation_and_validates_input(search: PolicySearchStandin) -> None:
+async def test_fail_next_only_affects_its_operation_and_validates_input(search: SimulatedPolicySearch) -> None:
     search.fail_next("get_passage")
     assert (await search.search_knowledge(T, "return", request_id="r")).passages  # another operation is fine
     with pytest.raises(UpstreamError):
@@ -66,7 +66,7 @@ async def test_fail_next_only_affects_its_operation_and_validates_input(search: 
         search.fail_next("get_passage", times=0)
 
 
-async def test_reset_and_inject(search: PolicySearchStandin) -> None:
+async def test_reset_and_inject(search: SimulatedPolicySearch) -> None:
     search.inject({"switch": "fail_next", "operation": "search_knowledge", "times": 3})
     search.inject({"switch": "reset"})
     assert (await search.search_knowledge(T, "return", request_id="r")).passages
@@ -111,14 +111,14 @@ def test_synonym_table_maps_variants_to_stemmed_meanings() -> None:
      ("araga3", "return_policy@v2#s2"), ("voucher", "faq@v1#q07")],
 )  # fmt: skip
 async def test_one_word_queries_find_the_obvious_passage(
-    search: PolicySearchStandin, query: str, expected: str
+    search: SimulatedPolicySearch, query: str, expected: str
 ) -> None:
     result = await search.search_knowledge(T, query, request_id="r")
     assert result.passages and result.passages[0].passage_id == expected
 
 
 @pytest.mark.parametrize("query", ["weather", "cairo weather", "football"])
-async def test_short_unrelated_queries_still_return_no_match(search: PolicySearchStandin, query: str) -> None:
+async def test_short_unrelated_queries_still_return_no_match(search: SimulatedPolicySearch, query: str) -> None:
     # "cairo" is in the delivery passage, but "weather" is covered by nothing, so a short query does not get a pass
     assert (await search.search_knowledge(T, query, request_id="r")).empty_reason == "no_match"
 

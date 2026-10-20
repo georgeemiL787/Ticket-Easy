@@ -1,4 +1,4 @@
-"""The orchestrator's read moves (safety-critical): every check passing and failing, with scripted moves, no AI model.
+"""The planner's read moves (safety-critical): every check passing and failing, with scripted moves, no AI model.
 
 The loop may look up an order, search the policy, ask the customer, hand over and reply. Whatever the picker proposes,
 code checks it first: an invented order number, a write tool, someone else's order and a reply that could say more than
@@ -25,7 +25,7 @@ from agent_service.domain.agent import (
 from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.domain.trace import DecisionTrace
 from agent_service.turn.handler import Orchestrator
-from tests.fakes import FunctionPicker, ScriptedMovePicker
+from tests.fakes import FunctionPlanner, ScriptedPlanner
 
 T, C = "shop_001", "conv-reads"
 PHONE = "01012345601"  # C-100: NS-20877 (shipped, late), NS-20512, NS-20745
@@ -40,7 +40,7 @@ def orch(c: Container, picker: Any, **options: Any) -> Orchestrator:
         "policy": c.policy,
     }
     return Orchestrator(
-        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, move_picker=picker, **{**base, **options}
+        clock=c.clock, sessions=c.sessions, traces=c.traces, cases=c.cases, planner=picker, **{**base, **options}
     )
 
 
@@ -65,7 +65,7 @@ def writes(c: Container) -> list[Any]:
 
 
 async def test_an_order_is_read_once_verified_and_its_status_comes_from_the_order(c: Container) -> None:
-    picker = ScriptedMovePicker(look(), status_reply())
+    picker = ScriptedPlanner(look(), status_reply())
     reply = await orch(c, picker).handle_turn(T, C, f"Where is my order NS-20877? My phone is {PHONE}")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and "NS-20877" in reply.text and "on its way" in reply.text
@@ -91,7 +91,7 @@ async def test_an_order_is_read_once_verified_and_its_status_comes_from_the_orde
 
 
 async def test_the_picker_is_shown_a_redacted_view_with_the_menu(c: Container) -> None:
-    picker = FunctionPicker(lambda v: status_reply() if v.orders else look())
+    picker = FunctionPlanner(lambda v: status_reply() if v.orders else look())
     await orch(c, picker).handle_turn(T, C, f"Where is my order NS-20877? My phone is {PHONE}")
     first, second = picker.views[0], picker.views[1]
     assert PHONE not in first.message and "[phone]" in first.message
@@ -134,7 +134,7 @@ async def test_a_look_up_that_breaks_a_rule_is_refused_before_anything_is_read(
     c: Container, move: LookUp, check: str, why: str
 ) -> None:
     assert c.shop is not None
-    picker = ScriptedMovePicker(move, Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
+    picker = ScriptedPlanner(move, Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
     await orch(c, picker).handle_turn(T, C, "Where is my order NS-20877?")
     first = (await trace_of(c)).agent_steps[0]
     failed = [ch for ch in first.checks if not ch.passed]
@@ -145,7 +145,7 @@ async def test_a_look_up_that_breaks_a_rule_is_refused_before_anything_is_read(
 
 async def test_an_order_number_the_model_made_up_is_refused_even_when_it_looks_real(c: Container) -> None:
     # NS-20790 exists and belongs to someone else: the customer never wrote it, so it cannot even be asked for
-    picker = ScriptedMovePicker(look("NS-20790"), look("NS-20790"))
+    picker = ScriptedPlanner(look("NS-20790"), look("NS-20790"))
     await orch(c, picker).handle_turn(T, C, f"Where is my order NS-20877? My phone is {PHONE}")
     trace = await trace_of(c)
     assert trace.fallback_reason == "two refused moves in a row"
@@ -153,10 +153,10 @@ async def test_an_order_number_the_model_made_up_is_refused_even_when_it_looks_r
 
 
 async def test_an_order_number_from_an_earlier_message_of_the_conversation_is_allowed(c: Container) -> None:
-    await orch(
-        c, ScriptedMovePicker(Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
-    ).handle_turn(T, C, "my order is NS-20877")
-    picker = ScriptedMovePicker(look(), status_reply())
+    await orch(c, ScriptedPlanner(Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))).handle_turn(
+        T, C, "my order is NS-20877"
+    )
+    picker = ScriptedPlanner(look(), status_reply())
     reply = await orch(c, picker).handle_turn(T, C, f"it is late, my phone is {PHONE}")
     assert reply.decision is Decision.ANSWER and "NS-20877" in reply.text
 
@@ -166,7 +166,7 @@ async def test_an_order_number_from_an_earlier_message_of_the_conversation_is_al
 
 async def test_the_customer_is_asked_to_verify_before_any_personal_data_is_read(c: Container) -> None:
     assert c.shop is not None
-    picker = ScriptedMovePicker(look())
+    picker = ScriptedPlanner(look())
     reply = await orch(c, picker).handle_turn(T, C, "Where is my order NS-20877?")
     trace = await trace_of(c)
     assert reply.decision is Decision.VERIFY_IDENTITY and reply.awaiting == "slot:phone"
@@ -177,9 +177,9 @@ async def test_the_customer_is_asked_to_verify_before_any_personal_data_is_read(
 
 
 async def test_another_customers_order_is_an_immediate_handoff_with_no_data(c: Container) -> None:
-    first = ScriptedMovePicker(look(), status_reply())
+    first = ScriptedPlanner(look(), status_reply())
     await orch(c, first).handle_turn(T, C, f"Where is my order NS-20877? My phone is {PHONE}")
-    second = ScriptedMovePicker(look("NS-20790"), status_reply("this must never run"))
+    second = ScriptedPlanner(look("NS-20790"), status_reply("this must never run"))
     reply = await orch(c, second).handle_turn(T, C, "and what about order NS-20790?")
     trace = await trace_of(c)
     assert reply.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.OWNERSHIP_MISMATCH
@@ -190,16 +190,16 @@ async def test_another_customers_order_is_an_immediate_handoff_with_no_data(c: C
 
 
 async def test_an_order_the_shop_does_not_know_is_asked_about_once(c: Container) -> None:
-    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
-    reply = await orch(c, ScriptedMovePicker(look("NS-99999"))).handle_turn(T, C, "and what about order NS-99999?")
+    await orch(c, ScriptedPlanner(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    reply = await orch(c, ScriptedPlanner(look("NS-99999"))).handle_turn(T, C, "and what about order NS-99999?")
     assert reply.decision is Decision.CLARIFY and "NS-**999" in reply.text and reply.awaiting == "order_choice"
 
 
 async def test_a_failing_read_is_told_honestly_and_nothing_is_guessed(c: Container) -> None:
     assert c.shop is not None
-    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    await orch(c, ScriptedPlanner(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
     c.shop.fail_next("get_order", "BACKEND_UNAVAILABLE", 2)
-    reply = await orch(c, ScriptedMovePicker(look("NS-20512"))).handle_turn(T, C, "what about NS-20512?")
+    reply = await orch(c, ScriptedPlanner(look("NS-20512"))).handle_turn(T, C, "what about NS-20512?")
     assert reply.decision is Decision.CLARIFY and "could not look that up" in reply.text
 
 
@@ -209,29 +209,29 @@ async def test_a_failing_read_is_told_honestly_and_nothing_is_guessed(c: Contain
 async def test_the_customers_own_orders_can_be_offered_as_a_choice_and_the_answer_is_understood(c: Container) -> None:
     listing = LookUp(tool="list_customer_orders", arguments={"customer_id": "C-100"}, why="which orders")
     choose = AskCustomer(question_key="disambiguate_order", options=["NS-20877", "NS-20745"], why="which one?")
-    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
-    picker = ScriptedMovePicker(listing, choose)
+    await orch(c, ScriptedPlanner(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    picker = ScriptedPlanner(listing, choose)
     asked = await orch(c, picker).handle_turn(T, C, "I want to know about another order")
     assert asked.decision is Decision.CLARIFY and asked.awaiting == "order_choice"
     assert "NS-**877" in asked.text and "NS-**745" in asked.text and "NS-20745" not in asked.text
     session = await c.sessions.load(T, C)
     assert session is not None and session.order_choices == ["NS-20877", "NS-20745"]
-    again = await orch(c, ScriptedMovePicker(look("NS-20745"), status_reply())).handle_turn(T, C, "the second")
+    again = await orch(c, ScriptedPlanner(look("NS-20745"), status_reply())).handle_turn(T, C, "the second")
     assert again.decision is Decision.ANSWER and "NS-20745" in again.text
 
 
 async def test_a_choice_may_only_offer_orders_the_shop_listed(c: Container) -> None:
-    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    await orch(c, ScriptedPlanner(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
     bad = AskCustomer(question_key="disambiguate_order", options=["NS-20790"])
     fine = AskCustomer(question_key="ask_order_id", slot="order_id")
-    reply = await orch(c, ScriptedMovePicker(bad, fine)).handle_turn(T, C, "which order?")
+    reply = await orch(c, ScriptedPlanner(bad, fine)).handle_turn(T, C, "which order?")
     trace = await trace_of(c)
     assert trace.agent_steps[0].refused and reply.awaiting == "slot:order_id"
 
 
 async def test_a_hand_over_needs_a_valid_reason_and_keeps_what_was_tried(c: Container) -> None:
     move = HandOver(reason=EscalationReason.UNSUPPORTED, tried=["searched twice"], why="not in the policy")
-    reply = await orch(c, ScriptedMovePicker(move)).handle_turn(T, C, "do you ship to the moon?")
+    reply = await orch(c, ScriptedPlanner(move)).handle_turn(T, C, "do you ship to the moon?")
     trace = await trace_of(c)
     assert reply.decision is Decision.HANDOFF and "searched twice" in trace.decision_reason
 
@@ -247,7 +247,7 @@ async def test_policy_passages_go_back_to_the_picker_and_the_answer_quotes_them_
             plan=ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer", citations=[view.passages[0].id])
         )
 
-    picker = FunctionPicker(decide)
+    picker = FunctionPlanner(decide)
     reply = await orch(c, picker).handle_turn(T, C, "How many days do I have to return an item?")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and reply.citations and "14" in reply.text
@@ -258,7 +258,7 @@ async def test_policy_passages_go_back_to_the_picker_and_the_answer_quotes_them_
 
 async def test_a_policy_answer_cannot_cite_what_was_not_retrieved_or_answer_without_a_search(c: Container) -> None:
     no_search = Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer"))
-    found = ScriptedMovePicker(no_search, AskCustomer(question_key="ask_rephrase"))
+    found = ScriptedPlanner(no_search, AskCustomer(question_key="ask_rephrase"))
     await orch(c, found).handle_turn(T, C, "How many days do I have to return an item?")
     assert "no policy passage was retrieved" in found.views[1].refused
 
@@ -267,13 +267,13 @@ async def test_a_policy_answer_cannot_cite_what_was_not_retrieved_or_answer_with
             return SearchPolicy(query="return window days")
         return Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="policy_answer", citations=["made_up@v9#s9"]))
 
-    picker = FunctionPicker(decide)
+    picker = FunctionPlanner(decide)
     await orch(c, picker).handle_turn(T, "conv-2", "How many days do I have to return an item?")
     assert "made_up@v9#s9 was not retrieved" in picker.views[2].refused
 
 
 async def test_a_search_that_finds_nothing_is_counted_and_the_picker_sees_the_count(c: Container) -> None:
-    picker = FunctionPicker(
+    picker = FunctionPlanner(
         lambda v: SearchPolicy(query="zzzz qqqq xxxx") if not v.moves else AskCustomer(question_key="ask_rephrase")
     )
     reply = await orch(c, picker).handle_turn(T, C, "zzzz qqqq xxxx")
@@ -285,7 +285,7 @@ async def test_a_search_that_finds_nothing_is_counted_and_the_picker_sees_the_co
 async def test_a_policy_search_that_is_down_is_a_handoff_not_a_guess(c: Container) -> None:
     assert c.policy_search is not None
     c.policy_search.fail_next("search_knowledge", 4)
-    reply = await orch(c, ScriptedMovePicker(SearchPolicy(query="return policy"))).handle_turn(
+    reply = await orch(c, ScriptedPlanner(SearchPolicy(query="return policy"))).handle_turn(
         T, C, "What is your return policy?"
     )
     trace = await trace_of(c)
@@ -297,7 +297,7 @@ async def test_a_policy_search_that_is_down_is_a_handoff_not_a_guess(c: Containe
 
 
 async def test_an_order_status_reply_needs_an_order_that_was_read(c: Container) -> None:
-    picker = ScriptedMovePicker(status_reply(), AskCustomer(question_key="ask_order_id", slot="order_id"))
+    picker = ScriptedPlanner(status_reply(), AskCustomer(question_key="ask_order_id", slot="order_id"))
     await orch(c, picker).handle_turn(T, C, "where is my order")
     assert "no order of the verified customer was read" in picker.views[1].refused
 
@@ -322,7 +322,7 @@ async def test_a_message_with_two_requests_is_planned_and_both_are_answered(c: C
         )
         return MoveProposal(plan=AgentPlan(steps=finished), move=reply)
 
-    picker = FunctionPicker(decide)
+    picker = FunctionPlanner(decide)
     reply = await orch(c, picker).handle_turn(T, C, f"Where is my order NS-20877 and how long do refunds take? {PHONE}")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and reply.citations
@@ -342,7 +342,7 @@ async def test_the_plan_is_changed_after_an_unexpected_status(c: Container) -> N
         replanned = AgentPlan(steps=[PlanStep(text="tell the customer the order is cancelled", status="done")])
         return MoveProposal(plan=replanned, move=status_reply("it was cancelled, say so"))
 
-    reply = await orch(c, FunctionPicker(decide)).handle_turn(T, C, "Where is order NS-20701? my phone is 01187654306")
+    reply = await orch(c, FunctionPlanner(decide)).handle_turn(T, C, "Where is order NS-20701? my phone is 01187654306")
     trace = await trace_of(c)
     assert reply.decision is Decision.ANSWER and "cancelled" in reply.text.lower()
     assert trace.agent_plan is not None and trace.agent_plan.revision == 2
@@ -350,7 +350,7 @@ async def test_the_plan_is_changed_after_an_unexpected_status(c: Container) -> N
 
 async def test_an_open_plan_is_continued_on_the_next_message(c: Container) -> None:
     plan = AgentPlan(steps=[PlanStep(text="verify the customer and look up NS-20877")])
-    first = ScriptedMovePicker(MoveProposal(plan=plan, move=AskCustomer(question_key="ask_phone", slot="phone")))
+    first = ScriptedPlanner(MoveProposal(plan=plan, move=AskCustomer(question_key="ask_phone", slot="phone")))
     asked = await orch(c, first).handle_turn(T, C, "where is my order NS-20877")
     assert asked.awaiting == "slot:phone"
 
@@ -360,7 +360,7 @@ async def test_an_open_plan_is_continued_on_the_next_message(c: Container) -> No
         done = AgentPlan(steps=[PlanStep(text=plan.steps[0].text, status="done")])
         return MoveProposal(plan=done, move=status_reply())
 
-    second = FunctionPicker(decide)
+    second = FunctionPlanner(decide)
     answered = await orch(c, second).handle_turn(T, C, PHONE)
     assert second.views[0].plan is not None and second.views[0].plan.revision == 1  # last turn's plan is in front of it
     assert second.views[0].pending == "slot:phone"
@@ -378,7 +378,7 @@ async def test_no_write_reaches_the_shop_whatever_the_picker_proposes(c: Contain
         look(tool="cancel_order"),
         look(tool="apply_voucher", amount=100),
     ]
-    picker = ScriptedMovePicker(*attempts, Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
+    picker = ScriptedPlanner(*attempts, Reply(plan=ReplyPlan(decision=Decision.ANSWER, reply_key="greeting")))
     await orch(c, picker).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
     assert writes(c) == []
 
@@ -387,10 +387,10 @@ async def test_no_write_reaches_the_shop_whatever_the_picker_proposes(c: Contain
 
 
 async def test_a_phone_the_customer_already_gave_is_not_asked_for_again(c: Container) -> None:
-    await orch(c, ScriptedMovePicker(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
+    await orch(c, ScriptedPlanner(look(), status_reply())).handle_turn(T, C, f"order NS-20877 phone {PHONE}")
     again = AskCustomer(question_key="ask_phone", slot="phone")
     handover = HandOver(reason=EscalationReason.UNSUPPORTED, tried=["read the order"], why="not covered")
-    await orch(c, ScriptedMovePicker(again, handover)).handle_turn(T, C, "and the other thing?")
+    await orch(c, ScriptedPlanner(again, handover)).handle_turn(T, C, "and the other thing?")
     trace = await trace_of(c)
     first = trace.agent_steps[0]
     assert first.refused and "slot_not_already_known" in [ch.name for ch in first.checks if not ch.passed]
@@ -399,10 +399,10 @@ async def test_a_phone_the_customer_already_gave_is_not_asked_for_again(c: Conta
 async def test_the_same_open_question_is_not_asked_a_third_time(c: Container) -> None:
     ask = AskCustomer(question_key="ask_rephrase")
     for text in ("hmm", "ok"):
-        reply = await orch(c, ScriptedMovePicker(ask)).handle_turn(T, C, text)
+        reply = await orch(c, ScriptedPlanner(ask)).handle_turn(T, C, text)
         assert reply.decision is Decision.CLARIFY and reply.awaiting == "detail"
     handover = HandOver(reason=EscalationReason.LOW_CONFIDENCE, tried=["asked twice"], why="still unclear")
-    reply = await orch(c, ScriptedMovePicker(ask, handover)).handle_turn(T, C, "so")
+    reply = await orch(c, ScriptedPlanner(ask, handover)).handle_turn(T, C, "so")
     first = (await trace_of(c)).agent_steps[0]
     assert first.refused and "not_asking_the_same_again" in [ch.name for ch in first.checks if not ch.passed]
     assert reply.decision is Decision.HANDOFF
@@ -410,12 +410,12 @@ async def test_the_same_open_question_is_not_asked_a_third_time(c: Container) ->
 
 async def test_asking_for_a_detail_keeps_the_request_so_the_usual_stages_can_continue_it(c: Container) -> None:
     ask = AskCustomer(question_key="ask_phone", slot="phone")
-    await orch(c, ScriptedMovePicker(ask)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
+    await orch(c, ScriptedPlanner(ask)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
     session = await c.sessions.load(T, C)
     assert session is not None and session.active_intent == "exchange_request" and session.awaiting == "slot:phone"
     # the AI is unavailable on the next turn: the usual stages take the phone number as the answer and go on to the
     # next detail the exchange needs, not back to "tell me more"
-    reply = await orch(c, ScriptedMovePicker()).handle_turn(T, C, "01123456702")
+    reply = await orch(c, ScriptedPlanner()).handle_turn(T, C, "01123456702")
     assert reply.decision is Decision.CLARIFY and reply.awaiting == "slot:reason"
 
 
@@ -428,14 +428,14 @@ async def test_the_agent_is_told_what_was_asked_and_cannot_forget_it_when_the_hi
         seen.append(view)
         return AskCustomer(question_key="ask_phone", slot="phone")
 
-    await orch(c, FunctionPicker(decide)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
+    await orch(c, FunctionPlanner(decide)).handle_turn(T, C, "I want to exchange order NS-20790 for a bigger size")
     assert seen[-1].requests_so_far == ["exchange_request"] and seen[-1].details_given.get("order_id")
     # the customer answers with something that says nothing by itself; the agent must not ask "what do you need?"
     forget = AskCustomer(question_key="ask_rephrase")
     carry_on = AskCustomer(question_key="ask_reason", slot="reason")
-    await orch(c, ScriptedMovePicker(forget, carry_on)).handle_turn(T, C, "ok")
+    await orch(c, ScriptedPlanner(forget, carry_on)).handle_turn(T, C, "ok")
     first = (await trace_of(c)).agent_steps[0]
     assert first.refused and "not_forgetting_the_request" in [ch.name for ch in first.checks if not ch.passed]
     # and the next ask shows it the request the shop kept
-    await orch(c, FunctionPicker(decide)).handle_turn(T, C, "hmm")
+    await orch(c, FunctionPlanner(decide)).handle_turn(T, C, "hmm")
     assert seen[-1].active_request == "exchange_request"

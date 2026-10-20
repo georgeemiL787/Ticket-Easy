@@ -1,6 +1,7 @@
-"""A stand-in for Team A's onboarding API, in memory: documents with statuses, a re-index that always succeeds at
-once, and rules that are proposed, approved or rejected by a named reviewer. Tests and the stand-in mode use it, so
-nothing needs Team A.
+"""A simulated for the knowledge service's onboarding API, in memory: documents with statuses, a re-index that always
+succeeds at
+once, and rules that are proposed, approved or rejected by a named reviewer. Tests and the simulated mode use it, so
+nothing needs the knowledge service.
 
 It cannot read pdf, docx or xlsx files for real: it only checks their signature. It has no model, so `extract_rules`
 proposes nothing; tests add proposals with `propose`.
@@ -23,7 +24,7 @@ def _refused(message: str, code: str = "INVALID_REQUEST") -> UpstreamError:
     return UpstreamError(SERVICE, code, message)
 
 
-class StandinKnowledgeAdmin:
+class SimulatedKnowledgeAdmin:
     def __init__(self) -> None:
         self._documents: dict[str, list[dict[str, Any]]] = {}
         self._rules: dict[str, dict[str, dict[str, Any]]] = {}
@@ -34,7 +35,7 @@ class StandinKnowledgeAdmin:
     def _check_fail(self) -> None:
         if self.fail_next:
             code, self.fail_next = self.fail_next, None
-            raise UpstreamError(SERVICE, code, "Team A is not available (stand-in switch)", retryable=True)
+            raise UpstreamError(SERVICE, code, "Team A is not available (simulated switch)", retryable=True)
 
     # ---- documents ----
 
@@ -159,7 +160,7 @@ class StandinKnowledgeAdmin:
     async def extract_rules(self, tenant_id: str, document_id: str | None = None) -> dict[str, Any]:
         self._check_fail()
         return self._job(
-            "extract", tenant_id, {"added": 0, "rule_ids": [], "note": "stand-in: no model proposes rules"}
+            "extract", tenant_id, {"added": 0, "rule_ids": [], "note": "simulated service: no model proposes rules"}
         )
 
     def _ruleset(self, tenant_id: str) -> dict[str, Any]:

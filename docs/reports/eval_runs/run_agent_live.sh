@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The agent-mode evaluation against the REAL knowledge service (TEAM_B_MODE=live) instead of the keyword stand-in.
+# The agent-mode evaluation against the REAL knowledge service (TEAM_B_MODE=live) instead of the keyword simulated service.
 # Start the knowledge service first:  cd team_a && PYTHONPATH=src .venv/Scripts/python -m uvicorn knowledge_service.api:app --app-dir src --port 8001
 # Needs GROQ_KEY_n in the environment (never in this repository). Reports: orchestrator/reports/eval_presentation_agent_live_<style>_<date>.*
 # Keys per style: en = 8-12, ar = 18-22, mixed = 13-17 (override with KEYS_EN / KEYS_AR / KEYS_MIXED / KEYS_ARABIZI).

@@ -1,4 +1,5 @@
-"""The failure table: what the agent does when a dependency fails. One case per row, with the stand-ins' switches.
+"""The failure table: what the agent does when a dependency fails. One case per row, with the simulated services'
+switches.
 
 Rows covered here: safety screen, rule checker, shop reads and writes, unpublished tools, rising frustration, out of
 scope. (The policy search rows belong to Track B's matrix.) Every case also checks the global rules: no write the shop
@@ -219,7 +220,7 @@ ROWS = [
 
 @pytest.fixture(params=["usual", "agent"])
 def container(request: pytest.FixtureRequest, tmp_path: Path) -> Container:
-    """Every row runs twice: the usual step-by-step flow, and the agent loop with the scripted orchestrator."""
+    """Every row runs twice: the usual step-by-step flow, and the agent loop with the scripted planner."""
     built = build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28)))
     return with_expert(built) if request.param == "agent" else built
 

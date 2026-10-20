@@ -4,12 +4,12 @@
 Ticket-Easy is a customer-service agent for e-commerce shops. Customers write in English, Egyptian Arabic, mixed Arabic-English, or Arabizi (Arabic in Latin letters and digits, e.g. "3ayez a3raf el order feen"). For every customer message this service decides exactly one outcome: answer, clarify, verify_identity, confirm, execute, refuse, or handoff, and records why in a DecisionTrace.
 
 ## The journey of one message
-load memory → understand (language, intents, entities, yes/no, wants human, frustration) → risk screen → customer wants a human? → pending confirmation? → **agent** (agent mode: the orchestrator plans and picks one move at a time, code checks each: look up / search policy / propose action / ask / hand over / reply; with no orchestrator model, or off, or after a fallback: missing information? → route by intent kind (knowledge / lookup / action)) → handoff if needed → compose reply in the customer's register → save trace and session.
+load memory → understand (language, intents, entities, yes/no, wants human, frustration) → risk screen → customer wants a human? → pending confirmation? → **agent** (agent mode: the planner plans and picks one move at a time, code checks each: look up / search policy / propose action / ask / hand over / reply; with no planner model, or off, or after a fallback: missing information? → route by intent kind (knowledge / lookup / action)) → handoff if needed → compose reply in the customer's register → save trace and session.
 
 Where the code lives (all under `src/agent_service/`): `turn/` runs a message through these steps; `understanding/` works out language, intent and details; `agent/` is the planner and its checked moves; `knowledge/` answers from the passages found; `actions/` holds identity, look-ups, refunds, cancellations, permissions and approvals; `replies/` writes what the customer reads; `handoff/` hands a case to a person with a briefing; `monitoring/` makes the dashboard numbers, alerts and gaps; `evaluation/` holds the measuring and comparing tools, apart from the service code.
 
 ## Non-negotiable rules
-1. The LLM proposes, code decides. The orchestrator may propose a move from the move menu, including a tool and its arguments; code validates every move and runs the gates of rule 4 before anything happens. The LLM never runs a tool itself, never clears a safety flag and never skips a gate. Identity, ownership, permission, policy check, confirmation and result verification are deterministic code; the LLM may fill structured fields that code validates and may raise safety flags.
+1. The LLM proposes, code decides. The planner may propose a move from the move menu, including a tool and its arguments; code validates every move and runs the gates of rule 4 before anything happens. The LLM never runs a tool itself, never clears a safety flag and never skips a gate. Identity, ownership, permission, policy check, confirmation and result verification are deterministic code; the LLM may fill structured fields that code validates and may raise safety flags.
 2. Never invent. No policy claim without a retrieved passage and its citation. No order fact without a tool result. No "done" without a verified tool result (success + audit id + required output fields + reference id for creates).
 3. Fail closed. If the policy check, risk screen or identity check cannot run, no side effect happens and the case is handed off.
 4. Fixed gate order for actions: required slots → identity verified → facts loaded from a read tool → ownership → permission gate → risk screen completed this turn → policy check_action → customer confirmation (or human approval) → renewed check_action → execution authorized → call tool → verify result.
@@ -18,9 +18,9 @@ Where the code lives (all under `src/agent_service/`): `turn/` runs a message th
 7. Configuration over code: everything shop-specific lives in config/tenants/<tenant>.json, data/lexicon, data/locales and fixtures/<tenant>. Adding a business must not need core code changes.
 8. The core (the parts turn, understanding, agent, knowledge, actions, replies, handoff and monitoring, plus evaluation) imports only agent_service.ports interfaces and agent_service.domain / agent_service.contracts models. Implementations live in agent_service.adapters; container.py wires them from settings.
 
-## Stand-ins
+## Simulated services
 Team A is reachable over HTTP (TEAM_B_MODE=live) and Team C's sandbox tools over MCP (TEAM_B_TEAM_C_CONFIG, TEST-ONLY; see
-../../docs/INTEGRATION.md); without them Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
+../../docs/INTEGRATION.md); without them Team B builds its own simulated services in adapters/simulated, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
 
 ## Layout
 Paths are relative to services/agent/ unless noted. "(planned)" marks anything not created yet; remove it when a prompt creates the item, and add new modules here.
@@ -54,8 +54,8 @@ services/agent/
                  turn/handler.py (handle_turn -> pipeline.run_turn, retries once on a stale session; human methods raise
                  NotImplementedError until the handoff step), turn/pipeline.py (STAGES, run_stage, finish: compose in the customer's
                  locale, validate and store trace + session), turn/context.py (Step, TurnContext, Deps: stages share state through them),
-                 agent/loop.py (run_agent(ctx) -> Step | raises AgentFallback; agent mode "on" = tenant agent_mode else TEAM_B_AGENT_MODE, and only with a MovePicker in Deps (a model for the orchestrator job);
-                 the front stages run first, then ONE "agent" stage replaces disambiguate..queue; the loop asks MovePicker.next_move(view) up to TEAM_B_AGENT_MAX_MOVES (5) times (a plan update counts),
+                 agent/loop.py (run_agent(ctx) -> Step | raises AgentFallback; agent mode "on" = tenant agent_mode else TEAM_B_AGENT_MODE, and only with a Planner in Deps (a model for the planner job);
+                 the front stages run first, then ONE "agent" stage replaces disambiguate..queue; the loop asks Planner.next_move(view) up to TEAM_B_AGENT_MAX_MOVES (5) times (a plan update counts),
                  TEAM_B_AGENT_TURN_TIMEOUT_S (20) for the whole loop; check_move = the code checks per move (on the menu, same look-up/search at most once, arguments size, action intent exists, question
                  template exists, a reply may only answer/clarify/refuse with an allowed template and no facts/citations nobody verified, hand-over needs a valid EscalationReason); a refused move is told
                  back to the picker (view.refused), two in a row, a picker error, a time-out or the move limit = AgentFallback: the saved plan is put back and the usual middle stages run from their start
@@ -71,45 +71,45 @@ services/agent/
                  of the current message are captured as the merge stage does (freetext); then actions.handle() runs UNCHANGED (the whole gate order). CONFIRM / a question / a handoff end the turn
                  (agent_pending = confirmation; the plan step is "waiting"); a refusal by the rules (with alternatives), a done action or action_failed becomes an OUTCOME (ctx.agent_outcomes): the
                  picker is told (JSON refused_by_the_rules + alternatives, or done/failed), delivers it with Reply action_outcome (the rule's and the shop's own words), and any outcome left is shown
-                 in front of the final reply. The yes is handled by the front stage pending_confirmation (the orchestrator never executes); then pipeline.resume_plan_after_confirmation settles the
+                 in front of the final reply. The yes is handled by the front stage pending_confirmation (the planner never executes); then pipeline.resume_plan_after_confirmation settles the
                  waiting step (done / dropped) and, if plan steps are still open, the agent goes on in the same turn with the action's result in front. A fallback restores plan, denied_actions,
                  active_intent and slots and keeps an already answered yes; once the shop was asked to change something (ctx.agent_wrote) a failure ends the turn with the outcome instead of
                  running the message again ("agent stopped early" in trace.errors)
                  writer (replies/writer.py, job writer, TEAM_B_LLM_REWRITE=1, prompts/writer_v1.md: plan_of(step) gives EVERY step a ReplyPlan (decision, intent line, facts = the step's values, must_ask,
-                 citations; Step.plan when the orchestrator chose it); ReplyWriter.write writes the reply freely from the plan + fallback template + customer message + history in the customer's
+                 citations; Step.plan when the planner chose it); ReplyWriter.write writes the reply freely from the plan + fallback template + customer message + history in the customer's
                  language/tone; the gate: check_grounded vs template + plan facts (no new number/date/id/currency/link/time word, none dropped), no colleague promise unless a HANDOFF plan,
                  a plan with must_ask still asks (a CONFIRM keeps its yes/no), not much longer; one retry with the problems named (status retried), then the fixed template (status template);
                  EXECUTE is never written; policy passages are appended after and never shown to the model; trace step 'write' + versions.writer_prompt; used by pipeline.say_step unless the turn's
-                 agent_mode is off (then the old LLMRewriter keeps wording); Reply free_reply = the orchestrator's answer to an off-topic message (no facts, a ReplyPlan with free=True, fallback
+                 agent_mode is off (then the old LLMRewriter keeps wording); Reply free_reply = the planner's answer to an off-topic message (no facts, a ReplyPlan with free=True, fallback
                  template ask_rephrase, also checked by the small-talk rules: no orders/money/policies/promises/colleagues))
                  reviewer (agent/reviewer.py, job reviewer, TEAM_B_LLM_REVIEW=1, prompts/reviewer_v1.md; STRICTER ONLY): review_reply runs after the code gate passed (blocked -> one writer retry with the
                  problems, blocked twice or reviewer down -> fixed template; the knowledge agent's wording is reviewed too; trace step 'review' + versions.reviewer_prompt); review_action is the former policy
                  agent (LLMPolicyGate finds passages, the stricter of reviewer and rule checker wins, uncited allow/deny -> require_human, failure -> POLICY_AGENT_UNAVAILABLE on an allowed write);
                  a HandOver with an empty `tried` is sent back once per turn (blocks_handover). The adversarial suite also runs with an over-eager reviewer ("reviewed")
-                 escalation (agent/escalation.py; FORCED = decided by code with no orchestrator move: safety screen, customer asks for a person, human owns the chat, rules/reviewer require_human,
-                 unverified write, another customer's order (also an order number unknown twice), identity failed, repeated deny -> Step.escalation_kind "forced"; the orchestrator may NOT state FORCED_ONLY
+                 escalation (agent/escalation.py; FORCED = decided by code with no planner move: safety screen, customer asks for a person, human owns the chat, rules/reviewer require_human,
+                 unverified write, another customer's order (also an order number unknown twice), identity failed, repeated deny -> Step.escalation_kind "forced"; the planner may NOT state FORCED_ONLY
                  reasons. CHOSEN = HandOver move, kind "chosen", checked by handover_after_trying with the tenant's escalation limits frustration_attempts=1 / policy_questions=1 /
                  outage_retries=1 / max_clarifications=2: high_frustration needs strikes>1 and a still-high message (agent mode counts strikes and apologises like the usual stage), no_evidence needs
                  no_evidence_count>=2 and a question asked, outage needs tool_failures>retries, low_confidence needs session.agent_questions>=max_clarifications; unsupported/capability_missing/
-                 customer_request always allowed. Two refused moves in a row still fall back to the usual stages. HandoffPackage.tried = the orchestrator's list + the turn's moves + session counts, shown in
+                 customer_request always allowed. Two refused moves in a row still fall back to the usual stages. HandoffPackage.tried = the planner's list + the turn's moves + session counts, shown in
                  the inbox ("Already tried"); trace.escalation_kind; turn_facts gets escalation_kind/agent_mode/agent_moves/agent_fallback (migration 005_agent_facts.sql))
-                 attack tests (tests/adversarial/test_agent_loop_attacks.py): a compromised model (AttackerLLM through the real LLMMovePicker) and the honest picker; judged by the shop audit log, the
+                 attack tests (tests/adversarial/test_agent_loop_attacks.py): a compromised model (AttackerLLM through the real LLMPlanner) and the honest picker; judged by the shop audit log, the
                  replies and the traces. Holes they found and code fixed: ProposeAction needs the customer to have asked for that action (check action_was_asked_for; agent mode now keeps
                  session.intents_seen), the trace clips long texts in a move (_clipped), redact() was quadratic on a long run of letters (email pattern) and on many matches (free()) - fixed
                  agent metrics (docs/metrics.md 15-19; MetricsService.agent_summary; /v1/dashboard/agent; forced/chosen split + automate-next on /v1/dashboard/escalations; turn_facts columns from migrations 005 and 006; alerts agent_fallback_spike and reviewer_block_spike with tenant thresholds agent_fallback_* / reviewer_block_*); conversation timeline: DashboardConversation.timeline (api/dashboard.timeline_of) drawn by dashboard components/AgentTimeline.tsx
-                 replay (replay.py; `python -m agent_service replay <id> --set KEY=VALUE`; POST /v1/dashboard/conversations/{id}/replay is admin-only because it is not in the role table; fresh stand-in shop + memory stores, never saved; dashboard components/ReplayPanel.tsx)
+                 replay (replay.py; `python -m agent_service replay <id> --set KEY=VALUE`; POST /v1/dashboard/conversations/{id}/replay is admin-only because it is not in the role table; fresh simulated shop + memory stores, never saved; dashboard components/ReplayPanel.tsx)
                  egyptian writer (optional, job writer_egyptian: its OWN base_url/model must be set, it never borrows the general model): ReplyWriter(egyptian_llm=) words ar and arabizi replies with
                  Nile-Chat via Ollama, answer read as PLAIN TEXT (llm.complete_text, RoleLLM.complete_text; plain_reply strips fences/quotes/labels); same gate, retry, reviewer and template;
                  versions.writer_model="egyptian"; `eval --llm --writer-compare [--judge]` (writer_compare.py) -> reports/writer_compare_<date>.csv with empty rating_* columns
-                 shadow (turn/shadow.py; agent_mode "shadow" + a move picker: a "shadow" stage after the front stages asks the orchestrator ONCE on a deep copy of the turn (session, lists,
+                 shadow (turn/shadow.py; agent_mode "shadow" + a planner: a "shadow" stage after the front stages asks the planner ONCE on a deep copy of the turn (session, lists,
                  counters), the move is only checked (agent_loop.check_move), never worked; trace.shadow_plan / shadow_move / shadow_error; the plan of the last trace is read back only while the
                  conversation waits for an answer; the real session, replies and shop are untouched, errors and timeouts are noted and ignored; compare(trace) says whether the first move agrees
                  with what the usual flow did (same kind of move and tool) and `eval --agent-mode shadow|on|off` (on/shadow need --llm) adds "Shadow mode" agreement + disagreement rows to the report;
-                 Orchestrator.set_agent(mode, move_picker))
-                 agent/planner.py (LLMMovePicker, job orchestrator, prompts/orchestrator_v1.md: sections customer_message/history/reading/verified/plan/moves_this_turn/tools, tool results in <tool_result>
-                 tags as data, answer {plan, move} = MoveProposal in ONE ask, one repair attempt then the loop falls back; container wires it when llm_for("orchestrator") exists; trace versions
-                 orchestrator_prompt). tests: ScriptedMovePicker / FunctionPicker (tests/fakes.py), tests/integration/agent_expert.py + test_agent_scenarios.py (the lookup/knowledge scenarios again in
-                 agent mode, plus the leak scan), test_agent_safety_property.py (a chaotic orchestrator: nothing gets past the checks) domain/agent.py = the move menu (LookUp, SearchPolicy,
+                 Orchestrator.set_agent(mode, planner))
+                 agent/planner.py (LLMPlanner, job planner, prompts/planner_v1.md: sections customer_message/history/reading/verified/plan/moves_this_turn/tools, tool results in <tool_result>
+                 tags as data, answer {plan, move} = MoveProposal in ONE ask, one repair attempt then the loop falls back; container wires it when llm_for("planner") exists; trace versions
+                 planner_prompt). tests: ScriptedPlanner / FunctionPlanner (tests/fakes.py), tests/integration/agent_expert.py + test_agent_scenarios.py (the lookup/knowledge scenarios again in
+                 agent mode, plus the leak scan), test_agent_safety_property.py (a chaotic planner: nothing gets past the checks) domain/agent.py = the move menu (LookUp, SearchPolicy,
                  ProposeAction, AskCustomer, HandOver, Reply(ReplyPlan)), AgentPlan/PlanStep (saved on session.agent_plan, revision), AgentView, AgentStepRecord/CheckRecord (trace.agent_steps, redacted),
                  trace.agent_mode/agent_plan/fallback_reason; no model = versions.agent "unavailable: no model"; shadow behaves like off until it is built)
                  turn/stages.py (the 12 stage functions + smalltalk/placeholder/handoff handlers; kinds plug in via Deps.handlers),
@@ -137,10 +137,10 @@ services/agent/
                  the passages in the customer's register (Step.text), names the passages it used, check_grounded vs the passages else the verbatim quote; answerable=false -> ask_rephrase/no_evidence;
                  prompts/knowledge_query_v1.md, knowledge_answer_v1.md)
                  knowledge_agent (KnowledgeAgent, job knowledge, TEAM_B_LLM_KNOWLEDGE=1, prompts/knowledge_agent_v1.md = tasks query / requery / answer; research(): write the search (or take the
-                 orchestrator's query), search, if empty or every passage below tenant knowledge.min_score (default 0) write a DIFFERENT search once, then answer from the passages naming those used
+                 planner's query), search, if empty or every passage below tenant knowledge.min_score (default 0) write a DIFFERENT search once, then answer from the passages naming those used
                  or return NotFound(what_was_missing); only retrieved passages can be cited, older versions of a document are dropped (latest_versions), the worded answer must pass check_grounded vs the
                  passages and promise no colleague else the passages are quoted word for word, passages are appended after the reply and never reworded; knowledge.answer uses it in the usual flow
-                 (NotFound = today's ask_rephrase / no_answer_offer / no_evidence sequence), the SearchPolicy move uses it in agent mode (NotFound goes back to the orchestrator: "no policy passage
+                 (NotFound = today's ask_rephrase / no_answer_offer / no_evidence sequence), the SearchPolicy move uses it in agent mode (NotFound goes back to the planner: "no policy passage
                  answers this: <missing>", no_evidence_count; the agent's worded text becomes the policy_answer reply when its citations are all quoted); the old LLMKnowledgeAssistant and its two
                  prompts stay for the old path (Deps.knowledge); AskCustomer disambiguate_intent offers two actions ("return or exchange?"), answered by the usual intent-choice resolver)
                  knowledge (answer: policy search with message + knowledge_query, one normalized retry for mixed/arabizi, 60 s cache per (tenant, query),
@@ -189,7 +189,7 @@ services/agent/
                  thresholds in tenant config "alerts" (domain/tenant.py AlertThresholds, all defaulted); opens ONE alert per (rule, key), resolves when the condition clears;
                  optional TEAM_B_ALERT_WEBHOOK gets opened/resolved JSON; alert_loop is an API lifespan task) · adapters/alert_repository (InMemoryAlertStore, SqliteAlertStore,
                  migration 003_alerts.sql, one open alert per tenant+rule+key) · api/alerts: GET /v1/dashboard/alerts?tenant_id=&status= -> {open_count, alerts}, POST .../{id}/ack
-                 api/testadmin (only with TEAM_B_ENABLE_TEST_ADMIN=1: POST /v1/_test/chaos {plug, seconds} (self-healing), POST /v1/_test/heal, GET /v1/_test/state, GET /v1/_test/report; StandinShop.heal/break_everything)
+                 api/testadmin (only with TEAM_B_ENABLE_TEST_ADMIN=1: POST /v1/_test/chaos {plug, seconds} (self-healing), POST /v1/_test/heal, GET /v1/_test/state, GET /v1/_test/report; SimulatedShop.heal/break_everything)
                  Turn stages: load, handed_off_check, understand, risk_screen, human_request, pending_confirmation, disambiguate, merge,
                  frustration, plan, handler, queue, handoff, finish; each recorded in trace.steps (skipped once decided).
                  retention.py (top level): purge_expired / retention_loop, daily from the API lifespan, TEAM_B_RETENTION_DAYS (90);
@@ -217,22 +217,22 @@ services/agent/
                  package.summary_source ai|template, ai_suggestion labelled 'AI suggestion, not approved'; Deps.llm / Orchestrator(llm=)), redaction (redact: phone/email/card/OTP),
                  transcript (transcript_from_traces)
     adapters/    memory_store (in-memory stores, SystemClock, FixedClock)
-                 standins/ shop (StandinShop: the fake Nile Style shop with audit log, idempotent replay, policy
+                 simulated/ shop (SimulatedShop: the fake Nile Style shop with audit log, idempotent replay, policy
                            safety net and failure switches; shop_backend.py = tool behaviour; json_schema.py)
-                 standins/ policy_search (PolicySearchStandin: keyword + Arabizi-synonym search, text_search.py = the engine;
+                 simulated/ policy_search (SimulatedPolicySearch: keyword + Arabizi-synonym search, text_search.py = the engine;
                            skips superseded passages, empty_reason no_match, fail_next switch)
-                           rule_checker (RuleCheckerStandin, the PolicyGate over fixtures/<tenant>/rules.json: tenant -> identity -> mandatory
+                           rule_checker (SimulatedRuleChecker, the PolicyGate over fixtures/<tenant>/rules.json: tenant -> identity -> mandatory
                            risk -> approved rules (deny > require_human > allow, missing/malformed fact = MISSING_CONTEXT) -> no-rule defaults
                            -> human approval turns require_human into allow, never a deny; facts only from facts, arguments only when
                            "from": "arguments"; days_since_delivery/days_late derived from dates and as_of; fail_next switch;
                            unreadable rules raise UpstreamError)
-                           safety_screen (SafetyScreenStandin.classify_risk: risk.json keywords per category in en/ar/arabizi, normalized whole-word matching, stretched letters collapsed;
+                           safety_screen (SimulatedSafetyScreen.classify_risk: risk.json keywords per category in en/ar/arabizi, normalized whole-word matching, stretched letters collapsed;
                            flagged = a mandatory category matched; fail_next switch; unreadable risk file raises UpstreamError)
                  sqlite_store (SqliteDatabase: one short connection per call, numbered migrations/NNN_*.sql applied on first use;
                            SqliteSessionStore/TraceStore/CaseStore, same behaviour as the memory stores; TEAM_B_STORE=sqlite)
                  llm (OpenAICompatibleLLM: Ollama, OpenRouter, Groq... over /chat/completions, JSON mode, UpstreamError / InvalidLLMOutput; TEAM_B_LLM_API_KEY may hold
                            several comma-separated keys: a 429 tries the next key, then waits (Retry-After, max 6 s) and goes round again, 3 rounds)
-                 llm_registry (LLMRegistry.llm_for(role) -> LLMClient | None, built by the container; Container.llms; jobs = config.ROLES: reader, orchestrator, knowledge, reviewer, writer,
+                 llm_registry (LLMRegistry.llm_for(role) -> LLMClient | None, built by the container; Container.llms; jobs = config.ROLES: reader, planner, knowledge, reviewer, writer,
                  writer_egyptian, summary, judge; wired: LLMNLU=reader, LLMKnowledgeAssistant=knowledge, LLMPolicyGate=reviewer, LLMRewriter+SmallTalkWriter=writer, summarizers and the
                  handoff summary=summary, the eval judge=judge. A job reads TEAM_B_LLM_<SETTING>_<ROLE> and, for what it does not set, the general TEAM_B_LLM_*; with no per-job settings every job
                  is the same client as before. Settings per job (config.RoleSettings / ROLE_ENV_VARS): MODEL, BASE_URL (its own server: it never gets the general key; needs MODEL), API_KEY,
@@ -245,12 +245,12 @@ services/agent/
                  llm_policy_gate (LLMPolicyGate, TEAM_B_LLM_POLICY=1: wraps the PolicyGate; for a write the model reads the retrieved policy passages (prompts/policy_agent_v2.md; v1 kept: v2 asks a person only for a missing fact, an exception a person may grant, or an amount above the chat limit)
                            and picks allow/require_human/deny; the STRICTER of its route and the rule checker's wins, it never loosens; uncited allow/deny -> require_human; model or
                            search failure -> an allowed write becomes require_human POLICY_AGENT_UNAVAILABLE; deny and reads pass through; a human approval still turns its require_human into allow)
-                 team_a_http (HttpEvidenceProvider + HttpPolicyGate: the real Team A, TEAM_B_MODE=live)
-                 team_c_mcp (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
+                 knowledge_client (HttpEvidenceProvider + HttpPolicyGate: the real Team A, TEAM_B_MODE=live)
+                 tools_mcp_client (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
                            McpUnavailable = not sent, McpLost = sent and no answer (outcome unknown), McpRemoteError = JSON-RPC error)
-                 team_c_tools (TeamCCapabilities, the CapabilityClient when TEAM_B_TEAM_C_CONFIG is set (config/team_c.example.json): wraps the
-                           stand-in; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
-                           mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the stand-in; a binding's
+                 tools_catalog (ToolCapabilities, the CapabilityClient when TEAM_B_TEAM_C_CONFIG is set (config/team_c.example.json): wraps the
+                           simulated service; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
+                           mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the simulated service; a binding's
                            `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API) or "production" (a PROMOTED tool, below); two allowed
                            environments published at once = ambiguous (no silent fallback); a result from another environment or claiming production
                            is not trusted; errors carry Team C's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
@@ -259,17 +259,17 @@ services/agent/
                            (audit_id team-c:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
                            rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
                            (registry drops its list). Team C sends no list_changed: re-listed every TEAM_B_CAPABILITY_TTL_S and on refresh)
-                 production (TeamCCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when Team C lists it with
+                 production (ToolCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when Team C lists it with
                            environment production AND production_ready true (a sandbox/live one must say false); production tools are listed and called on a SEPARATE Team C process (`--identity service --context-from-client`,
                            session key PRODUCTION_KEY) that uses the business's service credential; the call carries the VERIFIED customer (ToolCallRequest.acting_customer_id, set by code) as
                            `_meta.ticketeasy.context` and the request's idempotency_key as `_meta.ticketeasy.idempotency_key`, never in arguments; no verified customer = IDENTITY_NOT_MAPPED, nothing sent; a result is
                            trusted only for the same production publication id; a pre-flight rejection is TEAM_C_REJECTED (nothing applied). Production secrets never cross into Team B (the MCP process reads a `file:` or env
                            reference in Team C's own environment); Team B only holds Team C's admin token (config `admin_token_env`) to call its admin routes
-                 (team_c_admin also: promotions(business_id), promote(artifact_id, actor, note, rollback_contact, accept_no_idempotency), rollback(promotion_id, actor, note); api/business_tools: POST .../artifacts/{id}/promote and
+                 (tools_admin_client also: promotions(business_id), promote(artifact_id, actor, note, rollback_contact, accept_no_idempotency), rollback(promotion_id, actor, note); api/business_tools: POST .../artifacts/{id}/promote and
                  POST .../promotions/{id}/rollback are ADMIN-only (not in ROLES) and need a signed-in person (their name is the recorded decision), the artifact / promotion must belong to the tenant's business else 404,
                  Team C's refusal text (which checklist items failed) is returned as 409 PROMOTION_REFUSED; the page shows PRODUCTION badges, a banner count, promotions with checklists, Promote and Roll back (admins))
-                 (team_c_admin also: artifacts(business_id), auto_test(artifact_id), auto_test_run(run_id): Team C's automatic tests, started from the Business tools page, manager only, never publishes)
-                 team_c_admin (TeamCAdmin: Team C's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
+                 (tools_admin_client also: artifacts(business_id), auto_test(artifact_id), auto_test_run(run_id): Team C's automatic tests, started from the Business tools page, manager only, never publishes)
+                 tools_admin_client (ToolsAdminClient: Team C's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
     api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}, POST
                  .../connectors/{id}/check: manager; the publication or connector must belong to the tenant's Team C business else 404;
                  environment per tool and publication (SANDBOX / LIVE DEMO), live_tools, connectors with their last check;
@@ -289,7 +289,7 @@ services/agent/
                        (generated by scripts/export_schemas.py; a test fails if they drift from the models)
   config/tenants/      one JSON file per business: shop_001.json = demo shop "Nile Style" (12 intents)
   data/lexicon/default.json (arabizi_tokens, per-intent keywords x 4 styles, want/question/timing markers, yes/no, filler, human, negation, frustration)  data/locales/
-  prompts/nlu_v1.md, rewrite_v2.md, smalltalk_v1.md, orchestrator_v1.md (gets the customer message + history), policy_agent_v1.md + v2.md (v2 in use), knowledge_*_v1.md   the AI prompts (file name = version recorded on the trace)
+  prompts/nlu_v1.md, rewrite_v2.md, smalltalk_v1.md, planner_v1.md (gets the customer message + history), policy_agent_v1.md + v2.md (v2 in use), knowledge_*_v1.md   the AI prompts (file name = version recorded on the trace)
   fixtures/shop_001/   demo shop data: policies (36 passages, incl. superseded return_policy v1), rules (13, one
                        proposed), risk, synonyms, backend (8 customers, 16 orders), tools (11), tickets (10)
   scenarios/shop_001/  scripted test conversations, one JSON file each (run `make scenarios` to see which are active and which are pending)
@@ -298,17 +298,17 @@ services/agent/
   loadtest/    demo.py (the conversation mix), run.py (50 customers in-process or --url, --chaos PLUG:SECONDS@START, p50/p95 per endpoint and stage, checker verdict),
                checker.py (audit log + traces: no unauthorized/duplicate writes, failures as the table says), check.py, locustfile.py, README.md; make loadtest / make chaos
   scripts/     export_schemas.py, scenario_report.py (table of every scenario + counts; exit 1 if any fails)
-  tests/conftest.py    fixtures: settings, container (stand-ins, memory stores, clock fixed at 2026-09-28),
+  tests/conftest.py    fixtures: settings, container (simulated services, memory stores, clock fixed at 2026-09-28),
                        app, client (async HTTP client with lifespan), tenants_dir
   tests/unit/  contracts/  domain/  adapters/  api/  test_config.py  test_container.py  ...
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
-                   conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_standins.py runs them on the stand-ins
+                   conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_simulated.py runs them on the simulated services
   tests/integration/  test_failure_matrix.py (one case per failure row: safety screen, rule checker, reads, writes, unpublished tools, frustration, out of scope, identity, ownership), scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
                       test_a_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
                       success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-core self-tests),
                       test_a_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
-  tests/fake_team_c_mcp.py  a scripted stand-in for Team C's MCP server (tests/unit/adapters/test_team_c_tools.py, tests/unit/api/test_business_tools.py)
+  tests/fake_tools_mcp.py  a scripted simulated service for Team C's MCP server (tests/unit/adapters/test_tools_catalog.py, tests/unit/api/test_business_tools.py)
   tests/support.py    make_settings(): follows TEAM_B_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial/  prompt injection, fake approvals, amounts, identity and data theft, obfuscated threats, confirmation tricks and floods, hostile AI/shop answers, one conversation per rules.json rule (judged by the shop audit log + reply text)
   ../.github/  workflows ci.yml (lint, tests on memory+sqlite, scenario report, schema drift, dashboard, docker), safety.yml (adversarial + property test, 5 seeds),
@@ -338,7 +338,7 @@ demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment
 what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
 
-container.policy_search is the PolicySearchStandin (switches: fail_next with operation, reset). container.shop is the StandinShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker, safety_screen). container.rule_checker is the RuleCheckerStandin behind container.policy.
+container.policy_search is the SimulatedPolicySearch (switches: fail_next with operation, reset). container.shop is the SimulatedShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker, safety_screen). container.rule_checker is the SimulatedRuleChecker behind container.policy.
 
 Error format of every API error: {"schema_version": "1.0", "error": {"code", "message", "request_id"}}. Codes: INVALID_REQUEST 422, NOT_FOUND / TENANT_NOT_FOUND / TENANT_NOT_LIVE 404 (a business that is only a draft; staff get in with a preview pass), INVALID_STATE 409, UPSTREAM_UNAVAILABLE 503, INTERNAL_ERROR 500. Raise ApiError (api/errors.py) from routes; never put request values or internal details in messages.
 
@@ -366,7 +366,7 @@ The work is one build sequence (the agentic upgrade); there are no separate trac
 careful second look before a change: actions/flow.py, actions/approval.py, domain/actions.py, the two invariants in domain/trace.py,
 agent/loop.py (the checks on every move). The `owner` field of a scenario is kept for history only.
 
-Stubs (signatures are fixed; the orchestrator routes by intent kind through them):
+Stubs (signatures are fixed; the planner routes by intent kind through them):
 - knowledge/answers.py (B): `answer(ctx) -> Step`, `quote_for(ctx, query) -> list[Passage]`. Kind "knowledge".
 - actions/identity.py (A): `ensure_verified(ctx) -> Step | None`.
 - actions/lookup.py (A): `answer(ctx, intent_spec) -> Step`. Kind "lookup".
@@ -382,8 +382,8 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 ## Agentic upgrade: where things are (U0 to U7)
 
 - Modes: `TEAM_B_AGENT_MODE` on|off|shadow (default off, see docs/agent_comparison.md); a shop may set `agent_mode`. Rule 1 holds:
-  the model proposes, code decides; forced handoffs never wait for the orchestrator (agent/escalation.py).
-- Jobs and settings: reader, orchestrator, knowledge, reviewer, writer, writer_egyptian, summary, judge; `TEAM_B_LLM_<SETTING>_<JOB>`
+  the model proposes, code decides; forced handoffs never wait for the planner (agent/escalation.py).
+- Jobs and settings: reader, planner, knowledge, reviewer, writer, writer_egyptian, summary, judge; `TEAM_B_LLM_<SETTING>_<JOB>`
   (MODEL, FALLBACK_MODEL, BASE_URL, API_KEY, RPM, TPM, REASONING_EFFORT) and TEAM_B_LLM_MAX_WAIT_S; switches LLM_REWRITE, LLM_KNOWLEDGE, LLM_REVIEW, LLM_POLICY.
 - Commands: `eval --llm --agent-mode ... --label X [--per-style N --batch N --resume --judge --writer-compare]`, `eval-compare`, `replay`.
 - Docs: docs/agentic_design.md (plain language), docs/agent_comparison.md (numbers), docs/metrics.md 15-19, docs/runbook.md 8-10.
@@ -391,24 +391,24 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 
 ## Fixes from trying the agent by hand (2026-10-11)
 
-- Small talk (a greeting, check-in or thanks and nothing else) is answered in agent mode WITHOUT the orchestrator: `stages.small_talk_only` then `smalltalk_handler` (the small writer, checked; template on any problem); versions.agent = "skipped: small talk". The reviewer reads only the knowledge agent's policy wording (`step.knowledge`).
+- Small talk (a greeting, check-in or thanks and nothing else) is answered in agent mode WITHOUT the planner: `stages.small_talk_only` then `smalltalk_handler` (the small writer, checked; template on any problem); versions.agent = "skipped: small talk". The reviewer reads only the knowledge agent's policy wording (`step.knowledge`).
 - One language per conversation: the reader model's language guess is used only when the rules saw some language in the message (a bare order number or phone keeps the conversation's language).
 - A phone that does not match says so and asks to check both numbers (`identity_failed` in the three locales; PURPOSES tells the writer). Two failures still hand over.
 - "Ignore your rules ..." (understanding/injection.py, English, Arabic, Arabizi): nothing is blocked (the gates never depended on it); the reply starts with the fixed `override_notice` and the message is never treated as small talk. The writer may not say "certainly" to a request that still needs a check.
 - The chat page starts a new conversation on every load or refresh (web/chat/chat.js keeps no id).
 
-## Noon (noon_eg): a second shop on a SQLite stand-in (2026-10-11)
+## Noon (noon_eg): a second shop on a SQLite simulated service (2026-10-11)
 
-- Data: Team A's Noon mock data is copied by `scripts/build_noon_fixtures.py` into `fixtures/noon_eg/` (seed.json = customers, orders, returns; policies/risk/rules/synonyms/tickets.json for the offline stand-ins; tools.json is Team B's). The policy passages are numbered like Team A's index (noon_return_policy@v1#s<n>).
-- Shop: a tenant folder with `seed.json` is a SQLite shop (`adapters/standins/sql_shop.py`, wired in `StandinShop`); data, audit log and idempotency memory are rows, kept in `<db dir>/shops/noon_eg_shop.sqlite3` when the store is sqlite (memory otherwise). Tools: verify_customer, get_order, list_customer_orders, get_return_status, create_return, create_ticket. Nile Style stays on its JSON stand-in.
+- Data: Team A's Noon mock data is copied by `scripts/build_noon_fixtures.py` into `fixtures/noon_eg/` (seed.json = customers, orders, returns; policies/risk/rules/synonyms/tickets.json for the offline simulated services; tools.json is Team B's). The policy passages are numbered like Team A's index (noon_return_policy@v1#s<n>).
+- Shop: a tenant folder with `seed.json` is a SQLite shop (`adapters/simulated/sql_shop.py`, wired in `SimulatedShop`); data, audit log and idempotency memory are rows, kept in `<db dir>/shops/noon_eg_shop.sqlite3` when the store is sqlite (memory otherwise). Tools: verify_customer, get_order, list_customer_orders, get_return_status, create_return, create_ticket. Nile Style stays on its JSON simulated service.
 - Tenant config `config/tenants/noon_eg.json` (order ids ORD-#####). Team A needs `python -m knowledge_service ingest --tenant noon_eg` for the real search.
 - NO approved Noon rules exist in Team A (data/rules has shop_001 only): every Noon change goes to a person (scenario N06). tests/integration/test_noon_write_path.py shows the write path with one temporary rule.
-- Refund tracking: intent `refund_status` (kind lookup, tool get_return_status; the lexicon entry exists in data/lexicon/default.json but only a tenant that lists the intent gets it, so Nile Style's numbers did not move: eval rules baseline identical). lookup._return_reply builds the answer from the returns table only (templates return_status_<status>, return_none, refund_to_<destination> in data/locales/*/returns.json); in agent mode the orchestrator LooksUp get_return_status and replies with reply_key order_status (code picks the return text because session.facts holds `returns`).
+- Refund tracking: intent `refund_status` (kind lookup, tool get_return_status; the lexicon entry exists in data/lexicon/default.json but only a tenant that lists the intent gets it, so Nile Style's numbers did not move: eval rules baseline identical). lookup._return_reply builds the answer from the returns table only (templates return_status_<status>, return_none, refund_to_<destination> in data/locales/*/returns.json); in agent mode the planner LooksUp get_return_status and replies with reply_key order_status (code picks the return text because session.facts holds `returns`).
 
 ## Tenant bundles, tool setup, knowledge pages and the onboarding wizard (master plan P2 to P5)
 
 - `domain/bundle.py` TenantBundle: a versioned, hash-checked description of a business (embeds the old TenantConfig; profile, knowledge, guardrails, tools with bindings, identities). Secrets never belong in it (a validator refuses secret-like field names). Schema: `contracts/schemas/TenantBundle.schema.json` (`make schemas`). Stores: `adapters/bundle_repository.py` (memory + sqlite, migration 007). Status goes draft -> published -> active -> retired; content never changes.
-- `bundles.py` BundleRegistry = the TenantRegistry the core reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`TEAM_B_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the Team C tools on a change (`TeamCCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m agent_service bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
-- Tool setup (`api/tool_setup.py`, `tool_setup.py`, `adapters/team_c_admin.py`): `/v1/dashboard/tool-setup` import a spec, operations by class, connection check, batches (prepare / approve with the four effect flags / publish into a DRAFT bundle / activate). The Team C business is found by name `ticket-easy:<tenant>` or created on the first import.
-- Knowledge pages (`api/knowledge.py`, `adapters/team_a_admin.py`, `adapters/standins/knowledge_admin.py`, port `KnowledgeAdmin`): `/v1/dashboard/knowledge/*` and `/guardrails/*`. The reviewer recorded in Team A is the signed-in person. Team A is called with `X-Service-Key` (`TEAM_B_TEAM_A_KEY`) and, for these pages, `X-Admin-Key` (`TEAM_B_TEAM_A_ADMIN_KEY`).
+- `bundles.py` BundleRegistry = the TenantRegistry the core reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`TEAM_B_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the Team C tools on a change (`ToolCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m agent_service bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
+- Tool setup (`api/tool_setup.py`, `tool_setup.py`, `adapters/tools_admin_client.py`): `/v1/dashboard/tool-setup` import a spec, operations by class, connection check, batches (prepare / approve with the four effect flags / publish into a DRAFT bundle / activate). The Team C business is found by name `ticket-easy:<tenant>` or created on the first import.
+- Knowledge pages (`api/knowledge.py`, `adapters/knowledge_admin_client.py`, `adapters/simulated/knowledge_admin.py`, port `KnowledgeAdmin`): `/v1/dashboard/knowledge/*` and `/guardrails/*`. The reviewer recorded in Team A is the signed-in person. Team A is called with `X-Service-Key` (`TEAM_B_TEAM_A_KEY`) and, for these pages, `X-Admin-Key` (`TEAM_B_TEAM_A_ADMIN_KEY`).
 - Onboarding (`api/onboarding.py`, `onboarding.py`, `domain/onboarding.py`, `adapters/onboarding_repository.py`, migration 008, `preview.py`): `/v1/onboarding` creates a draft business (profile + draft bundle), `.../review` lists what blocks Go live, `.../preview` issues a signed pass for the test chat (`/chat?tenant_id=&preview=`), `.../go-live` generates the final config (an intent per published tool, agent mode on), publishes and activates. The public chat answers TENANT_NOT_LIVE until then. Admin only.

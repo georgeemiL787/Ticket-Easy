@@ -1,18 +1,18 @@
-"""Escalation in agent mode: what code forces at once, and what the orchestrator may choose only after trying.
+"""Escalation in agent mode: what code forces at once, and what the planner may choose only after trying.
 
 SAFETY-CRITICAL. A handoff is always safe for the customer, so the point of these rules is the other direction: a
 person's time is not spent on a case the agent could still solve, and a briefing never states a fact that code did not
 establish.
 
-FORCED (the reason is decided by code; the orchestrator is never asked, and it may not choose these reasons itself):
+FORCED (the reason is decided by code; the planner is never asked, and it may not choose these reasons itself):
   a flagged safety screen (mandatory_risk), the customer asks for a person (customer_request), a human already owns
   the chat, require_human from the rules or the reviewer (approval_required), an unverified write
   (unverified_result), another customer's order (ownership_mismatch, also an order number the shop does not know twice
   in a row), identity failed after the maximum attempts (identity_failed), a repeated policy deny (policy_denied).
   They are made by the front stages and the gates of agent/proposals.py and agent/reads.py, with no move of
-  the orchestrator in between. Their steps carry escalation_kind "forced".
+  the planner in between. Their steps carry escalation_kind "forced".
 
-CHOSEN (HandOver move, escalation_kind "chosen"): the orchestrator hands over by itself, but code checks that the agent
+CHOSEN (HandOver move, escalation_kind "chosen"): the planner hands over by itself, but code checks that the agent
 really tried first, with the limits in the tenant's escalation settings:
   high_frustration       the customer is still very frustrated after frustration_attempts attempt(s) to solve it
                          (the first very frustrated message gets an apology and the request goes on);
@@ -24,7 +24,7 @@ really tried first, with the limits in the tenant's escalation settings:
 Reasons a person must judge anyway (unsupported, capability_missing, customer_request phrased in a way the word lists
 missed) are always allowed: handing over early is the safe direction.
 
-The list of what was tried goes with the case: what the orchestrator said it tried, plus what the trace shows
+The list of what was tried goes with the case: what the planner said it tried, plus what the trace shows
 (its moves and their outcomes, the questions asked, the failures counted), in plain words.
 """
 
@@ -34,7 +34,7 @@ from agent_service.handoff.redaction import redact
 from agent_service.turn.context import Step, TurnContext
 
 R = EscalationReason
-# reasons only code can establish: the orchestrator may not state them
+# reasons only code can establish: the planner may not state them
 FORCED_ONLY = frozenset(
     {
         R.MANDATORY_RISK,
@@ -45,7 +45,7 @@ FORCED_ONLY = frozenset(
         R.UNVERIFIED_RESULT,
     }
 )
-# reasons the orchestrator may choose only after trying (see the module text)
+# reasons the planner may choose only after trying (see the module text)
 TRIED_FIRST = frozenset(
     {R.HIGH_FRUSTRATION, R.NO_EVIDENCE, R.DEPENDENCY_UNAVAILABLE, R.REPEATED_TOOL_FAILURE, R.LOW_CONFIDENCE}
 )
@@ -56,7 +56,7 @@ DEPENDENCY_ERRORS = ("policy search", "the shop tool list", "order list", "safet
 
 def note_turn_start(ctx: TurnContext) -> None:
     """Count a very frustrated message as the usual stages do: the first gets an apology and the request goes on, a
-    second in a row can be handed over (by the orchestrator, after this attempt). Any other message resets the count."""
+    second in a row can be handed over (by the planner, after this attempt). Any other message resets the count."""
     session = ctx.session
     level = ctx.understanding.frustration if ctx.understanding else "low"
     if level != "high":
@@ -83,7 +83,7 @@ def _outage_attempts(ctx: TurnContext) -> int:
 
 
 def handover_problem(ctx: TurnContext, move: HandOver) -> str | None:
-    """Why the orchestrator may not hand over yet (said back to it), or None when it may."""
+    """Why the planner may not hand over yet (said back to it), or None when it may."""
     session, cfg = ctx.session, ctx.tenant.escalation
     reason = move.reason
     if reason in FORCED_ONLY:
@@ -125,8 +125,8 @@ def _move_words(record: AgentStepRecord) -> str | None:
 
 
 def tried_in_words(ctx: TurnContext, step: Step) -> tuple[str, ...]:
-    """What was tried before this handoff, in plain words: the orchestrator's own list, the moves of this turn and
-    the counts the session holds. Only the orchestrator's own list comes from a model (and is redacted)."""
+    """What was tried before this handoff, in plain words: the planner's own list, the moves of this turn and
+    the counts the session holds. Only the planner's own list comes from a model (and is redacted)."""
     session = ctx.session
     items: list[str] = list(step.tried)
     items += [w for w in (_move_words(r) for r in ctx.agent_steps) if w]

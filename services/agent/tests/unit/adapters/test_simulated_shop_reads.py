@@ -5,15 +5,15 @@ from typing import Any
 
 import pytest
 
-from agent_service.adapters.standins.json_schema import validate
-from agent_service.adapters.standins.shop import StandinShop
+from agent_service.adapters.simulated.json_schema import validate
+from agent_service.adapters.simulated.shop import SimulatedShop
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.tools import ToolResult
 
 Call = Callable[..., Awaitable[ToolResult]]
 
 
-async def test_list_tools_returns_the_eleven_published_tools(shop: StandinShop) -> None:
+async def test_list_tools_returns_the_eleven_published_tools(shop: SimulatedShop) -> None:
     tools = await shop.list_tools("shop_001")
     assert [t.name for t in tools][:3] == ["verify_customer", "get_order", "list_customer_orders"]
     assert len(tools) == 11 and next(t for t in tools if t.name == "delete_customer").human_only
@@ -21,7 +21,7 @@ async def test_list_tools_returns_the_eleven_published_tools(shop: StandinShop) 
     assert "junk" not in (await shop.list_tools("shop_001"))[0].input_schema
 
 
-async def test_unknown_tenant_is_an_upstream_error(shop: StandinShop) -> None:
+async def test_unknown_tenant_is_an_upstream_error(shop: SimulatedShop) -> None:
     with pytest.raises(UpstreamError) as info:
         await shop.list_tools("nope_001")
     assert info.value.code == "TENANT_NOT_FOUND" and info.value.retryable is False
@@ -73,7 +73,7 @@ async def test_list_customer_orders_is_ordered_by_date(call: Call) -> None:
     assert (await call("list_customer_orders", {"customer_id": "C-999"})).error_code == "NOT_FOUND"
 
 
-async def test_reads_do_not_need_a_policy_id_and_change_nothing(call: Call, shop: StandinShop) -> None:
+async def test_reads_do_not_need_a_policy_id_and_change_nothing(call: Call, shop: SimulatedShop) -> None:
     result = await call("get_order", {"order_id": "NS-20877"}, policy=None)
     assert result.status == "success" and shop.change_count("shop_001") == 0
 
@@ -87,7 +87,7 @@ async def test_reads_do_not_need_a_policy_id_and_change_nothing(call: Call, shop
     ],
 )
 async def test_read_results_fit_their_output_schema(
-    shop: StandinShop, call: Call, tool: str, arguments: dict[str, Any]
+    shop: SimulatedShop, call: Call, tool: str, arguments: dict[str, Any]
 ) -> None:
     spec = next(t for t in await shop.list_tools("shop_001") if t.name == tool)
     result = await call(tool, arguments)

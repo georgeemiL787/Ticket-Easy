@@ -1,4 +1,4 @@
-"""ProposeAction: the orchestrator picks WHICH action and WITH WHICH details; the gate order of actions.py decides.
+"""ProposeAction: the planner picks WHICH action and WITH WHICH details; the gate order of actions.py decides.
 
 (SAFETY-CRITICAL, needs a second reviewer.) The move changes nothing by itself. Code maps the intent to the tenant's
 IntentSpec (an action intent or the move is refused), fills the request's details, and then calls actions.handle()
@@ -15,7 +15,7 @@ customer states in the current message is picked up the way the usual merge stag
 What comes back from the usual flow decides what the loop does:
   CONFIRM (waiting for the customer's yes), a question for a missing detail, or a handoff  -> the turn ends with it;
   a refusal by the rules (with the alternatives the shop lists), or a done / failed action -> an OUTCOME: its text is
-  kept for the customer and the orchestrator is told what happened, so it can go on with the rest of its plan
+  kept for the customer and the planner is told what happened, so it can go on with the rest of its plan
   or deliver it (Reply with reply_key "action_outcome"). An outcome left when the turn ends is shown before the reply.
 """
 

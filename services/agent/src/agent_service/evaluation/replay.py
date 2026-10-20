@@ -1,10 +1,10 @@
 """Replay: run a past conversation again with other settings and look at the two runs side by side.
 
-The customer's messages of a stored conversation are said again, in order, to a FRESH copy of the service: the stand-in
-shop, the stand-in policy search, rules and safety screen, and memory stores that nobody else sees. Nothing here can
+The customer's messages of a stored conversation are said again, in order, to a FRESH copy of the service: the simulated
+shop, the simulated policy search, rules and safety screen, and memory stores that nobody else sees. Nothing here can
 reach the real shop or the real stores, and a replay is never saved as a conversation. The conversation is played twice:
 "before" with the settings as they are, "after" with the changes (--set KEY=VALUE, the same names as the environment:
-TEAM_B_LLM_MODEL_ORCHESTRATOR, TEAM_B_AGENT_MODE, TEAM_B_LLM_REWRITE, ...). reports/replay_<id>_<date>.md shows each
+TEAM_B_LLM_MODEL_PLANNER, TEAM_B_AGENT_MODE, TEAM_B_LLM_REWRITE, ...). reports/replay_<id>_<date>.md shows each
 message with both runs' reply, decision and moves, and marks where they differ.
 
 The messages come from the stored session (the words as the customer wrote them); when the session is gone (retention)
@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.domain.agent import AgentStepRecord
-from agent_service.ports import MovePicker
+from agent_service.ports import Planner
 
 MAX_TURNS = 40
 TENANT_DEFAULT_TODAY = date(2026, 9, 28)  # the demo shop's orders are dated against this day
@@ -48,7 +48,7 @@ class ReplayTurn(BaseModel):
 class ReplayRun(BaseModel):
     label: str
     turns: list[ReplayTurn]
-    writes: int  # changes the (stand-in) shop saw in this run
+    writes: int  # changes the (simulated service) shop saw in this run
 
 
 class ReplayResult(BaseModel):
@@ -111,10 +111,10 @@ async def play(
     messages: list[str],
     label: str,
     *,
-    move_picker: MovePicker | None = None,
+    planner: Planner | None = None,
     today: date | None = None,
 ) -> ReplayRun:
-    """The messages said to a fresh service built from `settings` (stand-in shop, memory stores)."""
+    """The messages said to a fresh service built from `settings` (simulated shop, memory stores)."""
     fresh = settings.model_copy(
         update={
             "mode": "standin",
@@ -124,8 +124,8 @@ async def play(
     )
     container = build_container(fresh)
     assert container.orchestrator is not None and container.shop is not None
-    if move_picker is not None:
-        container.orchestrator.set_agent(mode="on", move_picker=move_picker)
+    if planner is not None:
+        container.orchestrator.set_agent(mode="on", planner=planner)
     chat = f"replay-{label}"
     turns: list[ReplayTurn] = []
     for said in messages[:MAX_TURNS]:
@@ -158,8 +158,8 @@ def differs(a: ReplayTurn, b: ReplayTurn) -> bool:
 class Pickers:
     """Move pickers for the two runs (tests give scripted ones; None: whatever the settings build)."""
 
-    before: MovePicker | None = None
-    after: MovePicker | None = None
+    before: Planner | None = None
+    after: Planner | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -178,10 +178,8 @@ async def replay(
     if not messages:
         raise LookupError(f"conversation {conversation_id} has no customer messages")
     chosen = pickers or Pickers()
-    before = await play(base, tenant_id, messages, "before", move_picker=chosen.before, today=today)
-    after = await play(
-        apply_changes(base, changes), tenant_id, messages, "after", move_picker=chosen.after, today=today
-    )
+    before = await play(base, tenant_id, messages, "before", planner=chosen.before, today=today)
+    after = await play(apply_changes(base, changes), tenant_id, messages, "after", planner=chosen.after, today=today)
     differing = [i for i, (a, b) in enumerate(zip(before.turns, after.turns, strict=True), start=1) if differs(a, b)]
     return ReplayResult(
         conversation_id=conversation_id,
@@ -213,7 +211,7 @@ def render(result: ReplayResult, when: date) -> str:
         f"- changes for the second run: {', '.join(f'{k}={v}' for k, v in result.changes.items()) or 'none'}",
         f"- messages that differ: {', '.join(map(str, result.differing_turns)) or 'none'}"
         f" (of {len(result.before.turns)})",
-        f"- changes made in the stand-in shop: before {result.before.writes}, after {result.after.writes}",
+        f"- changes made in the simulated shop: before {result.before.writes}, after {result.after.writes}",
         "",
         "| # | the customer said | before | after | |",
         "|---|---|---|---|---|",

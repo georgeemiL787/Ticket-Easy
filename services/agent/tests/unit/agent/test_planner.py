@@ -1,10 +1,10 @@
-"""The orchestrator's model call: what it is shown (redacted), how its JSON answer is read, the repair, the prompt."""
+"""The planner's model call: what it is shown (redacted), how its JSON answer is read, the repair, the prompt."""
 
 from typing import Any
 
 import pytest
 
-from agent_service.agent.planner import PROMPT, LLMMovePicker, UnusableAnswer, parse_answer
+from agent_service.agent.planner import PROMPT, LLMPlanner, UnusableAnswer, parse_answer
 from agent_service.container import Container
 from agent_service.domain.agent import (
     AgentStepRecord,
@@ -71,7 +71,7 @@ def test_an_answer_that_is_not_a_plan_and_a_move_of_the_menu_is_not_usable(answe
 
 async def test_an_unusable_answer_is_asked_for_again_once_with_the_problem_named() -> None:
     llm = FakeLLM({"move": {"kind": "teleport"}}, GOOD)
-    proposal = await LLMMovePicker(llm).next_move(view())
+    proposal = await LLMPlanner(llm).next_move(view())
     assert isinstance(proposal.move, Reply) and len(llm.calls) == 2
     assert "not usable" in llm.calls[1]["user"] and "Answer again" in llm.calls[1]["user"]
 
@@ -79,7 +79,7 @@ async def test_an_unusable_answer_is_asked_for_again_once_with_the_problem_named
 async def test_two_unusable_answers_end_in_an_error_so_the_loop_falls_back() -> None:
     llm = FakeLLM({"move": {"kind": "teleport"}}, {"nope": 1})
     with pytest.raises(UnusableAnswer):
-        await LLMMovePicker(llm).next_move(view())
+        await LLMPlanner(llm).next_move(view())
     assert len(llm.calls) == 2
 
 
@@ -87,7 +87,7 @@ async def test_a_model_error_is_not_swallowed() -> None:
     from agent_service.contracts.errors import UpstreamError
 
     with pytest.raises(UpstreamError):
-        await LLMMovePicker(FakeLLM(UpstreamError("llm", "TIMEOUT", "slow"))).next_move(view())
+        await LLMPlanner(FakeLLM(UpstreamError("llm", "TIMEOUT", "slow"))).next_move(view())
 
 
 # ---- what the model is shown ----
@@ -118,7 +118,7 @@ async def test_the_model_sees_the_sections_with_tool_results_as_marked_data() ->
         refused="create_refund changes something",
     )
     llm = FakeLLM(GOOD)
-    await LLMMovePicker(llm).next_move(v)
+    await LLMPlanner(llm).next_move(v)
     user = llm.calls[0]["user"]
     for section in ("customer_message", "history", "reading", "verified", "plan", "moves_this_turn", "tools"):
         assert f"<{section}>" in user and f"</{section}>" in user
@@ -129,7 +129,7 @@ async def test_the_model_sees_the_sections_with_tool_results_as_marked_data() ->
 
 def test_the_prompt_has_the_rules_the_menu_and_eight_worked_examples() -> None:
     prompt = PromptTemplate.load(PROMPT)
-    assert prompt.version == "orchestrator_v1"
+    assert prompt.version == "planner_v1"
     for must in (
         "Never invent an order number",
         "Prefer solving over handing over",
@@ -149,7 +149,7 @@ def test_the_prompt_has_the_rules_the_menu_and_eight_worked_examples() -> None:
 
 
 async def test_the_whole_thing_end_to_end_with_a_scripted_model(c: Container) -> None:
-    """LLMMovePicker inside the real loop: the model's JSON becomes a plan and moves, code checks and runs them."""
+    """LLMPlanner inside the real loop: the model's JSON becomes a plan and moves, code checks and runs them."""
     llm = FakeLLM(
         {
             "plan": [{"text": "look up NS-20877", "status": "open"}],
@@ -162,12 +162,12 @@ async def test_the_whole_thing_end_to_end_with_a_scripted_model(c: Container) ->
     )
     bot = Orchestrator(
         clock=c.clock, tenants=c.tenants, sessions=c.sessions, traces=c.traces, cases=c.cases, evidence=c.evidence,
-        capabilities=c.capabilities, policy=c.policy, move_picker=LLMMovePicker(llm),
+        capabilities=c.capabilities, policy=c.policy, planner=LLMPlanner(llm),
     )  # fmt: skip
     reply = await bot.handle_turn("shop_001", "conv-llm", "Where is my order NS-20877? My phone is 01012345601")
     trace = (await c.traces.for_conversation("shop_001", "conv-llm"))[-1]
     assert reply.decision is Decision.ANSWER and "on its way" in reply.text and len(llm.calls) == 2
-    assert trace.versions["orchestrator_prompt"] == "orchestrator_v1"
+    assert trace.versions["planner_prompt"] == "planner_v1"
     assert "01012345601" not in llm.calls[0]["user"] and "01012345601" not in llm.calls[1]["user"]
     assert trace.agent_plan is not None and trace.agent_plan.revision == 2
     assert isinstance(parse_answer({"move": {"kind": "search_policy", "query": "x"}}).move, SearchPolicy)

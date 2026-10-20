@@ -19,3 +19,6 @@ b394efb174ee7982fee0b03cec4762143d9d4050
 
 # Rename every setting to its service prefix
 35cae2ab0809b4009d32fcc8f280e5d3606f95f4
+
+# Rename saved values, the admin header, the MCP server name and the tool connection file
+7016be84ae792eaf62deaaaf271ffe12ab587e5e

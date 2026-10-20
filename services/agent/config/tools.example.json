@@ -18,14 +18,14 @@
   "call_timeout_s": 30,
   "tenants": {
     "shop_001": {
-      "business_id": "<the Team C business id>",
+      "business_id": "<the the tools service business id>",
       "identities": {
         "C-100": "alice",
         "C-101": "bob"
       },
       "tools": {
         "get_order": {
-          "proposal_id": "<the Team C proposal id of the order-lookup tool>",
+          "proposal_id": "<the the tools service proposal id of the order-lookup tool>",
           "fields": {
             "order_status": "/order_details/order_status",
             "customer_id": "/order_details/customer_id"
@@ -35,7 +35,7 @@
           ]
         },
         "create_ticket": {
-          "proposal_id": "<the Team C proposal id of the ticket tool>",
+          "proposal_id": "<the the tools service proposal id of the ticket tool>",
           "fields": {
             "reference_id": "Ticket ID",
             "status": "Ticket Status"

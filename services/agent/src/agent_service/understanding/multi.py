@@ -1,6 +1,5 @@
 """Several requests in one message, each about its own order: "where is NS-20955, change its address, refund NS-20701".
 
-OWNER: Track A.
 
 The understanding step lists the intents in the order they were said and the order numbers found. When the message holds
 more than one order number, this module decides which request each number belongs to, by position: a number belongs to

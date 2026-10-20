@@ -57,7 +57,7 @@ function DisableForm({ tenant, publication, onDone }: { tenant: string; publicat
   );
 }
 
-/** SANDBOX, LIVE DEMO or PRODUCTION, exactly as Team C reports the environment. */
+/** SANDBOX, LIVE DEMO or PRODUCTION, exactly as the tools service reports the environment. */
 function EnvBadge({ environment }: { environment: string | null | undefined }) {
   const { t } = useI18n();
   if (environment === "production") return <span className="badge env-production">{t("bt.env.production")}</span>;
@@ -66,7 +66,7 @@ function EnvBadge({ environment }: { environment: string | null | undefined }) {
   return null;
 }
 
-/** One Team C connector: its environment, host, the steps of its last real check, and a button to check it again. */
+/** One the tools service connector: its environment, host, the steps of its last real check, and a button to check it again. */
 function ConnectorCard({ tenant, connector, onDone }: { tenant: string; connector: ToolConnector; onDone: () => void }) {
   const { t, lang } = useI18n();
   const [busy, setBusy] = useState(false);
@@ -131,7 +131,7 @@ function useIsAdmin(): boolean {
   return Boolean(auth?.me.auth_required && auth.me.user?.role === "admin");
 }
 
-/** Promote a tested tool to production: a note, a rollback contact and (for writes) the idempotency acceptance. Team C may refuse; its words are shown. */
+/** Promote a tested tool to production: a note, a rollback contact and (for writes) the idempotency acceptance. The tools service may refuse; its words are shown. */
 function Promote({ tenant, proposal, reload }: { tenant: string; proposal: ToolProposal; reload: () => void }) {
   const { t } = useI18n();
   const [note, setNote] = useState("");
@@ -244,7 +244,7 @@ function PromotionCard({ tenant, promotion, admin, reload }: { tenant: string; p
 
 const READY_BADGE: Record<string, string> = { ready_to_publish: "ok", published: "ok", needs_owner: "problem", testing: "decision-handoff" };
 
-/** The state of a built tool and the button that starts Team C's automatic tests; polls while a run is going. */
+/** The state of a built tool and the button that starts the tools service's automatic tests; polls while a run is going. */
 function AutoTest({ tenant, proposal, reload }: { tenant: string; proposal: ToolProposal; reload: () => void }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);

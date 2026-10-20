@@ -5,7 +5,7 @@ A normal process is bound at startup to one test business and one test identity 
 configuration; tool arguments cannot choose a user or credential. A PRODUCTION process is started with --context-from-client:
 it lists and runs only production tools, uses the business's service credential, and takes the verified customer's trusted
 context (and an idempotency key) from the request's `_meta.ticketeasy`, never from arguments. TRUST BOUNDARY: that is safe only
-because this stdio process is spawned by the calling server (Team B) and nobody else can write to its input; any network
+because this stdio process is spawned by the calling server (the agent) and nobody else can write to its input; any network
 transport would need mutual authentication first. A process without the flag ignores `_meta.ticketeasy` completely.
 Protocol messages use stdout; logs go to stderr (never the context, only its hash is recorded by the tools service).
 

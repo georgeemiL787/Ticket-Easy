@@ -55,16 +55,16 @@ def main() -> int:
     page = http.post("/v1/dashboard/business-tools/refresh", params={"tenant_id": T}, headers=headers).json()
     tools = {t["name"]: t for t in page["tools"]}
     for name in ("get_order", "create_ticket"):
-        check(f"{name} is served by Team C as LIVE DEMO against {DEMO_SHOP.split('//')[1]}",
+        check(f"{name} is served by the tools service as LIVE DEMO against {DEMO_SHOP.split('//')[1]}",
               tools[name]["environment"] == "live_demo" and tools[name]["api_host"] == "127.0.0.1:8103" and tools[name]["status"] == "available", tools[name])  # fmt: skip
     check("the page counts the live tools and no longer says sandbox-only", page["live_tools"] == 2 and page["sandbox_only"] is False, page["live_tools"])
     live_pubs = [p for p in page["publications"] if p["environment"] == "live_demo" and p["status"] == "published"]
     check("its Live Demo publications are executable and never production-ready",
           len(live_pubs) >= 2 and all(p["execution_enabled"] and not p["production_ready"] for p in live_pubs), live_pubs)  # fmt: skip
 
-    print("\n== Team A + Team B still answer on their own")
+    print("\n== the knowledge service + the agent still answer on their own")
     reply = Chat(http).say("What is your return policy?")
-    check("a policy question is answered from Team A's passages", reply["decision"] == "answer" and bool(reply["citations"]), reply)
+    check("a policy question is answered from the knowledge service's passages", reply["decision"] == "answer" and bool(reply["citations"]), reply)
 
     print("\n== A read through the Live Demo tool, from the chat")
     sandbox_before = len(mcp_executions(tools_http, sandbox_order["artifact_id"]))
@@ -74,7 +74,7 @@ def main() -> int:
     reply = alice.say("01012345601")
     check("the order status comes back through the Live Demo tool", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
     runs = live_runs(tools_http, order["artifact_id"])
-    check("Team C recorded an mcp_live_demo execution as alice, and it succeeded",
+    check("The tools service recorded an mcp_live_demo execution as alice, and it succeeded",
           len(runs) == before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded", runs[before:])  # fmt: skip
     check("nothing was sent to the sandbox tool (no silent fallback)", len(mcp_executions(tools_http, sandbox_order["artifact_id"])) == sandbox_before)
 
@@ -99,13 +99,13 @@ def main() -> int:
     chat.say("01012345601")
     reply = chat.say("yes")
     runs = live_runs(tools_http, ticket["artifact_id"])
-    check("Team C classifies it outcome_unknown", len(runs) == runs_before + 1 and runs[-1]["status"] == "outcome_unknown", runs[runs_before:])
+    check("The tools service classifies it outcome_unknown", len(runs) == runs_before + 1 and runs[-1]["status"] == "outcome_unknown", runs[runs_before:])
     check("the write happened once at the API and was not repeated", len(shop_state()["tickets"]) == live_before + 1)
     reasons = [t.get("escalation_reason") for t in traces(http, chat.id)]
     check("the customer is handed over as unverified_result", reply["decision"] == "handoff" and "unverified_result" in reasons, (reply, reasons))
     shop_switch(fail_next_ticket_after_commit=False)
 
-    print("\n== The connection check, through Team B")
+    print("\n== The connection check, through the agent")
     connector = order["connector_id"]
     r = http.post(f"/v1/dashboard/business-tools/connectors/{connector}/check", params={"tenant_id": T}, headers=headers)
     card = next((c for c in r.json().get("connectors", []) if c["id"] == connector), {}) if r.status_code == 200 else {}
@@ -117,15 +117,15 @@ def main() -> int:
     print("\n== Disabling the Live Demo tool stops the next call")
     r = http.post(f"/v1/dashboard/business-tools/publications/{order['publication_id']}/disable", params={"tenant_id": T},
                   json={"note": "Live Demo e2e: check the next call is refused"}, headers=headers)  # fmt: skip
-    check("a manager disables it through Team B and it is listed as missing", r.status_code == 200
+    check("a manager disables it through the agent and it is listed as missing", r.status_code == 200
           and {t["name"]: t["status"] for t in r.json()["tools"]}["get_order"] == "missing", r.text[:200])  # fmt: skip
     old = asyncio.run(call_old_name(binding, tenant, order["tool_name"]))
-    check("a client holding the old tool name is refused by Team C", old == {"rpc_error": -32602, "data": {"code": "tool_not_published"}}, old)
+    check("a client holding the old tool name is refused by the tools service", old == {"rpc_error": -32602, "data": {"code": "tool_not_published"}}, old)
     count = len(live_runs(tools_http, order["artifact_id"]))
     late = Chat(http)
     late.say("Where is my order NS-20877?")
     reply = late.say("01012345601")
-    check("the assistant hands over honestly and Team C runs nothing", reply["decision"] == "handoff" and len(live_runs(tools_http, order["artifact_id"])) == count, reply)
+    check("the assistant hands over honestly and the tools service runs nothing", reply["decision"] == "handoff" and len(live_runs(tools_http, order["artifact_id"])) == count, reply)
     r = tools_http.post(f"/api/v1/artifacts/{order['artifact_id']}/publications", json={"note": "Live Demo e2e: republished", "environment": "live_demo"})
     if r.status_code == 200:
         order["publication_id"] = r.json()["id"]
@@ -147,7 +147,7 @@ def main() -> int:
         reply = chat.say("01012345601")
         runs = live_runs(tools_http, order["artifact_id"])
         calls = [c for t in traces(http, chat.id) for c in t.get("tool_calls", []) if c["tool"] == "get_order"]
-        check("the API refused the revoked credential and Team C reports it as failed (never succeeded)",
+        check("the API refused the revoked credential and the tools service reports it as failed (never succeeded)",
               len(runs) > before and all(r["status"] == "failed" for r in runs[before:]), [r["status"] for r in runs[before:]])  # fmt: skip
         check("the customer gets no order data, and the trace keeps the failure",
               reply["decision"] != "answer" and "on its way" not in reply["text"] and bool(calls) and calls[-1]["error_code"] == "TOOLS_FAILED", (reply, calls[-1:]))  # fmt: skip

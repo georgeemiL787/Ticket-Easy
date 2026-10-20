@@ -116,16 +116,23 @@ class KnowledgeAdminClient:
                     method, self._base + path, json=body, params=params, headers=self._headers
                 )
         except httpx.TimeoutException:
-            raise UpstreamError(SERVICE, "TIMEOUT", "Team A did not answer in time", retryable=True) from None
+            raise UpstreamError(
+                SERVICE, "TIMEOUT", "The knowledge service did not answer in time", retryable=True
+            ) from None
         except httpx.TransportError as exc:
             raise UpstreamError(
-                SERVICE, "BACKEND_UNAVAILABLE", f"cannot reach Team A ({type(exc).__name__})", retryable=True
+                SERVICE,
+                "BACKEND_UNAVAILABLE",
+                f"cannot reach the knowledge service ({type(exc).__name__})",
+                retryable=True,
             ) from None
         if response.status_code < 400:
             try:
                 found = response.json()
             except ValueError:
-                raise UpstreamError(SERVICE, "BAD_RESPONSE", "Team A answered in an unknown format") from None
+                raise UpstreamError(
+                    SERVICE, "BAD_RESPONSE", "The knowledge service answered in an unknown format"
+                ) from None
             return found if isinstance(found, dict) else {"items": found}
         code, message = "", ""
         try:
@@ -134,11 +141,14 @@ class KnowledgeAdminClient:
         except (ValueError, KeyError, TypeError, AttributeError):
             message = response.text[:200]
         if response.status_code in (401, 403) and code != "FORBIDDEN":
-            raise UpstreamError(SERVICE, "UNAUTHORIZED", "Team A refused the admin key")
+            raise UpstreamError(SERVICE, "UNAUTHORIZED", "The knowledge service refused the admin key")
         if code in REFUSALS or response.status_code in (404, 409, 413, 422):
             raise UpstreamError(
-                SERVICE, code or "INVALID_REQUEST", message or f"Team A answered {response.status_code}"
+                SERVICE, code or "INVALID_REQUEST", message or f"The knowledge service answered {response.status_code}"
             )
         raise UpstreamError(
-            SERVICE, "BACKEND_UNAVAILABLE", f"Team A answered {code or response.status_code}: {message}", retryable=True
+            SERVICE,
+            "BACKEND_UNAVAILABLE",
+            f"The knowledge service answered {code or response.status_code}: {message}",
+            retryable=True,
         )

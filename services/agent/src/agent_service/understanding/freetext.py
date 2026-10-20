@@ -1,6 +1,5 @@
 """Details the customer says in their own words: a reason, a new address, a description, an item.
 
-OWNER: Track A.
 
 The understanding step finds order numbers, phones and amounts. These four are free text, so they are picked up here by
 simple, predictable rules (no AI), and only for slots the request actually needs:

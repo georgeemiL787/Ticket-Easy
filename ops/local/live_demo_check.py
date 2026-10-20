@@ -230,7 +230,7 @@ def main() -> int:
         r = owner.http.post(f"/api/v1/proposals/{pid}/connectors", json=dict(base_url=api["base_url"], environment="live_demo", confirmed=True))
         if r.status_code != 200:
             raise SystemExit(f"the Live Demo connector was refused: {r.text[:400]}\nSet TOOLS_LIVE_DEMO_ENABLED=true and add the API's host:port to "
-                             "TOOLS_LIVE_DEMO_HOSTS in ops/local/live_demo.env, then restart Team C.")
+                             "TOOLS_LIVE_DEMO_HOSTS in ops/local/live_demo.env, then restart the tools service.")
         state["connector_id"] = r.json()["id"]
         save()
     check("the connector is a Live Demo connector to the real API", state["connector_id"].startswith("live-"), state["connector_id"])
@@ -245,7 +245,7 @@ def main() -> int:
     check("the artifact records environment live_demo (part of its hash) and no production activation",
           content["connector"].get("environment") == "live_demo" and content["activation"]["activated"] is False, content["connector"])  # fmt: skip
 
-    step("6-7. The owner's identity, then Team C's real connection check")
+    step("6-7. The owner's identity, then the tools service's real connection check")
     save_identity(owner, aid, api)
     result = owner.post(f"/connectors/{state['connector_id']}/check")
     for c in result["checks"]:
@@ -255,7 +255,7 @@ def main() -> int:
           checks["configuration"]["status"] == "ok" and checks["reachable"]["status"] == "ok", result["checks"][:2])  # fmt: skip
 
     if "publication_id" not in state:
-        step("8. A live test: one real call, judged by Team C")
+        step("8. A live test: one real call, judged by the tools service")
         owner.post(f"/artifacts/{aid}/policy-tests", {})
         test = owner.post(f"/artifacts/{aid}/sandbox-tests", {"name": "live_demo_read", "identity": "demo", "arguments": api["test_arguments"],
                                                              "expect": {"status": "succeeded"}, "scenario": "general"})  # fmt: skip
@@ -263,7 +263,7 @@ def main() -> int:
         step("9. Publish as Live Demo")
         r = owner.http.post(f"/api/v1/artifacts/{aid}/publications", json={"note": f"{LABEL} Live Demo publication", "environment": "live_demo"})
         if r.status_code != 200:
-            raise SystemExit("publication refused by Team C: " + r.text[:800])
+            raise SystemExit("publication refused by the tools service: " + r.text[:800])
         pub = r.json()
         state.update(publication_id=pub["id"], tool_name=pub["tool_name"])
         save()
@@ -271,7 +271,7 @@ def main() -> int:
     check("the publication is live_demo, executable now, and not production",
           pub["environment"] == "live_demo" and pub["execution_enabled"] and pub["production_ready"] is False and pub["production_activation"] is False, pub)  # fmt: skip
 
-    step("10. Team C's real MCP server through Team B's MCP client")
+    step("10. The tools service's real MCP server through the agent's MCP client")
     seen = asyncio.run(through_mcp(state, api))
     tool = next((t for t in seen["tools"] if t["name"] == state["tool_name"]), None)
     meta = ((tool or {}).get("_meta") or {}).get("tools", {})

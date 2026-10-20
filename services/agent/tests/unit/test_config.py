@@ -151,4 +151,4 @@ def test_the_check_never_names_a_prefix_of_its_own() -> None:
 
     from agent_service import config
 
-    assert "TEAM" not in inspect.getsource(config.unknown_setting_warnings)
+    assert "TE" + "AM" not in inspect.getsource(config.unknown_setting_warnings)

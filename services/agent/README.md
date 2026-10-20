@@ -69,7 +69,7 @@ decision accuracy, citation accuracy, reply language match, handoff precision an
 conversations that went wrong most (with their first wrong turn) and a table by topic. `--llm` uses the configured AI model
 for understanding. The gold labels come from the policies and rules (see `scripts/make_eval_set.py`), never from what the
 agent does. `--save-baseline` records what the rules reach today in `eval/eval_baseline.json`; the test
-`tests/integration/test_b_eval.py` keeps a 20-conversation sample at the targets (intent 0.90, decision 0.92, citation 0.95,
+`tests/integration/test_eval.py` keeps a 20-conversation sample at the targets (intent 0.90, decision 0.92, citation 0.95,
 locale 1.0) or, until they are reached, at that baseline.
 
 ### Grading how replies read (`--judge`, optional)

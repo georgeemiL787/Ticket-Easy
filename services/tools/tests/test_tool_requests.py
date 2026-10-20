@@ -129,7 +129,7 @@ def test_suggestions_are_grounded_and_decisions_touch_only_the_suggestion(desk):
     assert list(got) == ["Report a booking problem", "Service status for staff", "Booking lookup for customers", "Photo attachments", "Cancel a booking"]
     assert [s["category"] for s in got.values()] == ["feasible", "feasible", "needs_clarification", "blocked_by_missing_api", "blocked_by_missing_api"]
     assert got["Photo attachments"]["content"]["category_adjusted_from"] == "feasible"
-    assert got["Photo attachments"]["content"]["missing"][0] == dict(kind="unsupported_operation", description=f"{d.attach} is not executable by Team C", operation_ids=[d.attach])
+    assert got["Photo attachments"]["content"]["missing"][0] == dict(kind="unsupported_operation", description=f"{d.attach} is not executable by the tools service", operation_ids=[d.attach])
     # Sharing the existing tool's operations relates a differently named suggestion to it; the same name and operations recognize it.
     related = got["Report a booking problem"]["content"]
     assert related["related_proposal_ids"] == [pid] and related["shares_operations_with"] == [dict(proposal_id=pid, name="Service request for a booking")]

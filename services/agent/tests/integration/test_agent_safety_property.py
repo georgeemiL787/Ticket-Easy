@@ -1,6 +1,6 @@
 """The safety property in agent mode (safety-critical): a hostile planner cannot get anything past code.
 
-The conversations are the random ones of test_a_safety_property.py. This time an planner that proposes random,
+The conversations are the random ones of test_safety_property.py. This time an planner that proposes random,
 often absurd moves runs the agent loop: write tools named in look-ups, order numbers nobody wrote, other
 customers' orders, replies with invented facts, hand-overs, malformed moves, plans with too many steps. The shop's own
 audit log and the stored traces are checked afterwards with the same checks as the original property:
@@ -35,7 +35,7 @@ from agent_service.domain.decision import Decision, EscalationReason
 from tests.fakes import FunctionPlanner
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_runner import check_write_safety
-from tests.integration.test_a_safety_property import (
+from tests.integration.test_safety_property import (
     INJECTIONS,
     ORDERS,
     PLUG_INJECTIONS,

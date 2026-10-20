@@ -293,7 +293,7 @@ async def create_user_cmd(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m agent_service", description="Ticket-Easy Team B tools")
+    parser = argparse.ArgumentParser(prog="python -m agent_service", description="Ticket-Easy agent service tools")
     commands = parser.add_subparsers(dest="command", required=True)
     nlu = commands.add_parser("eval-nlu", help="measure understanding accuracy on the labelled messages")
     nlu.add_argument("--mode", choices=["rules", "llm", "both"], default="rules")

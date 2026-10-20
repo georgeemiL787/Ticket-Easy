@@ -25,7 +25,7 @@ import tools_lifecycle as lifecycle  # noqa: E402
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--fresh", action="store_true", help="start every tool over (the order tool creates a new business in Team C, the others join it)")
+    parser.add_argument("--fresh", action="store_true", help="start every tool over (the order tool creates a new business in the tools service, the others join it)")
     parser.add_argument("--tool", action="append", choices=sorted(lifecycle.TOOLS), help="only these tools (default: all)")
     parser.add_argument("--variant", default="", help="pass --variant to the lifecycle (a new proposal instead of an earlier stuck one)")
     args = parser.parse_args()

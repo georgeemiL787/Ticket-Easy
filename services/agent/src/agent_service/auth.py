@@ -1,6 +1,6 @@
 """Signing in: password hashes, the signed session cookie, and who may do what.
 
-OWNER: Track A. SAFETY-CRITICAL (access to customer data).
+SAFETY-CRITICAL (access to customer data).
 
   - Passwords are checked against argon2 hashes. An unknown email costs the same time as a wrong password, and both give
     the same answer, so the login cannot be used to find out who has an account.

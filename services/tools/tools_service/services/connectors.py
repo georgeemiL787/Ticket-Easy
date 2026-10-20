@@ -329,7 +329,7 @@ class Connectors:
             found = service_identity(connector, {}, None if auth in ("unknown", None) else auth)
             identities = {"service": found} if found else {}
             add("secret", "ok" if resolve_secret(connector.get("secret_ref")) is not None else "failed",
-                f"{connector.get('secret_ref')} is " + ("available" if resolve_secret(connector.get("secret_ref")) is not None else "NOT available to Team C"))
+                f"{connector.get('secret_ref')} is " + ("available" if resolve_secret(connector.get("secret_ref")) is not None else "NOT available to the tools service"))
         if not reachable:
             add("authentication", "skipped", "The API was not reached")
         elif auth == "unknown":

@@ -73,8 +73,8 @@ class ToolBindingRef(FrozenModel):
     business_id: str = Field(min_length=1)
     proposal_id: str = Field(min_length=1)
     environments: tuple[Literal["sandbox", "live_demo", "production"], ...] = Field(default=("sandbox",), min_length=1)
-    arguments: dict[str, str] = Field(default_factory=dict)  # Team B argument name -> tools-service input name
-    fields: dict[str, str] = Field(default_factory=dict)  # Team B output field -> tools-service output name
+    arguments: dict[str, str] = Field(default_factory=dict)  # The agent argument name -> tools-service input name
+    fields: dict[str, str] = Field(default_factory=dict)  # The agent output field -> tools-service output name
     reference_field: str | None = None
     echo: tuple[str, ...] = ()
     constants: dict[str, str] = Field(default_factory=dict)

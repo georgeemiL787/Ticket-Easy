@@ -189,10 +189,12 @@ class ToolsAdminClient:
                     method, self._base + path, params=params, json=body, files=files, headers=self._headers
                 )
         except httpx.TimeoutException:
-            raise UpstreamError(SERVICE, "TIMEOUT", "Team C did not answer in time", retryable=True) from None
+            raise UpstreamError(
+                SERVICE, "TIMEOUT", "The tools service did not answer in time", retryable=True
+            ) from None
         except httpx.TransportError as exc:
             raise UpstreamError(
-                SERVICE, "BACKEND_UNAVAILABLE", f"cannot reach Team C ({type(exc).__name__})", retryable=True
+                SERVICE, "BACKEND_UNAVAILABLE", f"cannot reach the tools service ({type(exc).__name__})", retryable=True
             ) from None
         if response.status_code == 404 and missing_ok:
             return None
@@ -207,8 +209,10 @@ class ToolsAdminClient:
                     detail = ": " + str(response.json().get("message") or "")[:600]
                 except (ValueError, AttributeError):
                     detail = ""
-            raise UpstreamError(SERVICE, code.upper(), f"Team C answered {response.status_code} ({code}){detail}")
+            raise UpstreamError(
+                SERVICE, code.upper(), f"The tools service answered {response.status_code} ({code}){detail}"
+            )
         try:
             return response.json()
         except ValueError:
-            raise UpstreamError(SERVICE, "BAD_RESPONSE", "Team C answered in an unknown format") from None
+            raise UpstreamError(SERVICE, "BAD_RESPONSE", "The tools service answered in an unknown format") from None

@@ -1,6 +1,6 @@
 {
   "tenant_id": "shop_001",
-  "description": "Query expansions: any variant found in a customer query adds its means to the search. origin says whether the entry came from Team A or was added by Team B.",
+  "description": "Query expansions: any variant found in a customer query adds its means to the search. origin says whether the entry came from the knowledge service or was added by the agent.",
   "entries": [
     {
       "variants": [

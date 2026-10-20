@@ -189,7 +189,7 @@ async def pending_confirmation(ctx: TurnContext) -> str:
 
     if answer == "yes":
         assert understanding is not None
-        ctx.step = await flow.on_confirmation(ctx, understanding)  # Track A: re-check, execute, verify
+        ctx.step = await flow.on_confirmation(ctx, understanding)  # re-check, execute, verify
         return f"yes to {proposal.tool}: handed to the action flow (not built yet)"
     if answer == "no" or has_new_topic:
         proposal.transition(

@@ -27,8 +27,8 @@ class Harness:
         self.accounts = {}
 
     def signup(self, name):
-        email, password = f"teamc-sandbox-{name}-{secrets.token_hex(4)}@teamc-sandbox.org", secrets.token_urlsafe(18)
-        user = self.http.post("/users/signup", json=dict(email=email, password=password, full_name=f"Team C sandbox {name} (disposable)"))
+        email, password = f"tools-sandbox-{name}-{secrets.token_hex(4)}@tools-sandbox.org", secrets.token_urlsafe(18)
+        user = self.http.post("/users/signup", json=dict(email=email, password=password, full_name=f"The tools service sandbox {name} (disposable)"))
         user.raise_for_status()
         token = self.http.post("/login/access-token", data=dict(username=email, password=password)).json()["access_token"]
         me = self.http.get("/users/me", headers=self.auth(token)).json()

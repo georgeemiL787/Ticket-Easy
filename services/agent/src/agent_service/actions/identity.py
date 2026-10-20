@@ -1,6 +1,5 @@
 """Proving who the customer is before any order data or action.
 
-OWNER: Track A.
 
 ensure_verified(ctx) returns None when the customer is verified (or becomes verified this turn) so the flow may go on,
 or a Step that stops the flow: asking for the missing detail, saying the details did not match, or a handoff

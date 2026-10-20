@@ -1,7 +1,7 @@
 """The knowledge and guardrail pages: a business's documents, the search index, and the rules derived from them.
 
 Every route is under /v1/dashboard with ?tenant_id= (managers). The signed-in person is the reviewer: their name,
-not one the request sends, is what Team A records on an approval, a rejection or an edit.
+not one the request sends, is what the knowledge service records on an approval, a rejection or an edit.
   GET    /knowledge/documents               every upload with its status (uploaded, parsing, indexed, failed, removed)
   POST   /knowledge/documents               {filename, content_base64, document_id?}: stored and checked at once
   DELETE /knowledge/documents/{id}          stop using a document (re-index to take it out of the search)
@@ -67,7 +67,7 @@ def _failure(exc: UpstreamError) -> ApiError:
         return invalid_state(exc.message)
     return ApiError(
         422, "INVALID_REQUEST", exc.message
-    )  # the reason Team A gave (an unreadable file, a failing guardrail case)
+    )  # the reason the knowledge service gave (an unreadable file, a failing guardrail case)
 
 
 def reviewer(request: Request) -> str:

@@ -87,7 +87,7 @@ def destination(connector, artifact: Artifact, settings):
         if problem:
             raise problem
         if artifact["connector"]["id"] in external_connectors(settings) or not connector.get("confirmed_by"):
-            raise AppError("destination_not_confirmed", "A production connector must be saved and confirmed through Team C by an admin", 403)
+            raise AppError("destination_not_confirmed", "A production connector must be saved and confirmed through the tools service by an admin", 403)
         if connector.get("business_id") != artifact["proposal"]["business_id"]:
             raise AppError("connector_scope", "This production connector belongs to another business", 403)
     elif artifact_environment(artifact) == PRODUCTION:

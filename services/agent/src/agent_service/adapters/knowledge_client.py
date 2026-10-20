@@ -55,10 +55,15 @@ class KnowledgeClient:
                     method, self._base + path, json=body, params=params, headers=self._headers
                 )
         except httpx.TimeoutException:
-            raise UpstreamError(SERVICE, "TIMEOUT", "Team A did not answer in time", retryable=True) from None
+            raise UpstreamError(
+                SERVICE, "TIMEOUT", "The knowledge service did not answer in time", retryable=True
+            ) from None
         except httpx.TransportError as exc:
             raise UpstreamError(
-                SERVICE, "BACKEND_UNAVAILABLE", f"cannot reach Team A ({type(exc).__name__})", retryable=True
+                SERVICE,
+                "BACKEND_UNAVAILABLE",
+                f"cannot reach the knowledge service ({type(exc).__name__})",
+                retryable=True,
             ) from None
         if response.status_code < 400:
             return response
@@ -66,17 +71,19 @@ class KnowledgeClient:
         if response.status_code == 404 and code == "NOT_FOUND":
             return response
         if response.status_code in (401, 403):
-            raise UpstreamError(SERVICE, "UNAUTHORIZED", "Team A refused the request")
+            raise UpstreamError(SERVICE, "UNAUTHORIZED", "The knowledge service refused the request")
         if response.status_code == 404:
             raise UpstreamError(SERVICE, code or "TENANT_NOT_FOUND", message)
         if response.status_code == 429 or response.status_code >= 500:
             raise UpstreamError(
                 SERVICE,
                 "BACKEND_UNAVAILABLE",
-                f"Team A answered {code or response.status_code}: {message}",
+                f"The knowledge service answered {code or response.status_code}: {message}",
                 retryable=True,
             )
-        raise UpstreamError(SERVICE, "BAD_REQUEST", f"Team A answered {code or response.status_code}: {message}")
+        raise UpstreamError(
+            SERVICE, "BAD_REQUEST", f"The knowledge service answered {code or response.status_code}: {message}"
+        )
 
     async def call(
         self,
@@ -106,7 +113,7 @@ def _parse(model: type[_T], response: httpx.Response) -> _T:
         return model.model_validate(response.json())
     except (ValueError, ValidationError):
         raise UpstreamError(
-            SERVICE, "BAD_RESPONSE", f"Team A answered in an unknown format ({model.__name__})"
+            SERVICE, "BAD_RESPONSE", f"The knowledge service answered in an unknown format ({model.__name__})"
         ) from None
 
 

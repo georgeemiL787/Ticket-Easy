@@ -271,7 +271,7 @@ def tool(pub, content):
     live = pub["environment"] == "live_demo"
     production = pub["environment"] == "production"
     where = (f'PRODUCTION publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}), promoted by an admin: acts on REAL customers\' data at '
-             f'{api_host(content)} with the business\'s service credential, scoped to the verified customer by Team C. ' if production else
+             f'{api_host(content)} with the business\'s service credential, scoped to the verified customer by the tools service. ' if production else
              f'LIVE DEMO publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}): calls the owner-configured '
              f'real API at {api_host(content)}; not a production release. ' if live else
              f'sandbox publication of reviewed artifact {pub["artifact_id"]} (proposal version {pub["version"]}); not production. ')

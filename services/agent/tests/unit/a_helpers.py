@@ -1,4 +1,4 @@
-"""Small helpers shared by Track A's tests."""
+"""Small helpers shared by the action tests."""
 
 from agent_service.config import Settings
 from agent_service.domain.tenant import AlertThresholds, TenantRegistry

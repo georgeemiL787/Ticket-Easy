@@ -495,7 +495,7 @@ async def test_a_smaller_stated_voucher_amount_is_used(container: Container) -> 
     assert reply.decision is Decision.CONFIRM and "50" in reply.text and "100" not in reply.text
 
 
-# ---- topic change and the safety screen, with a simulated service for the knowledge answers (Track B's) ----
+# ---- topic change and the safety screen, with a simulated service for the knowledge answers ----
 
 
 async def knowledge_simulated(ctx: Any, planned: Any) -> Step:

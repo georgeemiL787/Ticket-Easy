@@ -1,8 +1,9 @@
-"""From a published Team C tool to a bundle tool: its name, the ToolSpec the core sees and the binding.
+"""From a published the tools service tool to a bundle tool: its name, the ToolSpec the core sees and the binding.
 
 The tools service describes every tool it builds (name, input and output schemas, which steps read and which write).
-This module turns that into what Team B needs, without any model: a stable tool name, a ToolSpec for the core (the
-built-in shop declares no tool it does not know) and a ToolBindingRef naming the Team C proposal. Credentials never
+This module turns that into what the agent needs, without any model: a stable tool name, a ToolSpec for the core (the
+built-in shop declares no tool it does not know) and a ToolBindingRef naming the the tools service proposal. Credentials
+never
 pass through here: bundles hold ids only.
 """
 
@@ -32,7 +33,8 @@ def unique_name(wanted: str, taken: set[str]) -> str:
 
 
 def plain_schema(node: Any) -> Any:
-    """A Team C schema (OpenAPI flavour) as plain JSON Schema: `nullable` becomes a type list, titles are dropped."""
+    """A the tools service schema (OpenAPI flavour) as plain JSON Schema: `nullable` becomes a type list, titles are
+    dropped."""
     if isinstance(node, list):
         return [plain_schema(item) for item in node]
     if not isinstance(node, dict):
@@ -66,7 +68,8 @@ def reference_field(output_names: list[str]) -> str | None:
 def tool_for(
     *, name: str, item: dict[str, Any], artifact: dict[str, Any], business_id: str
 ) -> tuple[BundleTool, dict[str, Any]]:
-    """The bundle entry and its ToolSpec for one published tool (`item`: the batch item, `artifact`: Team C's)."""
+    """The bundle entry and its ToolSpec for one published tool (`item`: the batch item, `artifact`: the tools
+    service's)."""
     content = artifact.get("content") or {}
     methods = [str(s.get("method", "")).upper() for s in content.get("steps") or []]
     kind = operation_kind(str(item.get("class", "read")), methods)

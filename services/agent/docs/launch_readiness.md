@@ -77,7 +77,7 @@ review has not been done either.
 - Missing: a person scoring 10 briefings as usable or not.
 
 ### 5. Inbox and dashboard require login: PASS
-- `tests/unit/api/test_a_auth.py` (25 tests): the test walks the real route table; every route outside the short public
+- `tests/unit/api/test_auth.py` (25 tests): the test walks the real route table; every route outside the short public
   list (customer chat, its outbox and events, welcome text, health, the page files, the login itself) answers 401
   without a login. A manager of one business gets 404 on a second business, an agent gets 403 on reassign, decisions and
   the dashboard, cookies are HttpOnly and SameSite=Lax and signed, writes need the CSRF token, five wrong passwords lock
@@ -99,7 +99,7 @@ review has not been done either.
 
 ### 7. One-command startup and automatic checks: PARTLY
 - Done: `docker-compose.yml`, `services/agent/Dockerfile`, root `Makefile` (`make demo`, `make demo-full`), `.env.example` with
-  every setting documented; the file tests `tests/unit/test_a_docker_files.py` pass (26 passed with the load-test unit
+  every setting documented; the file tests `tests/unit/test_docker_files.py` pass (26 passed with the load-test unit
   tests). `make demo` also creates the first admin and prints the password once.
 - **Not done:** the image was never built and the compose stack never started here, so "starts on a clean computer and
   the three example conversations work in the browser" is not shown. The load test was the in-process runner, not

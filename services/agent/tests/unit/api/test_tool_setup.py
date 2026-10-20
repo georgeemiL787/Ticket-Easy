@@ -208,7 +208,7 @@ async def test_an_address_that_cannot_be_read_says_what_to_do_in_plain_words(set
     reply = await http.post(f"{URL}/import", params={"tenant_id": T}, json={"url": "http://shop.test/openapi.json"})
     message = reply.json()["error"]["message"]
     assert reply.status_code == 409 and message != f"this could not be done ({code})"
-    assert "Team C" not in message and code not in message  # no internal names or codes
+    assert "The tools service" not in message and code not in message  # no internal names or codes
 
 
 async def test_an_import_needs_exactly_one_of_file_or_url(setup: Any) -> None:

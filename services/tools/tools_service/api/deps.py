@@ -23,8 +23,8 @@ def get_jobs(request:Request):
 
 
 def require_admin(request:Request):
-    """Production actions need the operator's service token (TOOLS_ADMIN_TOKEN, header x-tools-admin-token). Team B's signed-in
-    admins reach them through Team B, which holds the token; the tools service's own pages have no sign-in and cannot do them."""
+    """Production actions need the operator's service token (TOOLS_ADMIN_TOKEN, header x-tools-admin-token). The agent's signed-in
+    admins reach them through the agent, which holds the token; the tools service's own pages have no sign-in and cannot do them."""
     import secrets
     expected=request.app.state.settings.admin_token
     if not expected:

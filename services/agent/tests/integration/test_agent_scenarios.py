@@ -70,11 +70,11 @@ async def test_scenario_in_agent_mode(tenant_id: str, path: object) -> None:
 
 @pytest.mark.parametrize(("tenant_id", "path"), CASES, ids=[f"{t}/{p.stem}" for t, p in CASES])
 async def test_no_order_data_before_identity_is_verified_in_agent_mode(tenant_id: str, path: object) -> None:
-    """The leak scan of test_a_leak_scan.py, with the agent loop doing the work."""
+    """The leak scan of test_leak_scan.py, with the agent loop doing the work."""
     from agent_service.container import Container
     from agent_service.domain.trace import DecisionTrace
     from tests.integration.scenario_runner import conversation_id_of
-    from tests.integration.test_a_leak_scan import GATED_TOOLS, TOKENS
+    from tests.integration.test_leak_scan import GATED_TOOLS, TOKENS
 
     scenario = load_scenario(path)  # type: ignore[arg-type]
     stored: list[DecisionTrace] = []

@@ -1,6 +1,5 @@
 """Reading from the shop: one call helper that retries once, records every attempt, and never hides a failure.
 
-OWNER: Track A.
 
 call_read() is for read tools only (a write is never retried: see actions/flow.py). It tries the call, tries once more
 when the failure says it may work next time (retryable), and records each attempt in the turn's tool calls. It returns

@@ -69,7 +69,7 @@ def promote_phase() -> None:
     if not all("publication_id" in s for s in states.values()):
         raise SystemExit("run the sandbox lifecycle for the order and ticket tools first (ops/local/tools_lifecycle.py --tool order|ticket)")
     business = states["order"]["business_id"]
-    check("the services are up (nile-prod, Team C)", httpx.get(NILE_PROD + "/health", timeout=5, trust_env=False).status_code == 200 and tc.get("/businesses").status_code == 200)
+    check("the services are up (nile-prod, the tools service)", httpx.get(NILE_PROD + "/health", timeout=5, trust_env=False).status_code == 200 and tc.get("/businesses").status_code == 200)
     no_token = httpx.post(f"{TOOLS_URL}/api/v1/artifacts/{states['order']['artifact_id']}/promotions", json={}, timeout=10, trust_env=False)
     check("production actions are refused without the operator's admin token", no_token.status_code == 403, no_token.text[:200])
 
@@ -78,14 +78,14 @@ def promote_phase() -> None:
             tc.post(f"/promotions/{old['id']}/rollback", json=dict(actor=ACTOR, note="sandbox-only: clean slate before a new production check"))
     r = tc.post(f"/proposals/{states['order']['proposal_id']}/connectors", json=dict(
         base_url=NILE_PROD, context_fields=["customer_id"], environment="production", confirmed=True, secret_ref="file:" + str(VAR / "prod_service.key")))
-    check("a production connector is saved with a secret REFERENCE (the credential never enters Team C's database)", r.status_code == 200 and r.json()["environment"] == "production", r.text[:300])
+    check("a production connector is saved with a secret REFERENCE (the credential never enters the tools service's database)", r.status_code == 200 and r.json()["environment"] == "production", r.text[:300])
     connector = r.json()["id"]
     leak = read("prod_service.key")
     check("the connector listing shows the reference and that it is available, never the credential",
           r.json().get("secret_set") is True and leak not in json.dumps(tc.get(f"/businesses/{business}/connectors").json()))
     check_result = tc.post(f"/connectors/{connector}/check")
     parts = {c["check"]: c["status"] for c in check_result.json().get("checks", [])}
-    check("Team C's connection check reaches the production API and finds the secret", parts.get("reachable") == "ok" and parts.get("secret") == "ok", parts)
+    check("The tools service's connection check reaches the production API and finds the secret", parts.get("reachable") == "ok" and parts.get("secret") == "ok", parts)
 
     promoted: dict[str, dict[str, Any]] = {}
     for tool, state in states.items():
@@ -149,7 +149,7 @@ async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, pr
               and independent["order_status"] in json.dumps(mine["output"]) and independent["customer_id"] in json.dumps(mine["output"]), mine)
         stolen = await call(order_tool, {"order_id": ALICE_ORDER}, ctx("C-101"))
         check("the API ITSELF would have given another customer that order (service token)", prod_get(f"/api/orders/{ALICE_ORDER}").status_code == 200)
-        check("...but Team C refuses it for the other customer: blocked_by_access_check, no data returned",
+        check("...but the tools service refuses it for the other customer: blocked_by_access_check, no data returned",
               stolen.get("status") == "failed" and stolen["error"]["code"] == "blocked_by_access_check" and stolen.get("output") is None, stolen)
         check("a call with no context is rejected before any request", (await call(order_tool, {"order_id": ALICE_ORDER}))["error"]["code"] == "context_missing")
         undeclared = await call(order_tool, {"order_id": ALICE_ORDER}, {"ticketeasy": {"context": {"customer_id": "C-100", "role": "admin"}}})
@@ -174,7 +174,7 @@ async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, pr
         check("the same write for another customer is refused before it is sent: no new ticket",
               denied.get("status") == "failed" and denied["error"]["code"] == "blocked_by_access_check" and len(prod_state()["tickets"]) == before + 1, denied)
         rows = production_executions(tc, names["ticket"]) + production_executions(tc, names["order"])
-        check("Team C recorded every production call as the service identity, with a context hash and no customer value",
+        check("The tools service recorded every production call as the service identity, with a context hash and no customer value",
               len(rows) >= 5 and all(r["identity"] == "service" and "C-100" not in json.dumps(r["report"]) for r in rows)
               and all(r["report"].get("context_sha256") for r in rows if r["report"].get("code") != "context_missing"))
         audit = list((VAR / "audit").glob("production-*.jsonl"))
@@ -199,7 +199,7 @@ def bind_phase() -> None:
     config = json.loads(path.read_text(encoding="utf-8"))
     config["tenants"][T] = tenant
     path.write_text(json.dumps(config, indent=2), encoding="utf-8")
-    print("Team B's binding now serves get_order and create_ticket from PRODUCTION only. RESTART Team B, then run --phase chat.")
+    print("The agent's binding now serves get_order and create_ticket from PRODUCTION only. RESTART the agent, then run --phase chat.")
 
 
 def admin(http: httpx.Client) -> dict[str, str]:
@@ -240,9 +240,9 @@ def chat_phase() -> None:
     verified = chat.say(ALICE_PHONE) if first["decision"] == "verify_identity" else first
     check("the order status comes back from the production tool", verified["decision"] == "answer" and ("on its way" in verified["text"] or "shipped" in verified["text"].lower()), verified["text"][:200])
     runs = production_executions(tc, promoted_artifact(tc, "order"))
-    check("Team C ran it once in production as the service identity", len(runs) == before["order"] + 1 and runs[-1]["identity"] == "service" and runs[-1]["status"] == "succeeded", [(r["identity"], r["status"]) for r in runs[before["order"]:]])
+    check("The tools service ran it once in production as the service identity", len(runs) == before["order"] + 1 and runs[-1]["identity"] == "service" and runs[-1]["status"] == "succeeded", [(r["identity"], r["status"]) for r in runs[before["order"]:]])
 
-    print("\n== another customer asks for that order: Team B's ownership check, and Team C's if it were bypassed")
+    print("\n== another customer asks for that order: the agent's ownership check, and the tools service's if it were bypassed")
     other = Chat(http)
     other.say(f"where is my order {ALICE_ORDER}")
     stolen = other.say("01012345602")  # bob's phone (C-101) against alice's order
@@ -260,19 +260,19 @@ def chat_phase() -> None:
     check("after the yes exactly one ticket exists in the production shop, for C-100", len(state) == tickets + 1 and state[-1]["customer_id"] == "C-100", state[tickets:])
     check("the agent reports it done with the shop's own ticket reference", done["decision"] == "execute" and state[-1]["ticket_id"] in done["text"], done["text"][:200])
 
-    print("\n== rollback through Team B (admin): the next call is refused and the agent stops using the tool")
+    print("\n== rollback through the agent (admin): the next call is refused and the agent stops using the tool")
     ids = [p["id"] for p in promotions.values()]
     for pid in ids:
         r = http.post(f"/v1/dashboard/business-tools/promotions/{pid}/rollback", params={"tenant_id": T}, json={"note": "sandbox-only rollback of the production check"}, headers=csrf)
         check(f"promotion {pid[:8]} is rolled back", r.status_code == 200, r.text[:200])
     after = http.post("/v1/dashboard/business-tools/refresh", params={"tenant_id": T}, headers=csrf).json()
-    check("Team B no longer lists the tools as available", {t["name"]: t["status"] for t in after["tools"] if t["source"] == "tools"}.get("get_order") != "available")
+    check("The agent no longer lists the tools as available", {t["name"]: t["status"] for t in after["tools"] if t["source"] == "tools"}.get("get_order") != "available")
     count = len(production_executions(tc, promoted_artifact(tc, "order")))
     gone = Chat(http)
     gone.say(f"where is my order {ALICE_ORDER}")
     reply = gone.say(ALICE_PHONE)
     check("the customer is not served by production any more", len(production_executions(tc, promoted_artifact(tc, "order"))) == count and "on its way" not in reply["text"], reply["text"][:200])
-    check("Team C shows the promotions as rolled back, with who and why",
+    check("The tools service shows the promotions as rolled back, with who and why",
           all(tc.get(f"/promotions/{pid}").json()["status"] == "rolled_back" and tc.get(f"/promotions/{pid}").json()["rolled_back_by"] == "E2E Admin" for pid in ids))
 
 

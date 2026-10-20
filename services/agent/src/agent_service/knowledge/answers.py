@@ -1,6 +1,5 @@
 """Answering policy questions from the shop's own documents.
 
-OWNER: Track B (fills this module).
 
 Signatures are fixed; the planner calls answer() for every intent of kind "knowledge", and other tracks call
 quote_for() to add a policy quote to their own replies (for example the late-delivery policy next to an order status).

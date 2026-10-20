@@ -1,6 +1,6 @@
 """Promotion of a sandbox- or Live Demo-tested tool to production, its rollback, and the automatic disable on an error spike.
 
-Promotion is a human decision (a Team B admin, recorded with name, time and note) with automated checks. Nothing here makes a
+Promotion is a human decision (a the agent admin, recorded with name, time and note) with automated checks. Nothing here makes a
 tool production by itself: every item of the readiness checklist must pass, each is stored with its evidence, and a refused
 attempt is kept too. A production publication then stays valid only while its promotion is active and everything it was
 promoted on still holds (re-checked on every list and call by Publication.check_publication).
@@ -86,7 +86,7 @@ class Promotion:
         _, problems, evidence = self.publishing.publication_problems(source_aid)
         item("sandbox_evidence", not problems, "; ".join(problems) or f"{len(evidence['test_ids'])} passing tests (required: {', '.join(evidence['required'])})")
         name = connector.get("secret_ref")
-        item("secret_resolved", resolve_secret(name) is not None, f"{name} is " + ("available" if resolve_secret(name) is not None else "NOT available to Team C"))
+        item("secret_resolved", resolve_secret(name) is not None, f"{name} is " + ("available" if resolve_secret(name) is not None else "NOT available to the tools service"))
         item("rate_limits", self.settings.production_calls_per_minute > 0 and self.settings.production_calls_per_customer_per_minute > 0,
              f"{self.settings.production_calls_per_minute} calls/min per connector, {self.settings.production_calls_per_customer_per_minute} per customer")
         item("rollback_contact", len((rollback_contact or "").strip()) >= 3, f"rollback contact: {(rollback_contact or '').strip() or 'none named'}")
@@ -103,7 +103,7 @@ class Promotion:
         if prod is not None:
             pc = prod["content"]
             blockers = pc["execution_blockers"]
-            item("service_scoped", not blockers, "; ".join(blockers) or "every record-scope requirement is a Team C check against the verified customer's context; no unrestricted, API-filtered or list scope")
+            item("service_scoped", not blockers, "; ".join(blockers) or "every record-scope requirement is a the tools service check against the verified customer's context; no unrestricted, API-filtered or list scope")
             differ = rules.differences(sc, pc)
             item("content_identical", not differ, ("differs from the tested artifact in: " + ", ".join(differ)) if differ else "identical to the tested artifact except destination and activation")
             ops = self.discovery.spec(self.building.proposals.view(pid, source["version"])["spec_id"])["inventory"]["operations"]

@@ -1,6 +1,6 @@
 """Alerts for managers: list them and acknowledge them. The engine (monitoring/alerts.py) opens and resolves them.
 
-OWNER: Track A. GET /v1/dashboard/alerts?tenant_id=&status=open|resolved|all and
+GET /v1/dashboard/alerts?tenant_id=&status=open|resolved|all and
 POST /v1/dashboard/alerts/{alert_id}/ack {"agent": "Sara"}. Acknowledging only records who saw it: the alert stays open
 until its condition clears.
 """

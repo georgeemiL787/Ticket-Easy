@@ -1,6 +1,5 @@
 """The alert engine: warns managers about problems before customers complain.
 
-OWNER: Track A.
 
 Every minute (a task of the API) the engine looks at what happened recently and compares it with the thresholds of each
 business (config/tenants/<tenant>.json, "alerts"; every number has a default). A rule that is true opens ONE alert (a

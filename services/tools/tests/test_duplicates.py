@@ -31,8 +31,8 @@ def test_equivalent_tool_with_renamed_labels_and_reordered_bindings_is_the_same(
         c["steps"][0]["bindings"][0]["reference"] = "order_number"
         c["steps"][1]["bindings"].reverse()
         c["steps"][1]["bindings"][1]["reference"] = "message"
-        c["steps"][1]["bindings"][0]["reference"] = "team"
-        c["configuration"] = [dict(key="team", value_json='  "payments" ')]
+        c["steps"][1]["bindings"][0]["reference"] = "group"
+        c["configuration"] = [dict(key="group", value_json='  "payments" ')]
         c["outputs"][0]["name"] = "current_status"
     assert behavior(variant(relabel)) == behavior(base())
 

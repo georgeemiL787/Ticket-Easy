@@ -29,7 +29,7 @@ from agent_service.container import Container, build_container, inject
 from agent_service.domain.decision import Decision
 from agent_service.domain.trace import DecisionTrace
 from tests.integration.scenario_runner import check_write_safety
-from tests.integration.test_a_leak_scan import BACKEND, GATED_TOOLS
+from tests.integration.test_leak_scan import BACKEND, GATED_TOOLS
 from tests.support import make_settings
 
 T = "shop_001"

@@ -1,6 +1,6 @@
 """Actions that change something in the shop: return, refund, cancel, address change.
 
-OWNER: Track A. SAFETY-CRITICAL: needs a second reviewer.
+SAFETY-CRITICAL: needs a second reviewer.
 
 handle() runs an action request through the gates in this fixed order, and stops at the first one that fails:
   required details -> identity verified -> order read from the shop -> ownership -> permission gate (also checked early,

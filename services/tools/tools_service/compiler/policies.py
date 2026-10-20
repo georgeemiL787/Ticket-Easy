@@ -93,7 +93,7 @@ def login_conflicts(principals, authentication, auth, operations=""):
         found.append(("policy_auth_unresolved", f"The API{where} declares no supported login, so authentication cannot be required. Use the declared API authentication setting."))
     signed_in = sorted(set(principals) - ANONYMOUS)
     if not auth and signed_in:
-        found.append(("policy_identity_unresolved", f"The API{where} declares no login, so Team C cannot verify who is calling and cannot allow {', '.join(signed_in)} callers. "
+        found.append(("policy_identity_unresolved", f"The API{where} declares no login, so the tools service cannot verify who is calling and cannot allow {', '.join(signed_in)} callers. "
                       "Choose Public or Guest/session user, or use an API version that declares authentication (OAuth2 password or HTTP bearer)."))
     return found
 

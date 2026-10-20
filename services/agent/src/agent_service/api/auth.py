@@ -1,4 +1,4 @@
-"""Who may call what. SAFETY-CRITICAL (access to customer data). OWNER: Track A.
+"""Who may call what. SAFETY-CRITICAL (access to customer data).
 
 The rule is deny by default: every request needs a signed-in person unless its path is on the PUBLIC list (the customer
 chat, the static pages, health, the login itself). A new route is therefore protected until someone decides otherwise.

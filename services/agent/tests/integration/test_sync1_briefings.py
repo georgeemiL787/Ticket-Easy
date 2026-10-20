@@ -1,4 +1,5 @@
-"""SYNC 1: every handoff case opened in any scenario (by Track A's flow or Track B's) passes the completeness check."""
+"""SYNC 1: every handoff case opened in any scenario (by the action flow or the knowledge flow) passes the completeness
+check."""
 
 from pathlib import Path
 

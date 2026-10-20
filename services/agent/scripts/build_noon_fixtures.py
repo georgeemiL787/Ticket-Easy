@@ -83,7 +83,11 @@ def write_stand_ins(folder: Path, source: Path) -> None:
     risk["tenant_id"] = "noon_eg"
     rules = json.loads((shop / "rules.json").read_text(encoding="utf-8-sig"))
     rules.update(
-        {"tenant_id": "noon_eg", "rules": [], "description": "No approved rules for noon_eg yet: Team A writes them."}
+        {
+            "tenant_id": "noon_eg",
+            "rules": [],
+            "description": "No approved rules for noon_eg yet: the knowledge service writes them.",
+        }
     )
     empty = {"synonyms": {"entries": []}, "tickets": {"tickets": []}}
     for name, data in {

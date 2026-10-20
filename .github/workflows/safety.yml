@@ -12,8 +12,8 @@ on:
       - "services/agent/data/**"
       - "services/agent/scenarios/**"
       - "services/agent/tests/adversarial/**"
-      - "services/agent/tests/integration/test_a_safety_property.py"
-      - "services/agent/tests/integration/test_a_leak_scan.py"
+      - "services/agent/tests/integration/test_safety_property.py"
+      - "services/agent/tests/integration/test_leak_scan.py"
       - ".github/workflows/safety.yml"
   push:
     branches: [main]
@@ -24,8 +24,8 @@ on:
       - "services/agent/data/**"
       - "services/agent/scenarios/**"
       - "services/agent/tests/adversarial/**"
-      - "services/agent/tests/integration/test_a_safety_property.py"
-      - "services/agent/tests/integration/test_a_leak_scan.py"
+      - "services/agent/tests/integration/test_safety_property.py"
+      - "services/agent/tests/integration/test_leak_scan.py"
       - ".github/workflows/safety.yml"
   workflow_dispatch:
 
@@ -61,7 +61,7 @@ jobs:
           if [ -d tests/adversarial ] && ls tests/adversarial/test_*.py > /dev/null 2>&1; then
             pytest -q tests/adversarial
           else
-            echo "tests/adversarial has no tests yet (Track A builds them); nothing to run."
+            echo "tests/adversarial has no tests yet nothing to run."
           fi
       - name: Property test, five seeds, and the leak scan
-        run: pytest -q tests/integration/test_a_safety_property.py tests/integration/test_a_leak_scan.py
+        run: pytest -q tests/integration/test_safety_property.py tests/integration/test_leak_scan.py

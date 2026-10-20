@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Manager dashboard of Ticket-Easy (Team B). Built into services/agent/web/dashboard and served at /dashboard.",
+  "description": "Manager dashboard of Ticket-Easy (the agent). Built into services/agent/web/dashboard and served at /dashboard.",
   "scripts": {
     "dev": "vite",
     "types": "node scripts/gen-types.mjs",

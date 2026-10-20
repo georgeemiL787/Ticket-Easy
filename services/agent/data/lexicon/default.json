@@ -1,5 +1,5 @@
 {
-  "description": "Word lists shared by every business, written per style (en, ar = Egyptian Arabic, arabizi, mixed = code-switched). Matching is on normalized text (brain/text.py): case, alef/yaa/taa-marbuta variants and diacritics do not matter, and Arabic words match with one attached prefix letter. Each step reads only the keys it owns.",
+  "description": "Word lists shared by every business, written per style (en, ar = Egyptian Arabic, arabizi, mixed = code-switched). Matching is on normalized text (understanding/text.py): case, alef/yaa/taa-marbuta variants and diacritics do not matter, and Arabic words match with one attached prefix letter. Each step reads only the keys it owns.",
   "arabizi_tokens": [
     "ana", "enta", "inta", "enti", "inti", "enty", "howa", "hwa", "heya", "hya", "ezay", "ezzay", "izay", "izzay",
     "ezayak", "ezayek", "ezzayak", "ezayko", "feen", "fein", "fen", "emta", "imta", "emty", "leh", "leeh", "lih",

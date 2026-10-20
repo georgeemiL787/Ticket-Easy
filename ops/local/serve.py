@@ -4,7 +4,7 @@
     python ops/local/serve.py status      # which services answer, and the Live Demo settings
     python ops/local/serve.py <service>   # one service in the foreground: sandbox | demo-shop | tools | knowledge | agent
 
-Services (each with its own team's virtualenv, working directory, port and an isolated database):
+Services (each with its own virtualenv, working directory, port and an isolated database):
     sandbox    Nile Style sandbox shop API (test data, TEST-ONLY)        http://127.0.0.1:8102
     demo-shop  a second, separate Nile shop API with its own credentials  http://127.0.0.1:8103
                (synthetic data on THIS machine; usable as a Live Demo target only through TOOLS_LIVE_DEMO_PRIVATE_HOSTS)
@@ -39,7 +39,7 @@ PRODUCTION_ENV = ROOT / "ops" / "local" / "production.env"
 PORTS = {"sandbox": 8102, "demo-shop": 8103, "nile-prod": 8104, "tools": 8101, "knowledge": 8001, "agent": 8010}
 # nile-prod (a production-like shop deployment with a service token) starts only when ops/local/production.env exists
 ORDER = ("sandbox", "demo-shop", *(("nile-prod",) if PRODUCTION_ENV.exists() else ()), "tools", "knowledge", "agent")
-TEAMS = {"sandbox": "services/agent", "demo-shop": "services/agent", "nile-prod": "services/agent", "tools": "services/tools", "knowledge": "services/knowledge", "agent": "services/agent"}
+SERVICE_FOLDERS = {"sandbox": "services/agent", "demo-shop": "services/agent", "nile-prod": "services/agent", "tools": "services/tools", "knowledge": "services/knowledge", "agent": "services/agent"}
 LIVE_KEYS = ("TOOLS_LIVE_DEMO_ENABLED", "TOOLS_LIVE_DEMO_HOSTS", "TOOLS_LIVE_DEMO_PRIVATE_HOSTS", "TOOLS_LIVE_DEMO_CALLS_PER_MINUTE")
 # the PRODUCTION_* lines of ops/local/production.env; the smoke settings belong to the tools service's web app only
 PRODUCTION_KEYS = ("TOOLS_PRODUCTION_ENABLED", "TOOLS_PRODUCTION_HOSTS", "TOOLS_PRODUCTION_PRIVATE_HOSTS", "TOOLS_PRODUCTION_CALLS_PER_MINUTE",
@@ -47,8 +47,8 @@ PRODUCTION_KEYS = ("TOOLS_PRODUCTION_ENABLED", "TOOLS_PRODUCTION_HOSTS", "TOOLS_
 SMOKE_KEYS = ("TOOLS_PRODUCTION_SMOKE_CONTEXT", "TOOLS_PRODUCTION_SMOKE_ARGUMENTS")
 
 
-def venv_python(team: str) -> str | None:
-    for candidate in (ROOT / team / ".venv" / "Scripts" / "python.exe", ROOT / team / ".venv" / "bin" / "python"):
+def venv_python(folder: str) -> str | None:
+    for candidate in (ROOT / folder / ".venv" / "Scripts" / "python.exe", ROOT / folder / ".venv" / "bin" / "python"):
         if candidate.exists():
             return str(candidate)
     return None
@@ -77,9 +77,9 @@ def live_settings(path: Path = LIVE_ENV) -> dict[str, str]:
 
 
 def command(service: str, simulated: bool = False, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
-    python = venv_python(TEAMS[service])
+    python = venv_python(SERVICE_FOLDERS[service])
     if python is None:
-        raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (docs/INTEGRATION.md, 'Run it locally')")
+        raise SystemExit(f"{SERVICE_FOLDERS[service]}/.venv is missing: create it first (docs/INTEGRATION.md, 'Run it locally')")
     env = dict(os.environ)
     port = str(PORTS[service])
     if service in ("sandbox", "demo-shop", "nile-prod"):
@@ -166,8 +166,8 @@ def health(service: str) -> dict | None:
 
 
 TITLES = {"sandbox": "Nile Style sandbox shop", "demo-shop": "Nile Style demo shop", "nile-prod": "Nile Style production deployment",
-          "tools": "Ticket-Easy Team C",
-          "knowledge": "Ticket-Easy Team A"}
+          "tools": "Ticket-Easy tools",
+          "knowledge": "Ticket-Easy knowledge service"}
 
 
 def ours(service: str) -> bool:
@@ -193,17 +193,17 @@ def port_taken(port: int) -> bool:
 def preflight() -> list[str]:
     """Problems that stop a service, and warnings that limit what works; nothing secret is printed."""
     problems = []
-    for team in ("services/knowledge", "services/agent", "services/tools"):
-        if venv_python(team) is None:
-            problems.append(f"ERROR   {team}/.venv is missing (docs/INTEGRATION.md, 'Run it locally')")
+    for folder in ("services/knowledge", "services/agent", "services/tools"):
+        if venv_python(folder) is None:
+            problems.append(f"ERROR   {folder}/.venv is missing (docs/INTEGRATION.md, 'Run it locally')")
     if not (ROOT / "services" / "knowledge" / "var" / "index" / "shop_001").exists():
-        problems.append("ERROR   Team A has no index for shop_001: cd services/knowledge; PYTHONPATH=src .venv/Scripts/python -m knowledge_service ingest --tenant shop_001 --no-embeddings")
+        problems.append("ERROR   the knowledge service has no index for shop_001: cd services/knowledge; PYTHONPATH=src .venv/Scripts/python -m knowledge_service ingest --tenant shop_001 --no-embeddings")
     if not (ROOT / "services" / "agent" / "web" / "dashboard" / "index.html").exists():
         problems.append("WARNING the dashboard is not built (cd apps/dashboard; npm ci; npm run build): /dashboard will say so")
     if not (ROOT / "services" / "tools" / ".env").exists():
-        problems.append("WARNING services/tools/.env is missing: Team C runs, but proposal generation needs a model provider (services/tools/.env.example)")
+        problems.append("WARNING services/tools/.env is missing: the tools service runs, but proposal generation needs a model provider (services/tools/.env.example)")
     if not (VAR / "tools.json").exists():
-        problems.append("WARNING no Team C binding (ops/local/var/tools.json): Team B serves every tool from its simulated shop")
+        problems.append("WARNING no the tools service binding (ops/local/var/tools.json): the agent serves every tool from its simulated shop")
     live = live_settings()
     if live.get("TOOLS_LIVE_DEMO_ENABLED", "").lower() in ("1", "true", "yes") and not live.get("TOOLS_LIVE_DEMO_HOSTS"):
         problems.append("WARNING TOOLS_LIVE_DEMO_ENABLED is on but TOOLS_LIVE_DEMO_HOSTS is empty: no live connector can be saved")
@@ -272,10 +272,10 @@ def report() -> None:
     b = health("agent") or {}
     live = live_settings()
     print("\nTicketEasy")
-    print(f"  Customer chat      http://127.0.0.1:{PORTS['agent']}/chat?tenant_id=shop_001   (Team B mode: {b.get('mode', 'down')})")
+    print(f"  Customer chat      http://127.0.0.1:{PORTS['agent']}/chat?tenant_id=shop_001   (the agent mode: {b.get('mode', 'down')})")
     print(f"  Support inbox      http://127.0.0.1:{PORTS['agent']}/inbox")
     print(f"  Business tools     http://127.0.0.1:{PORTS['agent']}/dashboard/tools")
-    print(f"  Tool builder       http://127.0.0.1:{PORTS['tools']}/   (Team C)")
+    print(f"  Tool builder       http://127.0.0.1:{PORTS['tools']}/   (the tools service)")
     enabled = live.get("TOOLS_LIVE_DEMO_ENABLED", "false").lower() in ("1", "true", "yes")
     print(f"  Live Demo          {'ON' if enabled else 'off'}; allowed hosts: {live.get('TOOLS_LIVE_DEMO_HOSTS') or 'none'}"
           f"; private-network exception: {live.get('TOOLS_LIVE_DEMO_PRIVATE_HOSTS') or 'none'}")
@@ -294,7 +294,7 @@ def status() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("service", choices=["up", "status", *ORDER])
-    parser.add_argument("--simulated", action="store_true", help="agent: use Team B's simulated safety/RAG, not Team A")
+    parser.add_argument("--simulated", action="store_true", help="agent: use the agent's simulated safety/RAG, not the knowledge service")
     parser.add_argument("--port", type=int, help="another port (e.g. a second agent for looking at the pages)")
     parser.add_argument("--no-auth", action="store_true", help="agent: sign-in off (AGENT_AUTH_REQUIRED=0); local only")
     args = parser.parse_args()

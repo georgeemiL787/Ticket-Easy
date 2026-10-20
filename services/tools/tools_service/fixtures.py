@@ -54,7 +54,7 @@ class FixtureClient:
     def key(self):
         value = self.environ.get(self.fixtures["key_ref"], "")
         if not value:
-            raise AppError("fixtures_key_missing", f"The environment variable {self.fixtures['key_ref']} is not set in Team C's environment, so no fixture request was sent", 409)
+            raise AppError("fixtures_key_missing", f"The environment variable {self.fixtures['key_ref']} is not set in the tools service's environment, so no fixture request was sent", 409)
         return value
 
     def call(self, method, path, body=None, query=None):

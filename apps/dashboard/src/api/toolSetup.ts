@@ -1,6 +1,6 @@
 import { apiGet, apiPost, withQuery } from "./client";
 
-/** The guided tool setup (Team B /v1/dashboard/tool-setup): three screens over one service. */
+/** The guided tool setup (the agent /v1/dashboard/tool-setup): three screens over one service. */
 export const SETUP = "/v1/dashboard/tool-setup";
 
 export type OperationClass = "read" | "write" | "risky" | "restricted";

@@ -1,6 +1,5 @@
 """A person's decision on an action that waited for approval. SAFETY-CRITICAL: needs a second reviewer.
 
-OWNER: Track A.
 
 decide_case() is what Orchestrator.human_decide runs. The rules:
   - Approving never skips a check. The order is read again, the arguments must still be the ones the person was shown,

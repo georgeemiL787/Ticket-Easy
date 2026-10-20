@@ -219,7 +219,7 @@ def screen(output, index, existing, prior, count):
             hold("a missing capability " + problems[0]); continue
         for i in d["operation_ids"]:
             if states[i] == "unsupported" and not any(i in m["operation_ids"] for m in d["missing"]):
-                d["missing"].append(dict(kind="unsupported_operation", description=f'{i} is not executable by Team C', operation_ids=[i]))
+                d["missing"].append(dict(kind="unsupported_operation", description=f'{i} is not executable by the tools service', operation_ids=[i]))
         kinds = {m["kind"] for m in d["missing"]}
         category = "blocked_by_missing_api" if kinds & BLOCKING else "needs_clarification" if "missing_information" in kinds else "feasible"
         if category == "feasible" and s.category != "feasible":

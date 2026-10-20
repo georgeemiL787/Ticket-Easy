@@ -35,7 +35,9 @@ class SimulatedKnowledgeAdmin:
     def _check_fail(self) -> None:
         if self.fail_next:
             code, self.fail_next = self.fail_next, None
-            raise UpstreamError(SERVICE, code, "Team A is not available (simulated switch)", retryable=True)
+            raise UpstreamError(
+                SERVICE, code, "The knowledge service is not available (simulated switch)", retryable=True
+            )
 
     # ---- documents ----
 

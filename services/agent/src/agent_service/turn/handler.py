@@ -63,7 +63,7 @@ async def _action(ctx: TurnContext, planned: PlannedIntent) -> Step:
     return await flow.handle(ctx, ctx.tenant.intents[planned.name])
 
 
-# One handler per intent kind. Knowledge is Track B's module, lookups and actions are Track A's.
+# One handler per intent kind. Knowledge, lookups and actions each have their own module.
 DEFAULT_HANDLERS: Mapping[str, Handler] = {
     "smalltalk": smalltalk_handler,
     "handoff": handoff_handler,
@@ -182,7 +182,7 @@ class Orchestrator:
             self._events.publish(tenant_id, conversation_id, message.model_dump(mode="json"))
         return message
 
-    # ---- human actions. Final signatures; Track B finishes them, Track A fills human_decide. ----
+    # ---- human actions. Final signatures. ----
 
     async def _case(self, case_id: str) -> HandoffCase:
         for tenant_id in self._tenants.tenant_ids():

@@ -3,7 +3,7 @@
 Two layers:
   1. Reviewed keyword lists (Arabic, English, Arabizi) - deterministic, always runs.
   2. Optional free LLM second opinion - may ADD categories, never removes a keyword hit.
-The result feeds check_action (MANDATORY_RISK) and Team B's escalation trigger.
+The result feeds check_action (MANDATORY_RISK) and the agent's escalation trigger.
 """
 
 import json

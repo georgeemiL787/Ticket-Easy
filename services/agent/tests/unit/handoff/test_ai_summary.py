@@ -7,7 +7,7 @@ from agent_service.domain.decision import EscalationReason
 from agent_service.handoff.cases import open_case
 from agent_service.replies.summarizer import AI_SUGGESTION_LABEL, add_ai_summary
 from tests.fakes import FakeLLM
-from tests.unit.handoff.test_b_briefing import R, T, rich_context
+from tests.unit.handoff.test_briefing import R, T, rich_context
 from tests.unit.turn.test_pipeline import C, orch, say
 
 GOOD = {

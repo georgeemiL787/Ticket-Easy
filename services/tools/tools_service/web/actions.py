@@ -67,7 +67,7 @@ def save_connector(service, settings, form):
     pid = str(form["proposal_id"])
     environment = str(form.get("environment", "sandbox"))
     if environment == "production":
-        raise AppError("production_admin_only", "A production connector is saved by an admin through Team B or the admin API, not from this page", 403)
+        raise AppError("production_admin_only", "A production connector is saved by an admin through the agent or the admin API, not from this page", 403)
     confirmed = form.get("confirm_live") == "1" if environment == "live_demo" else form.get("sandbox") == "1"
     cid = service.connectors.save(pid, str(form.get("base_url", "")), str(form.get("context_fields", "")).split(","),
                                   confirmed=confirmed, environment=environment)

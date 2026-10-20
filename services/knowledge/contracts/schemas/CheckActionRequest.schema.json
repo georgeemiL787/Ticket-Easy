@@ -36,7 +36,7 @@
       "type": "object"
     },
     "ToolContext": {
-      "description": "What Team C's ToolSpec says about the tool being called.",
+      "description": "What the tools service's ToolSpec says about the tool being called.",
       "properties": {
         "name": {
           "title": "Name",

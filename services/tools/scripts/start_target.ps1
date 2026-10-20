@@ -43,4 +43,4 @@ Invoke-TargetCompose @('up', '-d', '--wait', 'db', 'mailpit')
 Invoke-TargetCompose @('run', '--rm', '--no-deps', 'backend', 'bash', 'scripts/prestart.sh')
 Invoke-TargetCompose @('up', '-d', '--wait', 'backend')
 Write-Host 'Target application: http://127.0.0.1:8001'
-Write-Host 'Team C discovery: http://127.0.0.1:8000'
+Write-Host 'The tools service discovery: http://127.0.0.1:8000'

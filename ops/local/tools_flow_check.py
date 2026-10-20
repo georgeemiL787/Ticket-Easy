@@ -96,7 +96,7 @@ def main() -> int:
         if len(waiting) != 2:
             return 1
 
-        step("5 approve: the owner confirms the write's effects; Team C reviews, builds and tests")
+        step("5 approve: the owner confirms the write's effects; the tools service reviews, builds and tests")
         confirmations = {i["proposal_id"]: i["suggested_effects"] for i in waiting if i["class"] != "read"}
         call(http, "POST", f"{base}/batches/{batch['id']}/approve", headers, params={"tenant_id": tenant},
              json={"proposal_ids": [i["proposal_id"] for i in waiting], "confirmations": confirmations})
@@ -127,7 +127,7 @@ def main() -> int:
             with sqlite3.connect(db) as conn:
                 rows_ = conn.execute("SELECT content FROM sandbox_connectors").fetchall()
             plain = [r for r in rows_ if '"token": "' in r[0] and '"token": "enc:v1:' not in r[0]]
-            e2e_chat.check("no credential is stored in plaintext in Team C", not plain)
+            e2e_chat.check("no credential is stored in plaintext in the tools service", not plain)
     failed = [name for name, ok, _ in e2e_chat.RESULTS if not ok]
     print("\n" + ("TOOLS FLOW CHECK PASSED" if not failed else "TOOLS FLOW CHECK FAILED\n- " + "\n- ".join(failed)))
     return 1 if failed else 0

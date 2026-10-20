@@ -305,7 +305,7 @@ def add_identities(owner: Owner, aid: str, base: str = SANDBOX, key_file: str = 
             token = api.post("/_harness/tokens", json={"customer_id": customer}, headers={"x-harness-key": key}).json()["token"]
             owner.form(f"/artifacts/{aid}", "/actions/save_test_identity",
                        {"artifact_id": aid, "identity_name": name, "scope": "end_user", "token": token, "a:customer_id": customer})
-            print(f"identity {name} = customer {customer} at {base} (token stored in Team C only)")
+            print(f"identity {name} = customer {customer} at {base} (token stored in the tools service only)")
 
 
 def arguments_for(content: dict[str, Any], order_id: str, write: bool) -> dict[str, Any]:
@@ -368,11 +368,11 @@ def sandbox_tests(owner: Owner, aid: str, write: bool, tests: list | None = None
 
 
 def publish(owner: Owner, aid: str, environment: str = "sandbox") -> dict[str, Any]:
-    note = f"{LABEL} sandbox publication for Team B" if environment == "sandbox" else "Live Demo publication for Team B (ops/local/tools_lifecycle.py)"
+    note = f"{LABEL} sandbox publication for the agent" if environment == "sandbox" else "Live Demo publication for the agent (ops/local/tools_lifecycle.py)"
     r = owner.http.post(f"/api/v1/artifacts/{aid}/publications", json={"note": note, "environment": environment})
     if r.status_code == 409:
         problems = (r.json().get("details") or {}).get("problems") or [r.text]
-        raise SystemExit("publication refused by Team C:\n- " + "\n- ".join(problems))
+        raise SystemExit("publication refused by the tools service:\n- " + "\n- ".join(problems))
     _ok(r, "publish")
     return r.json()
 
@@ -460,7 +460,7 @@ def live_main(tool: str) -> int:
         r = owner.http.post(f"/api/v1/proposals/{pid}/connectors", json=dict(base_url=DEMO_SHOP, context_fields=["customer_id"], environment="live_demo", confirmed=True))
         if r.status_code != 200:
             raise SystemExit("the Live Demo connector was refused: " + r.text[:400] + "\nList 127.0.0.1:8103 in TOOLS_LIVE_DEMO_HOSTS and "
-                             "TOOLS_LIVE_DEMO_PRIVATE_HOSTS (ops/local/live_demo.env) and restart Team C.")
+                             "TOOLS_LIVE_DEMO_PRIVATE_HOSTS (ops/local/live_demo.env) and restart the tools service.")
         connector = r.json()["id"]
         aid = owner.post(f"/proposals/{pid}/artifacts", {"connector_id": connector})["id"]
         state.update(connector_id=connector, artifact_id=review_enforcement_if_needed(owner, pid, aid))
@@ -478,17 +478,17 @@ def live_main(tool: str) -> int:
     content = owner.get(f"/artifacts/{aid}")["content"]
     path = write_binding(state, tool, content, "live_demo")
     print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]["agent_tool"]} -> proposal {pid}, environments [live_demo]")
-    print("\nLIVE DEMO PUBLICATION COMPLETE (restart Team B to load the binding)")
+    print("\nLIVE DEMO PUBLICATION COMPLETE (restart the agent to load the binding)")
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--fresh", action="store_true", help="start over (a new business in Team C)")
+    parser.add_argument("--fresh", action="store_true", help="start over (a new business in the tools service)")
     parser.add_argument("--tool", choices=sorted(TOOLS), default="order")
     parser.add_argument("--refresh-identities", action="store_true", help="only re-save alice/bob on the built artifact")
     parser.add_argument("--variant", default="", help="word the tool request differently to get a new proposal instead of an earlier stuck one")
-    parser.add_argument("--manual-tests", action="store_true", help="run the old hand-written tests instead of Team C's automatic tests")
+    parser.add_argument("--manual-tests", action="store_true", help="run the old hand-written tests instead of the tools service's automatic tests")
     parser.add_argument("--environment", choices=["sandbox", "live_demo"], default="sandbox",
                         help="live_demo: publish the approved tool again on the separate demo-shop deployment (Live Demo)")
     args = parser.parse_args()
@@ -564,7 +564,7 @@ def main() -> int:
     print(f"artifact {aid}")
 
     if "publication_id" not in state:
-        step("Sandbox identities (for Team B's chat) and tests")
+        step("Sandbox identities (for the agent's chat) and tests")
         add_identities(owner, aid)
         if args.manual_tests:
             sandbox_tests(owner, aid, write, TOOLS[tool].get("tests"))
@@ -578,7 +578,7 @@ def main() -> int:
         save_state(state, tool)
     print(f"published {state['tool_name']} (publication {state['publication_id']}, environment sandbox, not production)")
 
-    step("Bind it into Team B")
+    step("Bind it into the agent")
     content = owner.get(f"/artifacts/{aid}")["content"]
     path = write_binding(state, tool, content)
     print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]["agent_tool"]} -> proposal {pid}")

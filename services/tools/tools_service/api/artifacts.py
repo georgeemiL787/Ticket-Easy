@@ -150,7 +150,7 @@ def set_fixtures(bid: str, cid: str, body: FixturesInput | None, service: Servic
 
 class PromotionInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    actor: str  # who decided it: Team B passes the signed-in admin's name
+    actor: str  # who decided it: the agent passes the signed-in admin's name
     note: str
     rollback_contact: str  # the person to reach when this has to be switched off
     production_connector_id: str | None = None

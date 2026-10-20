@@ -7,7 +7,7 @@ import textwrap
 import httpx
 import pytest
 from tools_service.config import Settings, AppError
-from tools_service.code_discovery import index_project, discover_project, parse_source, validate_setting_values
+from tools_service.legacy.code_discovery import index_project, discover_project, parse_source, validate_setting_values
 from tools_service.grounding import validate_proposal
 from tools_service.models import ProposalContent, GenerationOutput
 
@@ -134,7 +134,7 @@ FILES = {
 
         VERSION_SEGMENT = "/v1"
         api = APIRouter(prefix=VERSION_SEGMENT)
-        api.include_router(notes_router, prefix="/team")
+        api.include_router(notes_router, prefix="/group")
         api_alias = api
         app = FastAPI()
         app.include_router(api_alias, prefix=settings.API_PREFIX + "/public")
@@ -212,7 +212,7 @@ def test_settings_prefix_stays_unresolved_without_confirmation(project):
     read = op(inv, "read_note")
     assert read["path"] is None and not read["supported"]
     route = read["discovery"]["route"]
-    assert route["status"] == "unresolved" and route["template"] == "<API_PREFIX>/public/v1/team/notes/{id}"
+    assert route["status"] == "unresolved" and route["template"] == "<API_PREFIX>/public/v1/group/notes/{id}"
     assert route["settings"][0]["code_default"] == "/api/v9" and route["settings"][0]["value_source"] == "unconfirmed"
     assert any("API_PREFIX" in r and "not proof" in r for r in read["unresolved"])
     # Bindings and schemas are still resolved independently of the path.
@@ -224,7 +224,7 @@ def test_settings_prefix_stays_unresolved_without_confirmation(project):
 def test_confirmed_setting_resolves_nested_prefixes_and_records_source(project):
     inv = inspect(project, {"API_PREFIX": "/gateway"})
     read = op(inv, "read_note")
-    assert read["path"] == "/gateway/public/v1/team/notes/{id}" and read["supported"]
+    assert read["path"] == "/gateway/public/v1/group/notes/{id}" and read["supported"]
     setting = read["discovery"]["route"]["settings"][0]
     assert setting["value_source"] == "owner_confirmed" and setting["matches_code_default"] is False
     assert read["discovery"]["route"]["runtime_verified"] is False

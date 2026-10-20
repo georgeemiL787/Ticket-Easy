@@ -1,4 +1,4 @@
-"""Serve Team B locally with the settings of services/agent/.env (no Docker).
+"""Serve the agent locally with the settings of services/agent/.env (no Docker).
 
 Usage: python scripts/run_server.py [port]      (default 8010)
 

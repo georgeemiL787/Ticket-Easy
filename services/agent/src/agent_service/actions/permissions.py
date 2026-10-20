@@ -1,6 +1,5 @@
 """The permission gate: may the agent use this tool at all? (before any rule about this particular order)
 
-OWNER: Track A.
 
 A tool passes only if the shop has it enabled, it is not reserved for people (human_only), the business allows it
 (allowed_tools names it, or contains "*"), and its risk is not above the business's max_risk. The default allows

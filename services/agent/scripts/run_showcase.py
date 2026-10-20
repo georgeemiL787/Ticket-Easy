@@ -2,7 +2,8 @@
 
 Usage: python scripts/run_showcase.py [name ...]      names: english egyptian_arabic mixed arabizi (default: all)
 
-Reads services/agent/.env (the AI model, Team A and the flags come from there) but keeps everything in memory.
+Reads services/agent/.env (the AI model, the knowledge service and the flags come from there) but keeps everything in
+memory.
 The customer
 turns are scripted; every agent reply is produced by the system, so the transcript shows what it really says.
 The transcript goes to reports/showcase_<date>.md.

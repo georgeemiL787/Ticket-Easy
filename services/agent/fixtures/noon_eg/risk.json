@@ -1,6 +1,6 @@
 {
  "tenant_id": "noon_eg",
- "description": "Topics that always go to a human. Matching is substring-based on normalized text. Category names match Team A RiskAssessment.categories. A category may list exempt phrases: a match that lies inside one of them is ignored (the shop's own voucher is not a demand).",
+ "description": "Topics that always go to a human. Matching is substring-based on normalized text. Category names match the knowledge service RiskAssessment.categories. A category may list exempt phrases: a match that lies inside one of them is ignored (the shop's own voucher is not a demand).",
  "categories": {
   "fraud_suspected": {
    "mandatory_escalation": true,

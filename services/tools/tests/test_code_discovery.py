@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from conftest import ROOT
 from tools_service.config import Settings, AppError
-from tools_service.code_discovery import index_project, discover_project
+from tools_service.legacy.code_discovery import index_project, discover_project
 from tools_service.grounding import validate_proposal
 from tools_service.models import ProposalContent
 
@@ -87,12 +87,10 @@ def test_forged_source_evidence_is_rejected(project):
     with pytest.raises(AppError,match="grounding"):validate_proposal(ProposalContent(**p),inv)
 
 
-def test_retired_implementation_lives_in_legacy_behind_a_compatible_shim(project,monkeypatch):
-    import tools_service.code_discovery as shim
+def test_retired_implementation_lives_in_legacy(project,monkeypatch):
     import tools_service.legacy.code_discovery as legacy
     public=[n for n in vars(legacy) if not n.startswith("_")]
     assert {"index_project","discover_project","parse_source","validate_setting_values","validate_code_provenance"}<=set(public)
-    assert all(getattr(shim,n) is getattr(legacy,n) for n in public)
     inv=inspect(project);p=ProposalContent(**proposal(inv))
     assert inv["source_kind"]=="code" and validate_proposal(p,inv)
     def refuse(op,inventory):raise ValueError("checked by the legacy module")

@@ -28,8 +28,8 @@ from agent_service.turn.handler import Orchestrator
 from agent_service.turn.shadow import compare
 from tests.fakes import FunctionPlanner, ScriptedPlanner
 from tests.integration.agent_expert import expert
-from tests.integration.test_a_safety_property import script
 from tests.integration.test_agent_safety_property import ChaosPlanner
+from tests.integration.test_safety_property import script
 from tests.support import make_settings
 
 T, C = "shop_001", "conv-shadow"

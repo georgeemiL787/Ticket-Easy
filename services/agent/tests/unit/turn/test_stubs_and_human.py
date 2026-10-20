@@ -60,10 +60,9 @@ def test_the_stub_signatures_are_the_agreed_ones() -> None:
         assert params(getattr(Orchestrator, name))[1:] == expected, name
 
 
-def test_every_stub_names_its_owner() -> None:
-    owners = {answers: "Track B", identity: "Track A", lookup: "Track A", flow: "Track A"}
-    for module, owner in owners.items():
-        assert f"OWNER: {owner}" in (module.__doc__ or ""), module.__name__
+def test_every_stub_is_documented() -> None:
+    for module in (answers, identity, lookup, flow):
+        assert (module.__doc__ or "").strip(), module.__name__
 
 
 async def test_the_stubs_return_what_the_pipeline_needs(c: Container) -> None:

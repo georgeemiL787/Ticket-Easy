@@ -139,7 +139,7 @@ def sandbox_switch(**switches: bool) -> None:
 
 
 def writes(http: httpx.Client, tools_http: httpx.Client, artifact_id: str) -> None:
-    print("\n== TEST B/C: a write through Team C (open a support ticket)")
+    print("\n== TEST B/C: a write through the tools service (open a support ticket)")
     before = len(sandbox_state()["tickets"])
     runs_before = len(mcp_executions(tools_http, artifact_id))
     chat = Chat(http)
@@ -153,7 +153,7 @@ def writes(http: httpx.Client, tools_http: httpx.Client, artifact_id: str) -> No
     check("the agent reports it done with the sandbox's own ticket reference",
           done["decision"] == "execute" and tickets[-1]["ticket_id"] in done["text"], done)  # fmt: skip
     runs = mcp_executions(tools_http, artifact_id)
-    check("Team C ran the write once, as alice, and it succeeded",
+    check("The tools service ran the write once, as alice, and it succeeded",
           len(runs) == runs_before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded", [(r["identity"], r["status"]) for r in runs[runs_before:]])  # fmt: skip
 
     print("\n== TEST C: an uncertain write is never retried and never reported as done or failed")
@@ -164,12 +164,12 @@ def writes(http: httpx.Client, tools_http: httpx.Client, artifact_id: str) -> No
     chat.say("01012345601")
     reply = chat.say("yes")
     tickets, runs = sandbox_state()["tickets"], mcp_executions(tools_http, artifact_id)
-    check("Team C classifies it outcome_unknown (a 5xx after the write)",
+    check("The tools service classifies it outcome_unknown (a 5xx after the write)",
           len(runs) == runs_before + 1 and runs[-1]["status"] == "outcome_unknown", [(r["identity"], r["status"]) for r in runs[runs_before:]])  # fmt: skip
     check("the write really happened once in the sandbox and was not repeated", len(tickets) == before + 1, tickets[before:])
     traces_ = traces(http, chat.id)
     reasons = [t.get("escalation_reason") for t in traces_]
-    check("Team B hands over as unverified_result instead of claiming success or failure",
+    check("The agent hands over as unverified_result instead of claiming success or failure",
           reply["decision"] == "handoff" and "unverified_result" in reasons and tickets[-1]["ticket_id"] not in reply["text"], (reply, reasons))  # fmt: skip
     calls = [c for t in traces_ for c in t.get("tool_calls", []) if c["tool"] == "create_ticket"]
     check("the trace has exactly one create_ticket call, marked OUTCOME_UNKNOWN",
@@ -186,13 +186,13 @@ def main() -> int:
     tools_http = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
 
     print("\n== Services")
-    for name, url in (("Team A", KNOWLEDGE_URL), ("Team B", AGENT_URL), ("Team C", TOOLS_URL), ("sandbox", SANDBOX)):
+    for name, url in (("The knowledge service", KNOWLEDGE_URL), ("The agent", AGENT_URL), ("The tools service", TOOLS_URL), ("sandbox", SANDBOX)):
         check(f"{name} is up", httpx.get(url + "/health", timeout=5, trust_env=False).status_code == 200)
-    check("Team B runs against the real Team A (live mode)", http.get("/health").json().get("mode") == "live")
+    check("The agent runs against the real the knowledge service (live mode)", http.get("/health").json().get("mode") == "live")
 
-    print("\n== TEST A: the Team A + Team B flow is unchanged")
+    print("\n== TEST A: the the knowledge service + the agent flow is unchanged")
     reply = Chat(http).say("What is your return policy?")
-    check("a policy question is answered from Team A's passages, with citations", reply["decision"] == "answer" and bool(reply["citations"]), reply)
+    check("a policy question is answered from the knowledge service's passages, with citations", reply["decision"] == "answer" and bool(reply["citations"]), reply)
     human = Chat(http)
     reply = human.say("I want to talk to a human please")
     check("asking for a person opens a handoff case", reply["decision"] == "handoff" and bool(reply["handoff_case_id"]), reply)
@@ -201,18 +201,18 @@ def main() -> int:
 
     headers = manager(http)
 
-    print("\n== TEST B: the agent uses Team C's published tool as the verified customer")
+    print("\n== TEST B: the agent uses the tools service's published tool as the verified customer")
     before = len(mcp_executions(tools_http, artifact_id))
     alice = Chat(http)
     first = alice.say("Where is my order NS-20877?")
     reply = alice.say("01012345601")
-    check("identity is verified first (Team B's own check), nothing read before", first["decision"] == "verify_identity", first)
-    check("the order status comes back from Team C's tool", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
+    check("identity is verified first (the agent's own check), nothing read before", first["decision"] == "verify_identity", first)
+    check("the order status comes back from the tools service's tool", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
     calls = tool_calls(http, alice.id, "get_order")
-    check("the trace shows get_order served by Team C (audit id tools:<execution>)",
+    check("the trace shows get_order served by the tools service (audit id tools:<execution>)",
           bool(calls) and calls[-1]["status"] == "success" and str(calls[-1]["audit_id"]).startswith("tools:"), calls)  # fmt: skip
     runs = mcp_executions(tools_http, artifact_id)
-    check("Team C recorded one MCP sandbox execution as alice (C-100)",
+    check("The tools service recorded one MCP sandbox execution as alice (C-100)",
           len(runs) == before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded",
           [(r["identity"], r["status"]) for r in runs[before:]])  # fmt: skip
 
@@ -228,11 +228,11 @@ def main() -> int:
     stranger.say("Where is my order NS-20611?")
     reply = stranger.say("01234567803")
     calls = tool_calls(http, stranger.id, "get_order")
-    check("a customer with no sandbox identity gets no data and nothing is sent to Team C",
+    check("a customer with no sandbox identity gets no data and nothing is sent to the tools service",
           reply["decision"] != "answer" and len(mcp_executions(tools_http, artifact_id)) == count
           and bool(calls) and calls[-1]["error_code"] == "IDENTITY_NOT_MAPPED", (reply["decision"], calls[-1:] if calls else None))  # fmt: skip
 
-    print("\n== TEST C: Team C's contract, seen from the real MCP server")
+    print("\n== TEST C: the tools service's contract, seen from the real MCP server")
     direct = asyncio.run(direct_mcp(binding, tenant, tool_name))
     check("the published tool is listed", tool_name in direct["tools"], direct["tools"])
     extra = direct.get("extra_argument") or {}
@@ -241,20 +241,20 @@ def main() -> int:
     check("an unknown tool is JSON-RPC -32602 with data.code tool_not_published",
           direct.get("unknown_tool") == {"code": -32602, "data": {"code": "tool_not_published"}}, direct.get("unknown_tool"))  # fmt: skip
 
-    print("\n== TEST C: disabling through Team B stops the tool at once")
+    print("\n== TEST C: disabling through the agent stops the tool at once")
     page = http.get("/v1/dashboard/business-tools", params={"tenant_id": T}).json()
     tools = {t["name"]: t for t in page["tools"]}
-    check("the business-tools page shows get_order served by Team C, sandbox-only",
+    check("the business-tools page shows get_order served by the tools service, sandbox-only",
           page["sandbox_only"] and tools["get_order"]["source"] == "tools" and tools["get_order"]["status"] == "available", tools.get("get_order"))  # fmt: skip
     pub_id = state["publication_id"]
     r = http.post(f"/v1/dashboard/business-tools/publications/{pub_id}/disable", params={"tenant_id": T},
                   json={"note": "sandbox-only e2e: check the agent stops using it"}, headers=headers)  # fmt: skip
     after = r.json() if r.status_code == 200 else {}
-    check("a manager disables the publication through Team B", r.status_code == 200, r.text[:300])
-    check("Team B lists the tool as missing straight after",
+    check("a manager disables the publication through the agent", r.status_code == 200, r.text[:300])
+    check("The agent lists the tool as missing straight after",
           {t["name"]: t["status"] for t in after.get("tools", [])}.get("get_order") == "missing", after.get("tools"))  # fmt: skip
     old = asyncio.run(call_old_name(binding, tenant, tool_name))
-    check("a client holding the old tool name is refused by Team C (tool_not_published)",
+    check("a client holding the old tool name is refused by the tools service (tool_not_published)",
           old == {"rpc_error": -32602, "data": {"code": "tool_not_published"}}, old)  # fmt: skip
     count = len(mcp_executions(tools_http, artifact_id))
     late = Chat(http)
@@ -265,17 +265,17 @@ def main() -> int:
 
     print("\n== TEST C: publishing again is discovered on refresh")
     r = tools_http.post(f"/api/v1/artifacts/{artifact_id}/publications", json={"note": "sandbox-only e2e: publish the tested artifact again"})
-    check("Team C publishes the same tested artifact again (new publication)", r.status_code == 200, r.text[:300])
+    check("The tools service publishes the same tested artifact again (new publication)", r.status_code == 200, r.text[:300])
     if r.status_code == 200:
         state["publication_id"] = r.json()["id"]
         (VAR / "lifecycle_order.json").write_text(json.dumps(state, indent=2), encoding="utf-8")
     page = http.post("/v1/dashboard/business-tools/refresh", params={"tenant_id": T}, headers=headers).json()
-    check("Team B finds it again after a refresh",
+    check("The agent finds it again after a refresh",
           {t["name"]: t["status"] for t in page.get("tools", [])}.get("get_order") == "available", page.get("tools"))  # fmt: skip
     again = Chat(http)
     again.say("Where is my order NS-20877?")
     reply = again.say("01012345601")
-    check("the agent answers from Team C again", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
+    check("the agent answers from the tools service again", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
 
     ticket_state = VAR / "lifecycle_ticket.json"
     if "create_ticket" in tenant.get("tools", {}) and ticket_state.exists():

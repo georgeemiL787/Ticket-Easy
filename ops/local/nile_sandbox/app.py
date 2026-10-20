@@ -1,7 +1,7 @@
-"""Nile Style sandbox shop API: the business API Team C compiles tools against in the integrated demo (TEST-ONLY).
+"""Nile Style sandbox shop API: the business API the tools service compiles tools against in the integrated demo (TEST-ONLY).
 
-It serves the same customers and orders as Team B's demo shop (services/agent/fixtures/shop_001/backend.json, copied in memory
-at start), so the customer Team B verifies by phone is the same customer whose sandbox credential Team C uses.
+It serves the same customers and orders as the agent's demo shop (services/agent/fixtures/shop_001/backend.json, copied in memory
+at start), so the customer the agent verifies by phone is the same customer whose sandbox credential the tools service uses.
 
 Behavior and access rules, fixed before any tool is generated:
 - Every business operation needs a bearer token; each token belongs to exactly one customer.
@@ -15,14 +15,14 @@ Behavior and access rules, fixed before any tool is generated:
 - Production-like deployment: with NILE_SANDBOX_SERVICE_TOKEN set, that ONE bearer token is a business SERVICE credential. The
   API then answers it for ANY customer's order (no ownership refusal: it is the shop's own systems) and records the change for
   the order's customer, exactly as a real API behaves for a back-office token. Nothing in the API separates customers for it, so
-  whoever holds it must (Team C does, with a check against the verified customer). Never set it on the sandbox.
-- Fixture routes (/_fixtures/*, hidden from the OpenAPI document, protected by the x-fixture-key header) are what Team C's
+  whoever holds it must (the tools service does, with a check against the verified customer). Never set it on the sandbox.
+- Fixture routes (/_fixtures/*, hidden from the OpenAPI document, protected by the x-fixture-key header) are what the tools service's
   automatic tests use: create a disposable test customer, create an order owned by that customer in a requested state,
   list the record kinds and states, read back what a run changed, and delete everything a run created.
 
 Run: python -m uvicorn ops.local.nile_sandbox.app:create_app --factory --port 8102   (from the repository root)
 Environment: NILE_SANDBOX_HARNESS_KEY (required for the harness routes), NILE_SANDBOX_FIXTURE_KEY (the fixture routes;
-defaults to the harness key), NILE_SANDBOX_DATA (default: Team B's fixture).
+defaults to the harness key), NILE_SANDBOX_DATA (default: the agent's fixture).
 """
 
 import copy

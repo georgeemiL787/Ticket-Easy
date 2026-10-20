@@ -1,6 +1,7 @@
 """Noon end to end with the SQLite shop: the whole write path (identity, rule check, confirmation, the shop's rows).
 
-Team A has no approved rules for Noon yet, so a return goes to a person (scenario N06). Here a temporary rules file with
+The knowledge service has no approved rules for Noon yet, so a return goes to a person (scenario N06). Here a temporary
+rules file with
 ONE allow rule (the return window in the Noon policy, written only for this test) shows what happens once rules exist:
 the customer is asked to confirm, the return becomes a row in the shop's database, the order changes, the audit log has
 the rule's answer, a second return is refused by the shop, and everything is still there after a restart.

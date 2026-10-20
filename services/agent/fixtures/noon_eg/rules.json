@@ -1,10 +1,10 @@
 {
  "tenant_id": "noon_eg",
- "description": "No approved rules for noon_eg yet: Team A writes them.",
+ "description": "No approved rules for noon_eg yet: the knowledge service writes them.",
  "derived_facts": {
   "days_since_delivery": "as_of minus delivered_at, in calendar days",
   "days_late": "max(0, (delivered_at or as_of) minus expected_delivery_date), in calendar days",
-  "hours_since_delivery": "hours between delivered_at and now (not derived by Team A: the backend must send it)"
+  "hours_since_delivery": "hours between delivered_at and now (not derived by the knowledge service: the backend must send it)"
  },
  "rules": []
 }

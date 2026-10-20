@@ -57,7 +57,7 @@ def complete_json(system: str, user: str, timeout: float = 90) -> dict:
                 OPENROUTER_URL,
                 headers={
                     "Authorization": f"Bearer {settings.openrouter_api_key}",
-                    "X-Title": "Ticket-Easy Team A",
+                    "X-Title": "Ticket-Easy knowledge service",
                 },
                 json={
                     "model": model,

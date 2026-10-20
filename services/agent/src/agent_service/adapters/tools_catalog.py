@@ -263,7 +263,9 @@ class ToolCapabilities:
         resolved = state.resolved.get(request.tool)
         if resolved is None or resolved.problem is not None or resolved.published_tool is None:
             why = resolved.problem if resolved is not None else "not_published"
-            return _error("TOOL_NOT_PUBLISHED", f"{request.tool} has no usable Team C sandbox publication ({why})")
+            return _error(
+                "TOOL_NOT_PUBLISHED", f"{request.tool} has no usable the tools service sandbox publication ({why})"
+            )
         spec = self._spec(tenant_id, request.tool)
         production = resolved.environment == "production"
         if production:
@@ -276,7 +278,9 @@ class ToolCapabilities:
         else:
             identity = self._identity(binding, request, spec)
         if identity is None:
-            return _error("IDENTITY_NOT_MAPPED", "no Team C sandbox identity is configured for this customer; not sent")
+            return _error(
+                "IDENTITY_NOT_MAPPED", "no the tools service sandbox identity is configured for this customer; not sent"
+            )
         arguments = {bound.arguments.get(k, k): v for k, v in request.arguments.items()}
         arguments = self._without_undeclared_identity(state, resolved.published_tool, arguments)
         writes = resolved.read_only is False
@@ -466,10 +470,14 @@ class ToolCapabilities:
             state = self._state.get(tenant_id)
             if state is not None:
                 state.resolved.pop(tool, None)  # the next call or listing asks the tools service again
-            return _error("TOOL_NOT_PUBLISHED", f"{tool}: Team C says the tool is not published (disabled or replaced)")
+            return _error(
+                "TOOL_NOT_PUBLISHED", f"{tool}: the tools service says the tool is not published (disabled or replaced)"
+            )
         # -32602 / -32601 are refusals before the tool ran; any other protocol error may have happened mid-call.
         before_run = exc.code in (-32602, -32601, -32600)
-        return _error("TOOLS_PROTOCOL_ERROR", f"Team C answered {exc.code}", unclear=writes and not before_run)
+        return _error(
+            "TOOLS_PROTOCOL_ERROR", f"The tools service answered {exc.code}", unclear=writes and not before_run
+        )
 
 
 def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: ToolSpec | None) -> ResolvedTool:
@@ -585,17 +593,21 @@ def _result(
     if envelope is None or envelope.get("production_ready") is not production:
         return _error(
             "TOOLS_BAD_RESULT",
-            "Team C's answer is not a production execution result"
+            "The tools service's answer is not a production execution result"
             if production
-            else "Team C's answer is not a sandbox or Live Demo execution result",
+            else "The tools service's answer is not a sandbox or Live Demo execution result",
             unclear=writes,
         )
     if envelope.get("environment", "sandbox") != (resolved.environment or "sandbox"):
         return _error(
-            "TOOLS_BAD_RESULT", "Team C answered from another environment than the tool was listed in", unclear=writes
+            "TOOLS_BAD_RESULT",
+            "The tools service answered from another environment than the tool was listed in",
+            unclear=writes,
         )
     if production and envelope.get("publication_id") != resolved.publication_id:
-        return _error("TOOLS_BAD_RESULT", "Team C answered for another production publication", unclear=writes)
+        return _error(
+            "TOOLS_BAD_RESULT", "The tools service answered for another production publication", unclear=writes
+        )
     status = envelope.get("status")
     execution = envelope.get("execution_id")
     audit = f"{AUDIT_PREFIX}{execution}" if execution else None
@@ -605,7 +617,7 @@ def _result(
     detail = f"{category or error.get('code') or status}: {str(envelope.get('message') or '')[:200]}"
     if status == "succeeded" and raw.get("isError") is not True:
         if envelope.get("publication_id") not in (None, resolved.publication_id):
-            return _error("TOOLS_BAD_RESULT", "Team C answered for another publication", unclear=writes)
+            return _error("TOOLS_BAD_RESULT", "The tools service answered for another publication", unclear=writes)
         found_output = envelope.get("output")
         output: dict[str, Any] = found_output if isinstance(found_output, dict) else {}
         picked = {mine: _pick(output, theirs) for mine, theirs in bound.fields.items()}

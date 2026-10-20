@@ -1,7 +1,7 @@
 """Read a tenant's mock backend files and map them to the schema's column names.
 
 Two layouts are supported:
-  data/mock/<tenant>/backend.json             Team B's fixture (one item per order), e.g. shop_001
+  data/mock/<tenant>/backend.json             the agent's fixture (one item per order), e.g. shop_001
   data/mock/<tenant>/noon_*.json              customers/orders/returns/scenarios files with `_meta`, e.g. noon_eg
 Unknown fields fail loudly, so a new source field is mapped on purpose instead of silently dropped.
 """
@@ -41,7 +41,7 @@ def _check_tenant(tenant_id: str, record: dict, what: str) -> None:
         raise ValueError(f"{what} belongs to tenant {record['tenant_id']!r}, not {tenant_id!r}")
 
 
-# ------------------------------------------------------------------ Team B backend.json
+# ------------------------------------------------------------------ The agent backend.json
 
 _TB_CUSTOMER = {"customer_id", "name", "phone", "preferred_language"}
 _TB_ORDER = {

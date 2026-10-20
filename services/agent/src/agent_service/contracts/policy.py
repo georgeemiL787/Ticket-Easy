@@ -14,7 +14,8 @@ class ToolContext(RequestModel):
     """What the rule checker needs to know about the tool being used.
 
     side_effects is derived when missing (anything but a read changes something) and must be true for non-reads.
-    personal_data is the Team A field exposes_personal_data (either name is accepted); it defaults to true (fail-safe).
+    personal_data is the the knowledge service field exposes_personal_data (either name is accepted); it defaults to
+    true (fail-safe).
     """
 
     name: str = Field(min_length=1)
@@ -80,7 +81,7 @@ class RuleOutcome(PlugModel):
 
 
 class PolicyDecision(PlugModel):
-    """Answer of the rule checker. reason_code is kept as text because Team A may add codes."""
+    """Answer of the rule checker. reason_code is kept as text because the knowledge service may add codes."""
 
     request_id: str
     tenant_id: str = ""

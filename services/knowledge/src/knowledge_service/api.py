@@ -57,7 +57,7 @@ async def _lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Ticket-Easy Team A: Knowledge + Policy", version="1.0", lifespan=_lifespan)
+app = FastAPI(title="Ticket-Easy knowledge service: Knowledge + Policy", version="1.0", lifespan=_lifespan)
 
 
 class ServiceError(Exception):

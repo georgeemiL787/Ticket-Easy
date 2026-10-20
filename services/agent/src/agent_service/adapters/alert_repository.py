@@ -1,6 +1,6 @@
 """Storage for alerts: in memory (gone on restart) or SQLite (the table from migration 003).
 
-OWNER: Track A. Both behave the same: copies in and out, a second open alert for the same (tenant, rule, key) is refused
+Both behave the same: copies in and out, a second open alert for the same (tenant, rule, key) is refused
 with AlreadyExistsError (the engine opens a condition once), saving an unknown alert is NotFoundError, and one business
 can never read or change another's alerts.
 """

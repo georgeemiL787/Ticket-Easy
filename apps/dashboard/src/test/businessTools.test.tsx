@@ -16,7 +16,7 @@ const page = (published: boolean) => ({
   builder_base: "http://127.0.0.1:8101", listed_at: "2026-10-12T08:05:00Z", tools_error: null, mapped_customers: 2,
   tools: [
     { name: "get_order", used_by: ["order_status"], source: "tools", environment: "sandbox", api_host: null, status: published ? "available" : "missing",
-      reason: published ? null : "not_published", detail: published ? "" : "no sandbox publication of this tool is active in Team C",
+      reason: published ? null : "not_published", detail: published ? "" : "no sandbox publication of this tool is active in the tools service",
       operation_kind: published ? "read" : null, published_tool: published ? publication.tool_name : null, publication_id: null,
       proposal_id: "prop-1", proposal_version: 1, artifact_sha256: null },
     { name: "verify_customer", used_by: ["identity"], source: "simulated", status: "available", reason: null, detail: "",
@@ -34,7 +34,7 @@ function respond(body: unknown, status = 200) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("business tools", () => {
-  it("shows which tools Team C serves, marks them sandbox-only, and disables one through the service", async () => {
+  it("shows which tools the tools service serves, marks them sandbox-only, and disables one through the service", async () => {
     let published = true;
     const posted: { path: string; body: unknown }[] = [];
     vi.stubGlobal(
@@ -68,14 +68,14 @@ describe("business tools", () => {
     await user.click(screen.getByRole("button", { name: "Disable" }));
     await waitFor(() => expect(posted).toEqual([{ path: "/v1/dashboard/business-tools/publications/pub-1/disable", body: { note: "stop the demo tool" } }]));
     // the page shows what the service holds after the call, not what the button assumed
-    expect(await screen.findByText("Not published (no sandbox publication of this tool is active in Team C)")).toBeInTheDocument();
+    expect(await screen.findByText("Not published (no sandbox publication of this tool is active in the tools service)")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Disable" })).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Refresh tool list" }));
     await waitFor(() => expect(posted.at(-1)?.path).toBe("/v1/dashboard/business-tools/refresh"));
   });
 
-  it("says plainly when Team C is not connected and the service refuses", async () => {
+  it("says plainly when the tools service is not connected and the service refuses", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {

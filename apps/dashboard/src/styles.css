@@ -653,7 +653,7 @@ td, th { border-block-end-color: var(--border); }
 .replay-table td { vertical-align: top; }
 .replay-table tr.differs { background: rgba(240, 180, 40, 0.15); }
 
-/* Business tools (Team C sandbox tools) */
+/* Business tools (the tools service sandbox tools) */
 .notice {
   padding: 8px 12px;
   border: 1px solid var(--warn);

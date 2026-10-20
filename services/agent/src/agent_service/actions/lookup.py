@@ -1,6 +1,5 @@
 """Lookup requests: "where is my order?".
 
-OWNER: Track A.
 
 The orchestrator calls answer() for every intent of kind "lookup". The order of the checks is fixed:
 details -> identity (actions/identity.py) -> read the order -> ownership -> answer from templates.

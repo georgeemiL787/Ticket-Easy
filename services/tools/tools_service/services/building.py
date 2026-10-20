@@ -210,7 +210,7 @@ class Building:
                 self.check_production_budget(artifact["connector"]["id"], audit["context_sha256"])
                 identity = service_identity(connector, service_context, artifact["connector"]["auth"])
                 if identity is None:
-                    raise AppError("credential_missing", "The production service credential is not set in Team C's environment; no request was sent", 409)
+                    raise AppError("credential_missing", "The production service credential is not set in the tools service's environment; no request was sent", 409)
             else:
                 identity = (connector.get("identities") or {}).get(submission.identity)
             credentials(identity, artifact)
@@ -375,7 +375,7 @@ class Building:
             outcome, ask = "needs_owner", dict(where=action, question=why)
             break
         if outcome == "exhausted":
-            ask = dict(where="#test-results", question=f"Still failing after {attempts} attempts. Read the last failure above; it needs a decision Team C cannot make on its own.")
+            ask = dict(where="#test-results", question=f"Still failing after {attempts} attempts. Read the last failure above; it needs a decision the tools service cannot make on its own.")
         result = dict(artifact_id=aid, outcome=outcome, attempts_used=len({s["attempt"] for s in log}), log=log, ask=ask, final_identity=identity)
         self.store.finish_run(run, result)
         return result

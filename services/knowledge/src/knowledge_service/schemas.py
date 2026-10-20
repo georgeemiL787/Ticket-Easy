@@ -1,6 +1,6 @@
 """Public contracts owned by the knowledge service: RetrievalResult, Rule and PolicyDecision.
 
-Frozen in week 1. Any breaking change bumps SCHEMA_VERSION and is announced to Teams B and C.
+Frozen in week 1. Any breaking change bumps SCHEMA_VERSION and is announced to the agent and tools services.
 """
 
 from datetime import date, datetime, timezone
@@ -177,7 +177,7 @@ class Rule(BaseModel):
 
 
 class ToolContext(BaseModel):
-    """What Team C's ToolSpec says about the tool being called."""
+    """What the tools service's ToolSpec says about the tool being called."""
 
     name: str
     operation_kind: Literal["read", "create", "update", "delete"]
@@ -295,7 +295,7 @@ class RuleExplanation(BaseModel):
 # check_action, never a reason to execute an action. Mandatory-risk cases and personal data are
 # refused at write time (knowledge_service.search.resolutions.is_safe_to_persist).
 
-# Team B's escalation reason taxonomy (project plan, Member 5).
+# The agent's escalation reason taxonomy (project plan, Member 5).
 EscalationReason = Literal[
     "policy_deny", "require_human", "mandatory_category", "low_confidence", "customer_request", "repeated_failure",
 ]

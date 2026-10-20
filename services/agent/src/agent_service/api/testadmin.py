@@ -1,12 +1,12 @@
 """Endpoints for the load and chaos tests. They exist only when AGENT_ENABLE_TEST_ADMIN=1.
 
-OWNER: Track A. Never enable this in production: it switches simulated services off and shows the shop audit log.
+Never enable this in production: it switches simulated services off and shows the shop audit log.
 
-  POST /v1/_test/chaos   {"plug": "shop"|"policy_search"|"rule_checker"|"safety_screen", "seconds": 30}
-                         the plug fails every call, then recovers by itself after `seconds`
-  POST /v1/_test/heal    {"plug": ...} or {} for every plug: recover now
-  GET  /v1/_test/state   which plugs are failing right now
-  GET  /v1/_test/report?tenant_id=   what the checker needs: the shop's audit log, the decision traces, the order totals
+POST /v1/_test/chaos   {"plug": "shop"|"policy_search"|"rule_checker"|"safety_screen", "seconds": 30}
+                       the plug fails every call, then recovers by itself after `seconds`
+POST /v1/_test/heal    {"plug": ...} or {} for every plug: recover now
+GET  /v1/_test/state   which plugs are failing right now
+GET  /v1/_test/report?tenant_id=   what the checker needs: the shop's audit log, the decision traces, the order totals
 """
 
 import asyncio

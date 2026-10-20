@@ -1,6 +1,5 @@
 """The shop's published tools, cached per business.
 
-OWNER: Track A.
 
 CapabilityRegistry asks the shop for its tool list (list_tools) at most once per capability_ttl_s seconds per tenant.
 If the shop cannot be asked, the last good list is served (marked stale) so a short outage does not stop the chat;

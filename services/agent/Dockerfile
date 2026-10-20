@@ -1,4 +1,4 @@
-# Ticket-Easy Team B (agent + inbox + dashboard). Build from the repository root:
+# Ticket-Easy agent service (agent + inbox + dashboard). Build from the repository root:
 #   docker build -f services/agent/Dockerfile -t ticket-easy-agent .
 # (docker compose does this for you: see docker-compose.yml)
 

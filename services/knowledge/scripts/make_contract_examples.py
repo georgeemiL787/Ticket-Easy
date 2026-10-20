@@ -94,7 +94,7 @@ EXAMPLES = {
          {**RESOLVED, "request_id": "req-0021", "category": "card_dispute", "escalation_reason": "mandatory_category",
           "risk_categories": ["fraud_suspected"],
           "redacted_summary": "Customer reported a card payment they did not make.",
-          "resolution": "Handed to the payments team."}),
+          "resolution": "Handed to the payments department."}),
         ("rejected_personal_data", "post", "/v1/knowledge/resolutions",
          {**RESOLVED, "request_id": "req-0022",
           "redacted_summary": "Mona Adel asked for a refund on order NS-20877; call back on 01012345678."}),

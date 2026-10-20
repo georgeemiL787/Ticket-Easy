@@ -30,7 +30,7 @@ LIVE_ACTIVATION = dict(permitted_uses=["artifact_creation", "live_demo_testing",
 # it is built for production: whether it may run is decided by the live promotion and publication, re-checked on every call.
 PRODUCTION_ACTIVATION = dict(permitted_uses=["artifact_creation", "production_execution"], runtime_ready=True, activated=True,
                              note="Built for production by an admin promotion: calls reach the business's real API with its service credential, scoped to the "
-                                  "verified customer by Team C. It runs only while its promotion and publication are active.")
+                                  "verified customer by the tools service. It runs only while its promotion and publication are active.")
 # Supported mechanisms; anything else leaves the requirement unenforced and blocks execution.
 MECHANISMS = {"caller_access": {"delegated_user_credential"}, "record_scope": {"response_field_matches_context"}}
 COMPARISONS = {"equals"}
@@ -199,7 +199,7 @@ def production_blockers(access, auth, policy):
         e = a["enforcement"]
         if a["kind"] == "record_scope":
             if e.get("mechanism") != "response_field_matches_context":
-                found.append(f'{a["id"]}: record-scope must be a Team C check against the customer\'s context, not {"unrestricted" if e.get("unrestricted") else "the API alone"}')
+                found.append(f'{a["id"]}: record-scope must be a the tools service check against the customer\'s context, not {"unrestricted" if e.get("unrestricted") else "the API alone"}')
         elif a["kind"] == "data_scope":
             found.append(f'{a["id"]}: a list the API filters by caller cannot run with a service credential (no per-row customer filter exists yet)')
         elif a["kind"] != "caller_access":

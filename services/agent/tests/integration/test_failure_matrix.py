@@ -2,7 +2,8 @@
 switches.
 
 Rows covered here: safety screen, rule checker, shop reads and writes, unpublished tools, rising frustration, out of
-scope. (The policy search rows belong to Track B's matrix.) Every case also checks the global rules: no write the shop
+scope. (The policy search rows belong to the knowledge failure matrix.) Every case also checks the global rules: no
+write the shop
 did not apply on purpose, the trace of every turn is valid, and nothing is called done that the shop did not prove.
 """
 

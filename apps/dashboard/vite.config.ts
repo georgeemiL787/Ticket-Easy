@@ -2,7 +2,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// The app is served by the Team B service at /dashboard; `npm run build` writes straight into its web folder.
+// The app is served by the the agent service at /dashboard; `npm run build` writes straight into its web folder.
 export default defineConfig({
   base: "/dashboard/",
   plugins: [react()],

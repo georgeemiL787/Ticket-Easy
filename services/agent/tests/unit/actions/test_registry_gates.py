@@ -371,5 +371,5 @@ async def test_a_call_that_says_not_published_drops_the_remembered_list(containe
     assert again.decision is Decision.HANDOFF and trace.escalation_reason is EscalationReason.CAPABILITY_MISSING
 
 
-def test_gates_module_names_its_owner() -> None:
-    assert "OWNER: Track A" in (gates.__doc__ or "")
+def test_gates_module_is_documented() -> None:
+    assert (gates.__doc__ or "").strip()

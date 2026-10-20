@@ -2,8 +2,8 @@
 
 Rules (enforced here and again inside the orchestrator): only the person who claimed a case may reply, decide,
 resolve or return it; a move the case life cycle does not allow answers 409 INVALID_STATE; every change appends a
-CaseEvent. "agent" is a plain name for now (Phase 4 replaces it with logins). Approval of a waiting action is built by
-Track A (Orchestrator.human_decide): until then the decision endpoint answers 501 NOT_IMPLEMENTED.
+CaseEvent. "agent" is a plain name for now (Phase 4 replaces it with logins). Approval of a waiting action is done by
+Orchestrator.human_decide: until then the decision endpoint answers 501 NOT_IMPLEMENTED.
 """
 
 import base64

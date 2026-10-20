@@ -1,4 +1,5 @@
-"""The product has one name for owners and customers: no page, text or label shows "Team A", "Team B" or "Team C"."""
+"""The product has one name for owners and customers: no page, text or label shows "The knowledge service", "The agent"
+or "The tools service"."""
 
 import json
 import re

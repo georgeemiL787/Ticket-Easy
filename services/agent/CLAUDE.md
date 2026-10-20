@@ -304,9 +304,9 @@ services/agent/
   tests/contract/  fixture validation: every shop_001 fixture parses and cross-references agree
                    conformance.py (check_* functions per port: EvidenceProvider, PolicyGate, CapabilityClient; reusable against real services), test_conformance_simulated.py runs them on the simulated services
   tests/integration/  test_failure_matrix.py (one case per failure row: safety screen, rule checker, reads, writes, unpublished tools, frustration, out of scope, identity, ownership), scenario runner: scenario_format (strict models), scenario_runner, test_scenarios (format docs at top), test_coverage
-                      test_a_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
+                      test_safety_property.py (200 random conversations x 4 seeds, ~6 s each: writes need an allow in the same turn and an earlier confirmation question,
                       success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-core self-tests),
-                      test_a_leak_scan.py (no order data in any scenario reply before verification)
+                      test_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
   tests/fake_tools_mcp.py  a scripted simulated service for Team C's MCP server (tests/unit/adapters/test_tools_catalog.py, tests/unit/api/test_business_tools.py)
   tests/support.py    make_settings(): follows AGENT_STORE; store tests in tests/unit/adapters run on memory and sqlite
@@ -317,7 +317,7 @@ services/agent/
   web/inbox/   the support inbox (index.html, inbox.js, style.css): /inbox; inbox.js exports pure helpers for node tests; no innerHTML
   web/dashboard                                                                            (planned)
   eval/conversations/<style>.jsonl (200 conversations, 50 per style, gold per turn: intents, entities, decision, citations, escalation; written by
-  scripts/make_eval_set.py from the policies, not from the core), eval_baseline.json (what the rules reach; tests/integration/test_b_eval.py holds the
+  scripts/make_eval_set.py from the policies, not from the core), eval_baseline.json (what the rules reach; tests/integration/test_eval.py holds the
   20-conversation sample to the targets or the baseline); `python -m agent_service eval --set eval/conversations [--llm] [--save-baseline]` writes reports/eval_<date>.md/.json
   (src/agent_service/eval_conversations.py)
   comparison measures (eval_conversations.py: solved without a person, needless handoffs, missed escalations, wrong or unapproved actions (writes the gold does not expect or sent without a rule check),
@@ -387,7 +387,7 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
   (MODEL, FALLBACK_MODEL, BASE_URL, API_KEY, RPM, TPM, REASONING_EFFORT) and AGENT_LLM_MAX_WAIT_S; switches LLM_REWRITE, LLM_KNOWLEDGE, LLM_REVIEW, LLM_POLICY.
 - Commands: `eval --llm --agent-mode ... --label X [--per-style N --batch N --resume --judge --writer-compare]`, `eval-compare`, `replay`.
 - Docs: docs/agentic_design.md (plain language), docs/agent_comparison.md (numbers), docs/metrics.md 15-19, docs/runbook.md 8-10.
-- Safety suites that must stay green: tests/adversarial (incl. test_agent_loop_attacks.py), test_a_safety_property, test_agent_safety_property.
+- Safety suites that must stay green: tests/adversarial (incl. test_agent_loop_attacks.py), test_safety_property, test_agent_safety_property.
 
 ## Fixes from trying the agent by hand (2026-10-11)
 

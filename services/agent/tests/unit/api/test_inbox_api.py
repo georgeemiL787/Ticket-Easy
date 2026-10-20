@@ -216,7 +216,7 @@ async def test_bad_bodies_are_rejected_with_the_error_format(chat: httpx.AsyncCl
         assert (response.status_code, error_code(response)) == (422, "INVALID_REQUEST"), (action, body)
 
 
-# ---- the decision endpoint (approval is Track A's) ----
+# ---- the decision endpoint (approval belongs to the action flow) ----
 
 
 async def with_waiting_action(container: Container, case_id: str) -> None:

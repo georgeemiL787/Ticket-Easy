@@ -33,7 +33,8 @@ class ToolCallRequest(RequestModel):
     approval_id: str | None = None  # the human approval, when the rules needed one
     actor: Literal["customer", "human"] = "customer"
     # The customer the core verified (session.identity), set by code, never by the model or the customer. A shop that
-    # acts with each customer's own credential (Team C's sandbox tools) picks it from this; None: not verified.
+    # acts with each customer's own credential (the tools service's sandbox tools) picks it from this; None: not
+    # verified.
     acting_customer_id: str | None = None
 
 

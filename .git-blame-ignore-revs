@@ -16,3 +16,6 @@ b394efb174ee7982fee0b03cec4762143d9d4050
 
 # Rename the agent connections, simulated services, classes and the planner job
 900d17cc51697c83d83f583e636eb030a25b47be
+
+# Rename every setting to its service prefix
+35cae2ab0809b4009d32fcc8f280e5d3606f95f4

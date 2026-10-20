@@ -17,9 +17,9 @@ read from the commit history and the code-owner file, so correct it when the wor
 
 | Service | Folder | What it does | Looked after by |
 |---|---|---|---|
-| Knowledge | `services/knowledge/` | Finds the right policy passage with a citation, screens risky messages, and checks every action against the approved rules | Basmala Hesham (most of its commits), with Omar Essam and George Emil |
+| Knowledge | `services/knowledge/` | Finds the right policy passage with a citation, screens risky messages, and checks every action against the approved rules | Basmala Hesham and Asmaa Nazeh (retrieval and guardrails) |
 | Agent | `services/agent/` | Chat, understanding, decisions, actions, hand-off to a person, inbox, and the manager dashboard pages | Omar Essam and Basel Elhofy (see the parts below) |
-| Tools | `services/tools/` | Turns a shop's API description into tools the owner approves, and serves them to the agent | George Emil (most of its commits), with Omar Essam |
+| Tools | `services/tools/` | Turns a shop's API description into tools the owner approves, and serves them to the agent | George Emil |
 | Dashboard | `apps/dashboard/` | The manager dashboard (React), built into the agent | Omar Essam, with George Emil and Basel Elhofy |
 | Local scripts and docs | `ops/local/`, `docs/` | Starting everything locally, the end-to-end checks, the plans and reports | Shared |
 
@@ -43,4 +43,4 @@ the action flow (`actions/flow.py`), the action state machine (`domain/actions.p
 (`domain/trace.py`), the rule checker simulation (`adapters/simulated/rule_checker.py`), and the automatic checks in
 `.github/`. See `.github/CODEOWNERS` and `services/agent/docs/ci.md`.
 
-Asmaa Nazeh has no commits in the history yet; she reviews as a code owner.
+Asmaa Nazeh worked with Basmala Hesham on retrieval and guardrails; her commits may sit under another name.

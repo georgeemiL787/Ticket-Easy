@@ -53,7 +53,7 @@ def tool_def(
     schema = {"type": "object", "properties": {"order_id": {"type": "string"}}, "additionalProperties": False}
     return {
         "name": name, "title": name, "description": "sandbox-only", "annotations": {"readOnlyHint": read_only},
-        "inputSchema": schema, "_meta": {"team_c": meta},
+        "inputSchema": schema, "_meta": {"tools": meta},
     }  # fmt: skip
 
 
@@ -151,7 +151,7 @@ async def test_a_published_tool_is_served_with_the_businesss_own_spec_and_unboun
         "apply_voucher" not in tools
     )  # bound to the tools service and not published there: never the simulated service's
     state = client.status(T)
-    assert state is not None and state.resolved["get_order"].team_c_tool == "order_v2_aa"  # newest version
+    assert state is not None and state.resolved["get_order"].published_tool == "order_v2_aa"  # newest version
     assert state.resolved["apply_voucher"].problem == "not_published"
 
 
@@ -182,7 +182,7 @@ async def test_tools_down_hides_its_tools_but_the_simulated_services_stay(fake: 
     names = {t.name for t in await client.list_tools(T)}
     assert "get_order" not in names and "verify_customer" in names
     state = client.status(T)
-    assert state is not None and state.error and state.resolved["get_order"].problem == "team_c_unavailable"
+    assert state is not None and state.error and state.resolved["get_order"].problem == "tools_unavailable"
 
 
 async def test_a_new_publication_appears_on_the_next_listing_without_a_restart(fake: Fake, made: Made) -> None:
@@ -207,7 +207,7 @@ async def test_a_success_maps_the_output_and_runs_as_the_verified_customers_own_
     client = made(tools={"get_order": binding})
     await client.list_tools(T)
     result = await client.call_tool(T, request("get_order", customer="C-101"))
-    assert result.status == "success" and result.audit_id == "team-c:exe-succeeded"
+    assert result.status == "success" and result.audit_id == "tools:exe-succeeded"
     assert result.data["order_status"] == "shipped" and result.data["delivered_at"] is None  # a real null is kept
     assert result.data["ran_as"] == "bob"  # C-101 is bob in the operator's map
     sent = fake.calls()
@@ -260,7 +260,7 @@ async def test_only_succeeded_is_a_success_and_an_unclear_write_is_never_reporte
     result = await client.call_tool(T, request("apply_voucher", VOUCHER_ARGS))
     assert result.status == "error" and result.error_code == code
     assert result.write_may_have_applied is uncertain and result.retryable is False
-    assert result.audit_id == f"team-c:exe-{status}"
+    assert result.audit_id == f"tools:exe-{status}"
     assert len(fake.calls()) == 1  # never repeated
 
 
@@ -272,7 +272,7 @@ async def test_an_error_on_a_read_is_not_an_unclear_write(fake: Fake, made: Made
     assert result.error_code == "TOOLS_ERROR" and not result.write_may_have_applied
 
 
-async def test_a_disabled_tool_answers_not_published_and_the_next_call_asks_team_c_again(
+async def test_a_disabled_tool_answers_not_published_and_the_next_call_asks_the_tools_service_again(
     fake: Fake, made: Made
 ) -> None:
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=ORDER_OK)
@@ -331,10 +331,10 @@ async def test_a_result_that_claims_production_is_not_trusted(fake: Fake, made: 
 
 
 def test_the_example_config_is_valid_and_its_paths_are_relative_to_the_file() -> None:
-    config = ToolsConfig.load(PROJECT_ROOT / "config" / "team_c.example.json")
+    config = ToolsConfig.load(PROJECT_ROOT / "config" / "tools.example.json")
     assert set(config.tenants["shop_001"].tools) == {"get_order", "create_ticket"}
-    team_c = (PROJECT_ROOT.parent / "tools").resolve()
-    assert config.cwd == str(team_c) and Path(config.command[0]).is_relative_to(team_c)
+    tools_folder = (PROJECT_ROOT.parent / "tools").resolve()
+    assert config.cwd == str(tools_folder) and Path(config.command[0]).is_relative_to(tools_folder)
     command = config.server_command("biz", "alice")
     assert command[3:7] == ["--business-id", "biz", "--identity", "alice"]
     assert ["--sandbox-hosts", "127.0.0.1:8102"] == command[-2:]
@@ -363,10 +363,10 @@ async def test_only_the_allowed_environment_is_used_and_two_allowed_ones_are_amb
     fake.publish(sandbox, live)
     live_only = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["live_demo"]}})
     await live_only.list_tools(T)
-    assert live_only.status(T).resolved["get_order"].team_c_tool == "order_live_v1_bb"  # type: ignore[union-attr]
+    assert live_only.status(T).resolved["get_order"].published_tool == "order_live_v1_bb"  # type: ignore[union-attr]
     sandbox_only = made()
     await sandbox_only.list_tools(T)
-    assert sandbox_only.status(T).resolved["get_order"].team_c_tool == "order_sbx_v1_aa"  # type: ignore[union-attr]
+    assert sandbox_only.status(T).resolved["get_order"].published_tool == "order_sbx_v1_aa"  # type: ignore[union-attr]
     both = made(tools={"get_order": {"proposal_id": GET_ORDER_PROPOSAL, "environments": ["sandbox", "live_demo"]}})
     assert "get_order" not in {t.name for t in await both.list_tools(T)}
     assert both.status(T).resolved["get_order"].problem == "ambiguous"  # type: ignore[union-attr]
@@ -383,7 +383,9 @@ async def test_a_result_from_another_environment_is_not_trusted(fake: Fake, made
     ("category", "code"),
     [("not_found", "NOT_FOUND"), ("rate_limited", "TOOLS_FAILED"), ("authentication_failed", "TOOLS_FAILED")],
 )
-async def test_a_read_failure_keeps_team_cs_category(fake: Fake, made: Made, category: str, code: str) -> None:
+async def test_a_read_failure_keeps_the_tools_services_category(
+    fake: Fake, made: Made, category: str, code: str
+) -> None:
     failed = envelope("get_order_v1_aa", "failed") | {"error": {"code": "rejected_by_api", "category": category}}
     fake.publish(tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=failed)
     client = made()
@@ -402,24 +404,24 @@ def test_a_binding_names_exactly_one_tool() -> None:
 
 
 def core(tmp_path: Path, fake: Fake) -> Container:
-    path = tmp_path / "team_c.json"
+    path = tmp_path / "tools.json"
     path.write_text(json.dumps(fake.config()), encoding="utf-8")
     return build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28), tools_config=path))
 
 
-async def test_the_agent_answers_an_order_question_from_team_cs_tool_as_the_verified_customer(
+async def test_the_agent_answers_an_order_question_from_the_tools_services_tool_as_the_verified_customer(
     tmp_path: Path, fake: Fake
 ) -> None:
     fake.publish(
         tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=envelope("get_order_v1_aa", "succeeded", ORDER)
     )
     c = core(tmp_path, fake)
-    assert c.orchestrator is not None and c.team_c is not None
+    assert c.orchestrator is not None and c.tools is not None
     try:
         first = await c.orchestrator.handle_turn(T, "tc1", "Where is my order NS-20877?")
         second = await c.orchestrator.handle_turn(T, "tc1", "01012345601")
     finally:
-        await c.team_c.aclose()
+        await c.tools.aclose()
     assert (
         first.decision.value == "verify_identity"
     )  # the simulated service's verify_customer: identity first, nothing read
@@ -427,10 +429,10 @@ async def test_the_agent_answers_an_order_question_from_team_cs_tool_as_the_veri
     assert [x["identity"] for x in fake.calls()] == ["alice"]  # C-100, verified by phone, acts as alice
     traces = await c.traces.for_conversation(T, "tc1")
     reads = [call for t in traces for call in t.tool_calls if call.tool == "get_order"]
-    assert reads and reads[-1].audit_id == "team-c:exe-succeeded"
+    assert reads and reads[-1].audit_id == "tools:exe-succeeded"
 
 
-async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_repeated(
+async def test_an_unknown_outcome_from_the_tools_service_hands_over_and_the_write_is_not_repeated(
     tmp_path: Path, fake: Fake
 ) -> None:
     name = "issue_voucher_v1_cc"
@@ -441,14 +443,14 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
         **{name: envelope(name, "outcome_unknown", writes=[{"step_id": "s1", "write_state": "unknown"}])},
     )
     c = core(tmp_path, fake)
-    assert c.orchestrator is not None and c.team_c is not None
+    assert c.orchestrator is not None and c.tools is not None
     try:
         replies = [
             await c.orchestrator.handle_turn(T, "tc2", text)
             for text in ("I want a voucher of 100 EGP for the late delivery of order NS-20877", "01012345601", "yes")
         ]
     finally:
-        await c.team_c.aclose()
+        await c.tools.aclose()
     assert [r.decision.value for r in replies] == ["verify_identity", "confirm", "handoff"]
     last = await c.traces.get(T, replies[-1].trace_id)
     assert last is not None and last.escalation_reason is not None
@@ -458,7 +460,7 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
     assert c.shop is not None and not any(e.tool == "apply_voucher" for e in c.shop.audit_log(T))  # not the simulated
 
 
-def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_team_c_success() -> None:
+def test_a_bound_tool_can_echo_an_argument_and_set_a_constant_after_a_tools_service_success() -> None:
     from agent_service.adapters.tools_catalog import ResolvedTool, ToolBinding, _result
 
     envelope = {
@@ -492,7 +494,7 @@ def bundle_with(tool: str, proposal: str, business: str = BUSINESS) -> Any:
 
     config = TenantRegistry.from_dir(PROJECT_ROOT / "config" / "tenants").get(T)
     others = tuple(t for t in tools_from_config(config) if t.name != tool)
-    bound = BundleTool(name=tool, source="team_c", binding=ToolBindingRef(business_id=business, proposal_id=proposal))
+    bound = BundleTool(name=tool, source="tools", binding=ToolBindingRef(business_id=business, proposal_id=proposal))
     return TenantBundle(
         tenant_id=T, version=2, status="active", created_at=datetime(2026, 9, 28, tzinfo=UTC), created_by="test",
         config=config, profile=BundleProfile(display_name=config.display_name), tools=(*others, bound),

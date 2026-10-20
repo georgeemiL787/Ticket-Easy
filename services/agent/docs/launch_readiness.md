@@ -125,7 +125,7 @@ result, restore a backup, rotate secrets, add a support person.
 
 ## Addendum (agentic upgrade, 2026-10-10)
 
-The agent upgrade is on branch `team-b-v2`. It does not change the verdict above on its own: **agent mode is off by
+The agent upgrade lives on its own branch. It does not change the verdict above on its own: **agent mode is off by
 default** (`docs/agent_comparison.md`: in a small sample it was safe, with zero wrong actions and zero unbacked facts, but
 less accurate on outcomes and slower than today's flow on the Groq free plan). What to check before turning it on for a shop:
 the fallback rate on the Overview stays low for a week in `shadow` mode, the `agent_fallback_spike` and `reviewer_block_spike`

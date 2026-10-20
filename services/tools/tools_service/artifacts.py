@@ -13,7 +13,7 @@ from .persistence.util import digest
 
 # /2: every step body carries "required" and the complete request "schema". The executor keys on their presence,
 # not on this string: /1 bodies without them are always sent.
-FORMAT = "team_c.tool_artifact/2"
+FORMAT = "tools.tool_artifact/2"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 LIMITS = dict(timeout_seconds=10.0, max_request_bytes=64 * 1024, max_response_bytes=256 * 1024, max_steps=8, follow_redirects=False, retries=0)
 FAILURE = dict(on_step_failure="Stop. Later steps, including dependent writes, are not attempted.",
@@ -165,7 +165,7 @@ def enforcement_for(requirement, config, content, ops, auth, context_fields):
         from_check = bool(b) and b["kind"] == "previous_operation_output" and b["step_id"] == step["id"]
         if order.index(sid) < order.index(step["id"]) or not (from_check or (checked is not None and b == checked)):
             raise invalid(f"{sid} must follow {step['id']} and take {requirement['field']} from the checked record (same source, or {step['id']}'s response)")
-    return dict(status="configured", mechanism=mechanism, enforced_by="team_c_executor", step_id=step["id"], response_status=config["response_status"],
+    return dict(status="configured", mechanism=mechanism, enforced_by="tools_executor", step_id=step["id"], response_status=config["response_status"],
                 pointer=config["pointer"], context_field=config["context_field"], comparison=config["comparison"], check_point=config["check_point"],
                 detail=f"After {step['id']} returns {config['response_status']}, {config['pointer']} must equal trusted context field "
                        f"{config['context_field']}; otherwise no later step runs and no output is returned.")
@@ -256,7 +256,7 @@ def compile_artifact(content, derived: Grounding, inventory: Inventory, requirem
     artifact["access_policy"] = compiled_policy
     if compiled_policy:
         from .compiler.readiness import assess
-        artifact["format"] = "team_c.tool_artifact/3"
+        artifact["format"] = "tools.tool_artifact/3"
         readiness = assess(content, inventory, compiled_policy, artifact)
         if not readiness["build_ready"]:
             raise AppError("capability_not_ready", "Resolve capability readiness before building", details={"blockers": [f["detail"] for f in readiness["factors"] if f["stage"] == "build" and not f["passed"]]})

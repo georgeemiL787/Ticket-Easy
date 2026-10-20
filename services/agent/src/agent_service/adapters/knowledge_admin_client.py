@@ -15,7 +15,7 @@ import httpx
 
 from agent_service.contracts.errors import UpstreamError
 
-SERVICE = "team_a"
+SERVICE = "knowledge"
 REFUSALS = {"INVALID_REQUEST", "INVALID_STATE", "NOT_FOUND", "TENANT_NOT_FOUND", "FORBIDDEN"}
 
 
@@ -89,7 +89,7 @@ class KnowledgeAdminClient:
         current = [d for d in docs.get("documents", []) if d.get("current")]
         return {
             "knowledge": {
-                "provider": "team_a",
+                "provider": "knowledge",
                 "index_tenant": tenant_id,
                 "documents": [
                     {

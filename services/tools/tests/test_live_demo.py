@@ -132,7 +132,7 @@ def test_publishing_follows_the_artifacts_environment_and_never_claims_productio
     assert pub["environment"] == "live_demo" and pub["execution_enabled"] is True
     assert pub["production_ready"] is False and pub["production_activation"] is False and pub["production_assessment"] == "not_assessed"
     [tool] = d.service.published_tools(pub["business_id"], "alice")
-    meta = tool["meta"]["team_c"]
+    meta = tool["meta"]["tools"]
     assert meta == dict(meta, environment="live_demo", api_host="desk.test", execution_enabled=True, production_ready=False, activated=False)
     assert "LIVE DEMO" in tool["description"] and "sandbox-only" not in tool["description"]
     assert "token" not in json.dumps(tool).lower().replace("tokens", "")  # no credential in the model-visible definition

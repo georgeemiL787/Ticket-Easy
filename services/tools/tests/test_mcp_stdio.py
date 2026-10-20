@@ -113,7 +113,7 @@ def test_published_artifact_through_the_real_sdk_client(desk):
             assert tool.name == name and tool.title == a["content"]["name"] and tool.annotations.read_only_hint is False
             assert tool.input_schema == publishing.json_schema(a["content"]["input_schema"])
             assert set(tool.input_schema["properties"]) == {"booking_reference", "category", "details"} and tool.input_schema["additionalProperties"] is False
-            assert tool.meta["team_c"]["artifact_sha256"] == a["sha256"] and tool.meta["team_c"]["production_ready"] is False
+            assert tool.meta["tools"]["artifact_sha256"] == a["sha256"] and tool.meta["tools"]["production_ready"] is False
             assert tool.output_schema["properties"]["output"]["anyOf"][0]["properties"] == {"ticket": a["content"]["output_schema"]["properties"]["ticket"]}
 
             before = len(d.requests())

@@ -269,8 +269,8 @@ def test_admin_token_gates_production_actions_through_the_api(prod):
     assert d.client.post(url, json=body).json()["code"] == "admin_token_required"  # no token configured: production actions are off
     d.service.settings.admin_token = "operator-token"
     assert d.client.post(url, json=body).json()["code"] == "admin_token_invalid"
-    assert d.client.post(url, json=body, headers={"x-team-c-admin-token": "wrong"}).status_code == 403
-    done = d.client.post(url, json=body, headers={"x-team-c-admin-token": "operator-token"})
+    assert d.client.post(url, json=body, headers={"x-tools-admin-token": "wrong"}).status_code == 403
+    done = d.client.post(url, json=body, headers={"x-tools-admin-token": "operator-token"})
     assert done.status_code == 200 and done.json()["status"] == "active"
     # once a token is set it guards every change through the REST API, reads stay open
     assert d.client.get(f"/api/v1/businesses/{d.business}/promotions").status_code == 200
@@ -302,7 +302,7 @@ def test_content_that_differs_beyond_the_destination_is_refused():
     assert rules.differences(base, dict(twin, execution_blockers=["x"])) == ["execution_blockers"]
 
 
-def test_a_secret_can_also_be_a_file_that_only_team_c_reads(prod, tmp_path, monkeypatch):
+def test_a_secret_can_also_be_a_file_that_only_the_tools_service_reads(prod, tmp_path, monkeypatch):
     from tools_service.connectors import resolve_secret, secret_name
     path = tmp_path / "svc.key"
     path.write_text(SERVICE_TOKEN + chr(10), encoding="utf-8")

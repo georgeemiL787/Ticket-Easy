@@ -13,14 +13,14 @@ const publication = {
 };
 const page = (published: boolean) => ({
   tenant_id: T, configured: true, sandbox_only: true, business_id: "biz-1", builder_url: "http://127.0.0.1:8101/businesses/biz-1",
-  builder_base: "http://127.0.0.1:8101", listed_at: "2026-10-12T08:05:00Z", team_c_error: null, mapped_customers: 2,
+  builder_base: "http://127.0.0.1:8101", listed_at: "2026-10-12T08:05:00Z", tools_error: null, mapped_customers: 2,
   tools: [
-    { name: "get_order", used_by: ["order_status"], source: "team_c", environment: "sandbox", api_host: null, status: published ? "available" : "missing",
+    { name: "get_order", used_by: ["order_status"], source: "tools", environment: "sandbox", api_host: null, status: published ? "available" : "missing",
       reason: published ? null : "not_published", detail: published ? "" : "no sandbox publication of this tool is active in Team C",
-      operation_kind: published ? "read" : null, team_c_tool: published ? publication.tool_name : null, publication_id: null,
+      operation_kind: published ? "read" : null, published_tool: published ? publication.tool_name : null, publication_id: null,
       proposal_id: "prop-1", proposal_version: 1, artifact_sha256: null },
-    { name: "verify_customer", used_by: ["identity"], source: "standin", status: "available", reason: null, detail: "",
-      operation_kind: "read", team_c_tool: null, publication_id: null, proposal_id: null, proposal_version: null, artifact_sha256: null },
+    { name: "verify_customer", used_by: ["identity"], source: "simulated", status: "available", reason: null, detail: "",
+      operation_kind: "read", published_tool: null, publication_id: null, proposal_id: null, proposal_version: null, artifact_sha256: null },
   ],
   publications: [published ? publication : { ...publication, status: "disabled", effective_status: "disabled", disabled_at: "2026-10-12T09:00:00Z" }],
   publications_error: null,

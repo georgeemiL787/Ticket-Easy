@@ -9,7 +9,7 @@ as an owner would in its pages, with every owner decision labelled sandbox-only:
   -> approve to build -> save the sandbox connector (with its test-fixture endpoints) -> build the artifact -> save the demo
   customers' identities for the agent's chat (alice = C-100, bob = C-101, ...) -> ONE automatic-test call (the tools service creates its own
   test accounts and records, runs the policy tests and the own-record / cross-customer scenarios) -> publish to the sandbox-only
-  sandbox MCP -> write the agent's binding (ops/local/var/team_c.json). `--manual-tests` keeps the old hand-written tests.
+  sandbox MCP -> write the agent's binding (ops/local/var/tools.json). `--manual-tests` keeps the old hand-written tests.
 
 Nothing here approves on anyone's behalf without saying so: approvals are recorded by the tools service with this script's notes.
 Progress is kept in ops/local/var/lifecycle.json so a failed run resumes without asking the model again; --fresh
@@ -44,14 +44,14 @@ IDENTITIES = {
 
 TOOLS = {
     "order": dict(
-        team_b="get_order",
+        agent_tool="get_order",
         goal="let a logged-in customer look up one of their own orders by its order id: order status, "
         "payment status, dates (placed, shipped, delivered, expected delivery), total, item name, product category, "
         "clearance flag, item condition and tracking number. Read only; change nothing.",
         method="GET",
     ),
     "ticket": dict(
-        team_b="create_ticket",
+        agent_tool="create_ticket",
         goal="let a logged-in customer open a support ticket about one of their own orders. First look up "
         "the order by its order id (GET /api/orders/{order_id}) to confirm it belongs to the caller, then open the ticket "
         "(POST /api/tickets) for that same order with a subject and a description, and return the new ticket id and "
@@ -71,41 +71,41 @@ _UNSHIPPED = [("carol_own_order", "carol", "NS-20955", "succeeded", "own_record"
               ("dan_cannot_use_carols_order", "dan", "NS-20955", "failed", "cross_user", "carol")]
 TOOLS.update(
     orders=dict(
-        team_b="list_customer_orders", method="GET", financial=False, irreversible=False,
+        agent_tool="list_customer_orders", method="GET", financial=False, irreversible=False,
         goal="let a logged-in customer list all of their own orders (GET /api/orders): for each the order "
         "id, status, total and placement date. Read only; change nothing.",
         tests=[("alice_orders", "alice", None, "succeeded", "own_record", None),
                ("bob_orders", "bob", None, "succeeded", "own_record", None)],
     ),
     return_=dict(
-        team_b="create_return", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
+        agent_tool="create_return", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
         goal="let a logged-in customer request a return for one of their own delivered orders. First look up "
         "the order by its order id (GET /api/orders/{order_id}) to confirm it belongs to the caller, then request the "
         "return (POST /api/returns) for that order with a reason, and return the return reference and status.",
     ),
     exchange=dict(
-        team_b="create_exchange", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
+        agent_tool="create_exchange", method="POST", financial=False, irreversible=False, tests=_AFTER_SALES,
         goal="let a logged-in customer request an exchange (optionally for another size) for one of their own "
         "delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
         "request the exchange (POST /api/exchanges) with a reason and the new size, and return the exchange reference "
         "and status.",
     ),
     refund=dict(
-        team_b="create_refund", method="POST", financial=True, irreversible=True, tests=_AFTER_SALES,
+        agent_tool="create_refund", method="POST", financial=True, irreversible=True, tests=_AFTER_SALES,
         goal="let a logged-in customer request a refund of an amount (at most the order total) for one of "
         "their own paid, delivered orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to "
         "the caller, then request the refund (POST /api/refunds) with the order id, the amount and a reason, and return "
         "the refund reference, status and amount.",
     ),
     cancel=dict(
-        team_b="cancel_order", method="POST", financial=False, irreversible=True,
+        agent_tool="cancel_order", method="POST", financial=False, irreversible=True,
         tests=_UNSHIPPED,
         goal="let a logged-in customer cancel one of their own orders that has not shipped yet. First look up "
         "the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then cancel it "
         "(POST /api/orders/{order_id}/cancel), and return the cancellation reference and status.",
     ),
     address=dict(
-        team_b="update_delivery_address", method="POST", financial=False, irreversible=False,
+        agent_tool="update_delivery_address", method="POST", financial=False, irreversible=False,
         tests=_UNSHIPPED,
         goal="let a logged-in customer change the delivery address of one of their own orders that has not "
         "shipped yet. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then "
@@ -113,7 +113,7 @@ TOOLS.update(
         "reference and status.",
     ),
     voucher=dict(
-        team_b="apply_voucher", method="POST", financial=True, irreversible=False, tests=_AFTER_SALES,
+        agent_tool="apply_voucher", method="POST", financial=True, irreversible=False, tests=_AFTER_SALES,
         goal="let a logged-in customer be issued a goodwill voucher (up to 1000 EGP) about one of their own "
         "orders. First look up the order (GET /api/orders/{order_id}) to confirm it belongs to the caller, then issue the "
         "voucher (POST /api/vouchers) with the order id, amount and reason, and return the reference, voucher code and "
@@ -135,7 +135,7 @@ class Owner:
     def __init__(self) -> None:
         # The tools service requires its admin token on REST changes once the operator set one (ops/local/production.env switches that on)
         key = VAR / "tools_admin.key"
-        token = {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
+        token = {"x-tools-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
         self.http = httpx.Client(base_url=TOOLS_URL, timeout=600.0, trust_env=False, headers=token)
         self.csrf: str | None = None
 
@@ -408,7 +408,7 @@ def fill_missing_outputs(binding: dict[str, Any], declared: dict[str, Any]) -> N
 
 
 def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], environment: str = "sandbox") -> Path:
-    path = VAR / "team_c.json"
+    path = VAR / "tools.json"
     config = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
     tools_dir = ROOT / "services" / "tools"
     python = tools_dir / ".venv" / "Scripts" / "python.exe"
@@ -422,7 +422,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
     tenant["business_id"] = state["business_id"]
     tenant["identities"] = {customer: name for name, (customer, _) in IDENTITIES.items()}
     spec = json.loads((ROOT / "services" / "agent" / "fixtures" / "shop_001" / "tools.json").read_text(encoding="utf-8"))
-    declared = next(t for t in spec["tools"] if t["name"] == TOOLS[tool]["team_b"])
+    declared = next(t for t in spec["tools"] if t["name"] == TOOLS[tool]["agent_tool"])
     wanted = list(declared["output_schema"].get("properties") or {})
     inputs = list((content.get("input_schema") or {}).get("properties") or {})
     binding: dict[str, Any] = {"proposal_id": state["proposal_id"], "fields": output_fields(content, wanted), "environments": [environment]}
@@ -439,7 +439,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
     if "reference_id" in binding["fields"]:
         binding["reference_field"] = "reference_id"  # also for cancel / address changes: the customer is told the reference
     fill_missing_outputs(binding, declared)
-    tenant.setdefault("tools", {})[TOOLS[tool]["team_b"]] = binding
+    tenant.setdefault("tools", {})[TOOLS[tool]["agent_tool"]] = binding
     path.write_text(json.dumps(config, indent=2), encoding="utf-8")
     return path
 
@@ -477,7 +477,7 @@ def live_main(tool: str) -> int:
     print(f"published {state['tool_name']} (publication {state['publication_id']}, environment live_demo, not production)")
     content = owner.get(f"/artifacts/{aid}")["content"]
     path = write_binding(state, tool, content, "live_demo")
-    print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]['team_b']} -> proposal {pid}, environments [live_demo]")
+    print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]["agent_tool"]} -> proposal {pid}, environments [live_demo]")
     print("\nLIVE DEMO PUBLICATION COMPLETE (restart Team B to load the binding)")
     return 0
 
@@ -581,8 +581,8 @@ def main() -> int:
     step("Bind it into Team B")
     content = owner.get(f"/artifacts/{aid}")["content"]
     path = write_binding(state, tool, content)
-    print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]['team_b']} -> proposal {pid}")
-    print(json.dumps(json.loads(path.read_text(encoding="utf-8"))["tenants"]["shop_001"]["tools"][TOOLS[tool]["team_b"]], indent=2))
+    print(f"wrote {path.relative_to(ROOT)}: {TOOLS[tool]["agent_tool"]} -> proposal {pid}")
+    print(json.dumps(json.loads(path.read_text(encoding="utf-8"))["tenants"]["shop_001"]["tools"][TOOLS[tool]["agent_tool"]], indent=2))
     print("\nLIFECYCLE COMPLETE")
     return 0
 

@@ -6,7 +6,7 @@ tools service over MCP
 instead. Everything else in the core is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
 the same gates, the same verify_result.
 
-Binding (an operator file, AGENT_TOOLS_CONFIG, see config/team_c.example.json):
+Binding (an operator file, AGENT_TOOLS_CONFIG, see config/tools.example.json):
 - A the agent tool name is bound to a tools service proposal (`proposal_id`, stable across versions and rebuilds) or to
 one exact
   published tool name. On every listing the published tool of that proposal with the highest version is used; two
@@ -32,7 +32,7 @@ one process per (business, identity). Arguments never choose it. With no verifie
 sent (IDENTITY_NOT_MAPPED), except a tool that needs no identity may use `anonymous_identity` when one is configured.
 
 Results (only `succeeded` is a success; nothing is retried here):
-- succeeded -> success, audit_id "team-c:<execution_id>", reference_id from `reference_field` for creates
+- succeeded -> success, audit_id "tools:<execution_id>", reference_id from `reference_field` for creates
 - every error message starts with the tools service's category (invalid_arguments, authentication_failed,
 permission_denied,
   not_found, rate_limited, api_unreachable, timeout, ...); a read the tools service answered not_found is NOT_FOUND for
@@ -67,8 +67,8 @@ from agent_service.domain.bundle import TenantBundle
 from agent_service.observability import get_logger
 from agent_service.ports import CapabilityClient
 
-SERVICE = "team_c"
-AUDIT_PREFIX = "team-c:"
+SERVICE = "tools"
+AUDIT_PREFIX = "tools:"
 NOT_SENT_STATES = (None, "not_attempted", "not_applied")
 START_RETRY_S = 5.0  # after a failed start the process is not tried again for this long (no hammering)
 log = get_logger(__name__)
@@ -142,7 +142,7 @@ class ToolsConfig(BaseModel):
 
     # e.g. [".../services/tools/.venv/Scripts/python.exe", "-m", "tools_service.mcp_server"]
     command: list[str] = Field(min_length=1)
-    cwd: str | None = None  # The tools service's folder (the server imports team_c from there)
+    cwd: str | None = None  # The tools service's folder (the server imports tools_service from there)
     env: dict[str, str] = Field(default_factory=dict)  # e.g. {"PYTHONPATH": "."}
     database: str | None = None  # --database (the tools service's SQLite file)
     connectors: str | None = None  # --connectors (optional trusted connectors file)
@@ -183,17 +183,17 @@ class ResolvedTool:
     """What a agent tool name points at right now in the tools service (or why it points at nothing)."""
 
     name: str  # The agent's name
-    team_c_tool: str | None = None
+    published_tool: str | None = None
     publication_id: str | None = None
     artifact_id: str | None = None
     artifact_sha256: str | None = None
     proposal_id: str | None = None
     proposal_version: int | None = None
     read_only: bool | None = None
-    environment: str | None = None  # sandbox | live_demo (the tools service's _meta.team_c.environment)
+    environment: str | None = None  # sandbox | live_demo (the tools service's _meta.tools.environment)
     api_host: str | None = None  # live_demo: the real API's host
     problem: str | None = (
-        None  # not_published | ambiguous | kind_mismatch | environment_not_allowed | no_spec | team_c_unavailable
+        None  # not_published | ambiguous | kind_mismatch | environment_not_allowed | no_spec | tools_unavailable
     )
 
 
@@ -261,7 +261,7 @@ class ToolCapabilities:
             await self.refresh(tenant_id)
             state = self._state[tenant_id]
         resolved = state.resolved.get(request.tool)
-        if resolved is None or resolved.problem is not None or resolved.team_c_tool is None:
+        if resolved is None or resolved.problem is not None or resolved.published_tool is None:
             why = resolved.problem if resolved is not None else "not_published"
             return _error("TOOL_NOT_PUBLISHED", f"{request.tool} has no usable Team C sandbox publication ({why})")
         spec = self._spec(tenant_id, request.tool)
@@ -278,7 +278,7 @@ class ToolCapabilities:
         if identity is None:
             return _error("IDENTITY_NOT_MAPPED", "no Team C sandbox identity is configured for this customer; not sent")
         arguments = {bound.arguments.get(k, k): v for k, v in request.arguments.items()}
-        arguments = self._without_undeclared_identity(state, resolved.team_c_tool, arguments)
+        arguments = self._without_undeclared_identity(state, resolved.published_tool, arguments)
         writes = resolved.read_only is False
         meta = (
             {"ticketeasy": {"context": {binding.production_context_field: request.acting_customer_id},
@@ -289,7 +289,7 @@ class ToolCapabilities:
         try:
             session = await self._session(binding.business_id, identity)
             raw = await session.call_tool(
-                resolved.team_c_tool, arguments, timeout_s=self.config.call_timeout_s, meta=meta
+                resolved.published_tool, arguments, timeout_s=self.config.call_timeout_s, meta=meta
             )
         except McpUnavailable as exc:
             raise UpstreamError(SERVICE, "BACKEND_UNAVAILABLE", str(exc), retryable=True) from None
@@ -301,12 +301,14 @@ class ToolCapabilities:
         return _result(raw, bound, resolved, writes, request.arguments)
 
     @staticmethod
-    def _without_undeclared_identity(state: TenantState, team_c_tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _without_undeclared_identity(
+        state: TenantState, published_tool: str, arguments: dict[str, Any]
+    ) -> dict[str, Any]:
         """The customer travels by the identity of the call. A tool that declares no customer input (the tools service's
         order
         list reads the caller's own orders) would reject the customer_id the agent always adds, so it is left out for
         that tool."""
-        listed = next((t for t in state.tools if t.get("name") == team_c_tool), None)
+        listed = next((t for t in state.tools if t.get("name") == published_tool), None)
         properties = ((listed or {}).get("inputSchema") or {}).get("properties")
         if not isinstance(properties, dict):
             return arguments
@@ -342,8 +344,8 @@ class ToolCapabilities:
                 errors.append("production: " + str(exc)[:280])
         if errors and not tools:
             state.error = "; ".join(errors)[:300]
-            state.resolved = {n: ResolvedTool(n, problem="team_c_unavailable") for n in binding.tools}
-            log.warning("team_c_list_failed", tenant_id=tenant_id, error=state.error)
+            state.resolved = {n: ResolvedTool(n, problem="tools_unavailable") for n in binding.tools}
+            log.warning("tools_list_failed", tenant_id=tenant_id, error=state.error)
             return state
         state.listed_at, state.error, state.tools = time.time(), ("; ".join(errors)[:300] or None), tools
         state.resolved = {
@@ -355,7 +357,7 @@ class ToolCapabilities:
         """A business's active bundle changed: serve the tools it binds (the bundle wins over the file for this
         business); with no bundle, or none of its tools bound here, the operator's file applies again. Only this
         business's cached listing is dropped; its running tool processes are reused when the business id is the same."""
-        mine = [t for t in (bundle.tools if bundle else ()) if t.source == "team_c" and t.binding is not None]
+        mine = [t for t in (bundle.tools if bundle else ()) if t.source == "tools" and t.binding is not None]
         file_binding = self._file_bindings.get(tenant_id)
         if not mine:
             if file_binding is not None:
@@ -455,7 +457,7 @@ class ToolCapabilities:
                 raise
             self._start_failed.pop(key, None)
             self._sessions[key] = session
-            log.info("team_c_mcp_started", business_id=business_id, protocol=session.protocol_version)
+            log.info("tools_mcp_started", business_id=business_id, protocol=session.protocol_version)
             return session
 
     def _remote_error(self, tenant_id: str, tool: str, exc: McpRemoteError, writes: bool) -> ToolResult:
@@ -496,7 +498,7 @@ def _resolve(name: str, bound: ToolBinding, tools: list[dict[str, Any]], spec: T
     read_only = annotations.get("readOnlyHint", annotations.get("read_only_hint"))
     resolved = ResolvedTool(
         name,
-        team_c_tool=str(tool["name"]),
+        published_tool=str(tool["name"]),
         publication_id=meta.get("publication_id"),
         artifact_id=meta.get("artifact_id"),
         artifact_sha256=meta.get("artifact_sha256"),
@@ -526,8 +528,8 @@ def _usable(tool: dict[str, Any], bound: ToolBinding) -> bool:
 
 def _meta(tool: dict[str, Any]) -> dict[str, Any]:
     meta = tool.get("_meta") or tool.get("meta") or {}
-    team_c = meta.get("team_c") if isinstance(meta, dict) else None
-    return team_c if isinstance(team_c, dict) else {}
+    found = meta.get("tools") if isinstance(meta, dict) else None
+    return found if isinstance(found, dict) else {}
 
 
 def _error(code: str, message: str, *, unclear: bool = False) -> ToolResult:

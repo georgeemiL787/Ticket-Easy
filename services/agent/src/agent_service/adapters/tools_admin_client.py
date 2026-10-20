@@ -10,7 +10,7 @@ publications and proposals and forwards a disable, which blocks the tool's next 
 undo a write
 that already happened). The tools service accepts loopback hosts only and no cross-origin mutations; a server-side call
 sends no
-Origin header. Failures raise UpstreamError("team_c", ...).
+Origin header. Failures raise UpstreamError("tools", ...).
 """
 
 from typing import Any
@@ -19,7 +19,7 @@ import httpx
 
 from agent_service.contracts.errors import UpstreamError
 
-SERVICE = "team_c"
+SERVICE = "tools"
 
 
 class ToolsAdminClient:
@@ -35,7 +35,7 @@ class ToolsAdminClient:
         self._timeout = timeout_s
         self._transport = transport
         # The agent's service credential TO the tools service (never a production secret), sent on every call when set.
-        self._headers = {"x-team-c-admin-token": admin_token} if admin_token else {}
+        self._headers = {"x-tools-admin-token": admin_token} if admin_token else {}
 
     async def publications(self, business_id: str) -> list[dict[str, Any]]:
         found = await self._call("GET", "/publications", params={"business_id": business_id})

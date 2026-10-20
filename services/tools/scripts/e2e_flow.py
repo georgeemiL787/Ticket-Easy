@@ -476,7 +476,7 @@ def main():
         assert act.get("activated") is False, "activated must be False (not implemented)"
     meta = pub.get("meta")
     if meta is not None:
-        assert meta.get("team_c", {}).get("production_ready") is False, "production_ready must be False"
+        assert meta.get("tools", {}).get("production_ready") is False, "production_ready must be False"
     print("[OK] Production activation correctly absent")
 
     # --- 16. Verify retrieval reaches beyond the first index slice ---

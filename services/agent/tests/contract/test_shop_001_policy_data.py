@@ -97,4 +97,4 @@ def test_synonyms_contain_the_required_expansions() -> None:
     entries = [SynonymEntry.model_validate(e) for e in read("synonyms.json")["entries"]]
     means = {v.lower(): set(e.means) for e in entries for v in e.variants}
     assert "return" in means["araga3"] and "refund" in means["flousi"] and "late" in means["et2akhar"]
-    assert {e.origin for e in entries} == {"team_a", "team_b"}
+    assert {e.origin for e in entries} == {"knowledge", "agent"}

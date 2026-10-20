@@ -98,7 +98,7 @@ def test_test_only_publication_is_stated_separately_from_production_activation(d
     pub = publish(d, a["id"]).json()
     assert pub["environment"] == "sandbox"
     assert pub["production_activation"] is False and pub["production_ready"] is False
-    assert d.service.published_tools(pub["business_id"], "alice")[0]["meta"]["team_c"]["production_ready"] is False
+    assert d.service.published_tools(pub["business_id"], "alice")[0]["meta"]["tools"]["production_ready"] is False
 
 
 def test_invocation_returns_permitted_output_and_keeps_the_audit_sanitized(desk):
@@ -108,7 +108,7 @@ def test_invocation_returns_permitted_output_and_keeps_the_audit_sanitized(desk)
     pub = publish(d, a["id"]).json()
     [tool] = d.service.published_tools(pub["business_id"], "alice")
     assert tool["input_schema"] == publishing.json_schema(a["content"]["input_schema"]) and tool["input_schema"]["additionalProperties"] is False
-    assert tool["meta"]["team_c"] == dict(publication_id=pub["id"], artifact_id=a["id"], artifact_sha256=a["sha256"], proposal_id=a["proposal_id"],
+    assert tool["meta"]["tools"] == dict(publication_id=pub["id"], artifact_id=a["id"], artifact_sha256=a["sha256"], proposal_id=a["proposal_id"],
                                           proposal_version=1, environment="sandbox", execution_enabled=True, production_ready=False, activated=False)
     assert d.service.published_tools(pub["business_id"], "nobody") == [] and d.service.published_tools("other-business", "alice") == []
     before = len(d.state()["requests"])

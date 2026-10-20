@@ -4,7 +4,7 @@ from ..config import AppError
 
 
 def json_schema_format(schema):
-    return {"type": "json_schema", "json_schema": {"name": "team_c", "strict": True, "schema": schema}}
+    return {"type": "json_schema", "json_schema": {"name": "tools", "strict": True, "schema": schema}}
 
 
 def chat_completion(provider, body, api_key, step=None):

@@ -122,8 +122,8 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             for task in tasks:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
-            if built.team_c is not None:
-                await built.team_c.aclose()  # stop the Team C MCP server processes
+            if built.tools is not None:
+                await built.tools.aclose()  # stop the Team C MCP server processes
 
     app = FastAPI(title="Ticket-Easy Team B", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)

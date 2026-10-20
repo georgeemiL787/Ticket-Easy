@@ -97,7 +97,7 @@ class ConnectionCheckIn(BaseModel):
 
 def _admin(request: Request) -> tuple[Container, ToolsAdminClient]:
     built: Container = request.app.state.container
-    admin = built.team_c.admin if built.team_c is not None else None
+    admin = built.tools.admin if built.tools is not None else None
     if admin is None:
         raise upstream_unavailable("the tools service is not connected (AGENT_TOOLS_CONFIG with api_url)")
     return built, admin
@@ -138,7 +138,7 @@ def _failure(exc: UpstreamError) -> ApiError:
 async def _business(built: Container, admin: ToolsAdminClient, tenant_id: str, *, create: bool) -> str | None:
     """The tools-service business of this tenant: the one its tools are already bound to, else the one named
     ticket-easy:<tenant>, else (when `create`) a new one."""
-    bound = built.team_c.binding(tenant_id) if built.team_c is not None else None
+    bound = built.tools.binding(tenant_id) if built.tools is not None else None
     if bound is not None and bound.business_id:
         return bound.business_id
     active = (
@@ -318,7 +318,7 @@ async def publish(batch_id: str, tenant_id: TENANT, body: PublishIn, request: Re
         config = base.config if base else registry.file_config(tenant_id)
         if config is None:
             raise invalid_state("set up the business profile first: this business has no configuration to add tools to")
-        binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
+        binding = built.tools.binding(tenant_id) if built.tools is not None else None
         existing = list(base.tools) if base else list(tools_from_config(config, binding))
         taken = {t.name for t in existing}
         tools: list[BundleTool] = []

@@ -82,7 +82,7 @@ class Container:
     traces: TraceStore
     cases: CaseStore
     shop: SimulatedShop | None = None  # the fake shop behind `capabilities`, kept so tests can flip its switches
-    team_c: ToolCapabilities | None = None  # The tools service's sandbox tools (AGENT_TOOLS_CONFIG), wrapping `shop`
+    tools: ToolCapabilities | None = None  # The tools service's sandbox tools (AGENT_TOOLS_CONFIG), wrapping `shop`
     policy_search: SimulatedPolicySearch | None = None  # the policy search behind `evidence`, same purpose
     rule_checker: SimulatedRuleChecker | None = None  # the rule checker behind `policy`, same purpose
     safety_screen: SimulatedSafetyScreen | None = None  # the safety screen behind `evidence`, same purpose
@@ -132,10 +132,10 @@ def build_container(
     shop = SimulatedShop(settings.fixtures_dir, clock, tenants.tenant_ids(), db_dir=shops_dir)
     # The tools service serves the tools its config binds (sandbox publications over MCP); the simulated serves the
     # rest.
-    team_c = ToolCapabilities(shop, ToolsConfig.load(settings.tools_config)) if settings.tools_config else None
-    capabilities: CapabilityClient = team_c if team_c is not None else shop
-    if bundles is not None and team_c is not None:
-        bundles.add_listener(team_c.on_bundle_change)  # a new active bundle rebinds that business's tools
+    tools = ToolCapabilities(shop, ToolsConfig.load(settings.tools_config)) if settings.tools_config else None
+    capabilities: CapabilityClient = tools if tools is not None else shop
+    if bundles is not None and tools is not None:
+        bundles.add_listener(tools.on_bundle_change)  # a new active bundle rebinds that business's tools
     live = settings.backends == "live"  # The knowledge service is real (policy search, safety screen, rule checker)
     policy_search = None if live else SimulatedPolicySearch(settings.fixtures_dir)
     rule_checker = None if live else SimulatedRuleChecker(settings.fixtures_dir)
@@ -144,10 +144,10 @@ def build_container(
     policy: PolicyGate
     if live:
         service_key = settings.knowledge_key.get_secret_value() if settings.knowledge_key is not None else None
-        team_a = KnowledgeClient(
+        knowledge_client = KnowledgeClient(
             settings.knowledge_url, timeout_s=settings.knowledge_timeout_s, service_key=service_key
         )
-        evidence, policy = HttpEvidenceProvider(team_a), HttpPolicyGate(team_a)
+        evidence, policy = HttpEvidenceProvider(knowledge_client), HttpPolicyGate(knowledge_client)
         knowledge_admin: KnowledgeAdmin | None = (
             KnowledgeAdminClient(
                 settings.knowledge_url, settings.knowledge_admin_key.get_secret_value(), service_key=service_key
@@ -184,7 +184,7 @@ def build_container(
         traces=traces,
         cases=cases,
         shop=shop,
-        team_c=team_c,
+        tools=tools,
         bundles=bundles,
         knowledge_admin=knowledge_admin,
         policy_search=policy_search,
@@ -270,7 +270,7 @@ def approved_rules_are_current(admin: KnowledgeAdmin) -> Callable[[Any], Awaitab
 
     async def check(bundle: TenantBundle) -> list[str]:
         named = bundle.guardrails.ruleset_version
-        if named is None and bundle.knowledge.provider != "team_a":
+        if named is None and bundle.knowledge.provider != "knowledge":
             return []
         try:
             current = (await admin.ruleset(bundle.tenant_id)).get("ruleset_version")

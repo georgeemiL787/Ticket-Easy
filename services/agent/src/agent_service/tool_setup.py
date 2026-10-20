@@ -100,7 +100,7 @@ def tool_for(
         spec=spec,
     )
     permission = "read" if kind == "read" else "confirm"
-    return BundleTool(name=name, source="team_c", binding=binding, permission=permission, risk=risk), spec  # type: ignore[arg-type]
+    return BundleTool(name=name, source="tools", binding=binding, permission=permission, risk=risk), spec  # type: ignore[arg-type]
 
 
 def allow(config: TenantConfig, names: list[str]) -> TenantConfig:

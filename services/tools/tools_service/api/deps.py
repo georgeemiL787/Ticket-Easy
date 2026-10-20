@@ -23,13 +23,13 @@ def get_jobs(request:Request):
 
 
 def require_admin(request:Request):
-    """Production actions need the operator's service token (TOOLS_ADMIN_TOKEN, header x-team-c-admin-token). Team B's signed-in
+    """Production actions need the operator's service token (TOOLS_ADMIN_TOKEN, header x-tools-admin-token). Team B's signed-in
     admins reach them through Team B, which holds the token; the tools service's own pages have no sign-in and cannot do them."""
     import secrets
     expected=request.app.state.settings.admin_token
     if not expected:
         raise AppError("admin_token_required","Production actions are disabled until the operator sets TOOLS_ADMIN_TOKEN",403)
-    if not secrets.compare_digest(request.headers.get("x-team-c-admin-token",""),expected):
+    if not secrets.compare_digest(request.headers.get("x-tools-admin-token",""),expected):
         raise AppError("admin_token_invalid","This production action needs the operator's admin token",403)
 
 

@@ -14,7 +14,7 @@ PASSAGE = {
 }
 
 
-def test_passage_accepts_team_a_shape_and_ignores_extra_fields() -> None:
+def test_passage_accepts_the_knowledge_service_shape_and_ignores_extra_fields() -> None:
     passage = Passage.model_validate({**PASSAGE, "citation": "return_policy@v2#s2", "new_field": 1})
     assert passage.citation == "return_policy@v2#s2"
     assert not hasattr(passage, "new_field")
@@ -72,11 +72,11 @@ def test_past_ticket_result_empty_rule() -> None:
 
 def test_risk_assessment_accepts_both_names_for_flagged() -> None:
     ours = RiskAssessment.model_validate({"flagged": True, "categories": ["fraud_suspected"]})
-    from_team_a = RiskAssessment.model_validate(
+    from_knowledge = RiskAssessment.model_validate(
         {"mandatory_escalation": True, "categories": ["fraud_suspected"], "matched_terms": ["x"], "method": "keywords"}
     )
-    assert ours.flagged and from_team_a.flagged
-    assert from_team_a.matched_terms == ("x",)
+    assert ours.flagged and from_knowledge.flagged
+    assert from_knowledge.matched_terms == ("x",)
 
 
 def test_risk_assessment_flagged_is_required() -> None:

@@ -65,7 +65,7 @@ def test_discovered_inventory_and_grounding_have_the_documented_keys():
 def test_compiled_artifact_and_execution_reports_have_the_documented_keys():
     _, _, artifact = built()
     conforms(artifact, contracts.Artifact)
-    assert artifact["format"] == FORMAT == "team_c.tool_artifact/2"
+    assert artifact["format"] == FORMAT == "tools.tool_artifact/2"
     s1, s2 = artifact["steps"]
     assert s1["body"] is None and set(s2["body"]) == contracts.CompiledBody.__required_keys__ | contracts.CompiledBody.__optional_keys__
     assert s2["body"]["required"] is True and s2["body"]["schema"]["required"] == ["order_id", "customer_id", "summary", "queue_id"]

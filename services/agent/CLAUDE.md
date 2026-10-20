@@ -248,7 +248,7 @@ services/agent/
                  knowledge_client (HttpEvidenceProvider + HttpPolicyGate: the real Team A, AGENT_BACKENDS=live)
                  tools_mcp_client (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
                            McpUnavailable = not sent, McpLost = sent and no answer (outcome unknown), McpRemoteError = JSON-RPC error)
-                 tools_catalog (ToolCapabilities, the CapabilityClient when AGENT_TOOLS_CONFIG is set (config/team_c.example.json): wraps the
+                 tools_catalog (ToolCapabilities, the CapabilityClient when AGENT_TOOLS_CONFIG is set (config/tools.example.json): wraps the
                            simulated service; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
                            mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the simulated service; a binding's
                            `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API) or "production" (a PROMOTED tool, below); two allowed
@@ -256,7 +256,7 @@ services/agent/
                            is not trusted; errors carry Team C's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
                            ToolCallRequest.acting_customer_id (the verified customer, set by code in shopcalls/actions/stages) -> the operator's identities map,
                            one server process per (business, identity), never an argument; IDENTITY_NOT_MAPPED = not sent. Results: only succeeded = success
-                           (audit_id team-c:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
+                           (audit_id tools:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
                            rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
                            (registry drops its list). Team C sends no list_changed: re-listed every AGENT_CAPABILITY_TTL_S and on refresh)
                  production (ToolCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when Team C lists it with

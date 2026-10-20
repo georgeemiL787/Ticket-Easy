@@ -5,7 +5,7 @@ This is separate from Team C's read-only repository discovery. The owner explici
 From PowerShell:
 
 ```powershell
-Set-Location 'D:\nti project\team_c'
+Set-Location '<repository>\services\tools'
 powershell -ExecutionPolicy Bypass -File .\scripts\start_target.ps1
 ```
 
@@ -24,7 +24,7 @@ Addresses:
 - Local email viewer: http://127.0.0.1:8026
 - Team C: http://127.0.0.1:8000
 
-Docker project name: `team-c-target`. Its database volume is `team-c-target_app-db-data`. PostgreSQL is not published on a host port, so it does not conflict with the existing host database. Runtime build/Compose adaptations are generated under Team C's ignored `data/target-runtime/` directory, outside the target checkout. The external Dockerfile preserves the target frontend build and Python 3.14, then uses pip to install the backend's declared runtime dependencies constrained to registry versions in the target `uv.lock`. It omits uv itself and development tools to reduce slow downloads. Application source, migrations and startup command remain intact.
+Docker project name: `tools-target`. Its database volume is `tools-target_app-db-data`. PostgreSQL is not published on a host port, so it does not conflict with the existing host database. Runtime build/Compose adaptations are generated under Team C's ignored `data/target-runtime/` directory, outside the target checkout. The external Dockerfile preserves the target frontend build and Python 3.14, then uses pip to install the backend's declared runtime dependencies constrained to registry versions in the target `uv.lock`. It omits uv itself and development tools to reduce slow downloads. Application source, migrations and startup command remain intact.
 
 The container sets `PYTHONPATH=/app/backend` so the target package is available to Alembic, the initial-data script and the server without an editable uv installation. This is runtime environment configuration, not a modification to target code or discovery evidence.
 

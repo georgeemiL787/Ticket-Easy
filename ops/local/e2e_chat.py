@@ -34,7 +34,7 @@ def tools_headers() -> dict[str, str]:
     """The tools service's admin token (ops/local/var/tools_admin.key, created when production.env is on): once the operator sets one, the tools service
     requires it on every change through its REST API."""
     key = VAR / "tools_admin.key"
-    return {"x-team-c-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
+    return {"x-tools-admin-token": key.read_text(encoding="utf-8").strip()} if key.exists() and (ROOT / "ops" / "local" / "production.env").exists() else {}
 
 
 def check(name: str, ok: bool, detail: Any = "") -> bool:
@@ -85,8 +85,8 @@ def tool_calls(http: httpx.Client, conversation: str, tool: str) -> list[dict[st
     return [c for t in traces(http, conversation) for c in t.get("tool_calls", []) if c["tool"] == tool]
 
 
-def mcp_executions(team_c: httpx.Client, artifact_id: str) -> list[dict[str, Any]]:
-    executions = team_c.get(f"/api/v1/artifacts/{artifact_id}").json()["executions"]
+def mcp_executions(tools_http: httpx.Client, artifact_id: str) -> list[dict[str, Any]]:
+    executions = tools_http.get(f"/api/v1/artifacts/{artifact_id}").json()["executions"]
     return [e for e in executions if e.get("mode") == "mcp_sandbox"]
 
 
@@ -138,10 +138,10 @@ def sandbox_switch(**switches: bool) -> None:
     httpx.post(SANDBOX + "/_harness/switches", json=switches, headers={"x-harness-key": key}, timeout=10, trust_env=False)
 
 
-def writes(http: httpx.Client, team_c: httpx.Client, artifact_id: str) -> None:
+def writes(http: httpx.Client, tools_http: httpx.Client, artifact_id: str) -> None:
     print("\n== TEST B/C: a write through Team C (open a support ticket)")
     before = len(sandbox_state()["tickets"])
-    runs_before = len(mcp_executions(team_c, artifact_id))
+    runs_before = len(mcp_executions(tools_http, artifact_id))
     chat = Chat(http)
     chat.say("I have a complaint about order NS-20877, the parcel arrived late")
     confirm = chat.say("01012345601")
@@ -152,18 +152,18 @@ def writes(http: httpx.Client, team_c: httpx.Client, artifact_id: str) -> None:
           len(tickets) == before + 1 and tickets[-1]["customer_id"] == "C-100" and tickets[-1]["order_id"] == "NS-20877", tickets[before:])  # fmt: skip
     check("the agent reports it done with the sandbox's own ticket reference",
           done["decision"] == "execute" and tickets[-1]["ticket_id"] in done["text"], done)  # fmt: skip
-    runs = mcp_executions(team_c, artifact_id)
+    runs = mcp_executions(tools_http, artifact_id)
     check("Team C ran the write once, as alice, and it succeeded",
           len(runs) == runs_before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded", [(r["identity"], r["status"]) for r in runs[runs_before:]])  # fmt: skip
 
     print("\n== TEST C: an uncertain write is never retried and never reported as done or failed")
     sandbox_switch(fail_next_ticket_after_commit=True)  # the sandbox stores the ticket, then answers 500
-    before, runs_before = len(sandbox_state()["tickets"]), len(mcp_executions(team_c, artifact_id))
+    before, runs_before = len(sandbox_state()["tickets"]), len(mcp_executions(tools_http, artifact_id))
     chat = Chat(http)
     chat.say("I have a complaint about order NS-20877, the parcel arrived late")
     chat.say("01012345601")
     reply = chat.say("yes")
-    tickets, runs = sandbox_state()["tickets"], mcp_executions(team_c, artifact_id)
+    tickets, runs = sandbox_state()["tickets"], mcp_executions(tools_http, artifact_id)
     check("Team C classifies it outcome_unknown (a 5xx after the write)",
           len(runs) == runs_before + 1 and runs[-1]["status"] == "outcome_unknown", [(r["identity"], r["status"]) for r in runs[runs_before:]])  # fmt: skip
     check("the write really happened once in the sandbox and was not repeated", len(tickets) == before + 1, tickets[before:])
@@ -178,12 +178,12 @@ def writes(http: httpx.Client, team_c: httpx.Client, artifact_id: str) -> None:
 
 
 def main() -> int:
-    binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
+    binding = json.loads((VAR / "tools.json").read_text(encoding="utf-8"))
     tenant = binding["tenants"][T]
     state = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
     artifact_id, tool_name = state["artifact_id"], state["tool_name"]
     http = httpx.Client(base_url=AGENT_URL, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
+    tools_http = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
 
     print("\n== Services")
     for name, url in (("Team A", KNOWLEDGE_URL), ("Team B", AGENT_URL), ("Team C", TOOLS_URL), ("sandbox", SANDBOX)):
@@ -202,16 +202,16 @@ def main() -> int:
     headers = manager(http)
 
     print("\n== TEST B: the agent uses Team C's published tool as the verified customer")
-    before = len(mcp_executions(team_c, artifact_id))
+    before = len(mcp_executions(tools_http, artifact_id))
     alice = Chat(http)
     first = alice.say("Where is my order NS-20877?")
     reply = alice.say("01012345601")
     check("identity is verified first (Team B's own check), nothing read before", first["decision"] == "verify_identity", first)
     check("the order status comes back from Team C's tool", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
     calls = tool_calls(http, alice.id, "get_order")
-    check("the trace shows get_order served by Team C (audit id team-c:<execution>)",
-          bool(calls) and calls[-1]["status"] == "success" and str(calls[-1]["audit_id"]).startswith("team-c:"), calls)  # fmt: skip
-    runs = mcp_executions(team_c, artifact_id)
+    check("the trace shows get_order served by Team C (audit id tools:<execution>)",
+          bool(calls) and calls[-1]["status"] == "success" and str(calls[-1]["audit_id"]).startswith("tools:"), calls)  # fmt: skip
+    runs = mcp_executions(tools_http, artifact_id)
     check("Team C recorded one MCP sandbox execution as alice (C-100)",
           len(runs) == before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded",
           [(r["identity"], r["status"]) for r in runs[before:]])  # fmt: skip
@@ -219,7 +219,7 @@ def main() -> int:
     bob = Chat(http)
     bob.say("Where is my order NS-20790?")
     reply = bob.say("01123456702")
-    runs = mcp_executions(team_c, artifact_id)
+    runs = mcp_executions(tools_http, artifact_id)
     check("another verified customer runs as their own sandbox identity (bob = C-101)",
           reply["decision"] == "answer" and runs[-1]["identity"] == "bob" and runs[-1]["status"] == "succeeded", reply)  # fmt: skip
 
@@ -229,7 +229,7 @@ def main() -> int:
     reply = stranger.say("01234567803")
     calls = tool_calls(http, stranger.id, "get_order")
     check("a customer with no sandbox identity gets no data and nothing is sent to Team C",
-          reply["decision"] != "answer" and len(mcp_executions(team_c, artifact_id)) == count
+          reply["decision"] != "answer" and len(mcp_executions(tools_http, artifact_id)) == count
           and bool(calls) and calls[-1]["error_code"] == "IDENTITY_NOT_MAPPED", (reply["decision"], calls[-1:] if calls else None))  # fmt: skip
 
     print("\n== TEST C: Team C's contract, seen from the real MCP server")
@@ -245,7 +245,7 @@ def main() -> int:
     page = http.get("/v1/dashboard/business-tools", params={"tenant_id": T}).json()
     tools = {t["name"]: t for t in page["tools"]}
     check("the business-tools page shows get_order served by Team C, sandbox-only",
-          page["sandbox_only"] and tools["get_order"]["source"] == "team_c" and tools["get_order"]["status"] == "available", tools.get("get_order"))  # fmt: skip
+          page["sandbox_only"] and tools["get_order"]["source"] == "tools" and tools["get_order"]["status"] == "available", tools.get("get_order"))  # fmt: skip
     pub_id = state["publication_id"]
     r = http.post(f"/v1/dashboard/business-tools/publications/{pub_id}/disable", params={"tenant_id": T},
                   json={"note": "sandbox-only e2e: check the agent stops using it"}, headers=headers)  # fmt: skip
@@ -256,15 +256,15 @@ def main() -> int:
     old = asyncio.run(call_old_name(binding, tenant, tool_name))
     check("a client holding the old tool name is refused by Team C (tool_not_published)",
           old == {"rpc_error": -32602, "data": {"code": "tool_not_published"}}, old)  # fmt: skip
-    count = len(mcp_executions(team_c, artifact_id))
+    count = len(mcp_executions(tools_http, artifact_id))
     late = Chat(http)
     late.say("Where is my order NS-20877?")
     reply = late.say("01012345601")
     check("the agent no longer reads orders through the disabled tool and hands over honestly",
-          reply["decision"] == "handoff" and len(mcp_executions(team_c, artifact_id)) == count, reply)  # fmt: skip
+          reply["decision"] == "handoff" and len(mcp_executions(tools_http, artifact_id)) == count, reply)  # fmt: skip
 
     print("\n== TEST C: publishing again is discovered on refresh")
-    r = team_c.post(f"/api/v1/artifacts/{artifact_id}/publications", json={"note": "sandbox-only e2e: publish the tested artifact again"})
+    r = tools_http.post(f"/api/v1/artifacts/{artifact_id}/publications", json={"note": "sandbox-only e2e: publish the tested artifact again"})
     check("Team C publishes the same tested artifact again (new publication)", r.status_code == 200, r.text[:300])
     if r.status_code == 200:
         state["publication_id"] = r.json()["id"]
@@ -279,7 +279,7 @@ def main() -> int:
 
     ticket_state = VAR / "lifecycle_ticket.json"
     if "create_ticket" in tenant.get("tools", {}) and ticket_state.exists():
-        writes(http, team_c, json.loads(ticket_state.read_text(encoding="utf-8"))["artifact_id"])
+        writes(http, tools_http, json.loads(ticket_state.read_text(encoding="utf-8"))["artifact_id"])
 
     failed = [name for name, ok, _ in RESULTS if not ok]
     print(f"\n{len(RESULTS) - len(failed)} passed, {len(failed)} failed")

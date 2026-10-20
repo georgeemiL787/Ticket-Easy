@@ -1,7 +1,7 @@
 """Real check of the guided tool setup (the three screens' API) against the Nile sandbox shop. TEST-ONLY.
 
 Needs ops/local/serve.py up (sandbox, the tools service with a model provider, the agent signed in) and the tools service binding file
-(ops/local/var/team_c.json: run ops/local/tools_lifecycle.py once, or copy the example). It drives exactly what the
+(ops/local/var/tools.json: run ops/local/tools_lifecycle.py once, or copy the example). It drives exactly what the
 three dashboard screens call, as a signed-in manager, with the owner's own choices (no scripted shortcuts inside the tools service):
 
   1 import      the sandbox's OpenAPI by address -> classes of its operations

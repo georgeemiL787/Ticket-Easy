@@ -22,7 +22,7 @@ from agent_service.contracts.evidence import Passage, PastTicketResult, Retrieva
 from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
 from agent_service.observability import get_logger
 
-SERVICE = "team_a"
+SERVICE = "knowledge"
 log = get_logger(__name__)
 _T = TypeVar("_T", bound=PlugModel)
 

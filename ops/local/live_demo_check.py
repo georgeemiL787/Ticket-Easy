@@ -274,7 +274,7 @@ def main() -> int:
     step("10. Team C's real MCP server through Team B's MCP client")
     seen = asyncio.run(through_mcp(state, api))
     tool = next((t for t in seen["tools"] if t["name"] == state["tool_name"]), None)
-    meta = ((tool or {}).get("_meta") or {}).get("team_c", {})
+    meta = ((tool or {}).get("_meta") or {}).get("tools", {})
     check("the tool is discovered with environment live_demo and its real API host",
           meta.get("environment") == "live_demo" and meta.get("api_host") == api["base_url"].split("//", 1)[1], meta)  # fmt: skip
     text = json.dumps(seen["tools"])

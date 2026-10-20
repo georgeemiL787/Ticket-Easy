@@ -66,7 +66,6 @@ export type Version1 = number;
 export type Publications = ToolPublication[];
 export type PublicationsError = string | null;
 export type SandboxOnly = boolean;
-export type TeamCError = string | null;
 export type TenantId = string;
 export type ApiHost = string | null;
 export type ArtifactSha256 = string | null;
@@ -77,12 +76,13 @@ export type OperationKind = string | null;
 export type ProposalId1 = string | null;
 export type ProposalVersion = number | null;
 export type PublicationId1 = string | null;
+export type PublishedTool = string | null;
 export type Reason = string | null;
-export type Source = "team_c" | "standin";
+export type Source = "tools" | "simulated";
 export type Status3 = "available" | "missing" | "blocked";
-export type TeamCTool = string | null;
 export type UsedBy = string[];
 export type Tools = BusinessTool[];
+export type ToolsError = string | null;
 
 export interface DashboardBusinessTools {
   builder_base?: BuilderBase;
@@ -100,9 +100,9 @@ export interface DashboardBusinessTools {
   publications?: Publications;
   publications_error?: PublicationsError;
   sandbox_only?: SandboxOnly;
-  team_c_error?: TeamCError;
   tenant_id: TenantId;
   tools: Tools;
+  tools_error?: ToolsError;
 }
 export interface ToolConnector {
   checked_at?: CheckedAt;
@@ -176,9 +176,9 @@ export interface BusinessTool {
   proposal_id?: ProposalId1;
   proposal_version?: ProposalVersion;
   publication_id?: PublicationId1;
+  published_tool?: PublishedTool;
   reason?: Reason;
   source: Source;
   status: Status3;
-  team_c_tool?: TeamCTool;
   used_by: UsedBy;
 }

@@ -38,7 +38,7 @@ def test_tool_context_rejects_write_without_side_effects() -> None:
         ToolContext.model_validate({"name": "t", "operation_kind": "update", "side_effects": False})
 
 
-def test_tool_context_accepts_team_a_personal_data_name() -> None:
+def test_tool_context_accepts_the_knowledge_service_personal_data_name() -> None:
     ctx = ToolContext.model_validate({"name": "t", "operation_kind": "read", "exposes_personal_data": False})
     assert ctx.personal_data is False
 
@@ -81,9 +81,9 @@ def test_policy_decision_values() -> None:
         PolicyDecision.model_validate({"request_id": "r", "decision": "maybe", "reason_code": "X"})
 
 
-# Recorded the knowledge service examples must parse (skipped if the team_a folder is not in this checkout).
+# Recorded the knowledge service examples must parse (skipped if the knowledge service folder is not in this checkout).
 EXAMPLES = Path(__file__).resolve().parents[4] / "knowledge" / "contracts" / "examples"
-needs_team_a = pytest.mark.skipif(not EXAMPLES.is_dir(), reason="team_a examples not available")
+needs_knowledge_examples = pytest.mark.skipif(not EXAMPLES.is_dir(), reason="knowledge service examples not available")
 
 
 def _body(name: str, part: str) -> dict[str, Any]:
@@ -92,7 +92,7 @@ def _body(name: str, part: str) -> dict[str, Any]:
     return body
 
 
-@needs_team_a
+@needs_knowledge_examples
 @pytest.mark.parametrize("name", ["allow", "deny", "require_human", "missing_context"])
 def test_knowledge_check_action_examples_parse(name: str) -> None:
     file = f"check_action.{name}.json"
@@ -105,7 +105,7 @@ def test_knowledge_check_action_examples_parse(name: str) -> None:
     assert decision.decision in {"allow", "deny", "require_human"}
 
 
-@needs_team_a
+@needs_knowledge_examples
 def test_knowledge_search_and_risk_examples_parse() -> None:
     result = RetrievalResult.model_validate(_body("search_knowledge.success.json", "response"))
     assert result.passages and result.passages[0].citation == result.passages[0].passage_id

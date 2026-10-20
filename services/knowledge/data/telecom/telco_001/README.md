@@ -31,7 +31,7 @@ A complete Egyptian mobile and home-internet company so Ticket-Easy can be tried
 
 ## How it plugs into Ticket-Easy
 
-The files under `fixtures/telco_001/`, `config/tenants/telco_001.json` and `scenarios/telco_001/` follow the same layout as the shop's files on the `team-b` branch. Adding telecom later should mostly mean copying them in and adding the telecom actions to the stand-in shop system.
+The files under `fixtures/telco_001/`, `config/tenants/telco_001.json` and `scenarios/telco_001/` follow the same layout as the shop's files in the agent service. Adding telecom later should mostly mean copying them in and adding the telecom actions to the stand-in shop system.
 
 The one real difference from the shop is identity. Instead of order number plus phone, a telecom customer proves who they are with their line number (or home landline) plus the last 4 digits of their national ID.
 

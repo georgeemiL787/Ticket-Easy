@@ -73,7 +73,7 @@ def test_groq_request_shape_and_usage(tmp_path):
     url, auth, body = seen[0]
     assert url == "https://api.groq.com/openai/v1/chat/completions" and auth == "Bearer test-groq-key"
     schema, _ = output_schema("generation", {}, GenerationOutput)
-    assert body["response_format"] == {"type": "json_schema", "json_schema": {"name": "team_c", "strict": True, "schema": groq_schema(schema)}}
+    assert body["response_format"] == {"type": "json_schema", "json_schema": {"name": "tools", "strict": True, "schema": groq_schema(schema)}}
     assert body["model"] == "openai/gpt-oss-120b" and body["temperature"] == 0 and body["max_tokens"] == GROQ_MAX_TOKENS and body["stream"] is False
     assert body["reasoning_effort"] == "low" and body["include_reasoning"] is False and "provider" not in body
     assert [m["role"] for m in body["messages"]] == ["system", "user"]
@@ -127,7 +127,7 @@ def test_openrouter_request_shape_uses_full_schema(tmp_path):
     url, auth, body = seen[0]
     schema, _ = output_schema("generation", {}, GenerationOutput)
     assert url == "https://openrouter.ai/api/v1/chat/completions" and auth == "Bearer test-or-key"
-    assert body["response_format"] == {"type": "json_schema", "json_schema": {"name": "team_c", "strict": True, "schema": schema}}
+    assert body["response_format"] == {"type": "json_schema", "json_schema": {"name": "tools", "strict": True, "schema": schema}}
     assert body["provider"] == {"require_parameters": True, "allow_fallbacks": False}
     assert "reasoning_effort" not in body
 

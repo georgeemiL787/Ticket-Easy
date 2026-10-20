@@ -23,7 +23,7 @@
   "tools": [
     {
       "name": "verify_customer",
-      "source": "team_c"
+      "source": "tools"
     }
   ]
 }

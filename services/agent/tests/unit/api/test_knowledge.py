@@ -111,7 +111,7 @@ async def test_a_business_that_has_uploaded_nothing_yet_shows_an_empty_list_not_
     await sign_in(secured, web, "manager", "Mona")
 
     async def unknown(tenant_id: str) -> dict[str, Any]:
-        raise UpstreamError("team_a", "TENANT_NOT_FOUND", f"Unknown tenant '{tenant_id}'")
+        raise UpstreamError("knowledge", "TENANT_NOT_FOUND", f"Unknown tenant '{tenant_id}'")
 
     monkeypatch.setattr(admin_of(secured), "documents", unknown)
     reply = await web.get("/v1/dashboard/knowledge/documents", params={"tenant_id": T})
@@ -184,7 +184,7 @@ async def test_a_bundle_cannot_be_published_on_stale_rules(secured: Container, w
     assert first.status_code == 201, first.text
     assert (
         first.json()["guardrails"]["approved_rule_ids"] == ["R-ONE"]
-        and first.json()["knowledge"]["provider"] == "standin"
+        and first.json()["knowledge"]["provider"] == "simulated"
     )
     admin.propose(T, "R-TWO", "Another rule.")
     await admin.approve_rule(T, "R-TWO", "Root")  # the approved rules changed after the draft was made
@@ -261,7 +261,7 @@ async def test_the_admin_client_sends_its_keys_and_reads_a_snapshot() -> None:
         (500, {"error": {"code": "INTERNAL_ERROR", "message": "boom"}}, "BACKEND_UNAVAILABLE", True),
     ],
 )
-async def test_the_admin_client_keeps_the_reason_team_a_gave(
+async def test_the_admin_client_keeps_the_reason_the_knowledge_service_gave(
     status: int, body: dict[str, Any], code: str, retryable: bool
 ) -> None:
     admin = KnowledgeAdminClient("http://a.test", "k", transport=httpx.MockTransport(handler([], body, status)))
@@ -272,7 +272,7 @@ async def test_the_admin_client_keeps_the_reason_team_a_gave(
         assert body["error"]["message"] in error.value.message
 
 
-async def test_an_unreachable_team_a_is_a_retryable_failure() -> None:
+async def test_an_unreachable_knowledge_service_is_a_retryable_failure() -> None:
     def refuse(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("down", request=request)
 

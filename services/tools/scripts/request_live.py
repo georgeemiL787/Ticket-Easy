@@ -27,7 +27,7 @@ def sha(path):
 
 def main():
     before = sha(REAL_DB)
-    db = Path(tempfile.mkdtemp(prefix="team-c-requests-")) / "requests.sqlite3"
+    db = Path(tempfile.mkdtemp(prefix="tools-requests-")) / "requests.sqlite3"
     settings = Settings(database_path=str(db), connectors_file="", sandbox_hosts="")
     store = Store(str(db))
     service = Service(settings, store, Providers(settings, store))

@@ -44,7 +44,7 @@ The original failed run and existing approvals are preserved. Debug replays are 
 Reproduce a separate new live run with:
 
 ```powershell
-Set-Location 'D:\nti project\team_c'
+Set-Location '<repository>\services\tools'
 uv run python -m scripts.live_smoke --provider ollama --example nilestay
 ```
 

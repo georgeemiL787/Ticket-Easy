@@ -27,16 +27,16 @@ def recorded(name: str) -> httpx.Response:
     return httpx.Response(response["status"], json=response["body"])
 
 
-def team_a(handler: Handler) -> KnowledgeClient:
+def knowledge_client_for(handler: Handler) -> KnowledgeClient:
     return KnowledgeClient("http://knowledge.test/", timeout_s=1.0, transport=httpx.MockTransport(handler))
 
 
 def evidence(handler: Handler) -> HttpEvidenceProvider:
-    return HttpEvidenceProvider(team_a(handler))
+    return HttpEvidenceProvider(knowledge_client_for(handler))
 
 
 def gate(handler: Handler) -> HttpPolicyGate:
-    return HttpPolicyGate(team_a(handler))
+    return HttpPolicyGate(knowledge_client_for(handler))
 
 
 def request(**over: Any) -> CheckActionRequest:
@@ -61,7 +61,7 @@ def test_they_satisfy_the_ports() -> None:
 # ---- evidence ----
 
 
-async def test_search_knowledge_sends_team_as_request_and_reads_its_passages() -> None:
+async def test_search_knowledge_sends_the_knowledge_services_request_and_reads_its_passages() -> None:
     seen: list[httpx.Request] = []
 
     def handler(r: httpx.Request) -> httpx.Response:
@@ -123,7 +123,7 @@ async def test_classify_risk_flagged_and_clear() -> None:
 # ---- rule checker ----
 
 
-async def test_check_action_is_sent_in_team_as_format() -> None:
+async def test_check_action_is_sent_in_the_knowledge_services_format() -> None:
     seen: list[httpx.Request] = []
 
     def handler(r: httpx.Request) -> httpx.Response:
@@ -198,7 +198,7 @@ def error(status: int, code: str) -> httpx.Response:
 async def test_failures_become_upstream_errors(response: httpx.Response, code: str, retryable: bool) -> None:
     with pytest.raises(UpstreamError) as caught:
         await evidence(always(response)).search_knowledge("shop_001", "q", request_id="r")
-    assert caught.value.service == "team_a" and caught.value.code == code and caught.value.retryable is retryable
+    assert caught.value.service == "knowledge" and caught.value.code == code and caught.value.retryable is retryable
     with pytest.raises(UpstreamError):
         await gate(always(response)).check_action(request())
 

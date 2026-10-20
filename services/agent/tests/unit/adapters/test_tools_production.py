@@ -51,7 +51,7 @@ async def test_a_production_tool_runs_on_the_production_process_with_the_verifie
     state = client.status(T)
     assert state is not None and state.resolved["get_order"].environment == "production"
     result = await client.call_tool(T, request("get_order", customer="C-101"))
-    assert result.status == "success" and result.audit_id == "team-c:exe-succeeded"
+    assert result.status == "success" and result.audit_id == "tools:exe-succeeded"
     [call] = [c for c in fake.calls() if c["tool"] == PROD_TOOL]
     assert call["production"] is True
     assert call["meta"] == {"ticketeasy": {"context": {"customer_id": "C-101"}, "idempotency_key": "k1"}}
@@ -79,9 +79,11 @@ async def test_production_is_used_only_where_the_operator_allows_it(fake: Fake, 
     assert state is not None and state.resolved["get_order"].problem in ("not_published", "environment_not_allowed")
 
 
-async def test_a_publication_that_claims_production_without_team_cs_flag_is_not_used(fake: Fake, made: Made) -> None:
+async def test_a_publication_that_claims_production_without_the_tools_services_flag_is_not_used(
+    fake: Fake, made: Made
+) -> None:
     liar = tool_def(PROD_TOOL, GET_ORDER_PROPOSAL, sandbox=False)
-    liar["_meta"]["team_c"]["production_ready"] = False
+    liar["_meta"]["tools"]["production_ready"] = False
     publish(fake, liar, **{PROD_TOOL: PROD_OK})
     client = made(**production_binding())
     assert "get_order" not in {t.name for t in await client.list_tools(T)}

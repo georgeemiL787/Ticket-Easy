@@ -163,8 +163,8 @@ async def setup(
 ) -> AsyncIterator[tuple[httpx.AsyncClient, ToolsService, Container]]:
     fake = Fake(tmp_path)
     container = build(tmp_path, fake, service)
-    assert container.team_c is not None
-    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    assert container.tools is not None
+    container.tools.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     async for http in serve(container):
         yield http, service, container
 
@@ -288,7 +288,7 @@ async def test_a_batch_is_prepared_approved_published_into_a_draft_and_only_then
     assert registry is not None and registry.active_bundle(T) is None  # a draft: nothing is in use yet
     draft = await registry.get_bundle(T, 1)
     tool = next(t for t in draft.tools if t.name == "open_a_support_ticket")
-    assert tool.source == "team_c" and tool.permission == "confirm" and tool.binding is not None
+    assert tool.source == "tools" and tool.permission == "confirm" and tool.binding is not None
     assert (
         tool.binding.proposal_id == "prop-new"
         and tool.binding.business_id == "biz-1"
@@ -308,8 +308,8 @@ async def test_a_batch_is_prepared_approved_published_into_a_draft_and_only_then
     )
     assert activated.status_code == 200 and activated.json()["status"] == "active"
     assert registry.active_bundle(T) is not None
-    assert container.team_c is not None
-    binding = container.team_c.config.tenants[T]
+    assert container.tools is not None
+    binding = container.tools.config.tenants[T]
     assert "open_a_support_ticket" in binding.tools and binding.tools["open_a_support_ticket"].proposal_id == "prop-new"
     assert binding.identities["C-100"] == "alice"  # the account chosen on the connect screen is mapped to its customer
     assert binding.business_id == "biz-1"  # the new business of this tenant
@@ -371,8 +371,8 @@ async def test_only_a_signed_in_manager_may_use_it(tmp_path: Path, service: Tool
     config = tmp_path / "tenants"
     shutil.copytree(PROJECT_ROOT / "config" / "tenants", config)
     container = build(tmp_path, Fake(tmp_path), service, auth_required=True, secret_key="k" * 32, config_dir=config)
-    assert container.auth is not None and container.team_c is not None
-    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    assert container.auth is not None and container.tools is not None
+    container.tools.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     await container.auth.create_user("agent@example.com", "Agent", "agent", (T,), PASSWORD)
     await container.auth.create_user("mona@example.com", "Mona", "manager", (T,), PASSWORD)
     async for http in serve(container):

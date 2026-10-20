@@ -47,8 +47,8 @@ def read(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-def team_c() -> httpx.Client:
-    return httpx.Client(base_url=TOOLS_URL + "/api/v1", headers={"x-team-c-admin-token": read("tools_admin.key")}, timeout=300, trust_env=False)
+def tools_client() -> httpx.Client:
+    return httpx.Client(base_url=TOOLS_URL + "/api/v1", headers={"x-tools-admin-token": read("tools_admin.key")}, timeout=300, trust_env=False)
 
 
 def prod_get(path: str) -> httpx.Response:
@@ -64,7 +64,7 @@ def production_executions(tc: httpx.Client, artifact_id: str) -> list[dict[str, 
 
 
 def promote_phase() -> None:
-    tc = team_c()
+    tc = tools_client()
     states = {t: lifecycle.load_state(False, t) for t in ("order", "ticket")}
     if not all("publication_id" in s for s in states.values()):
         raise SystemExit("run the sandbox lifecycle for the order and ticket tools first (ops/local/tools_lifecycle.py --tool order|ticket)")
@@ -106,9 +106,9 @@ def promote_phase() -> None:
         return
 
     # the REAL production MCP process, started the way the agent starts it
-    binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
-    serve.sync_live_settings(VAR / "team_c.json")
-    binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
+    binding = json.loads((VAR / "tools.json").read_text(encoding="utf-8"))
+    serve.sync_live_settings(VAR / "tools.json")
+    binding = json.loads((VAR / "tools.json").read_text(encoding="utf-8"))
     asyncio.run(mcp_phase(tc, binding, business, promoted))
 
 
@@ -125,7 +125,7 @@ async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, pr
     try:
         tools = {t["name"]: t for t in await production.list_tools(timeout_s=60)}
         names = {tool: promoted[tool]["production_artifact_id"] for tool in promoted}
-        meta = {n: (t.get("_meta") or t.get("meta") or {}).get("team_c", {}) for n, t in tools.items()}
+        meta = {n: (t.get("_meta") or t.get("meta") or {}).get("tools", {}) for n, t in tools.items()}
         check("the production server lists exactly the promoted tools, marked production_ready", len(tools) == 2 and all(m.get("environment") == "production" and m.get("production_ready") is True for m in meta.values()), list(meta.values()))
         sandbox_tools = {t["name"] for t in await ordinary.list_tools(timeout_s=60)}
         check("an ordinary (identity) server does not list or run the production tools", not (set(tools) & sandbox_tools))
@@ -186,7 +186,7 @@ async def mcp_phase(tc: httpx.Client, binding: dict[str, Any], business: str, pr
 
 
 def bind_phase() -> None:
-    path = VAR / "team_c.json"
+    path = VAR / "tools.json"
     config = json.loads(path.read_text(encoding="utf-8"))
     tenant = config["tenants"][T]
     for tool, key in (("get_order", "order"), ("create_ticket", "ticket")):
@@ -222,11 +222,11 @@ def admin(http: httpx.Client) -> dict[str, str]:
 
 
 def chat_phase() -> None:
-    tc = team_c()
+    tc = tools_client()
     http = httpx.Client(base_url=AGENT_URL, timeout=300, trust_env=False)
     csrf = admin(http)
     tools = http.get("/v1/dashboard/business-tools", params={"tenant_id": T}).json()
-    served = {t["name"]: t for t in tools["tools"] if t["source"] == "team_c"}
+    served = {t["name"]: t for t in tools["tools"] if t["source"] == "tools"}
     check("the Business tools page shows get_order and create_ticket served as PRODUCTION",
           all(served.get(n, {}).get("environment") == "production" and served[n]["status"] == "available" for n in ("get_order", "create_ticket")), served)
     check("...with a banner count and no 'sandbox only' claim", tools["production_tools"] == 2 and tools["sandbox_only"] is False, {k: tools[k] for k in ("production_tools", "sandbox_only")})
@@ -266,7 +266,7 @@ def chat_phase() -> None:
         r = http.post(f"/v1/dashboard/business-tools/promotions/{pid}/rollback", params={"tenant_id": T}, json={"note": "sandbox-only rollback of the production check"}, headers=csrf)
         check(f"promotion {pid[:8]} is rolled back", r.status_code == 200, r.text[:200])
     after = http.post("/v1/dashboard/business-tools/refresh", params={"tenant_id": T}, headers=csrf).json()
-    check("Team B no longer lists the tools as available", {t["name"]: t["status"] for t in after["tools"] if t["source"] == "team_c"}.get("get_order") != "available")
+    check("Team B no longer lists the tools as available", {t["name"]: t["status"] for t in after["tools"] if t["source"] == "tools"}.get("get_order") != "available")
     count = len(production_executions(tc, promoted_artifact(tc, "order")))
     gone = Chat(http)
     gone.say(f"where is my order {ALICE_ORDER}")

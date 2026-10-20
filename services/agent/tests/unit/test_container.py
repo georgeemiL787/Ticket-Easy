@@ -58,7 +58,7 @@ def test_without_a_fixed_date_the_real_clock_is_used(tenants_dir: Path) -> None:
     assert isinstance(built.clock, SystemClock)
 
 
-def test_live_mode_plugs_in_the_real_team_a_and_keeps_the_shop_simulated(tenants_dir: Path) -> None:
+def test_live_mode_plugs_in_the_real_knowledge_service_and_keeps_the_shop_simulated(tenants_dir: Path) -> None:
     built = build_container(
         Settings(backends="live", knowledge_url="http://knowledge.test:8001", config_dir=tenants_dir)
     )

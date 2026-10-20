@@ -28,7 +28,7 @@ from .executor import load_connectors
 from .service import Service
 from .persistence.db import Store
 
-log = logging.getLogger("team_c.mcp")
+log = logging.getLogger("tools_service.mcp")
 
 
 def result(envelope):
@@ -66,8 +66,8 @@ def build_server(service, business_id, identity, production=False):
         log.info("call %s -> %s (execution %s)", params.name, envelope["status"], envelope["execution_id"])
         return result(envelope)
 
-    return Server("team-c-sandbox", version="0.1.0", on_list_tools=list_tools, on_call_tool=call_tool,
-                  instructions="Tools compiled from owner-reviewed artifacts: sandbox publications are sandbox-only; live_demo publications (see _meta.team_c.environment) "
+    return Server("ticket-easy-tools", version="0.1.0", on_list_tools=list_tools, on_call_tool=call_tool,
+                  instructions="Tools compiled from owner-reviewed artifacts: sandbox publications are sandbox-only; live_demo publications (see _meta.tools.environment) "
                                "call the owner-configured real API and are not a production release. The caller identity is fixed by this server; "
                                "results with is_error=true include partial and outcome_unknown executions, which must not be treated as success or retried blindly.")
 

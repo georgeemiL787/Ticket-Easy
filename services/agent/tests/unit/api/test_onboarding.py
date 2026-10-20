@@ -29,8 +29,8 @@ T = "cairo_books"
 async def wizard(tmp_path: Path) -> AsyncIterator[tuple[httpx.AsyncClient, ToolsService, Container]]:
     service = ToolsService()
     container = build(tmp_path, Fake(tmp_path), service)
-    assert container.team_c is not None
-    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
+    assert container.tools is not None
+    container.tools.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(service.handle))
     async for http in serve(container):
         yield http, service, container
 
@@ -234,7 +234,9 @@ async def test_go_live_is_blocked_until_everything_is_ready_and_then_the_busines
     }
     active = container.bundles.active_bundle(T)
     assert active is not None and active.status == "active" and active.guardrails.approved_rule_ids == ("R-ONE",)
-    assert active.knowledge.provider == "standin" and [d.document_id for d in active.knowledge.documents] == ["returns"]
+    assert active.knowledge.provider == "simulated" and [d.document_id for d in active.knowledge.documents] == [
+        "returns"
+    ]
     config = container.tenants.get(T)
     assert config.agent_mode == "on" and config.identity.verify_tool == "open_a_support_ticket"
     assert T not in container.bundles.drafts and config.preview is False
@@ -270,7 +272,7 @@ def tool(name: str, kind: str, properties: dict[str, Any], required: list[str]) 
     }
     return BundleTool(
         name=name,
-        source="team_c",
+        source="tools",
         risk="high" if kind == "delete" else "low",
         binding=ToolBindingRef(business_id="b", proposal_id=f"p-{name}", spec=spec),
     )

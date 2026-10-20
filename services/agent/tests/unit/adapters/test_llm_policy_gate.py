@@ -116,7 +116,7 @@ async def test_when_the_model_fails_an_allowed_write_goes_to_a_person(llm: FakeL
 
 
 async def test_when_the_search_fails_an_allowed_write_goes_to_a_person() -> None:
-    search = Search(error=UpstreamError("team_a", "TIMEOUT", "slow"))
+    search = Search(error=UpstreamError("knowledge", "TIMEOUT", "slow"))
     out = await agent("allow", FakeLLM(), search).check_action(request())
     assert out.decision == "require_human"
 
@@ -211,7 +211,7 @@ async def test_one_failed_search_is_retried_and_the_write_is_judged_normally() -
         async def search_knowledge(self, *args: Any, **kwargs: Any) -> RetrievalResult:
             self.tries += 1
             if self.tries == 1:
-                raise UpstreamError("team_a", "TIMEOUT", "slow")
+                raise UpstreamError("knowledge", "TIMEOUT", "slow")
             return await super().search_knowledge(*args, **kwargs)
 
     search = FlakySearch()

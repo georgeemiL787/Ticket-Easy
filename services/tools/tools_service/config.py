@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     production_smoke_context: str = ""  # JSON object: the internal test customer's trusted context used by the promotion smoke check
     production_smoke_arguments: str = ""  # JSON object: that customer's tool arguments (e.g. an order that customer owns)
     production_audit_dir: str = "data/audit"  # append-only daily log of production executions (ids and hashes, no values)
-    # TOOLS_ADMIN_TOKEN: required (header x-team-c-admin-token) for production actions on /api/v1
+    # TOOLS_ADMIN_TOKEN: required (header x-tools-admin-token) for production actions on /api/v1
     admin_token: str = ""
     connection_check_timeout: float = 10
     # TOOLS_PRODUCT_URL: where the guided flow lives (the dashboard). Set: this app's start page sends owners there and every page links to it.

@@ -7,7 +7,7 @@ Local business-tool discovery, AI proposal generation, clarification reconciliat
 Prerequisites: Python 3.13, `uv`, and Ollama running with `qwen3:8b` installed. The installed model is used as-is; the application never downloads a model. Run from this component directory:
 
 ```powershell
-Set-Location 'D:\nti project\team_c'
+Set-Location '<repository>\services\tools'
 uv sync --locked
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 uv run python -c "import secrets; print(secrets.token_hex(32))"
@@ -25,7 +25,7 @@ The default is **Ollama only**, requiring no cloud API key. Empty model configur
 
 ### Commands
 
-Run from `D:\nti project\team_c`. `uv sync --locked` creates `.venv`; the commands below use its interpreter directly (`uv run ...` works too).
+Run from `<repository>\services\tools`. `uv sync --locked` creates `.venv`; the commands below use its interpreter directly (`uv run ...` works too).
 
 ```powershell
 uv sync --locked                                    # install
@@ -208,14 +208,14 @@ Live check on a database copy: `$env:PYTHONPATH="."; $env:OLLAMA_CONTEXT="40960"
 
 ### Executable artifacts and sandbox runs
 
-An `approved_to_build` version can be compiled, without a model, into an immutable tool artifact (`artifacts.py`). The artifact holds: name, purpose, input and output schemas, the approved version and decision ID, the spec SHA-256 and operation source pointers, ordered steps with parameter locations and serialization, body mappings, declared success statuses, media types and schemas, output pointers, connector and authentication, access requirements with their enforcement, limits and failure behaviour. Content is deterministic and hashed, so rebuilding identical content returns the same artifact. Stored artifacts are never modified: a rebuild whose content hash differs (for example an older approval rebuilt after the format changed from `team_c.tool_artifact/1` to `/2`) creates a new artifact record, and `/1` artifacts still execute. Anything the executor cannot perform exactly (header/cookie inputs, non-simple path styles, object parameters, unbound path placeholders, unsupported authentication) rejects the build with `artifact_unsupported`. Approval permits artifact creation and sandbox testing only. `runtime_ready` and `activated` stay false; sandbox publication is a separate decision (see "Sandbox MCP publication").
+An `approved_to_build` version can be compiled, without a model, into an immutable tool artifact (`artifacts.py`). The artifact holds: name, purpose, input and output schemas, the approved version and decision ID, the spec SHA-256 and operation source pointers, ordered steps with parameter locations and serialization, body mappings, declared success statuses, media types and schemas, output pointers, connector and authentication, access requirements with their enforcement, limits and failure behaviour. Content is deterministic and hashed, so rebuilding identical content returns the same artifact. Stored artifacts are never modified: a rebuild whose content hash differs (for example an older approval rebuilt after the format changed from `tools.tool_artifact/1` to `/2`) creates a new artifact record, and `/1` artifacts still execute. Anything the executor cannot perform exactly (header/cookie inputs, non-simple path styles, object parameters, unbound path placeholders, unsupported authentication) rejects the build with `artifact_unsupported`. Approval permits artifact creation and sandbox testing only. `runtime_ready` and `activated` stay false; sandbox publication is a separate decision (see "Sandbox MCP publication").
 
 Each owner-confirmed access requirement needs an enforceable mechanism. Record-scope requirements are derived from path parameters, required query parameters, and inputs that carry an identifier from an earlier response. The operator submits the mechanisms (`POST /proposals/{id}/enforcement`). They are validated immediately, but usable only after review (`POST /enforcement/{id}/review`, which records the reviewer, time and note). The artifact records which reviewed configuration it was built from. Submitting a new configuration invalidates earlier artifacts (`enforcement_not_current`) until it is reviewed and the artifact rebuilt. The model never supplies or changes enforcement. Requirements without a reviewed mechanism are listed as `execution_blockers` and block every run.
 
 Supported mechanisms, and nothing else:
 
 - `caller_access`: `{"mechanism": "delegated_user_credential"}` (`enforced_by: target_api`). Each run uses one operator-registered identity's own credential, and identities not labelled `scope: end_user` are refused. The label is an operator declaration, not proof of authorization. The target API decides what the credential may do; Team C verifies this only through sandbox tests.
-- `record_scope`: `{"mechanism": "response_field_matches_context", "step_id", "response_status", "pointer", "context_field", "comparison": "equals", "check_point": "after_step"}` (`enforced_by: team_c_executor`). Its rules:
+- `record_scope`: `{"mechanism": "response_field_matches_context", "step_id", "response_status", "pointer", "context_field", "comparison": "equals", "check_point": "after_step"}` (`enforced_by: tools_executor`). Its rules:
   - The check runs on a read step.
   - The pointer (nested allowed) must be a required, non-nullable string or integer in that response.
   - `context_field` must be declared in the connector's `context_fields`.
@@ -332,7 +332,7 @@ Tests of an older or different artifact never count.
 
 `python -m tools_service.mcp_server` is a stdio server built on the official SDK (`mcp==2.2.0`, pinned in `pyproject.toml`; lowlevel `Server`). Protocol messages go to stdout and logs to stderr; httpx request logging is off because URLs carry record references. Behavior:
 
-- **Tool definitions.** Tools are generated from the stored artifacts: name `<artifact-name-slug>_v<version>_<artifact-id-hex>` (stable per artifact, unique across artifacts), title, description, the artifact's input schema (OpenAPI `nullable` rendered as a JSON Schema null type), an output schema, and `_meta.team_c` with the publication/artifact/version mapping.
+- **Tool definitions.** Tools are generated from the stored artifacts: name `<artifact-name-slug>_v<version>_<artifact-id-hex>` (stable per artifact, unique across artifacts), title, description, the artifact's input schema (OpenAPI `nullable` rendered as a JSON Schema null type), an output schema, and `_meta.tools` with the publication/artifact/version mapping.
 - **Rechecks.** Every `tools/list` and every `tools/call` re-reads the database. Disabling, a superseded approval, changed enforcement, a changed artifact or a newly failing test blocks the next call, including from a client holding an old tool list. No restart is needed.
 - **Refresh.** New publications appear on the client's next `tools/list`. The server does not send `list_changed` notifications, so clients re-list (or restart).
 - **Disabling does not undo writes.** Disabling does not undo a write that already completed or is in flight.
@@ -347,7 +347,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --bu
 Client configuration (Cursor / Claude Desktop style; paths are examples):
 
 ```json
-{"mcpServers": {"team-c-sandbox-alice": {
+{"mcpServers": {"ticket-easy-tools-alice": {
   "command": "D:/nti project/tool_generation_mcp/.venv/Scripts/python.exe",
   "args": ["-m", "tools_service.mcp_server", "--business-id", "<business-id>", "--identity", "alice",
            "--database", "data/mcp-desk.sqlite3", "--connectors", "data/mcp-desk-connectors.json", "--sandbox-hosts", "127.0.0.1:8004"],
@@ -414,7 +414,7 @@ A **production** tool is a tested sandbox or Live Demo tool that an admin has **
 
 **Rollback / disable**: `POST /promotions/{id}/rollback` disables the production publication and leaves the sandbox / Live Demo publications alone; an **error spike** (API or integration failures: unavailable, timeout, bad response, partial or unknown writes, bad login, within the window) rolls the tool back automatically as `auto-disable`. A customer refused by a Team C check never counts. (The plan's Team B `action_failing` hook is not used: this is Team C's own watch.)
 
-**Who may do what**: promote, roll back and save a production connector need the operator's `x-team-c-admin-token` on the REST API (`TOOLS_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
+**Who may do what**: promote, roll back and save a production connector need the operator's `x-tools-admin-token` on the REST API (`TOOLS_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
 
 **Not done / limits**: no per-customer OAuth (D1 default); list/data-scope tools cannot be promoted yet (`output_rows_match_context` was not built); the idempotency header path is unit-tested but no real API in this repository declares one; nothing was run against a real external production API (only the local Nile "production" deployment, `integration/production_check.py`).
 
@@ -431,7 +431,7 @@ What separates the two, everywhere:
 | Artifact | unchanged content and hash | `connector.environment: "live_demo"` (part of the hash), `activation.permitted_uses` = creation, live testing, live execution |
 | Tests and calls | executions `sandbox` / `mcp_sandbox` | `live_demo` / `mcp_live_demo`, at most `TOOLS_LIVE_DEMO_CALLS_PER_MINUTE` per connector (counted in the shared database) |
 | Publication | `environment: "sandbox"` | `environment: "live_demo"`: must equal the artifact's; refused otherwise |
-| MCP `_meta.team_c` | `environment: sandbox` | `environment: live_demo`, `api_host`, the description says it calls the real API |
+| MCP `_meta.tools` | `environment: sandbox` | `environment: live_demo`, `api_host`, the description says it calls the real API |
 
 Every gate is checked again before each run, right before the request: switching `TOOLS_LIVE_DEMO_ENABLED` off or removing the host blocks the next call and hides the tool from `tools/list` (`effective_status: blocked`, `problem.code: live_demo_disabled`). A sandbox artifact never runs on a live connector, nor the reverse (`environment_mismatch`). The URL in an uploaded specification is only a suggestion: calls go only to the URL the owner confirms on the connector.
 

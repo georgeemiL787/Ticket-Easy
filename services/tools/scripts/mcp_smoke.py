@@ -75,7 +75,7 @@ class Domain:
 
 async def listed(s):
     return [dict(name=t.name, required=t.input_schema.get("required"), properties=sorted(t.input_schema["properties"]),
-                 additional_properties=t.input_schema.get("additionalProperties"), artifact=t.meta["team_c"]["artifact_id"][:8])
+                 additional_properties=t.input_schema.get("additionalProperties"), artifact=t.meta["tools"]["artifact_id"][:8])
             for t in (await s.list_tools()).tools]
 
 

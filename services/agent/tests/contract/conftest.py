@@ -75,7 +75,7 @@ class RiskCategory(Strict):
 class SynonymEntry(Strict):
     variants: list[str] = Field(min_length=1)
     means: list[str] = Field(min_length=1)
-    origin: Literal["team_a", "team_b"]
+    origin: Literal["knowledge", "agent"]
 
 
 class Customer(Strict):

@@ -41,7 +41,7 @@ async def call(
 # ---- the data and the reads ----
 
 
-async def test_the_seed_is_loaded_from_team_as_noon_data() -> None:
+async def test_the_seed_is_loaded_from_the_knowledge_services_noon_data() -> None:
     s = shop()
     tools = {t.name for t in await s.list_tools(T)}
     assert tools == {

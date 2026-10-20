@@ -136,11 +136,11 @@ def rest() -> ToolsRestClient:
 def build(tmp_path: Path, fake: Fake, rest: ToolsRestClient, **options: Any) -> Container:
     config = fake.config()
     config.update(api_url="http://127.0.0.1:9", builder_url="http://127.0.0.1:9")
-    path = tmp_path / "team_c.json"
+    path = tmp_path / "tools.json"
     path.write_text(json.dumps(config), encoding="utf-8")
     container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, tools_config=path, **options))
-    assert container.team_c is not None
-    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
+    assert container.tools is not None
+    container.tools.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     return container
 
 
@@ -163,7 +163,7 @@ async def open_client(
         yield http, fake, rest
 
 
-async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_publications(
+async def test_the_page_shows_which_tools_the_tools_service_serves_and_its_test_only_publications(
     open_client: tuple[httpx.AsyncClient, Fake, ToolsRestClient],
 ) -> None:
     http, _, _ = open_client
@@ -172,11 +172,11 @@ async def test_the_page_shows_which_tools_team_c_serves_and_its_test_only_public
     body = reply.json()
     assert body["configured"] and body["sandbox_only"] and body["business_id"] == BUSINESS
     tools = {t["name"]: t for t in body["tools"]}
-    assert tools["get_order"]["source"] == "team_c" and tools["get_order"]["status"] == "available"
-    assert tools["get_order"]["team_c_tool"] == "get_order_v1_aa"
-    assert tools["verify_customer"]["source"] == "standin"
+    assert tools["get_order"]["source"] == "tools" and tools["get_order"]["status"] == "available"
+    assert tools["get_order"]["published_tool"] == "get_order_v1_aa"
+    assert tools["verify_customer"]["source"] == "simulated"
     assert tools["apply_voucher"] == tools["apply_voucher"] | {
-        "source": "team_c",
+        "source": "tools",
         "status": "missing",
         "reason": "not_published",
     }
@@ -219,10 +219,10 @@ async def test_another_businesss_publication_cannot_be_disabled_from_here(
     assert rest.posts == [] and rest.publications["pub-other"]["status"] == "published"
 
 
-async def test_a_business_without_team_c_shows_the_stand_in_tools(tmp_path: Path) -> None:
+async def test_a_business_without_the_tools_service_shows_the_simulated_tools(tmp_path: Path) -> None:
     async for http in serve(build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY))):
         body = (await http.get(URL, params={"tenant_id": T})).json()
-        assert body["configured"] is False and {t["source"] for t in body["tools"]} == {"standin"}
+        assert body["configured"] is False and {t["source"] for t in body["tools"]} == {"simulated"}
         reply = await http.post(f"{URL}/publications/p1/disable", params={"tenant_id": T}, json={"note": "x" * 5})
         assert reply.status_code == 404
 
@@ -286,11 +286,11 @@ async def test_a_live_demo_tool_is_labelled_as_calling_a_real_api(tmp_path: Path
     config = fake.config()
     config["tenants"][T]["tools"]["get_order"]["environments"] = ["sandbox", "live_demo"]
     config.update(api_url="http://127.0.0.1:9")
-    path = tmp_path / "team_c.json"
+    path = tmp_path / "tools.json"
     path.write_text(json.dumps(config), encoding="utf-8")
     container = build_container(make_settings(tmp_path, fixed_today=FIXED_TODAY, tools_config=path))
-    assert container.team_c is not None
-    container.team_c.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
+    assert container.tools is not None
+    container.tools.admin = ToolsAdminClient("http://127.0.0.1:9", transport=httpx.MockTransport(rest.handle))
     async for http in serve(container):
         body = (await http.get(URL, params={"tenant_id": T})).json()
         tool = {t["name"]: t for t in body["tools"]}["get_order"]

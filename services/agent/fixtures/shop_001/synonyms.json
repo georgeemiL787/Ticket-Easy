@@ -19,7 +19,7 @@
         "تالفا",
         "damaged"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -36,7 +36,7 @@
         "cancelled",
         "cancellation"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -60,7 +60,7 @@
         "upper egypt",
         "الصعيد"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -74,7 +74,7 @@
         "العطور",
         "perfume"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -88,7 +88,7 @@
         "فتحها",
         "opened"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -100,7 +100,7 @@
         "استرجاع",
         "مرتجع"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -113,7 +113,7 @@
         "رد المبلغ",
         "refund"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -127,7 +127,7 @@
         "استخدام",
         "used"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -147,7 +147,7 @@
         "استرجاع",
         "return"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -165,7 +165,7 @@
         "مرتجع",
         "return"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -181,7 +181,7 @@
         "استرداد",
         "refund"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -194,7 +194,7 @@
         "رد المبلغ",
         "refund"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -208,7 +208,7 @@
         "يومًا",
         "day"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -221,7 +221,7 @@
         "مرور",
         "after"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -233,7 +233,7 @@
         "ايام",
         "days"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -246,7 +246,7 @@
         "شحن",
         "shipping"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -261,7 +261,7 @@
         "توصيل",
         "delivery"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -283,7 +283,7 @@
         "late",
         "delay"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -296,7 +296,7 @@
         "موعد",
         "when"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -310,7 +310,7 @@
         "where",
         "tracking"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -324,7 +324,7 @@
         "مقاس",
         "size"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -336,7 +336,7 @@
         "منتج",
         "product"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -348,7 +348,7 @@
         "منتج",
         "product"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -365,7 +365,7 @@
         "اوردر",
         "order"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -381,7 +381,7 @@
         "استبدال",
         "exchange"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -398,7 +398,7 @@
         "الغاء",
         "cancel"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -411,7 +411,7 @@
         "الدفع عند الاستلام",
         "cash on delivery"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -424,7 +424,7 @@
         "محفظة",
         "wallet"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -440,7 +440,7 @@
         "قسيمة",
         "voucher"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -456,7 +456,7 @@
         "تالف",
         "damaged"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -473,7 +473,7 @@
         "معيب",
         "defective"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -486,7 +486,7 @@
         "تعويض",
         "compensation"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -498,7 +498,7 @@
         "شكوى",
         "complaint"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -510,7 +510,7 @@
         "مندوب",
         "courier"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -523,7 +523,7 @@
         "عنوان",
         "address"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -540,7 +540,7 @@
         "تغيير",
         "change"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -552,7 +552,7 @@
         "خصم",
         "discount"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -567,7 +567,7 @@
         "موعد",
         "hours"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -579,7 +579,7 @@
         "ساعات",
         "hours"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -591,7 +591,7 @@
         "العمل",
         "working"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -609,7 +609,7 @@
         "رسوم",
         "fees"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -624,7 +624,7 @@
         "مجاني",
         "free"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -638,7 +638,7 @@
         "محافظات",
         "governorate"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -650,7 +650,7 @@
         "الصعيد",
         "upper egypt"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -663,7 +663,7 @@
         "بطاقة",
         "card"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -678,7 +678,7 @@
         "تحويل",
         "transfer"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -692,7 +692,7 @@
         "الدفع",
         "payment"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -705,7 +705,7 @@
         "هدية",
         "gift"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -718,7 +718,7 @@
         "تغليف",
         "wrapping"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -731,7 +731,7 @@
         "نقاط",
         "points"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -744,7 +744,7 @@
         "خارج",
         "international"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -758,7 +758,7 @@
         "محل",
         "store"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -772,7 +772,7 @@
         "رقم",
         "number"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -786,7 +786,7 @@
         "هاتف",
         "phone"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -799,7 +799,7 @@
         "حساب",
         "account"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -813,7 +813,7 @@
         "استرداد",
         "refund"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -828,7 +828,7 @@
         "فتح",
         "opened"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -842,7 +842,7 @@
         "عطور",
         "perfume"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -855,7 +855,7 @@
         "ملابس",
         "clothes"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -867,7 +867,7 @@
         "داخلية",
         "underwear"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -882,7 +882,7 @@
         "تخفيضات",
         "sale"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -897,7 +897,7 @@
         "صور",
         "photos"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -915,7 +915,7 @@
         "وصل",
         "delivered"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -927,7 +927,7 @@
         "فحص",
         "inspection"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -939,7 +939,7 @@
         "بنكي",
         "bank"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -951,7 +951,7 @@
         "تقريبا",
         "approximately"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -965,7 +965,7 @@
         "تتبع",
         "tracking"
       ],
-      "origin": "team_a"
+      "origin": "knowledge"
     },
     {
       "variants": [
@@ -980,7 +980,7 @@
         "استرداد",
         "refund"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -995,7 +995,7 @@
         "اريد",
         "want"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1008,7 +1008,7 @@
         "ليس",
         "not"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1026,7 +1026,7 @@
         "مرحبا",
         "hello"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1039,7 +1039,7 @@
         "معرفة",
         "know"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1056,7 +1056,7 @@
         "خدمة العملاء",
         "human"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1068,7 +1068,7 @@
         "تعديل",
         "modify"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1086,7 +1086,7 @@
         "late",
         "delay"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1103,7 +1103,7 @@
         "بطاقة",
         "card"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1117,7 +1117,7 @@
         "international",
         "outside"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1132,7 +1132,7 @@
         "شحن",
         "shipping"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1146,7 +1146,7 @@
         "استرداد",
         "refund"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1158,7 +1158,7 @@
         "موعد",
         "when"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     },
     {
       "variants": [
@@ -1171,7 +1171,7 @@
         "يوم",
         "day"
       ],
-      "origin": "team_b"
+      "origin": "agent"
     }
   ]
 }

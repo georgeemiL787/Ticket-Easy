@@ -6,7 +6,7 @@
   "created_at": "2026-09-28T09:00:00Z",
   "created_by": "import",
   "parent_version": null,
-  "content_sha256": "c9de9de1b2425303fa6a39457c355e6453a9b524c001d6a4bbfd0c5c01802cf5",
+  "content_sha256": "b57d584853429e1a9d8de4d51045e23adbc934c73d14616eb5cf280ea111270f",
   "config": {
     "tenant_id": "shop_001",
     "display_name": "Nile Style",
@@ -411,7 +411,7 @@
     "tone": "friendly"
   },
   "knowledge": {
-    "provider": "standin",
+    "provider": "simulated",
     "index_tenant": null,
     "built_at": null,
     "documents": []
@@ -429,77 +429,77 @@
   "tools": [
     {
       "name": "apply_voucher",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "cancel_order",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "create_exchange",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "create_refund",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "create_return",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "create_ticket",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "delete_customer",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "get_order",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "list_customer_orders",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "update_delivery_address",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"
     },
     {
       "name": "verify_customer",
-      "source": "standin",
+      "source": "simulated",
       "binding": null,
       "permission": "read",
       "risk": "low"

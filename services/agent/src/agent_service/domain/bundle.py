@@ -46,7 +46,7 @@ class BundleDocument(FrozenModel):
 
 
 class BundleKnowledge(FrozenModel):
-    provider: Literal["team_a", "standin"] = "standin"
+    provider: Literal["knowledge", "simulated"] = "simulated"
     index_tenant: str | None = None  # the tenant id the knowledge service indexes this business under
     built_at: datetime | None = None
     documents: tuple[BundleDocument, ...] = ()
@@ -83,14 +83,14 @@ class ToolBindingRef(FrozenModel):
 
 class BundleTool(FrozenModel):
     name: str = Field(min_length=1)
-    source: Literal["team_c", "standin"] = "standin"
+    source: Literal["tools", "simulated"] = "simulated"
     binding: ToolBindingRef | None = None
     permission: ToolPermission = "read"
     risk: ToolRisk = "low"
 
     @model_validator(mode="after")
-    def _team_c_tools_are_bound(self) -> Self:
-        if self.source == "team_c" and self.binding is None:
+    def _tools_are_bound(self) -> Self:
+        if self.source == "tools" and self.binding is None:
             raise ValueError(f"tools.{self.name}: a tool served by the tools service needs a binding")
         return self
 

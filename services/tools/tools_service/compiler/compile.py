@@ -55,7 +55,7 @@ def guards(record, content, inventory, requirements, connector, auth):
             raise AppError("policy_scope_unresolved", "Account administration requires explicit privileged principals, roles or permissions")
         if not matching:
             result.append(dict(id=r["id"], kind=r["kind"], text=r["text"], owner_confirmed_answer="Structured policy decision",
-                               enforcement=dict(status="configured", mechanism="structured_policy", enforced_by="target_api" if scopes.get(r["id"], {}).get("mode") == "api_filtered" else "team_c_executor",
+                               enforcement=dict(status="configured", mechanism="structured_policy", enforced_by="target_api" if scopes.get(r["id"], {}).get("mode") == "api_filtered" else "tools_executor",
                                                 policy_sha256=record["sha256"], unrestricted=unrestricted, api_filtered=scopes.get(r["id"], {}).get("mode") == "api_filtered")))
         for check in matching:
             config = dict(mechanism="response_field_matches_context", step_id=check["step_id"], response_status=check["response_status"],

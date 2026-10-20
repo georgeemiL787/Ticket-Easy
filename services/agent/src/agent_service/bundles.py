@@ -236,12 +236,12 @@ def tools_from_config(config: TenantConfig, binding: "TenantBinding | None" = No
     for name in configured_capabilities(config):
         bound = binding.tools.get(name) if binding is not None else None
         if bound is None or binding is None:
-            tools.append(BundleTool(name=name, source="standin"))
+            tools.append(BundleTool(name=name, source="simulated"))
             continue
         tools.append(
             BundleTool(
                 name=name,
-                source="team_c",
+                source="tools",
                 binding=ToolBindingRef(
                     business_id=binding.business_id,
                     proposal_id=bound.proposal_id or bound.tool or name,

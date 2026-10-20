@@ -290,7 +290,7 @@ const ar: Record<TextKey, string> = {
   "bt.reason.kind_mismatch": "بتقرا أو بتكتب بشكل مختلف عن المعلن",
   "bt.reason.not_sandbox": "مش منشورة في البيئة التجريبية",
   "bt.reason.no_spec": "مفيش تعريف",
-  "bt.reason.team_c_unavailable": "خدمة الأدوات غير متاح",
+  "bt.reason.tools_unavailable": "خدمة الأدوات غير متاح",
   "bt.reason.disabled": "مقفولة",
   "bt.reason.human_only": "للموظفين بس",
   "bt.reason.not_allowed": "غير مسموحة للنشاط ده",

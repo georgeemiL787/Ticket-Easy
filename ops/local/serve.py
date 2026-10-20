@@ -15,7 +15,7 @@ Services (each with its own team's virtualenv, working directory, port and an is
 Configuration without editing source files:
 - ops/local/live_demo.env (git-ignored; copy ops/local/live_demo.example.env): LIVE_DEMO_* settings for the tools service
   and the credentials the Live Demo scripts store into the tools service (never printed, never committed).
-- ops/local/var/ (git-ignored): generated local keys, the agent's database, the agent's the tools service binding (team_c.json,
+- ops/local/var/ (git-ignored): generated local keys, the agent's database, the agent's the tools service binding (tools.json,
   written by ops/local/tools_lifecycle.py / live_demo_check.py). Without a binding the agent uses its simulated shop.
 Nothing here touches another the tools service instance (for example one on port 8000 with data/tools.sqlite3).
 """
@@ -131,7 +131,7 @@ def command(service: str, simulated: bool = False, no_auth: bool = False) -> tup
         AGENT_SECRET_KEY=secret("agent_cookie.key"),
         AGENT_LOG_JSON="0",
     )
-    binding = VAR / "team_c.json"
+    binding = VAR / "tools.json"
     if binding.exists():
         sync_live_settings(binding)
         env["AGENT_TOOLS_CONFIG"] = str(binding)
@@ -202,8 +202,8 @@ def preflight() -> list[str]:
         problems.append("WARNING the dashboard is not built (cd apps/dashboard; npm ci; npm run build): /dashboard will say so")
     if not (ROOT / "services" / "tools" / ".env").exists():
         problems.append("WARNING services/tools/.env is missing: Team C runs, but proposal generation needs a model provider (services/tools/.env.example)")
-    if not (VAR / "team_c.json").exists():
-        problems.append("WARNING no Team C binding (ops/local/var/team_c.json): Team B serves every tool from its simulated shop")
+    if not (VAR / "tools.json").exists():
+        problems.append("WARNING no Team C binding (ops/local/var/tools.json): Team B serves every tool from its simulated shop")
     live = live_settings()
     if live.get("TOOLS_LIVE_DEMO_ENABLED", "").lower() in ("1", "true", "yes") and not live.get("TOOLS_LIVE_DEMO_HOSTS"):
         problems.append("WARNING TOOLS_LIVE_DEMO_ENABLED is on but TOOLS_LIVE_DEMO_HOSTS is empty: no live connector can be saved")
@@ -306,7 +306,7 @@ def main() -> int:
         PORTS[args.service] = args.port
     cmd, cwd, env = command(args.service, args.simulated, args.no_auth)
     if args.service == "agent" and args.port:
-        env["AGENT_DB_PATH"] = str(VAR / f"team_b_{args.port}.sqlite3")
+        env["AGENT_DB_PATH"] = str(VAR / f"agent_{args.port}.sqlite3")
     print(f"starting {args.service} on http://127.0.0.1:{PORTS[args.service]} (cwd {cwd})", flush=True)
     return subprocess.call(cmd, cwd=cwd, env=env)
 

@@ -15,7 +15,7 @@ from typing import Any
 
 from agent_service.contracts.errors import UpstreamError
 
-SERVICE = "team_a"
+SERVICE = "knowledge"
 TEXT = {".md", ".markdown", ".txt", ".html", ".htm"}
 SIGNATURES = {".pdf": b"%PDF", ".docx": b"PK", ".xlsx": b"PK"}
 
@@ -222,7 +222,7 @@ class SimulatedKnowledgeAdmin:
         ruleset = self._ruleset(tenant_id)
         return {
             "knowledge": {
-                "provider": "standin",
+                "provider": "simulated",
                 "index_tenant": tenant_id,
                 "documents": [
                     {"document_id": d["document_id"], "version": d["version_number"], "status": d["status"]}

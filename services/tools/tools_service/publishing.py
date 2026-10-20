@@ -285,7 +285,7 @@ def tool(pub, content):
     if live or production:
         meta["api_host"] = api_host(content)
     return dict(name=pub["tool_name"], title=content["name"], description=description, **tool_schemas(content), annotations=dict(read_only_hint=not writes),
-                meta={"team_c": meta})
+                meta={"tools": meta})
 
 
 def api_host(content):

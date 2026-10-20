@@ -11,7 +11,7 @@ database. The script (path in FAKE_TOOLS_SCRIPT):
      "refuse_identities": ["mallory"], "split_production": true}
 
 With "split_production" the process started with --context-from-client lists and runs only tools whose
-_meta.team_c.environment is "production", and an ordinary one only the others (like the tools service's two kinds of
+_meta.tools.environment is "production", and an ordinary one only the others (like the tools service's two kinds of
 server).
 
 A tool that is not in "tools" answers -32602 with data.code "tool_not_published", like the tools service. Every call is
@@ -38,7 +38,7 @@ def send(message: dict) -> None:
 
 
 def environment_of(tool: dict) -> str | None:
-    meta: dict = (tool.get("_meta") or {}).get("team_c") or {}
+    meta: dict = (tool.get("_meta") or {}).get("tools") or {}
     found = meta.get("environment")
     return found if isinstance(found, str) else None
 
@@ -75,7 +75,7 @@ def main() -> None:
                     "result": {
                         "protocolVersion": message["params"]["protocolVersion"],
                         "capabilities": {"tools": {}},
-                        "serverInfo": {"name": "fake-team-c", "version": "0"},
+                        "serverInfo": {"name": "fake-tools", "version": "0"},
                     },
                 }
             )

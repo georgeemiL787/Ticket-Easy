@@ -95,6 +95,18 @@
           "default": null,
           "title": "Publication Id"
         },
+        "published_tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published Tool"
+        },
         "reason": {
           "anyOf": [
             {
@@ -109,8 +121,8 @@
         },
         "source": {
           "enum": [
-            "team_c",
-            "standin"
+            "tools",
+            "simulated"
           ],
           "title": "Source",
           "type": "string"
@@ -123,18 +135,6 @@
           ],
           "title": "Status",
           "type": "string"
-        },
-        "team_c_tool": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Team C Tool"
         },
         "used_by": {
           "items": {
@@ -707,18 +707,6 @@
       "title": "Sandbox Only",
       "type": "boolean"
     },
-    "team_c_error": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Team C Error"
-    },
     "tenant_id": {
       "title": "Tenant Id",
       "type": "string"
@@ -729,6 +717,18 @@
       },
       "title": "Tools",
       "type": "array"
+    },
+    "tools_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tools Error"
     }
   },
   "required": [

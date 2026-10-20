@@ -288,7 +288,7 @@ const en = {
   "bt.reason.kind_mismatch": "Reads or writes differently than declared",
   "bt.reason.not_sandbox": "Not a sandbox publication",
   "bt.reason.no_spec": "No declaration",
-  "bt.reason.team_c_unavailable": "Tool service unavailable",
+  "bt.reason.tools_unavailable": "Tool service unavailable",
   "bt.reason.disabled": "Switched off",
   "bt.reason.human_only": "People only",
   "bt.reason.not_allowed": "Not allowed for this business",

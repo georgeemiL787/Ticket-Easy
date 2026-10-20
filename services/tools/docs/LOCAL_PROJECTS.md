@@ -9,7 +9,7 @@ Local projects and OpenAPI uploads produce the same capability inventory and use
 The backend currently runs on Windows. `/workspace/target-system` is not available here. The user-supplied clone is at `D:\target-system`. Configure that directory as the allowed root before starting Team C:
 
 ```powershell
-Set-Location 'D:\nti project\team_c'
+Set-Location '<repository>\services\tools'
 uv sync --locked
 $env:TOOLS_ALLOWED_PROJECT_DIRECTORY='D:\target-system'
 uv run uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8000

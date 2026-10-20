@@ -26,12 +26,12 @@ CMD ["fastapi", "run", "--workers", "4"]
 [System.IO.File]::WriteAllText($dockerfilePath, $stages[0]+$runtimeStage)
 $overlayPath = Join-Path $runtimeDirectory 'compose.local.yml'
 $overlay = @{services = @{
-    backend = @{image = 'team-c-target-backend:local'; build = @{context = $targetRoot; dockerfile = $dockerfilePath};
+    backend = @{image = 'tools-target-backend:local'; build = @{context = $targetRoot; dockerfile = $dockerfilePath};
         ports = @('127.0.0.1:8001:8000'); environment = @{FASTAPI_ENV = 'development'; PYTHONPATH = '/app/backend'; SMTP_HOST = 'mailpit'; SMTP_PORT = '1025'; SMTP_TLS = 'false'}}
     mailpit = @{image = 'axllent/mailpit'; ports = @('127.0.0.1:8026:8025')}
 }}
 [System.IO.File]::WriteAllText($overlayPath, ($overlay | ConvertTo-Json -Depth 8))
-$composeArgs = @('compose', '--project-name', 'team-c-target', '--project-directory', $targetRoot,
+$composeArgs = @('compose', '--project-name', 'tools-target', '--project-directory', $targetRoot,
     '--env-file', (Join-Path $targetRoot '.env'), '-f', (Join-Path $targetRoot 'compose.yml'), '-f', $overlayPath)
 function Invoke-TargetCompose {
     param([string[]]$Arguments)

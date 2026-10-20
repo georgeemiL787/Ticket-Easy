@@ -1,6 +1,6 @@
 """Check the bulk noon_eg data before anyone uses it. Prints one line per check and exits 1 on any failure.
 
-Usage:  python verify.py [--data <tenant folder with mock/ and tickets.jsonl>] [--db team_a.sqlite]
+Usage:  python verify.py [--data <tenant folder with mock/ and tickets.jsonl>] [--db knowledge.sqlite]
 Defaults: the noon_eg folder this script lives in; the originals are read from its seed/ folder.
 """
 import argparse

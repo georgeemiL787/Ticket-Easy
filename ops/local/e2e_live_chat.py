@@ -37,18 +37,18 @@ def shop_switch(**switches: bool) -> None:
     httpx.post(DEMO_SHOP + "/_harness/switches", json=switches, headers={"x-harness-key": key}, timeout=10, trust_env=False)
 
 
-def live_runs(team_c: httpx.Client, artifact_id: str) -> list[dict[str, Any]]:
-    return [e for e in team_c.get(f"/api/v1/artifacts/{artifact_id}").json()["executions"] if e.get("mode") == "mcp_live_demo"]
+def live_runs(tools_http: httpx.Client, artifact_id: str) -> list[dict[str, Any]]:
+    return [e for e in tools_http.get(f"/api/v1/artifacts/{artifact_id}").json()["executions"] if e.get("mode") == "mcp_live_demo"]
 
 
 def main() -> int:
-    binding = json.loads((VAR / "team_c.json").read_text(encoding="utf-8"))
+    binding = json.loads((VAR / "tools.json").read_text(encoding="utf-8"))
     tenant = binding["tenants"][T]
     order = json.loads((VAR / "lifecycle_order_live.json").read_text(encoding="utf-8"))
     ticket = json.loads((VAR / "lifecycle_ticket_live.json").read_text(encoding="utf-8"))
     sandbox_order = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))
     http = httpx.Client(base_url=AGENT_URL, timeout=120, trust_env=False)
-    team_c = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
+    tools_http = httpx.Client(base_url=TOOLS_URL, timeout=60, trust_env=False, headers=tools_headers())
     headers = manager(http)
 
     print("\n== The Business tools page tells the truth about Live Demo")
@@ -67,16 +67,16 @@ def main() -> int:
     check("a policy question is answered from Team A's passages", reply["decision"] == "answer" and bool(reply["citations"]), reply)
 
     print("\n== A read through the Live Demo tool, from the chat")
-    sandbox_before = len(mcp_executions(team_c, sandbox_order["artifact_id"]))
-    before = len(live_runs(team_c, order["artifact_id"]))
+    sandbox_before = len(mcp_executions(tools_http, sandbox_order["artifact_id"]))
+    before = len(live_runs(tools_http, order["artifact_id"]))
     alice = Chat(http)
     alice.say("Where is my order NS-20877?")
     reply = alice.say("01012345601")
     check("the order status comes back through the Live Demo tool", reply["decision"] == "answer" and "on its way" in reply["text"], reply)
-    runs = live_runs(team_c, order["artifact_id"])
+    runs = live_runs(tools_http, order["artifact_id"])
     check("Team C recorded an mcp_live_demo execution as alice, and it succeeded",
           len(runs) == before + 1 and runs[-1]["identity"] == "alice" and runs[-1]["status"] == "succeeded", runs[before:])  # fmt: skip
-    check("nothing was sent to the sandbox tool (no silent fallback)", len(mcp_executions(team_c, sandbox_order["artifact_id"])) == sandbox_before)
+    check("nothing was sent to the sandbox tool (no silent fallback)", len(mcp_executions(tools_http, sandbox_order["artifact_id"])) == sandbox_before)
 
     print("\n== A write through the Live Demo tool, confirmed by the customer, verified at the API")
     live_before, sandbox_tickets = len(shop_state()["tickets"]), len(sandbox_state()["tickets"])
@@ -93,12 +93,12 @@ def main() -> int:
 
     print("\n== An uncertain Live Demo write is never retried and never reported as done")
     shop_switch(fail_next_ticket_after_commit=True)
-    live_before, runs_before = len(shop_state()["tickets"]), len(live_runs(team_c, ticket["artifact_id"]))
+    live_before, runs_before = len(shop_state()["tickets"]), len(live_runs(tools_http, ticket["artifact_id"]))
     chat = Chat(http)
     chat.say("I have a complaint about order NS-20877, the parcel arrived late")
     chat.say("01012345601")
     reply = chat.say("yes")
-    runs = live_runs(team_c, ticket["artifact_id"])
+    runs = live_runs(tools_http, ticket["artifact_id"])
     check("Team C classifies it outcome_unknown", len(runs) == runs_before + 1 and runs[-1]["status"] == "outcome_unknown", runs[runs_before:])
     check("the write happened once at the API and was not repeated", len(shop_state()["tickets"]) == live_before + 1)
     reasons = [t.get("escalation_reason") for t in traces(http, chat.id)]
@@ -121,12 +121,12 @@ def main() -> int:
           and {t["name"]: t["status"] for t in r.json()["tools"]}["get_order"] == "missing", r.text[:200])  # fmt: skip
     old = asyncio.run(call_old_name(binding, tenant, order["tool_name"]))
     check("a client holding the old tool name is refused by Team C", old == {"rpc_error": -32602, "data": {"code": "tool_not_published"}}, old)
-    count = len(live_runs(team_c, order["artifact_id"]))
+    count = len(live_runs(tools_http, order["artifact_id"]))
     late = Chat(http)
     late.say("Where is my order NS-20877?")
     reply = late.say("01012345601")
-    check("the assistant hands over honestly and Team C runs nothing", reply["decision"] == "handoff" and len(live_runs(team_c, order["artifact_id"])) == count, reply)
-    r = team_c.post(f"/api/v1/artifacts/{order['artifact_id']}/publications", json={"note": "Live Demo e2e: republished", "environment": "live_demo"})
+    check("the assistant hands over honestly and Team C runs nothing", reply["decision"] == "handoff" and len(live_runs(tools_http, order["artifact_id"])) == count, reply)
+    r = tools_http.post(f"/api/v1/artifacts/{order['artifact_id']}/publications", json={"note": "Live Demo e2e: republished", "environment": "live_demo"})
     if r.status_code == 200:
         order["publication_id"] = r.json()["id"]
         (VAR / "lifecycle_order_live.json").write_text(json.dumps(order, indent=2), encoding="utf-8")
@@ -141,11 +141,11 @@ def main() -> int:
                {"artifact_id": order["artifact_id"], "identity_name": "alice", "scope": "end_user", "token": "revoked-credential",
                 "a:customer_id": IDENTITIES["alice"][0]})  # fmt: skip
     try:
-        before = len(live_runs(team_c, order["artifact_id"]))
+        before = len(live_runs(tools_http, order["artifact_id"]))
         chat = Chat(http)
         chat.say("Where is my order NS-20877?")
         reply = chat.say("01012345601")
-        runs = live_runs(team_c, order["artifact_id"])
+        runs = live_runs(tools_http, order["artifact_id"])
         calls = [c for t in traces(http, chat.id) for c in t.get("tool_calls", []) if c["tool"] == "get_order"]
         check("the API refused the revoked credential and Team C reports it as failed (never succeeded)",
               len(runs) > before and all(r["status"] == "failed" for r in runs[before:]), [r["status"] for r in runs[before:]])  # fmt: skip

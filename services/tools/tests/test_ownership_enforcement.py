@@ -26,7 +26,7 @@ def test_10_the_accepted_ownership_rule_compiles_into_runtime_enforcement(lifecy
     rule = requirement["enforcement"]
 
     assert rule["mechanism"] and rule["status"] == "configured"
-    assert rule["enforced_by"] == "team_c_executor"
+    assert rule["enforced_by"] == "tools_executor"
     assert rule["scope_kind"] == check["kind"]
     # Every value comes from the accepted policy: nothing about a particular target API is assumed.
     assert rule["pointer"] == check["resource_field"]

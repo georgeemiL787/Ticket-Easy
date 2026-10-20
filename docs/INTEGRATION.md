@@ -38,7 +38,7 @@ browser /chat ──POST /v1/conversations/{id}/messages──► Team B pipelin
      write:    permission gate ─► Team A check_action ─► customer "yes" ─► check_action again ─► create_ticket via
                Team C (once, never retried) ─► verify_result
   handoff (forced or chosen) ─► case in /inbox, unchanged
-◄── reply in the customer's language; trace stored (tool audit id "team-c:<execution id>")
+◄── reply in the customer's language; trace stored (tool audit id "tools:<execution id>")
 ```
 
 Team C is reached only through Team B's `CapabilityClient` port, so every gate of Team B is unchanged. Unbound tools
@@ -57,8 +57,8 @@ keep using Team B's simulated shop.
 
 ### Binding a Team B tool to a Team C tool
 
-`AGENT_TOOLS_CONFIG` names a JSON file (example `services/agent/config/team_c.example.json`; the scripts write
-`ops/local/var/team_c.json`). Per business: the Team C `business_id`, `identities` (verified Team B customer id →
+`AGENT_TOOLS_CONFIG` names a JSON file (example `services/agent/config/tools.example.json`; the scripts write
+`ops/local/var/tools.json`). Per business: the Team C `business_id`, `identities` (verified Team B customer id →
 Team C identity name) and `tools` (Team B tool name → Team C `proposal_id`, optional `arguments` / `fields` renames,
 `reference_field` for creates, `environments`). The adapter enforces:
 
@@ -73,7 +73,7 @@ Team C identity name) and `tools` (Team B tool name → Team C `proposal_id`, op
 
 | Team C | Team B `ToolResult` | Customer hears |
 |---|---|---|
-| `succeeded` | success, `audit_id = team-c:<execution_id>` | the answer / "Done, reference …" (after `verify_result`) |
+| `succeeded` | success, `audit_id = tools:<execution_id>` | the answer / "Done, reference …" (after `verify_result`) |
 | `rejected` (nothing sent) | `TOOLS_REJECTED` | honest "could not look that up" / "could not do it" |
 | `failed`, no write attempted | `TOOLS_FAILED` (a read with category `not_found` → `NOT_FOUND`: "please check the number") | same |
 | `failed` with a `rejected_unverified` write | error, `write_may_have_applied` | handoff `unverified_result` |
@@ -188,7 +188,7 @@ services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool ticket -
 services/agent/.venv/Scripts/python ops/local/live_demo_check.py                   # Live Demo on GitHub's real public API
 ```
 
-Restart Team B after a binding changes (`ops/local/var/team_c.json`). Sign-in for the inbox and dashboard:
+Restart Team B after a binding changes (`ops/local/var/tools.json`). Sign-in for the inbox and dashboard:
 `cd services/agent; $env:AGENT_STORE="sqlite"; $env:AGENT_DB_PATH="../../ops/local/var/agent.sqlite3"; .venv/Scripts/python -m agent_service create-user --email you@example.com --name You --role manager --tenants shop_001 --generate-password`.
 Demo customers: C-100 (alice, phone 01012345601), C-101 (bob, 01123456702).
 

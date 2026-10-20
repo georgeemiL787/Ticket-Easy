@@ -6,7 +6,7 @@ How the Team C source is organized, which way dependencies point, and the rules 
 
 | Path | Contents |
 |---|---|
-| `tool_generation_mcp/` | Application source (package `team_c`) |
+| `tools_service/` | Application source (package `tools_service`) |
 | `tests/` | pytest suite (`testpaths` in `pyproject.toml`); `tests/fixtures/` holds the Petstore OpenAPI snapshots |
 | `docs/` | This file, the OpenAPI subset, verification records and investigation notes |
 | `scripts/` | Opt-in live checks and demos (see below); not used by the app or the tests |
@@ -154,7 +154,7 @@ The executor validates decoded paths and the HTTP client's normalized URL agains
 
 Generation batches use the primary provider's input budget. An optional Ollama fallback does not shrink a cloud-primary batch; Ollama checks its own budget if attempted. Cloud calls recheck cancellation when response headers arrive and after the response is read, and always finish their progress step. A blocking request may still wait for a response or timeout, but its cancelled result is discarded and cannot trigger fallback or save proposals.
 
-Compiled artifacts carry `format` (`FORMAT` in `artifacts.py`, now `team_c.tool_artifact/2`). Rules:
+Compiled artifacts carry `format` (`FORMAT` in `artifacts.py`, now `tools.tool_artifact/2`). Rules:
 
 - Artifacts are immutable and hashed. A rebuild with identical content returns the existing record; a rebuild whose hash differs creates a new artifact record.
 - When compiled content changes shape, bump the version in `FORMAT`.
@@ -165,7 +165,7 @@ Compiled artifacts carry `format` (`FORMAT` in `artifacts.py`, now `team_c.tool_
 For anyone upgrading an existing checkout or database:
 
 - **Database.** On the first start after upgrading, the `schema_migrations` table is created and filled automatically for existing databases. Missing tables and columns are added; existing data is kept. No manual step is needed.
-- **Artifact format `/2`.** New builds produce `team_c.tool_artifact/2`. Existing `/1` artifacts are not rewritten and still execute. Rebuilding an older approval produces a new artifact record with a new hash, so sandbox tests and publications of the old artifact do not count for the new one.
+- **Artifact format `/2`.** New builds produce `tools.tool_artifact/2`. Existing `/1` artifacts are not rewritten and still execute. Rebuilding an older approval produces a new artifact record with a new hash, so sandbox tests and publications of the old artifact do not count for the new one.
 - **`LIVE_WAIT_SECONDS`.** It moved from `tools_service.web` to `tools_service.jobs`. Patch `tools_service.jobs.LIVE_WAIT_SECONDS`; `tools_service.web` no longer has it.
 - **Facade method replacement.** Assigning a replacement method on a `Service` instance (for example `service.generate = fake`) changes only calls made through that facade attribute. The services call each other directly, so other workflows (for example tool requests calling generation) do not see the replacement. Patch the method on the service object instead (`service.generation.generate`). Replacing `service.providers`, `service.fetch_transport` or `service.execution_transport` still reaches every service.
 - **`Providers.check_ollama_budget`.** It remains callable, but `Providers.call()` no longer goes through it: the Ollama provider checks its own budget when it is attempted. Overriding it on a `Providers` instance does not change calls.

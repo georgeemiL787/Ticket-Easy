@@ -1,4 +1,4 @@
-# TicketEasy (team_c) End-to-End Flow Final Report
+# TicketEasy (tools service) End-to-End Flow Final Report
 
 **Date:** 2026-10-09  
 **Environment:** `data/flow4.sqlite3`, port 8101, TOOLS_DEV_FAST_TRACK=false, LLM_PRIMARY=groq, AstroCommerce API on localhost:8080  
@@ -133,9 +133,9 @@ The Groq path is exercised live by `tests/test_groq.py`; no test depends on a pa
 
 **Model calls in this run:** 0 failed runs; 36 attempts succeeded directly on Groq and 1 fell back to OpenRouter after a Groq rate-limit response. The 50 rate-limit attempts recorded today are all `provider_service_failure`, which is the designed fallback path.
 
-**Target-API note (environmental, not a team_c defect):** AstroCommerce occasionally answers `HTTP 500` on `GET /api/v1/orders/{order_id}` — roughly 1 run in 5, unreproducible outside the flow (200+ direct requests returned 200/403). The publication gate correctly refuses when that happens, because a 5xx is `other_failure` and not a record refusal, so no authorization claim could be made. The driver therefore re-runs a sandbox sandbox only when the stored execution report shows the target API answered 5xx; denials, validation failures and every other result are never retried, all runs stay in the audit history, and the gate still judges the latest run.
+**Target-API note (environmental, not a tools service defect):** AstroCommerce occasionally answers `HTTP 500` on `GET /api/v1/orders/{order_id}` — roughly 1 run in 5, unreproducible outside the flow (200+ direct requests returned 200/403). The publication gate correctly refuses when that happens, because a 5xx is `other_failure` and not a record refusal, so no authorization claim could be made. The driver therefore re-runs a sandbox sandbox only when the stored execution report shows the target API answered 5xx; denials, validation failures and every other result are never retried, all runs stay in the audit history, and the gate still judges the latest run.
 
-**Production activation:** Correctly absent — publication `environment="sandbox"`, `activation=None`, `meta=None`, `permitted_uses=["artifact_creation","sandbox_testing"]`, `meta.team_c.production_ready=false`.
+**Production activation:** Correctly absent — publication `environment="sandbox"`, `activation=None`, `meta=None`, `permitted_uses=["artifact_creation","sandbox_testing"]`, `meta.tools.production_ready=false`.
 
 ---
 

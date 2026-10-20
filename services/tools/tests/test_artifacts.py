@@ -155,7 +155,7 @@ def test_artifact_is_deterministic_complete_and_secret_free(built):
     assert s2["parameters"] == [dict(name="id", location="path", type="string", style="simple", explode=False, source=dict(kind="runtime_argument", reference="item_id"))]
     assert sorted(f["name"] for f in s2["body"]["fields"]) == ["description", "title"] and list(s2["responses"]) == ["200"]
     assert c["connector"] == dict(id="items-sandbox", base_url="http://target.test", auth=dict(c["connector"]["auth"], type="oauth2_password", token_path="/api/v1/login/access-token"))
-    assert {r["enforcement"]["mechanism"]: r["enforcement"]["enforced_by"] for r in c["access_requirements"]} == {"delegated_user_credential": "target_api", "response_field_matches_context": "team_c_executor"}
+    assert {r["enforcement"]["mechanism"]: r["enforcement"]["enforced_by"] for r in c["access_requirements"]} == {"delegated_user_credential": "target_api", "response_field_matches_context": "tools_executor"}
     assert c["enforcement_config"]["reviewed_by"] and c["enforcement_config"]["submitted_by"]
     assert c["execution_blockers"] == [] and c["limits"]["follow_redirects"] is False and c["limits"]["retries"] == 0
     assert c["activation"] == dict(c["activation"], runtime_ready=False, activated=False, permitted_uses=["artifact_creation", "sandbox_testing"])

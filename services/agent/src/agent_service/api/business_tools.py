@@ -53,21 +53,21 @@ PROBLEMS = {
     "kind_mismatch": "the published tool reads or writes differently from what this business declared",
     "environment_not_allowed": "its environment (e.g. Live Demo) is not allowed for this tool here",
     "no_spec": "this business has no declaration of the tool (spec) to check it against",
-    "team_c_unavailable": "the tool service could not be asked",
+    "tools_unavailable": "the tool service could not be asked",
 }
 
 
 class BusinessTool(BaseModel):
     name: str  # the tool name the agent's intents use
     used_by: list[str]  # intents (or "identity") that rely on it
-    source: Literal["team_c", "standin"]  # The tools service sandbox publication, or the built-in simulated shop
+    source: Literal["tools", "simulated"]  # The tools service sandbox publication, or the built-in simulated shop
     status: Literal["available", "missing", "blocked"]
     reason: str | None = (
         None  # a gate reason (disabled, not_allowed, ...) or a tools service problem (not_published, ...)
     )
     detail: str = ""
     operation_kind: str | None = None
-    team_c_tool: str | None = None
+    published_tool: str | None = None
     publication_id: str | None = None
     proposal_id: str | None = None
     proposal_version: int | None = None
@@ -165,7 +165,7 @@ class DashboardBusinessTools(BaseModel):
     )
     builder_base: str | None = None  # The tools service's pages root: <base>/proposals/<id>, <base>/artifacts/<id>
     listed_at: datetime | None = None  # when the tools service's tools were last listed
-    team_c_error: str | None = None
+    tools_error: str | None = None
     mapped_customers: int = 0  # verified customers that have a sandbox identity
     tools: list[BusinessTool]
     publications: list[ToolPublication] = []
@@ -186,17 +186,17 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
         raise upstream_unavailable("no shop is connected")
     catalog = await built.registry.catalog(tenant_id, refresh=refresh)
     tenant = built.tenants.get(tenant_id)
-    team_c = built.team_c
-    binding = team_c.binding(tenant_id) if team_c is not None else None
-    state = team_c.status(tenant_id) if team_c is not None and binding is not None else None
+    tools_caps = built.tools
+    binding = tools_caps.binding(tenant_id) if tools_caps is not None else None
+    state = tools_caps.status(tenant_id) if tools_caps is not None and binding is not None else None
     tools: list[BusinessTool] = []
     for name, used_by in permissions.configured_capabilities(tenant).items():
         bound = binding is not None and name in binding.tools
         resolved = state.resolved.get(name) if state is not None else None
         spec = catalog.get(name) if catalog is not None else None
-        item = BusinessTool(name=name, used_by=used_by, source="team_c" if bound else "standin", status="missing")
+        item = BusinessTool(name=name, used_by=used_by, source="tools" if bound else "simulated", status="missing")
         if resolved is not None:
-            item.team_c_tool, item.publication_id = resolved.team_c_tool, resolved.publication_id
+            item.published_tool, item.publication_id = resolved.published_tool, resolved.publication_id
             item.proposal_id, item.proposal_version = resolved.proposal_id, resolved.proposal_version
             item.artifact_sha256 = resolved.artifact_sha256[:12] if resolved.artifact_sha256 else None
             item.environment, item.api_host = resolved.environment, resolved.api_host
@@ -209,9 +209,9 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
             item.reason, item.detail = gate.reason, gate.detail
             item.operation_kind = spec.operation_kind
         tools.append(item)
-    live = sum(1 for t in tools if t.source == "team_c" and t.status == "available" and t.environment == "live_demo")
+    live = sum(1 for t in tools if t.source == "tools" and t.status == "available" and t.environment == "live_demo")
     production = sum(
-        1 for t in tools if t.source == "team_c" and t.status == "available" and t.environment == "production"
+        1 for t in tools if t.source == "tools" and t.status == "available" and t.environment == "production"
     )
     out = DashboardBusinessTools(
         tenant_id=tenant_id,
@@ -221,17 +221,17 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
         production_tools=production,
         sandbox_only=live == 0 and production == 0,
     )
-    if team_c is None or binding is None:
+    if tools_caps is None or binding is None:
         return out
     out.business_id = binding.business_id
     out.mapped_customers = len(binding.identities)
-    if team_c.config.builder_url:
-        out.builder_base = team_c.config.builder_url.rstrip("/")
+    if tools_caps.config.builder_url:
+        out.builder_base = tools_caps.config.builder_url.rstrip("/")
         out.builder_url = f"{out.builder_base}/businesses/{binding.business_id}"
     if state is not None:
         out.listed_at = datetime.fromtimestamp(state.listed_at, UTC) if state.listed_at else None
-        out.team_c_error = state.error
-    admin = team_c.admin
+        out.tools_error = state.error
+    admin = tools_caps.admin
     if admin is None:
         out.publications_error = "the tool service's API address (api_url) is not configured"
         return out
@@ -367,10 +367,10 @@ async def disable(
     """Stop one the tools service tool of this business. Its next call is refused; a write that already happened
     stays."""
     built = checked_tenant(request, tenant_id)
-    binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
-    if built.team_c is None or binding is None:
+    binding = built.tools.binding(tenant_id) if built.tools is not None else None
+    if built.tools is None or binding is None:
         raise not_found("this business has no the tool service tools")
-    admin = built.team_c.admin
+    admin = built.tools.admin
     if admin is None:
         raise upstream_unavailable("the tool service's API address is not configured")
     try:
@@ -382,7 +382,7 @@ async def disable(
         await admin.disable(publication_id, f"Disabled in Ticket-Easy by {who}: {body.note}")
     except UpstreamError as exc:
         raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
-    log.info("team_c_publication_disabled", tenant_id=tenant_id, publication_id=publication_id, actor=who)
+    log.info("tools_publication_disabled", tenant_id=tenant_id, publication_id=publication_id, actor=who)
     return await _overview(built, tenant_id, refresh=True)
 
 
@@ -394,10 +394,10 @@ async def check_connector(connector_id: CONNECTOR_ID, tenant_id: TENANT, request
     """Ask the tools service to check one of this business's connectors for real (configuration, reachability,
     login)."""
     built = checked_tenant(request, tenant_id)
-    binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
-    if built.team_c is None or binding is None or built.team_c.admin is None:
+    binding = built.tools.binding(tenant_id) if built.tools is not None else None
+    if built.tools is None or binding is None or built.tools.admin is None:
         raise not_found("this business has no the tool service connectors")
-    admin = built.team_c.admin
+    admin = built.tools.admin
     try:
         mine = {c.get("id") for c in await admin.connectors(binding.business_id)}
         if connector_id not in mine:
@@ -405,7 +405,7 @@ async def check_connector(connector_id: CONNECTOR_ID, tenant_id: TENANT, request
         await admin.check_connector(connector_id)
     except UpstreamError as exc:
         raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
-    log.info("team_c_connector_checked", tenant_id=tenant_id, connector_id=connector_id)
+    log.info("tools_connector_checked", tenant_id=tenant_id, connector_id=connector_id)
     return await _overview(built, tenant_id, refresh=False)
 
 
@@ -422,10 +422,10 @@ async def auto_test(artifact_id: ARTIFACT_ID, tenant_id: TENANT, request: Reques
     the proposal's readiness_state until the run is over.
     """
     built = checked_tenant(request, tenant_id)
-    binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
-    if built.team_c is None or binding is None or built.team_c.admin is None:
+    binding = built.tools.binding(tenant_id) if built.tools is not None else None
+    if built.tools is None or binding is None or built.tools.admin is None:
         raise not_found("this business has no the tool service tools")
-    admin = built.team_c.admin
+    admin = built.tools.admin
     try:
         mine = {a.get("id") for a in await admin.artifacts(binding.business_id)}
         if artifact_id not in mine:
@@ -435,7 +435,7 @@ async def auto_test(artifact_id: ARTIFACT_ID, tenant_id: TENANT, request: Reques
         raise upstream_unavailable(f"The tool service could not be asked ({exc.code})") from None
     user = current_user(request)
     log.info(
-        "team_c_auto_test_started",
+        "tools_auto_test_started",
         tenant_id=tenant_id,
         artifact_id=artifact_id,
         actor=user.display_name if user else "an operator",
@@ -465,7 +465,7 @@ def _admin_name(request: Request) -> str:
     return str(user.display_name)
 
 
-def _team_c_failure(exc: UpstreamError) -> ApiError:
+def _tools_failure(exc: UpstreamError) -> ApiError:
     if exc.code in ("PROMOTION_REFUSED", "PRODUCTION_DISABLED", "PROMOTION_NOT_ACTIVE"):
         return ApiError(409, exc.code, exc.message)  # The tools service's own words: which checks failed
     return upstream_unavailable(f"The tool service could not be asked ({exc.code})")
@@ -480,10 +480,10 @@ async def promote(
     whole checklist (evidence, scoping, identical content, secret, smoke check, idempotency, rollback contact)."""
     built = checked_tenant(request, tenant_id)
     actor = _admin_name(request)
-    binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
-    if built.team_c is None or binding is None or built.team_c.admin is None:
+    binding = built.tools.binding(tenant_id) if built.tools is not None else None
+    if built.tools is None or binding is None or built.tools.admin is None:
         raise not_found("this business has no the tool service tools")
-    admin = built.team_c.admin
+    admin = built.tools.admin
     try:
         if artifact_id not in {a.get("id") for a in await admin.artifacts(binding.business_id)}:
             raise not_found("tool not found")  # another business's tool is answered as missing
@@ -495,9 +495,9 @@ async def promote(
             accept_no_idempotency=body.accept_no_idempotency,
         )
     except UpstreamError as exc:
-        raise _team_c_failure(exc) from None
+        raise _tools_failure(exc) from None
     log.info(
-        "team_c_promoted_to_production",
+        "tools_promoted_to_production",
         tenant_id=tenant_id,
         artifact_id=artifact_id,
         actor=actor,
@@ -513,15 +513,15 @@ async def rollback(
     """Switch a production tool off (admin). Its next call is refused; a write that already happened stays."""
     built = checked_tenant(request, tenant_id)
     actor = _admin_name(request)
-    binding = built.team_c.binding(tenant_id) if built.team_c is not None else None
-    if built.team_c is None or binding is None or built.team_c.admin is None:
+    binding = built.tools.binding(tenant_id) if built.tools is not None else None
+    if built.tools is None or binding is None or built.tools.admin is None:
         raise not_found("this business has no the tool service tools")
-    admin = built.team_c.admin
+    admin = built.tools.admin
     try:
         if promotion_id not in {p.get("id") for p in await admin.promotions(binding.business_id)}:
             raise not_found("promotion not found")
         await admin.rollback(promotion_id, actor=actor, note=body.note)
     except UpstreamError as exc:
-        raise _team_c_failure(exc) from None
-    log.info("team_c_production_rolled_back", tenant_id=tenant_id, promotion_id=promotion_id, actor=actor)
+        raise _tools_failure(exc) from None
+    log.info("tools_production_rolled_back", tenant_id=tenant_id, promotion_id=promotion_id, actor=actor)
     return await _overview(built, tenant_id, refresh=True)

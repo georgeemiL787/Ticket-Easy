@@ -285,10 +285,10 @@
           "title": "Index Tenant"
         },
         "provider": {
-          "default": "standin",
+          "default": "simulated",
           "enum": [
-            "team_a",
-            "standin"
+            "knowledge",
+            "simulated"
           ],
           "title": "Provider",
           "type": "string"
@@ -376,10 +376,10 @@
           "type": "string"
         },
         "source": {
-          "default": "standin",
+          "default": "simulated",
           "enum": [
-            "team_c",
-            "standin"
+            "tools",
+            "simulated"
           ],
           "title": "Source",
           "type": "string"

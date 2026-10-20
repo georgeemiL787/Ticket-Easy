@@ -342,10 +342,10 @@ export default function BusinessTools() {
                   <dd>{d.listed_at ? formatDateTime(d.listed_at, lang) : t("common.noData")}</dd>
                   <dt>{t("bt.mapped")}</dt>
                   <dd>{d.mapped_customers}</dd>
-                  {d.team_c_error ? (
+                  {d.tools_error ? (
                     <>
                       <dt>{t("bt.problem")}</dt>
-                      <dd className="badge problem">{d.team_c_error}</dd>
+                      <dd className="badge problem">{d.tools_error}</dd>
                     </>
                   ) : null}
                 </dl>
@@ -391,8 +391,8 @@ export default function BusinessTools() {
                       </td>
                       <td>{tool.used_by.join(", ") || t("common.noData")}</td>
                       <td>
-                        <span className="chip">{t(tool.source === "team_c" ? "bt.sourceTools" : "bt.sourceSimulated")}</span>{" "}
-                        <EnvBadge environment={tool.source === "team_c" ? tool.environment : null} />
+                        <span className="chip">{t(tool.source === "tools" ? "bt.sourceTools" : "bt.sourceSimulated")}</span>{" "}
+                        <EnvBadge environment={tool.source === "tools" ? tool.environment : null} />
                         {tool.api_host ? <div className="muted small">{t("bt.callsApi", { host: tool.api_host })}</div> : null}
                       </td>
                       <td>
@@ -400,9 +400,9 @@ export default function BusinessTools() {
                       </td>
                       <td>{tool.reason ? `${label(t, "bt.reason", tool.reason)}${tool.detail ? ` (${tool.detail})` : ""}` : tool.operation_kind ?? ""}</td>
                       <td>
-                        {tool.team_c_tool ? (
+                        {tool.published_tool ? (
                           <>
-                            <code>{tool.team_c_tool}</code>
+                            <code>{tool.published_tool}</code>
                             {tool.proposal_version ? <span className="muted"> v{tool.proposal_version}</span> : null}
                           </>
                         ) : (

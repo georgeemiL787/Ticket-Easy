@@ -39,7 +39,7 @@ def test_the_hash_ignores_version_status_and_author_but_not_the_content() -> Non
         ("invalid_human_only_allowed.json", "human-only"),
         ("invalid_tenant_mismatch.json", "tenant_id"),
         ("invalid_wrong_hash.json", "content_sha256"),
-        ("invalid_team_c_unbound.json", "binding"),
+        ("invalid_tools_unbound.json", "binding"),
     ],
 )
 def test_invalid_bundles_are_refused(name: str, reason: str) -> None:
@@ -58,7 +58,7 @@ def test_a_bundle_with_a_secret_in_a_constant_is_refused() -> None:
     data["tools"] = [
         {
             "name": "verify_customer",
-            "source": "team_c",
+            "source": "tools",
             "binding": {"business_id": "b", "proposal_id": "p", "constants": {"api_key": "sk-123"}},
         }
     ]

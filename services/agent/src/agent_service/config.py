@@ -148,7 +148,7 @@ class Settings(BaseModel):
     knowledge_admin_key: SecretStr | None = (
         None  # X-Admin-Key for documents and rules (the knowledge pages); unset: those pages are off
     )
-    # The tools service's sandbox tools over MCP: the operator's JSON file (see config/team_c.example.json). Unset: the
+    # The tools service's sandbox tools over MCP: the operator's JSON file (see config/tools.example.json). Unset: the
     # simulated shop serves every tool. Set: the tools it binds are served by the tools service, the rest by the
     # simulated service.
     tools_config: Path | None = None

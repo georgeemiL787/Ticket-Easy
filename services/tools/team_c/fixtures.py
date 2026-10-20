@@ -1,7 +1,7 @@
 """Test fixtures for automatic sandbox tests: disposable accounts and records created by the business's own sandbox.
 
 A sandbox connector may declare `fixtures: {base_url, key_ref}`: a few endpoints the sandbox exposes for test setup only
-(see Docs/plan/TOOLS_AUTOTEST_AND_PRODUCTION_PLAN.md, section 1.1). They are never part of the OpenAPI document tools are
+(see docs/plan/TOOLS_AUTOTEST_AND_PRODUCTION_PLAN.md, section 1.1). They are never part of the OpenAPI document tools are
 generated from. Only sandbox connectors may declare fixtures; a Live Demo (or any later production) connector never gets
 account creation. The key is read from the environment variable `key_ref` names and is never stored, logged or returned.
 Same safety as the executor: an allowed sandbox destination, no redirects, a timeout and a response size limit.

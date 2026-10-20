@@ -1,7 +1,8 @@
 # One-command demo of the whole stack (needs Docker). The service's own commands are in services/agent/Makefile.
 # make demo        start the demo (no AI model) and fill the dashboard with example conversations
 # make demo-full   the same plus a local AI model (Ollama, qwen3:8b: the first start downloads about 5 GB)
-# make demo-live  Team B with the real Team A (policy search, safety, rules); needs Ollama on the host with bge-m3 pulled
+# make demo-live  the agent with the real knowledge service (policy search, safety, rules) and the tools service
+#                 (http://localhost:8101); needs Ollama on the host with bge-m3 pulled
 # make down        stop it (your data is kept)   make logs   follow what it is doing
 
 PORT ?= 8010

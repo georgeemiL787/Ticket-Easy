@@ -14,7 +14,7 @@ Ticket-Easy is an AI agent for Egyptian businesses that answers customers in the
 | The assistant, chat, inbox, dashboard, onboarding | Agent service | `services/agent/` (+ `apps/dashboard/`) |
 | Tools: turn an API description into safe tools | Tools service | `services/tools/` |
 
-An owner sets a business up in the dashboard: **Set up a business** (profile, policies, rules, API connection, tools, test chat, go live). The folder names are historical; the plan is in `Docs/plan/TICKET_EASY_MASTER_PLAN.md` and its progress in `Docs/plan/TICKET_EASY_MASTER_PROGRESS.md`. Schemas: `contracts/README.md`.
+An owner sets a business up in the dashboard: **Set up a business** (profile, policies, rules, API connection, tools, test chat, go live). The folder names are historical; the plan is in `docs/plan/TICKET_EASY_MASTER_PLAN.md` and its progress in `docs/plan/TICKET_EASY_MASTER_PROGRESS.md`. Schemas: `contracts/README.md`.
 
 ---
 
@@ -40,7 +40,7 @@ This version answers by rules and needs no internet. For the version where an AI
 
 To run Team B against the real Team A service (policy search, safety screen, rule checker) use `make demo-live`. It needs Ollama on your computer with `ollama pull bge-m3` done once; without it Team A falls back to keyword-only search. The Docker demos use the stand-in shop.
 
-To run all three teams together locally, with business tools that Team C generated and published as TEST-ONLY **Sandbox** tools or as **Live Demo** tools that call an owner-configured real API (never a production release), follow [Docs/INTEGRATION.md](Docs/INTEGRATION.md): `python ops/local/serve.py up`, the tool lifecycle `ops/local/team_c_lifecycle.py`, the real-API check `ops/local/live_demo_check.py`, and the end-to-end checks `ops/local/e2e_chat.py` / `e2e_live_chat.py`. Managers see each tool's environment, check API connections and disable tools on the dashboard's **Business tools** page.
+To run all three teams together locally, with business tools that Team C generated and published as TEST-ONLY **Sandbox** tools or as **Live Demo** tools that call an owner-configured real API (never a production release), follow [docs/INTEGRATION.md](docs/INTEGRATION.md): `python ops/local/serve.py up`, the tool lifecycle `ops/local/team_c_lifecycle.py`, the real-API check `ops/local/live_demo_check.py`, and the end-to-end checks `ops/local/e2e_chat.py` / `e2e_live_chat.py`. Managers see each tool's environment, check API connections and disable tools on the dashboard's **Business tools** page.
 
 Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
 delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.

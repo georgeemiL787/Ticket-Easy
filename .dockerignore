@@ -14,4 +14,4 @@ services/knowledge/tests
 services/knowledge/.venv
 services/knowledge/scripts
 team_c
-Docs
+docs

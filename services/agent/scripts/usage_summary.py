@@ -1,5 +1,5 @@
 """Totals from one or more token usage logs (JSONL, one line per AI request; the format is in
-Docs/output/eval_runs/USAGE_LOG_FORMAT.md and is the same in the conversation, knowledge and tool services).
+docs/reports/eval_runs/USAGE_LOG_FORMAT.md and is the same in the conversation, knowledge and tool services).
 
     python scripts/usage_summary.py logs/a.jsonl logs/b.jsonl [--csv out.csv]
 

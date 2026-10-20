@@ -79,7 +79,7 @@ def live_settings(path: Path = LIVE_ENV) -> dict[str, str]:
 def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple[list[str], Path, dict[str, str]]:
     python = venv_python(TEAMS[service])
     if python is None:
-        raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (Docs/INTEGRATION.md, 'Run it locally')")
+        raise SystemExit(f"{TEAMS[service]}/.venv is missing: create it first (docs/INTEGRATION.md, 'Run it locally')")
     env = dict(os.environ)
     port = str(PORTS[service])
     if service in ("sandbox", "demo-shop", "nile-prod"):
@@ -195,7 +195,7 @@ def preflight() -> list[str]:
     problems = []
     for team in ("services/knowledge", "services/agent", "services/tools"):
         if venv_python(team) is None:
-            problems.append(f"ERROR   {team}/.venv is missing (Docs/INTEGRATION.md, 'Run it locally')")
+            problems.append(f"ERROR   {team}/.venv is missing (docs/INTEGRATION.md, 'Run it locally')")
     if not (ROOT / "services" / "knowledge" / "var" / "index" / "shop_001").exists():
         problems.append("ERROR   Team A has no index for shop_001: cd services/knowledge; PYTHONPATH=src .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings")
     if not (ROOT / "services" / "agent" / "web" / "dashboard" / "index.html").exists():

@@ -78,7 +78,7 @@ services:
       retries: 180   # up to 30 minutes for the first download
       start_period: 20s
 
-  # ---- profile "live": Team B + the real Team A ----
+  # ---- profile "live": Team B + the real Team A and the tools service ----
   team-b-live:
     <<: *team-b
     profiles: ["live"]
@@ -118,7 +118,43 @@ services:
       retries: 30
       start_period: 60s
 
+  # the tools service: owners use its pages at http://localhost:8101; the agent is wired to it by hand (docs/INTEGRATION.md)
+  tools:
+    build:
+      context: .
+      dockerfile: services/tools/Dockerfile
+    image: ticket-easy-tools
+    profiles: ["live"]
+    ports:
+      - "127.0.0.1:${TOOLS_PORT:-8101}:8101"   # its owner pages have no sign-in: keep them on this machine
+    volumes:
+      - tools_data:/data
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: /data/integration.sqlite3
+      OPENAPI_FETCH_HOSTS: ${TOOLS_OPENAPI_FETCH_HOSTS:-loopback:*}
+      SANDBOX_HOSTS: ${TOOLS_SANDBOX_HOSTS:-}
+      # secrets come from the environment; empty session secret: a random one per start
+      SESSION_SECRET: ${TOOLS_SESSION_SECRET:-}
+      TEAM_C_ADMIN_TOKEN: ${TOOLS_ADMIN_TOKEN:-}
+      LIVE_DEMO_ENABLED: ${TOOLS_LIVE_DEMO_ENABLED:-false}
+      LIVE_DEMO_HOSTS: ${TOOLS_LIVE_DEMO_HOSTS:-}
+      # model provider for proposals (Ollama on the host by default; Groq or OpenRouter with their keys)
+      LLM_PRIMARY: ${TOOLS_LLM_PRIMARY:-ollama}
+      OLLAMA_BASE_URL: ${TOOLS_OLLAMA_URL:-http://host.docker.internal:11434}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8101/health', timeout=2).status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
 volumes:
   team_b_data:
   ollama_models:
   team_a_var:
+  tools_data:

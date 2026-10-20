@@ -1,6 +1,6 @@
 # Launch readiness review
 
-Checked on 2026-10-06 against the launch checklist in `Docs/plan/Ticket-Easy_Implementation_Plan.md` (section 5.6), on
+Checked on 2026-10-06 against the launch checklist in `docs/plan/Ticket-Easy_Implementation_Plan.md` (section 5.6), on
 branch `team-b` at the commit after A16. Every line says what was run or read, so each can be repeated.
 
 ## Verdict: NOT READY. Do not launch to real customers yet.

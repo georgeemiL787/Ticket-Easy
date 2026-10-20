@@ -185,6 +185,6 @@ ops/local/var/
 # Live Demo settings and credentials (copy ops/local/live_demo.example.env)
 ops/local/live_demo.env
 ops/local/production.env
-Docs/system_workflow.html
+docs/system_workflow.html
 ops/local/showcase_cases.py
-Docs/system_architecture.html
+docs/system_architecture.html

@@ -18,7 +18,7 @@ load memory → understand (language, intents, entities, yes/no, wants human, fr
 
 ## Stand-ins
 Team A is reachable over HTTP (TEAM_B_MODE=live) and Team C's sandbox tools over MCP (TEAM_B_TEAM_C_CONFIG, TEST-ONLY; see
-../../Docs/INTEGRATION.md); without them Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
+../../docs/INTEGRATION.md); without them Team B builds its own stand-ins in adapters/standins, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
 
 ## Layout
 Paths are relative to services/agent/ unless noted. "(planned)" marks anything not created yet; remove it when a prompt creates the item, and add new modules here.

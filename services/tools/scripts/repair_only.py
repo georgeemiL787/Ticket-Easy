@@ -18,11 +18,11 @@ import time
 from pathlib import Path
 from domain_demo import LABEL, PREFLIGHT_REFUSALS, Backend, build, mapping_check, review, run_case, start_fixture
 from fixtures.service_desk.app import VARIANTS
-from team_c.config import AppError, Settings
-from team_c.models import RepairSubmission, SandboxRunSubmission
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store, uid
+from tools_service.config import AppError, Settings
+from tools_service.models import RepairSubmission, SandboxRunSubmission
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store, uid
 
 SOURCE, DB, CONNECTORS = Path("data/desk-base.sqlite3"), "data/desk-repair.sqlite3", "data/desk-repair-connectors.json"
 

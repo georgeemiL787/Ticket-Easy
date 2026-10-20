@@ -105,7 +105,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
             production = live_settings(PRODUCTION_ENV)
             env.update({k: v for k, v in production.items() if k in PRODUCTION_KEYS + SMOKE_KEYS})
             env.update(PRODUCTION_AUDIT_DIR=str(VAR / "audit"), TEAM_C_ADMIN_TOKEN=secret("team_c_admin.key"))
-        args = ["-m", "uvicorn", "team_c.web:create_app", "--factory", "--host", "127.0.0.1"]
+        args = ["-m", "uvicorn", "tools_service.web:create_app", "--factory", "--host", "127.0.0.1"]
         return [python, *args, "--port", port], ROOT / "services" / "tools", env
     if service == "team-a":
         env["PYTHONPATH"] = "src"

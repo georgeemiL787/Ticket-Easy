@@ -12,7 +12,7 @@ The backend currently runs on Windows. `/workspace/target-system` is not availab
 Set-Location 'D:\nti project\team_c'
 uv sync --locked
 $env:ALLOWED_PROJECT_DIRECTORY='D:\target-system'
-uv run uvicorn team_c.web:create_app --factory --host 127.0.0.1 --port 8000
+uv run uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 The equivalent persistent setting is `ALLOWED_PROJECT_DIRECTORY=D:\target-system` in `.env`. Local discovery is disabled when this setting is empty. On a Linux backend use an actual accessible allowed root such as `/workspace`, and enter `/workspace/target-system` in the UI. Paths always refer to the backend filesystem.

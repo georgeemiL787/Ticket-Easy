@@ -2,9 +2,9 @@
 import json
 from pathlib import Path
 import pytest
-from team_c.config import Settings
-from team_c.models import CRITERIA, GenerationOutput, ReconciliationOutput
-from team_c.web import create_app
+from tools_service.config import Settings
+from tools_service.models import CRITERIA, GenerationOutput, ReconciliationOutput
+from tools_service.web import create_app
 from fastapi.testclient import TestClient
 
 ROOT=Path(__file__).resolve().parents[1]

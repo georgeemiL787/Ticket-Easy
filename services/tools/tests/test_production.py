@@ -1,17 +1,17 @@
-"""Production: a service credential scoped to the verified customer by Team C, promotion with its checklist, rollback, auto-disable.
+"""Production: a service credential scoped to the verified customer by the tools service, promotion with its checklist, rollback, auto-disable.
 
 MOCKED / AUTHORED: the proposal comes from the AUTHORED TEST SUBSTITUTE, owner decisions are sandbox-only, the target is the
 in-process service-desk fixture, which here also accepts a business SERVICE token that may act on any booking (so the API itself
-no longer separates customers: only Team C's check does). The real stdio server and the Nile deployment: ops/local/production_check.py.
+no longer separates customers: only the tools service's check does). The real stdio server and the Nile deployment: ops/local/production_check.py.
 """
 import json
 import re
 from pathlib import Path
 import pytest
-from team_c import promotions as rules
-from team_c.config import AppError
-from team_c.executor import Run
-from team_c.mcp_server import client_context
+from tools_service import promotions as rules
+from tools_service.config import AppError
+from tools_service.executor import Run
+from tools_service.mcp_server import client_context
 from helpers.desk import KEY, generated, make_desk, review_and_build_policy
 from helpers.publication import RevisingDesk, publish
 
@@ -113,7 +113,7 @@ def test_promotion_refuses_missing_evidence_a_missing_secret_a_failed_smoke_chec
     assert exc.value.details["checklist"]["secret_resolved"]["ok"] is False and "NOT available" in exc.value.details["checklist"]["secret_resolved"]["detail"]
     monkeypatch.setenv(ENV, SERVICE_TOKEN)
     d.service.settings.production_smoke_arguments = json.dumps(dict(booking_reference=d.booking["bob"]["ref"], category=d.n["categories"][0], details="x"))
-    with pytest.raises(AppError) as exc:  # the smoke customer (alice) does not own bob's booking: Team C's check refuses it
+    with pytest.raises(AppError) as exc:  # the smoke customer (alice) does not own bob's booking: the tools service's check refuses it
         d.promote()
     smoke = exc.value.details["checklist"]["smoke"]
     assert smoke["ok"] is False and "failed" in smoke["detail"]
@@ -142,7 +142,7 @@ def test_a_service_credential_cannot_reach_another_customers_record(prod):
     assert ok["status"] == "succeeded" and ok["environment"] == "production" and ok["production_ready"] is True
     filed = d.state()["requests"]
     assert len(filed) == before + 1 and filed[-1]["filed_by"] == d.people["alice"]["id"]
-    # bob's context against alice's booking: the API alone would allow it (service token), Team C's check refuses before the write
+    # bob's context against alice's booking: the API alone would allow it (service token), the tools service's check refuses before the write
     denied = d.call(promo, "bob", owner="alice")
     assert denied["status"] == "failed" and denied["error"]["code"] == "blocked_by_access_check" and denied["error"]["category"] == "permission_denied"
     assert len(d.state()["requests"]) == before + 1
@@ -216,7 +216,7 @@ def test_an_error_spike_switches_the_tool_off_but_refused_customers_never_do(pro
     d = prod
     d.service.settings.production_auto_disable_failures = 2
     promo = d.promote()
-    for _ in range(4):  # a customer after someone else's record is refused by Team C's check: not an API problem
+    for _ in range(4):  # a customer after someone else's record is refused by the tools service's check: not an API problem
         assert d.call(promo, "bob", owner="alice")["status"] == "failed"
     assert d.service.promotion(promo["id"])["status"] == "active"
     monkeypatch.setenv(ENV, "a-revoked-service-token")  # the business rotated the credential: the API now answers 401
@@ -285,7 +285,7 @@ def test_idempotency_header_is_declared_by_the_api_and_sent_as_a_trusted_header_
     content = dict(steps=[dict(id="s1", effect="read", operation_id="o1"), dict(id="s2", effect="write", operation_id="o2"), dict(id="s3", effect="write", operation_id="o3")])
     ops = [dict(id="o1", parameters=[]), dict(id="o2", parameters=[dict(**{"in": "header", "name": "Idempotency-Key"})]), dict(id="o3", parameters=[dict(**{"in": "query", "name": "idempotency-key"})])]
     assert rules.idempotency_plan(content, ops) == {"s2": "Idempotency-Key", "s3": None}
-    from team_c.artifacts import LIMITS
+    from tools_service.artifacts import LIMITS
     artifact = dict(limits=LIMITS, proposal=dict(business_id="b"))
     run = Run(artifact, {}, dict(context={}), "http://api.test", None, dict(key="0123456789abcdef", steps={"s2": "Idempotency-Key"}))
     assert run.transport_headers(dict(id="s2", effect="write", parameters=[]), {"Authorization": "Bearer x"})["Idempotency-Key"] == "0123456789abcdef"
@@ -303,7 +303,7 @@ def test_content_that_differs_beyond_the_destination_is_refused():
 
 
 def test_a_secret_can_also_be_a_file_that_only_team_c_reads(prod, tmp_path, monkeypatch):
-    from team_c.connectors import resolve_secret, secret_name
+    from tools_service.connectors import resolve_secret, secret_name
     path = tmp_path / "svc.key"
     path.write_text(SERVICE_TOKEN + chr(10), encoding="utf-8")
     assert resolve_secret("file:" + str(path)) == SERVICE_TOKEN and resolve_secret("file:" + str(tmp_path / "missing")) is None

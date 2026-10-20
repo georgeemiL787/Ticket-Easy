@@ -2,7 +2,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 from conftest import ROOT, DeterministicModelSubstitute, setup_proposal, answer_reconcile, confirm_requirements
-from team_c.web import create_app
+from tools_service.web import create_app
 
 
 def decide(client,pid,action="approve_to_build",key="decision-key-123",reason=""):
@@ -135,7 +135,7 @@ def test_restart_preserves_pending_and_marks_interrupted(env):
 
 def test_concurrent_identical_decisions_are_single_record(env):
     from concurrent.futures import ThreadPoolExecutor
-    from team_c.models import DecisionSubmission
+    from tools_service.models import DecisionSubmission
     app,client,_=env
     pid=setup_proposal(env)[2]["proposal_ids"][0]
     ready(client,pid)

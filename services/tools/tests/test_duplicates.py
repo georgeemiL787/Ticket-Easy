@@ -1,6 +1,6 @@
 """Duplicate generated tools are recognized by complete executable behavior, not by shared operations."""
 import copy
-from team_c.capabilities import behavior
+from tools_service.capabilities import behavior
 from helpers.desk import desk_proposal, generated
 from helpers.tool_requests import ask, proposal_count, triage
 

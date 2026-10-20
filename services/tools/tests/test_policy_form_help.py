@@ -2,9 +2,9 @@
 import pytest
 from starlette.datastructures import FormData
 
-from team_c.config import AppError
-from team_c.services.proposals import Proposals
-from team_c.web import actions
+from tools_service.config import AppError
+from tools_service.services.proposals import Proposals
+from tools_service.web import actions
 
 OPS = {
     "refund": {"method": "POST", "path": "/refunds", "inputs": {"body.amount": {}}},

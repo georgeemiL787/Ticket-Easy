@@ -1,10 +1,10 @@
 import json
 import httpx
 import pytest
-from team_c.config import Settings,AppError
-from team_c.providers import Providers
-from team_c.models import GenerationOutput, RepairOutput
-from team_c.storage import Store,uid,now
+from tools_service.config import Settings,AppError
+from tools_service.providers import Providers
+from tools_service.models import GenerationOutput, RepairOutput
+from tools_service.storage import Store,uid,now
 
 
 def provider(tmp_path,transport,**kwargs):

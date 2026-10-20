@@ -2,8 +2,8 @@ import json
 import time
 from pathlib import Path
 
-from team_c.discovery import discover
-from team_c.swagger2 import convert, is_swagger2
+from tools_service.discovery import discover
+from tools_service.swagger2 import convert, is_swagger2
 
 SPECS = Path(__file__).parent / "fixtures" / "specs"
 

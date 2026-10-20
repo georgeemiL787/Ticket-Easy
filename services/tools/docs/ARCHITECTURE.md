@@ -37,7 +37,7 @@ Entry points:
 | Module | Responsibility |
 |---|---|
 | `app.py` | `create_app(settings=None, provider_factory=None)`: builds the `Store`, `Providers` and `Service`, puts them and the job registry on `app.state`, adds session, trusted-host and same-origin middleware, error handlers, templates and routers |
-| `mcp_server.py` | Stdio MCP server for sandbox publications (`python -m team_c.mcp_server`); builds its own `Store` and `Service` with no model providers |
+| `mcp_server.py` | Stdio MCP server for sandbox publications (`python -m tools_service.mcp_server`); builds its own `Store` and `Service` with no model providers |
 
 HTTP layers:
 
@@ -123,12 +123,12 @@ A check of every `import` in `tool_generation_mcp/` found no violations. Interna
 
 | Old import | New location |
 |---|---|
-| `team_c.web:create_app` | `team_c.app:create_app` (lazy re-export in `web/__init__.py`) |
-| `team_c.storage` (`Store`, `INTERRUPTED`, `OWNER`, `claim`, `owner_alive`, `digest`, `dump`, `now`, `uid`) | `team_c.persistence` (`db`, `recovery`, `util`) |
-| `team_c.providers` (`Providers`, prompts, budgets, schema helpers, `ollama_stream`, `LIVE`, `live_step`, `check_cancelled`) | `team_c.llm.router`, `llm.prompts`, `llm.budget`, `llm.schemas`, `llm.ollama`; `team_c.progress` |
-| `team_c.code_discovery` | `team_c.legacy.code_discovery` |
+| `tools_service.web:create_app` | `tools_service.app:create_app` (lazy re-export in `web/__init__.py`) |
+| `tools_service.storage` (`Store`, `INTERRUPTED`, `OWNER`, `claim`, `owner_alive`, `digest`, `dump`, `now`, `uid`) | `tools_service.persistence` (`db`, `recovery`, `util`) |
+| `tools_service.providers` (`Providers`, prompts, budgets, schema helpers, `ollama_stream`, `LIVE`, `live_step`, `check_cancelled`) | `tools_service.llm.router`, `llm.prompts`, `llm.budget`, `llm.schemas`, `llm.ollama`; `tools_service.progress` |
+| `tools_service.code_discovery` | `tools_service.legacy.code_discovery` |
 
-Moved without a shim: `tool_generation_mcp/templates/` is now `tool_generation_mcp/web/templates/`, and `team_c.web.LIVE_WAIT_SECONDS` is now `team_c.jobs.LIVE_WAIT_SECONDS`. New code should import the new locations.
+Moved without a shim: `tool_generation_mcp/templates/` is now `tool_generation_mcp/web/templates/`, and `tools_service.web.LIVE_WAIT_SECONDS` is now `tools_service.jobs.LIVE_WAIT_SECONDS`. New code should import the new locations.
 
 ## Transactions
 
@@ -166,7 +166,7 @@ For anyone upgrading an existing checkout or database:
 
 - **Database.** On the first start after upgrading, the `schema_migrations` table is created and filled automatically for existing databases. Missing tables and columns are added; existing data is kept. No manual step is needed.
 - **Artifact format `/2`.** New builds produce `team_c.tool_artifact/2`. Existing `/1` artifacts are not rewritten and still execute. Rebuilding an older approval produces a new artifact record with a new hash, so sandbox tests and publications of the old artifact do not count for the new one.
-- **`LIVE_WAIT_SECONDS`.** It moved from `team_c.web` to `team_c.jobs`. Patch `team_c.jobs.LIVE_WAIT_SECONDS`; `team_c.web` no longer has it.
+- **`LIVE_WAIT_SECONDS`.** It moved from `tools_service.web` to `tools_service.jobs`. Patch `tools_service.jobs.LIVE_WAIT_SECONDS`; `tools_service.web` no longer has it.
 - **Facade method replacement.** Assigning a replacement method on a `Service` instance (for example `service.generate = fake`) changes only calls made through that facade attribute. The services call each other directly, so other workflows (for example tool requests calling generation) do not see the replacement. Patch the method on the service object instead (`service.generation.generate`). Replacing `service.providers`, `service.fetch_transport` or `service.execution_transport` still reaches every service.
 - **`Providers.check_ollama_budget`.** It remains callable, but `Providers.call()` no longer goes through it: the Ollama provider checks its own budget when it is attempted. Overriding it on a `Providers` instance does not change calls.
 - **Behavior.** The refactor did not change the limits listed in the README "Limitations" section: loopback, single-process development use, shared development reviewer label, stdio-only sandbox MCP server.

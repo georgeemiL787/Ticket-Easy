@@ -152,7 +152,7 @@ async def through_mcp(state: dict[str, Any], api: dict[str, Any]) -> dict[str, A
     python = ROOT / "services" / "tools" / ".venv" / ("Scripts/python.exe" if (ROOT / "services" / "tools" / ".venv" / "Scripts").exists() else "bin/python")
     env = {"PYTHONPATH": ".", **{k: v for k, v in live_settings().items() if k.startswith("LIVE_DEMO_") and k in (
         "LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")}}  # fmt: skip
-    session = McpStdioSession([str(python), "-m", "team_c.mcp_server", "--business-id", state["business_id"], "--identity", "demo",
+    session = McpStdioSession([str(python), "-m", "tools_service.mcp_server", "--business-id", state["business_id"], "--identity", "demo",
                                "--database", "data/integration.sqlite3"], cwd=str(ROOT / "services" / "tools"), env=env)  # fmt: skip
     await session.start()
     out: dict[str, Any] = {}

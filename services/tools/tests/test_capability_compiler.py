@@ -3,16 +3,16 @@ import copy
 import json
 import httpx
 import pytest
-from team_c.artifacts import compile_artifact
-from team_c.compiler.policies import AccessPolicy, resolve_inputs
-from team_c.compiler.readiness import assess
-from team_c.compiler.semantics import enrich, input_semantics
-from team_c.compiler.security_tests import run
-from team_c.config import AppError
-from team_c.discovery import discover
-from team_c.executor import Run, credentials, validate_arguments
-from team_c.persistence.util import digest
-from team_c.requirements import derive
+from tools_service.artifacts import compile_artifact
+from tools_service.compiler.policies import AccessPolicy, resolve_inputs
+from tools_service.compiler.readiness import assess
+from tools_service.compiler.semantics import enrich, input_semantics
+from tools_service.compiler.security_tests import run
+from tools_service.config import AppError
+from tools_service.discovery import discover
+from tools_service.executor import Run, credentials, validate_arguments
+from tools_service.persistence.util import digest
+from tools_service.requirements import derive
 
 
 DOMAINS = [("healthcare", "appointments", "patient", "clinic"), ("banking", "transfers", "beneficiary", "institution"),
@@ -179,7 +179,7 @@ def test_runtime_transport_context_is_not_a_tool_argument(location):
 
 def test_negative_generated_tests_fail_if_authorizer_is_disabled(monkeypatch):
     artifact, _, _ = compiled(DOMAINS[4])
-    monkeypatch.setattr("team_c.compiler.security_tests.authorize", lambda *_: None)
+    monkeypatch.setattr("tools_service.compiler.security_tests.authorize", lambda *_: None)
     report = run(artifact)
     assert not report["passed"]
     assert any(not case["passed"] for case in report["cases"] if case["kind"] == "negative")

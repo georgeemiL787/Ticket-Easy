@@ -110,8 +110,8 @@ ENV_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,63}")
 
 
 def secret_name(ref):
-    """The target of a connector's `secret_ref`: "env:NAME" (an environment variable of the Team C process) or "file:PATH" (a file
-    only Team C's processes can read; use it for the MCP server Team B starts, whose environment is deliberately small). Returns
+    """The target of a connector's `secret_ref`: "env:NAME" (an environment variable of the tools service process) or "file:PATH" (a file
+    only the tools service's processes can read; use it for the MCP server Team B starts, whose environment is deliberately small). Returns
     the reference itself when it is well formed, else None. The credential is never part of a reference."""
     ref = str(ref or "")
     kind, _, target = ref.partition(":")

@@ -2,8 +2,8 @@
 import sqlite3
 import threading
 import pytest
-from team_c.persistence import MIGRATIONS, Store, applied, migrate
-from team_c.persistence.migrations import BASELINE
+from tools_service.persistence import MIGRATIONS, Store, applied, migrate
+from tools_service.persistence.migrations import BASELINE
 
 V1_MARKER = "INSERT OR IGNORE INTO schema_version VALUES(2);"
 

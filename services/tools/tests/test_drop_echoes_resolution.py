@@ -7,7 +7,7 @@ operation. Every checkout proposal failed `invalid_model_output` for that reason
 """
 import pytest
 
-from team_c.llm.schemas import drop_echoes
+from tools_service.llm.schemas import drop_echoes
 
 ECHOES = {"operation_id", "source_operation_id"}
 OP_ME = "a" * 32
@@ -101,8 +101,8 @@ def test_resolution_cannot_smuggle_a_forward_reference_past_grounding():
     Resolution never widens what grounding accepts: `validate_proposal` requires the referenced
     step to have already run, so a self or forward reference is still rejected.
     """
-    from team_c.grounding import validate_proposal
-    from team_c.models import ProposalContent
+    from tools_service.grounding import validate_proposal
+    from tools_service.models import ProposalContent
 
     schema = {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}
     inventory = {"valid": True, "document_valid": True, "operations": [
@@ -128,7 +128,7 @@ def test_resolution_cannot_smuggle_a_forward_reference_past_grounding():
         ],
     }
     # A step sourcing from itself survives resolution only if grounding accepts it, which it must not.
-    from team_c.config import AppError
+    from tools_service.config import AppError
 
     with pytest.raises(AppError) as caught:
         validate_proposal(ProposalContent.model_validate(content), inventory)

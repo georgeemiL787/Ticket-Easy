@@ -3,10 +3,10 @@ import argparse
 import json
 import time
 from pathlib import Path
-from team_c.config import Settings,AppError
-from team_c.storage import Store
-from team_c.providers import Providers
-from team_c.service import Service
+from tools_service.config import Settings,AppError
+from tools_service.storage import Store
+from tools_service.providers import Providers
+from tools_service.service import Service
 
 
 def main():

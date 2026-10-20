@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from team_c.classify import operation_class, operation_row
-from team_c.discovery import discover
+from tools_service.classify import operation_class, operation_row
+from tools_service.discovery import discover
 
 SPECS = Path(__file__).parent / "fixtures" / "specs"
 

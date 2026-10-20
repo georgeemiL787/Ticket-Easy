@@ -5,10 +5,10 @@ import shutil
 from pathlib import Path
 import pytest
 from conftest import ROOT
-from team_c.config import Settings, AppError
-from team_c.code_discovery import index_project, discover_project
-from team_c.grounding import validate_proposal
-from team_c.models import ProposalContent
+from tools_service.config import Settings, AppError
+from tools_service.code_discovery import index_project, discover_project
+from tools_service.grounding import validate_proposal
+from tools_service.models import ProposalContent
 
 
 @pytest.fixture
@@ -88,8 +88,8 @@ def test_forged_source_evidence_is_rejected(project):
 
 
 def test_retired_implementation_lives_in_legacy_behind_a_compatible_shim(project,monkeypatch):
-    import team_c.code_discovery as shim
-    import team_c.legacy.code_discovery as legacy
+    import tools_service.code_discovery as shim
+    import tools_service.legacy.code_discovery as legacy
     public=[n for n in vars(legacy) if not n.startswith("_")]
     assert {"index_project","discover_project","parse_source","validate_setting_values","validate_code_provenance"}<=set(public)
     assert all(getattr(shim,n) is getattr(legacy,n) for n in public)
@@ -191,7 +191,7 @@ def test_operation_id_stable_when_lines_change_and_snapshot_invalidates(project)
 
 def test_legacy_code_records_are_read_only(project,tmp_path):
     from fastapi.testclient import TestClient
-    from team_c.web import create_app
+    from tools_service.web import create_app
     target,settings=project;settings.database_path=str(tmp_path/'store.db');settings.session_secret='test'
     app=create_app(settings)
     with TestClient(app) as client:

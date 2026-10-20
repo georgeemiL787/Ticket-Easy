@@ -1,6 +1,6 @@
 from conftest import setup_proposal,answer_reconcile
-from team_c.models import ProposalContent
-from team_c.models import GenerationOutput
+from tools_service.models import ProposalContent
+from tools_service.models import GenerationOutput
 
 
 def test_reordering_bindings_is_not_a_material_change(env):

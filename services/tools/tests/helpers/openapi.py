@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
-from team_c.discovery import discover
+from tools_service.discovery import discover
 
 
 def target_spec():

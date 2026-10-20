@@ -415,7 +415,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
     if not python.exists():
         python = team_c_dir / ".venv" / "bin" / "python"
     config.update(
-        command=[str(python), "-m", "team_c.mcp_server"], cwd=str(team_c_dir), env={"PYTHONPATH": "."},
+        command=[str(python), "-m", "tools_service.mcp_server"], cwd=str(team_c_dir), env={"PYTHONPATH": "."},
         database="data/integration.sqlite3", sandbox_hosts="127.0.0.1:8102", api_url=TEAM_C, builder_url=TEAM_C,
     )  # fmt: skip
     tenant = config.setdefault("tenants", {}).setdefault("shop_001", {})

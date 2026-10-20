@@ -120,7 +120,7 @@ def service_identity(connector, context, auth=None):
     """The identity a production call runs as: the business's ONE service credential (read from the environment variable the
     connector names, never stored) acting for the verified customer whose trusted context the call carries. The class is
     end_user because that is who the accepted policy admits; the credential is a service one, so the target API cannot tell
-    customers apart and Team C's checks do. An OAuth2-password API takes the secret as "username:password". None when the
+    customers apart and the tools service's checks do. An OAuth2-password API takes the secret as "username:password". None when the
     secret is not set (or not in that form)."""
     secret = resolve_secret(connector.get("secret_ref"))
     if secret is None:

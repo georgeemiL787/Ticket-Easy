@@ -3,12 +3,12 @@ MOCKED / AUTHORED: model responses are transport substitutes or the authored Req
 import json
 import httpx
 import pytest
-from team_c.config import AppError, Settings
-from team_c.grounding import drop_stale_configuration, validate_proposal
-from team_c.models import GenerationOutput, ProposalContent
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store, now, uid
+from tools_service.config import AppError, Settings
+from tools_service.grounding import drop_stale_configuration, validate_proposal
+from tools_service.models import GenerationOutput, ProposalContent
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store, now, uid
 from conftest import answer_reconcile, setup_proposal
 from helpers.openapi import inventory, op, proposal
 from helpers.tool_requests import ask, lookup_only, triage

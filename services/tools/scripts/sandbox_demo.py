@@ -13,11 +13,11 @@ import sqlite3
 import uuid
 from pathlib import Path
 import httpx
-from team_c.config import AppError, Settings
-from team_c.models import ArtifactBuildSubmission, EnforcementReviewSubmission, EnforcementSubmission, SandboxRunSubmission
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store
+from tools_service.config import AppError, Settings
+from tools_service.models import ArtifactBuildSubmission, EnforcementReviewSubmission, EnforcementSubmission, SandboxRunSubmission
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store
 
 
 class Harness:

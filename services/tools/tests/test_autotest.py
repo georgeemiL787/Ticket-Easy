@@ -6,8 +6,8 @@ in-process service-desk fixture with its (sandbox-only) /_fixtures provider. Not
 import json
 import re
 import pytest
-from team_c import autotest as plans
-from team_c.config import AppError
+from tools_service import autotest as plans
+from tools_service.config import AppError
 from helpers.desk import KEY, generated, make_desk, review_and_build
 from helpers.publication import RevisingDesk
 

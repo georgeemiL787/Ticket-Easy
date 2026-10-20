@@ -6,11 +6,11 @@ import httpx
 import pytest
 from jsonschema import Draft202012Validator
 
-from team_c.config import AppError
-from team_c.llm.router import Providers
-from team_c.llm.schemas import compact_schema, groq_schema, output_schema
-from team_c.models import GenerationOutput, ReconciliationOutput, RepairOutput
-from team_c.services.proposals import Proposals
+from tools_service.config import AppError
+from tools_service.llm.router import Providers
+from tools_service.llm.schemas import compact_schema, groq_schema, output_schema
+from tools_service.models import GenerationOutput, ReconciliationOutput, RepairOutput
+from tools_service.services.proposals import Proposals
 from helpers.desk import desk_proposal
 
 

@@ -1,7 +1,7 @@
 """Review lifecycle on the target-shaped inventory: the deterministic TEST SUBSTITUTE and sandbox-only review helpers."""
 import json
 from conftest import refreshed_review, requirement_findings
-from team_c.models import CRITERIA, GenerationOutput, ReconciliationOutput
+from tools_service.models import CRITERIA, GenerationOutput, ReconciliationOutput
 
 ANSWER = "sandbox-only (not a business decision): only the authenticated owner of an item may read or update it."
 OWNER_ID_QUESTION = "What is the exact business setting for the owner_id?"

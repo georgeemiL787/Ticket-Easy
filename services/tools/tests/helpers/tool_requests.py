@@ -1,5 +1,5 @@
 """Owner-requested tools: the scripted request substitute and its authored triage, suggestion and generation outputs."""
-from team_c.models import GenerationOutput, RequestTriageOutput, SuggestionOutput
+from tools_service.models import GenerationOutput, RequestTriageOutput, SuggestionOutput
 from helpers.openapi import op
 from helpers.publication import RevisingDesk
 
@@ -29,7 +29,7 @@ def triage(outcome, operation_ids=(), existing=(), questions=(), missing=()):
 
 def idea(title, category, operation_ids=(), missing=(), related=(), security=4, others=4):
     """A substitute suggestion, rated strong by default; lower security/others to exercise the potential gate."""
-    from team_c.models import POTENTIAL
+    from tools_service.models import POTENTIAL
     return dict(title=title, purpose=f"sandbox-only purpose: {title}", benefit="sandbox-only benefit", business_reason="sandbox-only reason for this service desk",
                 category=category, operation_ids=list(operation_ids), related_proposal_ids=list(related), relationship="sandbox-only relationship",
                 missing=[dict(kind=k, description=t, operation_ids=list(i)) for k, t, i in missing],

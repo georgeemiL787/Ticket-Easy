@@ -1,6 +1,6 @@
 """Diagnostic redaction checks; no live model calls."""
 import json
-from team_c.diagnostics import response_diagnostic
+from tools_service.diagnostics import response_diagnostic
 
 
 def test_reconciliation_diagnostics_show_evidence_ids_without_answer_text():

@@ -8,10 +8,10 @@ import json
 import re
 import pytest
 from mcp.shared.tool_name_validation import TOOL_NAME_REGEX
-from team_c import publishing
-from team_c.config import AppError
-from team_c.mcp_server import result
-from team_c.models import PublicationDisableSubmission
+from tools_service import publishing
+from tools_service.config import AppError
+from tools_service.mcp_server import result
+from tools_service.models import PublicationDisableSubmission
 from helpers.desk import KEY, LABEL, arguments, generated, make_desk, review_and_build, sandbox_test
 from helpers.publication import DENIED, OWNER, RevisingDesk, publish, revise, scenario_test, with_evidence
 
@@ -218,8 +218,8 @@ def test_ui_controls_publish_and_disable(desk):
 
 
 def test_the_ai_helper_prefills_the_sandbox_test_form_without_running_anything(desk, monkeypatch):
-    from team_c.llm.schemas import output_schema
-    from team_c.models import TestInputSuggestionOutput
+    from tools_service.llm.schemas import output_schema
+    from tools_service.models import TestInputSuggestionOutput
     d = desk
     a = review_and_build(d, generated(d))
     names = list((a["content"]["input_schema"].get("properties") or {}))

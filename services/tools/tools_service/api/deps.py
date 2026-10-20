@@ -24,7 +24,7 @@ def get_jobs(request:Request):
 
 def require_admin(request:Request):
     """Production actions need the operator's service token (TEAM_C_ADMIN_TOKEN, header x-team-c-admin-token). Team B's signed-in
-    admins reach them through Team B, which holds the token; Team C's own pages have no sign-in and cannot do them."""
+    admins reach them through Team B, which holds the token; the tools service's own pages have no sign-in and cannot do them."""
     import secrets
     expected=request.app.state.settings.admin_token
     if not expected:

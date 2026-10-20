@@ -16,7 +16,7 @@ uv run python -c "import secrets; print(secrets.token_hex(32))"
 Put the generated value in `SESSION_SECRET` in `.env`. Do not overwrite an existing `.env`; retain its credentials/settings. Then:
 
 ```powershell
-uv run uvicorn team_c.web:create_app --factory --host 127.0.0.1 --port 8000
+uv run uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 Open <http://127.0.0.1:8000>. API documentation is at <http://127.0.0.1:8000/docs>. Use one server process/worker. Stop with Ctrl+C. Data stays in `data/team_c.sqlite3`; restart with the same command/path.
@@ -30,11 +30,11 @@ Run from `D:\nti project\team_c`. `uv sync --locked` creates `.venv`; the comman
 ```powershell
 uv sync --locked                                    # install
 .\.venv\Scripts\python.exe -m pytest -q             # tests (same as: uv run pytest -q)
-$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m uvicorn team_c.web:create_app --factory --host 127.0.0.1 --port 8010
-$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m team_c.mcp_server --business-id <business-id> --identity <identity>
+$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m uvicorn tools_service.web:create_app --factory --host 127.0.0.1 --port 8010
+$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --business-id <business-id> --identity <identity>
 ```
 
-`team_c.app:create_app` is the same factory as `team_c.web:create_app`; either works with `--factory`. Any free port works (the examples elsewhere use 8000). The MCP server reads `DATABASE_PATH`, `CONNECTORS_FILE` and `SANDBOX_HOSTS` from the settings unless `--database`, `--connectors` or `--sandbox-hosts` override them; see "Sandbox MCP publication".
+`tools_service.app:create_app` is the same factory as `tools_service.web:create_app`; either works with `--factory`. Any free port works (the examples elsewhere use 8000). The MCP server reads `DATABASE_PATH`, `CONNECTORS_FILE` and `SANDBOX_HOSTS` from the settings unless `--database`, `--connectors` or `--sandbox-hosts` override them; see "Sandbox MCP publication".
 
 ## Architecture
 
@@ -330,7 +330,7 @@ Publishing is refused unless all of the following hold:
 
 Tests of an older or different artifact never count.
 
-`python -m team_c.mcp_server` is a stdio server built on the official SDK (`mcp==2.2.0`, pinned in `pyproject.toml`; lowlevel `Server`). Protocol messages go to stdout and logs to stderr; httpx request logging is off because URLs carry record references. Behavior:
+`python -m tools_service.mcp_server` is a stdio server built on the official SDK (`mcp==2.2.0`, pinned in `pyproject.toml`; lowlevel `Server`). Protocol messages go to stdout and logs to stderr; httpx request logging is off because URLs carry record references. Behavior:
 
 - **Tool definitions.** Tools are generated from the stored artifacts: name `<artifact-name-slug>_v<version>_<artifact-id-hex>` (stable per artifact, unique across artifacts), title, description, the artifact's input schema (OpenAPI `nullable` rendered as a JSON Schema null type), an output schema, and `_meta.team_c` with the publication/artifact/version mapping.
 - **Rechecks.** Every `tools/list` and every `tools/call` re-reads the database. Disabling, a superseded approval, changed enforcement, a changed artifact or a newly failing test blocks the next call, including from a client holding an old tool list. No restart is needed.
@@ -340,7 +340,7 @@ Tests of an older or different artifact never count.
 - **Caller identity.** Each process is bound at startup to `--business-id` and `--identity` (a sandbox identity in the trusted connectors file). There is no shared mutable identity, and no tool argument can choose a user or credential (unknown arguments are rejected). This is a local development mechanism, not production authentication: run one process per test user.
 
 ```powershell
-$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m team_c.mcp_server --business-id <business-id> --identity alice `
+$env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --business-id <business-id> --identity alice `
   --database data/mcp-desk.sqlite3 --connectors data/mcp-desk-connectors.json --sandbox-hosts 127.0.0.1:8004
 ```
 
@@ -349,7 +349,7 @@ Client configuration (Cursor / Claude Desktop style; paths are examples):
 ```json
 {"mcpServers": {"team-c-sandbox-alice": {
   "command": "D:/nti project/tool_generation_mcp/.venv/Scripts/python.exe",
-  "args": ["-m", "team_c.mcp_server", "--business-id", "<business-id>", "--identity", "alice",
+  "args": ["-m", "tools_service.mcp_server", "--business-id", "<business-id>", "--identity", "alice",
            "--database", "data/mcp-desk.sqlite3", "--connectors", "data/mcp-desk-connectors.json", "--sandbox-hosts", "127.0.0.1:8004"],
   "cwd": "D:/nti project/tool_generation_mcp", "env": {"PYTHONPATH": "."}}}}
 ```

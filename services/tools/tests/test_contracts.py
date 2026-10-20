@@ -1,15 +1,15 @@
-"""Records produced at the module boundaries have exactly the keys team_c.contracts documents."""
+"""Records produced at the module boundaries have exactly the keys tools_service.contracts documents."""
 import json
 import types
 import typing
 import httpx
 from conftest import ROOT
-from team_c import contracts
-from team_c.artifacts import FORMAT, compile_artifact
-from team_c.discovery import discover
-from team_c.executor import Run
-from team_c.grounding import validate_proposal
-from team_c.models import ProposalContent
+from tools_service import contracts
+from tools_service.artifacts import FORMAT, compile_artifact
+from tools_service.discovery import discover
+from tools_service.executor import Run
+from tools_service.grounding import validate_proposal
+from tools_service.models import ProposalContent
 
 
 def conforms(value, hint, where="$"):

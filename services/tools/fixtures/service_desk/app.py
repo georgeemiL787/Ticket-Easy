@@ -1,4 +1,4 @@
-"""Local appointment / service-request API: an independent second domain for Team C (test fixture only).
+"""Local appointment / service-request API: an independent second domain for the tools service (test fixture only).
 
 Expected behavior and access rules, fixed before any proposal is generated:
 - Every business operation needs a bearer token; each token belongs to exactly one customer account.
@@ -9,7 +9,7 @@ Expected behavior and access rules, fixed before any proposal is generated:
 - Filing a service request needs the internal booking identifier from the lookup, a category (enum) and a
   text. The backend answers 201 with a different envelope, 404 for an unknown booking, 403 when the caller
   does not hold the booking, 422 for invalid input.
-- Attaching a file to a request uses multipart/form-data (intentionally outside Team C's supported subset).
+- Attaching a file to a request uses multipart/form-data (intentionally outside the tools service's supported subset).
 - Cancelling a booking is not offered at all.
 - Business rule for tools: a customer may file service requests only for bookings they hold.
 
@@ -57,7 +57,7 @@ def create_app(variant=None, harness_key=None):
 
     def caller(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
         # a business SERVICE credential (set by a test as app.state.service_token) may act on any booking: the API cannot
-        # tell customers apart for it, which is exactly why Team C must scope such calls itself
+        # tell customers apart for it, which is exactly why the tools service must scope such calls itself
         if credentials and getattr(app.state, "service_token", None) and secrets.compare_digest(credentials.credentials, app.state.service_token):
             return dict(id=None, service=True)
         account = tokens.get(credentials.credentials) if credentials else None
@@ -127,7 +127,7 @@ def create_app(variant=None, harness_key=None):
         with lock:
             return dict(bookings=list(bookings.values()), requests=list(requests))
 
-    # ---- test fixtures for Team C's automatic tests: same contract as the Nile sandbox, key header x-fixture-key ----
+    # ---- test fixtures for the tools service's automatic tests: same contract as the Nile sandbox, key header x-fixture-key ----
     runs = {}
 
     def fixture_auth(x_fixture_key: str = Header("")):

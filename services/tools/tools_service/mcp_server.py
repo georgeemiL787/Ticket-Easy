@@ -7,10 +7,10 @@ it lists and runs only production tools, uses the business's service credential,
 context (and an idempotency key) from the request's `_meta.ticketeasy`, never from arguments. TRUST BOUNDARY: that is safe only
 because this stdio process is spawned by the calling server (Team B) and nobody else can write to its input; any network
 transport would need mutual authentication first. A process without the flag ignores `_meta.ticketeasy` completely.
-Protocol messages use stdout; logs go to stderr (never the context, only its hash is recorded by Team C).
+Protocol messages use stdout; logs go to stderr (never the context, only its hash is recorded by the tools service).
 
-    python -m team_c.mcp_server --business-id <id> --identity <name> [--database ...] [--connectors ...] [--sandbox-hosts ...]
-    python -m team_c.mcp_server --business-id <id> --identity service --context-from-client [...]
+    python -m tools_service.mcp_server --business-id <id> --identity <name> [--database ...] [--connectors ...] [--sandbox-hosts ...]
+    python -m tools_service.mcp_server --business-id <id> --identity service --context-from-client [...]
 """
 import argparse
 import json

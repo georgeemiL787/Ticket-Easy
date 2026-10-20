@@ -26,7 +26,7 @@ ACTIVATION = dict(permitted_uses=["artifact_creation", "sandbox_testing"], runti
 LIVE_ACTIVATION = dict(permitted_uses=["artifact_creation", "live_demo_testing", "live_demo_execution"], runtime_ready=False, activated=False,
                        note="Built for Live Demo: tests and published calls reach the owner-configured real API. Not a production release.")
 # A production artifact (built on a production connector by a promotion) runs with ONE business service credential for
-# every customer; Team C scopes each call to the verified customer's trusted context. It is activated only in the sense that
+# every customer; the tools service scopes each call to the verified customer's trusted context. It is activated only in the sense that
 # it is built for production: whether it may run is decided by the live promotion and publication, re-checked on every call.
 PRODUCTION_ACTIVATION = dict(permitted_uses=["artifact_creation", "production_execution"], runtime_ready=True, activated=True,
                              note="Built for production by an admin promotion: calls reach the business's real API with its service credential, scoped to the "
@@ -185,7 +185,7 @@ def validate_enforcement(configs, content, inventory: Inventory, requirements, c
 
 def production_blockers(access, auth, policy):
     """Why this tool cannot safely run with a service credential (empty when it can). With one credential for every customer
-    the target API no longer separates them, so every separation must be a Team C check:
+    the target API no longer separates them, so every separation must be a tools service check:
       - an accepted structured policy exists (plain delegated credentials mean 'the API decides', which a service credential defeats);
       - every record-scope requirement is `checked` by a response_field_matches_context check (no unrestricted, no api_filtered);
       - no data-scope requirement (a list the API filters by caller) and no other kind of requirement;

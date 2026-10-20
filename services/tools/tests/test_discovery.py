@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import pytest
 from conftest import ROOT
-from team_c.discovery import discover
+from tools_service.discovery import discover
 
 
 def source():

@@ -5,10 +5,10 @@ import sqlite3
 
 import pytest
 
-from team_c.config import AppError, Settings
-from team_c.connectors import load_connectors, managed_connectors
-from team_c.persistence.util import dump, now
-from team_c.secretbox import PREFIX, has_plaintext, open_value, seal, seal_value, unseal
+from tools_service.config import AppError, Settings
+from tools_service.connectors import load_connectors, managed_connectors
+from tools_service.persistence.util import dump, now
+from tools_service.secretbox import PREFIX, has_plaintext, open_value, seal, seal_value, unseal
 
 TOKEN, PASSWORD = "tok-PLAINTEXT-123456", "pw-PLAINTEXT-654321"
 

@@ -2,7 +2,7 @@
   "command": [
     "../../tools/.venv/Scripts/python.exe",
     "-m",
-    "team_c.mcp_server"
+    "tools_service.mcp_server"
   ],
   "cwd": "../../tools",
   "env": {

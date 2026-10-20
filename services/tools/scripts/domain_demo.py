@@ -17,12 +17,12 @@ import time
 from pathlib import Path
 import httpx
 from fixtures.service_desk.app import VARIANTS
-from team_c.config import AppError, Settings
-from team_c.models import (AnswerSubmission, ArtifactBuildSubmission, DecisionSubmission, EnforcementReviewSubmission, EnforcementSubmission, GenerationOutput,
+from tools_service.config import AppError, Settings
+from tools_service.models import (AnswerSubmission, ArtifactBuildSubmission, DecisionSubmission, EnforcementReviewSubmission, EnforcementSubmission, GenerationOutput,
                            RepairSubmission, ReviewSubmission, RevisionSubmission, SandboxTestSubmission, SupersedeSubmission)
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store
 
 PREFLIGHT_REFUSALS = {"repair_stale", "repair_not_applicable", "verification_required", "repair_exhausted", "nothing_to_repair"}
 LABEL = "sandbox-only (live second-domain check; not a business decision): "
@@ -36,7 +36,7 @@ ANSWERS = {
 
 
 class Backend:
-    """Fixture harness client: disposable data and state reads, independent of Team C."""
+    """Fixture harness client: disposable data and state reads, independent of the tools service."""
     def __init__(self, base, key):
         self.http, self.h = httpx.Client(base_url=base, timeout=10, trust_env=False), {"x-harness-key": key}
 

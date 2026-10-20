@@ -1,10 +1,10 @@
 """An Ollama fallback's context budget applies only when Ollama is attempted; it never blocks the Groq primary."""
 import json
 import httpx
-from team_c.config import AppError, Settings
-from team_c.models import GenerationOutput
-from team_c.providers import GENERATION_NUM_PREDICT, OLLAMA_MARGIN_TOKENS, Providers
-from team_c.storage import Store, now, uid
+from tools_service.config import AppError, Settings
+from tools_service.models import GenerationOutput
+from tools_service.providers import GENERATION_NUM_PREDICT, OLLAMA_MARGIN_TOKENS, Providers
+from tools_service.storage import Store, now, uid
 
 # Far above the byte bound of a small Ollama context, so reaching Ollama requires a token count.
 PAYLOAD = dict(business=dict(description="sandbox-only " * 2000))

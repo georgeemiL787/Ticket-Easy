@@ -1,5 +1,5 @@
 """The AI review never widens access on its own and never overwrites an answer the owner already gave."""
-from team_c.services.autopilot import Autopilot
+from tools_service.services.autopilot import Autopilot
 
 
 class Svc:

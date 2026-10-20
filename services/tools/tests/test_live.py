@@ -9,10 +9,10 @@ import threading
 import time
 import httpx
 import pytest
-from team_c.config import AppError, Settings
-from team_c.models import SuggestionOutput
-from team_c.providers import LIVE, Providers, check_cancelled, live_step
-from team_c.storage import Store, now, uid
+from tools_service.config import AppError, Settings
+from tools_service.models import SuggestionOutput
+from tools_service.providers import LIVE, Providers, check_cancelled, live_step
+from tools_service.storage import Store, now, uid
 from helpers.desk import make_desk
 from helpers.tool_requests import RequestDesk
 
@@ -95,7 +95,7 @@ class SlowDesk(RequestDesk):
 @pytest.fixture
 def desk(tmp_path, monkeypatch):
     monkeypatch.setattr("helpers.desk.DeskSubstitute", SlowDesk)
-    monkeypatch.setattr("team_c.jobs.LIVE_WAIT_SECONDS", 0.2)
+    monkeypatch.setattr("tools_service.jobs.LIVE_WAIT_SECONDS", 0.2)
     SlowDesk.gate = threading.Event()
     d = make_desk(tmp_path, "base")
     d.service = d.app.state.service
@@ -176,7 +176,7 @@ def test_a_failed_check_lists_what_it_found_on_the_live_page(desk):
 
 def test_fast_actions_redirect_straight_to_the_result(desk, monkeypatch):
     d = desk
-    monkeypatch.setattr("team_c.jobs.LIVE_WAIT_SECONDS", 5)
+    monkeypatch.setattr("tools_service.jobs.LIVE_WAIT_SECONDS", 5)
     SlowDesk.gate.set()
     d.service.providers.ideas.append([])
     csrf = re.search(r'name="csrf" value="([^"]+)"', d.client.get(f"/businesses/{d.bid}").text).group(1)

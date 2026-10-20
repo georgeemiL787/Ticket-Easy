@@ -7,10 +7,10 @@ in-process service-desk fixture. No live model is called.
 import json
 import re
 import pytest
-from team_c import areas, capabilities
-from team_c.discovery import discover
-from team_c.models import AreaAssignmentOutput, AreaNamingOutput
-from team_c.providers import input_fits, model_messages
+from tools_service import areas, capabilities
+from tools_service.discovery import discover
+from tools_service.models import AreaAssignmentOutput, AreaNamingOutput
+from tools_service.providers import input_fits, model_messages
 from helpers.desk import make_desk, desk_proposal
 from helpers.openapi import op
 from helpers.tool_requests import RequestDesk, ask, idea, lookup_only, triage

@@ -11,9 +11,9 @@ import pytest
 from pathlib import Path
 from fastapi.testclient import TestClient
 from helpers.lifecycle import LifecycleSubstitute, approve, answer_all, confirm_all, current, generate, post, supersede_q2
-from team_c.artifacts import compile_steps
-from team_c.executor import Run
-from team_c.web import create_app
+from tools_service.artifacts import compile_steps
+from tools_service.executor import Run
+from tools_service.web import create_app
 
 ALICE, BOB, ADMIN = (str(uuid.UUID(int=i)) for i in (1, 2, 3))
 ITEM_A, ITEM_B = str(uuid.UUID(int=10)), str(uuid.UUID(int=20))

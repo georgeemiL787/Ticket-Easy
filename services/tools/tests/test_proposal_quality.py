@@ -1,9 +1,9 @@
 """A proposal must earn review: the model rates it, and the application checks it too."""
 import pytest
 
-from team_c.capabilities import behavior
-from team_c.models import CRITERIA
-from team_c.quality import assess, existing_tools, structural
+from tools_service.capabilities import behavior
+from tools_service.models import CRITERIA
+from tools_service.quality import assess, existing_tools, structural
 
 OP_LIST = "a" * 32
 OP_GET = "b" * 32

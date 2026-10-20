@@ -1,4 +1,4 @@
-"""Compatibility imports: model calls live in team_c.llm."""
+"""Compatibility imports: model calls live in tools_service.llm."""
 from pydantic import ValidationError  # noqa: F401 (re-exported)
 from .config import AppError  # noqa: F401 (re-exported)
 from .diagnostics import response_diagnostic, output_diagnostic  # noqa: F401 (re-exported)

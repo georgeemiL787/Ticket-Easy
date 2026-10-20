@@ -174,7 +174,7 @@ class Building:
 
         A PRODUCTION artifact runs only with a `precheck` (the caller proved a live promotion and publication) and the verified
         customer's trusted `service_context`; it uses the business's one service credential, so every customer separation is a
-        Team C check. `smoke` (promotion only) runs the read steps before the first write and nothing else."""
+        the tools service check. `smoke` (promotion only) runs the read steps before the first write and nothing else."""
         eid = uid()
         audit = audit or {}
         artifact = self.artifact(aid)["content"]

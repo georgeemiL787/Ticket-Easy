@@ -8,11 +8,11 @@ from fastapi.testclient import TestClient
 
 from helpers.lifecycle import LifecycleSubstitute, current, post, approve
 from test_artifacts import sandbox, approved, enforcement, review, run, ITEM_A, ITEM_B, ALICE
-from team_c.config import AppError, Settings
-from team_c.connectors import base_url, load_connectors
-from team_c.executor import destination
-from team_c.services.connectors import server_candidates
-from team_c.web import create_app
+from tools_service.config import AppError, Settings
+from tools_service.connectors import base_url, load_connectors
+from tools_service.executor import destination
+from tools_service.services.connectors import server_candidates
+from tools_service.web import create_app
 
 
 def csrf(client, path):

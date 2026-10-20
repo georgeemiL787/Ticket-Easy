@@ -3,8 +3,8 @@ import hashlib
 import os
 from pathlib import Path
 import pytest
-from team_c.config import Settings
-from team_c.code_discovery import index_project, discover_project
+from tools_service.config import Settings
+from tools_service.code_discovery import index_project, discover_project
 
 TARGET = Path(os.environ.get("TARGET_SYSTEM_PATH", r"D:\target-system"))
 pytestmark = pytest.mark.skipif(not (TARGET / "backend/app/api/deps.py").is_file(), reason="target clone not available")

@@ -1,4 +1,4 @@
-"""Tool batches: the owner picks operations, Team C prepares one tool per operation, the owner confirms, and the tools are
+"""Tool batches: the owner picks operations, the tools service prepares one tool per operation, the owner confirms, and the tools are
 built, tested and published together.
 
 A batch runs the same steps an owner takes one by one in the review pages (request a tool, answer the access questions,

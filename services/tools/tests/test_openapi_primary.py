@@ -10,14 +10,14 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.testclient import TestClient
 from conftest import ROOT, DeterministicModelSubstitute
 from helpers.openapi import inventory, op, proposal, target_spec
-from team_c.config import AppError, Settings
-from team_c.discovery import Normalizer, Scope
-from team_c.grounding import validate_proposal
-from team_c.models import GenerationOutput, ProposalContent
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store, now, uid
-from team_c.web import create_app
+from tools_service.config import AppError, Settings
+from tools_service.discovery import Normalizer, Scope
+from tools_service.grounding import validate_proposal
+from tools_service.models import GenerationOutput, ProposalContent
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store, now, uid
+from tools_service.web import create_app
 
 URL = "http://127.0.0.1:8001/api/v1/openapi.json"
 

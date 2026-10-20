@@ -1,5 +1,5 @@
 [project]
-name = "ticket-easy-team-c"
+name = "ticket-easy-tools"
 version = "0.1.0"
 description = "Discovery and approval-to-build for business tools"
 requires-python = ">=3.13,<3.14"

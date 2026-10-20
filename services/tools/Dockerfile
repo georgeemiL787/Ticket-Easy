@@ -12,7 +12,7 @@ RUN pip install "uv>=0.11,<0.12"
 COPY services/tools/pyproject.toml services/tools/uv.lock ./
 RUN uv sync --locked --no-dev
 
-COPY services/tools/team_c team_c
+COPY services/tools/tools_service tools_service
 
 # a user without privileges, and a folder it may write to (the SQLite database)
 RUN useradd --create-home --uid 10001 app && mkdir -p /data && chown app /data
@@ -21,4 +21,4 @@ USER app
 EXPOSE 8101
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
     CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8101/health', timeout=2).status == 200 else 1)"
-CMD ["uvicorn", "team_c.web:create_app", "--factory", "--host", "0.0.0.0", "--port", "8101"]
+CMD ["uvicorn", "tools_service.web:create_app", "--factory", "--host", "0.0.0.0", "--port", "8101"]

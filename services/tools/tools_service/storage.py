@@ -1,4 +1,4 @@
-"""Compatibility shim: persistence lives in team_c.persistence."""
+"""Compatibility shim: persistence lives in tools_service.persistence."""
 from .persistence.db import Store
 from .persistence.recovery import INTERRUPTED, OWNER, _held, _lock, _owners, claim, owner_alive
 from .persistence.util import digest, dump, now, uid

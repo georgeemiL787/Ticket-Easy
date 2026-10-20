@@ -2,7 +2,7 @@
 
 Discovery works on OpenAPI 3.x. A Swagger 2.0 description is converted first, keeping every operation, parameter, schema and
 security scheme that has a 3.0 equivalent. Nothing is fetched and nothing is guessed: a construct with no equivalent is
-left as it is, so the 3.0 validator and Team C's per-operation checks report it against that operation.
+left as it is, so the 3.0 validator and the tools service's per-operation checks report it against that operation.
 """
 import copy
 
@@ -92,7 +92,7 @@ def convert_parameter(param, consumes, body_holder, form_holder):
             out["style"], out["explode"] = "spaceDelimited", False
         elif fmt == "pipes" and location == "query":
             out["style"], out["explode"] = "pipeDelimited", False
-        # tsv has no 3.0 equivalent: the style is left out and Team C reports the serialization for that operation
+        # tsv has no 3.0 equivalent: the style is left out and the tools service reports the serialization for that operation
     return out
 
 

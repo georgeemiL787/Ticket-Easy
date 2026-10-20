@@ -1,6 +1,6 @@
 """compatible(): every value the source schema allows must satisfy the target, including additional properties."""
 from openapi_schema_validator import OAS30Validator
-from team_c.grounding import compatible
+from tools_service.grounding import compatible
 
 INT = {"type": "integer"}
 STR = {"type": "string"}

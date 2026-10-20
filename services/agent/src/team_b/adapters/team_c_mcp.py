@@ -1,8 +1,8 @@
 """A small MCP client over stdio: start one server process, initialize, list tools, call a tool.
 
 It speaks the MCP JSON-RPC protocol (newline-delimited JSON on the process's stdin/stdout) to Team C's sandbox server
-(`python -m team_c.mcp_server`). Only what Team B needs is here: the initialize handshake, tools/list with paging and
-tools/call. The server's own requests (ping) are answered; anything else it asks is refused politely.
+(`python -m tools_service.mcp_server`). Only what Team B needs is here: the initialize handshake, tools/list with
+paging and tools/call. The server's own requests (ping) are answered; anything else it asks is refused politely.
 
 The process runs under subprocess.Popen with reader threads, so it works under every asyncio event loop (uvicorn on
 Windows may run a selector loop, which cannot start asyncio subprocesses).

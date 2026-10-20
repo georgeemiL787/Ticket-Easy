@@ -210,7 +210,7 @@ class Promotion:
 
     def after_call(self, pub, report):
         """Called after every production execution: when the tool's recent calls show the API (or our link to it) failing, roll the
-        tool back by itself. A customer who asks for someone else's record is refused by a Team C check and never counts: only
+        tool back by itself. A customer who asks for someone else's record is refused by a tools service check and never counts: only
         outcomes that point at the API or the integration do (unavailable, timeout, bad response, partial or unknown writes, bad login)."""
         if report["status"] == "succeeded":
             return None

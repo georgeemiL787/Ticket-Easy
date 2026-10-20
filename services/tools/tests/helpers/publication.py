@@ -1,5 +1,5 @@
 """Sandbox publication helpers: the revising substitute, record-scope evidence, publish and revise."""
-from team_c.models import GenerationOutput
+from tools_service.models import GenerationOutput
 from helpers.desk import DeskSubstitute, LABEL, arguments, current, desk_proposal
 
 OWNER = dict(status="succeeded", outputs_present=["ticket"])

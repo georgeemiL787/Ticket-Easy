@@ -5,10 +5,10 @@ MOCKED: both providers answer through an httpx MockTransport; all data lives in 
 import json
 import httpx
 import pytest
-from team_c.config import AppError, Settings
-from team_c.models import GenerationOutput
-from team_c.providers import LIVE, Providers
-from team_c.storage import Store, now, uid
+from tools_service.config import AppError, Settings
+from tools_service.models import GenerationOutput
+from tools_service.providers import LIVE, Providers
+from tools_service.storage import Store, now, uid
 
 CONTENT = json.dumps(dict(proposals=[], capability_gaps=[]))
 

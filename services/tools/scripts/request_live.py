@@ -11,11 +11,11 @@ import tempfile
 import time
 from pathlib import Path
 from fixtures.service_desk.app import create_app as create_fixture
-from team_c.config import Settings
-from team_c.models import SuggestionRunSubmission, ToolRequestSubmission
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store
+from tools_service.config import Settings
+from tools_service.models import SuggestionRunSubmission, ToolRequestSubmission
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store
 
 REAL_DB = Path("data/openapi-live.sqlite3")
 LABEL = "sandbox-only (live request check; not a business decision): "

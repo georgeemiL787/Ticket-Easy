@@ -4,9 +4,9 @@ import base64
 import httpx
 import pytest
 
-from team_c.artifacts import auth_for
-from team_c.config import AppError
-from team_c.executor import Run, credentials
+from tools_service.artifacts import auth_for
+from tools_service.config import AppError
+from tools_service.executor import Run, credentials
 
 
 def operation(scheme):

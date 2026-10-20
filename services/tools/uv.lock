@@ -695,7 +695,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ticket-easy-team-c"
+name = "ticket-easy-tools"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

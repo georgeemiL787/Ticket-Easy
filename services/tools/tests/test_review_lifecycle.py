@@ -8,10 +8,10 @@ import pytest
 from fastapi.testclient import TestClient
 from helpers.lifecycle import ANSWER, OWNER_ID_QUESTION, LifecycleSubstitute, answer_all, approve, confirm_all, current, generate, live_shaped, post, supersede_q2
 from helpers.openapi import target_spec, inventory, op
-from team_c.config import AppError, Settings
-from team_c.grounding import response_only_fields, validate_proposal
-from team_c.models import ProposalContent
-from team_c.web import create_app
+from tools_service.config import AppError, Settings
+from tools_service.grounding import response_only_fields, validate_proposal
+from tools_service.models import ProposalContent
+from tools_service.web import create_app
 
 
 def test_inventory_exposes_distinct_state_fields(lifecycle):
@@ -60,7 +60,7 @@ def test_invalid_question_is_superseded_with_history(lifecycle):
 
 def test_reconciliation_contract_requires_a_finding_per_requirement(lifecycle, tmp_path):
     import httpx
-    from team_c.providers import Providers
+    from tools_service.providers import Providers
     app, client, _, spec, scope = lifecycle
     pid = generate(client, spec, scope)
     answer_all(client, pid, text="first answer", requirement_text="first answer")

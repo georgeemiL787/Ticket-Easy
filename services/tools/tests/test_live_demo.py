@@ -9,9 +9,9 @@ import json
 
 import pytest
 
-from team_c import publishing
-from team_c.config import AppError
-from team_c.connectors import live_destination_problem
+from tools_service import publishing
+from tools_service.config import AppError
+from tools_service.connectors import live_destination_problem
 from helpers.desk import KEY, LABEL, arguments, current, generated, make_desk, review_and_build
 from helpers.publication import DENIED, OWNER, RevisingDesk, publish, scenario_test, with_evidence
 
@@ -87,7 +87,7 @@ def test_live_gates_refuse_before_any_request(live, change, code):
 def test_a_live_host_that_resolves_to_a_non_public_address_is_refused(live, monkeypatch, addresses):
     d = live
     d.settings.live_demo_private_hosts = ""
-    monkeypatch.setattr("team_c.connectors.resolve_addresses", lambda host: {__import__("ipaddress").ip_address(a) for a in addresses})
+    monkeypatch.setattr("tools_service.connectors.resolve_addresses", lambda host: {__import__("ipaddress").ip_address(a) for a in addresses})
     a_problem = live_destination_problem(d.settings, "http://desk.test")
     assert a_problem is not None and a_problem.code == "destination_unsafe"
 
@@ -95,7 +95,7 @@ def test_a_live_host_that_resolves_to_a_non_public_address_is_refused(live, monk
 def test_a_public_live_host_passes_the_address_guard(live, monkeypatch):
     d = live
     d.settings.live_demo_private_hosts = ""
-    monkeypatch.setattr("team_c.connectors.resolve_addresses", lambda host: {__import__("ipaddress").ip_address("93.184.216.34")})
+    monkeypatch.setattr("tools_service.connectors.resolve_addresses", lambda host: {__import__("ipaddress").ip_address("93.184.216.34")})
     assert live_destination_problem(d.settings, "http://desk.test") is None
 
 
@@ -163,7 +163,7 @@ def test_failures_carry_a_category_the_caller_can_act_on(live):
     assert call("alice", nonsense="x")["error"]["category"] == "invalid_arguments"
     expired = call("expired", **arguments(d, "alice"))  # a revoked or changed credential
     assert expired["status"] == "failed" and expired["error"]["category"] == "authentication_failed" and expired["error"]["http_status"] == 401
-    stolen = call("bob", **arguments(d, "alice"))  # bob targets alice's booking: Team C's own record check refuses
+    stolen = call("bob", **arguments(d, "alice"))  # bob targets alice's booking: the tools service's own record check refuses
     assert stolen["status"] == "failed" and stolen["error"]["category"] == "permission_denied"
 
 

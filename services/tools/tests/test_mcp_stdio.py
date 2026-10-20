@@ -1,8 +1,8 @@
 """Real MCP client over stdio against the real server process, for both service-desk variants.
 
-REAL: the official SDK client launches `python -m team_c.mcp_server`; the fixture runs as a separate
+REAL: the official SDK client launches `python -m tools_service.mcp_server`; the fixture runs as a separate
 uvicorn process and the executor reaches it over HTTP. Backend state is read through the fixture's
-harness routes, independently of Team C.
+harness routes, independently of the tools service.
 AUTHORED / sandbox-only: proposals come from the authored test substitute (no model call), every review
 and publication is a labeled sandbox-only decision, and all records live in a temporary database.
 """
@@ -23,9 +23,9 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp.shared.exceptions import MCPError
 from conftest import ROOT
 from fixtures.service_desk.app import VARIANTS
-from team_c import publishing
-from team_c.config import Settings
-from team_c.web import create_app
+from tools_service import publishing
+from tools_service.config import Settings
+from tools_service.web import create_app
 from helpers.desk import KEY, LABEL, arguments, current, generated, review_and_build
 from helpers.publication import RevisingDesk, publish, revise, with_evidence
 
@@ -74,7 +74,7 @@ def desk(request, tmp_path):
 @asynccontextmanager
 async def session(d, who):
     params = StdioServerParameters(command=sys.executable, cwd=str(ROOT), env=dict(os.environ, PYTHONPATH=str(ROOT)),
-                                   args=["-m", "team_c.mcp_server", "--business-id", d.biz, "--identity", who, "--database", d.settings.database_path,
+                                   args=["-m", "tools_service.mcp_server", "--business-id", d.biz, "--identity", who, "--database", d.settings.database_path,
                                          "--connectors", d.settings.connectors_file, "--sandbox-hosts", d.settings.sandbox_hosts])
     async with AsyncExitStack() as stack:
         read, write = await stack.enter_async_context(stdio_client(params))

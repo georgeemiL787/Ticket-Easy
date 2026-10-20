@@ -3,13 +3,13 @@
 MOCKED / AUTHORED: proposals come from an AUTHORED TEST SUBSTITUTE built from the discovered inventory,
 and every review is a labeled sandbox-only decision. The live-model proof is scripts/domain_demo.py.
 Expected outcomes come from the fixture's documented rules (fixtures/service_desk/app.py), and backend
-state is read through the fixture's harness routes, independently of Team C.
+state is read through the fixture's harness routes, independently of the tools service.
 """
 import json
 import pytest
 from helpers.desk import KEY, arguments, current, generated, make_desk, review_and_build, sandbox_test
 from helpers.openapi import op
-from team_c.repair import classify
+from tools_service.repair import classify
 
 
 @pytest.fixture(params=["base", "renamed"])

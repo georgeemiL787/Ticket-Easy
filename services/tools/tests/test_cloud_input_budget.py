@@ -7,9 +7,9 @@ after spending all configured credentials.
 """
 import pytest
 
-from team_c.config import Settings
-from team_c.llm.budget import CLOUD_CHARS_PER_TOKEN, cloud_budget, input_ceiling, input_fits
-from team_c.llm.prompts import SYSTEM, model_messages
+from tools_service.config import Settings
+from tools_service.llm.budget import CLOUD_CHARS_PER_TOKEN, cloud_budget, input_ceiling, input_fits
+from tools_service.llm.prompts import SYSTEM, model_messages
 
 
 def payload(description="x"):

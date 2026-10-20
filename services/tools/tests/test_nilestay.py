@@ -4,9 +4,9 @@ import json
 import pytest
 from conftest import ROOT
 from helpers.nilestay import candidate, inventory, run_with_transport
-from team_c.config import AppError
-from team_c.grounding import validate_proposal
-from team_c.models import GenerationOutput, ProposalContent, canonical_content
+from tools_service.config import AppError
+from tools_service.grounding import validate_proposal
+from tools_service.models import GenerationOutput, ProposalContent, canonical_content
 
 
 def test_empty_configuration_contract_and_dependency():
@@ -39,7 +39,7 @@ def test_reproduced_model_declarations_remain_invalid_without_normalization_repa
 
 
 def test_prompt_and_schema_distinguish_questions_from_input_configuration():
-    from team_c.providers import SYSTEM,strict_schema
+    from tools_service.providers import SYSTEM,strict_schema
     schema=strict_schema(GenerationOutput.model_json_schema())
     prop=schema["$defs"]["ProposalContent"]["properties"]["configuration"]
     assert prop.get("minItems",0)==0 and [] in prop["examples"]

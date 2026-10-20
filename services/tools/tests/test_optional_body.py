@@ -3,12 +3,12 @@ import json
 import re
 import httpx
 import pytest
-from team_c.artifacts import compile_steps
-from team_c.config import AppError
-from team_c.discovery import discover
-from team_c.executor import Run
-from team_c.grounding import validate_proposal
-from team_c.models import ProposalContent
+from tools_service.artifacts import compile_steps
+from tools_service.config import AppError
+from tools_service.discovery import discover
+from tools_service.executor import Run
+from tools_service.grounding import validate_proposal
+from tools_service.models import ProposalContent
 
 CREATED = {"201": {"description": "Created", "content": {"application/json": {"schema": {"type": "object", "properties": {"id": {"type": "integer"}}}}}}}
 DOCUMENT = {"openapi": "3.0.3", "info": {"title": "sandbox-only bodies", "version": "1"}, "paths": {

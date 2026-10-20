@@ -1,7 +1,7 @@
 """A missing capability reported by the answer check can be marked not needed, with a recorded reason, to reach review."""
 from conftest import answer_reconcile, confirm_requirements, setup_proposal
-from team_c.models import CapabilityGap
-from team_c.llm.prompts import RECONCILIATION_SYSTEM
+from tools_service.models import CapabilityGap
+from tools_service.llm.prompts import RECONCILIATION_SYSTEM
 
 
 def reporting_gaps(env, insufficient=False):

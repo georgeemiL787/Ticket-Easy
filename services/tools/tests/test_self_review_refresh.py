@@ -6,8 +6,8 @@ superseded rating stays in the content and in the reconciliation history for aud
 reads the current one.
 """
 from helpers.lifecycle import answer_all, approve, confirm_all, current, generate, post
-from team_c.models import CRITERIA
-from team_c.quality import assess
+from tools_service.models import CRITERIA
+from tools_service.quality import assess
 
 
 def start(lifecycle):

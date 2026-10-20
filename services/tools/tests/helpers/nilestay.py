@@ -2,8 +2,8 @@
 import json
 import httpx
 from conftest import ROOT
-from team_c.discovery import discover
-from team_c.providers import Providers
+from tools_service.discovery import discover
+from tools_service.providers import Providers
 
 
 def inventory():

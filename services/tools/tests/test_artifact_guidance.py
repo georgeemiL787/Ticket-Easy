@@ -1,7 +1,7 @@
 """Guides the owner through what is left, instead of only stating that something is missing."""
 import pytest
 
-from team_c import publishing
+from tools_service import publishing
 
 
 def test_guidance_lists_the_steps_in_order_and_names_the_action():

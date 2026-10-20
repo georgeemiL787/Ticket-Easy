@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 from conftest import refreshed_review, requirement_findings
 from fixtures.service_desk.app import create_app as create_fixture
 from helpers.openapi import op
-from team_c.config import Settings
-from team_c.models import GenerationOutput, ReconciliationOutput, RepairOutput
-from team_c.web import create_app
+from tools_service.config import Settings
+from tools_service.models import GenerationOutput, ReconciliationOutput, RepairOutput
+from tools_service.web import create_app
 
 KEY = "harness-test-key"
 LABEL = "sandbox-only (not a business decision): "

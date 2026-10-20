@@ -6,10 +6,10 @@ import json
 import textwrap
 import httpx
 import pytest
-from team_c.config import Settings, AppError
-from team_c.code_discovery import index_project, discover_project, parse_source, validate_setting_values
-from team_c.grounding import validate_proposal
-from team_c.models import ProposalContent, GenerationOutput
+from tools_service.config import Settings, AppError
+from tools_service.code_discovery import index_project, discover_project, parse_source, validate_setting_values
+from tools_service.grounding import validate_proposal
+from tools_service.models import ProposalContent, GenerationOutput
 
 FILES = {
     "app/__init__.py": "",
@@ -361,8 +361,8 @@ def test_eligible_operation_grounds_and_restricted_or_unresolved_do_not(project)
 
 
 def test_confirmations_change_cache_and_legacy_records_are_read_only(project, tmp_path):
-    from team_c.storage import Store
-    from team_c.service import Service
+    from tools_service.storage import Store
+    from tools_service.service import Service
     target, settings = project; settings.database_path = str(tmp_path / "r.db")
     store = Store(settings.database_path); service = Service(settings, store, None)
     b = service.business("Notes", "Owner note tools")
@@ -378,9 +378,9 @@ def test_confirmations_change_cache_and_legacy_records_are_read_only(project, tm
 
 
 def test_model_facing_code_inventory_is_compact_but_stored_inventory_is_complete(project, tmp_path):
-    from team_c.storage import Store
-    from team_c.service import Service
-    from team_c.providers import Providers
+    from tools_service.storage import Store
+    from tools_service.service import Service
+    from tools_service.providers import Providers
     target, settings = project; settings.database_path = str(tmp_path / "p.db")
     sent = []
     def handler(request):

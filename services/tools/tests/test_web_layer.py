@@ -4,8 +4,8 @@ import importlib
 import re
 import time
 import pytest
-from team_c import jobs
-from team_c.config import AppError
+from tools_service import jobs
+from tools_service.config import AppError
 
 
 def csrf(client):
@@ -13,11 +13,11 @@ def csrf(client):
 
 
 def test_create_app_import_paths():
-    import team_c.app
-    import team_c.web
-    from team_c.web import create_app, field_kind, form_arguments
-    assert create_app is team_c.app.create_app
-    for target in ("team_c.web:create_app", "team_c.app:create_app"):
+    import tools_service.app
+    import tools_service.web
+    from tools_service.web import create_app, field_kind, form_arguments
+    assert create_app is tools_service.app.create_app
+    for target in ("tools_service.web:create_app", "tools_service.app:create_app"):
         module, attr = target.split(":")
         assert getattr(importlib.import_module(module), attr) is create_app
     assert field_kind({"type": ["null", "integer"]}) == "integer"

@@ -7,11 +7,11 @@ scripts/request_live.py.
 """
 import re
 import pytest
-from team_c import capabilities
-from team_c.config import AppError
-from team_c.models import RequestTriageOutput, SuggestionOutput
-from team_c.providers import constrain, strict_schema
-from team_c.web import create_app
+from tools_service import capabilities
+from tools_service.config import AppError
+from tools_service.models import RequestTriageOutput, SuggestionOutput
+from tools_service.providers import constrain, strict_schema
+from tools_service.web import create_app
 from fastapi.testclient import TestClient
 from helpers.desk import LABEL, desk_proposal, review_and_build, generated
 from helpers.publication import publish, with_evidence

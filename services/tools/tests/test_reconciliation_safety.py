@@ -2,12 +2,12 @@ import json
 import re
 import pytest
 from conftest import setup_proposal,answer_reconcile
-from team_c.config import AppError
-from team_c.models import ReconciliationOutput
+from tools_service.config import AppError
+from tools_service.models import ReconciliationOutput
 
 
 def test_compact_check_prompt_preserves_all_answers_and_grounding_evidence():
-    from team_c.llm.prompts import SYSTEM, RECONCILIATION_SYSTEM, model_messages
+    from tools_service.llm.prompts import SYSTEM, RECONCILIATION_SYSTEM, model_messages
     payload = dict(proposal=dict(content=dict(questions=[dict(id="q1", text="Which setting?")]),
                                  answers={"q1": dict(id=7, text="explicit correction")}),
                    earlier_answers=[dict(id=3, question_id="q1", text="earlier contradictory value")],
@@ -91,7 +91,7 @@ def test_generation_gap_cannot_disappear_through_reconciliation(env):
     def mixed(kind,payload,model,run):
         result=original(kind,payload,model,run)
         if kind=="generation":
-            from team_c.models import CapabilityGap
+            from tools_service.models import CapabilityGap
             result.capability_gaps=[CapabilityGap(requested_capability="Refund",explanation="No refund API exists")]
         return result
     app.state.service.providers.call=mixed
@@ -109,7 +109,7 @@ def test_stale_reconciliation_cannot_commit(env):
     def intervening(kind,payload,model,run):
         result=original(kind,payload,model,run)
         if kind=="reconciliation":
-            from team_c.models import AnswerSubmission
+            from tools_service.models import AnswerSubmission
             p=app.state.service.view(pid)
             app.state.service.answers(pid,p["version"],AnswerSubmission(expected_revision=p["review_revision"],answers={"q1":"New intervening answer"}))
         return result

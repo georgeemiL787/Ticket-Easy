@@ -5,14 +5,14 @@ from pathlib import Path
 import httpx
 import pytest
 
-from team_c.artifacts import LIMITS
-from team_c.capabilities import screen, title_key
-from team_c.config import AppError
-from team_c.executor import Run
-from team_c.llm.budget import input_fits
-from team_c.llm.router import Providers
-from team_c.models import SuggestionOutput
-from team_c.progress import LIVE
+from tools_service.artifacts import LIMITS
+from tools_service.capabilities import screen, title_key
+from tools_service.config import AppError
+from tools_service.executor import Run
+from tools_service.llm.budget import input_fits
+from tools_service.llm.router import Providers
+from tools_service.models import SuggestionOutput
+from tools_service.progress import LIVE
 from helpers.tool_requests import idea
 
 

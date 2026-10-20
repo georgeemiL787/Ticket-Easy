@@ -5,12 +5,12 @@ import sqlite3
 import subprocess
 import sys
 from conftest import ROOT
-from team_c import storage
-from team_c.storage import Store, now
+from tools_service import storage
+from tools_service.storage import Store, now
 
 CHILD = r"""
 import sqlite3, sys
-from team_c.storage import OWNER, Store, now
+from tools_service.storage import OWNER, Store, now
 store = Store(sys.argv[1])
 db = sqlite3.connect(sys.argv[1])
 db.execute("INSERT INTO runs(id,business_id,kind,input_hash,status,created_at,owner) VALUES('child-run','b','generation','h','running',?,?)", (now(), OWNER))

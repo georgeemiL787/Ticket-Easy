@@ -119,7 +119,7 @@ class TeamCConfig(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    # e.g. [".../services/tools/.venv/Scripts/python.exe", "-m", "team_c.mcp_server"]
+    # e.g. [".../services/tools/.venv/Scripts/python.exe", "-m", "tools_service.mcp_server"]
     command: list[str] = Field(min_length=1)
     cwd: str | None = None  # Team C's folder (the server imports team_c from there)
     env: dict[str, str] = Field(default_factory=dict)  # e.g. {"PYTHONPATH": "."}

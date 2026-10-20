@@ -1,4 +1,4 @@
-"""Contract tests for the Nile sandbox's /_fixtures routes, the provider Team C's automatic tests use for that shop."""
+"""Contract tests for the Nile sandbox's /_fixtures routes, the provider the tools service's automatic tests use for that shop."""
 import sys
 from pathlib import Path
 import pytest
@@ -80,6 +80,6 @@ def test_a_service_token_acts_for_any_customer_and_nothing_in_the_api_separates_
         tickets = shop.get("/_harness/state", headers={"x-harness-key": "harness-test-key"}).json()["tickets"]
         assert tickets[-1]["customer_id"] == "C-100"
         assert shop.get("/api/orders", headers={"Authorization": "Bearer wrong"}).status_code == 401
-        assert len(shop.get("/api/orders", headers=service).json()["orders"]) > 5  # a list is not separated either: Team C refuses such tools
+        assert len(shop.get("/api/orders", headers=service).json()["orders"]) > 5  # a list is not separated either: the tools service refuses such tools
     with TestClient(create_app(harness_key="harness-test-key")) as plain:
         assert plain.get("/api/orders/NS-20877", headers={"Authorization": "Bearer service-token-0123456789"}).status_code == 401

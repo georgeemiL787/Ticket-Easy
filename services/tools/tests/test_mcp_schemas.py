@@ -6,10 +6,10 @@ import pytest
 from jsonschema import Draft202012Validator
 from openapi_schema_validator import OAS30Validator
 
-from team_c import publishing
-from team_c.config import AppError
-from team_c.discovery import discover
-from team_c.persistence.util import digest, dump
+from tools_service import publishing
+from tools_service.config import AppError
+from tools_service.discovery import discover
+from tools_service.persistence.util import digest, dump
 from helpers.desk import generated, review_and_build
 from helpers.publication import publish, with_evidence
 

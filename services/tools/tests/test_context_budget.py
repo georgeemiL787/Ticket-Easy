@@ -2,10 +2,10 @@
 import json
 import httpx
 import pytest
-from team_c.config import AppError, Settings
-from team_c.models import AreaAssignmentOutput, AreaNamingOutput, GenerationOutput
-from team_c.providers import AREA_SYSTEM, GENERATION_NUM_PREDICT, OLLAMA_MARGIN_TOKENS, OLLAMA_NUM_PREDICT, OLLAMA_TEMPLATE_BYTES, SYSTEM, THINK_KINDS, Providers, num_predict
-from team_c.storage import Store, now, uid
+from tools_service.config import AppError, Settings
+from tools_service.models import AreaAssignmentOutput, AreaNamingOutput, GenerationOutput
+from tools_service.providers import AREA_SYSTEM, GENERATION_NUM_PREDICT, OLLAMA_MARGIN_TOKENS, OLLAMA_NUM_PREDICT, OLLAMA_TEMPLATE_BYTES, SYSTEM, THINK_KINDS, Providers, num_predict
+from tools_service.storage import Store, now, uid
 
 # Quotes and newlines are escaped again in the HTTP JSON body but are single bytes of prompt text.
 PAYLOAD = dict(business=dict(description='quoted "text"\n' * 400))

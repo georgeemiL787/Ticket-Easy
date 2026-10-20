@@ -25,10 +25,10 @@ from mcp.shared.exceptions import MCPError
 sys.path.insert(0, str(Path(__file__).parent))
 from domain_demo import Backend, start_fixture
 from sandbox_demo import Harness
-from team_c.config import AppError, Settings
-from team_c.models import PublicationDisableSubmission, PublicationSubmission, SandboxTestSubmission
-from team_c.service import Service
-from team_c.storage import Store
+from tools_service.config import AppError, Settings
+from tools_service.models import PublicationDisableSubmission, PublicationSubmission, SandboxTestSubmission
+from tools_service.service import Service
+from tools_service.storage import Store
 
 NOTE = "sandbox publication (MCP smoke run, isolated copy)"
 
@@ -64,7 +64,7 @@ class Domain:
     @asynccontextmanager
     async def session(self, identity):
         params = StdioServerParameters(command=sys.executable, env=dict(os.environ, PYTHONPATH="."),
-                                       args=["-m", "team_c.mcp_server", "--business-id", self.business_id, "--identity", identity, "--database", self.settings.database_path,
+                                       args=["-m", "tools_service.mcp_server", "--business-id", self.business_id, "--identity", identity, "--database", self.settings.database_path,
                                              "--connectors", self.settings.connectors_file, "--sandbox-hosts", self.settings.sandbox_hosts])
         async with AsyncExitStack() as stack:
             read, write = await stack.enter_async_context(stdio_client(params))
@@ -90,7 +90,7 @@ async def call(s, name, arguments):
 
 
 async def exercise(d, aid, owner, other, valid, cross, extra, state, log):
-    """The same sequence for either domain; `state` reads backend state independently of Team C."""
+    """The same sequence for either domain; `state` reads backend state independently of the tools service."""
     pub, record = d.publish(aid)
     log.append(dict(step="publish", **record))
     name = pub["tool_name"]

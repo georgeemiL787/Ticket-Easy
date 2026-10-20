@@ -10,11 +10,11 @@ import sqlite3
 import time
 from pathlib import Path
 import httpx
-from team_c.config import AppError, Settings
-from team_c.models import AnswerSubmission, DecisionSubmission, ReviewSubmission, SupersedeSubmission
-from team_c.providers import Providers
-from team_c.service import Service
-from team_c.storage import Store
+from tools_service.config import AppError, Settings
+from tools_service.models import AnswerSubmission, DecisionSubmission, ReviewSubmission, SupersedeSubmission
+from tools_service.providers import Providers
+from tools_service.service import Service
+from tools_service.storage import Store
 
 LABEL = "sandbox-only (live check on a database copy; not a business decision): "
 ANSWERS = {

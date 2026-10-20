@@ -1,7 +1,7 @@
 """Encryption at rest for the credentials of managed connectors (test identities: tokens and passwords).
 
 Values are stored as `enc:v1:<fernet token>`. The key comes from TEAM_C_SECRET_KEY: a Fernet key, `env:NAME` (a variable
-of the Team C process) or `file:PATH` (a file only Team C can read). With nothing set a key file is created next to the
+of the tools service process) or `file:PATH` (a file only the tools service can read). With nothing set a key file is created next to the
 database (`<database folder>/secret.key`) the first time a credential is saved, so a copy of the database file alone does
 not reveal credentials. Production service credentials are never stored: connectors name them by `secret_ref`.
 Reading accepts old plaintext values; the next write (or the start-up sweep) seals them.

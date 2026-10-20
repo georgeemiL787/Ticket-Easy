@@ -6,7 +6,7 @@ goal is the only evidence of what they want, so it ranks the index before the bu
 """
 import pytest
 
-from team_c import capabilities
+from tools_service import capabilities
 
 
 def inventory():

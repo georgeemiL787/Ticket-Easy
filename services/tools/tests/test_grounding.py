@@ -1,10 +1,10 @@
 import json
 import pytest
 from conftest import ROOT,candidate
-from team_c.discovery import discover
-from team_c.grounding import validate_proposal
-from team_c.models import ProposalContent
-from team_c.config import AppError
+from tools_service.discovery import discover
+from tools_service.grounding import validate_proposal
+from tools_service.models import ProposalContent
+from tools_service.config import AppError
 
 
 def inventory():

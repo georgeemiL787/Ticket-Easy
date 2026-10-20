@@ -6,9 +6,9 @@ for model calls, because every substitute call records exactly one attempt.
 import json
 import re
 from helpers.lifecycle import ANSWER, approve, current, generate, post, supersede_q2
-from team_c.compiler.policies import suggested_checks
-from team_c.llm.prompts import DESIGN, SYSTEM, TASKS, system_prompt
-from team_c.models import AnswerSuggestionOutput
+from tools_service.compiler.policies import suggested_checks
+from tools_service.llm.prompts import DESIGN, SYSTEM, TASKS, system_prompt
+from tools_service.models import AnswerSuggestionOutput
 
 
 def attempts(app):
@@ -285,7 +285,7 @@ def test_without_questions_a_revise_rating_still_goes_to_the_model(lifecycle):
 
 def test_index_entries_show_every_response_field_of_a_wide_record():
     """At a 12-field cut-off an order lookup lost items/status/totals and triage called it unavailable."""
-    from team_c.capabilities import entry
+    from tools_service.capabilities import entry
     fields = {f"field_{i:02d}": {"type": "string"} for i in range(22)} | {"status": {"type": "string"}, "items": {"type": "array"}}
     op = dict(id="o", method="GET", path="/orders/{id}", summary="Get order", inputs={"path.id": {}}, declared_auth={"status": "required"},
               proposal_eligible=True, supported=True, responses={"200": {"schema": {"type": "object", "properties": fields}}})
@@ -293,11 +293,11 @@ def test_index_entries_show_every_response_field_of_a_wide_record():
 
 
 def test_triage_starts_from_its_own_smaller_slice(tmp_path):
-    from team_c.config import Settings
-    from team_c.services.runs import Runs
+    from tools_service.config import Settings
+    from tools_service.services.runs import Runs
     settings = Settings(_env_file=None, database_path=str(tmp_path / "x.db"), llm_primary="ollama", ollama_context=200_000)
     budgets = []
-    import team_c.services.runs as runs_module
+    import tools_service.services.runs as runs_module
     original = runs_module.capabilities.operation_index
     runs_module.capabilities.operation_index = lambda inv, b, *a: (budgets.append(b), original(inv, b, *a))[1]
     try:
@@ -326,6 +326,6 @@ def test_assistant_is_offered_even_when_a_question_is_prefilled_from_the_policy(
 
 
 def test_policy_summary_states_when_no_ownership_check_applies():
-    from team_c.services.proposals import policy_summary
+    from tools_service.services.proposals import policy_summary
     text = policy_summary(dict(principals=["admin"], checks=[], scopes=[]))
     assert "administrators" in text and "No per-record ownership check applies" in text

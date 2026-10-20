@@ -9,8 +9,8 @@ import pytest
 
 from agent_service import __main__ as cli
 from agent_service.config import Settings
-from agent_service.eval_conversations import evaluate, headline, load_set, render
-from agent_service.judge import (
+from agent_service.evaluation.conversations import evaluate, headline, load_set, render
+from agent_service.evaluation.judge import (
     CRITERIA,
     SPOTCHECK_COLUMNS,
     Judge,

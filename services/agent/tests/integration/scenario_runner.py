@@ -11,12 +11,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from agent_service.brain.handoff import incomplete
-from agent_service.brain.redaction import sensitive_kinds
 from agent_service.container import Container, build_container, inject
 from agent_service.domain.handoff import HandoffCase
 from agent_service.domain.reply import AgentReply
 from agent_service.domain.trace import DecisionTrace, record_problems
+from agent_service.handoff.cases import incomplete
+from agent_service.handoff.redaction import sensitive_kinds
 from tests.integration.scenario_format import Expect, Final, Inject, Scenario
 from tests.support import make_settings
 
@@ -25,7 +25,7 @@ Customize = Callable[[Container], Container]
 
 
 class OrchestratorLike(Protocol):
-    """The interface the runner expects from container.orchestrator (human methods: see brain/orchestrator.py)."""
+    """The interface the runner expects from container.orchestrator (human methods: see turn/handler.py)."""
 
     async def handle_turn(self, tenant_id: str, conversation_id: str, text: str) -> AgentReply: ...
 

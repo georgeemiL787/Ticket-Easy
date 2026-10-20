@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from agent_service.brain.knowledge_agent import KnowledgeAgent
 from agent_service.container import Container
+from agent_service.knowledge.agent import KnowledgeAgent
 from tests.fakes import FunctionPicker, KnowledgeFakeLLM
 from tests.integration.agent_expert import expert
 from tests.integration.scenario_format import discover, load_scenario

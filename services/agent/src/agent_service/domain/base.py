@@ -1,4 +1,4 @@
-"""Base classes for the brain own models. Unknown fields are rejected so typos fail loudly."""
+"""Base classes for the core own models. Unknown fields are rejected so typos fail loudly."""
 
 from pydantic import BaseModel, ConfigDict
 

@@ -3,7 +3,7 @@
 HttpEvidenceProvider is the EvidenceProvider plug and HttpPolicyGate is the PolicyGate plug. Both talk to the service in
 services/knowledge/ (POST /v1/knowledge/search, GET /v1/knowledge/passages, POST /v1/knowledge/past-tickets/search,
 POST /v1/policy/classify-risk, POST /v1/policy/check-action). Failures follow the plug rules: a service that cannot be
-reached, is too slow, refuses us or answers nonsense raises UpstreamError, and the brain then hands the case to a human
+reached, is too slow, refuses us or answers nonsense raises UpstreamError, and the core then hands the case to a human
 (nothing is executed on a failed rule check).
 
 Team A does not know human approvals. HttpPolicyGate applies them here, exactly as the stand-in does: a recorded

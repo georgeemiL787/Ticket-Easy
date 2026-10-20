@@ -15,17 +15,17 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
-from agent_service import replay as replay_mod
 from agent_service.api.auth import visible_tenants
 from agent_service.api.chat import CONVERSATION, TENANT, checked_tenant
 from agent_service.api.errors import invalid_request, not_found
-from agent_service.brain import metrics as m
-from agent_service.brain.gaps import QuestionGroup, group_questions
-from agent_service.brain.transcript import transcript_from_traces
 from agent_service.container import Container
 from agent_service.domain.facts import FactsSummary, TurnFact
 from agent_service.domain.handoff import CaseStatus, HandoffCase, TranscriptLine
 from agent_service.domain.trace import DecisionTrace
+from agent_service.evaluation import replay as replay_mod
+from agent_service.monitoring import metrics as m
+from agent_service.monitoring.gaps import QuestionGroup, group_questions
+from agent_service.turn.transcript import transcript_from_traces
 
 DEFAULT_DAYS = 7
 DEFAULT_LIMIT, MAX_LIMIT = 50, 200

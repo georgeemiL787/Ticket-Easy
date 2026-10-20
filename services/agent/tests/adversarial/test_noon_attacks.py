@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from agent_service.brain.move_picker import LLMMovePicker
+from agent_service.agent.planner import LLMMovePicker
 from agent_service.container import Container, build_container
 from tests.adversarial.test_agent_loop_attacks import AttackerLLM, action, after, look_up
 from tests.integration.agent_expert import with_expert

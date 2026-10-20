@@ -5,10 +5,10 @@ from typing import Any
 import pytest
 
 from agent_service.adapters.llm_policy_gate import LLMPolicyGate
-from agent_service.brain.llm_nlu import PROMPTS_DIR, PromptTemplate
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.evidence import Passage, RetrievalResult
 from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
+from agent_service.understanding.ai_reader import PROMPTS_DIR, PromptTemplate
 from tests.fakes import FakeLLM
 
 PASSAGE = Passage(

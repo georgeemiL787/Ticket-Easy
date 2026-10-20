@@ -89,7 +89,7 @@ review has not been done either.
   cannot write a reply to the customer. So `/inbox` is not removed.
 
 ### 6. Personal data in logs; deletion on schedule: PASS
-- `brain/redaction.py` hides phone, email, card, one-time code and address before text goes into a trace or a log;
+- `handoff/redaction.py` hides phone, email, card, one-time code and address before text goes into a trace or a log;
   covered by the unit tests and the leak scan (no order data in any reply or trace before the customer is verified).
 - `retention.py` deletes conversations, traces and finished cases older than `TEAM_B_RETENTION_DAYS` (default 90) in a
   loop started with the service; open and claimed cases and their conversations are kept. Tested in

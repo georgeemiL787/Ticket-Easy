@@ -7,7 +7,7 @@ collapses stretched letters ("scaaam"), joins letters spread out with spaces or 
 look-alikes ("fr4ud"), so a customer cannot slip past by disguising a word.
 A category may list exempt phrases (the shop's own "compensation voucher"): a keyword inside one is ignored.
 flagged is true when any matched category is mandatory. No AI is involved.
-If the risk file cannot be read the screen raises UpstreamError (the brain then blocks actions): never "clear".
+If the risk file cannot be read the screen raises UpstreamError (the core then blocks actions): never "clear".
 """
 
 import json
@@ -18,9 +18,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from agent_service.brain.text import normalize
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.evidence import RiskAssessment
+from agent_service.understanding.text import normalize
 
 SERVICE = "safety_screen"
 STYLES = ("en", "ar", "arabizi")

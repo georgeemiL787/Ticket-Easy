@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from agent_service.brain.handoff import incomplete
 from agent_service.container import Container
 from agent_service.domain.handoff import HandoffCase
+from agent_service.handoff.cases import incomplete
 from tests.integration.scenario_format import discover, load_scenario
 from tests.integration.scenario_runner import run_scenario
 

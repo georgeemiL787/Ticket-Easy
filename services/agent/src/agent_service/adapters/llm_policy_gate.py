@@ -1,7 +1,7 @@
 """The reviewer in front of the rule checker: an AI model reads the retrieved policy and picks the route for a write.
 
 LLMPolicyGate wraps the real PolicyGate. For an action that changes something it finds the policy passages that
-concern the action and asks the reviewer (brain/reviewer.py, job "reviewer") for allow / require_human / deny; the
+concern the action and asks the reviewer (agent/reviewer.py, job "reviewer") for allow / require_human / deny; the
 reviewer returns the STRICTER of its route and the rule checker's. So the model can send a case to a person or refuse
 it where the rules alone would allow it, but it can never turn a deny or a require_human into an allow. If the model or
 the search cannot answer, an allowed write goes to a person (fail closed). A recorded human approval still turns the
@@ -13,12 +13,12 @@ TEAM_B_LLM_POLICY=1 still switches it on, as does TEAM_B_LLM_REVIEW=1.)
 
 import asyncio
 
-from agent_service.brain.llm_nlu import PromptTemplate
-from agent_service.brain.reviewer import Reviewer
+from agent_service.agent.reviewer import Reviewer
 from agent_service.contracts.evidence import Passage
 from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
 from agent_service.observability import get_logger
 from agent_service.ports import EvidenceProvider, LLMClient, PolicyGate
+from agent_service.understanding.ai_reader import PromptTemplate
 
 log = get_logger(__name__)
 TOP_K = 6

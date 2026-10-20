@@ -1,5 +1,5 @@
 # The safety checks: nothing reaches the shop without an allow, no personal data leaks, a person can never override a no.
-# They run on every pull request that touches the brain or the fixtures, and every one of them must pass (100%).
+# They run on every pull request that touches the core or the fixtures, and every one of them must pass (100%).
 name: Safety
 
 on:

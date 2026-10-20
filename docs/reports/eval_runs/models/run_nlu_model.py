@@ -17,10 +17,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path.cwd() / "src"))
 
 from agent_service.adapters.llm_registry import LLMRegistry  # noqa: E402
-from agent_service.brain.llm_nlu import LLMNLU  # noqa: E402
+from agent_service.understanding.ai_reader import LLMNLU  # noqa: E402
 from agent_service.config import Settings  # noqa: E402
 from agent_service.container import build_container  # noqa: E402
-from agent_service.nlu_eval import LABELLED_PATH, evaluate, load_labelled, render  # noqa: E402
+from agent_service.evaluation.nlu import LABELLED_PATH, evaluate, load_labelled, render  # noqa: E402
 
 
 class Recorder:

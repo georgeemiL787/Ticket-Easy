@@ -43,7 +43,18 @@ warn_unused_configs = true
 
 # Strict checking for the safety-critical packages (per-module sections cannot use `strict = true`).
 [[tool.mypy.overrides]]
-module = ["agent_service.domain.*", "agent_service.ports.*", "agent_service.brain.*"]
+module = [
+  "agent_service.domain.*",
+  "agent_service.ports.*",
+  "agent_service.turn.*",
+  "agent_service.understanding.*",
+  "agent_service.agent.*",
+  "agent_service.knowledge.*",
+  "agent_service.actions.*",
+  "agent_service.replies.*",
+  "agent_service.handoff.*",
+  "agent_service.monitoring.*",
+]
 disallow_any_generics = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true

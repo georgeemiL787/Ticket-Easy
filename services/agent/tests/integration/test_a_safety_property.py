@@ -341,7 +341,7 @@ def test_the_generator_is_deterministic_and_varied() -> None:
     assert {len(s) for s in first} >= {3, 4, 5, 6, 7}
 
 
-# ---- the checks themselves must be able to fail: run brains that are broken on purpose ----
+# ---- the checks themselves must be able to fail: run cores that are broken on purpose ----
 
 
 async def count_problems(tmp_path: Path, conversations: int = 120) -> list[str]:
@@ -355,7 +355,7 @@ async def count_problems(tmp_path: Path, conversations: int = 120) -> list[str]:
 async def test_the_checks_catch_a_brain_that_skips_the_confirmation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from agent_service.brain import actions
+    from agent_service.actions import flow as actions
 
     async def reckless(ctx: Any, intent_spec: Any, tool: Any, decision: Any) -> Any:
         if decision.decision == "deny":
@@ -373,26 +373,26 @@ async def test_the_checks_catch_a_brain_that_skips_the_confirmation(
 async def test_the_checks_catch_a_brain_that_skips_the_ownership_check(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from agent_service.brain import lookup, shopcalls
+    from agent_service.actions import lookup, shop_calls
 
     async def careless(ctx: Any, spec: Any, tools: Any) -> Any:
         tool = tools.get(spec.lookup_tool)
         if tool is None:
             return lookup._handoff(lookup.EscalationReason.CAPABILITY_MISSING, "not published")
-        outcome = await shopcalls.call_read(ctx, tool.name, {"order_id": ctx.session.slots.get("order_id", "")})
+        outcome = await shop_calls.call_read(ctx, tool.name, {"order_id": ctx.session.slots.get("order_id", "")})
         if not outcome.ok:
-            return shopcalls.failed_read(ctx, "read")
+            return shop_calls.failed_read(ctx, "read")
         ctx.session.facts = lookup.derive_order_facts(outcome.data, ctx.deps.clock.today())  # never compares the owner
         return None
 
     monkeypatch.setattr(lookup, "load_own_order", careless)
-    monkeypatch.setattr("agent_service.brain.actions.load_own_order", careless)
+    monkeypatch.setattr("agent_service.actions.flow.load_own_order", careless)
     problems = await count_problems(tmp_path)
     assert any("belongs to" in p or "which is not" in p for p in problems), problems[:3]
 
 
 async def test_the_checks_catch_a_brain_that_ignores_a_deny(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from agent_service.brain import actions
+    from agent_service.actions import flow as actions
 
     real = actions.check_policy
 
@@ -403,6 +403,6 @@ async def test_the_checks_catch_a_brain_that_ignores_a_deny(tmp_path: Path, monk
         return decision
 
     monkeypatch.setattr(actions, "check_policy", lenient)
-    # The trace refuses to record a write backed by a deny, so such a brain cannot even finish a turn quietly.
+    # The trace refuses to record a write backed by a deny, so such a core cannot even finish a turn quietly.
     with pytest.raises(ValueError, match="not authorized: policy said"):
         await count_problems(tmp_path, conversations=400)

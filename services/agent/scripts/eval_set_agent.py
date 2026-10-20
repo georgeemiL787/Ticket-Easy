@@ -1,6 +1,6 @@
 """The conversations that test the agent's behaviour, written for scripts/make_eval_set.py (10 per language style).
 
-Like the rest of the set, the gold labels say what the policies and rules require, never what the brain does today:
+Like the rest of the set, the gold labels say what the policies and rules require, never what the core does today:
   T13  how are you (small talk, answered with the greeting, no question back)
   T14  an off-topic request (nothing invented, nothing done)
   T15  three requests in one message (status, address change, refund): identity first, then the actions one by one

@@ -1,7 +1,7 @@
 """Tenant configuration bundles: list, read, create a draft, publish, activate, roll back.
 
 Reading is for managers who may see the business; every change is admin only (a route not listed in api/auth.ROLES needs
-admin). Activating swaps the configuration the brain uses, so the next customer message already runs on it.
+admin). Activating swaps the configuration the core uses, so the next customer message already runs on it.
   GET  /v1/admin/tenants/{t}/bundles            versions, newest first
   GET  /v1/admin/tenants/{t}/bundles/active     the active bundle (404 if the business runs on its file)
   GET  /v1/admin/tenants/{t}/bundles/{v}        one version in full

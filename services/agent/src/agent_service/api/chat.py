@@ -12,12 +12,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from agent_service.api.auth import check_chat_key
 from agent_service.api.errors import ApiError, not_found, rate_limited, tenant_not_found
 from agent_service.api.ratelimit import RateLimiter
-from agent_service.brain.composer import default_composer
-from agent_service.brain.redaction import redact
 from agent_service.container import Container
 from agent_service.domain.reply import AgentReply
 from agent_service.domain.session import Message, SessionState
 from agent_service.domain.understanding import Locale
+from agent_service.handoff.redaction import redact
+from agent_service.replies.composer import default_composer
 
 KEEPALIVE_S = 15.0  # an SSE comment is sent this often so proxies keep the connection open
 MAX_REQUEST_ID = 128

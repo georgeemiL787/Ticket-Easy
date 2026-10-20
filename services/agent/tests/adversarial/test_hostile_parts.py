@@ -4,11 +4,11 @@ from typing import Any
 
 import pytest
 
-from agent_service.brain.llm_nlu import LLMNLU
-from agent_service.brain.orchestrator import Orchestrator
 from agent_service.container import Container
 from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.turn.handler import Orchestrator
+from agent_service.understanding.ai_reader import LLMNLU
 from tests.adversarial.support import T, assert_nothing_unauthorized, leaks, say, verified_as, writes
 
 C101 = "01123456702"

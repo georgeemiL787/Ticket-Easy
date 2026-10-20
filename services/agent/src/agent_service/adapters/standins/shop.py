@@ -158,7 +158,7 @@ class StandinShop:
 
     def uncertain(self, tool: str, *, applied: bool = False) -> None:
         """Calls of the write tool answer OUTCOME_UNKNOWN with write_may_have_applied. `applied` says whether the
-        change really happened in the shop, so tests can check that the brain never claims done or failed."""
+        change really happened in the shop, so tests can check that the core never claims done or failed."""
         if self._check_tool(tool).operation_kind == "read":
             raise ValueError("uncertain() only makes sense for a write tool")
         self._uncertain[tool] = applied

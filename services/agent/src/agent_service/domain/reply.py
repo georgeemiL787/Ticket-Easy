@@ -1,4 +1,4 @@
-"""What the brain sends back to the customer for one message."""
+"""What the core sends back to the customer for one message."""
 
 from pydantic import Field
 

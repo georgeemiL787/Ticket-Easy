@@ -12,11 +12,11 @@ from fastapi import FastAPI
 
 from agent_service.api.app import create_app
 from agent_service.api.dashboard import METRICS
-from agent_service.brain.metrics import MetricsService
 from agent_service.container import Container, build_container
 from agent_service.demo_seed import DriftClock, seed
 from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.domain.trace import DecisionTrace, PolicyRecord, ToolCallRecord
+from agent_service.monitoring.metrics import MetricsService
 from tests.support import make_settings
 
 T = "shop_001"

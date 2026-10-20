@@ -23,7 +23,7 @@ from typing import Any
 
 import pytest
 
-from agent_service.brain.move_picker import LLMMovePicker
+from agent_service.agent.planner import LLMMovePicker
 from agent_service.container import Container, build_container
 from agent_service.contracts.evidence import Passage, RetrievalResult
 from agent_service.domain.trace import DecisionTrace, record_problems

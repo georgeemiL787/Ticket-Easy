@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path.cwd() / "src"))
 
-from agent_service import eval_conversations as ec  # noqa: E402
+from agent_service.evaluation import conversations as ec  # noqa: E402
 from agent_service.adapters.usage_log import current_call  # noqa: E402
 from agent_service.config import Settings  # noqa: E402
 from agent_service.container import build_container  # noqa: E402

@@ -1,4 +1,4 @@
-"""Play the long example conversations (eval/showcase/*.json) through the real brain and write a transcript.
+"""Play the long example conversations (eval/showcase/*.json) through the real core and write a transcript.
 
 Usage: python scripts/run_showcase.py [name ...]      names: english egyptian_arabic mixed arabizi (default: all)
 

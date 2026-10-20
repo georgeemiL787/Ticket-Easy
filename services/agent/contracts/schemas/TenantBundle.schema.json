@@ -920,7 +920,7 @@
     },
     "ViolationBehaviour": {
       "additionalProperties": false,
-      "description": "What happens when a guardrail is hit. Fixed by the gates in brain/actions.py; stored so the bundle shows it.",
+      "description": "What happens when a guardrail is hit. Fixed by the gates in actions/flow.py; stored so the bundle shows it.",
       "properties": {
         "deny": {
           "const": "refuse",

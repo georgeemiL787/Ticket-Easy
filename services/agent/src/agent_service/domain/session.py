@@ -1,4 +1,4 @@
-"""Conversation memory: everything the brain remembers between messages."""
+"""Conversation memory: everything the core remembers between messages."""
 
 from datetime import datetime
 from typing import Any, Literal, Self

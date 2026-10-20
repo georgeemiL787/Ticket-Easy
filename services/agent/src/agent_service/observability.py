@@ -72,7 +72,7 @@ def turn_context(*, tenant_id: str, conversation_id: str, request_id: str, trace
         yield
 
 
-# The events the brain logs, one line each. Fields are ids, codes and counts only: never message text or personal data.
+# The events the core logs, one line each. Fields are ids, codes and counts only: never message text or personal data.
 EVENTS = ("turn_start", "turn_complete", "policy_check", "tool_call", "handoff_created", "dependency_error")
 
 

@@ -7,12 +7,12 @@ from typing import Any
 import httpx
 import pytest
 
-from agent_service import replay
 from agent_service.api.app import create_app
 from agent_service.api.auth import least_role
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.domain.agent import AskCustomer
+from agent_service.evaluation import replay
 from tests.fakes import FunctionPicker, ScriptedMovePicker
 from tests.integration.agent_expert import expert
 from tests.support import make_settings

@@ -6,9 +6,9 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 
+from agent_service.actions import permissions
 from agent_service.api.chat import TENANT, checked_tenant
 from agent_service.api.errors import upstream_unavailable
-from agent_service.brain import gates
 
 router = APIRouter(tags=["capabilities"])
 
@@ -45,7 +45,7 @@ async def list_capabilities(
         raise upstream_unavailable("the shop's tool list is not available")
     tenant = built.tenants.get(tenant_id)
     items: list[CapabilityInfo] = []
-    for name, used_by in gates.configured_capabilities(tenant).items():
+    for name, used_by in permissions.configured_capabilities(tenant).items():
         tool = catalog.get(name)
         if tool is None:
             items.append(
@@ -58,7 +58,7 @@ async def list_capabilities(
                 )  # fmt: skip
             )
             continue
-        gate = gates.check_tool(tenant, tool)
+        gate = permissions.check_tool(tenant, tool)
         items.append(
             CapabilityInfo(
                 name=name,

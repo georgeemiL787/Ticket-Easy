@@ -392,10 +392,10 @@ def test_a_binding_names_exactly_one_tool() -> None:
         TeamCConfig.model_validate({"command": ["x"], "tenants": {T: {"business_id": "b", "tools": {"get_order": {}}}}})
 
 
-# ---- through the brain ----
+# ---- through the core ----
 
 
-def brain(tmp_path: Path, fake: Fake) -> Container:
+def core(tmp_path: Path, fake: Fake) -> Container:
     path = tmp_path / "team_c.json"
     path.write_text(json.dumps(fake.config()), encoding="utf-8")
     return build_container(make_settings(tmp_path, fixed_today=date(2026, 9, 28), team_c_config=path))
@@ -407,7 +407,7 @@ async def test_the_agent_answers_an_order_question_from_team_cs_tool_as_the_veri
     fake.publish(
         tool_def("get_order_v1_aa", GET_ORDER_PROPOSAL), get_order_v1_aa=envelope("get_order_v1_aa", "succeeded", ORDER)
     )
-    c = brain(tmp_path, fake)
+    c = core(tmp_path, fake)
     assert c.orchestrator is not None and c.team_c is not None
     try:
         first = await c.orchestrator.handle_turn(T, "tc1", "Where is my order NS-20877?")
@@ -432,7 +432,7 @@ async def test_an_unknown_outcome_from_team_c_hands_over_and_the_write_is_not_re
         get_order_v1_aa=envelope("get_order_v1_aa", "succeeded", ORDER),
         **{name: envelope(name, "outcome_unknown", writes=[{"step_id": "s1", "write_state": "unknown"}])},
     )
-    c = brain(tmp_path, fake)
+    c = core(tmp_path, fake)
     assert c.orchestrator is not None and c.team_c is not None
     try:
         replies = [

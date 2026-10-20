@@ -28,10 +28,10 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Path, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from agent_service.actions import permissions
 from agent_service.api.auth import current_user
 from agent_service.api.chat import TENANT, checked_tenant
 from agent_service.api.errors import ApiError, forbidden, not_found, upstream_unavailable
-from agent_service.brain import gates
 from agent_service.container import Container
 from agent_service.contracts.errors import UpstreamError
 from agent_service.observability import get_logger
@@ -173,7 +173,7 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
     binding = team_c.binding(tenant_id) if team_c is not None else None
     state = team_c.status(tenant_id) if team_c is not None and binding is not None else None
     tools: list[BusinessTool] = []
-    for name, used_by in gates.configured_capabilities(tenant).items():
+    for name, used_by in permissions.configured_capabilities(tenant).items():
         bound = binding is not None and name in binding.tools
         resolved = state.resolved.get(name) if state is not None else None
         spec = catalog.get(name) if catalog is not None else None
@@ -187,7 +187,7 @@ async def _overview(built: Container, tenant_id: str, *, refresh: bool) -> Dashb
             item.reason = (resolved.problem if resolved is not None else None) or "not_published"
             item.detail = PROBLEMS.get(item.reason, f"the shop does not publish {name}")
         else:
-            gate = gates.check_tool(tenant, spec)
+            gate = permissions.check_tool(tenant, spec)
             item.status = "available" if gate.allowed else "blocked"
             item.reason, item.detail = gate.reason, gate.detail
             item.operation_kind = spec.operation_kind

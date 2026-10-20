@@ -1,8 +1,8 @@
-"""The plugs: interfaces the brain depends on.
+"""The plugs: interfaces the core depends on.
 
-The brain imports only these Protocols plus agent_service.domain and agent_service.contracts models. Implementations
+The core imports only these Protocols plus agent_service.domain and agent_service.contracts models. Implementations
 live in agent_service.adapters and are wired together in agent_service.container. Every method is async. A failing
-outside service raises agent_service.contracts.errors.UpstreamError; the brain decides what to do about it (usually:
+outside service raises agent_service.contracts.errors.UpstreamError; the core decides what to do about it (usually:
 hand off).
 """
 
@@ -110,7 +110,7 @@ class CapabilityClient(Protocol):
 
 @runtime_checkable
 class LLMClient(Protocol):
-    """The optional AI model. The brain must work fully without it."""
+    """The optional AI model. The core must work fully without it."""
 
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
@@ -282,7 +282,7 @@ class DraftStore(Protocol):
 
 @runtime_checkable
 class KnowledgeAdmin(Protocol):
-    """Documents, the index and the rules of a business, for the dashboard's knowledge pages (never used by the brain).
+    """Documents, the index and the rules of a business, for the dashboard's knowledge pages (never used by the core).
     A refusal (an unreadable file, a rule that would break a guardrail case) is an UpstreamError with the reason."""
 
     async def upload(
@@ -314,7 +314,7 @@ class KnowledgeAdmin(Protocol):
 
 @runtime_checkable
 class Clock(Protocol):
-    """Time source. The brain never reads the real date directly, so tests can fix it."""
+    """Time source. The core never reads the real date directly, so tests can fix it."""
 
     def today(self) -> date: ...
 

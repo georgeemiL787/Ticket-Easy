@@ -1,5 +1,5 @@
 """The tiny JSON Schema checker moved to agent_service.contracts.json_schema
-(the brain checks agent moves with it too)."""
+(the core checks agent moves with it too)."""
 
 from agent_service.contracts.json_schema import validate
 

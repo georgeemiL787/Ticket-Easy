@@ -8,19 +8,19 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
-from agent_service import eval_conversations as convo
-from agent_service import replay as replay_mod
 from agent_service.adapters.llm_registry import LLMRegistry
-from agent_service.brain.llm_nlu import LLMNLU
-from agent_service.brain.nlu import NLU, RuleBasedNLU
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.demo_seed import DriftClock
 from agent_service.domain.tenant import TenantRegistry
-from agent_service.eval_compare import compare_runs, load_run
-from agent_service.judge import Judge, agreement, pick_spotcheck, write_spotcheck
-from agent_service.nlu_eval import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
-from agent_service.writer_compare import compare_writers
+from agent_service.evaluation import conversations as convo
+from agent_service.evaluation import replay as replay_mod
+from agent_service.evaluation.compare import compare_runs, load_run
+from agent_service.evaluation.judge import Judge, agreement, pick_spotcheck, write_spotcheck
+from agent_service.evaluation.nlu import LABELLED_PATH, EvalReport, evaluate, load_labelled, render, save_baseline
+from agent_service.evaluation.writer_compare import compare_writers
+from agent_service.understanding.ai_reader import LLMNLU
+from agent_service.understanding.rules import NLU, RuleBasedNLU
 
 
 def build_nlu(mode: str, settings: Settings) -> NLU:

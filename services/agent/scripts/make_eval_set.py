@@ -1,7 +1,7 @@
 """Write the conversation evaluation set to eval/conversations/<style>.jsonl: 50 conversations per language style.
 
 The gold labels here are decided by what the shop's policies and business rules say should happen, never by what the
-brain currently does: a wrong gold label would hide a bug, and tuning the brain to the labels would hide it too. Edit
+core currently does: a wrong gold label would hide a bug, and tuning the core to the labels would hide it too. Edit
 this file to change the set, then run it again (`python scripts/make_eval_set.py`).
 
 Topics (every style has the same topics, written in its own words):

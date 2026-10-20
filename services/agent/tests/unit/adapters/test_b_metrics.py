@@ -26,7 +26,10 @@ import pytest
 
 from agent_service.adapters.memory_store import InMemoryCaseStore, InMemoryTraceStore
 from agent_service.adapters.sqlite_store import SqliteCaseStore, SqliteDatabase, SqliteTraceStore
-from agent_service.brain.metrics import (
+from agent_service.domain.decision import Decision, EscalationReason
+from agent_service.domain.handoff import HandoffCase, HandoffPackage
+from agent_service.domain.trace import DecisionTrace, EvidenceRef, PolicyRecord, ToolCallRecord, TraceStep
+from agent_service.monitoring.metrics import (
     MAX_BUCKETS,
     MetricFilters,
     MetricsService,
@@ -35,9 +38,6 @@ from agent_service.brain.metrics import (
     next_bucket,
     percentile,
 )
-from agent_service.domain.decision import Decision, EscalationReason
-from agent_service.domain.handoff import HandoffCase, HandoffPackage
-from agent_service.domain.trace import DecisionTrace, EvidenceRef, PolicyRecord, ToolCallRecord, TraceStep
 
 T = "shop_001"
 D1 = datetime(2026, 9, 28, tzinfo=UTC)

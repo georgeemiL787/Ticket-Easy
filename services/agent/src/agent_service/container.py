@@ -1,10 +1,11 @@
-"""Wires the brain dependencies from settings. The one place that knows which implementation is plugged in."""
+"""Wires the core dependencies from settings. The one place that knows which implementation is plugged in."""
 
 import secrets
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Any
 
+from agent_service.actions.tool_registry import CapabilityRegistry
 from agent_service.adapters.alert_repository import InMemoryAlertStore, SqliteAlertStore
 from agent_service.adapters.bundle_repository import InMemoryBundleStore, SqliteBundleStore
 from agent_service.adapters.llm_policy_gate import LLMPolicyGate
@@ -29,25 +30,17 @@ from agent_service.adapters.team_a_admin import TeamAAdmin
 from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate, TeamAClient
 from agent_service.adapters.team_c_tools import TeamCCapabilities, TeamCConfig
 from agent_service.adapters.user_repository import InMemoryUserStore, SqliteUserStore
+from agent_service.agent.planner import LLMMovePicker
+from agent_service.agent.reviewer import Reviewer
 from agent_service.auth import AuthService
-from agent_service.brain.alerts import AlertEngine, WebhookNotifier
-from agent_service.brain.knowledge_agent import KnowledgeAgent
-from agent_service.brain.llm_nlu import LLMNLU
-from agent_service.brain.move_picker import LLMMovePicker
-from agent_service.brain.nlu import NLU, RuleBasedNLU
-from agent_service.brain.orchestrator import Orchestrator
-from agent_service.brain.registry import CapabilityRegistry
-from agent_service.brain.reviewer import Reviewer
-from agent_service.brain.rewrite import LLMRewriter
-from agent_service.brain.smalltalk import SmallTalkWriter
-from agent_service.brain.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
-from agent_service.brain.writer import ReplyWriter
 from agent_service.bundles import BundleRegistry
 from agent_service.config import Settings
 from agent_service.contracts.errors import UpstreamError
 from agent_service.domain.bundle import TenantBundle
 from agent_service.domain.tenant import TenantRegistry
 from agent_service.events import EventHub
+from agent_service.knowledge.agent import KnowledgeAgent
+from agent_service.monitoring.alerts import AlertEngine, WebhookNotifier
 from agent_service.ports import (
     AlertStore,
     CapabilityClient,
@@ -63,6 +56,13 @@ from agent_service.ports import (
     UserStore,
 )
 from agent_service.preview import PreviewTokens
+from agent_service.replies.rewrite import LLMRewriter
+from agent_service.replies.smalltalk import SmallTalkWriter
+from agent_service.replies.summarizer import HistorySummarizer, LLMHistorySummarizer, TemplateHistorySummarizer
+from agent_service.replies.writer import ReplyWriter
+from agent_service.turn.handler import Orchestrator
+from agent_service.understanding.ai_reader import LLMNLU
+from agent_service.understanding.rules import NLU, RuleBasedNLU
 
 
 class ContainerError(RuntimeError):

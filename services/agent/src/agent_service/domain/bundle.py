@@ -53,7 +53,7 @@ class BundleKnowledge(FrozenModel):
 
 
 class ViolationBehaviour(FrozenModel):
-    """What happens when a guardrail is hit. Fixed by the gates in brain/actions.py; stored so the bundle shows it."""
+    """What happens when a guardrail is hit. Fixed by the gates in actions/flow.py; stored so the bundle shows it."""
 
     deny: Literal["refuse"] = "refuse"
     require_human: Literal["handoff"] = "handoff"
@@ -78,7 +78,7 @@ class ToolBindingRef(FrozenModel):
     reference_field: str | None = None
     echo: tuple[str, ...] = ()
     constants: dict[str, str] = Field(default_factory=dict)
-    spec: dict[str, Any] | None = None  # the ToolSpec the brain sees, for a tool the built-in shop does not declare
+    spec: dict[str, Any] | None = None  # the ToolSpec the core sees, for a tool the built-in shop does not declare
 
 
 class BundleTool(FrozenModel):
@@ -179,7 +179,7 @@ class TenantBundle(FrozenModel):
         return hashlib.sha256(json.dumps(self.content(), sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
     def effective_config(self) -> TenantConfig:
-        """The configuration the brain runs with: the embedded one, with the profile and escalation applied."""
+        """The configuration the core runs with: the embedded one, with the profile and escalation applied."""
         update: dict[str, Any] = {
             "display_name": self.profile.display_name,
             "default_locale": self.profile.default_locale,

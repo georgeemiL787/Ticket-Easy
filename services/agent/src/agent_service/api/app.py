@@ -27,9 +27,9 @@ from agent_service.api import (
 )
 from agent_service.api.errors import install_error_handlers
 from agent_service.api.ratelimit import RateLimiter
-from agent_service.brain.alerts import alert_loop
 from agent_service.config import PROJECT_ROOT, Settings
 from agent_service.container import Container, build_container
+from agent_service.monitoring.alerts import alert_loop
 from agent_service.observability import bind_context, clear_context, configure_logging, get_logger
 from agent_service.retention import retention_loop
 

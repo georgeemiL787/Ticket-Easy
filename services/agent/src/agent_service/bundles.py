@@ -1,6 +1,6 @@
-"""The tenant bundle registry: the TenantRegistry the brain reads, with versioned bundles layered over the tenant files.
+"""The tenant bundle registry: the TenantRegistry the core reads, with versioned bundles layered over the tenant files.
 
-For a business with an active bundle, the bundle's configuration is what the brain runs with; for every other business
+For a business with an active bundle, the bundle's configuration is what the core runs with; for every other business
 it is the file in config/tenants/. Activating a version swaps the configuration atomically, so the next customer turn
 uses it without a restart; rolling back activates the parent version. Published bundles are immutable: a change is a new
 draft (a copy with a higher version number).
@@ -44,7 +44,7 @@ class BundleRegistry(TenantRegistry):
         self._listeners: list[Listener] = []
         self._publish_checks: list[PublishCheck] = []
 
-    # ---- the registry the brain reads ----
+    # ---- the registry the core reads ----
 
     def add_listener(self, listener: Listener) -> None:
         """Called after a tenant's active bundle changes (the tools binding reloads there)."""
@@ -230,7 +230,7 @@ def _profile_of(config: TenantConfig) -> BundleProfile:
 
 def tools_from_config(config: TenantConfig, binding: "TenantBinding | None" = None) -> tuple[BundleTool, ...]:
     """The tools a configuration relies on, as bundle entries. `binding`: what the tools service serves."""
-    from agent_service.brain.gates import configured_capabilities
+    from agent_service.actions.permissions import configured_capabilities
 
     tools: list[BundleTool] = []
     for name in configured_capabilities(config):

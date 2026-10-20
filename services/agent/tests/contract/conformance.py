@@ -229,5 +229,5 @@ async def check_same_key_acts_once(client: CapabilityClient, case: ConformanceCa
 
 
 def write_result_is_verifiable(result: ToolResult) -> bool:
-    """What the brain needs before it may say "done": success, an audit id and a reference id."""
+    """What the core needs before it may say "done": success, an audit id and a reference id."""
     return result.status == "success" and bool(result.audit_id) and bool(result.reference_id)

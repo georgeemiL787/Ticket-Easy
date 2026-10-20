@@ -5,12 +5,11 @@ from collections import Counter
 import pytest
 
 from agent_service.__main__ import main
-from agent_service.brain.nlu import RuleBasedNLU
 from agent_service.config import Settings
 from agent_service.domain.session import SessionState
 from agent_service.domain.tenant import TenantConfig, TenantRegistry
 from agent_service.domain.understanding import IntentCandidate, Language, NLUResult
-from agent_service.nlu_eval import (
+from agent_service.evaluation.nlu import (
     ENTITY_TYPES,
     EvalReport,
     LabelledMessage,
@@ -20,6 +19,7 @@ from agent_service.nlu_eval import (
     render,
     save_baseline,
 )
+from agent_service.understanding.rules import RuleBasedNLU
 
 TOLERANCE = 0.02  # intent accuracy may fall at most 2 points below the recorded baseline
 
@@ -213,7 +213,7 @@ def test_the_llm_mode_explains_what_is_missing() -> None:
 
 def test_the_llm_mode_builds_the_ai_assisted_understanding_when_a_model_is_configured() -> None:
     from agent_service.__main__ import build_nlu
-    from agent_service.brain.llm_nlu import LLMNLU
+    from agent_service.understanding.ai_reader import LLMNLU
 
     assert isinstance(build_nlu("rules", Settings(llm="ollama")), RuleBasedNLU)
     assert isinstance(build_nlu("llm", Settings(llm="ollama")), LLMNLU)

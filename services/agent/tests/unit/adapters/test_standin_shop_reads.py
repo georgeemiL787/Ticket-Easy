@@ -46,7 +46,7 @@ async def test_verify_customer_fails_the_same_way_for_wrong_phone_and_unknown_or
 
 async def test_verify_customer_ignores_spaces_and_dashes_but_nothing_else(call: Call) -> None:
     assert (await call("verify_customer", {"order_id": "NS-20877", "phone": "010 1234-5601"})).data["verified"] is True
-    # normalising +20 or Arabic digits is the brain job: the shop compares what it is given
+    # normalising +20 or Arabic digits is the core job: the shop compares what it is given
     assert (await call("verify_customer", {"order_id": "NS-20877", "phone": "+201012345601"})).data["verified"] is False
 
 

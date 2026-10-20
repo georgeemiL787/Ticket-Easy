@@ -12,7 +12,7 @@ from agent_service.domain.base import FrozenModel
 from agent_service.domain.trace import DecisionTrace
 
 AI_MODEL_SERVICE = "ai_model"  # an AI job fell back to the rules or the template (rate budget, outage, nonsense)
-# The brain names the part of the system in the first words of an error it records for the trace.
+# The core names the part of the system in the first words of an error it records for the trace.
 _SERVICE_BY_PREFIX: tuple[tuple[str, str], ...] = (
     ("policy search", "policy_search"),
     ("policy passage", "policy_search"),

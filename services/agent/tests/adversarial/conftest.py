@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from agent_service.adapters.llm_policy_gate import LLMPolicyGate
-from agent_service.brain.reviewer import Reviewer
+from agent_service.agent.reviewer import Reviewer
 from agent_service.container import Container, build_container
 from tests.integration.agent_expert import with_expert
 from tests.support import make_settings

@@ -1,7 +1,7 @@
 """Team C's published business tools behind Team B's CapabilityClient plug (sandbox, or Live Demo when allowed).
 
 TeamCCapabilities wraps the existing shop client (the stand-in) and sends the tools a business BINDS to Team C over MCP
-instead. Everything else in the brain is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
+instead. Everything else in the core is unchanged: the same ToolSpec names the intents use (get_order, create_ticket),
 the same gates, the same verify_result.
 
 Binding (an operator file, TEAM_B_TEAM_C_CONFIG, see config/team_c.example.json):
@@ -12,27 +12,27 @@ Binding (an operator file, TEAM_B_TEAM_C_CONFIG, see config/team_c.example.json)
   API) is used only when the operator lists "live_demo" in that binding's `environments`. A publication that claims
   production readiness is never used (no production release process exists).
 - A bound tool is NEVER served by the stand-in: when Team C does not list it (not published, disabled, blocked, Team C
-  down), the brain sees it as not published and says so or hands over.
-- The ToolSpec the brain sees is the business's own declaration (the stand-in's spec of that name, or `spec` in the
+  down), the core sees it as not published and says so or hands over.
+- The ToolSpec the core sees is the business's own declaration (the stand-in's spec of that name, or `spec` in the
   binding). A Team C tool that writes while the declaration says read (or the reverse) is not used (fail closed).
 - `arguments` / `fields` rename Team B's argument and output names to Team C's; outputs not named are dropped.
 
 Identity: Team C's MCP server is bound to one sandbox identity per process. The identity of a call is chosen from the
-customer the brain VERIFIED (ToolCallRequest.acting_customer_id, set by code) through the operator's `identities` map,
+customer the core VERIFIED (ToolCallRequest.acting_customer_id, set by code) through the operator's `identities` map,
 one process per (business, identity). Arguments never choose it. With no verified or mapped customer the call is not
 sent (IDENTITY_NOT_MAPPED), except a tool that needs no identity may use `anonymous_identity` when one is configured.
 
 Results (only `succeeded` is a success; nothing is retried here):
 - succeeded -> success, audit_id "team-c:<execution_id>", reference_id from `reference_field` for creates
 - every error message starts with Team C's category (invalid_arguments, authentication_failed, permission_denied,
-  not_found, rate_limited, api_unreachable, timeout, ...); a read Team C answered not_found is NOT_FOUND for the brain
+  not_found, rate_limited, api_unreachable, timeout, ...); a read Team C answered not_found is NOT_FOUND for the core
 - rejected (refused before any request) -> error TEAM_C_REJECTED, nothing applied
 - failed -> error TEAM_C_FAILED; when the API refused a write (write_state rejected_unverified) Team C does not assert
-  that nothing changed, so write_may_have_applied (the brain escalates as unverified_result, never says "not done")
+  that nothing changed, so write_may_have_applied (the core escalates as unverified_result, never says "not done")
 - partial / outcome_unknown -> error PARTIAL_WRITE / OUTCOME_UNKNOWN, write_may_have_applied
 - error -> error TEAM_C_ERROR, write_may_have_applied for a write tool
 - JSON-RPC tool_not_published -> error TOOL_NOT_PUBLISHED (the registry forgets its list); the request was not run
-- request sent but no answer (timeout, process exit) -> UpstreamError TIMEOUT / CONNECTION_LOST: the brain reports a
+- request sent but no answer (timeout, process exit) -> UpstreamError TIMEOUT / CONNECTION_LOST: the core reports a
   write as uncertain (never BACKEND_UNAVAILABLE, which means "certainly not applied"); a read may be asked again
 - process not running / cannot start -> UpstreamError BACKEND_UNAVAILABLE (nothing was sent)
 """

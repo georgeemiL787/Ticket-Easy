@@ -2,7 +2,7 @@
 
 What the dashboard counts, exactly. Every number is **per business (tenant) and per time bucket** (`hour`, `day`, `week`
 starting Monday, or `month`, all in UTC), optionally narrowed by a **filter** (language, intent, decision, escalation
-reason). Code: `brain/metrics.py` (`MetricsService`, one function per metric, signature
+reason). Code: `monitoring/metrics.py` (`MetricsService`, one function per metric, signature
 `(tenant_id, start, end, bucket="day", filters=None)`). Data: the summary rows below, never message text.
 
 Conventions
@@ -58,7 +58,7 @@ does not change the numbers of past periods.
 
 `created_at` is the moment the store saved the trace.
 
-## The agent's alerts (docs: brain/alerts.py)
+## The agent's alerts (docs: monitoring/alerts.py)
 
 Both read the text-free turn rows of the last hour (tenant thresholds in `alerts`, defaults shown) and only count turns
 the agent loop worked:

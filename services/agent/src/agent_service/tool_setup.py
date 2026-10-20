@@ -1,7 +1,7 @@
-"""From a published Team C tool to a bundle tool: its name, the ToolSpec the brain sees and the binding.
+"""From a published Team C tool to a bundle tool: its name, the ToolSpec the core sees and the binding.
 
 The tools service describes every tool it builds (name, input and output schemas, which steps read and which write).
-This module turns that into what Team B needs, without any model: a stable tool name, a ToolSpec for the brain (the
+This module turns that into what Team B needs, without any model: a stable tool name, a ToolSpec for the core (the
 built-in shop declares no tool it does not know) and a ToolBindingRef naming the Team C proposal. Credentials never
 pass through here: bundles hold ids only.
 """

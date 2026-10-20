@@ -293,4 +293,4 @@ async def test_the_search_client_sends_the_service_key_when_there_is_one() -> No
     )
     with pytest.raises(UpstreamError) as error:
         await refused.request("GET", "/health")
-    assert error.value.code == "UNAUTHORIZED"  # fails closed: the brain hands over
+    assert error.value.code == "UNAUTHORIZED"  # fails closed: the core hands over

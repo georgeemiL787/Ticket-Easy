@@ -14,8 +14,6 @@ from agent_service.adapters.memory_store import (
 from agent_service.adapters.standins.evidence import StandinEvidenceProvider
 from agent_service.adapters.standins.shop import StandinShop
 from agent_service.adapters.team_a_http import HttpEvidenceProvider, HttpPolicyGate
-from agent_service.brain.llm_nlu import LLMNLU
-from agent_service.brain.nlu import RuleBasedNLU
 from agent_service.config import Settings
 from agent_service.container import Container, build_container
 from agent_service.contracts.policy import CheckActionRequest
@@ -30,6 +28,8 @@ from agent_service.ports import (
     SessionStore,
     TraceStore,
 )
+from agent_service.understanding.ai_reader import LLMNLU
+from agent_service.understanding.rules import RuleBasedNLU
 
 
 def test_standin_container_wires_every_dependency(container: Container) -> None:

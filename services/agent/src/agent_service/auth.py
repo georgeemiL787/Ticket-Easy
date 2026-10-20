@@ -9,7 +9,7 @@ OWNER: Track A. SAFETY-CRITICAL (access to customer data).
     so a person switched off, or whose role or businesses changed, is affected at once.
   - A state-changing request must also carry the csrf token in the X-CSRF-Token header (checked in api/auth.py).
   - Too many wrong passwords for one email in a short time are refused for a while (Retry-After).
-Time here is the real clock (a session must really expire), not the brain's injected one.
+Time here is the real clock (a session must really expire), not the core's injected one.
 """
 
 import base64

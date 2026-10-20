@@ -1,4 +1,4 @@
-"""What the brain understood from one customer message."""
+"""What the core understood from one customer message."""
 
 from enum import StrEnum
 from typing import Literal

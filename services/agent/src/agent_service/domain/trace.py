@@ -1,4 +1,4 @@
-"""DecisionTrace: the record of why the brain did what it did, for one message or one human action.
+"""DecisionTrace: the record of why the core did what it did, for one message or one human action.
 
 Three invariants are checked on every trace (safety-critical):
 1. A handoff always has an escalation reason.

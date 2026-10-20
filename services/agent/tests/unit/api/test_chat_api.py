@@ -10,9 +10,9 @@ from fastapi import FastAPI
 from agent_service.api.app import create_app
 from agent_service.api.chat import event_stream
 from agent_service.api.ratelimit import RateLimiter
-from agent_service.brain.composer import render
 from agent_service.container import Container, build_container
 from agent_service.domain.understanding import Locale
+from agent_service.replies.composer import render
 from tests.support import make_settings
 
 T = "shop_001"

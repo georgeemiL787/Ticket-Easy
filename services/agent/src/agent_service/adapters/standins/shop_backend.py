@@ -2,7 +2,7 @@
 
 Only physical constraints live here (a shipped order cannot be cancelled, a refund cannot exceed the order total).
 Business policy (the 14-day window, the EGP 3,000 limit) is NOT enforced here on purpose: it belongs to the rule
-checker. If the shop enforced it too, a brain that forgot to ask the rule checker would go unnoticed in tests.
+checker. If the shop enforced it too, a core that forgot to ask the rule checker would go unnoticed in tests.
 """
 
 import re

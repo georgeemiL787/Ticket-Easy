@@ -15,15 +15,15 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Path, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from agent_service.actions.approval import CaseNotYoursError, NothingToDecideError
 from agent_service.api.auth import acting_name, current_user, visible_tenants
 from agent_service.api.chat import TENANT, checked_tenant, container_of
 from agent_service.api.errors import forbidden, invalid_request, invalid_state, not_found
-from agent_service.brain.approval import CaseNotYoursError, NothingToDecideError
-from agent_service.brain.orchestrator import Orchestrator
 from agent_service.container import Container
 from agent_service.domain.decision import EscalationReason
 from agent_service.domain.handoff import CaseStatus, HandoffCase, IllegalCaseTransitionError, NotManagerError, Priority
 from agent_service.ports import NotFoundError
+from agent_service.turn.handler import Orchestrator
 
 DEFAULT_LIMIT, MAX_LIMIT = 50, 200
 PRIORITY_RANK: dict[str, int] = {"urgent": 0, "high": 1, "normal": 2, "low": 3}

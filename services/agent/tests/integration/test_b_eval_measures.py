@@ -10,8 +10,8 @@ import pytest
 from agent_service import __main__ as cli
 from agent_service.config import Settings
 from agent_service.container import build_container
-from agent_service.eval_compare import compare_runs, judge_mean, load_run
-from agent_service.eval_conversations import (
+from agent_service.evaluation.compare import compare_runs, judge_mean, load_run
+from agent_service.evaluation.conversations import (
     EVAL_TODAY,
     TENANT,
     CountingLLM,
@@ -228,7 +228,7 @@ def test_the_label_option_names_the_saved_report(tmp_path: Path) -> None:
 
 async def test_a_run_in_batches_gives_the_same_report_as_one_run(tmp_path: Path) -> None:
     from agent_service.config import Settings
-    from agent_service.eval_conversations import evaluate, load_set, sample
+    from agent_service.evaluation.conversations import evaluate, load_set, sample
 
     settings = Settings.from_env({"TEAM_B_LLM": "none"}).model_copy(update={"llm": "none", "roles": {}})
     conversations = sample(load_set(), 2)  # 8 conversations
@@ -252,7 +252,7 @@ async def test_a_run_in_batches_gives_the_same_report_as_one_run(tmp_path: Path)
 async def test_a_conversation_during_which_the_budget_ran_out_is_not_recorded(tmp_path: Path) -> None:
     from agent_service.adapters.llm_limits import RateBudgetExceeded
     from agent_service.config import Settings
-    from agent_service.eval_conversations import CountingLLM, evaluate, load_set, sample
+    from agent_service.evaluation.conversations import CountingLLM, evaluate, load_set, sample
 
     class Empty:
         async def complete_json(self, **kw: Any) -> dict[str, Any]:

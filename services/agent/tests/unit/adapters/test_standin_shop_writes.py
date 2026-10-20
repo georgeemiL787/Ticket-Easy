@@ -92,7 +92,7 @@ async def test_create_refund_physical_limits(
 
 
 async def test_the_shop_does_not_enforce_business_policy(call: Call) -> None:
-    # Day 20 and above EGP 3,000 are the RULE CHECKER job. If the shop refused these too, a brain that skipped
+    # Day 20 and above EGP 3,000 are the RULE CHECKER job. If the shop refused these too, a core that skipped
     # the rule checker would never be caught by the tests.
     assert (await call("create_refund", {"order_id": "NS-20512", "amount": 800})).status == "success"
     assert (await call("create_refund", {"order_id": "NS-20934", "amount": 3450})).status == "success"

@@ -1,4 +1,4 @@
-"""Write JSON Schemas of the brain public models to contracts/schemas/.
+"""Write JSON Schemas of the core public models to contracts/schemas/.
 
 Usage: python scripts/export_schemas.py [--out DIR]
 """
@@ -9,12 +9,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from agent_service import replay
 from agent_service.api import business_tools, dashboard
 from agent_service.domain.bundle import TenantBundle
 from agent_service.domain.handoff import HandoffCase, HandoffPackage
 from agent_service.domain.reply import AgentReply
 from agent_service.domain.trace import DecisionTrace
+from agent_service.evaluation import replay
 
 ROOT = Path(__file__).resolve().parent.parent
 MODELS: tuple[type[BaseModel], ...] = (

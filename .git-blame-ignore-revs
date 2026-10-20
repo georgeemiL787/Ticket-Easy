@@ -7,3 +7,6 @@
 
 # Rename the tools package to tools_service
 b0a7d460789e036ea4896d31a42c5036aebbe516
+
+# Rename the agent package to agent_service
+aa7514a7a1c8ef614144733506970d8c55bb3d46

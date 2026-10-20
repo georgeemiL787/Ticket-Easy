@@ -1,0 +1,6 @@
+# Commits that only rename or move things. "git blame" skips them, so a line still shows who last changed it
+# in substance. Use it with:  git config blame.ignoreRevsFile .git-blame-ignore-revs
+# (GitHub reads this file by itself.) Add the hash of every rename-only commit, with a short label.
+
+# Rename the knowledge package to knowledge_service
+1faa29cc9c894f36c3984581148f807dd83d8186

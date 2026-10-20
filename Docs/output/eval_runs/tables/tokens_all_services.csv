@@ -1,0 +1,5 @@
+component,tokens_per_conversation,basis,status
+"conversation service (AI jobs, measured)",10844,"usage/agent_live_*.jsonl, 180 conversations",measured
+knowledge service: search embeddings (local bge-m3),6.6,66 query embeddings in the time window of the three agent runs / 180 conversations x 17.9 tokens each; the 15-conversation Arabizi sample ran in the same window,estimate (window count)
+knowledge service: risk second opinion (OpenRouter free),414.9,"1.18 messages per conversation x 350.6 tokens per check (measured on 40 messages); the evaluation ran with this second opinion switched off, so this is the cost if it is switched on",estimate
+TOTAL per conversation (all components),11265.5,sum of the rows above,contains estimates

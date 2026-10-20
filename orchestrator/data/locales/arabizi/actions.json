@@ -9,6 +9,7 @@
   "status_returned": "etraga3",
   "order_status_in_transit": "El order {order_id} {status}. w metwaqa3 yewsal yom {date}.",
   "order_status_delivered": "El order {order_id} etsallem yom {date}.",
+  "order_status_preparing": "El order {order_id} et2akked w bytgahaz lel shehn. w metwaqa3 yewsal yom {date}.",
   "order_status_other": "El order {order_id} {status}.",
   "confirm_action_create_return": "Tamam, ha3mellak el return lel order {order_id} delwa2ty law mwafe2. akammel? (aywa/la2)",
   "confirm_action_create_exchange": "Ha3mellak talab el estebdal lel order {order_id}. akammel? (aywa/la2)",

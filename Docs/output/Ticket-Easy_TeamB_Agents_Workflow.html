@@ -1,0 +1,87 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Team B agents workflow</title>
+<style>body{font-family:Segoe UI,sans-serif;margin:24px}pre.mermaid{background:#fff;border:1px solid #ddd;padding:16px;margin-bottom:32px}</style></head><body>
+<h1>Team B: the agentic system</h1><h2>1. Workflow of one customer message</h2><pre class="mermaid">flowchart TD
+    C([Customer message]) --&gt; MEM[Load session + memory]
+    MEM --&gt; SUM{{&quot;History Summarizer agent&lt;br/&gt;(AI, checked against the source)&quot;}}
+    SUM --&gt; NLU
+
+    subgraph UNDERSTAND [Understanding]
+        NLU{{&quot;NLU agent (AI)&lt;br/&gt;language, intents, entities,&lt;br/&gt;yes/no, wants human, frustration&quot;}}
+        RULES[Rule-based NLU&lt;br/&gt;safety floor, always runs]
+        RULES --&gt; NLU
+        NLU -. &quot;invalid / timeout&quot; .-&gt; RULES
+    end
+
+    NLU --&gt; RISK[/&quot;Risk screen (Team A)&lt;br/&gt;fraud, legal, medical, abuse&quot;/]
+    RISK --&gt;|risk found| HO
+    RISK --&gt; HUMAN{Wants a person?}
+    HUMAN --&gt;|yes| HO
+    HUMAN --&gt;|no| PEND{Waiting for yes/no?}
+    PEND --&gt;|yes| CONF[Confirmation handler]
+    PEND --&gt;|no| DIS[Disambiguate + merge slots&lt;br/&gt;missing detail -&gt; ask]
+    DIS --&gt; PLAN[Planner: route by intent kind&lt;br/&gt;code only, never the AI]
+
+    PLAN --&gt;|policy question| KA
+    PLAN --&gt;|order lookup| LK
+    PLAN --&gt;|action| ACT
+
+    subgraph KNOW [Knowledge agent]
+        KA{{&quot;Query writer (AI)&lt;br/&gt;messy text -&gt; search query&quot;}} --&gt; SRCH[/&quot;Policy search (Team A)&quot;/]
+        SRCH --&gt; ANS{{&quot;Answer writer (AI)&lt;br/&gt;reply from passages + citations&quot;}}
+        ANS --&gt;|&quot;not grounded&quot;| QUOTE[Quote passages verbatim]
+    end
+
+    subgraph LOOKUP [Lookup]
+        LK[Identity check: order id + phone] --&gt; GO[/&quot;get_order (Team C)&quot;/]
+        GO --&gt; OWN{Ownership ok?}
+    end
+    OWN --&gt;|&quot;not the customer&#39;s order&quot;| HO
+
+    subgraph ACTION [Action agent: fixed gate order]
+        ACT[Slots -&gt; identity -&gt; facts -&gt; ownership -&gt; permission] --&gt; PA
+        PA{{&quot;Policy agent (AI)&lt;br/&gt;reads policy passages,&lt;br/&gt;picks allow / require_human / deny&quot;}}
+        RC[/&quot;Rule checker (Team A)&quot;/]
+        PA --- RC
+        PA --&gt; STRICT[&quot;Keep the STRICTER of the two&quot;]
+        RC --&gt; STRICT
+        STRICT --&gt;|deny| REF[Refuse + offer]
+        STRICT --&gt;|require_human| APPR[Needs human approval]
+        STRICT --&gt;|allow| ASKC[Ask customer to confirm]
+        ASKC --&gt; CONF
+        CONF --&gt; RECHK[Renewed policy check]
+        RECHK --&gt; EXEC[/&quot;Run tool once (Team C)&quot;/]
+        EXEC --&gt; VER{Result verified?&lt;br/&gt;success + audit id + fields}
+        VER --&gt;|no| HO
+    end
+
+    APPR --&gt; HO
+    REF -. &quot;asked again&quot; .-&gt; HO
+
+    HO{{&quot;Handoff agent&lt;br/&gt;briefing: summary, evidence,&lt;br/&gt;past tickets, priority, next step&quot;}} --&gt; INBOX
+
+    subgraph HUMANS [People]
+        INBOX[Support inbox] --&gt; APPROVE[&quot;Human approval agent&lt;br/&gt;re-reads order, re-checks rules,&lt;br/&gt;never overrides a deny&quot;]
+    end
+    APPROVE --&gt; EXEC
+
+    KA -. fail .-&gt; HO
+    QUOTE --&gt; COMP
+    ANS --&gt; COMP
+    OWN --&gt;|ok| COMP
+    VER --&gt;|yes| COMP
+    REF --&gt; COMP
+
+    COMP[&quot;Composer: template reply&lt;br/&gt;in the customer&#39;s register&quot;] --&gt; RW{{&quot;Rewrite agent (AI)&lt;br/&gt;low-stakes replies only&quot;}}
+    RW --&gt;|&quot;adds/drops any number, date, id, link&quot;| TPL[Use template text]
+    RW --&gt;|grounded| OUT
+    TPL --&gt; OUT
+    OUT([Reply + DecisionTrace saved]) --&gt; C
+</pre>
+<h2>2. Who watches the agents</h2><pre class="mermaid">flowchart LR
+    TR[(Traces, tool calls,&lt;br/&gt;rule answers, cases)] --&gt; AL[&quot;Alert engine (every minute)&lt;br/&gt;service_down, action_failing,&lt;br/&gt;unverified_result, knowledge_gap,&lt;br/&gt;slow_replies, escalation_spike,&lt;br/&gt;ai_fallback, queue_backlog&quot;]
+    AL --&gt; DASH[Manager dashboard + webhook]
+    TR --&gt; EV[Evaluation runner&lt;br/&gt;NLU accuracy, scripted conversations]
+    EV --&gt; JD{{&quot;Judge agent (AI)&lt;br/&gt;clarity, politeness, register,&lt;br/&gt;helpfulness 1-5 &#183; advice only&quot;}}
+    JD --&gt; CSV[10% sample -&gt; CSV&lt;br/&gt;a person grades, agreement measured]
+</pre>
+<script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";mermaid.initialize({startOnLoad:true});</script></body></html>

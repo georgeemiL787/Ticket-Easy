@@ -1,0 +1,40 @@
+== NLU evaluation, mode: rules, 155 messages ==
+intent accuracy (first intent)   87.7%  (136/155)
+intent list exact match          87.1%  (135/155)
+multi-intent exact match         90.0%  (9/10)
+language accuracy                99.4%  (154/155)
+wants-a-person accuracy          100.0%  (155/155)
+
+by style:        intent    language
+  en             91.4%     97.1%   (n=35)
+  ar             84.8%    100.0%   (n=33)
+  mixed          82.8%    100.0%   (n=29)
+  arabizi        89.7%    100.0%   (n=58)
+
+entities:        precision   recall
+  order_id       100.0%   100.0%   (gold=21)
+  phone          100.0%   100.0%   (gold=5)
+  amount         100.0%   100.0%   (gold=5)
+
+10 worst misses (of 21 messages with any error):
+  [ar-004] المنتج ده مش عاجبني عايز ارجعه
+      intents: expected ['return_request'], got []
+  [ar-010] العنوان اللي كتبته غلط
+      intents: expected ['change_address'], got []
+  [ar-015] المندوب كان وحش جدا
+      intents: expected ['complaint'], got []
+  [ar-023] مش عايز ارجع المنتج عايز ابدله
+      intents: expected ['exchange_request'], got []
+  [ar-031] اسوأ خدمة، محدش بيرد عليا
+      intents: expected ['complaint'], got []
+  [arabizi-015] 3awez a3raf el order wasal wala la2
+      intents: expected ['order_status'], got []
+  [arabizi-019] fi masrouf lel shahn?
+      intents: expected ['policy_question'], got []
+  [arabizi-034] fein el order bta3i NS-20877 w 3ayez alghyh
+      intents: expected ['order_status', 'cancel_order'], got []
+  [arabizi-038] el order msh wasel
+      intents: expected ['order_status'], got []
+  [arabizi-041] el mandoob kan wesekh
+      intents: expected ['complaint'], got []
+

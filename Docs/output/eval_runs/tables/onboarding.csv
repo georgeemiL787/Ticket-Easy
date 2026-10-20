@@ -1,0 +1,5 @@
+step,service,job,model,source,calls,ok_calls,failed_or_rate_limited_calls,input_tokens,output_tokens,total_tokens,avg_input_tokens_per_ok_call,avg_output_tokens_per_ok_call,latency_p50_ms,latency_p95_ms,tokens_reported_or_estimated
+"tool generation (tool service, Groq free tier)",tools,generation,openai/gpt-oss-120b,usage/onboarding_tools.jsonl,1,1,0,3980,1395,5375,3980.0,1395.0,3975,3975,reported by the server
+"rule extraction (knowledge service, OpenRouter free)",knowledge,rule_extraction,nvidia/nemotron-3-super-120b-a12b:free,usage/onboarding_rules.jsonl,36,36,0,59986,19396,79382,1666.3,538.8,6832,32324,reported by the server
+"document embeddings (knowledge service, local bge-m3)",knowledge,embed_document,bge-m3,usage/onboarding_embed.jsonl,6,6,0,3384,0,3384,564.0,0.0,2029,11639,reported by the server
+"ONE ONBOARDING, all steps",,,,onboarding_measured.csv,,,,67350,20791,88141,,,,,reported by the servers

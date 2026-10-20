@@ -1,0 +1,4 @@
+orchestrator_model,conversations,turns,citation_turns,citation_right,citation_right_pct,turns_with_a_failed_check,intent_checks_failed,decision_checks_failed,fallback_turns,unbacked_fact_turns,ai_requests_per_turn_all_jobs,total_tokens_per_turn_all_jobs,turn_time_p50_s,turn_time_p95_s,orchestrator_calls_ok,orchestrator_calls_failed_or_rate_limited,orchestrator_tokens_per_turn,status,note
+openai/gpt-oss-120b,25,27,25,17,68.0,8,3,8,0,0,7.3,10128,7.4,38.8,44,54,6469,complete,"latency on the Groq free tier; same 25 conversations, one orchestrator model changed"
+qwen/qwen3.8-27b,25,27,25,22,88.0,5,3,4,0,0,7.1,12042,7.3,34.4,55,41,8127,complete,"latency on the Groq free tier; same 25 conversations, one orchestrator model changed"
+openai/gpt-oss-20b,25,27,25,19,76.0,6,3,6,1,0,5.0,10487,7.1,31.9,47,0,6835,1 turns fell back to the fixed flow (rate limits or move errors),"latency on the Groq free tier; same 25 conversations, one orchestrator model changed"

@@ -1,0 +1,21 @@
+{
+  "spec_id": "65a70604-65db-43e7-9c78-3239ea88be25",
+  "summary": {
+    "operations": 2,
+    "technically_supported": 2,
+    "proposal_eligible": 2,
+    "restricted": 0,
+    "requires_clarification": 2
+  },
+  "scope": null
+}
+{
+  "live": true,
+  "provider": "groq",
+  "seconds": 3.55,
+  "error": "provider_request_failure",
+  "message": "groq rejected the request (HTTP 400); check credentials/model/structured-output support: \"Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.\"",
+  "details": {
+    "run_id": "899a717b-92ff-4b9c-aeb1-0c318ab0dabf"
+  }
+}

@@ -58,6 +58,9 @@ class Lexicon(BaseModel):
     want_markers: StyleWords = StyleWords()  # "I want", "عايز", "3ayez"
     question_markers: StyleWords = StyleWords()  # "how", "ازاي", "emta", "?"
     policy_timing_markers: StyleWords = StyleWords()  # "how many days", "كام يوم": asks about a rule, not for an action
+    hours_markers: StyleWords = (
+        StyleWords()
+    )  # "opening hours", "مواعيد", "mawa3id": asks WHEN a department is available
     ordinals: dict[str, StyleWords] = {}  # "1", "2", "3": the first, second, third of a list
     both: StyleWords = StyleWords()  # "both", "الاتنين"
     yes: StyleWords = StyleWords()

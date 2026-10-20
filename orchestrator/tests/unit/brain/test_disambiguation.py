@@ -222,10 +222,10 @@ async def test_changing_the_subject_drops_the_list_for_this_turn(c: Container) -
     assert detail == "topic change: the list is dropped"
 
 
-async def test_cancelled_orders_are_not_offered(c: Container) -> None:
+async def test_cancelled_orders_are_not_offered_and_the_one_open_order_is_used(c: Container) -> None:
     o = await verified_as(c, "C-105")  # NS-20955 processing, NS-20701 cancelled
     reply = await say(o, "I want a refund")
-    assert (await session_of(c)).order_choices == ["NS-20955"] and "NS-**701" not in reply.text
+    assert (await session_of(c)).slots.get("order_id") == "NS-20955" and "701" not in reply.text
 
 
 async def test_an_unverified_customer_is_asked_for_the_number_and_no_list_is_read(c: Container) -> None:

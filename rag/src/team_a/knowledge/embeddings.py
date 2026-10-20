@@ -7,6 +7,7 @@ from typing import Protocol
 import httpx
 import numpy as np
 
+from team_a import usage_log
 from team_a.config import settings
 
 
@@ -40,6 +41,7 @@ class OllamaEmbedder:
         vectors = []
         for start in range(0, len(texts), self.batch_size):
             batch = texts[start:start + self.batch_size]
+            watch = usage_log.Stopwatch()
             try:
                 resp = self._client.post(
                     f"{self.url}/api/embed",
@@ -47,12 +49,38 @@ class OllamaEmbedder:
                 )
                 resp.raise_for_status()
             except httpx.HTTPError as exc:
+                self._log_usage(batch, watch, None, exc)
                 raise EmbeddingUnavailable(
                     f"Ollama embedding call failed ({exc}). Is Ollama running and is "
                     f"'{self.model}' pulled? Try: ollama pull {self.model}"
                 ) from exc
+            self._log_usage(batch, watch, resp)
             vectors.extend(resp.json()["embeddings"])
         return _unit(np.asarray(vectors, dtype=np.float32))
+
+    def _log_usage(self, batch: list[str], watch: "usage_log.Stopwatch", resp: httpx.Response | None,
+                   error: httpx.HTTPError | None = None) -> None:
+        """One usage line per embedding request. Ollama reports the input tokens as prompt_eval_count; when it does not,
+        the count is an estimate (characters / 3) and the line says so. Never text, never raises."""
+        if not usage_log.enabled():
+            return
+        tokens, estimated, code = None, False, None
+        if resp is not None:
+            code = resp.status_code
+            try:
+                tokens = usage_log.count(resp.json().get("prompt_eval_count"))
+            except (ValueError, AttributeError):
+                tokens = None
+            if tokens is None:
+                tokens, estimated = -(-sum(len(t) for t in batch) // usage_log.CHARS_PER_TOKEN), True
+        elif isinstance(error, httpx.HTTPStatusError):
+            code = error.response.status_code
+        status = "ok" if resp is not None else "timeout" if isinstance(error, httpx.TimeoutException) else (
+            "rate_limited" if code == 429 else "error")
+        usage_log.record(
+            job=usage_log.current_job("embed_document"), kind="embedding", model=self.model, url=self.url,
+            status=status, http_status=code, latency_ms=watch.ms(), input_tokens=tokens, estimated=estimated,
+        )
 
     def embed(self, texts: list[str]) -> np.ndarray:
         found: dict[str, np.ndarray] = {}

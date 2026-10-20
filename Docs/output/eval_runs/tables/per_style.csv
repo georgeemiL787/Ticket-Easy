@@ -1,0 +1,12 @@
+style,run,appendix,conversations,turns,intent_pct,decision_pct,citation_pct,locale_pct,handoff_precision_pct,handoff_recall_pct,solved_without_person,wrong_actions,unbacked_facts,agent_fallbacks,time_p50_s,time_p95_s
+en,rules only (before the fix),no,60,71,76.7,78.9,52.0,100.0,85.7,85.7,52/53,0,0,0,0.3,0.7
+en,rules only (after the fix),no,60,71,78.3,80.3,56.0,100.0,100.0,85.7,53/53,0,0,0,0.2,0.5
+en,agent mode,no,60,71,95.0,80.3,68.0,100.0,66.7,85.7,50/53,0,0,0,7.4,31.6
+ar,rules only (before the fix),no,60,71,66.7,73.2,32.0,100.0,75.0,85.7,51/53,0,0,0,0.3,0.9
+ar,rules only (after the fix),no,60,71,70.0,76.1,40.0,100.0,100.0,85.7,53/53,0,0,0,0.2,0.5
+ar,agent mode,no,60,71,95.0,84.5,76.0,100.0,60.0,85.7,49/53,0,0,0,7.2,31.4
+mixed,rules only (before the fix),no,60,71,66.7,73.2,48.0,98.6,85.7,85.7,52/53,0,1,0,0.2,0.8
+mixed,rules only (after the fix),no,60,71,68.3,74.6,52.0,98.6,100.0,85.7,53/53,0,1,0,0.2,0.5
+mixed,agent mode,no,60,71,93.3,80.3,68.0,98.6,71.4,71.4,51/53,0,0,0,5.9,32.4
+arabizi,rules only (before the fix),yes: all 60 conversations,60,71,40.0,45.1,24.0,97.2,,,,0,0,0,0.3,1.0
+arabizi,"agent mode, keyword stand-in, SAMPLE of 15 conversations","yes: appendix: a sample, not the full set",15,21,73.3,76.2,40.0,100.0,,,,0,0,0,59.5,180.6

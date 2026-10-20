@@ -1,0 +1,39 @@
+== NLU evaluation, mode: llm, 155 messages ==
+intent accuracy (first intent)   96.1%  (149/155)
+intent list exact match          95.5%  (148/155)
+multi-intent exact match         90.0%  (9/10)
+language accuracy                99.4%  (154/155)
+wants-a-person accuracy          100.0%  (155/155)
+
+by style:        intent    language
+  en            100.0%     97.1%   (n=35)
+  ar            100.0%    100.0%   (n=33)
+  mixed          89.7%    100.0%   (n=29)
+  arabizi        94.8%    100.0%   (n=58)
+
+entities:        precision   recall
+  order_id       100.0%   100.0%   (gold=21)
+  phone          100.0%   100.0%   (gold=5)
+  amount          60.0%    60.0%   (gold=5)
+
+10 worst misses (of 10 messages with any error):
+  [arabizi-018] el shahn bekam lel eskandareya?
+      intents: expected ['policy_question'], got ['order_status']
+  [arabizi-024] rag3ouly felousy law samaht
+      intents: expected ['refund_request'], got ['return_request']
+  [arabizi-057] mesh 3ayez a8ayar el 3enwan
+      intents: expected [], got ['change_address']
+  [mixed-017] الـ refund هيرجع امتى على الكارت؟
+      intents: expected ['policy_question'], got ['refund_request']
+  [mixed-026] احنا نقدر نعمل cancel بعد الشحن؟
+      intents: expected ['policy_question'], got ['cancel_order']
+  [mixed-028] 01012345601 ده رقمي and the order is NS-20877
+      intents: expected [], got ['order_status']
+  [arabizi-004] 3ayez flousi el order mesh 3agebny
+      intents: expected ['refund_request', 'complaint'], got ['refund_request']
+  [ar-032] عايز ارجع فلوسي ٣٠٠ جنيه
+      amount: expected '300', got '٣٠٠ جنيه'
+  [en-026] I want a refund of 300 EGP for NS-20512, my phone is 01012345601
+      amount: expected '300', got '300 EGP'
+  [en-029] ok
+      language: expected en, got ar

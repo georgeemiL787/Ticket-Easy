@@ -1,0 +1,4 @@
+model,attempts,accepted,typical_tokens_of_an_accepted_run,same_tool_idea_when_accepted,scope
+gpt-oss-120b,2,2,5375,Order Lookup & Support Ticket Creator; Order Lookup and Support Ticket Creator,example e-commerce API with only 2 operations; Groq free tier
+qwen3.8-27b,3,1,4262,Order Support Ticket,example e-commerce API with only 2 operations; Groq free tier
+gpt-oss-20b,3,0,,,example e-commerce API with only 2 operations; Groq free tier

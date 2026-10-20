@@ -9,6 +9,7 @@
   "status_returned": "اترجع",
   "order_status_in_transit": "الأوردر {order_id} {status}. ومتوقع يوصل يوم {date}.",
   "order_status_delivered": "الأوردر {order_id} اتسلم يوم {date}.",
+  "order_status_preparing": "الأوردر {order_id} اتأكد وبيتجهز للشحن. ومتوقع يوصلك يوم {date}.",
   "order_status_other": "الأوردر {order_id} {status}.",
   "confirm_action_create_return": "تمام، هعملك المرتجع للأوردر {order_id} دلوقتي لو موافق. أكمل؟ (أيوه/لأ)",
   "confirm_action_create_exchange": "هعملك طلب الاستبدال للأوردر {order_id}. أكمل؟ (أيوه/لأ)",

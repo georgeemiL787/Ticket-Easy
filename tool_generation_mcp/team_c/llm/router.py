@@ -1,4 +1,5 @@
 import json
+import time
 import httpx
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as SchemaValidationError
@@ -11,6 +12,7 @@ from .openrouter import OpenRouterProvider
 from .prompts import model_messages
 from .schemas import drop_echoes, output_schema
 from .types import AttemptInfo
+from .. import usage_log
 
 PROVIDERS = {p.name: p for p in (OllamaProvider, GroqProvider, OpenRouterProvider)}
 
@@ -47,10 +49,12 @@ class Providers:
             raise AppError("model_input_limit", "Model input exceeds configured limit; no content was truncated")
         failures = []
         # Start afresh on every call: a rate-limited key is never permanently disabled.
-        attempts = [(name, key) for name in chain for key in (self.settings.groq_api_keys if name == "groq" else [None])]
-        for name, api_key in attempts:
+        attempts = [(name, key, index) for name in chain for index, key in enumerate(self.settings.groq_api_keys if name == "groq" else [None])]
+        for name, api_key, key_index in attempts:
             provider = self.provider(name, api_key)
             model = provider.model
+            started, response, timed_out = time.perf_counter(), None, False
+            error = None
             try:
                 response = provider.complete(kind, messages, schema, run_id, fixing="grounding_feedback" in payload)
                 secrets = self.settings.model_secrets
@@ -64,6 +68,7 @@ class Providers:
                 self.store.attempt(run_id, name, model, "succeeded")
                 return result
             except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as exc:
+                timed_out = isinstance(exc, httpx.TimeoutException)
                 error = AppError("provider_service_failure", f"{name} connection/timeout failure ({type(exc).__name__})", 502)
             except AppError as exc:
                 error = exc
@@ -71,6 +76,9 @@ class Providers:
                 error = AppError("invalid_model_output", f"{name} returned invalid structured output ({type(exc).__name__})", 502)
             except httpx.HTTPError as exc:
                 error = AppError("provider_request_failure", f"{name} request failed ({type(exc).__name__})", 502)
+            finally:
+                usage_log.record_attempt(self.settings, kind=kind, provider=name, url=provider.base_url, model=model, started=started,
+                                         response=response, error=error, timed_out=timed_out, key_index=key_index if name == "groq" else None)
             info = AttemptInfo(code=error.code, message=error.message, provider=name)
             self.store.attempt(run_id, name, model, "failed", info)
             failures.append(info)

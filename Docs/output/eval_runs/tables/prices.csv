@@ -1,0 +1,16 @@
+model,input_usd_per_1m,output_usd_per_1m,source,date,how_obtained
+groq/gpt-oss-120b,0.15,0.6,https://console.groq.com/docs/models,17 Oct 2026,provider page (read by the fetch tool)
+groq/gpt-oss-20b,0.075,0.3,https://console.groq.com/docs/models,17 Oct 2026,provider page (read by the fetch tool)
+groq/qwen3.8-27b,0.8,4.0,https://console.groq.com/docs/models,17 Oct 2026,"provider page; a preview model, 'for evaluation only'"
+openrouter/nemotron-3-super-120b-a12b (paid),0.08,0.45,https://openrouter.ai/api/v1/models,17 Oct 2026,OpenRouter public price list; the :free variant is $0
+openrouter/gemma-4-31b-it (paid),0.2,0.4,https://openrouter.ai/api/v1/models,17 Oct 2026,OpenRouter public price list; the :free variant is $0
+openai/gpt-6-luna,0.1,0.5,https://openrouter.ai/api/v1/models,17 Oct 2026,OpenAI's own page returned HTTP 403; OpenRouter public list used (equal to the plan's indicative price)
+openai/gpt-6.1-sol,2.0,10.0,https://openrouter.ai/api/v1/models,17 Oct 2026,OpenAI's own page returned HTTP 403; OpenRouter public list used (equal to the plan's indicative price)
+google/gemini-3.5-flash-lite,0.3,2.5,https://ai.google.dev/gemini-api/docs/pricing,17 Oct 2026,provider page
+google/gemini-3.8-flash (to 31 Dec 2026),0.75,3.75,https://ai.google.dev/gemini-api/docs/pricing,17 Oct 2026,provider page; introductory price
+google/gemini-3.8-flash (from 1 Jan 2027),1.5,7.5,https://ai.google.dev/gemini-api/docs/pricing,17 Oct 2026,provider page
+anthropic/claude-sonnet-5.5,2.0,10.0,https://platform.claude.com/docs/en/about-claude/pricing,17 Oct 2026,provider page
+deepseek/deepseek-flash (peak),0.3,1.2,https://api-docs.deepseek.com/quick_start/pricing,17 Oct 2026,provider page; off-peak is half
+deepseek/deepseek-flash (off-peak),0.15,0.6,https://api-docs.deepseek.com/quick_start/pricing,17 Oct 2026,provider page
+mistral/mistral-small-4,0.15,0.6,"plan, Part 2 (vendor survey)",6 Oct 2026,"indicative, 6 Oct 2026: Mistral's page names no Small 4 price"
+mistral/mistral-large-3,0.5,1.5,https://mistral.ai/pricing,17 Oct 2026,the page quotes 'Mistral Large $0.5 in / $1.5 out' without naming version 3: indicative

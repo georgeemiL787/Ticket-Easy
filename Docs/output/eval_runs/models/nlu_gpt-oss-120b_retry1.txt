@@ -1,0 +1,23 @@
+== NLU evaluation, mode: llm, 67 messages ==
+intent accuracy (first intent)   98.5%  (66/67)
+intent list exact match          97.0%  (65/67)
+multi-intent exact match         80.0%  (4/5)
+language accuracy                100.0%  (67/67)
+wants-a-person accuracy          100.0%  (67/67)
+
+by style:        intent    language
+  en            100.0%    100.0%   (n=2)
+  ar            100.0%    100.0%   (n=1)
+  mixed         100.0%    100.0%   (n=16)
+  arabizi        97.9%    100.0%   (n=48)
+
+entities:        precision   recall
+  order_id       100.0%   100.0%   (gold=10)
+  phone          100.0%   100.0%   (gold=2)
+  amount         100.0%   100.0%   (gold=1)
+
+2 worst misses (of 2 messages with any error):
+  [arabizi-057] mesh 3ayez a8ayar el 3enwan
+      intents: expected [], got ['change_address']
+  [arabizi-004] 3ayez flousi el order mesh 3agebny
+      intents: expected ['refund_request', 'complaint'], got ['refund_request']

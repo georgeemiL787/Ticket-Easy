@@ -1,0 +1,16 @@
+{
+  "tenant_id": "shop_001",
+  "built_at": "2026-10-16T23:31:50.368910+00:00",
+  "embed_model": "bge-m3",
+  "passages": 40,
+  "current_passages": 36,
+  "tickets": 20,
+  "resolutions": 7,
+  "source_hashes": {
+    "return_policy_v2.md": "bed5ad784938271e",
+    "return_policy_v1.md": "6022ed63778a70ba",
+    "shipping_policy.pdf": "77a2c30fbe73caac",
+    "refund_policy.docx": "20c12396400db1e1",
+    "faq.xlsx": "c597bd6e55d65042"
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "spec_id": "9f2997f4-9ae8-40b6-8c5b-7b174c508b15",
+  "summary": {
+    "operations": 2,
+    "technically_supported": 2,
+    "proposal_eligible": 2,
+    "restricted": 0,
+    "requires_clarification": 2
+  },
+  "scope": null
+}
+{
+  "live": true,
+  "provider": "groq",
+  "model": "qwen/qwen3.8-27b",
+  "seconds": 4.87,
+  "business_id": "78ad1ada-7511-4098-9386-d4889e9e0294",
+  "spec_id": "9f2997f4-9ae8-40b6-8c5b-7b174c508b15",
+  "result": {
+    "run_id": "5fa3b363-df95-4132-86d1-4f593e388ff6",
+    "proposal_ids": [
+      "c8bc505c-db6d-40ba-aca4-bb5e45517837"
+    ],
+    "capability_gaps": [],
+    "duplicates": []
+  }
+}
+{
+  "proposal_id": "c8bc505c-db6d-40ba-aca4-bb5e45517837",
+  "content": {
+    "assumptions": [
+      "Order lookup must return 200 before ticket creation proceeds.",
+      "queue_id is a fixed owner-wide routing setting, not a per-request choice."
+    ],
+    "business_purpose": "Look up an order by ID and automatically open a support ticket for that order's customer in a configured queue.",
+    "configuration": [
+      {
+        "key": "queue_id",
+        "value_json": null
+      }
+    ],
+    "description": "Retrieves an order by its ID, extracts the customer ID from the response, and creates a support ticket in the configured queue with a user-supplied summary.",
+    "expected_reads": [
+      "Order record including customer_id, order_id, and status"
+    ],
+    "expected_writes": [
+      "A new support ticket referencing the order and customer in the configured queue"
+    ],
+    "limitations": [
+      "API credentials are connector-managed and not yet configured; runtime authorization and data-scoping permissions remain unverified.",
+      "Customer ownership of the order is not verified by the API; the tool assumes the caller is authorized to act on the given order_id."
+    ],
+    "name": "Order Support Ticket",
+    "outputs": [
+      {
+        "name": "ticket_id",
+        "pointer": "/ticket_id",
+        "response_status": "201",
+        "step_id": "s2"
+      }
+    ],
+    "questions": [
+      {
+        "configuration_key": "queue_id",
+        "id": "q1",
+        "text": "Which queue ID should support tickets be routed to?"
+      },
+      {
+        "configuration_key": null,
+        "id": "q2",
+        "text": "How will caller authorization and data-scoping for order access be verified at runtime? The API declares bearer authentication but does not declare roles or ownership checks."
+      }
+    ],
+    "risk": "medium",
+    "risk_rationale": "The tool writes a ticket on behalf of a customer identified via an unverified order lookup. If authorization is not enforced, an unauthorized caller could create tickets for arbitrary customers.",
+    "self_review": {
+      "criteria": [
+        {
+          "criterion": "business_value",
+          "reason": "Directly implements the stated workflow of order lookup followed by ticket creation.",
+          "score": 4
+        },
+        {
+          "criterion": "api_fidelity",
+          "reason": "All required inputs are bound to correct sources; sequential dependency is enforced via previous_operation_output.",
+          "score": 5
+        },
+        {
+          "criterion": "input_minimality",
+          "reason": "Only order_id and summary come from runtime; customer_id is derived from the lookup; queue_id is a single config value.",
+          "score": 5
+        },
+        {
+          "criterion": "output_usefulness",
+          "reason": "Returns the created ticket_id, which is the actionable result for the operator.",
+          "score": 4
+        },
+        {
+          "criterion": "redundancy",
+          "reason": "No existing tool in the inventory performs this combined lookup-and-create flow.",
+          "score": 5
+        },
+        {
+          "criterion": "security_posture",
+          "reason": "Authorization gaps are surfaced as questions and limitations; no permissions are invented.",
+          "score": 3
+        }
+      ],
+      "summary": "Proposal is well-grounded in the supplied operations with clear sequential dependency and minimal inputs. Main open item is the unresolved authorization model.",
+      "verdict": "proceed"
+    },
+    "steps": [
+      {
+        "bindings": [
+          {
+            "kind": "runtime_argument",
+            "reference": "order_id",
+            "response_status": null,
+            "step_id": null,
+            "target": "path.order_id"
+          }
+        ],
+        "id": "s1",
+        "operation_id": "a86f014d-3428-5293-833c-14620dd56dde",
+        "purpose": "Retrieve the order to obtain the customer_id."
+      },
+      {
+        "bindings": [
+          {
+            "kind": "previous_operation_output",
+            "reference": "/customer_id",
+            "response_status": "200",
+            "step_id": "s1",
+            "target": "body.customer_id"
+          },
+          {
+            "kind": "previous_operation_output",
+            "reference": "/order_id",
+            "response_status": "200",
+            "step_id": "s1",
+            "target": "body.order_id"
+          },
+          {
+            "kind": "business_configuration",
+            "reference": "queue_id",
+            "response_status": null,
+            "step_id": null,
+            "target": "body.queue_id"
+          },
+          {
+            "kind": "runtime_argument",
+            "reference": "summary",
+            "response_status": null,
+            "step_id": null,
+            "target": "body.summary"
+          }
+        ],
+        "id": "s2",
+        "operation_id": "be77384b-0c9f-5666-b556-aff36713cdf2",
+        "purpose": "Create a support ticket for the order's customer in the configured queue."
+      }
+    ]
+  },
+  "derived": {
+    "authorization_review": [
+      {
+        "declared_auth": "required",
+        "method": "GET",
+        "operation_id": "a86f014d-3428-5293-833c-14620dd56dde",
+        "path": "/orders/{order_id}",
+        "unresolved_requirements": [
+          "Which callers may use this operation is not declared (OpenAPI declares authentication, not roles or permissions).",
+          "Whether a caller may access the record identified by path.order_id (ownership/data scoping) is not declared."
+        ]
+      },
+      {
+        "declared_auth": "required",
+        "method": "POST",
+        "operation_id": "be77384b-0c9f-5666-b556-aff36713cdf2",
+        "path": "/tickets",
+        "unresolved_requirements": [
+          "Which callers may use this operation is not declared (OpenAPI declares authentication, not roles or permissions)."
+        ]
+      }
+    ],
+    "blockers": [
+      "Configuration queue_id has no reconciled value"
+    ],
+    "facts_vs_interpretation": "Schemas and method/path are extracted facts; purpose, effects and risk are AI interpretations. Security/authorization unverified.",
+    "generation_capability_gaps": [],
+    "generation_scope": [
+      "a86f014d-3428-5293-833c-14620dd56dde",
+      "be77384b-0c9f-5666-b556-aff36713cdf2"
+    ],
+    "outputs": {
+      "ticket_id": {
+        "guaranteed": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "runtime_inputs": {
+      "order_id": {
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "summary": {
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "source_operations": [
+      "a86f014d-3428-5293-833c-14620dd56dde",
+      "be77384b-0c9f-5666-b556-aff36713cdf2"
+    ]
+  }
+}

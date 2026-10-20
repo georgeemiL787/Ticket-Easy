@@ -1,0 +1,30 @@
+Split: test (102 questions, 12 unanswerable)
+
+Thresholds: MIN_COSINE=0.52 MIN_BM25=4.0
+recall@5            82.22%  per style: {'ar': '27/30', 'arabizi': '19/30', 'en': '28/30'}
+no-answer precision 40.00%
+no-answer recall    33.33%
+  MISS FAQ-010-en I recharged but the balance didn't arrive. ['refund_policy@v3#s5', 'postpaid_billing_policy@v2#s2']
+  MISS FAQ-010-ar شحنت والرصيد منزلش. ['prepaid_recharge_policy@v3#s2', 'prepaid_recharge_policy@v3#s0']
+  MISS FAQ-010-arabizi shahant w el rased manzelsh. ['prepaid_recharge_policy@v3#s6', 'prepaid_recharge_policy@v3#s5']
+  MISS FAQ-016-ar دفعت الفاتورة ولسه ظاهرة مش مدفوعة. ['postpaid_billing_policy@v2#s2', 'postpaid_billing_policy@v2#s1']
+  MISS FAQ-016-arabizi dafa3t el fatora w lessa zahra msh madfo3a. ['postpaid_billing_policy@v2#s1', 'postpaid_billing_policy@v2#s2']
+  MISS FAQ-020-en How do I stop my bundle from renewing? ['home_internet_policy@v3#s2', 'refund_policy@v3#s1']
+  MISS FAQ-020-arabizi aw2af tagdeed el ba2a ezay? ['bundles_policy@v4#s5', 'bundles_policy@v4#s4']
+  MISS FAQ-022-arabizi we7dat el control elly mat3amaletsh btetra7al? []
+  MISS FAQ-028-arabizi byet5asam meny 3ala khedma 3omry ma eshtarakt feeha. ['bundles_policy@v4#s1', 'refund_policy@v3#s4']
+  MISS FAQ-030-ar الفلوس بترجع على الفيزا في قد ايه؟ []
+  MISS FAQ-032-arabizi el shee7a da3et, momken teb3atoly wa7da gdeda? []
+  MISS FAQ-046-arabizi el fanny hayeegy yrakeb el net emta? ['bundles_policy@v4#s5', 'bundles_policy@v4#s4']
+  MISS FAQ-048-arabizi sor3et el net a2al b keteer men el ba2a. ['bundles_policy@v4#s5', 'bundles_policy@v4#s4']
+  MISS FAQ-050-arabizi hadfa3 felous zeyaret el fanny? []
+  MISS FAQ-058-arabizi momken teb3atly sigel el mokalmat? []
+  MISS FAQ-060-arabizi aw2af el rasayel el de3aeya ezay? []
+  MISS OFF-en-02 should be empty ['complaints_policy@v2#s0', 'prepaid_recharge_policy@v3#s2']
+  MISS OFF-en-04 should be empty ['prepaid_recharge_policy@v3#s1', 'home_internet_policy@v3#s4']
+  MISS OFF-en-08 should be empty ['sim_policy@v2#s3', 'bundles_policy@v4#s3']
+  MISS OFF-ar-04 should be empty ['prepaid_recharge_policy@v3#s1', 'home_internet_policy@v3#s4']
+  MISS OFF-ar-08 should be empty ['roaming_policy@v2#s2', 'roaming_policy@v2#s1']
+  MISS OFF-arabizi-04 should be empty ['porting_policy@v2#s1', 'sim_policy@v2#s4']
+  MISS OFF-arabizi-06 should be empty ['refund_policy@v3#s1', 'bundles_policy@v4#s1']
+  MISS OFF-arabizi-08 should be empty ['roaming_policy@v2#s2', 'roaming_policy@v2#s1']

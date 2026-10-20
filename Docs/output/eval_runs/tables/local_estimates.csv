@@ -1,0 +1,9 @@
+option,case,hardware_price_usd,power_kw,electricity_usd_per_kwh,hours_per_month,hourly_rate_usd,formula,api_cost_usd,monthly_cost_usd_estimate,usd_per_1000_messages_at_10k_a_month_estimate,usd_per_1000_messages_at_100k_a_month_estimate,status
+L1 starter (one 24-32 GB GPU workstation),low,3500,0.6,0.1,730,,hardware / 36 months + 0.6 kW x 730 h x $0.1/kWh,0,141.02,14.1,1.41,estimate; throughput not measured
+L1 starter (one 24-32 GB GPU workstation),high,5000,0.6,0.1,730,,hardware / 36 months + 0.6 kW x 730 h x $0.1/kWh,0,182.69,18.27,1.83,estimate; throughput not measured
+L2 mirror of today (one 96 GB workstation GPU),low,10000,0.8,0.1,730,,hardware / 36 months + 0.8 kW x 730 h x $0.1/kWh,0,336.18,33.62,3.36,estimate; throughput not measured
+L2 mirror of today (one 96 GB workstation GPU),high,12000,0.8,0.1,730,,hardware / 36 months + 0.8 kW x 730 h x $0.1/kWh,0,391.73,39.17,3.92,estimate; throughput not measured
+L3 server (one 80 GB data-centre GPU server),low,30000,1.2,0.1,730,,hardware / 36 months + 1.2 kW x 730 h x $0.1/kWh,0,920.93,92.09,9.21,estimate; throughput not measured
+L3 server (one 80 GB data-centre GPU server),high,40000,1.2,0.1,730,,hardware / 36 months + 1.2 kW x 730 h x $0.1/kWh,0,1198.71,119.87,11.99,estimate; throughput not measured
+L3 rented (same GPU by the hour),low,,,,730,2.0,GPU rented around the clock: 730 hours x $2-3 per hour,0,1460.0,146.0,14.6,estimate; throughput not measured
+L3 rented (same GPU by the hour),high,,,,730,3.0,GPU rented around the clock: 730 hours x $2-3 per hour,0,2190.0,219.0,21.9,estimate; throughput not measured

@@ -76,7 +76,7 @@ describe("tool setup: connect", () => {
     const user = userEvent.setup();
     render(<MemoryRouter initialEntries={["/tools/connect"]}><App /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: "Connect your system", level: 1 })).toBeInTheDocument();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light");
+    await waitFor(() => expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light"));
     await user.type(await screen.findByPlaceholderText("https://your-api.example.com/openapi.json"), "https://shop.example.com/openapi.json");
     await user.click(screen.getByRole("button", { name: "Read the description" }));
     expect(await screen.findByText(/3 of 4 operations can become tools/)).toBeInTheDocument();

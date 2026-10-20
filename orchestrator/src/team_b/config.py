@@ -61,6 +61,8 @@ ENV_VARS: dict[str, str] = {
     "agent_max_moves": "TEAM_B_AGENT_MAX_MOVES",
     "agent_turn_timeout_s": "TEAM_B_AGENT_TURN_TIMEOUT_S",
     "bundles": "TEAM_B_BUNDLES",
+    "usage_log": "TEAM_B_USAGE_LOG",
+    "usage_run_label": "TEAM_B_USAGE_RUN_LABEL",
 }
 
 # The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
@@ -163,6 +165,8 @@ class Settings(BaseModel):
     rate_limit_per_minute: int = Field(default=20, ge=1)  # messages per conversation per minute (chat API)
     bundles: bool = True  # 0: tenant bundles are ignored and only config/tenants/*.json is used (always-safe fallback)
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
+    usage_log: str = ""  # a file path: one JSON line per AI request with the provider's token counts. Empty = off
+    usage_run_label: str = ""  # free text written into every usage line (which run it belongs to)
 
     @model_validator(mode="after")
     def _openrouter_needs_a_key(self) -> Self:

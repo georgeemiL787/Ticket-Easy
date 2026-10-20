@@ -49,7 +49,7 @@ describe("onboarding", () => {
     const user = userEvent.setup();
     render(<MemoryRouter initialEntries={["/onboarding"]}><App /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: "Set up a business", level: 1 })).toBeInTheDocument();
-    expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light");
+    await waitFor(() => expect(document.documentElement.getAttribute("data-theme")).toBe("aurora-light"));
     expect(await screen.findByRole("article", { name: "Old Shop" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Continue setting up" })).toBeInTheDocument();
     const create = screen.getByRole("button", { name: "Create the business" });

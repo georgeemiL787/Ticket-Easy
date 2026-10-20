@@ -22,6 +22,7 @@ import httpx
 
 from team_b.adapters.llm import OpenAICompatibleLLM
 from team_b.adapters.llm_limits import LimiterRegistry
+from team_b.adapters.usage_log import UsageLog, tagged
 from team_b.config import ROLES, Settings
 from team_b.contracts.errors import UpstreamError
 from team_b.observability import get_logger, record_ai_event
@@ -77,6 +78,29 @@ def _text_of(client: LLMClient) -> Callable[..., Awaitable[str]]:
     if text is None:
         raise UpstreamError("llm", "BAD_REQUEST", "this AI model client cannot answer in plain text")
     return text  # type: ignore[no-any-return]
+
+
+class JobTagged:
+    """Marks every request of a client with the job (and whether it is the backup model) for the usage log. Only used
+    when the log is on; it changes nothing else about the client."""
+
+    def __init__(self, inner: LLMClient, job: str, backup: bool = False) -> None:
+        self._inner, self._job, self._backup = inner, job, backup
+
+    async def complete_json(
+        self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
+    ) -> dict[str, Any]:
+        with tagged(self._job, self._backup):
+            return await self._inner.complete_json(
+                system=system, user=user, schema_hint=schema_hint, temperature=temperature
+            )
+
+    async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
+        with tagged(self._job, self._backup):
+            return await _text_of(self._inner)(system=system, user=user, temperature=temperature)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
 
 
 class RoleLLM:
@@ -153,6 +177,7 @@ class LLMRegistry:
         self._wrapper = wrapper
         self._transport = transport
         self._limiters = LimiterRegistry(settings.llm_max_wait_s)
+        self._usage = UsageLog(settings.usage_log, settings.usage_run_label) if settings.usage_log.strip() else None
         self._clients: dict[tuple[str, str, str | None, str | None], LLMClient] = {}
         self._roles: dict[str, LLMClient | None] = {}
         for role in ROLES:  # first every job's numbers, so jobs on one model share the tightest budget
@@ -177,7 +202,7 @@ class LLMRegistry:
     def default(self) -> LLMClient | None:
         """The general AI model (TEAM_B_LLM_*), the one a job without its own settings uses."""
         provider = general_provider(self._settings)
-        return self._client(provider, None) if provider is not None else None
+        return self._tag(self._client(provider, None), "default") if provider is not None else None
 
     def any_model(self) -> bool:
         return any(client is not None for client in self._roles.values())
@@ -195,6 +220,7 @@ class LLMRegistry:
                 transport=self._transport,
                 reasoning_effort=effort,
                 limiter=self._limiters.get(provider.base_url, provider.model),
+                usage_log=self._usage,
             )
             self._clients[key] = self._wrapper(client) if self._wrapper is not None else client
         return self._clients[key]
@@ -206,6 +232,14 @@ class LLMRegistry:
         own = self._settings.role(role)
         main = self._client(provider, own.reasoning_effort)
         if not own.fallback_model:
-            return main
+            return self._tag(main, role)
         backup = Provider(provider.base_url, own.fallback_model, provider.api_key)
-        return RoleLLM(role, main, self._client(backup, None), own.fallback_model)
+        return RoleLLM(
+            role,
+            self._tag(main, role),
+            self._tag(self._client(backup, None), role, backup=True),
+            own.fallback_model,
+        )
+
+    def _tag(self, client: LLMClient, role: str, *, backup: bool = False) -> LLMClient:
+        return JobTagged(client, role, backup) if self._usage is not None else client

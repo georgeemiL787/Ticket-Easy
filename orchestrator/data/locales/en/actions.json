@@ -9,6 +9,7 @@
   "status_returned": "returned",
   "order_status_in_transit": "Your order {order_id} is {status}. It is expected on {date}.",
   "order_status_delivered": "Your order {order_id} was delivered on {date}.",
+  "order_status_preparing": "Your order {order_id} is confirmed and is being prepared for shipping. It is expected to arrive on {date}.",
   "order_status_other": "Your order {order_id} is {status}.",
   "confirm_action_create_return": "I can set up a return for order {order_id}. Shall I go ahead? (yes/no)",
   "confirm_action_create_exchange": "I can set up an exchange for order {order_id}. Shall I go ahead? (yes/no)",

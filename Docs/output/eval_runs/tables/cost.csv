@@ -1,0 +1,4 @@
+stack,actual_spend_usd,conversation_service_usd_per_1000_messages,knowledge_service_usd_per_1000_messages,total_usd_per_1000_messages_at_list_price,usd_per_month_at_10k_messages,usd_per_month_at_100k_messages,pilot_50k_messages_plus_2_onboardings_usd,status,note
+rules + local embeddings (no AI model),0,0.0,0.0,0.0,0.0,0.0,0.0,measured tokens x list price,"no AI tokens; embeddings run locally on Ollama ($0 API; hardware and power are separate, see local_estimates.csv)"
+"agent mode, today's free Groq mix (measured)",0,3.843,0.0,3.843,38.43,384.26,192.18,measured tokens x list price,"orchestrator and reviewer gpt-oss-120b; reader, knowledge, writer, summary qwen3.8-27b; measured over 180 conversations (213 messages)"
+"agent mode, qwen3.8-27b as orchestrator too",0,9.973,0.0,9.973,99.73,997.3,498.68,estimate,orchestrator tokens measured on the 25 English policy conversations only (in 7962 / out 166 per message); other jobs as today; estimate

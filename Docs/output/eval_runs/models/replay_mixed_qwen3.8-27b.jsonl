@@ -1,0 +1,25 @@
+{"index": 4, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.9}
+{"index": 9, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 14, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 21, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 26, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.3}
+{"index": 31, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.3}
+{"index": 37, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.6}
+{"index": 44, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 51, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 61, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 67, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 73, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 79, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 84, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 91, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.1}
+{"index": 97, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.3}
+{"index": 101, "job": "reviewer", "model": "qwen/qwen3.8-27b", "reply": {"ok": true, "problems": []}, "seconds": 0.7}
+{"index": 106, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 113, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.4}
+{"index": 119, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 124, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 130, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 137, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 148, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.2}
+{"index": 155, "job": "reviewer", "model": "qwen/qwen3.8-27b", "error": "UpstreamError: llm: BACKEND_UNAVAILABLE: the AI model answered HTTP 429", "seconds": 14.4}

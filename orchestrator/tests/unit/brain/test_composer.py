@@ -74,7 +74,7 @@ def test_every_locale_has_exactly_the_same_keys() -> None:
 
 
 def test_the_key_count_is_the_one_in_the_report() -> None:
-    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 83, "ar": 83, "arabizi": 83}
+    assert {locale.value: len(texts) for locale, texts in FILES.items()} == {"en": 84, "ar": 84, "arabizi": 84}
 
 
 @pytest.mark.parametrize("locale", list(Locale))
@@ -250,3 +250,9 @@ def test_without_a_policy_message_the_generic_sentence_is_used() -> None:
         assert COMPOSER.policy_message(locale, decision(None)) == FILES[locale]["policy_denied"]
     blank = LocalizedText(en="  ", ar="")
     assert COMPOSER.policy_message(Locale.EN, decision(blank)) == FILES[Locale.EN]["policy_denied"]
+
+
+def test_an_order_being_prepared_gets_the_expected_date_in_every_language() -> None:
+    for locale in Locale:
+        text = COMPOSER.t(locale, "order_status_preparing", order_id="NS-20955", date="2026-10-01")
+        assert "NS-20955" in text and "2026-10-01" in text, locale

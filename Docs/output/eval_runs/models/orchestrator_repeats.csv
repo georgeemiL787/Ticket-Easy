@@ -1,0 +1,6 @@
+run,turns,fallback_turns,citation_right_all_turns,citation_right_agent_turns_only,turns_with_a_failed_check
+qwen3.8-27b run 1,27,0,22/25,22/25,5
+qwen3.8-27b run 2,27,18,21/25,7/9,4
+qwen3.8-27b run 3,27,3,21/25,20/23,5
+gpt-oss-20b run 1,27,1,19/25,18/24,6
+gpt-oss-120b run 1 (baseline),27,0,17/25,17/25,8

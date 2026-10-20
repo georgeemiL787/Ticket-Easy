@@ -1,0 +1,20 @@
+Split: dev (102 questions, 12 unanswerable)
+
+Thresholds: MIN_COSINE=0.52 MIN_BM25=4.0
+recall@5            88.89%  per style: {'ar': '27/30', 'arabizi': '27/30', 'en': '26/30'}
+no-answer precision 72.73%
+no-answer recall    66.67%
+  MISS FAQ-009-en I transferred credit to the wrong number. Can you reverse it? ['refund_policy@v3#s2', 'porting_policy@v2#s2']
+  MISS FAQ-015-ar ليه مش عارف اتصل؟ []
+  MISS FAQ-015-arabizi leh msh 3aref attesel? []
+  MISS FAQ-017-en How can I pay my bill? ['postpaid_billing_policy@v2#s1', 'postpaid_billing_policy@v2#s2']
+  MISS FAQ-017-ar ادفع الفاتورة منين؟ ['postpaid_billing_policy@v2#s1', 'postpaid_billing_policy@v2#s2']
+  MISS FAQ-021-ar الباقة متجددتش. ['refund_policy@v3#s1', 'bundles_policy@v4#s4']
+  MISS FAQ-033-arabizi momken te3melooly badal fa2ed 3al chat? []
+  MISS FAQ-037-arabizi el 5at el gedeed b kam? ['prepaid_recharge_policy@v3#s4', 'sim_policy@v2#s5']
+  MISS FAQ-049-en My internet is completely down. ['home_internet_policy@v3#s4', 'home_internet_policy@v3#s2']
+  MISS FAQ-059-en I want to check my father's line balance. ['prepaid_recharge_policy@v3#s6', 'privacy_policy@v2#s1']
+  MISS OFF-en-03 should be empty ['postpaid_billing_policy@v2#s5', 'postpaid_billing_policy@v2#s1']
+  MISS OFF-ar-03 should be empty ['postpaid_billing_policy@v2#s1', 'postpaid_billing_policy@v2#s5']
+  MISS OFF-arabizi-03 should be empty ['postpaid_billing_policy@v2#s1', 'contract_policy@v1#s3']
+  MISS OFF-arabizi-05 should be empty ['refund_policy@v3#s1', 'prepaid_recharge_policy@v3#s5']

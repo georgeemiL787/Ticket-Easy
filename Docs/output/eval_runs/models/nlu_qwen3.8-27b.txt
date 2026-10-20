@@ -1,0 +1,39 @@
+== NLU evaluation, mode: llm, 155 messages ==
+intent accuracy (first intent)   98.1%  (152/155)
+intent list exact match          97.4%  (151/155)
+multi-intent exact match         90.0%  (9/10)
+language accuracy                99.4%  (154/155)
+wants-a-person accuracy          100.0%  (155/155)
+
+by style:        intent    language
+  en            100.0%     97.1%   (n=35)
+  ar            100.0%    100.0%   (n=33)
+  mixed         100.0%    100.0%   (n=29)
+  arabizi        94.8%    100.0%   (n=58)
+
+entities:        precision   recall
+  order_id       100.0%   100.0%   (gold=21)
+  phone          100.0%   100.0%   (gold=5)
+  amount           0.0%     0.0%   (gold=5)
+
+10 worst misses (of 10 messages with any error):
+  [arabizi-044] ezzay a3mel return?
+      intents: expected ['return_request'], got ['policy_question']
+  [arabizi-050] la2 balash
+      intents: expected [], got ['greeting']
+  [arabizi-057] mesh 3ayez a8ayar el 3enwan
+      intents: expected [], got ['change_address']
+  [arabizi-004] 3ayez flousi el order mesh 3agebny
+      intents: expected ['refund_request', 'complaint'], got ['refund_request']
+  [ar-032] عايز ارجع فلوسي ٣٠٠ جنيه
+      amount: expected '300', got '٣٠٠ جنيه'
+  [arabizi-054] 3ayez 500 geneh ta3weed
+      amount: expected '500', got '500 geneh'
+  [arabizi-055] 3ayez flousi 3000 geneh
+      amount: expected '3000', got '3000 geneh'
+  [en-026] I want a refund of 300 EGP for NS-20512, my phone is 01012345601
+      amount: expected '300', got '300 EGP'
+  [en-029] ok
+      language: expected en, got ar
+  [en-032] is the shipping free for orders above 1000 EGP?
+      amount: expected '1000', got '1000 EGP'

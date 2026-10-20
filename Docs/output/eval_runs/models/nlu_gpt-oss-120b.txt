@@ -1,0 +1,106 @@
+2026-10-17 01:41:49 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:42:03 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:42:17 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:42:47 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:43:02 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:43:26 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:43:41 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:43:55 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:44:10 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:44:25 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:44:39 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:44:54 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:45:09 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:45:38 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:45:53 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:46:07 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:46:22 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:46:37 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:46:52 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:47:07 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:47:21 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:47:36 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:47:50 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:48:05 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:48:20 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:48:35 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:48:49 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:49:04 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:49:34 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:49:49 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:50:03 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:50:18 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:50:33 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:50:56 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:51:11 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:51:26 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:51:40 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:51:55 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:52:10 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:52:25 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:52:50 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:53:05 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:53:21 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:53:36 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:53:51 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:54:13 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:54:28 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:54:58 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:55:21 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:55:36 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:56:07 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:56:22 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:56:37 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:56:52 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:57:07 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:57:39 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:58:09 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:58:33 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:58:49 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:59:04 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:59:18 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:59:41 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 01:59:57 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 02:00:12 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 02:00:26 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 02:00:41 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+2026-10-17 02:00:56 [warning  ] nlu_fallback                   prompt=nlu_v2 reason=UpstreamError
+== NLU evaluation, mode: llm, 155 messages ==
+intent accuracy (first intent)   92.9%  (144/155)
+intent list exact match          91.6%  (142/155)
+multi-intent exact match         90.0%  (9/10)
+language accuracy                99.4%  (154/155)
+wants-a-person accuracy          99.4%  (154/155)
+
+by style:        intent    language
+  en            100.0%     97.1%   (n=35)
+  ar            100.0%    100.0%   (n=33)
+  mixed          82.8%    100.0%   (n=29)
+  arabizi        89.7%    100.0%   (n=58)
+
+entities:        precision   recall
+  order_id       100.0%   100.0%   (gold=21)
+  phone          100.0%   100.0%   (gold=5)
+  amount          80.0%    80.0%   (gold=5)
+
+10 worst misses (of 15 messages with any error):
+  [arabizi-015] 3awez a3raf el order wasal wala la2
+      intents: expected ['order_status'], got []
+  [arabizi-034] fein el order bta3i NS-20877 w 3ayez alghyh
+      intents: expected ['order_status', 'cancel_order'], got []
+  [arabizi-038] el order msh wasel
+      intents: expected ['order_status'], got []
+  [arabizi-041] el mandoob kan wesekh
+      intents: expected ['complaint'], got []
+  [arabizi-049] tamam
+      intents: expected [], got ['greeting']
+  [arabizi-052] el order raqam NS-20877 wasal?
+      intents: expected ['order_status'], got []
+  [mixed-011] Hello عايز اسأل عن الشحن
+      intents: expected ['policy_question'], got ['greeting']
+  [mixed-015] مش عايز return عايز refund
+      intents: expected ['refund_request'], got []
+  [mixed-016] where is الاوردر بتاعي
+      intents: expected ['order_status'], got []
+  [mixed-017] الـ refund هيرجع امتى على الكارت؟
+      intents: expected ['policy_question'], got ['refund_request']

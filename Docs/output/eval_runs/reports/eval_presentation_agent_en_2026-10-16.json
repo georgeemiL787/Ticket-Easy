@@ -1,0 +1,463 @@
+{
+  "mode": "llm",
+  "date": "2026-10-16",
+  "label": "presentation_agent_en",
+  "agent_mode": "on",
+  "shadow_disagreements": [],
+  "topics": {
+    "K1": {
+      "right": 6,
+      "total": 6
+    },
+    "K2": {
+      "right": 3,
+      "total": 4
+    },
+    "K3": {
+      "right": 3,
+      "total": 3
+    },
+    "K4": {
+      "right": 2,
+      "total": 3
+    },
+    "K5": {
+      "right": 0,
+      "total": 3
+    },
+    "K6": {
+      "right": 1,
+      "total": 2
+    },
+    "K7": {
+      "right": 1,
+      "total": 2
+    },
+    "T1": {
+      "right": 3,
+      "total": 3
+    },
+    "T10": {
+      "right": 1,
+      "total": 1
+    },
+    "T11": {
+      "right": 1,
+      "total": 1
+    },
+    "T12": {
+      "right": 1,
+      "total": 1
+    },
+    "T13": {
+      "right": 1,
+      "total": 1
+    },
+    "T14": {
+      "right": 0,
+      "total": 1
+    },
+    "T15": {
+      "right": 1,
+      "total": 1
+    },
+    "T16": {
+      "right": 1,
+      "total": 1
+    },
+    "T17": {
+      "right": 0,
+      "total": 1
+    },
+    "T18": {
+      "right": 1,
+      "total": 1
+    },
+    "T19": {
+      "right": 1,
+      "total": 1
+    },
+    "T2": {
+      "right": 3,
+      "total": 3
+    },
+    "T20": {
+      "right": 0,
+      "total": 1
+    },
+    "T21": {
+      "right": 1,
+      "total": 1
+    },
+    "T22": {
+      "right": 1,
+      "total": 1
+    },
+    "T3": {
+      "right": 3,
+      "total": 3
+    },
+    "T4": {
+      "right": 3,
+      "total": 3
+    },
+    "T5": {
+      "right": 3,
+      "total": 3
+    },
+    "T6": {
+      "right": 2,
+      "total": 2
+    },
+    "T7": {
+      "right": 3,
+      "total": 3
+    },
+    "T8": {
+      "right": 1,
+      "total": 3
+    },
+    "T9": {
+      "right": 1,
+      "total": 1
+    }
+  },
+  "judge": {
+    "en": {
+      "judged": 71,
+      "failed": 0,
+      "mean_clarity": 3.7746478873239435,
+      "mean_politeness": 4.746478873239437,
+      "mean_register": 4.492957746478873,
+      "mean_helpfulness": 3.5492957746478875
+    },
+    "ar": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "mixed": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "arabizi": {
+      "judged": 0,
+      "failed": 0,
+      "mean_clarity": null,
+      "mean_politeness": null,
+      "mean_register": null,
+      "mean_helpfulness": null
+    },
+    "all": {
+      "judged": 71,
+      "failed": 0,
+      "mean_clarity": 3.7746478873239435,
+      "mean_politeness": 4.746478873239437,
+      "mean_register": 4.492957746478873,
+      "mean_helpfulness": 3.5492957746478875
+    }
+  },
+  "overall": {
+    "style": "all",
+    "conversations": 60,
+    "turns": 71,
+    "measures": {
+      "solved_without_person": 51,
+      "solved_without_person_rate": 0.85,
+      "no_person_needed": 53,
+      "needless_handoffs": 2,
+      "missed_escalations": 0,
+      "escalations_wanted": 7,
+      "wrong_or_unapproved_actions": 0,
+      "writes": 0,
+      "unbacked_facts": 0,
+      "agent_fallbacks": 0,
+      "ai_calls_per_message": 4.816901408450704,
+      "time_p50_ms": 9001.786699998775,
+      "time_p95_ms": 60186.19979999494,
+      "shadow_asked": 0,
+      "shadow_agreement": null
+    },
+    "agent_fallback_reasons": {},
+    "intent_accuracy": 0.95,
+    "decision_accuracy": 0.8309859154929577,
+    "citation_accuracy": 0.68,
+    "locale_match": 1.0,
+    "entity_recall": 1.0,
+    "handoff_precision": 0.7777777777777778,
+    "handoff_recall": 1.0,
+    "latency_p50_ms": 9001.786699998775,
+    "latency_p95_ms": 60186.19979999494
+  },
+  "styles": {
+    "en": {
+      "style": "en",
+      "conversations": 60,
+      "turns": 71,
+      "measures": {
+        "solved_without_person": 51,
+        "solved_without_person_rate": 0.85,
+        "no_person_needed": 53,
+        "needless_handoffs": 2,
+        "missed_escalations": 0,
+        "escalations_wanted": 7,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": 4.816901408450704,
+        "time_p50_ms": 9001.786699998775,
+        "time_p95_ms": 60186.19979999494,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": 0.95,
+      "decision_accuracy": 0.8309859154929577,
+      "citation_accuracy": 0.68,
+      "locale_match": 1.0,
+      "entity_recall": 1.0,
+      "handoff_precision": 0.7777777777777778,
+      "handoff_recall": 1.0,
+      "latency_p50_ms": 9001.786699998775,
+      "latency_p95_ms": 60186.19979999494
+    },
+    "ar": {
+      "style": "ar",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "mixed": {
+      "style": "mixed",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    },
+    "arabizi": {
+      "style": "arabizi",
+      "conversations": 0,
+      "turns": 0,
+      "measures": {
+        "solved_without_person": 0,
+        "solved_without_person_rate": null,
+        "no_person_needed": 0,
+        "needless_handoffs": 0,
+        "missed_escalations": 0,
+        "escalations_wanted": 0,
+        "wrong_or_unapproved_actions": 0,
+        "writes": 0,
+        "unbacked_facts": 0,
+        "agent_fallbacks": 0,
+        "ai_calls_per_message": null,
+        "time_p50_ms": null,
+        "time_p95_ms": null,
+        "shadow_asked": 0,
+        "shadow_agreement": null
+      },
+      "agent_fallback_reasons": {},
+      "intent_accuracy": null,
+      "decision_accuracy": null,
+      "citation_accuracy": null,
+      "locale_match": null,
+      "entity_recall": null,
+      "handoff_precision": null,
+      "handoff_recall": null,
+      "latency_p50_ms": null,
+      "latency_p95_ms": null
+    }
+  },
+  "worst_conversations": [
+    {
+      "id": "en-17",
+      "style": "en",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "the item I received is broken, what now",
+      "problems": [
+        "intent: expected policy_question, got complaint",
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "I'm so sorry to hear the item arrived broken. Could you please provide your order number so I can look into this for you?"
+    },
+    {
+      "id": "en-19",
+      "style": "en",
+      "topic": "K5",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "I got a defective item, who do I tell",
+      "problems": [
+        "intent: expected policy_question, got human_request",
+        "decision: expected answer, got handoff",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "I'm sorry to hear about the defective item. I'm connecting you with a colleague from our customer care team now."
+    },
+    {
+      "id": "en-21",
+      "style": "en",
+      "topic": "K6",
+      "wrong_checks": 3,
+      "first_wrong_turn": 1,
+      "said": "can you wrap my order as a gift",
+      "problems": [
+        "intent: expected policy_question, got none",
+        "decision: expected answer, got clarify",
+        "citation: expected one of faq@v1#q05, got none"
+      ],
+      "reply": "I would be happy to help with gift wrapping for you. Could you please provide your order number so I can look into it?"
+    },
+    {
+      "id": "en-08",
+      "style": "en",
+      "topic": "K2",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "what are your delivery fees",
+      "problems": [
+        "decision: expected answer, got clarify",
+        "citation: expected one of shipping_policy@v1#s3, shipping_policy@v1#s2, got none"
+      ],
+      "reply": "I'd be happy to help with that. Could you tell me a little more about what you need help with?"
+    },
+    {
+      "id": "en-14",
+      "style": "en",
+      "topic": "K4",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "when will my refund reach my card?",
+      "problems": [
+        "decision: expected answer, got clarify",
+        "citation: expected one of refund_policy@v1#s2, got none"
+      ],
+      "reply": "I'd be happy to help check on that for you. Could you please provide your order number so I can look into it?"
+    },
+    {
+      "id": "en-18",
+      "style": "en",
+      "topic": "K5",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "my product arrived damaged what should I do",
+      "problems": [
+        "decision: expected answer, got clarify",
+        "citation: expected one of return_policy@v2#s6, got none"
+      ],
+      "reply": "I'm so sorry to hear your product arrived damaged. To help you with this, could you please provide your order number?"
+    },
+    {
+      "id": "en-23",
+      "style": "en",
+      "topic": "K7",
+      "wrong_checks": 2,
+      "first_wrong_turn": 1,
+      "said": "when is customer support open",
+      "problems": [
+        "decision: expected answer, got handoff",
+        "citation: expected one of faq@v1#q01, got none"
+      ],
+      "reply": "I'm connecting you with a colleague from our customer care team now."
+    },
+    {
+      "id": "en-55",
+      "style": "en",
+      "topic": "T17",
+      "wrong_checks": 2,
+      "first_wrong_turn": 2,
+      "said": "01012345601",
+      "problems": [
+        "decision: expected refuse, got clarify",
+        "citation: expected one of refund_policy@v1#s1, got none"
+      ],
+      "reply": "Thanks for that. Could you please tell me the reason for the refund? A few words are enough."
+    },
+    {
+      "id": "en-58",
+      "style": "en",
+      "topic": "T20",
+      "wrong_checks": 2,
+      "first_wrong_turn": 2,
+      "said": "01012345601",
+      "problems": [
+        "decision: expected confirm, got clarify",
+        "text: expected it to contain NS-20745"
+      ],
+      "reply": "Thanks for that. To help with your request, what amount are you asking for?"
+    },
+    {
+      "id": "en-44",
+      "style": "en",
+      "topic": "T8",
+      "wrong_checks": 1,
+      "first_wrong_turn": 1,
+      "said": "What is the weather in Cairo today?",
+      "problems": [
+        "decision: expected clarify/refuse, got answer"
+      ],
+      "reply": "I can only help with your orders and our shop policies. Would you like to talk to a person?\n\nI'm not sure about the weather in Cairo, but I'm here to help with "
+    }
+  ]
+}

@@ -645,6 +645,9 @@ async def ask_for_details(ctx: TurnContext, planned: PlannedIntent, *, force_ide
         return None
 
     if slot == "order_id" and (listing := await _list_orders(ctx)) is not None:
+        if len(listing) == 1:  # one open order: there is nothing to choose, so do not ask for the number again
+            session.slots["order_id"] = listing[0]["order_id"]
+            return await ask_for_details(ctx, planned, force_identity=force_identity)
         if _count_clarification(ctx, "order_choice"):
             return _give_up(ctx, EscalationReason.LOW_CONFIDENCE, "the customer did not say which order they meant")
         session.order_choices = [o["order_id"] for o in listing]

@@ -1,11 +1,13 @@
-# Every change to the repository is checked here. Team B's service is in orchestrator/, the dashboard app in dashboard/.
-# The jobs below are the "required checks" to switch on in the branch protection of main and team-b (see orchestrator/docs/ci.md).
+# Every change to the repository is checked here: the agent service (orchestrator/), the knowledge service (rag/),
+# the tools service (tool_generation_mcp/) and the dashboard app (dashboard/).
+# The jobs below are the "required checks" to switch on in the branch protection of main (see orchestrator/docs/ci.md).
 name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: [main, team-b]
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: team_b
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -46,7 +48,7 @@ jobs:
       TEAM_B_STORE: ${{ matrix.store }}
     defaults:
       run:
-        working-directory: team_b
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -59,12 +61,46 @@ jobs:
       - run: pip install -e . -r requirements-dev.txt
       - run: pytest -q
 
+  knowledge:
+    name: Knowledge service tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rag
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: rag/requirements.txt
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest -q
+        env:
+          PYTHONPATH: src
+
+  tools:
+    name: Tools service tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tool_generation_mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: tool_generation_mcp/uv.lock
+      - run: uv sync --locked
+      - run: uv run pytest -q
+
   scenarios:
     name: Scenario report
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: team_b
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -93,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: team_b
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -135,9 +171,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the image
-        if: hashFiles('orchestrator/Dockerfile') != ''
+      - name: Build the agent image
         run: docker build -f orchestrator/Dockerfile -t ticket-easy-team-b:ci .
-      - name: No Dockerfile yet
-        if: hashFiles('orchestrator/Dockerfile') == ''
-        run: echo "orchestrator/Dockerfile does not exist yet (one-command startup is built by Track A); nothing to build."
+      - name: Build the knowledge image
+        run: docker build -f rag/Dockerfile -t ticket-easy-team-a:ci .

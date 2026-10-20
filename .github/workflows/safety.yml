@@ -4,6 +4,19 @@ name: Safety
 
 on:
   pull_request:
+    branches: [main]
+    paths:
+      - "orchestrator/src/**"
+      - "orchestrator/fixtures/**"
+      - "orchestrator/config/**"
+      - "orchestrator/data/**"
+      - "orchestrator/scenarios/**"
+      - "orchestrator/tests/adversarial/**"
+      - "orchestrator/tests/integration/test_a_safety_property.py"
+      - "orchestrator/tests/integration/test_a_leak_scan.py"
+      - ".github/workflows/safety.yml"
+  push:
+    branches: [main]
     paths:
       - "orchestrator/src/**"
       - "orchestrator/fixtures/**"
@@ -29,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: team_b
+        working-directory: orchestrator
     env:
       # the property test has four fixed seeds; this adds a fifth, so five different seeds must all hold
       TEAM_B_EXTRA_SEEDS: "424242"

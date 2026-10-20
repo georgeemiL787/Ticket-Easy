@@ -10,7 +10,7 @@ This plan has these parts:
 4. **The phases.** What to build, in what order, how to build each feature, and how to know it works.
 5. **Who does what** and 6. **Risks**.
 
-The plan does not wait for the other teams. Team B builds its own simple **stand-ins** for the policy search, the rule checker and the shop's systems, so the whole product can be built, demoed and tested now. Connecting to the other teams' real services is the last phase, and it is optional until their work is finished.
+The plan does not wait for the other services. The agent builds its own simple **simulated services** for the policy search, the rule checker and the shop's systems, so the whole product can be built, demoed and tested now. Connecting to the other services' real versions is the last phase, and it is optional until their work is finished.
 
 ---
 
@@ -63,7 +63,7 @@ What happens at each step:
      9. The result is checked: did it really succeed, is there a reference number? Only then does the agent say "done".
 7. **Hand off.** If the rules say no or need a human, the safety screen flagged something, a system keeps failing, the agent is unsure after asking twice, or the customer asks for a person, the conversation goes to a human. The human gets a **handoff briefing**: a summary, the customer's details, the order facts, the policy passages, what the agent tried, what failed, why it was handed off, and a suggested next step. The customer never has to repeat themselves.
 8. **Reply.** The reply is in the customer's own language and style (an Arabizi customer gets an Arabizi reply). Any number, date or order detail in it must come from the shop's data or policy, never made up.
-9. **Record.** Every message produces a **decision log entry**: what was understood, what was searched and found, which checks passed or failed, what actions ran, what was decided and why. This is how the team debugs problems and how the manager dashboard gets its numbers.
+9. **Record.** Every message produces a **decision log entry**: what was understood, what was searched and found, which checks passed or failed, what actions ran, what was decided and why. This is how the staff debug problems and how the manager dashboard gets its numbers.
 
 ### 1.3 Three example conversations
 
@@ -102,7 +102,7 @@ This part shows the main parts of the system, how they connect, and everything t
 │  Receives every request · checks logins and which business it belongs to · limits floods│
 └──────┬──────────────────────────────────────────────────────────────────────────────────┘
        ▼
-┌──────────────────────────────── THE BRAIN (Team B) ─────────────────────────────────────┐
+┌──────────────────────────────── THE CORE (the agent)  ─────────────────────────────────────┐
 │                                                                                          │
 │   Conversation manager ──► Understanding ──► Missing-info checker ──► Decision maker     │
 │   (one message at a time,   (language,         (what is still          (picks the path   │
@@ -128,9 +128,9 @@ This part shows the main parts of the system, how they connect, and everything t
        │              │              │          └───┬───┘      └───┬───┘          │
        ▼              ▼              ▼              ▼              ▼              ▼
   Policy search   Rule checker   Safety screen   Shop systems   AI model      Database
-  ─────────────── today: Team B's stand-ins ───  today: fake    (optional;    conversations,
-  later: Team A's real service (Phase 6)         shop stand-in  works without decision log,
-                                                 later: Team C  it)           cases, numbers,
+  ─────────────── today: the agent's simulated services ───  today: fake    (optional;    conversations,
+  later: the knowledge service's real service (Phase 6)         shop simulated  works without decision log,
+                                                 later: the tools service  it)           cases, numbers,
                                                  (Phase 6)                    alerts
 
 ┌──────────────────────────────── BACKGROUND JOBS ───────────────────────────────────────┐
@@ -142,19 +142,19 @@ This part shows the main parts of the system, how they connect, and everything t
 How to read it, top to bottom:
 
 - **People and screens.** Four kinds of people use Ticket-Easy: customers chat, support staff work the inbox, managers watch the dashboard, and the shop owner sets the business up.
-- **Front door.** Every request comes in through one entrance. It checks who is calling, which business they belong to, and stops message floods. Nothing reaches the brain without passing here.
-- **The brain.** Team B's part. It runs the journey from Part 1 for every message and decides what happens. It never talks to an outside service directly, only through the plugs.
-- **Plugs.** Each outside service has one plug with fixed inputs and outputs. Today each plug is connected to a stand-in that Team B built. Later, Team A's and Team C's real services are plugged in instead, and the brain does not change.
-- **Outside services.** Policy search, rule checker and safety screen (Team A's job), shop systems and actions (Team C's job), an optional AI model, and the database.
+- **Front door.** Every request comes in through one entrance. It checks who is calling, which business they belong to, and stops message floods. Nothing reaches the core without passing here.
+- **The core.** The agent's part. It runs the journey from Part 1 for every message and decides what happens. It never talks to an outside service directly, only through the plugs.
+- **Plugs.** Each outside service has one plug with fixed inputs and outputs. Today each plug is connected to a simulated that the agent built. Later, the knowledge service's and the tools service's real services are plugged in instead, and the core does not change.
+- **Outside services.** Policy search, rule checker and safety screen (the knowledge service's job), shop systems and actions (the tools service's job), an optional AI model, and the database.
 - **Background jobs.** Small tasks that run on a timer: alerts, refreshing the list of actions, deleting old data, and preparing dashboard numbers.
 
 ### 2.2 How the parts talk to each other
 
 | From | To | What passes between them |
 |---|---|---|
-| Customer chat | Front door → brain | The customer's message; back comes the reply, its policy sources, and what the agent is waiting for (phone, "yes", a human) |
+| Customer chat | Front door → core | The customer's message; back comes the reply, its policy sources, and what the agent is waiting for (phone, "yes", a human) |
 | Conversation manager | Database | Loads and saves the conversation's memory; makes sure messages of one conversation are handled one at a time |
-| Understanding | AI model (optional) | The allowed request types, a short summary and the new message; back comes a structured guess that the brain checks |
+| Understanding | AI model (optional) | The allowed request types, a short summary and the new message; back comes a structured guess that the core checks |
 | Policy answers | Policy search | The question; back come matching passages with their source, or "nothing found" |
 | Decision maker | Safety screen | The message; back comes "clear" or the risky topic found |
 | Order lookups | Shop systems | "Verify this customer", "look up this order"; back come real order facts |
@@ -167,7 +167,7 @@ How to read it, top to bottom:
 
 ### 2.3 The full workflow
 
-The system has five flows. They share the same brain, plugs and database.
+The system has five flows. They share the same core, plugs and database.
 
 #### Flow 1 · Setting up a business (done once per business)
 
@@ -177,8 +177,8 @@ The system has five flows. They share the same brain, plugs and database.
     ├─► uploads policies and FAQs ─────────► Policy search indexes them
     ├─► writes or approves rules ──────────► Rule checker loads them
     ├─► connects order and customer data ──► Shop actions become available
-    ├─► switches on allowed actions ───────► Action list for the brain
-    └─► fills in settings ─────────────────► Brain reads them
+    ├─► switches on allowed actions ───────► Action list for the core
+    └─► fills in settings ─────────────────► Core reads them
           (request types, details each one needs, limits, risk levels,
            when to hand off, reply wording, languages)
     │
@@ -186,7 +186,7 @@ The system has five flows. They share the same brain, plugs and database.
  Test chat ──► Go live
 ```
 
-Today the demo shop "Nile Style" is pre-loaded into the stand-ins, so this flow is only settings. Adding a second business means repeating this flow with no changes to the brain.
+Today the demo shop "Nile Style" is pre-loaded into the simulated services, so this flow is only settings. Adding a second business means repeating this flow with no changes to the core.
 
 #### Flow 2 · A customer conversation (every message)
 
@@ -278,7 +278,7 @@ The order of these checks never changes, and the AI cannot skip any of them.
 #### Flow 4 · Handoff and the human side
 
 ```text
- Brain decides to hand off
+ Core decides to hand off
       │
       ▼
  [Handoff manager] builds the briefing from recorded facts:
@@ -332,23 +332,23 @@ While a human owns the chat, the agent stays quiet: it tells the customer once t
                  Alert on the dashboard (later also Slack or email)
 ```
 
-### 2.4 Stand-ins now, real services later
+### 2.4 Simulated services now, real services later
 
 ```text
                  ┌──────────────── same plug, same inputs and outputs ────────────────┐
-  Brain ───────► │ Policy plug │ Rules plug │ Safety plug │ Shop actions plug         │
+  Core ───────► │ Policy plug │ Rules plug │ Safety plug │ Shop actions plug         │
                  └──────┬──────────────┬──────────────┬──────────────┬───────────────┘
         today (Phases 1–5)             │              │              │
                         ▼              ▼              ▼              ▼
-                 Team B stand-ins: keyword policy search · rules as data ·
+                 The agent simulated services: keyword policy search · rules as data ·
                  keyword safety lists · fake "Nile Style" shop with failure switches
         later (Phase 6, when ready)
                         ▼              ▼              ▼              ▼
-                 Team A: real policy search, rule checker, safety screen ·
-                 Team C: real shop actions
+                 The knowledge service: real policy search, rule checker, safety screen ·
+                 The tools service: real shop actions
 ```
 
-A single setting chooses stand-in or real service for each plug, so one plug can be switched while the others stay on stand-ins. The stand-ins stay available for testing even after the real services are connected.
+A single setting chooses simulated or real service for each plug, so one plug can be switched while the others stay on simulated services. The simulated services stay available for testing even after the real services are connected.
 
 ### 2.5 What is stored, and what stays private
 
@@ -368,36 +368,36 @@ Every stored item belongs to one business, and every screen and query only shows
 
 | Block | What it does | Who builds it |
 |---|---|---|
-| **Conversation memory** | Keeps each conversation's state and recent messages; survives restarts | Team B |
-| **Understanding** | Detects language, requests, details, frustration, "talk to a person" | Team B |
-| **Missing-information checker** | Knows what each request needs and asks for what is missing | Team B |
-| **Decision maker** (the brain) | Runs the journey in Part 1 and picks one outcome per message: answer, ask, check identity, ask to confirm, do the action, refuse, or hand off | Team B |
-| **Policy search** | Finds the right passage in the shop's policies | Team A (Team B uses a stand-in until then) |
-| **Rule checker** | Says yes / no / needs a human for every action | Team A (stand-in until then) |
-| **Safety screen** | Flags topics that must go to a human | Team A (stand-in until then) |
-| **Shop actions** | Look up orders, create returns, refunds, cancellations, tickets | Team C (stand-in fake shop until then) |
-| **Action controller** | Runs the strict action path: checks, confirmation, doing it, verifying it | Team B |
-| **Reply writer** | Writes the reply in the right language, only with real facts | Team B |
-| **Handoff and inbox** | Builds the handoff briefing; lets humans claim, reply, approve, reject, close | Team B |
-| **Decision log** | Records every decision and why | Team B |
-| **Manager dashboard** | Shows conversations, automation rate, escalations, failures, system problems | Team B |
+| **Conversation memory** | Keeps each conversation's state and recent messages; survives restarts | The agent |
+| **Understanding** | Detects language, requests, details, frustration, "talk to a person" | The agent |
+| **Missing-information checker** | Knows what each request needs and asks for what is missing | The agent |
+| **Decision maker** (the core) | Runs the journey in Part 1 and picks one outcome per message: answer, ask, check identity, ask to confirm, do the action, refuse, or hand off | The agent |
+| **Policy search** | Finds the right passage in the shop's policies | The knowledge service (the agent uses a simulated until then) |
+| **Rule checker** | Says yes / no / needs a human for every action | The knowledge service (simulated until then) |
+| **Safety screen** | Flags topics that must go to a human | The knowledge service (simulated until then) |
+| **Shop actions** | Look up orders, create returns, refunds, cancellations, tickets | The tools service (simulated fake shop until then) |
+| **Action controller** | Runs the strict action path: checks, confirmation, doing it, verifying it | The agent |
+| **Reply writer** | Writes the reply in the right language, only with real facts | The agent |
+| **Handoff and inbox** | Builds the handoff briefing; lets humans claim, reply, approve, reject, close | The agent |
+| **Decision log** | Records every decision and why | The agent |
+| **Manager dashboard** | Shows conversations, automation rate, escalations, failures, system problems | The agent |
 
-**About the stand-ins.** Each stand-in behaves like the real service will, using the same demo shop "Nile Style": real-looking policies (returns within 14 days, refunds up to a limit, late-delivery vouchers), a fake order system with customers and orders, and a simple rule checker with the same rules. The brain talks to every stand-in through a fixed "plug", so later the real service is plugged in instead and the brain does not change.
+**About the simulated services.** Each simulated behaves like the real service will, using the same demo shop "Nile Style": real-looking policies (returns within 14 days, refunds up to a limit, late-delivery vouchers), a fake order system with customers and orders, and a simple rule checker with the same rules. The core talks to every simulated through a fixed "plug", so later the real service is plugged in instead and the core does not change.
 
-**What already exists.** A first working version of the brain, the stand-ins, the handoff cases and the decision log already runs, with 16 test conversations passing. The phases below finish, harden and extend it.
+**What already exists.** A first working version of the core, the simulated services, the handoff cases and the decision log already runs, with 16 test conversations passing. The phases below finish, harden and extend it.
 
 ---
 
 ## Part 4 · The phases
 
-| Phase | Result you can see | Needs other teams? |
+| Phase | Result you can see | Needs other services? |
 |---|---|---|
 | 1 · Conversation core | The agent understands all four language styles, remembers the conversation, asks for missing details and replies naturally | No |
-| 2 · Answers and safe actions | It answers from policies with sources, looks up orders, and takes actions safely, handling every kind of failure | No (stand-ins) |
+| 2 · Answers and safe actions | It answers from policies with sources, looks up orders, and takes actions safely, handling every kind of failure | No (simulated services) |
 | 3 · Human handoff | Risky or stuck cases reach a human with a full briefing; humans reply and approve from an inbox | No |
 | 4 · Manager dashboard | A manager sees how the agent is doing and what is going wrong | No |
 | 5 · Quality and launch readiness | Measured quality in all four language styles, safety tests, one-command startup | No |
-| 6 · Connect to the other teams (later) | The stand-ins are swapped for Team A's and Team C's real services | Yes, when they are ready |
+| 6 · Connect to the other services (later) | The simulated services are swapped for the knowledge service's and the tools service's real services | Yes, when they are ready |
 
 Each phase ends with a working demo. **Rule for all phases: the demo must still work after every change.**
 
@@ -490,22 +490,22 @@ Goal: the agent holds a sensible conversation in all four language styles, even 
 
 ### Phase 2 · Answers and safe actions
 
-Goal: the agent gives correct, sourced answers and carries out actions safely, using the stand-ins.
+Goal: the agent gives correct, sourced answers and carries out actions safely, using the simulated services.
 
-#### 2.1 Build the stand-ins properly
+#### 2.1 Build the simulated services properly
 
-**What it does.** Gives the brain realistic services to work with, without waiting for the other teams.
+**What it does.** Gives the core realistic services to work with, without waiting for the other services.
 
 **How to build it.**
 1. **Demo shop "Nile Style":** policies (returns, refunds, shipping, FAQ) in English and Arabic, including an old version of the return policy that must never be quoted.
 2. **Fake order system:** customers, phones, orders in different states (paid, shipped, delivered, late, clearance items, high value), and the actions: verify customer, look up order, create return, exchange, refund, cancel, change address, give voucher, open ticket, and a delete-customer action that only humans may use.
-3. **Policy search stand-in:** simple keyword search over the policy texts with Arabizi word expansions, returning the passage and its source, or "nothing found".
-4. **Rule checker stand-in:** the shop's rules written as data (refund within 14 days, refund limit, cancel only before shipping, address change only before shipping, voucher only when 3+ days late and max EGP 100, clearance not returnable). It answers yes, no or needs a human, with the rule and the policy passage behind it.
-5. **Safety screen stand-in:** keyword lists for fraud, legal, safety and compensation in all four styles.
-6. **Failure switches:** each stand-in can be told to fail, time out, or return an unclear result, so failures can be tested.
-7. Every stand-in sits behind a fixed "plug" with the same inputs and outputs the real service will have.
+3. **Policy search simulated service:** simple keyword search over the policy texts with Arabizi word expansions, returning the passage and its source, or "nothing found".
+4. **Rule checker simulated service:** the shop's rules written as data (refund within 14 days, refund limit, cancel only before shipping, address change only before shipping, voucher only when 3+ days late and max EGP 100, clearance not returnable). It answers yes, no or needs a human, with the rule and the policy passage behind it.
+5. **Safety screen simulated service:** keyword lists for fraud, legal, safety and compensation in all four styles.
+6. **Failure switches:** each simulated can be told to fail, time out, or return an unclear result, so failures can be tested.
+7. Every simulated sits behind a fixed "plug" with the same inputs and outputs the real service will have.
 
-**Done when.** All stand-ins run with no internet and no other team's code, and every failure switch is used in at least one test conversation.
+**Done when.** All simulated services run with no internet and no other service's code, and every failure switch is used in at least one test conversation.
 
 #### 2.2 Answering policy questions with sources
 
@@ -714,7 +714,7 @@ Arabic and English interface, right-to-left support.
 
 Alerts appear on the dashboard and can later be sent to Slack or email.
 
-**Done when.** Each alert has a test that raises and clears it; switching off the policy search stand-in during a demo raises "Service down" within a minute.
+**Done when.** Each alert has a test that raises and clears it; switching off the policy search simulated during a demo raises "Service down" within a minute.
 
 #### 4.5 Logins and access
 
@@ -763,7 +763,7 @@ Also turn the shop's rule test cases into full conversations. Count changes in t
 
 #### 5.4 One-command startup
 
-**How to build it.** Package everything (the agent, stand-ins, chat page, inbox, dashboard, and optionally a local AI model) so one command starts it all with the demo shop loaded. Offer a light mode (no AI model, starts in seconds) and a full mode. One settings file, documented, with no passwords stored in it.
+**How to build it.** Package everything (the agent, simulated services, chat page, inbox, dashboard, and optionally a local AI model) so one command starts it all with the demo shop loaded. Offer a light mode (no AI model, starts in seconds) and a full mode. One settings file, documented, with no passwords stored in it.
 
 **Done when.** On a clean computer, one command starts everything and the three example conversations work in the browser.
 
@@ -786,36 +786,36 @@ Also turn the shop's rule test cases into full conversations. Count changes in t
 
 ---
 
-### Phase 6 · Connect to the other teams (later, optional for now)
+### Phase 6 · Connect to the other services (later, optional for now)
 
-Only start this when Team A's policy service and Team C's action service are ready. Because the brain talks to everything through fixed plugs, this phase swaps the stand-ins and changes nothing in the brain.
+Only start this when the knowledge service's policy service and the tools service's action service are ready. Because the core talks to everything through fixed plugs, this phase swaps the simulated services and changes nothing in the core.
 
 #### 6.1 Agree the details
 
-Before connecting, agree with both teams: how a human approval is passed to the rule checker; whether "3 days late" means business days or calendar days; how the action service knows *which customer* each call is for (today it runs as one fixed test identity, which must change before real customers); the "do it once" key; and which demo shop and actions everyone uses. Until each is agreed, the stand-in's behaviour is the default.
+Before connecting, agree with both services' owners: how a human approval is passed to the rule checker; whether "3 days late" means business days or calendar days; how the action service knows *which customer* each call is for (today it runs as one fixed test identity, which must change before real customers); the "do it once" key; and which demo shop and actions everyone uses. Until each is agreed, the simulated service's behaviour is the default.
 
-#### 6.2 Plug in Team A's policy search, rule checker and safety screen
+#### 6.2 Plug in the knowledge service's policy search, rule checker and safety screen
 
-Point the plug at Team A's service, run all test conversations, and fix any difference. Keep the stand-in for offline tests and update it to match the real service. Check that the order facts the agent sends are the ones the rules need (order status, delivery date, item category, clearance, item condition, expected delivery date, amount).
+Point the plug at the knowledge service, run all test conversations, and fix any difference. Keep the simulated for offline tests and update it to match the real service. Check that the order facts the agent sends are the ones the rules need (order status, delivery date, item category, clearance, item condition, expected delivery date, amount).
 
-#### 6.3 Plug in Team C's shop actions
+#### 6.3 Plug in the tools service's shop actions
 
-Team C publishes the demo shop's actions (the same ten as the stand-in). Team B maps Team C's action names to its own request types in the shop's settings. Run all test conversations against it, compare Team C's action log with Team B's decision log (every real change must appear in both), and make sure Team C itself refuses calls for the wrong customer.
+The tools service publishes the demo shop's actions (the same ten as the simulated service). The agent maps the tools service's action names to its own request types in the shop's settings. Run all test conversations against it, compare the tools service's action log with the agent's decision log (every real change must appear in both), and make sure the tools service itself refuses calls for the wrong customer.
 
 #### 6.4 Prove "plug and play" with a second business
 
-Add a telecom business (bills, plan changes, line suspension) using only settings, documents, rules and actions, with no brain code changes, and 10 test conversations for it.
+Add a telecom business (bills, plan changes, line suspension) using only settings, documents, rules and actions, with no core code changes, and 10 test conversations for it.
 
-**Done when (whole phase).** The three example conversations and nearly all test conversations pass on the real services, and every real change appears in both teams' logs.
+**Done when (whole phase).** The three example conversations and nearly all test conversations pass on the real services, and every real change appears in both services' logs.
 
 ---
 
-## Part 5 · Who does what (Team B)
+## Part 5 · Who does what (the agent)
 
-| Area | Agent & brain (B1) | Handoff & quality (B2) |
+| Area | Agent & core (B1) | Handoff & quality (B2) |
 |---|---|---|
 | Phase 1 | Understanding, missing details, replies, chat page | Test conversations, memory and database |
-| Phase 2 | Stand-ins, policy answers, identity, action path | Failure tests, multi-request tests |
+| Phase 2 | Simulated services, policy answers, identity, action path | Failure tests, multi-request tests |
 | Phase 3 | Approval execution | Handoff reasons, briefing, inbox, decision log |
 | Phase 4 | Numbers behind the dashboard | Dashboard pages, alerts, logins |
 | Phase 5 | Speed, startup package | Quality tests, safety tests, automatic checks |
@@ -828,8 +828,8 @@ Changes to the action checks or the decision log need both people to approve.
 | Risk | What we do |
 |---|---|
 | The AI misunderstands Arabizi | Rules stay the main path; the AI only helps; grow word lists from real chats |
-| The other teams finish late | Nothing in Phases 1–5 depends on them; stand-ins keep everything working |
-| The real services behave differently from the stand-ins | Phase 6 runs the same test conversations on both and fixes the stand-ins |
+| The other services finish late | Nothing in Phases 1–5 depends on them; simulated services keep everything working |
+| The real services behave differently from the simulated services | Phase 6 runs the same test conversations on both and fixes the simulated services |
 | An action's outcome is unknown | Never reported as done; a human checks |
 | Dashboard gets slow | Summary rows instead of reading full logs; bigger database later |
 | Test data written by one person | Native-speaker review; add real chats from a pilot |

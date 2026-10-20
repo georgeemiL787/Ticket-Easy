@@ -1,4 +1,4 @@
-"""Grow Team A's noon_eg mock data to a realistic size, in exactly the files and fields Team A's loader reads.
+"""Grow the knowledge service's noon_eg mock data to a realistic size, in exactly the files and fields the knowledge service's loader reads.
 
 Reads the hand-built originals (noon_customers/orders/returns/scenarios.json and tickets/noon_eg.jsonl) from a
 knowledge service checkout, keeps every original record unchanged and first, and appends generated records:
@@ -6,7 +6,7 @@ knowledge service checkout, keeps every original record unchanged and first, and
   customers  C-20001 ...      orders  ORD-100001 ...      returns  RET-60001 ...
   scenarios  NSG-0001 ...     past tickets  NT-3001 ...
 
-Every generated return request and every create_return label is decided by Team A's own reference reading of
+Every generated return request and every create_return label is decided by the knowledge service's own reference reading of
 the policy (decide_return in build_noon_mock_data.py), so the bulk data follows the same rules as the originals.
 Fixed seed: running it twice gives byte-identical files.
 

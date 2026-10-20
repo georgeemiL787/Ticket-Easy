@@ -1,9 +1,9 @@
 """Model comparison helper: the 155 labelled messages through the AI reader of ONE model, with a per-message record.
 
-Same code and prompt as `python -m agent_service eval-nlu --mode llm` (nlu_eval.evaluate with brain.llm_nlu.LLMNLU on the reader
+Same code and prompt as `python -m agent_service eval-nlu --mode llm` (nlu_eval.evaluate with core.llm_nlu.LLMNLU on the reader
 job); it only adds a file with one line per message (expected first intent, the first intent got, whether the AI really
 answered or the rules answered instead, "rules_fallback"). The model is the reader job's model (AGENT_LLM_MODEL_READER).
-Run from team_b:
+Run from agent_service:
 
     python ../docs/reports/eval_runs/models/run_nlu_model.py --out ../docs/reports/eval_runs/models/nlu_<slug>.jsonl
 """

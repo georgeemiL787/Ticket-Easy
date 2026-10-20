@@ -11,8 +11,8 @@
 | dashboard `npm test` | 103 passed, 1 failed at first; fixed, now 104 passed (3 runs in a row) |
 
 ## Failures left alone (none block the evaluation commands)
-- `orchestrator/tests/unit/test_export_schemas.py::test_committed_schemas_match_the_models`: committed JSON schemas are stale; the tool service models gained a `sandbox_only` field. Fix is regenerating schemas (`make schemas`).
-- ruff E501 in `orchestrator/src/team_b/adapters/team_c_tools.py:278` and `orchestrator/tests/unit/adapters/test_llm_policy_gate.py:218`, plus 2 files not ruff-formatted (changes from the earlier uncommitted work).
+- `services/agent/tests/unit/test_export_schemas.py::test_committed_schemas_match_the_models`: committed JSON schemas are stale; the tool service models gained a `sandbox_only` field. Fix is regenerating schemas (`make schemas`).
+- ruff E501 in `services/agent/src/agent_service/adapters/tools_catalog.py:278` and `services/agent/tests/unit/adapters/test_llm_policy_gate.py:218`, plus 2 files not ruff-formatted (changes from the earlier uncommitted work).
 
 No code changed in E0. No test skipped, deleted or loosened.
 

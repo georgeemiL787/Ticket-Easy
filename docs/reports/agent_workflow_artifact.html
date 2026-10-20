@@ -1,4 +1,4 @@
-<title>Team B Agent Workflow</title>
+<title>The agent Agent Workflow</title>
 <style>
 :root{--bg:#f6f7f9;--fg:#171b22;--muted:#5a6472;--line:#d6dbe3;--card:#ffffff;--accent:#b45309}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12161c;--fg:#e6e9ee;--muted:#9aa4b2;--line:#2c3441;--card:#dfe3ea;--accent:#f0a964;color-scheme:dark}}
@@ -17,16 +17,16 @@ ul{margin:0;padding-left:20px;max-width:72ch;color:var(--muted)}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap">
 <main>
-<header><h1>Team B: the agentic system</h1></header>
+<header><h1>The agent: the agentic system</h1></header>
 <p>Orchestrator, planner and router are plain code. Only the orange boxes call the AI model with a system prompt. Each one's answer is checked by code, and a rule or template takes over if the check fails.</p>
-<div class="key"><span><i class="ai"></i>AI agent (model + system prompt)</span><span><i class="cd"></i>Code (no model)</span><span><i class="ext"></i>Team A / Team C service</span></div>
+<div class="key"><span><i class="ai"></i>AI agent (model + system prompt)</span><span><i class="cd"></i>Code (no model)</span><span><i class="ext"></i>The knowledge service / the tools service</span></div>
 <div class="box"><pre class="mermaid">flowchart TD
     C([Customer message]) --&gt; ORC
 
     subgraph ORC [&quot; Orchestrator: code, runs the same fixed 12 stages every turn &quot;]
         direction TB
         NLU{{&quot;1. NLU agent&lt;br/&gt;understands the message&quot;}}
-        RISK[/&quot;2. Risk screen (Team A)&quot;/]
+        RISK[/&quot;2. Risk screen (the knowledge service)&quot;/]
         ROUTER[&quot;3. Planner / Router&lt;br/&gt;code: picks the intent and the path&quot;]
         NLU --&gt; RISK --&gt; ROUTER
     end
@@ -36,13 +36,13 @@ ul{margin:0;padding-left:20px;max-width:72ch;color:var(--muted)}
     ROUTER --&gt;|action| GATES
 
     subgraph KN [Knowledge path]
-        KQ{{&quot;Query agent&lt;br/&gt;writes the search query&quot;}} --&gt; SEARCH[/&quot;Policy search (Team A)&quot;/] --&gt; KA{{&quot;Answer agent&lt;br/&gt;words the reply from passages&quot;}}
+        KQ{{&quot;Query agent&lt;br/&gt;writes the search query&quot;}} --&gt; SEARCH[/&quot;Policy search (the knowledge service)&quot;/] --&gt; KA{{&quot;Answer agent&lt;br/&gt;words the reply from passages&quot;}}
     end
 
     subgraph AC [Action path]
         GATES[&quot;Action gates, code&lt;br/&gt;slots, identity, facts, permission&quot;] --&gt; PA{{&quot;Policy agent&lt;br/&gt;allow / needs human / deny&quot;}}
-        RULES[/&quot;Rule checker (Team A)&quot;/] --&gt; PA
-        PA --&gt;|allow| CONFIRM[&quot;Customer confirms&quot;] --&gt; EXEC[/&quot;Run tool (Team C)&quot;/]
+        RULES[/&quot;Rule checker (the knowledge service)&quot;/] --&gt; PA
+        PA --&gt;|allow| CONFIRM[&quot;Customer confirms&quot;] --&gt; EXEC[/&quot;Run tool (the tools service)&quot;/]
     end
 
     PA --&gt;|needs human, deny, risk, errors| HAND

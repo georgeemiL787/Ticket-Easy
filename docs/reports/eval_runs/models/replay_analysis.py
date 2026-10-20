@@ -14,7 +14,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, "orchestrator/src")
+sys.path.insert(0, "services/agent/src")
 from agent_service.replies.composer import check_grounded  # noqa: E402
 
 RUNS = Path("docs/reports/eval_runs")

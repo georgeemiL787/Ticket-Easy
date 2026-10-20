@@ -199,7 +199,7 @@ def production_blockers(access, auth, policy):
         e = a["enforcement"]
         if a["kind"] == "record_scope":
             if e.get("mechanism") != "response_field_matches_context":
-                found.append(f'{a["id"]}: record-scope must be a the tools service check against the customer\'s context, not {"unrestricted" if e.get("unrestricted") else "the API alone"}')
+                found.append(f'{a["id"]}: record-scope must be a tools service check against the customer\'s context, not {"unrestricted" if e.get("unrestricted") else "the API alone"}')
         elif a["kind"] == "data_scope":
             found.append(f'{a["id"]}: a list the API filters by caller cannot run with a service credential (no per-row customer filter exists yet)')
         elif a["kind"] != "caller_access":

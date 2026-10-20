@@ -123,7 +123,7 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             if built.tools is not None:
-                await built.tools.aclose()  # stop the the tools service MCP server processes
+                await built.tools.aclose()  # stop the tools service MCP server processes
 
     app = FastAPI(title="Ticket-Easy agent service", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)

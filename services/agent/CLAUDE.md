@@ -1,4 +1,4 @@
-# Ticket-Easy · Team B (AI core, orchestration, human handoff)
+# Ticket-Easy · Agent service
 
 ## What this service does
 Ticket-Easy is a customer-service agent for e-commerce shops. Customers write in English, Egyptian Arabic, mixed Arabic-English, or Arabizi (Arabic in Latin letters and digits, e.g. "3ayez a3raf el order feen"). For every customer message this service decides exactly one outcome: answer, clarify, verify_identity, confirm, execute, refuse, or handoff, and records why in a DecisionTrace.
@@ -19,8 +19,8 @@ Where the code lives (all under `src/agent_service/`): `turn/` runs a message th
 8. The core (the parts turn, understanding, agent, knowledge, actions, replies, handoff and monitoring, plus evaluation) imports only agent_service.ports interfaces and agent_service.domain / agent_service.contracts models. Implementations live in agent_service.adapters; container.py wires them from settings.
 
 ## Simulated services
-Team A is reachable over HTTP (AGENT_BACKENDS=live) and Team C's sandbox tools over MCP (AGENT_TOOLS_CONFIG, TEST-ONLY; see
-../../docs/INTEGRATION.md); without them Team B builds its own simulated services in adapters/simulated, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
+The knowledge service is reachable over HTTP (AGENT_BACKENDS=live) and the tools service's sandbox tools over MCP (AGENT_TOOLS_CONFIG, TEST-ONLY; see
+../../docs/INTEGRATION.md); without them the agent builds its own simulated services in adapters/simulated, using the demo shop "Nile Style" (tenant shop_001) in fixtures/shop_001. Never import code from services/knowledge/ or services/tools/, and never make a test depend on their services. You may READ services/knowledge/contracts/schemas and services/knowledge/data/e-commerce/*/corpus as reference for data formats and policy texts.
 
 ## Layout
 Paths are relative to services/agent/ unless noted. "(planned)" marks anything not created yet; remove it when a prompt creates the item, and add new modules here.
@@ -245,33 +245,33 @@ services/agent/
                  llm_policy_gate (LLMPolicyGate, AGENT_LLM_POLICY=1: wraps the PolicyGate; for a write the model reads the retrieved policy passages (prompts/policy_agent_v2.md; v1 kept: v2 asks a person only for a missing fact, an exception a person may grant, or an amount above the chat limit)
                            and picks allow/require_human/deny; the STRICTER of its route and the rule checker's wins, it never loosens; uncited allow/deny -> require_human; model or
                            search failure -> an allowed write becomes require_human POLICY_AGENT_UNAVAILABLE; deny and reads pass through; a human approval still turns its require_human into allow)
-                 knowledge_client (HttpEvidenceProvider + HttpPolicyGate: the real Team A, AGENT_BACKENDS=live)
+                 knowledge_client (HttpEvidenceProvider + HttpPolicyGate: the real knowledge service, AGENT_BACKENDS=live)
                  tools_mcp_client (McpStdioSession: a small MCP stdio client (initialize, tools/list, tools/call) under subprocess.Popen + reader threads;
                            McpUnavailable = not sent, McpLost = sent and no answer (outcome unknown), McpRemoteError = JSON-RPC error)
                  tools_catalog (ToolCapabilities, the CapabilityClient when AGENT_TOOLS_CONFIG is set (config/tools.example.json): wraps the
-                           simulated service; tools the config binds (by Team C proposal_id, newest published version in an allowed environment; ambiguous/kind
-                           mismatch/environment_not_allowed = not used) are served ONLY by Team C's MCP server, never by the simulated service; a binding's
-                           `environments` (default ["sandbox"]) opt a tool into "live_demo" (Team C calls the owner-configured REAL API) or "production" (a PROMOTED tool, below); two allowed
+                           simulated service; tools the config binds (by the tools service proposal_id, newest published version in an allowed environment; ambiguous/kind
+                           mismatch/environment_not_allowed = not used) are served ONLY by the tools service's MCP server, never by the simulated service; a binding's
+                           `environments` (default ["sandbox"]) opt a tool into "live_demo" (the tools service calls the owner-configured REAL API) or "production" (a PROMOTED tool, below); two allowed
                            environments published at once = ambiguous (no silent fallback); a result from another environment or claiming production
-                           is not trusted; errors carry Team C's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
+                           is not trusted; errors carry the tools service's category (a read's not_found = NOT_FOUND); the ToolSpec stays the business's own; identity =
                            ToolCallRequest.acting_customer_id (the verified customer, set by code in shopcalls/actions/stages) -> the operator's identities map,
                            one server process per (business, identity), never an argument; IDENTITY_NOT_MAPPED = not sent. Results: only succeeded = success
                            (audit_id tools:<execution>); rejected / failed = error; partial / outcome_unknown / error on a write / failed with a
                            rejected_unverified write / a lost answer = write_may_have_applied (unverified_result); tool_not_published -> TOOL_NOT_PUBLISHED
-                           (registry drops its list). Team C sends no list_changed: re-listed every AGENT_CAPABILITY_TTL_S and on refresh)
-                 production (ToolCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when Team C lists it with
-                           environment production AND production_ready true (a sandbox/live one must say false); production tools are listed and called on a SEPARATE Team C process (`--identity service --context-from-client`,
+                           (registry drops its list). The tools service sends no list_changed: re-listed every AGENT_CAPABILITY_TTL_S and on refresh)
+                 production (ToolCapabilities, binding environments ["production"], tenant `production_context_field` default customer_id): a production publication is used only when the tools service lists it with
+                           environment production AND production_ready true (a sandbox/live one must say false); production tools are listed and called on a SEPARATE the tools service process (`--identity service --context-from-client`,
                            session key PRODUCTION_KEY) that uses the business's service credential; the call carries the VERIFIED customer (ToolCallRequest.acting_customer_id, set by code) as
                            `_meta.ticketeasy.context` and the request's idempotency_key as `_meta.ticketeasy.idempotency_key`, never in arguments; no verified customer = IDENTITY_NOT_MAPPED, nothing sent; a result is
-                           trusted only for the same production publication id; a pre-flight rejection is TOOLS_REJECTED (nothing applied). Production secrets never cross into Team B (the MCP process reads a `file:` or env
-                           reference in Team C's own environment); Team B only holds Team C's admin token (config `admin_token_env`) to call its admin routes
+                           trusted only for the same production publication id; a pre-flight rejection is TOOLS_REJECTED (nothing applied). Production secrets never cross into the agent (the MCP process reads a `file:` or env
+                           reference in the tools service's own environment); the agent only holds the tools service's admin token (config `admin_token_env`) to call its admin routes
                  (tools_admin_client also: promotions(business_id), promote(artifact_id, actor, note, rollback_contact, accept_no_idempotency), rollback(promotion_id, actor, note); api/business_tools: POST .../artifacts/{id}/promote and
                  POST .../promotions/{id}/rollback are ADMIN-only (not in ROLES) and need a signed-in person (their name is the recorded decision), the artifact / promotion must belong to the tenant's business else 404,
-                 Team C's refusal text (which checklist items failed) is returned as 409 PROMOTION_REFUSED; the page shows PRODUCTION badges, a banner count, promotions with checklists, Promote and Roll back (admins))
-                 (tools_admin_client also: artifacts(business_id), auto_test(artifact_id), auto_test_run(run_id): Team C's automatic tests, started from the Business tools page, manager only, never publishes)
-                 tools_admin_client (ToolsAdminClient: Team C's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
+                 The tools service's refusal text (which checklist items failed) is returned as 409 PROMOTION_REFUSED; the page shows PRODUCTION badges, a banner count, promotions with checklists, Promote and Roll back (admins))
+                 (tools_admin_client also: artifacts(business_id), auto_test(artifact_id), auto_test_run(run_id): the tools service's automatic tests, started from the Business tools page, manager only, never publishes)
+                 tools_admin_client (ToolsAdminClient: the tools service's REST API for the Business tools page: publications, proposals, connectors, disable, connection check)
     api/         business_tools (GET /v1/dashboard/business-tools, POST .../refresh, POST .../publications/{id}/disable {note}, POST
-                 .../connectors/{id}/check: manager; the publication or connector must belong to the tenant's Team C business else 404;
+                 .../connectors/{id}/check: manager; the publication or connector must belong to the tenant's the tools service business else 404;
                  environment per tool and publication (SANDBOX / LIVE DEMO), live_tools, connectors with their last check;
                  dashboard page /dashboard/tools; DashboardBusinessTools schema),
                  capabilities (GET /v1/capabilities?tenant_id=&refresh=: each configured tool available/missing/blocked), app (create_app, GET /health, request-id middleware, /chat page), errors (error envelope + handlers, 429 RATE_LIMITED),
@@ -308,7 +308,7 @@ services/agent/
                       success wording needs a verified write, no order data before verification or of another customer, refunds = shop total; plus broken-core self-tests),
                       test_leak_scan.py (no order data in any scenario reply before verification)
   tests/fakes.py      FakeLLM (scripted responses)
-  tests/fake_tools_mcp.py  a scripted simulated service for Team C's MCP server (tests/unit/adapters/test_tools_catalog.py, tests/unit/api/test_business_tools.py)
+  tests/fake_tools_mcp.py  a scripted simulated service for the tools service's MCP server (tests/unit/adapters/test_tools_catalog.py, tests/unit/api/test_business_tools.py)
   tests/support.py    make_settings(): follows AGENT_STORE; store tests in tests/unit/adapters run on memory and sqlite
   tests/adversarial/  prompt injection, fake approvals, amounts, identity and data theft, obfuscated threats, confirmation tricks and floods, hostile AI/shop answers, one conversation per rules.json rule (judged by the shop audit log + reply text)
   ../.github/  workflows ci.yml (lint, tests on memory+sqlite, scenario report, schema drift, dashboard, docker), safety.yml (adversarial + property test, 5 seeds),
@@ -333,9 +333,9 @@ apps/dashboard/   (repo root, next to services/agent/) React + Vite + TypeScript
 
 Safety-critical code (change only with tests): domain/actions.py (state machine, execution_authorized) and the two invariants in domain/trace.py. ActionProposal.state and HandoffCase.status are read-only fields; they change only through transition().
 
-Fixture conventions (shop_001): copied from Team A sources, never loaded from services/knowledge/ at runtime. Today is 2026-09-28; the
+Fixture conventions (shop_001): copied from the knowledge service sources, never loaded from services/knowledge/ at runtime. Today is 2026-09-28; the
 demo orders are dated against it (delivered 3/10/14/15/20 days ago, one shipment 4 days late; backend.json demo_guide says
-what each order is for). Rules use Team A format: effect when applies_if and all conditions hold, else_effect otherwise,
+what each order is for). Rules use the knowledge service format: effect when applies_if and all conditions hold, else_effect otherwise,
 only status=approved is enforced. Tenant argument_map values are slot:<name>, fact:<name> or const:<value>.
 
 container.policy_search is the SimulatedPolicySearch (switches: fail_next with operation, reset). container.shop is the SimulatedShop; container.inject(container, 'shop', {switch: fail_next|uncertain|no_audit|unpublish|publish|reset, tool, ...}) flips its failure switches (for the scenario runner; plugs: shop, policy_search, rule_checker, safety_screen). container.rule_checker is the SimulatedRuleChecker behind container.policy.
@@ -358,7 +358,7 @@ Error format of every API error: {"schema_version": "1.0", "error": {"code", "me
 - AI model (optional): AGENT_LLM=ollama|openrouter, see .env.example; `python -m agent_service eval-nlu --mode llm|both`
 - Run the suite on SQLite: `AGENT_STORE=sqlite make test` (a temp database per test)
 - Demo data for the dashboard: `python scripts/seed_dashboard.py --reset` then `AGENT_STORE=sqlite AGENT_DB_PATH=var/demo.sqlite3 make run`; slow tests: `python -m pytest -q -m slow` (not in the normal run)
-- Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; Team C's web app uses 8000, Team A uses 8001)
+- Scenarios: `make scenarios` (pending ones are skipped with their reason) · Tests: `make test` · Lint: `make lint` · Run: `make run` (port 8010; the tools service's web app uses 8000, the knowledge service uses 8001)
 - Regenerate JSON Schemas after changing DecisionTrace, HandoffPackage, HandoffCase or AgentReply: `make schemas`
 
 ## Stubs and ownership
@@ -399,16 +399,16 @@ Migration numbers: 002 summary tables (B), 003 alerts (A), 004 users (A), 005+ a
 
 ## Noon (noon_eg): a second shop on a SQLite simulated service (2026-10-11)
 
-- Data: Team A's Noon mock data is copied by `scripts/build_noon_fixtures.py` into `fixtures/noon_eg/` (seed.json = customers, orders, returns; policies/risk/rules/synonyms/tickets.json for the offline simulated services; tools.json is Team B's). The policy passages are numbered like Team A's index (noon_return_policy@v1#s<n>).
+- Data: the knowledge service's Noon mock data is copied by `scripts/build_noon_fixtures.py` into `fixtures/noon_eg/` (seed.json = customers, orders, returns; policies/risk/rules/synonyms/tickets.json for the offline simulated services; tools.json is the agent's). The policy passages are numbered like the knowledge service's index (noon_return_policy@v1#s<n>).
 - Shop: a tenant folder with `seed.json` is a SQLite shop (`adapters/simulated/sql_shop.py`, wired in `SimulatedShop`); data, audit log and idempotency memory are rows, kept in `<db dir>/shops/noon_eg_shop.sqlite3` when the store is sqlite (memory otherwise). Tools: verify_customer, get_order, list_customer_orders, get_return_status, create_return, create_ticket. Nile Style stays on its JSON simulated service.
-- Tenant config `config/tenants/noon_eg.json` (order ids ORD-#####). Team A needs `python -m knowledge_service ingest --tenant noon_eg` for the real search.
-- NO approved Noon rules exist in Team A (data/rules has shop_001 only): every Noon change goes to a person (scenario N06). tests/integration/test_noon_write_path.py shows the write path with one temporary rule.
+- Tenant config `config/tenants/noon_eg.json` (order ids ORD-#####). The knowledge service needs `python -m knowledge_service ingest --tenant noon_eg` for the real search.
+- NO approved Noon rules exist in the knowledge service (data/rules has shop_001 only): every Noon change goes to a person (scenario N06). tests/integration/test_noon_write_path.py shows the write path with one temporary rule.
 - Refund tracking: intent `refund_status` (kind lookup, tool get_return_status; the lexicon entry exists in data/lexicon/default.json but only a tenant that lists the intent gets it, so Nile Style's numbers did not move: eval rules baseline identical). lookup._return_reply builds the answer from the returns table only (templates return_status_<status>, return_none, refund_to_<destination> in data/locales/*/returns.json); in agent mode the planner LooksUp get_return_status and replies with reply_key order_status (code picks the return text because session.facts holds `returns`).
 
 ## Tenant bundles, tool setup, knowledge pages and the onboarding wizard (master plan P2 to P5)
 
 - `domain/bundle.py` TenantBundle: a versioned, hash-checked description of a business (embeds the old TenantConfig; profile, knowledge, guardrails, tools with bindings, identities). Secrets never belong in it (a validator refuses secret-like field names). Schema: `contracts/schemas/TenantBundle.schema.json` (`make schemas`). Stores: `adapters/bundle_repository.py` (memory + sqlite, migration 007). Status goes draft -> published -> active -> retired; content never changes.
-- `bundles.py` BundleRegistry = the TenantRegistry the core reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`AGENT_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the Team C tools on a change (`ToolCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m agent_service bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
-- Tool setup (`api/tool_setup.py`, `tool_setup.py`, `adapters/tools_admin_client.py`): `/v1/dashboard/tool-setup` import a spec, operations by class, connection check, batches (prepare / approve with the four effect flags / publish into a DRAFT bundle / activate). The Team C business is found by name `ticket-easy:<tenant>` or created on the first import.
-- Knowledge pages (`api/knowledge.py`, `adapters/knowledge_admin_client.py`, `adapters/simulated/knowledge_admin.py`, port `KnowledgeAdmin`): `/v1/dashboard/knowledge/*` and `/guardrails/*`. The reviewer recorded in Team A is the signed-in person. Team A is called with `X-Service-Key` (`AGENT_KNOWLEDGE_KEY`) and, for these pages, `X-Admin-Key` (`AGENT_KNOWLEDGE_ADMIN_KEY`).
+- `bundles.py` BundleRegistry = the TenantRegistry the core reads (`container.tenants`): an active bundle replaces `config/tenants/<t>.json` for its business (`AGENT_BUNDLES=0` ignores bundles), activation swaps the config atomically (next turn, no restart), rollback activates the parent. A business that only has a draft is in the registry too (`registry.drafts`), flagged `preview`, and its traces say `versions.preview=1`. Listeners rebind the tools service tools on a change (`ToolCapabilities.on_bundle_change`); publish checks (`approved_rules_are_current` in container.py) can stop a publication. CLI: `python -m agent_service bundle import|export|activate`. API: `api/bundles.py` (`/v1/admin/tenants/{t}/bundles`, managers read, admins write).
+- Tool setup (`api/tool_setup.py`, `tool_setup.py`, `adapters/tools_admin_client.py`): `/v1/dashboard/tool-setup` import a spec, operations by class, connection check, batches (prepare / approve with the four effect flags / publish into a DRAFT bundle / activate). The tools service business is found by name `ticket-easy:<tenant>` or created on the first import.
+- Knowledge pages (`api/knowledge.py`, `adapters/knowledge_admin_client.py`, `adapters/simulated/knowledge_admin.py`, port `KnowledgeAdmin`): `/v1/dashboard/knowledge/*` and `/guardrails/*`. The reviewer recorded in the knowledge service is the signed-in person. The knowledge service is called with `X-Service-Key` (`AGENT_KNOWLEDGE_KEY`) and, for these pages, `X-Admin-Key` (`AGENT_KNOWLEDGE_ADMIN_KEY`).
 - Onboarding (`api/onboarding.py`, `onboarding.py`, `domain/onboarding.py`, `adapters/onboarding_repository.py`, migration 008, `preview.py`): `/v1/onboarding` creates a draft business (profile + draft bundle), `.../review` lists what blocks Go live, `.../preview` issues a signed pass for the test chat (`/chat?tenant_id=&preview=`), `.../go-live` generates the final config (an intent per published tool, agent mode on), publishes and activates. The public chat answers TENANT_NOT_LIVE until then. Admin only.

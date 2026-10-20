@@ -65,5 +65,5 @@ accuracy and the cost per message match today's flow. The next steps are listed 
 
 The conversation page shows each message's plan and moves with the checks that passed or failed; the Overview shows how often
 the agent gave up (and why), how many replies the reviewer stopped, moves per message and who chose each handoff; the
-Escalations page lists which request types most often end with a person, so the team knows what to automate next. An admin
+Escalations page lists which request types most often end with a person, so the staff know what to automate next. An admin
 can replay a past conversation with other settings and compare the two runs.

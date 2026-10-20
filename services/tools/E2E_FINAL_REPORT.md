@@ -68,7 +68,7 @@
 - `9191c6c` sandbox-only publication wording
 - final report and `scripts/e2e_flow.py` (this commit)
 
-**Excluded:** `*.sqlite3`, `*.db`, `*.log`, `*.err` via `.gitignore` — no runtime DBs, logs, cache, temp artifacts, credentials, or local `.env` committed. Secret scan (`gsk_`/`sk-or-v1`) clean. Git identity: `Team C local` / `local@tools.invalid`.
+**Excluded:** `*.sqlite3`, `*.db`, `*.log`, `*.err` via `.gitignore` — no runtime DBs, logs, cache, temp artifacts, credentials, or local `.env` committed. Secret scan (`gsk_`/`sk-or-v1`) clean. Git identity: `the tools service local` / `local@tools.invalid`.
 
 ---
 

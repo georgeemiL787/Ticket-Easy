@@ -1,4 +1,4 @@
-// Generates TypeScript types from the JSON Schemas the the agent service exports (services/agent/contracts/schemas).
+// Generates TypeScript types from the JSON Schemas the agent service exports (services/agent/contracts/schemas).
 //
 //   node scripts/gen-types.mjs           write src/api/types/<Name>.ts for every Dashboard*.schema.json
 //   node scripts/gen-types.mjs --check   fail (exit 1) if a committed file differs from what the schemas would give,

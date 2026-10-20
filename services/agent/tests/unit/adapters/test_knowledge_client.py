@@ -1,4 +1,4 @@
-"""The the knowledge service HTTP adapters against a fake server (httpx.MockTransport) that replays the knowledge
+"""The knowledge service HTTP adapters against a fake server (httpx.MockTransport) that replays the knowledge
 service's recorded examples."""
 
 import json

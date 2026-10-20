@@ -14,7 +14,7 @@ class ToolContext(RequestModel):
     """What the rule checker needs to know about the tool being used.
 
     side_effects is derived when missing (anything but a read changes something) and must be true for non-reads.
-    personal_data is the the knowledge service field exposes_personal_data (either name is accepted); it defaults to
+    personal_data is the knowledge service field exposes_personal_data (either name is accepted); it defaults to
     true (fail-safe).
     """
 

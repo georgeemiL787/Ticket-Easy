@@ -1,6 +1,6 @@
 # Running the cloned target application
 
-This is separate from Team C's read-only repository discovery. The owner explicitly requested running the cloned target. Its code is executed inside a dedicated local Docker stack; discovery itself still does not import or execute it.
+This is separate from the tools service's read-only repository discovery. The owner explicitly requested running the cloned target. Its code is executed inside a dedicated local Docker stack; discovery itself still does not import or execute it.
 
 From PowerShell:
 
@@ -22,9 +22,9 @@ Addresses:
 - Target application: http://127.0.0.1:8001
 - Target API documentation: http://127.0.0.1:8001/docs
 - Local email viewer: http://127.0.0.1:8026
-- Team C: http://127.0.0.1:8000
+- The tools service: http://127.0.0.1:8000
 
-Docker project name: `tools-target`. Its database volume is `tools-target_app-db-data`. PostgreSQL is not published on a host port, so it does not conflict with the existing host database. Runtime build/Compose adaptations are generated under Team C's ignored `data/target-runtime/` directory, outside the target checkout. The external Dockerfile preserves the target frontend build and Python 3.14, then uses pip to install the backend's declared runtime dependencies constrained to registry versions in the target `uv.lock`. It omits uv itself and development tools to reduce slow downloads. Application source, migrations and startup command remain intact.
+Docker project name: `tools-target`. Its database volume is `tools-target_app-db-data`. PostgreSQL is not published on a host port, so it does not conflict with the existing host database. Runtime build/Compose adaptations are generated under the tools service's ignored `data/target-runtime/` directory, outside the target checkout. The external Dockerfile preserves the target frontend build and Python 3.14, then uses pip to install the backend's declared runtime dependencies constrained to registry versions in the target `uv.lock`. It omits uv itself and development tools to reduce slow downloads. Application source, migrations and startup command remain intact.
 
 The container sets `PYTHONPATH=/app/backend` so the target package is available to Alembic, the initial-data script and the server without an editable uv installation. This is runtime environment configuration, not a modification to target code or discovery evidence.
 
@@ -34,6 +34,6 @@ The owner's additional requirement for this run is unassisted discovery: use the
 
 ## Verification — 30 September 2026
 
-The dedicated backend, database and mail viewer containers are healthy. Migrations and first-superuser initialization completed. The target homepage, target `/docs`, target `/api/v1/utils/health-check/` and Team C homepage returned HTTP 200; the health response was `true`. Target login/business actions were not exercised.
+The dedicated backend, database and mail viewer containers are healthy. Migrations and first-superuser initialization completed. The target homepage, target `/docs`, target `/api/v1/utils/health-check/` and the tools service homepage returned HTTP 200; the health response was `true`. Target login/business actions were not exercised.
 
-The Team C local-project API reindexed the target, validated its snapshot and reused the unchanged inventory cache: 23 route declarations, zero eligible operations. The full saved inventory compared equal before and after this run. Code-analysis and proposal endpoints returned HTTP 422 with `code_analysis_blocked` and `inventory_blocked`, respectively; no live LLM call ran for this target. No OpenAPI substitute was uploaded. `git --no-optional-locks -C D:\target-system status --porcelain` remained empty. Machine-readable checks are saved under `data/target-runtime/verification.json`.
+The tools service local-project API reindexed the target, validated its snapshot and reused the unchanged inventory cache: 23 route declarations, zero eligible operations. The full saved inventory compared equal before and after this run. Code-analysis and proposal endpoints returned HTTP 422 with `code_analysis_blocked` and `inventory_blocked`, respectively; no live LLM call ran for this target. No OpenAPI substitute was uploaded. `git --no-optional-locks -C D:\target-system status --porcelain` remained empty. Machine-readable checks are saved under `data/target-runtime/verification.json`.

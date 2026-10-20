@@ -154,7 +154,7 @@ def main():
     check("create_return covers every decision reason the evaluator can give", len(reasons) >= 8,
           ", ".join(f"{k} {v}" for k, v in sorted(reasons.items())))
     check("tickets have valid dates before 2026-10-08", all(d(t["created_at"]) <= AS_OF for t in T_new))
-    # 9 the database Team A's loader built
+    # 9 the database the knowledge service's loader built
     if a.db:
         con = sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)
         q = lambda sql: con.execute(sql).fetchone()[0]
@@ -171,7 +171,7 @@ def main():
                             .read_text(encoding="utf-8")).group(1)
         tables = set(re.findall(r"CREATE (?:VIRTUAL )?TABLE (\w+)", schema))
         have = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}
-        check(f"db: built from Team A's schema (same tables, version {version})",
+        check(f"db: built from the knowledge service's schema (same tables, version {version})",
               tables <= have and q("select value from db_meta where key='schema_version'") == version)
         check("db: shop_001 is unchanged in size", q("select count(*) from orders where tenant_id='shop_001'") == 16)
     print(f"\n{sum(results)}/{len(results)} checks passed")

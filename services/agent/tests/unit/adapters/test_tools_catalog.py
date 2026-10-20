@@ -138,7 +138,7 @@ def request(tool: str, arguments: dict[str, Any] | None = None, customer: str | 
 # ---- discovery ----
 
 
-async def test_a_published_tool_is_served_with_the_businesss_own_spec_and_unbound_tools_stay_with_the_stand_in(
+async def test_a_published_tool_is_served_with_the_businesss_own_spec_and_unbound_tools_stay_with_the_simulated_shop(
     fake: Fake, made: Made
 ) -> None:
     fake.publish(tool_def("order_v2_aa", GET_ORDER_PROPOSAL, 2), tool_def("order_v1_bb", GET_ORDER_PROPOSAL, 1))

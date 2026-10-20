@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Team B agents workflow</title>
+<!doctype html><html><head><meta charset="utf-8"><title>The agent agents workflow</title>
 <style>body{font-family:Segoe UI,sans-serif;margin:24px}pre.mermaid{background:#fff;border:1px solid #ddd;padding:16px;margin-bottom:32px}</style></head><body>
-<h1>Team B: the agentic system</h1><h2>1. Workflow of one customer message</h2><pre class="mermaid">flowchart TD
+<h1>The agent: the agentic system</h1><h2>1. Workflow of one customer message</h2><pre class="mermaid">flowchart TD
     C([Customer message]) --&gt; MEM[Load session + memory]
     MEM --&gt; SUM{{&quot;History Summarizer agent&lt;br/&gt;(AI, checked against the source)&quot;}}
     SUM --&gt; NLU
@@ -12,7 +12,7 @@
         NLU -. &quot;invalid / timeout&quot; .-&gt; RULES
     end
 
-    NLU --&gt; RISK[/&quot;Risk screen (Team A)&lt;br/&gt;fraud, legal, medical, abuse&quot;/]
+    NLU --&gt; RISK[/&quot;Risk screen (the knowledge service)&lt;br/&gt;fraud, legal, medical, abuse&quot;/]
     RISK --&gt;|risk found| HO
     RISK --&gt; HUMAN{Wants a person?}
     HUMAN --&gt;|yes| HO
@@ -26,13 +26,13 @@
     PLAN --&gt;|action| ACT
 
     subgraph KNOW [Knowledge agent]
-        KA{{&quot;Query writer (AI)&lt;br/&gt;messy text -&gt; search query&quot;}} --&gt; SRCH[/&quot;Policy search (Team A)&quot;/]
+        KA{{&quot;Query writer (AI)&lt;br/&gt;messy text -&gt; search query&quot;}} --&gt; SRCH[/&quot;Policy search (the knowledge service)&quot;/]
         SRCH --&gt; ANS{{&quot;Answer writer (AI)&lt;br/&gt;reply from passages + citations&quot;}}
         ANS --&gt;|&quot;not grounded&quot;| QUOTE[Quote passages verbatim]
     end
 
     subgraph LOOKUP [Lookup]
-        LK[Identity check: order id + phone] --&gt; GO[/&quot;get_order (Team C)&quot;/]
+        LK[Identity check: order id + phone] --&gt; GO[/&quot;get_order (the tools service)&quot;/]
         GO --&gt; OWN{Ownership ok?}
     end
     OWN --&gt;|&quot;not the customer&#39;s order&quot;| HO
@@ -40,7 +40,7 @@
     subgraph ACTION [Action agent: fixed gate order]
         ACT[Slots -&gt; identity -&gt; facts -&gt; ownership -&gt; permission] --&gt; PA
         PA{{&quot;Policy agent (AI)&lt;br/&gt;reads policy passages,&lt;br/&gt;picks allow / require_human / deny&quot;}}
-        RC[/&quot;Rule checker (Team A)&quot;/]
+        RC[/&quot;Rule checker (the knowledge service)&quot;/]
         PA --- RC
         PA --&gt; STRICT[&quot;Keep the STRICTER of the two&quot;]
         RC --&gt; STRICT
@@ -49,7 +49,7 @@
         STRICT --&gt;|allow| ASKC[Ask customer to confirm]
         ASKC --&gt; CONF
         CONF --&gt; RECHK[Renewed policy check]
-        RECHK --&gt; EXEC[/&quot;Run tool once (Team C)&quot;/]
+        RECHK --&gt; EXEC[/&quot;Run tool once (the tools service)&quot;/]
         EXEC --&gt; VER{Result verified?&lt;br/&gt;success + audit id + fields}
         VER --&gt;|no| HO
     end

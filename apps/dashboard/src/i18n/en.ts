@@ -279,7 +279,7 @@ const en = {
   "bt.sourceSimulated": "Simulated shop",
   "bt.status": "Status",
   "bt.detail": "Detail",
-  "bt.teamCTool": "Tool-service tool",
+  "bt.publishedTool": "Tool-service tool",
   "bt.status.available": "Available",
   "bt.status.missing": "Missing",
   "bt.status.blocked": "Blocked",

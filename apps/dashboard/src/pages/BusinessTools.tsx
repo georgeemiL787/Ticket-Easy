@@ -380,7 +380,7 @@ export default function BusinessTools() {
                     <th>{t("bt.source")}</th>
                     <th>{t("bt.status")}</th>
                     <th>{t("bt.detail")}</th>
-                    <th>{t("bt.teamCTool")}</th>
+                    <th>{t("bt.publishedTool")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -425,7 +425,7 @@ export default function BusinessTools() {
                     <table>
                       <thead>
                         <tr>
-                          <th>{t("bt.teamCTool")}</th>
+                          <th>{t("bt.publishedTool")}</th>
                           <th>{t("bt.boundTo")}</th>
                           <th>{t("bt.status")}</th>
                           <th>{t("bt.publishedAt")}</th>

@@ -1,6 +1,6 @@
 """Say a few messages to the agent and print every move it made, with the checks that refused it (read-only debugging).
 
-Run from team_b with the same settings as the evaluation (agent_env.sh.example, live mode, a Groq key):
+Run from agent_service with the same settings as the evaluation (agent_env.sh.example, live mode, a Groq key):
 
     python ../docs/reports/eval_runs/trace_turns.py "how much do you charge for delivery" --conversation "refund NS-20512" 01012345601
 """

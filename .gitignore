@@ -180,7 +180,7 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-# integrated local run (ops/local/serve.py): generated keys, Team B database, the Team C binding
+# integrated local run (ops/local/serve.py): generated keys, the agent database, the tools service binding
 ops/local/var/
 # Live Demo settings and credentials (copy ops/local/live_demo.example.env)
 ops/local/live_demo.env

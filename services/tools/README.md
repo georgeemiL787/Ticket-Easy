@@ -1,4 +1,4 @@
-  # Ticket-Easy — Team C
+  # Ticket-Easy — the tools service
 
 Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). A tool becomes **production** only through an admin's promotion with an automatic checklist (see "Production"); nothing else makes `production_ready` true.
 
@@ -38,7 +38,7 @@ $env:PYTHONPATH="."; .\.venv\Scripts\python.exe -m tools_service.mcp_server --bu
 
 ## Architecture
 
-`tool_generation_mcp/app.py` builds the application: the SQLite `Store`, the model `Providers`, the `Service` facade, middleware, error handlers and routers. JSON routes are in `tool_generation_mcp/api/`, browser pages and form actions in `tool_generation_mcp/web/` (templates in `tool_generation_mcp/web/templates/`), background AI jobs in `tool_generation_mcp/jobs.py`. `tool_generation_mcp/service.py` is a facade over the workflow services in `tool_generation_mcp/services/`; they use `tool_generation_mcp/persistence/` (store, migrations, repositories), `tool_generation_mcp/llm/` (prompts, schemas, providers, fallback) and the domain modules (`discovery.py`, `grounding.py`, `artifacts.py`, `executor.py`, …). The old modules `storage.py`, `providers.py` and `code_discovery.py` remain as compatibility imports. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map, dependency rules, migrations and compatibility notes.
+`services/tools/app.py` builds the application: the SQLite `Store`, the model `Providers`, the `Service` facade, middleware, error handlers and routers. JSON routes are in `services/tools/api/`, browser pages and form actions in `services/tools/web/` (templates in `services/tools/web/templates/`), background AI jobs in `services/tools/jobs.py`. `services/tools/service.py` is a facade over the workflow services in `services/tools/services/`; they use `services/tools/persistence/` (store, migrations, repositories), `services/tools/llm/` (prompts, schemas, providers, fallback) and the domain modules (`discovery.py`, `grounding.py`, `artifacts.py`, `executor.py`, …). The old modules `storage.py`, `providers.py` and `code_discovery.py` remain as compatibility imports. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the module map, dependency rules, migrations and compatibility notes.
 
 ## Discovery input
 
@@ -65,7 +65,7 @@ Local Python/FastAPI code discovery is retired from the UI/API (`410 code_discov
 | `OLLAMA_BASE_URL` | Default `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | Default `qwen3:8b`; override explicitly to use another model |
 | `OLLAMA_TIMEOUT` | Seconds for one whole model answer; default 240. On a laptop GPU that runs part of qwen3:8b on the CPU, suggestions take about 3 minutes, so raise it (for example 1800) |
-| `OLLAMA_CONTEXT` | Sent as `options.num_ctx` (tokens); default 32768. Requests are rejected unless an input-token upper bound (UTF-8 bytes of the chat text plus the template wrapper; the `format` schema is a decoding grammar, not prompt text) plus 8192 reserved output tokens (`num_predict`, including any thinking) plus a 512-token margin fits. That bound overestimates about fourfold, so when it fails Team C first asks Ollama for the real count (a one-token `/api/chat` call with the same messages and `num_ctx`; stored as `measured_input_tokens`) and accepts if that count plus the reserve and margin fits. A prompt longer than `num_ctx` is cut by Ollama and reported near `num_ctx`, so it is still rejected. Batch sizing keeps using the byte bound. The bound and Ollama's `prompt_eval_count`/`eval_count` are stored as run diagnostics |
+| `OLLAMA_CONTEXT` | Sent as `options.num_ctx` (tokens); default 32768. Requests are rejected unless an input-token upper bound (UTF-8 bytes of the chat text plus the template wrapper; the `format` schema is a decoding grammar, not prompt text) plus 8192 reserved output tokens (`num_predict`, including any thinking) plus a 512-token margin fits. That bound overestimates about fourfold, so when it fails the tools service first asks Ollama for the real count (a one-token `/api/chat` call with the same messages and `num_ctx`; stored as `measured_input_tokens`) and accepts if that count plus the reserve and margin fits. A prompt longer than `num_ctx` is cut by Ollama and reported near `num_ctx`, so it is still rejected. Batch sizing keeps using the byte bound. The bound and Ollama's `prompt_eval_count`/`eval_count` are stored as run diagnostics |
 | `OLLAMA_THINK` | Default false: turns Qwen3 reasoning on for every call. Request triage, suggestions, area naming, proposal writing, revision and answer checking (reconciliation) always reason; area assignment and automated repair do not. Reasoning shares the `num_predict` output budget with the answer, so proposal writing, revision and answer checking reserve 16384 output tokens instead of 8192. Reasoning text is streamed to the live progress page while an action runs, held only in server memory, cleared when the action succeeds and never stored in the database |
 | `GROQ_API_KEY` | Secret; required only when Groq is selected |
 | `GROQ_API_KEY_2`, `GROQ_API_KEY_3`, `GROQ_API_KEY_4` | Optional backup secrets, tried in that order before moving from Groq to the next provider |
@@ -90,7 +90,7 @@ The usual cloud-then-local order is `LLM_PRIMARY=groq` and `LLM_FALLBACK=openrou
 
 All configured Groq keys are tried before OpenRouter and Ollama on service failures. The Ollama context budget (including its token-count call) is checked only when Ollama is actually attempted, so an offline local fallback never blocks a successful Groq or OpenRouter request. If the fallback input does not fit, the run fails with `model_input_limit`. Selected providers must be configured and distinct; unused providers are ignored. Invalid output, refusals, bad bindings, rejected requests, configuration failures and cancellation stop the chain. Every attempted provider is recorded on the run. There are no automatic repair/retry loops or cross-model replacement on invalid content.
 
-The proposal-design system prompt is assembled per task (`system_prompt(kind)` in `tool_generation_mcp/llm/prompts.py`): every call carries the shared role and safety rules, generation/revision/repair add the binding rules, and triage and suggestion carry only their own section. Triage starts from a `TOOLS_TRIAGE_INDEX_CHARS` slice (default 8000, never above `TOOLS_CAPABILITY_INDEX_CHARS`), and further slices are retrieved when the model reports an operation absent. Index entries list up to 32 top-level response fields, so a wide record is not misread as lacking a field. “Check answers” uses a dedicated reconciliation prompt and compact JSON; it sends only the answers it assesses. Groq schemas share binding definitions and omit annotations and unused definitions; the original full schema still validates every response. A token-limit HTTP 413 reports requested and allowed token counts when supplied by Groq. Rotating keys cannot make an oversized request fit an identical token allowance.
+The proposal-design system prompt is assembled per task (`system_prompt(kind)` in `services/tools/llm/prompts.py`): every call carries the shared role and safety rules, generation/revision/repair add the binding rules, and triage and suggestion carry only their own section. Triage starts from a `TOOLS_TRIAGE_INDEX_CHARS` slice (default 8000, never above `TOOLS_CAPABILITY_INDEX_CHARS`), and further slices are retrieved when the model reports an operation absent. Index entries list up to 32 top-level response fields, so a wide record is not misread as lacking a field. “Check answers” uses a dedicated reconciliation prompt and compact JSON; it sends only the answers it assesses. Groq schemas share binding definitions and omit annotations and unused definitions; the original full schema still validates every response. A token-limit HTTP 413 reports requested and allowed token counts when supplied by Groq. Rotating keys cannot make an oversized request fit an identical token allowance.
 
 
 The UI shows the primary/fallback configuration; each run records actual provider/model attempts. A successful provider response is not the same as accepted generation: grounding can still fail the overall run.
@@ -130,7 +130,7 @@ Do not enter a real order ID during onboarding. Future customer identity/authori
 
 ## Second domain
 
-Create **Room Desk**, use `examples/room-booking-business.txt`, and upload `examples/room-booking.yaml`. A chained proposal can map the reservation response's `/room_id` to the service request's `body.room_id`. `reservation_id` and `message` are runtime inputs; `team_id` is business configuration. Answer with the exact team setting, such as **Use team_id "facilities" for all requests**. Inspect/reconcile revisions and reject this proposal to demonstrate decisions independent of Small Shop.
+Create **Room Desk**, use `examples/room-booking-business.txt`, and upload `examples/room-booking.yaml`. A chained proposal can map the reservation response's `/room_id` to the service request's `body.room_id`. `reservation_id` and `message` are runtime inputs; `team_id` is business configuration. Answer with the exact setting, such as **Use team_id "facilities" for all requests**. Inspect/reconcile revisions and reject this proposal to demonstrate decisions independent of Small Shop.
 
 ## Tests
 
@@ -214,14 +214,14 @@ Each owner-confirmed access requirement needs an enforceable mechanism. Record-s
 
 Supported mechanisms, and nothing else:
 
-- `caller_access`: `{"mechanism": "delegated_user_credential"}` (`enforced_by: target_api`). Each run uses one operator-registered identity's own credential, and identities not labelled `scope: end_user` are refused. The label is an operator declaration, not proof of authorization. The target API decides what the credential may do; Team C verifies this only through sandbox tests.
+- `caller_access`: `{"mechanism": "delegated_user_credential"}` (`enforced_by: target_api`). Each run uses one operator-registered identity's own credential, and identities not labelled `scope: end_user` are refused. The label is an operator declaration, not proof of authorization. The target API decides what the credential may do; the tools service verifies this only through sandbox tests.
 - `record_scope`: `{"mechanism": "response_field_matches_context", "step_id", "response_status", "pointer", "context_field", "comparison": "equals", "check_point": "after_step"}` (`enforced_by: tools_executor`). Its rules:
   - The check runs on a read step.
   - The pointer (nested allowed) must be a required, non-nullable string or integer in that response.
   - `context_field` must be declared in the connector's `context_fields`.
   - Every other step touching the record must follow the check and take the identifier either from the same source or from the checked step's response.
   - If the value differs from the identity's trusted context value, no later step runs.
-- **Not supported:** service-account execution on behalf of many users, organization/team membership or role checks, list/set comparisons, and checks after a write. Such requirements stay blocked; they are not forced into equality checks.
+- **Not supported:** service-account execution on behalf of many users, organization/group membership or role checks, list/set comparisons, and checks after a write. Such requirements stay blocked; they are not forced into equality checks.
 
 `TOOLS_CONNECTORS_FILE` format (keep it out of version control; credentials never enter artifacts, prompts, arguments or reports):
 
@@ -241,7 +241,7 @@ The executor (`executor.py`) validates arguments against the input schema before
 
 Before a run, the server checks that the approval is still current, that the stored content matches the approved snapshot, the destination and the credentials. A failed pre-flight is recorded as `rejected` with `requests_sent: 0`.
 
-**Liveness of runs and executions.** Every model run and execution records the process that owns it. Each process holds an exclusive OS file lock (`<database>.owners/<owner>.lock`) for as long as it lives. When a Team C or MCP process starts, it marks a `running` row `interrupted` only if its owner's lock can be acquired (so the owner has exited) or the row has no owner (legacy data). Runs of other live processes are left alone. An interrupted execution reports that a write may or may not have been applied; nothing is retried. `tests/test_lifecycle.py` checks this with a real second process.
+**Liveness of runs and executions.** Every model run and execution records the process that owns it. Each process holds an exclusive OS file lock (`<database>.owners/<owner>.lock`) for as long as it lives. When a tools service or MCP process starts, it marks a `running` row `interrupted` only if its owner's lock can be acquired (so the owner has exited) or the row has no owner (legacy data). Runs of other live processes are left alone. An interrupted execution reports that a write may or may not have been applied; nothing is retried. `tests/test_lifecycle.py` checks this with a real second process.
 
 API: `POST /proposals/{id}/enforcement`, `POST /enforcement/{id}/review` (`note`), `POST /proposals/{id}/artifacts` (`connector_id`), `GET /artifacts/{id}`, `POST /artifacts/{id}/sandbox-runs` (`identity`, `arguments`), `POST /artifacts/{id}/sandbox-tests` (`name`, `identity`, `arguments`, `expect`), `POST /sandbox-tests/{id}/repairs` (`verification`). The proposal page has the enforcement submit/review and build forms plus repair history. `/artifacts/{id}` shows steps, enforcement provenance, a sandbox-run form (one field per tool input, built from the artifact's input schema: a list for enums and booleans, number fields, text fields, and a JSON box only for object or array inputs), test results and execution history.
 
@@ -253,7 +253,7 @@ A sandbox test pairs a run with an expectation written by the operator or test a
 |---|---|---|
 | `mapping_suspect` (bad binding pointer, 4xx on a mapped request, schema mismatch, missing output) | yes | model repair (max 2 per case) |
 | `authentication`, `access_or_authentication` (401/403), `configuration`, `test_input` | no | fix configuration or the test |
-| `access_check` (Team C blocked the run), `expected_denial_not_observed` | no | owner review; access is never repaired |
+| `access_check` (the tools service blocked the run), `expected_denial_not_observed` | no | owner review; access is never repaired |
 | `uncertain_write`, `partial_write` | no | inspect target state manually; nothing is retried |
 | `connectivity`, `destination` | no | check the connector |
 
@@ -324,7 +324,7 @@ Publishing is refused unless all of the following hold:
   - `authentication_failure`: a 401 or failed connector authentication. It never counts.
   - `general_access_denial`: a 403/404 when the caller never showed it can use its own record. It never counts.
   - `target_record_denial`: the API refused the other user's record after the caller succeeded on its own. It counts.
-  - `record_scope_enforced`: Team C's record check refused the call. It counts.
+  - `record_scope_enforced`: the tools service's record check refused the call. It counts.
 - Public tools, and tools that only need caller access, require only a success test. No cross-user test is invented for them.
 - No test name's latest run failed.
 
@@ -348,13 +348,13 @@ Client configuration (Cursor / Claude Desktop style; paths are examples):
 
 ```json
 {"mcpServers": {"ticket-easy-tools-alice": {
-  "command": "D:/nti project/tool_generation_mcp/.venv/Scripts/python.exe",
+  "command": "D:/nti project/services/tools/.venv/Scripts/python.exe",
   "args": ["-m", "tools_service.mcp_server", "--business-id", "<business-id>", "--identity", "alice",
            "--database", "data/mcp-desk.sqlite3", "--connectors", "data/mcp-desk-connectors.json", "--sandbox-hosts", "127.0.0.1:8004"],
   "cwd": "D:/nti project/tool_generation_mcp", "env": {"PYTHONPATH": "."}}}}
 ```
 
-**Team B integration contract.** Discover tools with `tools/list` and call them with `tools/call`, sending only the arguments in `inputSchema` (`additionalProperties: false`). Every call result has `structuredContent` (mirrored as JSON text in `content[0]`):
+**The agent integration contract.** Discover tools with `tools/list` and call them with `tools/call`, sending only the arguments in `inputSchema` (`additionalProperties: false`). Every call result has `structuredContent` (mirrored as JSON text in `content[0]`):
 
 `{status, output, error{code, category, message, step_id?, outcome?, http_status?, retry_after?, errors?}, message, execution_id, writes[{step_id, write_state}], tool, publication_id, artifact{id, sha256, proposal_id, proposal_version}, environment, production_ready: false}`
 
@@ -369,7 +369,7 @@ Client configuration (Cursor / Claude Desktop style; paths are examples):
 | `outcome_unknown` | true | a write may or may not have applied | no; check the target first |
 | `error` | true | server failure while handling the call; outcome unknown | no |
 
-An unknown, never-published or disabled tool name is a JSON-RPC error `-32602` with `data.code = "tool_not_published"`. Team B must not treat `partial` or `outcome_unknown` as success.
+An unknown, never-published or disabled tool name is a JSON-RPC error `-32602` with `data.code = "tool_not_published"`. The agent must not treat `partial` or `outcome_unknown` as success.
 
 Evidence:
 
@@ -381,40 +381,40 @@ Evidence:
 
 One action replaces creating dummy accounts, hunting for records and hand-writing scenarios: **Run automatic tests** on the artifact page, or `POST /api/v1/artifacts/{id}/auto-test` (background, returns a run id; poll `GET /auto-test-runs/{id}`; `{"wait": true}` answers when finished). It works for any business API, not one shop.
 
-- **Test fixtures** (optional, sandbox connectors only): the sandbox exposes `POST /_fixtures/accounts`, `POST /_fixtures/records`, `GET /_fixtures/kinds`, `POST /_fixtures/reset`, `GET /_fixtures/state` and optionally `POST /_fixtures/revoke`, protected by an `x-fixture-key` header and absent from the OpenAPI document. Declare them with `PUT /businesses/{bid}/connectors/{cid}/fixtures` `{base_url, key_ref}`; `key_ref` is the NAME of an environment variable in Team C's process, never the key. Live Demo connectors refuse fixtures. `integration/nile_sandbox/app.py` is one provider; `fixtures/service_desk/app.py` is another.
-- **Plan** (`tool_generation_mcp/autotest.py`, pure, no model): derived from the artifact exactly as `publishing.evidence()` requires: a success test as account A; for record-scope requirements own_record A, own_record B and a cross_user refusal; for data-scope requirements a success test as each account. Diagnostics that are not publication evidence: a revoked credential must be refused, an unknown argument must be rejected before any request. Argument values come from the input schema (enum, default, example, format, constraints); only what a schema cannot decide goes to the existing test-input helper (marked `source: model`).
+- **Test fixtures** (optional, sandbox connectors only): the sandbox exposes `POST /_fixtures/accounts`, `POST /_fixtures/records`, `GET /_fixtures/kinds`, `POST /_fixtures/reset`, `GET /_fixtures/state` and optionally `POST /_fixtures/revoke`, protected by an `x-fixture-key` header and absent from the OpenAPI document. Declare them with `PUT /businesses/{bid}/connectors/{cid}/fixtures` `{base_url, key_ref}`; `key_ref` is the NAME of an environment variable in the tools service's process, never the key. Live Demo connectors refuse fixtures. `integration/nile_sandbox/app.py` is one provider; `fixtures/service_desk/app.py` is another.
+- **Plan** (`services/tools/autotest.py`, pure, no model): derived from the artifact exactly as `publishing.evidence()` requires: a success test as account A; for record-scope requirements own_record A, own_record B and a cross_user refusal; for data-scope requirements a success test as each account. Diagnostics that are not publication evidence: a revoked credential must be refused, an unknown argument must be rejected before any request. Argument values come from the input schema (enum, default, example, format, constraints); only what a schema cannot decide goes to the existing test-input helper (marked `source: model`).
 - **Run** (`services/autotest.py`): creates accounts and records, saves the accounts as connector identities, runs each scenario through `run_sandbox_test` (tests are named `auto.<scenario>.<label>`; a re-run supersedes by name), tries each record state the kind offers for a write (a fresh record per attempt, a write is never retried on the same record), runs the generated guard tests and evaluates `publication_problems`. A wiring defect or any other question becomes `needs_owner` with the failure report; the AI repair is never started automatically, nothing is approved, and publishing happens only with `publish_when_ready` (default off, sandbox only).
 - **Without fixtures** it uses existing identities of the right account type and finds their records through a no-input read tool of the same connector; otherwise it says exactly what to add.
-- **Per-business setting**: `GET/PUT /businesses/{bid}/settings` `{auto_publish_sandbox}` (also on the artifact page, under "Settings for this business and connector"). Off by default; when on, a run that reaches ready_to_publish publishes to the sandbox MCP (never Live Demo or production). A request's explicit `publish_when_ready` wins; Team B's button never sends one, so the setting decides.
+- **Per-business setting**: `GET/PUT /businesses/{bid}/settings` `{auto_publish_sandbox}` (also on the artifact page, under "Settings for this business and connector"). Off by default; when on, a run that reaches ready_to_publish publishes to the sandbox MCP (never Live Demo or production). A request's explicit `publish_when_ready` wins; the agent's button never sends one, so the setting decides.
 - **Identities do not pile up**: after each run, `auto-*` identities that no current test of any artifact on the connector uses (as caller or record owner) are deleted. Evidence identities and your own identities are never touched.
 - **Fixtures form**: the artifact page can declare or remove the connector's fixtures (base URL + the NAME of the key variable; a value that is not a variable name is refused).
 - `readiness_state` (artifact view and `GET /businesses/{bid}/artifacts`): `not_tested | testing | needs_owner | ready_to_publish | published`, computed, never stored. Tests: `tests/test_autotest.py`, `tests/test_nile_fixtures.py`.
 
 #### Production: promoted tools that act on real customers' data
 
-A **production** tool is a tested sandbox or Live Demo tool that an admin has **promoted**. It calls the business's real API with ONE business **service credential** for every customer, so the target API can no longer tell customers apart: **Team C does**, on every call, against the verified customer's trusted context. Nothing is production until Team C says so for a promoted, active publication.
+A **production** tool is a tested sandbox or Live Demo tool that an admin has **promoted**. It calls the business's real API with ONE business **service credential** for every customer, so the target API can no longer tell customers apart: **The tools service does**, on every call, against the verified customer's trusted context. Nothing is production until the tools service says so for a promoted, active publication.
 
 | | Sandbox | Live Demo | Production |
 |---|---|---|---|
 | connector | test destination, test identities | real API, a demo account's credentials | real API, ONE service credential named by reference (`secret_ref`: `env:NAME` or `file:/path`), never stored |
-| who runs it | a registered test identity | one demo identity per MCP process | the business's service credential, acting for the **verified customer** whose id the calling server (Team B) sends as trusted context |
+| who runs it | a registered test identity | one demo identity per MCP process | the business's service credential, acting for the **verified customer** whose id the calling server (the agent) sends as trusted context |
 | MCP server | `--identity <name>` | `--identity <name>` | a separate process: `--identity service --context-from-client` (lists and runs only production tools) |
 | published by | the owner, after tests | the owner, after tests | an **admin's promotion** (`POST /artifacts/{id}/promotions`), never `publish` |
 | `production_ready` | false | false | true only while the promotion is active and every re-check holds |
 
 **Switches (operator, `.env`)**: `TOOLS_PRODUCTION_ENABLED` (kill switch, off), `TOOLS_PRODUCTION_HOSTS` (exact host:port; every address must be public), `TOOLS_PRODUCTION_CALLS_PER_MINUTE` / `TOOLS_PRODUCTION_CALLS_PER_CUSTOMER_PER_MINUTE`, `TOOLS_PRODUCTION_SMOKE_CONTEXT` / `TOOLS_PRODUCTION_SMOKE_ARGUMENTS`, `TOOLS_PRODUCTION_AUTO_DISABLE_FAILURES` / `_WINDOW_SECONDS`, `TOOLS_PRODUCTION_AUDIT_DIR`, and `TOOLS_ADMIN_TOKEN`. `TOOLS_PRODUCTION_PRIVATE_HOSTS` is a **development-only** exception (a local production-like deployment) and must be empty in a real setup; it is the one place this deviates from "no private-host exception".
 
-**Why it is safe to use one credential for everyone** (all enforced by Team C, tested in `tests/test_production.py`):
+**Why it is safe to use one credential for everyone** (all enforced by the tools service, tested in `tests/test_production.py`):
 - the tool needs an accepted structured access policy; every record-scope requirement must be a `response_field_matches_context` check (after the record is read, its owner field must equal the customer's context); a write must come after such a checked read. `unrestricted`, `api_filtered` and list/data-scope requirements are **execution blockers** in production (a list the API filters by caller would return everyone's rows);
-- the customer context travels in the MCP request's `_meta.ticketeasy.context` (and an idempotency key in `_meta.ticketeasy.idempotency_key`), **never in arguments** (`additionalProperties: false` is unchanged). Keys must be the connector's declared context fields; a missing, undeclared or malformed context is refused before any request. A server started without `--context-from-client` never reads the metadata. **Trust boundary:** this holds because the stdio process is spawned by Team B and nobody else can write to it; any network transport needs mutual authentication first;
+- the customer context travels in the MCP request's `_meta.ticketeasy.context` (and an idempotency key in `_meta.ticketeasy.idempotency_key`), **never in arguments** (`additionalProperties: false` is unchanged). Keys must be the connector's declared context fields; a missing, undeclared or malformed context is refused before any request. A server started without `--context-from-client` never reads the metadata. **Trust boundary:** this holds because the stdio process is spawned by the agent and nobody else can write to it; any network transport needs mutual authentication first;
 - a production artifact runs only through its publication (`production_requires_publication` otherwise); context is recorded only as a hash;
 - every call is budgeted per connector and per customer, and every execution is appended to a daily audit file (ids, status and the context hash, never a value).
 
 **Promotion** (`services/promotion.py`; the human decision is the admin's, the checks are automatic and ALL must pass, each stored with its evidence; a refused attempt is kept): source published with complete evidence; approval current; enforcement reviewed; production twin built from the same approved version and identical to the tested artifact except destination and activation (`promotions.differences`); service-credential scoping satisfied; secret available; idempotency (an API-declared `Idempotency-Key` header is sent from the trusted key, otherwise an admin must explicitly accept "no idempotency" for each write; an uncertain write is never retried either way); rate limits set; a named rollback contact; and a **smoke check** (connection check plus the tool's read steps before its first write, as the operator's internal test customer; a write is never run by a promotion).
 
-**Rollback / disable**: `POST /promotions/{id}/rollback` disables the production publication and leaves the sandbox / Live Demo publications alone; an **error spike** (API or integration failures: unavailable, timeout, bad response, partial or unknown writes, bad login, within the window) rolls the tool back automatically as `auto-disable`. A customer refused by a Team C check never counts. (The plan's Team B `action_failing` hook is not used: this is Team C's own watch.)
+**Rollback / disable**: `POST /promotions/{id}/rollback` disables the production publication and leaves the sandbox / Live Demo publications alone; an **error spike** (API or integration failures: unavailable, timeout, bad response, partial or unknown writes, bad login, within the window) rolls the tool back automatically as `auto-disable`. A customer refused by a tools service check never counts. (The plan's the agent `action_failing` hook is not used: this is the tools service's own watch.)
 
-**Who may do what**: promote, roll back and save a production connector need the operator's `x-tools-admin-token` on the REST API (`TOOLS_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). Team B holds the token and records the signed-in **admin's name**; Team C's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
+**Who may do what**: promote, roll back and save a production connector need the operator's `x-tools-admin-token` on the REST API (`TOOLS_ADMIN_TOKEN`; unset = those actions are off; once set it guards every change through `/api`, reads stay open). The agent holds the token and records the signed-in **admin's name**; the tools service's own pages are read-only for production (a production card on the artifact page) and refuse the production connector form.
 
 **Not done / limits**: no per-customer OAuth (D1 default); list/data-scope tools cannot be promoted yet (`output_rows_match_context` was not built); the idempotency header path is unit-tested but no real API in this repository declares one; nothing was run against a real external production API (only the local Nile "production" deployment, `integration/production_check.py`).
 
@@ -435,7 +435,7 @@ What separates the two, everywhere:
 
 Every gate is checked again before each run, right before the request: switching `TOOLS_LIVE_DEMO_ENABLED` off or removing the host blocks the next call and hides the tool from `tools/list` (`effective_status: blocked`, `problem.code: live_demo_disabled`). A sandbox artifact never runs on a live connector, nor the reverse (`environment_mismatch`). The URL in an uploaded specification is only a suggestion: calls go only to the URL the owner confirms on the connector.
 
-Owner workflow (Team C pages or `/api/v1`): upload the API's OpenAPI → request a tool → answer, accept the access policy, approve → under **Set up the API connector** choose **Live Demo**, confirm it is the real API you may call (`POST /proposals/{id}/connectors` `{base_url, environment: "live_demo", confirmed: true}`) → build → add the demo account's identity on the artifact page → **Check connection** (`POST /connectors/{id}/check`) → **Run live test** → **Publish as Live Demo** (`POST /artifacts/{id}/publications` `{environment: "live_demo", note}`) → disable any time.
+Owner workflow (the tools service pages or `/api/v1`): upload the API's OpenAPI → request a tool → answer, accept the access policy, approve → under **Set up the API connector** choose **Live Demo**, confirm it is the real API you may call (`POST /proposals/{id}/connectors` `{base_url, environment: "live_demo", confirmed: true}`) → build → add the demo account's identity on the artifact page → **Check connection** (`POST /connectors/{id}/check`) → **Run live test** → **Publish as Live Demo** (`POST /artifacts/{id}/publications` `{environment: "live_demo", note}`) → disable any time.
 
 The connection check reports each step separately: `configuration` (allowed in its environment; nothing is sent if not), `reachable` (one GET to the base URL, no credentials, no redirects), `authentication` (OAuth2 password: each identity obtains a token; bearer tokens stay `unknown` until an operation proves them), `permissions` (only what passing tests proved, per identity) and `executable` (published tools that pass every re-check). A passing check never claims every operation will succeed. `GET /businesses/{id}/connectors` lists connectors with environment, host, identity names and the last check, never credentials.
 

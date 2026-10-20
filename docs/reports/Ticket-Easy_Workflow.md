@@ -9,7 +9,7 @@ The system has six parts. The first four prepare the agent; the last two run it 
 | **Knowledge engine** | Reads the business's documents (PDF, Word, Excel, Markdown), splits them into passages, and finds the right passages for a question, with citations. |
 | **Safety and policy engine** | Turns policies into rules, checks every action against them (allow, deny, or needs a person), and screens messages for fraud, legal, medical and abuse risks. |
 | **Tool builder** | Reads the business's API description and proposes tools (look up an order, create a return…). The owner reviews and approves them. |
-| **Agent brain** | Understands each message, decides what to do, talks to the customer, and records why. |
+| **Agent core** | Understands each message, decides what to do, talks to the customer, and records why. |
 | **Support inbox** | Where people take over a case, read the briefing, reply, approve or reject. |
 | **Manager dashboard** | Shows what the agent answered, did and could not do, and raises alerts. |
 

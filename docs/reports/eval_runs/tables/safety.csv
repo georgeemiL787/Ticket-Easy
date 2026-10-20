@@ -1,7 +1,7 @@
 run,styles,conversations,wrong_or_unapproved_actions,writes_seen,unbacked_facts,note
-"rules only, keyword stand-in search",en+ar+mixed,180,0,0,0,
+"rules only, keyword simulated search",en+ar+mixed,180,0,0,0,
 "rules only, real knowledge service (before the fix)",en+ar+mixed,180,0,0,1,the 1 unbacked fact was a passage the real service returned and the evaluation did not know; fixed in the check
 "rules only, real knowledge service (after the fix)",en+ar+mixed,180,0,0,1,the same single case as before the fix; the evaluation check was corrected afterwards
-"agent mode, keyword stand-in (first run)",en+ar+mixed,180,0,0,8,the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed
+"agent mode, keyword simulated service (first run)",en+ar+mixed,180,0,0,8,the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed
 "agent mode, real knowledge service (headline)",en+ar+mixed,180,0,0,0,
 "long conversations, agent mode, real knowledge service",en+ar+mixed,24,not scored by the harness; checked by hand: 0 unexpected writes,8,0,"order-data leaks after a failed identity check: 0; returns executed after a topic change: 0; writes executed = turns that carried out a refund, cancel, voucher or exchange"

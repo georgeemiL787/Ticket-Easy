@@ -1,6 +1,6 @@
 # Ticket-Easy dashboard
 
-The manager dashboard (React, Vite, TypeScript, Recharts). It reads the Team B service's `/v1/dashboard/*` API and is
+The manager dashboard (React, Vite, TypeScript, Recharts). It reads the agent service's `/v1/dashboard/*` API and is
 served by that service at `/dashboard`.
 
 ## Use it

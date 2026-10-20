@@ -1,6 +1,6 @@
 """Promotion of a sandbox- or Live Demo-tested tool to production, its rollback, and the automatic disable on an error spike.
 
-Promotion is a human decision (a the agent admin, recorded with name, time and note) with automated checks. Nothing here makes a
+Promotion is a human decision (a agent admin, recorded with name, time and note) with automated checks. Nothing here makes a
 tool production by itself: every item of the readiness checklist must pass, each is stored with its evidence, and a refused
 attempt is kept too. A production publication then stays valid only while its promotion is active and everything it was
 promoted on still holds (re-checked on every list and call by Publication.check_publication).
@@ -103,7 +103,7 @@ class Promotion:
         if prod is not None:
             pc = prod["content"]
             blockers = pc["execution_blockers"]
-            item("service_scoped", not blockers, "; ".join(blockers) or "every record-scope requirement is a the tools service check against the verified customer's context; no unrestricted, API-filtered or list scope")
+            item("service_scoped", not blockers, "; ".join(blockers) or "every record-scope requirement is a tools service check against the verified customer's context; no unrestricted, API-filtered or list scope")
             differ = rules.differences(sc, pc)
             item("content_identical", not differ, ("differs from the tested artifact in: " + ", ".join(differ)) if differ else "identical to the tested artifact except destination and activation")
             ops = self.discovery.spec(self.building.proposals.view(pid, source["version"])["spec_id"])["inventory"]["operations"]

@@ -84,11 +84,11 @@ reason **unverified result**.
 3. Check in the shop's own system whether the change really happened.
    - It happened: reply to the customer to confirm and resolve the case.
    - It did not happen: do it by hand in the shop (do not press the action again from here), then reply and resolve.
-   - You cannot tell: ask the shop's team before telling the customer anything.
+   - You cannot tell: ask the shop's staff before telling the customer anything.
 4. Do not retry the same action blindly. The agent never repeats a change it could not verify, because that could
    refund twice.
 5. If it happens often, something is wrong in the shop's answers: look at the dashboard **Actions** page (what was
-   sent to the shop and what came back), and tell the shop team. The Alerts page shows an "unverified result" alert.
+   sent to the shop and what came back), and tell the shop staff. The Alerts page shows an "unverified result" alert.
 
 ## 5. Back up and restore
 

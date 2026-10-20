@@ -110,7 +110,7 @@ PRODUCTS = {
 
 # Conditions a customer can report per (category, subcategory) when asking for a return. Limited to the
 # conditions the reference policy evaluator reads exactly as the policy page does, and to the values in
-# data/rules/vocabulary.json (the contract shared with Team C).
+# data/rules/vocabulary.json (the contract shared with the tools service).
 CONDITIONS = {
     "electronics": ["sealed", "sealed", "opened", "used", "defective"],
     "beauty_health": ["sealed", "sealed", "opened", "used"],

@@ -1,4 +1,4 @@
-"""Write the plug-in files next to the database: policies, FAQ, Team-B-shaped fixtures, tenant config, scenarios.
+"""Write the plug-in files next to the database: policies, FAQ, agent-shaped fixtures, tenant config, scenarios.
 
 Run after generate.py:  python3 export.py
 """
@@ -213,7 +213,7 @@ def main():
     q = lambda sql, *a: [dict(r) for r in con.execute(sql, a)]
 
     # ---- policies as readable documents ----
-    pol_dir = OUT / "corpus"  # Team A reads the policies as this tenant's RAG corpus
+    pol_dir = OUT / "corpus"  # the knowledge service reads the policies as this tenant's RAG corpus
     for doc_id, ver, ten, tar, sections in POLICIES:
         md = [f"# {ten} — {tar}", "", f"{BRAND_EN} ({BRAND_AR}) · version {ver} · effective {EFFECTIVE}", "",
               "_Fictional brand. The rules follow real Egyptian operators' and NTRA's public terms; each section lists what it is based on._", ""]
@@ -235,7 +235,7 @@ def main():
                f'<div dir="rtl">{r["answer_ar"]}</div>', "", f"Source: `{r['citation']}`", ""]
     (OUT / "faq.md").write_text("\n".join(md), encoding="utf-8", newline="\n")
 
-    # ---- Team B shaped fixtures ----
+    # ---- the agent shaped fixtures ----
     fx = OUT / "fixtures" / TENANT
     passages = []
     for doc_id, ver, ten, tar, sections in POLICIES:

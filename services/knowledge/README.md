@@ -1,11 +1,11 @@
-# Ticket-Easy · Team A: AI Safety + RAG
+# Ticket-Easy · Knowledge service: AI Safety + RAG
 
-Team A answers two questions for the agent:
+The knowledge service answers two questions for the agent:
 
 1. **What does the company's policy say?** (Knowledge & RAG): cited passages, or an explicit "no evidence".
 2. **Is this action allowed?** (Safety & Guardrails): a deterministic `allow` / `deny` / `require_human` decision with the rule and citation behind it.
 
-Team A never talks to the customer (Team B) and never executes tools (Team C).
+The knowledge service never talks to the customer (the agent) and never executes tools (the tools service).
 
 Everything is free and runs locally: embeddings come from Ollama (`bge-m3`). The only LLM use is OpenRouter `:free` models for *proposing* rules and a second opinion on risk. Nothing that controls execution depends on an LLM.
 
@@ -43,7 +43,7 @@ uvicorn knowledge_service.api:app --app-dir src --port 8001
 | `python -m knowledge_service eval-scenarios [--tenant noon_eg]` | Retrieval smoke test on a tenant's scenarios, read from the database |
 | `python -m knowledge_service export-schemas` | Write JSON Schemas to `contracts/schemas/` |
 
-## HTTP API (for Team C's MCP adapter)
+## HTTP API (for the tools service's MCP adapter)
 
 | MCP capability | Endpoint | Returns | Auth |
 |---|---|---|---|
@@ -56,7 +56,7 @@ uvicorn knowledge_service.api:app --app-dir src --port 8001
 | review (admin) | `GET /v1/policy/rules`, `POST .../{id}/approve`, `POST .../{id}/reject`, `PATCH .../{id}` | `Rule` | `X-Admin-Key` |
 | after re-ingest | `POST /v1/admin/reload` | clears the cached index | `X-Admin-Key` |
 | data lookups (read-only) | `GET /v1/data/customers/{id}`, `.../customers/{id}/orders`, `/v1/data/orders/{id}`, `.../orders/{id}/items/{item}/facts`, `/v1/data/returns/{id}` (all `?tenant_id=`) | JSON record | `X-Admin-Key` |
-| store a precedent (Team B, on `resolved`) | `POST /v1/knowledge/resolutions` | `ResolutionWriteResult` (`stored: false` + reasons when refused) | `X-Admin-Key` |
+| store a precedent (the agent, on `resolved`) | `POST /v1/knowledge/resolutions` | `ResolutionWriteResult` (`stored: false` + reasons when refused) | `X-Admin-Key` |
 | precedents for a human reviewer | `POST /v1/knowledge/resolutions/search` | `ResolutionSearchResult` (advisory only) | `X-Admin-Key` |
 
 Endpoints marked `X-Admin-Key` require that header to equal `KNOWLEDGE_ADMIN_API_KEY` from `.env`. If `KNOWLEDGE_ADMIN_API_KEY` is unset, they reject every request.
@@ -73,7 +73,7 @@ Redacted records of how humans resolved escalated cases, so a reviewer handling 
 2. **No personal data is stored.** Only category, redacted summary, resolution, cited rule and tags are kept. `is_safe_to_persist()` refuses (never scrubs) text with an email, phone, order or reference id, payment details, address, name or transcript text. Its reasons name the kind of data, never the value.
 3. **Precedents are advisory.** Results carry `advisory: true`. `check_action` never reads them, so a precedent cannot authorize or execute an action.
 
-**Team B integration.** The handoff code isn't in this repo yet; this is built against the project plan's `HandoffPackage`. When a case moves to `resolved`, POST:
+**The agent integration.** The handoff code isn't in this repo yet; this is built against the project plan's `HandoffPackage`. When a case moves to `resolved`, POST:
 - `category`, `redacted_summary` and `resolution`, with no names, order numbers or quotes
 - `cited_rule_id` (if any) and `escalation_reason`
 - `risk_categories` from the case's `classify_risk`; send `[]` only if it really was empty
@@ -98,7 +98,7 @@ The checks run in the order below, and the first one that decides stops the eval
 
 Rule conditions read **`facts`** (verified backend data) by default. `arguments` (values the agent proposes, such as a refund amount) are read only when a condition says `"from": "arguments"`. An argument can never stand in for a fact: guardrail case G25 covers this.
 
-### Facts Team C's backend must send
+### Facts the tools service's backend must send
 
 | Action | Required facts / arguments |
 |---|---|
@@ -108,7 +108,7 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | `update_delivery_address`, `cancel_order` | `order_status` |
 | `apply_voucher` | `expected_delivery_date`, `delivered_at`, argument `amount` |
 
-`days_since_delivery` and `days_late` are derived from the dates. Full vocabulary: [data/rules/vocabulary.json](data/rules/vocabulary.json).
+`days_since_delivery` and `days_late` are derived from the dates. Full vocabulary: [data/shared/vocabulary.json](data/shared/vocabulary.json).
 
 ## Current results (seed corpus, `bge-m3`)
 
@@ -142,7 +142,7 @@ No-answer recall is the weak spot: off-topic questions that share words with the
 
 One derived database, `var/db/knowledge.sqlite` (gitignored), holding every tenant's structured data and knowledge. Build it with `python -m knowledge_service db build` (add `--no-embeddings` without Ollama; if Ollama is down the build stores that tenant keyword-only and says so). Rebuilding is idempotent.
 
-- **Tenants:** `shop_001` (Nile Style; customers/orders from Team B's fixture, `data/mock/shop_001/backend.json`) and `noon_eg` (noon's real public return policy, with fictional customers/orders/returns/scenarios in `data/mock/noon_eg/`, regenerated by `build_noon_mock_data.py`).
+- **Tenants:** `shop_001` (Nile Style; customers/orders from the agent's fixture, `data/mock/shop_001/backend.json`) and `noon_eg` (noon's real public return policy, with fictional customers/orders/returns/scenarios in `data/mock/noon_eg/`, regenerated by `build_noon_mock_data.py`).
 - **Tables:** `tenants`, `customers`, `orders`, `order_items`, `returns`, `policy_documents`, `policy_passages` (+ `passages_fts`, `passage_embeddings`), `past_tickets` (+ `ticket_embeddings`), `rules_mirror`, `resolutions_mirror`, `eval_scenarios`, `eval_scenario_sections`, `benchmark_questions`, `db_meta`, `db_sources`. Schema: [src/knowledge_service/db/schema.sql](src/knowledge_service/db/schema.sql).
 - **Repository** ([db/repository.py](src/knowledge_service/db/repository.py)), all tenant-scoped: `get_customer`, `list_orders_for_customer`, `get_order` (with items), `get_return`, `build_check_action_facts`, `search_knowledge`, `get_passage`, `search_past_tickets`. Search uses the same retrieval code, thresholds and result contracts as the file index.
 - **Tenant isolation:** `tenant_id` leads every primary key and foreign key, so a row cannot reference another tenant's row.
@@ -169,7 +169,7 @@ One derived database, `var/db/knowledge.sqlite` (gitignored), holding every tena
 - Risk keywords handle spelling variants, but miss new vocabulary (e.g. "someone changed the phone number on my account") and dropped Arabizi vowels. Substring matching over-flags ("court shoes" escalates as legal), which fails safe.
 - The `proposed` queue holds 20 LLM-extracted rules. The approval gate only catches rules that break a guardrail case, so review each one before approving.
 - Admin endpoints share one `X-Admin-Key`, with no per-user accounts, and `reviewer` is self-reported. Replace with real auth before any real deployment.
-- Precedent redaction is pattern-based: a bare first name can get through unless Team B sends `redaction_check`. It also over-refuses, e.g. summaries mentioning "compensation" or a 5-digit amount.
+- Precedent redaction is pattern-based: a bare first name can get through unless the agent sends `redaction_check`. It also over-refuses, e.g. summaries mentioning "compensation" or a 5-digit amount.
 - Precedent search is only as safe as the `risk_categories` the caller sends; the keyword re-scan of the query is a backstop that misses phrasings.
 - Precedent writes append to a JSONL file without locking, so run a single instance only. If Ollama is down at write time, precedents go keyword-only, which finds nothing until a handful exist.
 - OCR, contradictory-document detection and reranking are out of scope.

@@ -73,7 +73,7 @@ def policy_passages(source: Path) -> dict[str, object]:
     return {"tenant_id": "noon_eg", "documents": documents, "passages": passages}
 
 
-def write_stand_ins(folder: Path, source: Path) -> None:
+def write_simulated_files(folder: Path, source: Path) -> None:
     """What the offline simulated services (policy search, safety screen, rule checker) need so Noon also runs without
     the knowledge service:
     the policy passages, the same danger words as Nile Style, and NO approved rules (a change then goes to a person,
@@ -108,7 +108,7 @@ def main() -> int:
     data = build(args.source)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8", newline="\n")
-    write_stand_ins(OUT.parent, args.source)
+    write_simulated_files(OUT.parent, args.source)
     counts = [len(data[k]) for k in ("customers", "orders", "returns")]  # type: ignore[arg-type]
     print(f"wrote {OUT}: {counts[0]} customers, {counts[1]} orders, {counts[2]} returns")
     return 0

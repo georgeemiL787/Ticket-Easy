@@ -1,7 +1,7 @@
 # Ticket-Easy demo. Two profiles (use `make demo` or `make demo-full`, see the README):
 #   light  the service with the simulated shop and policies, and a SQLite volume. Replies come from the rules.   (no AI model)
 #   full   the same plus Ollama running qwen3:8b: the AI model helps understand messages (AGENT_LLM=ollama).
-#   live   the agent talks to the real the knowledge service service (policy search, safety screen, rule checker) with the simulated shop.
+#   live   the agent talks to the real knowledge service (policy search, safety screen, rule checker) with the simulated shop.
 #          The knowledge service embeds with bge-m3 from the Ollama on the host (ollama pull bge-m3). No chat AI model.
 # Only one profile runs at a time (all use port 8010).
 
@@ -78,7 +78,7 @@ services:
       retries: 180   # up to 30 minutes for the first download
       start_period: 20s
 
-  # ---- profile "live": the agent + the real the knowledge service and the tools service ----
+  # ---- profile "live": the agent + the real knowledge service and the tools service ----
   agent-live:
     <<: *agent
     profiles: ["live"]

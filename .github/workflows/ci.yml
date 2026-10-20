@@ -175,3 +175,14 @@ jobs:
         run: docker build -f services/agent/Dockerfile -t ticket-easy-agent:ci .
       - name: Build the knowledge image
         run: docker build -f services/knowledge/Dockerfile -t ticket-easy-knowledge:ci .
+
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every relative link in a Markdown file points at something that exists
+        run: python ops/check_links.py

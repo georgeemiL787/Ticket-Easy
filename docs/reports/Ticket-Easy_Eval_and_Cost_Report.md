@@ -103,14 +103,14 @@ What this shows, without spin:
 
 | Run | Conversations | Wrong or unapproved actions | Writes seen | Unbacked facts | Note |
 |---|---|---|---|---|---|
-| rules only, keyword stand-in search | 180 | 0 | 0 | 0 |  |
+| rules only, keyword simulated search | 180 | 0 | 0 | 0 |  |
 | rules only, real knowledge service (before the fix) | 180 | 0 | 0 | 1 | the 1 unbacked fact was a passage the real service returned and the evaluation did not know; fixed in the check |
 | rules only, real knowledge service (after the fix) | 180 | 0 | 0 | 1 | the same single case as before the fix; the evaluation check was corrected afterwards |
-| agent mode, keyword stand-in (first run) | 180 | 0 | 0 | 8 | the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed |
+| agent mode, keyword simulated service (first run) | 180 | 0 | 0 | 8 | the 8 unbacked facts were 'today' in greetings; the evaluation check flagged them wrongly and was fixed |
 | agent mode, real knowledge service (headline) | 180 | 0 | 0 | 0 |  |
 | long conversations, agent mode, real knowledge service | 24 | not scored by the harness; checked by hand: 0 unexpected writes | 8 | 0 | order-data leaks after a failed identity check: 0; returns executed after a topic change: 0; writes executed = turns that carried out a refund, cancel, voucher or exchange |
 
-"Keyword stand-in search" is the simple keyword search the tests used before the real knowledge service was connected.
+"Keyword simulated search" is the simple keyword search the tests used before the real knowledge service was connected.
 
 In the 240-conversation set almost every conversation is one question and one answer (284 messages in 240 conversations), so no write was attempted and "0 of 0 writes" says little by itself. The evidence for write safety is the 83 scripted scenarios (real confirmations and executions) and a set of 24 longer conversations of 5 to 7 messages: there, cancellations, vouchers and exchanges were carried out after a confirmation, no order data leaked after a failed identity check, and no return was executed after the customer changed topic.[^4]
 
@@ -137,13 +137,13 @@ The gap is concentrated in policy questions. On the policy topics the agent ofte
 
 ---
 
-[^1]: `.github/workflows/eval.yml`, `orchestrator/eval/baseline_phase0.json`, `orchestrator/eval/nlu_baseline.json`, `docs/reports/eval_runs/E0_health_check.md`.
+[^1]: `.github/workflows/eval.yml`, `services/agent/eval/baseline_phase0.json`, `services/agent/eval/nlu_baseline.json`, `docs/reports/eval_runs/E0_health_check.md`.
 [^2]: `docs/reports/eval_runs/tables/per_style.csv`.
 [^3]: `docs/reports/eval_runs/knowledge/summary.json` and the command outputs in the same folder; recorded at commit `0be10fd`.
 [^4]: `tables/headline.csv`, `tables/per_style.csv`, `tables/safety.csv`, `conversation/compare_agent_vs_rules_live.txt`, `reports/eval_presentation_agent_live_*_2026-10-17.json`, `reports/eval_live_rules_*.json`, `diagnosis/longlive_*.jsonl`, `conversation/scenarios.txt`, `conversation/README_E4_followup.md`.
-[^5]: `tool_generation_mcp/E2E_FINAL_REPORT.md`, `knowledge/onboarding_tools_live_smoke.txt`, `usage/onboarding_tools.jsonl`, `conversation/../E0_health_check.md`.
-[^6]: `orchestrator/docs/metrics.md`, `.github/workflows/eval.yml`.
-[^7]: `orchestrator/docs/launch_readiness.md` (targets), `tables/headline.csv`, `diagnosis/live_en_policy.jsonl`, `conversation/README_E4_followup.md`.
+[^5]: `services/tools/E2E_FINAL_REPORT.md`, `knowledge/onboarding_tools_live_smoke.txt`, `usage/onboarding_tools.jsonl`, `conversation/../E0_health_check.md`.
+[^6]: `services/agent/docs/metrics.md`, `.github/workflows/eval.yml`.
+[^7]: `services/agent/docs/launch_readiness.md` (targets), `tables/headline.csv`, `diagnosis/live_en_policy.jsonl`, `conversation/README_E4_followup.md`.
 
 # Part 2. Models and cost
 
@@ -393,12 +393,12 @@ Nemotron 3 Super answered all 36 passages. For Nemotron 3 Ultra, every request r
 
 ## A. Arabizi
 
-Arabizi (Egyptian Arabic written in Latin letters) is measured so numbers stay comparable, but it is not part of the headline figures. The rules alone reach 40% intent on all 60 Arabizi conversations. The agent-mode figure below is a **sample of 15 conversations** run on the earlier keyword stand-in; the same sample on the real knowledge service did not complete cleanly (most turns fell back after rate limits), so it is not reported. Dialect wording by a dedicated writer is optional.
+Arabizi (Egyptian Arabic written in Latin letters) is measured so numbers stay comparable, but it is not part of the headline figures. The rules alone reach 40% intent on all 60 Arabizi conversations. The agent-mode figure below is a **sample of 15 conversations** run on the earlier keyword simulated service; the same sample on the real knowledge service did not complete cleanly (most turns fell back after rate limits), so it is not reported. Dialect wording by a dedicated writer is optional.
 
 | Run | Conversations | Intent % | Decision % | Citation % | Language % | Median s | Note |
 |---|---|---|---|---|---|---|---|
 | rules only (before the fix) | 60 | 40.0 | 45.1 | 24.0 | 97.2 | 0.3 | yes: all 60 conversations |
-| agent mode, keyword stand-in, SAMPLE of 15 conversations | 15 | 73.3 | 76.2 | 40.0 | 100.0 | 59.5 | yes: appendix: a sample, not the full set |
+| agent mode, keyword simulated service, SAMPLE of 15 conversations | 15 | 73.3 | 76.2 | 40.0 | 100.0 | 59.5 | yes: appendix: a sample, not the full set |
 
 ## B. Formulas
 

@@ -5,8 +5,8 @@ Status: plan only (2026-10-12). Written to be implemented step by step. Read the
 ## The two problems
 
 1. **Testing a tool is manual and slow.** Before publishing, the owner must create dummy accounts in their sandbox,
-   paste each account's credentials into Team C, find records that belong to each account and are in the right state,
-   and hand-write scenarios (own record ×2, cross-user refusal, data isolation). `integration/team_c_lifecycle.py`
+   paste each account's credentials into the tools service, find records that belong to each account and are in the right state,
+   and hand-write scenarios (own record ×2, cross-user refusal, data isolation). `ops/local/tools_lifecycle.py`
    shows the cost: every tool hard-codes identity → record pairs (`IDENTITIES`, `_UNSHIPPED`, carol/dan for orders
    that must be "processing" or "pending").
    **Goal:** one action ("Run automatic tests") that provisions what it needs, derives the scenarios, runs them,
@@ -22,14 +22,14 @@ Status: plan only (2026-10-12). Written to be implemented step by step. Read the
 
 - **Owner approval stays human.** Automation may test, diagnose, fix test *setup* and mark "ready". It never approves a
   proposal, never accepts an access policy, never approves a model repair, and never promotes to production by itself.
-- **Evidence rules are not weakened.** `tool_generation_mcp/team_c/publishing.py` `evidence()` / `next_steps()` stay the
+- **Evidence rules are not weakened.** `services/tools/tools_service/publishing.py` `evidence()` / `next_steps()` stay the
   definition of "may publish". Automation produces that evidence; it doesn't bypass it.
 - **Writes are never retried blindly.** Uncertain outcomes stay uncertain (`partial`, `outcome_unknown`).
 - **The model never sees credentials** and never chooses an identity.
-- **Team B's gates are unchanged** (identity → ownership → Team A `check_action` → customer confirmation → one
+- **The agent's gates are unchanged** (identity → ownership → the knowledge service `check_action` → customer confirmation → one
   execution → `verify_result`). Production is only another environment behind the same gates.
-- **Every phase ships with tests**, and existing suites stay green: Team A 973, Team B 3833, Team C 634, dashboard 49,
-  plus `integration/e2e_chat.py` (33), `e2e_live_chat.py` (22), `live_demo_check.py` (12).
+- **Every phase ships with tests**, and existing suites stay green: the knowledge service 973, the agent 3833, the tools service 634, dashboard 49,
+  plus `ops/local/e2e_chat.py` (33), `e2e_live_chat.py` (22), `live_demo_check.py` (12).
 
 ---
 
@@ -40,9 +40,9 @@ Status: plan only (2026-10-12). Written to be implemented step by step. Read the
 The hard part is not running tests; it's having accounts and records in the right state. Add an optional, declared
 **fixture provider** to a sandbox connector: a small set of endpoints the business's sandbox exposes for test setup
 only. The Nile sandbox already has most of this (`/_harness/tokens`, `/_harness/state`, `/_harness/switches` in
-`integration/nile_sandbox/app.py`).
+`ops/local/nile_sandbox/app.py`).
 
-Contract (JSON over HTTP, header `x-fixture-key`; never part of the OpenAPI document Team C generates tools from):
+Contract (JSON over HTTP, header `x-fixture-key`; never part of the OpenAPI document the tools service generates tools from):
 
 | Endpoint | Purpose |
 |---|---|
@@ -59,19 +59,19 @@ If the API has **no** fixture provider, automatic testing still works partly (§
 the owner must provide.
 
 Implement:
-- `integration/nile_sandbox/app.py`: add `/_fixtures/*` next to the existing harness routes. Records with a requested
+- `ops/local/nile_sandbox/app.py`: add `/_fixtures/*` next to the existing harness routes. Records with a requested
   state = copy a template order and set `order_status` / dates so the state's preconditions hold. Keep the harness
   routes for the existing scripts.
-- `tool_generation_mcp/team_c/fixtures.py` (new): `FixtureClient(connector, settings)` with `accounts()`, `record()`, `kinds()`,
+- `services/tools/tools_service/fixtures.py` (new): `FixtureClient(connector, settings)` with `accounts()`, `record()`, `kinds()`,
   `reset()`, `state()`. Same safety as the executor: sandbox destinations only, no redirects, timeouts, size limits,
   and the key read from the environment variable named by `key_ref`.
-- `tool_generation_mcp/team_c/services/connectors.py`: `save()` accepts optional `fixtures` (sandbox only); `listing()` shows
+- `services/tools/tools_service/services/connectors.py`: `save()` accepts optional `fixtures` (sandbox only); `listing()` shows
   `fixtures: configured | none` (never the key); the connection check gets a `fixtures` step (`GET /_fixtures/kinds`).
 
 ## 1.2 Derive the test plan from the artifact (deterministic, no model needed)
 
-New `tool_generation_mcp/team_c/autotest.py` with `plan(artifact, view, fixture_kinds) -> TestPlan`. Derive scenarios from what
-Team C already knows. Don't invent new rules; mirror `publishing.evidence()` and `next_steps()` so the plan is exactly
+New `services/tools/tools_service/autotest.py` with `plan(artifact, view, fixture_kinds) -> TestPlan`. Derive scenarios from what
+The tools service already knows. Don't invent new rules; mirror `publishing.evidence()` and `next_steps()` so the plan is exactly
 what publication needs:
 
 | Artifact fact | Scenarios generated |
@@ -140,21 +140,21 @@ computed from tests, evidence and publications (not stored, so it can't drift).
   a 409/422 means wrong state → classify as `test_input` and try the next one. Log every attempt.
 - Never call signup, admin or restricted operations to create data (they stay restricted, see `docs/OPENAPI_SUBSET.md`).
 
-## 1.5 Team B and the dashboard
+## 1.5 the agent and the dashboard
 
-- `orchestrator/src/team_b/adapters/team_c_admin.py`: `auto_test(artifact_id)`, `run(run_id)`.
-- `orchestrator/src/team_b/api/business_tools.py`: per Team C proposal, show `readiness_state` and the latest auto-test run
+- `services/agent/src/agent_service/adapters/tools_admin_client.py`: `auto_test(artifact_id)`, `run(run_id)`.
+- `services/agent/src/agent_service/api/business_tools.py`: per the tools service proposal, show `readiness_state` and the latest auto-test run
   summary. Add `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test` (manager; the artifact must belong to the
   tenant's business, else 404; add the route to `ROLES` in `api/auth.py`).
 - `dashboard/src/pages/BusinessTools.tsx`: under Tool proposals, a **Run automatic tests** button and the state badge
   (Not tested / Testing… / Needs you: <question> / Ready to publish / Published), polling the run until it finishes.
   en + ar texts.
-- `integration/team_c_lifecycle.py`: replace hard-coded `IDENTITIES`, `_UNSHIPPED` and the per-tool test lists with
+- `ops/local/tools_lifecycle.py`: replace hard-coded `IDENTITIES`, `_UNSHIPPED` and the per-tool test lists with
   one call to auto-test; keep the old path behind `--manual-tests` for comparison.
 
 ## 1.6 Tests for Part 1
 
-- `tool_generation_mcp/tests/test_autotest.py` (in-process service-desk fixture + a mock fixture provider):
+- `services/tools/tests/test_autotest.py` (in-process service-desk fixture + a mock fixture provider):
   - plan derivation for each row of §1.2 (pure function);
   - a record-scope tool reaches `ready_to_publish` with zero identities configured beforehand;
   - a tool whose state precondition needs `pending` gets a `pending` record;
@@ -163,8 +163,8 @@ computed from tests, evidence and publications (not stored, so it can't drift).
   - the fixture key never appears in a run, page, report or log;
   - a re-run supersedes by test name and doesn't duplicate evidence.
 - Nile sandbox: `/_fixtures/*` contract tests.
-- Team B API test for the proxy (scoping, role).
-- Real check: `integration/autotest_check.py`. Fresh business → model proposal → owner approval (scripted, labelled)
+- The agent API test for the proxy (scoping, role).
+- Real check: `ops/local/autotest_check.py`. Fresh business → model proposal → owner approval (scripted, labelled)
   → **one** auto-test call → `ready_to_publish` for each Nile tool (order, ticket, orders, return, exchange, refund,
   cancel, address, voucher) with no hand-written identities or records.
 
@@ -179,25 +179,25 @@ existing evidence rules are unchanged.
 
 | # | Question | Default in this plan |
 |---|---|---|
-| D1 | Whose credentials does a production tool use? | **A business service credential** (an API key/token the business issues to TicketEasy), with **Team C enforcing per-customer scoping** on every call. Per-customer OAuth (each customer links their own account) is a later option, not this plan. |
-| D2 | Where do production secrets live? | An env var or OS secret store referenced by name (`secret_ref: "env:NILE_PROD_TOKEN"`). Never in Team C's SQLite, pages, artifacts, logs or prompts. |
-| D3 | Who may promote to production? | A Team B **admin** (dashboard), recorded with name, time and note; sandbox evidence plus a passing production smoke check are required. |
-| D4 | Write tools in production? | Allowed only if the API declares an idempotency mechanism **or** the owner explicitly accepts "no idempotency" for that tool; still subject to Team A rules and customer confirmation. |
+| D1 | Whose credentials does a production tool use? | **A business service credential** (an API key/token the business issues to TicketEasy), with **The tools service enforcing per-customer scoping** on every call. Per-customer OAuth (each customer links their own account) is a later option, not this plan. |
+| D2 | Where do production secrets live? | An env var or OS secret store referenced by name (`secret_ref: "env:NILE_PROD_TOKEN"`). Never in the tools service's SQLite, pages, artifacts, logs or prompts. |
+| D3 | Who may promote to production? | A the agent **admin** (dashboard), recorded with name, time and note; sandbox evidence plus a passing production smoke check are required. |
+| D4 | Write tools in production? | Allowed only if the API declares an idempotency mechanism **or** the owner explicitly accepts "no idempotency" for that tool; still subject to the knowledge service rules and customer confirmation. |
 | D5 | Does Live Demo stay? | Yes, as the step between sandbox and production (real API, demo account). |
 
 ## 2.1 Why the current model can't serve real customers
 
-Today the identity is fixed per MCP process (`--identity`), and Team B maps a few demo customers to dummy identities
-(`TenantBinding.identities`). Real customers are unbounded and have no Team C identity. Team C's README states that
+Today the identity is fixed per MCP process (`--identity`), and the agent maps a few demo customers to dummy identities
+(`TenantBinding.identities`). Real customers are unbounded and have no the tools service identity. The tools service's README states that
 service-account execution on behalf of many users is unsupported. That is the core change, and it must be done safely:
 **the service credential may only ever reach the verified customer's own records.**
 
 ## 2.2 New execution mode: service credential + trusted customer context
 
-**Team C**
-- `tool_generation_mcp/team_c/compiler/policies.py` / `artifacts.py`: new caller-access mechanism `service_credential_scoped`:
-  - allowed only when **every** record-scope requirement has a Team C check (`response_field_matches_context`). No
-    `unrestricted`, and no `api_filtered` reliance for data scope: data-scope outputs must be filtered by Team C
+**The tools service**
+- `services/tools/tools_service/compiler/policies.py` / `artifacts.py`: new caller-access mechanism `service_credential_scoped`:
+  - allowed only when **every** record-scope requirement has a tools service check (`response_field_matches_context`). No
+    `unrestricted`, and no `api_filtered` reliance for data scope: data-scope outputs must be filtered by the tools service
     against the context too (new mechanism `output_rows_match_context`: drop rows whose owner field differs, or fail
     the call; owner chooses per tool);
   - every write step that targets a record must come after a checked read of that record (the two-step shape the
@@ -207,21 +207,21 @@ service-account execution on behalf of many users is unsupported. That is the co
   - context keys must be the connector's declared `context_fields`;
   - arguments still can't carry identity (`additionalProperties: false` unchanged);
   - the context is never logged in full (only a hash), never returned, and never reaches a model;
-  - **trust boundary:** this is safe only because the stdio process is spawned by Team B and nobody else can write to
+  - **trust boundary:** this is safe only because the stdio process is spawned by the agent and nobody else can write to
     it. Document it; any network transport needs mutual authentication first.
-- `tool_generation_mcp/team_c/executor.py`: `credentials()` for `service_credential_scoped` takes the service secret from
+- `services/tools/tools_service/executor.py`: `credentials()` for `service_credential_scoped` takes the service secret from
   `secret_ref` and the context from the call (not from a stored identity). The identity context check then compares
   against the call's context.
 
-**Team B**
-- `team_c_tools.py`: for a tool whose resolved environment is `production`, don't map to a dummy identity. Use one MCP
+**The agent**
+- `tools_catalog.py`: for a tool whose resolved environment is `production`, don't map to a dummy identity. Use one MCP
   process per business started with `--identity service --context-from-client`, and send `acting_customer_id` as
   `_meta.ticketeasy.context.customer_id`. An unverified customer still sends **nothing** (`IDENTITY_NOT_MAPPED` stays).
 - `TenantBinding.identities` stays for sandbox and Live Demo only.
 
 ## 2.3 The `production` environment
 
-**Team C**
+**The tools service**
 - `connectors.py`: `ENVIRONMENTS += ("production",)`. A production connector has:
   - `environment: "production"`, id prefix `prod-`, `base_url`, `secret_ref` (no stored credentials), `context_fields`;
   - hosts from operator settings `PRODUCTION_HOSTS` (exact host:port), the same public-address guard as Live Demo, and
@@ -237,8 +237,8 @@ service-account execution on behalf of many users is unsupported. That is the co
 
 ## 2.4 Promotion: sandbox-tested → production (human decision, automated checks)
 
-New table `promotions` (migration in `tool_generation_mcp/team_c/persistence/migrations/versions.py`, next version number) and
-service `tool_generation_mcp/team_c/services/promotion.py`:
+New table `promotions` (migration in `services/tools/tools_service/persistence/migrations/versions.py`, next version number) and
+service `services/tools/tools_service/services/promotion.py`:
 
 `promote(source_artifact_id, production_connector_id, actor, note)`:
 1. The source artifact is published (sandbox or Live Demo) with complete evidence (`publication_problems` empty).
@@ -259,53 +259,53 @@ service `tool_generation_mcp/team_c/services/promotion.py`:
    - idempotency decision recorded for writes (D4);
    - rate limits set;
    - an owner-named rollback contact.
-5. Record the promotion (actor from Team B's signed-in admin, time, note, the checklist, both artifact hashes) and
+5. Record the promotion (actor from the agent's signed-in admin, time, note, the checklist, both artifact hashes) and
    create a publication with `environment: "production"`, `production_ready: true`, `production_activation: true`.
 
 Keep `production_assessment` truthful: `passed` with the checklist id, or `not_assessed` for everything else.
 
 Rollback: `POST /publications/{id}/disable` (unchanged), plus `POST /promotions/{id}/rollback`, which disables
-production and leaves the sandbox / Live Demo publications as they are. Auto-disable on an error spike: reuse Team B's
-`action_failing` alert. When it opens for a production tool, call Team C's disable through `team_c_admin` (configurable
-per tenant; default on) and notify through the existing `TEAM_B_ALERT_WEBHOOK`.
+production and leaves the sandbox / Live Demo publications as they are. Auto-disable on an error spike: reuse the agent's
+`action_failing` alert. When it opens for a production tool, call the tools service's disable through `tools_admin_client` (configurable
+per tenant; default on) and notify through the existing `AGENT_ALERT_WEBHOOK`.
 
 ## 2.5 Idempotency for production writes
 
-- Discovery (`tool_generation_mcp/team_c/discovery.py`): detect an `Idempotency-Key` header parameter (or a documented body field)
+- Discovery (`services/tools/tools_service/discovery.py`): detect an `Idempotency-Key` header parameter (or a documented body field)
   on write operations and record `idempotency: header|field|none`.
-- `executor.py`: for production writes with `idempotency != none`, send Team B's `ToolCallRequest.idempotency_key`
+- `executor.py`: for production writes with `idempotency != none`, send the agent's `ToolCallRequest.idempotency_key`
   (already sha256(tenant|conversation|proposal)) through a new trusted MCP `_meta.ticketeasy.idempotency_key`, never as
   an argument. With `none`, require D4's explicit owner acceptance, shown on the promotion checklist.
 - An uncertain write stays uncertain. If the API has a lookup-by-idempotency-key read, add a **reconciliation** step for
   the inbox: "check whether this went through" runs that read, as a person-triggered action only.
 
-## 2.6 Team B, dashboard and labels
+## 2.6 the agent, dashboard and labels
 
-- `team_c_tools.py`: `Environment = Literal["sandbox", "live_demo", "production"]`. Production results are trusted only
+- `tools_catalog.py`: `Environment = Literal["sandbox", "live_demo", "production"]`. Production results are trusted only
   if `environment == "production"`, `production_ready is True` and the publication id matches. The rule against
   silent fallback stays (sandbox/live/prod published together and all allowed = ambiguous).
 - `business_tools.py`: environment `production`, the promotion record, the checklist, a **Promote to production**
   action (admin only; add to `ROLES`; scoped to the tenant's business) and **Roll back**.
 - Dashboard: a PRODUCTION badge (distinct colour), a promotion dialog showing the checklist and requiring a note, a
   banner "N tools act on real customer data", and the rollback button. en + ar.
-- Team C pages: a production connector form (secret reference, not secret value) and a read-only promotion view;
-  promotion itself is done from Team B (admin sign-in exists there; Team C pages have none).
+- The tools service pages: a production connector form (secret reference, not secret value) and a read-only promotion view;
+  promotion itself is done from the agent (admin sign-in exists there; the tools service pages have none).
 - Customer chat: unchanged. Customers never see environments.
 
 ## 2.7 Security work that production needs (and Live Demo didn't)
 
-- Team C's management API must stop being open on loopback for production actions: require a service token
-  (`TEAM_C_ADMIN_TOKEN`, env) on `/api/v1` mutations, and send it from `team_c_admin.py`. Team C's own pages: add at
-  least a single-operator password, or bind production actions to Team B only.
+- The tools service's management API must stop being open on loopback for production actions: require a service token
+  (`TOOLS_ADMIN_TOKEN`, env) on `/api/v1` mutations, and send it from `tools_admin_client.py`. The tools service's own pages: add at
+  least a single-operator password, or bind production actions to the agent only.
 - Pin DNS for production calls: resolve once, check public, connect to that address (httpx transport with a custom
   resolver), closing the rebinding gap noted in `docs/INTEGRATION.md` §8.
 - Audit export: executions with mode `mcp_production` → append-only log file per day (hashes and ids, no values).
-- Secrets never cross into Team B: Team B's binding `env` must not carry production secrets. Team C's process reads
+- Secrets never cross into the agent: the agent's binding `env` must not carry production secrets. The tools service's process reads
   them from its own environment.
 
 ## 2.8 Tests for Part 2
 
-- Team C `tests/test_production.py` (mock target):
+- The tools service `tests/test_production.py` (mock target):
   - a service credential cannot read another customer's record (context check refuses);
   - a call with no context or with undeclared keys is refused before any request;
   - context is ignored on a server started without `--context-from-client`;
@@ -316,10 +316,10 @@ per tenant; default on) and notify through the existing `TEAM_B_ALERT_WEBHOOK`.
   - an error spike auto-disables;
   - the secret never appears anywhere;
   - the idempotency key is sent as a header and never as an argument.
-- Team B: production results need `production_ready`; context is sent only for verified customers; admin-only
+- The agent: production results need `production_ready`; context is sent only for verified customers; admin-only
   promotion; ambiguity rules.
 - Dashboard: PRODUCTION badge, promotion dialog, rollback.
-- Real check `integration/production_check.py` against the Nile shop started as a separate "production" deployment
+- Real check `ops/local/production_check.py` against the Nile shop started as a separate "production" deployment
   with a service token (labelled clearly as a local deployment), then against a real API when the business provides a
   service credential.
 
@@ -335,25 +335,25 @@ Disable and rollback work on the next call.
 2. `autotest.plan()` as a pure function with full tests (1.2).
 3. `auto_test` run, job progress, readiness state, artifact page button (1.3).
 4. Fallback without fixtures (1.4).
-5. Team B proxy + dashboard button + lifecycle script switch (1.5); `autotest_check.py` passes for all Nile tools.
+5. The agent proxy + dashboard button + lifecycle script switch (1.5); `autotest_check.py` passes for all Nile tools.
 6. **Confirm D1–D5 with the product owner before starting Part 2.**
 7. Service-credential mechanism + trusted per-call context (2.2), mock-tested.
 8. Production environment + kill switch + secrets by reference (2.3).
 9. Promotion service + checklist + rollback + auto-disable (2.4).
 10. Idempotency (2.5).
-11. Team B + dashboard + Team C pages (2.6).
-12. Security hardening (2.7), then `production_check.py`, then docs (`docs/INTEGRATION.md`, `tool_generation_mcp/README.md`,
-    `orchestrator/CLAUDE.md`).
+11. The agent + dashboard + the tools service pages (2.6).
+12. Security hardening (2.7), then `production_check.py`, then docs (`docs/INTEGRATION.md`, `services/tools/README.md`,
+    `services/agent/CLAUDE.md`).
 
 ## Notes for the implementer
 
-- Read before editing: `tool_generation_mcp/team_c/publishing.py`, `services/building.py` (`run_sandbox`, `run_sandbox_test`,
+- Read before editing: `services/tools/tools_service/publishing.py`, `services/building.py` (`run_sandbox`, `run_sandbox_test`,
   `fix_and_retest`, `suggest_test_inputs`), `repair.py` (`diagnose`), `services/publication.py`, `connectors.py`,
-  `executor.py`, `orchestrator/src/team_b/adapters/team_c_tools.py`, `orchestrator/CLAUDE.md` (rules for Team B changes).
-- Team B tests must never start Team C: extend `orchestrator/tests/fake_team_c_mcp.py` instead.
-- Team A's test suite rewrites `rag/data/telecom/telco_001/schema.sql`. Restore it with
-  `git restore -- rag/data/telecom/telco_001/schema.sql` after running Team A's tests; don't commit it.
-- Generated files: after changing Team B dashboard models, run `python scripts/export_schemas.py` in `orchestrator/` and
+  `executor.py`, `services/agent/src/agent_service/adapters/tools_catalog.py`, `services/agent/CLAUDE.md` (rules for the agent changes).
+- The agent tests must never start the tools service: extend `services/agent/tests/fake_tools_mcp.py` instead.
+- The knowledge service's test suite rewrites `services/knowledge/data/telecom/telco_001/schema.sql`. Restore it with
+  `git restore -- services/knowledge/data/telecom/telco_001/schema.sql` after running the knowledge service's tests; don't commit it.
+- Generated files: after changing the agent dashboard models, run `python scripts/export_schemas.py` in `services/agent/` and
   `npm run types` in `dashboard/`.
 - Use Python heredocs carefully on Windows bash: `\n` inside an unquoted Python string in a heredoc becomes a real
   newline. Write edit scripts to files instead.

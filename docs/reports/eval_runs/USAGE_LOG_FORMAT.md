@@ -5,9 +5,9 @@ per service; off (no file, no change in behaviour) when it is empty.
 
 | Service | Log path | Run label |
 |---|---|---|
-| conversation service (`team_b`) | `TEAM_B_USAGE_LOG` | `TEAM_B_USAGE_RUN_LABEL` |
-| knowledge service (`team_a`) | `TEAM_A_USAGE_LOG` | `TEAM_A_USAGE_RUN_LABEL` |
-| tool service (`team_c`) | `TEAM_C_USAGE_LOG` | `TEAM_C_USAGE_RUN_LABEL` |
+| conversation service (`agent_service`) | `AGENT_USAGE_LOG` | `AGENT_USAGE_RUN_LABEL` |
+| knowledge service (`knowledge_service`) | `KNOWLEDGE_USAGE_LOG` | `KNOWLEDGE_USAGE_RUN_LABEL` |
+| tool service (`tools_service`) | `TOOLS_USAGE_LOG` | `TOOLS_USAGE_RUN_LABEL` |
 
 All three services write exactly the fields below (E1b).
 
@@ -43,7 +43,7 @@ Example (conversation service):
 {"ts": "2026-10-16T20:41:07.512+00:00", "service": "conversation", "run_label": "presentation_agent_en", "job": "orchestrator", "kind": "chat", "model": "openai/gpt-oss-120b", "provider": "api.groq.com", "status": "ok", "http_status": 200, "input_tokens": 3412, "output_tokens": 188, "reasoning_tokens": 40, "cached_tokens": null, "latency_ms": 1290, "key_index": 0, "backup_used": false, "estimated": false}
 ```
 
-Summary: `python orchestrator/scripts/usage_summary.py <logs...> [--csv out.csv]` groups by service, run label, job and model.
+Summary: `python services/agent/scripts/usage_summary.py <logs...> [--csv out.csv]` groups by service, run label, job and model.
 
 ## How each service fills the fields
 - **Conversation service:** one line per HTTP request to a model (a retry on the next key and a backup-model call are separate lines). Tokens are the provider's `usage`.

@@ -1,7 +1,7 @@
 # noon Egypt shop data (tenant noon_eg, e-commerce)
 
-A much bigger version of Team A's noon Egypt shop data (tenant `noon_eg`), in exactly the files and fields
-Team A's database loader already reads. Team A's database schema is unchanged.
+A much bigger version of the knowledge service's noon Egypt shop data (tenant `noon_eg`), in exactly the files and fields
+The knowledge service's database loader already reads. The knowledge service's database schema is unchanged.
 
 Built 2026-10-08. The shop's fixed "today" stays 2026-10-08, like the hand-built data.
 
@@ -35,11 +35,11 @@ Built 2026-10-08. The shop's fixed "today" stays 2026-10-08, like the hand-built
 
 ## How the rules are kept right
 
-- Every return in the data, and every "can I return this?" label, is decided by **Team A's own reading of
+- Every return in the data, and every "can I return this?" label, is decided by **The knowledge service's own reading of
   the policy** (the checker inside their noon data script), so the new data can't disagree with the
   hand-built data.
-- Only values from Team A's shared word list with Team C are used (order statuses, payment methods, item
-  conditions, categories), so nothing new needs Team C sign-off.
+- Only values from the knowledge service's shared word list with the tools service are used (order statuses, payment methods, item
+  conditions, categories), so nothing new needs the tools service sign-off.
 - `scripts/verify.py` runs 30 checks: the originals are unchanged, ids/emails are unique, totals add up,
   dates are in order and never in the future, refunds go where the payment method says, every label
   matches the policy, and the database row counts match the files.
@@ -59,11 +59,11 @@ Built 2026-10-08. The shop's fixed "today" stays 2026-10-08, like the hand-built
 
 ## Rebuilding
 
-From `rag/`: `bash data/e-commerce/noon_eg/scripts/rebuild.sh`. The seed is fixed (20261008), so the files come out byte-identical.
+From `services/knowledge/`: `bash data/e-commerce/noon_eg/scripts/rebuild.sh`. The seed is fixed (20261008), so the files come out byte-identical.
 
 ## Not changed
 
-Team A's schema, the policy text, the retrieval benchmark questions (they were written before tuning and
+The knowledge service's schema, the policy text, the retrieval benchmark questions (they were written before tuning and
 must stay that way), the word list, and the other shop (`shop_001`).
 
 ## Invented on purpose

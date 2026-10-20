@@ -2,7 +2,7 @@
 
 The tools service describes every tool it builds (name, input and output schemas, which steps read and which write).
 This module turns that into what the agent needs, without any model: a stable tool name, a ToolSpec for the core (the
-built-in shop declares no tool it does not know) and a ToolBindingRef naming the the tools service proposal. Credentials
+built-in shop declares no tool it does not know) and a ToolBindingRef naming the tools service proposal. Credentials
 never
 pass through here: bundles hold ids only.
 """

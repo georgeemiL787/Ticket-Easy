@@ -188,9 +188,9 @@ def main() -> int:
     print("\n== Services")
     for name, url in (("The knowledge service", KNOWLEDGE_URL), ("The agent", AGENT_URL), ("The tools service", TOOLS_URL), ("sandbox", SANDBOX)):
         check(f"{name} is up", httpx.get(url + "/health", timeout=5, trust_env=False).status_code == 200)
-    check("The agent runs against the real the knowledge service (live mode)", http.get("/health").json().get("mode") == "live")
+    check("The agent runs against the real knowledge service (live mode)", http.get("/health").json().get("mode") == "live")
 
-    print("\n== TEST A: the the knowledge service + the agent flow is unchanged")
+    print("\n== TEST A: the knowledge service + the agent flow is unchanged")
     reply = Chat(http).say("What is your return policy?")
     check("a policy question is answered from the knowledge service's passages, with citations", reply["decision"] == "answer" and bool(reply["citations"]), reply)
     human = Chat(http)

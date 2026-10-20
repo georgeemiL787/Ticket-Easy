@@ -31,7 +31,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
    pass, but too many customers would be asked to repeat themselves or sent to a person.
    Next step: work through the worst topics in the report (K5, K7, K2, T10 and the Arabic and Arabizi order-status
    phrasings), then run the same set with the AI model on (`make demo-full`, or `AGENT_LLM=openrouter`): that run has
-   never been made. Owner: Track B (understanding, evidence), with Track A for the action topics.
+   never been made. Owner: the handoff workstream (understanding, evidence), with the actions workstream for the action topics.
 2. **Handoff briefings (item 4) are not scored by a person.** The automatic check passes for every case opened in all 45
    scenarios (`tests/integration/test_sync1_briefings.py`, 45 passed), meaning each briefing has the required parts.
    Whether a reviewer finds 9 of 10 usable needs a human to read 10 of them. Owner: both, 30 minutes.
@@ -41,7 +41,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
 ## Evidence, item by item
 
 ### 1. All phase goals met and demos working: PARTLY
-- Prompts A1 to A16 and the matching Track B prompts are done and merged on `agent`.
+- Prompts A1 to A16 and the matching the handoff workstream prompts are done and merged on `agent`.
 - Whole test suite after the last merge: 2444 passed (`pytest -q` in `services/agent/`); dashboard: typecheck, build and 38 tests
   passed (`npm run build`, `npm test`).
 - 45 scenarios (the three example conversations among them) all pass: `tests/integration/test_scenarios.py` (part of
@@ -55,7 +55,7 @@ Also from phase 5.3, speed and resilience: PASS in the in-process run, not yet r
   matrix: **273 passed**, 0 failed.
 - "Zero forbidden changes" is measured in the fake shop's audit log, not in what the agent says (the tests count
   changes in the shop). Human approval never overrides a rule denial; that is tested too.
-- CI blocks weakening these: `safety.yml` runs on any change to the brain, and `.github/CODEOWNERS` needs two
+- CI blocks weakening these: `safety.yml` runs on any change to the core, and `.github/CODEOWNERS` needs two
   approvals on the action checks and the decision log (`docs/ci.md`). **A person must switch on the GitHub branch rules
   listed in `docs/ci.md`**; until then the block is not enforced.
 
@@ -93,7 +93,7 @@ review has not been done either.
   covered by the unit tests and the leak scan (no order data in any reply or trace before the customer is verified).
 - `retention.py` deletes conversations, traces and finished cases older than `AGENT_RETENTION_DAYS` (default 90) in a
   loop started with the service; open and claimed cases and their conversations are kept. Tested in
-  `tests/unit/brain/test_retention.py` (part of the 2444 passed).
+  `tests/unit/the core test_retention.py` (part of the 2444 passed).
 - Not covered: the server's own web-server logs and any backup file you take (they hold the same data as the database);
   see the runbook's backup section.
 

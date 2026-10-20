@@ -1,6 +1,6 @@
 # Architecture
 
-How the Team C source is organized, which way dependencies point, and the rules for changing the schema and the artifact format. Feature behavior is described in the [README](../README.md).
+How the tools service source is organized, which way dependencies point, and the rules for changing the schema and the artifact format. Feature behavior is described in the [README](../README.md).
 
 ## Project layout
 
@@ -117,7 +117,7 @@ Rules:
 - Domain modules never import those layers either.
 - Services reach each other only through the sibling instances passed to their constructors, not through the facade.
 
-A check of every `import` in `tool_generation_mcp/` found no violations. Internal modules import from the real locations (`persistence.db`, `persistence.recovery`, `persistence.util`, `llm.*`, `legacy.code_discovery`); no module in `tool_generation_mcp/` imports `storage`, `providers` or `code_discovery`. The shims below exist only for external callers (tests, scripts, older imports).
+A check of every `import` in `services/tools/` found no violations. Internal modules import from the real locations (`persistence.db`, `persistence.recovery`, `persistence.util`, `llm.*`, `legacy.code_discovery`); no module in `services/tools/` imports `storage`, `providers` or `code_discovery`. The shims below exist only for external callers (tests, scripts, older imports).
 
 ## Compatibility shims
 
@@ -128,7 +128,7 @@ A check of every `import` in `tool_generation_mcp/` found no violations. Interna
 | `tools_service.providers` (`Providers`, prompts, budgets, schema helpers, `ollama_stream`, `LIVE`, `live_step`, `check_cancelled`) | `tools_service.llm.router`, `llm.prompts`, `llm.budget`, `llm.schemas`, `llm.ollama`; `tools_service.progress` |
 | `tools_service.code_discovery` | `tools_service.legacy.code_discovery` |
 
-Moved without a shim: `tool_generation_mcp/templates/` is now `tool_generation_mcp/web/templates/`, and `tools_service.web.LIVE_WAIT_SECONDS` is now `tools_service.jobs.LIVE_WAIT_SECONDS`. New code should import the new locations.
+Moved without a shim: `services/tools/templates/` is now `services/tools/web/templates/`, and `tools_service.web.LIVE_WAIT_SECONDS` is now `tools_service.jobs.LIVE_WAIT_SECONDS`. New code should import the new locations.
 
 ## Transactions
 

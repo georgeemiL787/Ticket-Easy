@@ -1,4 +1,4 @@
-"""E5b helpers for the knowledge service (run from team_a with PYTHONPATH=src). Nothing is stored or approved.
+"""E5b helpers for the knowledge service (run from knowledge_service with PYTHONPATH=src). Nothing is stored or approved.
 
     rules : runs the rule extraction (the same function `python -m knowledge_service rules extract` uses) for each shop_001
             document WITHOUT storing the candidates, and prints how many candidate rules came back.

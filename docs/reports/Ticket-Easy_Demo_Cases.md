@@ -2,7 +2,7 @@
 
 Every case below was run against the live system (agent mode ON, Groq gpt-oss-120b orchestrator) and the replies shown are what it actually answered. Demo date is pinned to 2026-09-28.
 
-**Important:** the shop data lives in memory and each write can only happen once. Run every case once, in this order. To reset it, restart the stack: `orchestrator/.venv/Scripts/python.exe integration/serve.py up` (with the orchestrator/.env values loaded).
+**Important:** the shop data lives in memory and each write can only happen once. Run every case once, in this order. To reset it, restart the stack: `services/agent/.venv/Scripts/python.exe ops/local/serve.py up` (with the services/agent/.env values loaded).
 
 ## Links
 
@@ -12,8 +12,8 @@ Every case below was run against the live system (agent mode ON, Groq gpt-oss-12
 | Customer chat (second shop, noon_eg) | http://127.0.0.1:8010/chat?tenant_id=noon_eg |
 | Support inbox (staff) | http://127.0.0.1:8010/inbox |
 | Dashboard / Business tools (manager) | http://127.0.0.1:8010/dashboard/tools |
-| Team C tool builder | http://127.0.0.1:8101/ |
-| Team A safety + RAG API docs | http://127.0.0.1:8001/docs |
+| The tools service tool builder | http://127.0.0.1:8101/ |
+| The knowledge service safety + RAG API docs | http://127.0.0.1:8001/docs |
 | Nile sandbox shop API docs | http://127.0.0.1:8102/docs |
 
 Staff login (inbox, dashboard): `demo@ticketeasy.local` / `5KSTJdLZti0RNcxs` (manager, shop_001).
@@ -140,8 +140,8 @@ Topic change during a confirmation (use a new chat, Bob again only if you skippe
 
 1. http://127.0.0.1:8010/dashboard/tools shows each tool's state (Not tested, Testing, Needs you, Ready to publish, Published), the SANDBOX badge, **Run automatic tests**, **Disable** and **Refresh tool list**.
 2. Disable the order-lookup tool, ask `Where is my order NS-20877?` + `01012345601` in the chat (it can't look orders up and hands over), re-enable it and ask again.
-3. http://127.0.0.1:8101/ is Team C: connect an API, the model proposes a tool, the owner approves, tests run, publish.
-4. http://127.0.0.1:8001/docs is Team A, the policy search and the safety check behind the chat.
+3. http://127.0.0.1:8101/ is the tools service: connect an API, the model proposes a tool, the owner approves, tests run, publish.
+4. http://127.0.0.1:8001/docs is the knowledge service, the policy search and the safety check behind the chat.
 5. http://127.0.0.1:8010/chat?tenant_id=noon_eg: same platform, a different shop with its own policy (`What is your return policy?` answers from noon's rules).
 
 ## Suggested 20-minute order
@@ -152,8 +152,8 @@ Case 1, then Case 3, Case 4, Case 5, Case 2, Case 8. Cases 6 and 7 are backups.
 - Refund of NS-20701 is refused by the sandbox (409). Use NS-20745.
 - A refund or return always asks for the reason first. Give a short one. "I changed my mind" and "المنتج وصل بايظ" work; a size reason becomes an exchange, and the Arabizi sentence "ana ghayart ra2yi" is misread as thanks.
 - Cancelling the shipped order NS-20899 ends in a handoff to a colleague, because that lookup can fail; present it as "a human decides".
-- A Team C tool error shows as "I could not look that up right now". The agent never invents data and hands over.
-- Logs: integration/var/logs/*.log. Status: `orchestrator/.venv/Scripts/python.exe integration/serve.py status`.
+- A the tools service tool error shows as "I could not look that up right now". The agent never invents data and hands over.
+- Logs: ops/local/var/logs/*.log. Status: `services/agent/.venv/Scripts/python.exe ops/local/serve.py status`.
 
 ---
 

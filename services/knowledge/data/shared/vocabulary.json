@@ -1,5 +1,5 @@
 {
-  "description": "Actions (Team C tool names) and facts that rules may reference. The extractor rejects candidates that use anything else. Agree changes with Team C.",
+  "description": "Actions (the tools service tool names) and facts that rules may reference. The extractor rejects candidates that use anything else. Agree changes with the tools service.",
   "actions": {
     "get_order_status": "read an order's status and tracking",
     "create_return": "open a return request for a delivered item",

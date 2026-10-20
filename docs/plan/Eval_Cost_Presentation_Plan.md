@@ -3,7 +3,7 @@ name: Eval Cost Presentation
 overview: Produce a sales-oriented detailed report with chart-ready tables covering Ticket-Easy's evaluation pipeline/results (full refresh, agent mode as the AI run, Arabizi de-emphasized) and a model/cost analysis with measured token usage, a small measured model comparison, local vs cloud recommendations, and total cost. Free tiers only; several Groq keys used in parallel.
 todos:
   - id: branch-health
-    content: "New branch from a+b+c-integration; run all three services' test suites + dashboard before measuring anything; fix only what blocks the runs"
+    content: "New branch from the integration branch; run all three services' test suites + dashboard before measuring anything; fix only what blocks the runs"
     status: pending
   - id: token-logging
     content: "Small instrumentation (not a feature): save the provider's usage numbers per AI call to a JSONL file during eval runs (job, model, input/output tokens, latency, status; never text)"
@@ -30,14 +30,14 @@ todos:
     content: Model local/cloud table (measured vs hypothetical clearly marked; what-if rows for popular API and local models) + measured per-stack token averages + 1k/10k/100k and pilot monthly cost
     status: pending
   - id: write-report
-    content: Write docs/reports/Ticket-Easy_Eval_and_Cost_Report.md with chart-ready tables, pipeline/results-sharing narrative, service names (no team letters)
+    content: Write docs/reports/Ticket-Easy_Eval_and_Cost_Report.md with chart-ready tables, pipeline/results-sharing narrative, service names only
     status: pending
 isProject: false
 ---
 
 # Ticket-Easy Eval Pipeline & Model Cost Report
 
-Updated 16 October 2026 with five changes: agent mode is the AI run; the full AI run fits the free tier through four parallel processes; tokens are measured, not estimated; a small measured model comparison; service names instead of team letters in the report.
+Updated 16 October 2026 with five changes: agent mode is the AI run; the full AI run fits the free tier through four parallel processes; tokens are measured, not estimated; a small measured model comparison; service names instead of letters in the report.
 
 ## Deliverable
 
@@ -47,15 +47,15 @@ One detailed Markdown report (chart-ready tables you can paste into slides):
 
 Supporting raw outputs stay under:
 
-- `rag/reports/` (or stdout captured into `docs/reports/eval_runs/`)
-- `orchestrator/reports/eval_*_<date>.json|.md`
+- `services/knowledge/reports/` (or stdout captured into `docs/reports/eval_runs/`)
+- `services/agent/reports/eval_*_<date>.json|.md`
 - `docs/reports/eval_runs/` — consolidated CSVs/JSON excerpts for charts, and the token usage logs (`usage_*.jsonl`)
 
-**Naming in the report:** the report says **knowledge service** (team_a), **conversation service** (team_b) and **tool service** (team_c). Team letters appear only in commands and file paths, never in headings, tables or narrative.
+**Naming in the report:** the report says **knowledge service** (knowledge_service), **conversation service** (agent_service) and **tool service** (tools_service). Old letter names appear nowhere in headings, tables or narrative.
 
 **Arabizi policy:** still run all four styles so numbers stay comparable to baselines, but the report leads with **English + Arabic + mixed** aggregates. Arabizi appears only as a short appendix row, not a selling narrative.
 
-**Branch:** all work on a new branch made from `a+b+c-integration`. Nothing is merged. Step 0 runs every test suite on that branch first, because the integration branch has never been run in CI; only failures that block the measurements are fixed.
+**Branch:** all work on a new branch made from `the integration branch`. Nothing is merged. Step 0 runs every test suite on that branch first, because the integration branch has never been run in CI; only failures that block the measurements are fixed.
 
 ---
 
@@ -91,29 +91,29 @@ flowchart TD
 
 | Layer               | Command / source                                                                                                                                    | Success check                                                                   |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Branch health       | team_b `make test && make lint && make scenarios`; team_a `PYTHONPATH=src python -m pytest -q`; team_c `python -m pytest -q`; dashboard `npm test` | All green before any measurement                                                |
-| Retrieval           | `python -m team_a eval-retrieval --tenant shop_001\|noon_eg\|telco_001` (test + note dev)                                                           | recall@5, no-answer P/R captured                                                |
-| Guardrails          | `python -m team_a eval-guardrails`                                                                                                                  | **44/44**, 0 blocked actions executed                                           |
-| Noon scenarios      | `python -m team_a eval-scenarios --tenant noon_eg` (after `db build`)                                                                               | section_recall@5                                                                |
-| NLU                 | `python -m team_b eval-nlu --mode rules`                                                                                                            | intent ≥ baseline − 0.02                                                        |
-| Conversations       | `python -m team_b eval --set eval/conversations --label presentation_rules`                                                                         | full **240**; EN/AR/mixed highlighted                                           |
+| Branch health       | agent_service `make test && make lint && make scenarios`; knowledge_service `PYTHONPATH=src python -m pytest -q`; tools_service `python -m pytest -q`; dashboard `npm test` | All green before any measurement                                                |
+| Retrieval           | `python -m knowledge_service eval-retrieval --tenant shop_001\|noon_eg\|telco_001` (test + note dev)                                                           | recall@5, no-answer P/R captured                                                |
+| Guardrails          | `python -m knowledge_service eval-guardrails`                                                                                                                  | **44/44**, 0 blocked actions executed                                           |
+| Noon scenarios      | `python -m knowledge_service eval-scenarios --tenant noon_eg` (after `db build`)                                                                               | section_recall@5                                                                |
+| NLU                 | `python -m agent_service eval-nlu --mode rules`                                                                                                            | intent ≥ baseline − 0.02                                                        |
+| Conversations       | `python -m agent_service eval --set eval/conversations --label presentation_rules`                                                                         | full **240**; EN/AR/mixed highlighted                                           |
 | Conversations + AI  | 4 parallel processes, one per style (see below), `--llm --agent-mode on --judge --resume`                                                           | full **240** in agent mode; if a style cannot finish, its largest complete batch with sample size stated |
-| Model comparison    | `python -m team_b eval-nlu --mode llm` once per Groq model (see Part 2)                                                                        | intent accuracy + tokens + latency per model                                    |
-| Scenarios           | `python -m team_b.scripts.scenario_report` / `make scenarios`                                                                                       | **83** active pass                                                              |
+| Model comparison    | `python -m agent_service eval-nlu --mode llm` once per Groq model (see Part 2)                                                                        | intent accuracy + tokens + latency per model                                    |
+| Scenarios           | `python -m agent_service.scripts.scenario_report` / `make scenarios`                                                                                       | **83** active pass                                                              |
 | Safety spot-check   | Existing adversarial/property suites already in CI; cite latest green + reconfirm eval measures `wrong_or_unapproved_actions=0`, `unbacked_facts=0` | Must stay **0**                                                                 |
-| Tool service        | Cite `[tool_generation_mcp/E2E_FINAL_REPORT.md](tool_generation_mcp/E2E_FINAL_REPORT.md)` + run focused gate tests if needed                                                  | Publication/sandbox verdicts                                                    |
+| Tool service        | Cite `[services/tools/E2E_FINAL_REPORT.md](services/tools/E2E_FINAL_REPORT.md)` + run focused gate tests if needed                                                  | Publication/sandbox verdicts                                                    |
 
 ### Full 240 AI run on the free tier (locked)
 
 The AI run is **agent mode** (`--agent-mode on`), because that is what we present.
 
-**All AI helpers on.** In code, the four AI helper switches default to off (`orchestrator/src/team_b/config.py`: `llm_rewrite`, `llm_policy`, `llm_knowledge`, `llm_review` = False); only `.env.example` turns them on. Every AI run (the 240 agent run and the model comparison) must set `TEAM_B_LLM_REWRITE=1`, `TEAM_B_LLM_POLICY=1`, `TEAM_B_LLM_KNOWLEDGE=1`, `TEAM_B_LLM_REVIEW=1`, plus a model for every job (orchestrator, reader, knowledge, reviewer, writer, summary, judge). Before the long run, check one trace: it must show agent moves and the AI writer, knowledge and reviewer steps, not templates.
+**All AI helpers on.** In code, the four AI helper switches default to off (`services/agent/src/agent_service/config.py`: `llm_rewrite`, `llm_policy`, `llm_knowledge`, `llm_review` = False); only `.env.example` turns them on. Every AI run (the 240 agent run and the model comparison) must set `AGENT_LLM_REWRITE=1`, `AGENT_LLM_POLICY=1`, `AGENT_LLM_KNOWLEDGE=1`, `AGENT_LLM_REVIEW=1`, plus a model for every job (orchestrator, reader, knowledge, reviewer, writer, summary, judge). Before the long run, check one trace: it must show agent moves and the AI writer, knowledge and reviewer steps, not templates.
 
 Several keys in one process do not add speed: the LLM client only switches key when one hits a rate limit, and all keys share one rate budget per model. Separate processes each get their own budget, so:
 
-1. Make four folders, one per style: `eval_runs/sets/en/en.jsonl`, `.../ar/ar.jsonl`, `.../mixed/mixed.jsonl`, `.../arabizi/arabizi.jsonl` (copies of `orchestrator/eval/conversations/*.jsonl`).
+1. Make four folders, one per style: `eval_runs/sets/en/en.jsonl`, `.../ar/ar.jsonl`, `.../mixed/mixed.jsonl`, `.../arabizi/arabizi.jsonl` (copies of `services/agent/eval/conversations/*.jsonl`).
 2. Start four processes at the same time, each with its own Groq key and the same model settings:
-   `TEAM_B_LLM_API_KEY=<key N> python -m team_b eval --set eval_runs/sets/<style> --llm --agent-mode on --judge --label presentation_agent_<style> --resume`
+   `AGENT_LLM_API_KEY=<key N> python -m agent_service eval --set eval_runs/sets/<style> --llm --agent-mode on --judge --label presentation_agent_<style> --resume`
 3. If a process stops on the daily limit, re-run the same command later; `--resume` continues where it stopped.
 4. Merge the four per-style JSON reports in the aggregation step (recompute totals from per-turn results, not by averaging percentages).
 
@@ -122,7 +122,7 @@ Arabizi is run last and may use `--per-style` to keep it small. Every latency fi
 ### Extra validation (only where it strengthens the story)
 
 1. **Style rollups:** Add EN+AR+mixed aggregate tables (exclude Arabizi from headline %).
-2. **Baseline delta:** `eval-compare` presentation run vs `[orchestrator/eval/baseline_phase0.json](orchestrator/eval/baseline_phase0.json)` / `[eval_baseline.json](orchestrator/eval/eval_baseline.json)`, and agent run vs rules run.
+2. **Baseline delta:** `eval-compare` presentation run vs `[services/agent/eval/baseline_phase0.json](services/agent/eval/baseline_phase0.json)` / `[eval_baseline.json](services/agent/eval/eval_baseline.json)`, and agent run vs rules run.
 3. **Safety invariant block:** One table proving zero wrong writes / unbacked facts on the fresh run (the sales "trust" slide).
 4. **Scenario coverage check:** Confirm shop_001 + noon_eg file counts and zero pending.
 5. **Retrieval split hygiene:** Reconfirm test numbers only on held-out splits (no `--sweep` on test).
@@ -136,7 +136,7 @@ No new product features. The only code changes are the token usage log (Part 2) 
 3. **Knowledge service tables** — per tenant recall@5 / no-answer; guardrails
 4. **Conversation service tables** — NLU; conversation metrics (intent/decision/citation/locale/handoff); rules run vs agent run side by side, rules shown as the starting point that agent mode improves on
 5. **Tool service** — tool publication / E2E credibility (not chat quality %)
-6. **How results are shared** — committed baselines, `reports/`, GitHub artifacts, dashboard metrics (`[orchestrator/docs/metrics.md](orchestrator/docs/metrics.md)`)
+6. **How results are shared** — committed baselines, `reports/`, GitHub artifacts, dashboard metrics (`[services/agent/docs/metrics.md](services/agent/docs/metrics.md)`)
 7. **Honest gaps** — conversation accuracy vs 0.90/0.92/0.95 targets; framed as roadmap + model-stack opportunity (ties to Part 2)
 
 ---
@@ -145,9 +145,9 @@ No new product features. The only code changes are the token usage log (Part 2) 
 
 ### Token usage: measured, not estimated
 
-Every model answer already contains its exact token counts (`usage.prompt_tokens`, `usage.completion_tokens`); the conversation service reads them only to settle its rate limiter and then drops them (`orchestrator/src/team_b/adapters/llm.py`, `_settle`).
+Every model answer already contains its exact token counts (`usage.prompt_tokens`, `usage.completion_tokens`); the conversation service reads them only to settle its rate limiter and then drops them (`services/agent/src/agent_service/adapters/llm.py`, `_settle`).
 
-Small instrumentation change: when an environment variable such as `TEAM_B_USAGE_LOG=<path>` is set, the LLM client appends one JSON line per call: time, job (reader, orchestrator, knowledge, reviewer, writer, summary, judge), model, provider host, input tokens, output tokens, latency, status, run label. **Never prompt or reply text, customer data or keys.** Off by default; no effect on behaviour. Each eval process writes its own log under `docs/reports/eval_runs/`.
+Small instrumentation change: when an environment variable such as `AGENT_USAGE_LOG=<path>` is set, the LLM client appends one JSON line per call: time, job (reader, orchestrator, knowledge, reviewer, writer, summary, judge), model, provider host, input tokens, output tokens, latency, status, run label. **Never prompt or reply text, customer data or keys.** Off by default; no effect on behaviour. Each eval process writes its own log under `docs/reports/eval_runs/`.
 
 **Every component, same format.** The knowledge service and the tool service get the same log, written in the same line format with a `service` field (`conversation`, `knowledge`, `tools`), so one summary covers everything:
 
@@ -162,7 +162,7 @@ Ollama embeddings report their token count (`prompt_eval_count`) when the server
 
 **Measured onboarding.** One real onboarding with the logs on: the tool service generates tools for the example e-commerce API (`scripts.live_smoke --example ecommerce`, Groq free tier) and the knowledge service extracts rules for `shop_001` (`rules extract`, OpenRouter free). This turns the onboarding cost line from an estimate into a measured number.
 
-**Knowledge service per-message cost.** The conversation tests use a stand-in for the knowledge service, so its tokens do not appear there. They are measured separately: average tokens per search query (from the retrieval runs with the log on) and per risk second opinion (on 40 labelled messages), then multiplied by the number of searches and risk checks per conversation counted in the agent run.
+**Knowledge service per-message cost.** The conversation tests use a simulated for the knowledge service, so its tokens do not appear there. They are measured separately: average tokens per search query (from the retrieval runs with the log on) and per risk second opinion (on 40 labelled messages), then multiplied by the number of searches and risk checks per conversation counted in the agent run.
 
 The report states: usage before this log existed was not recorded; the totals shown are measured over the presentation runs, with their dates.
 
@@ -170,7 +170,7 @@ If there is no time for this change, every token figure in the report is labelle
 
 ### Measured model comparison (Groq only)
 
-Cheap and real: run `python -m team_b eval-nlu --mode llm` on all 155 labelled messages once per Groq model, changing only the model that does the understanding job, with the usage log on.
+Cheap and real: run `python -m agent_service eval-nlu --mode llm` on all 155 labelled messages once per Groq model, changing only the model that does the understanding job, with the usage log on.
 
 | Provider | Model id | Role today |
 |---|---|---|
@@ -329,7 +329,7 @@ Arabizi: one appendix sentence ("also measured; dialect writer optional").
 
 ## Work sequence
 
-0. Create the branch from `a+b+c-integration`; run all test suites; fix only what blocks the runs
+0. Create the branch from `the integration branch`; run all test suites; fix only what blocks the runs
 1. Add the token usage log (off by default) to the conversation service, then the same log to the knowledge and tool services; test that each writes numbers and never text
 2. Prepare `docs/reports/eval_runs/` and run the knowledge service retrieval (3 tenants) + guardrails + noon scenarios
 3. Run conversation service NLU + full 240 rules eval + scenario report
@@ -340,4 +340,4 @@ Arabizi: one appendix sentence ("also measured; dialect writer optional").
 7. Build model comparison + token/cost tables from the usage logs and public prices
 8. Write `[docs/reports/Ticket-Easy_Eval_and_Cost_Report.md](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md)` with chart-ready Markdown tables and source citations
 
-**Verify:** every headline % traces to a file under `eval_runs/` or `orchestrator/reports/`; every token figure traces to a usage log or is labelled "estimated"; the token tables cover all three services; what-if models are marked "hypothetical, not tested" and only appear in cost tables; safety cells are 0; Arabizi not in primary charts; no team letters in the report text.
+**Verify:** every headline % traces to a file under `eval_runs/` or `services/agent/reports/`; every token figure traces to a usage log or is labelled "estimated"; the token tables cover all three services; what-if models are marked "hypothetical, not tested" and only appear in cost tables; safety cells are 0; Arabizi not in primary charts; no letter names in the report text.

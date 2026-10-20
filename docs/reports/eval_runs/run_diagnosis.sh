@@ -13,7 +13,7 @@ run() {  # name, keys..., then diagnose_run.py arguments after --
   local name="$1"; shift; local ks=(); while [ "$1" != "--" ]; do ks+=("$1"); shift; done; shift
   (
     export AGENT_LLM_API_KEY="$(keys "${ks[@]}")" AGENT_USAGE_LOG="$RUNS/usage/diag_$name.jsonl" AGENT_USAGE_RUN_LABEL="diag_$name"
-    "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/orchestrator/eval/conversations" --llm --agent-mode on "$@" \
+    "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/services/agent/eval/conversations" --llm --agent-mode on "$@" \
       --out "$RUNS/diagnosis/agent_$name.jsonl" > "$RUNS/logs/diag_$name.log" 2>&1
   ) &
 }

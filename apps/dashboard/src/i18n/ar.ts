@@ -281,7 +281,7 @@ const ar: Record<TextKey, string> = {
   "bt.sourceSimulated": "المتجر البديل",
   "bt.status": "الحالة",
   "bt.detail": "التفاصيل",
-  "bt.teamCTool": "أداة من خدمة الأدوات",
+  "bt.publishedTool": "أداة من خدمة الأدوات",
   "bt.status.available": "متاحة",
   "bt.status.missing": "غير موجودة",
   "bt.status.blocked": "موقوفة",

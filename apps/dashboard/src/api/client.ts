@@ -1,4 +1,4 @@
-/** A failed call to the the agent service, with the service's own error code and message when it sent them. */
+/** A failed call to the agent service, with the service's own error code and message when it sent them. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,

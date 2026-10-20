@@ -160,6 +160,10 @@ section runs everything without Docker.
 Prerequisites: Python 3.13, Node 20+, `uv` (the tools service), a model provider for the tools service proposals (`services/tools/.env`, Groq /
 OpenRouter / Ollama). Ollama with `bge-m3` is optional for the knowledge service (keyword search without it).
 
+The quick way: `python ops/local/setup.py` does the whole block below for you (it skips what already exists, creates
+`services/agent/.env` and `services/tools/.env` from their examples, and never overwrites a settings file), and
+`python ops/local/setup.py --check` only reports what is missing. By hand:
+
 ```powershell
 # once: virtualenvs (git-ignored), the knowledge service's index, the dashboard
 python -m venv services/knowledge/.venv; services/knowledge/.venv/Scripts/python -m pip install -r services/knowledge/requirements.txt
@@ -176,7 +180,13 @@ a port held by another program, logs to `ops/local/var/logs/`):
 ```powershell
 python ops/local/serve.py up
 python ops/local/serve.py status     # in another terminal: what runs, Live Demo settings, setup warnings
+python ops/local/serve.py down       # stop everything (after changing a setting or a binding: down, then up)
 ```
+
+`up` reuses a service that already runs, so a changed `.env` only takes effect after `down`. The first `up` also writes
+`ops/local/var/tools.json` without any tool in it, which connects the agent to the tools service (the tool-setup pages need
+that); the commands below fill it in. If your `.env` files come from before the restructure, each service logs a start-up
+warning for every setting it no longer reads and names the new setting to use (`Setting X is not used. Did you mean AGENT_Y?`).
 
 Create tools (once; both resume where they stopped):
 

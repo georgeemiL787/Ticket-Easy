@@ -37,8 +37,8 @@ The dashboard type check, its tests and its build also pass.
 
 After pulling this branch:
 
-1. Recreate your local environments (virtual environments cannot be moved): run `uv sync` in each of `services/agent`, `services/knowledge` and `services/tools`, and `npm install` in `apps/dashboard`.
-2. Rename the settings in your own `.env` files. The prefixes are now AGENT_, KNOWLEDGE_ and TOOLS_ for each service; the full old-to-new table is kept by the person who ran the restructure.
+1. Recreate your local environments (virtual environments cannot be moved): run `python ops/local/setup.py`. It builds the three environments, the knowledge index and the dashboard, and creates `services/agent/.env` and `services/tools/.env` when they are missing.
+2. Rename the settings in your own `.env` files. The prefixes are now AGENT_, KNOWLEDGE_ and TOOLS_ for each service; at start-up every service logs a warning for each setting it no longer reads and names the new one.
 3. Local data made before the restructure (the agent database, the tool binding file) needs a one-time conversion; ask for the conversion script, which is not part of the repository. It makes a `.bak` copy first.
-4. Run the tool lifecycle again so `ops/local/var/tools.json` is written.
+4. Stop everything with `python ops/local/serve.py down`, start it again with `up`, and run the tool lifecycle again (`ops/local/tools_lifecycle.py --tool order`, then `--tool ticket`) so the tools are published and `ops/local/var/tools.json` lists them.
 5. Old remote branches are untouched. The eight branches that carry the old work-stream names (run `git branch -r --merged origin/main` to see them) are all already merged into main. Delete them only when the group agrees.

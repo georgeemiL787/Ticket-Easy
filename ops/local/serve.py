@@ -2,6 +2,7 @@
 
     python ops/local/serve.py up          # check the setup, start everything in order, wait for health, report
     python ops/local/serve.py status      # which services answer, and the Live Demo settings
+    python ops/local/serve.py down        # stop everything this script started (after a settings or binding change: down, then up)
     python ops/local/serve.py <service>   # one service in the foreground: sandbox | demo-shop | tools | knowledge | agent
 
 Services (each with its own virtualenv, working directory, port and an isolated database):
@@ -15,9 +16,9 @@ Services (each with its own virtualenv, working directory, port and an isolated 
 Configuration without editing source files:
 - ops/local/live_demo.env (git-ignored; copy ops/local/live_demo.example.env): LIVE_DEMO_* settings for the tools service
   and the credentials the Live Demo scripts store into the tools service (never printed, never committed).
-- ops/local/var/ (git-ignored): generated local keys, the agent's database, the agent's the tools service binding (tools.json,
+- ops/local/var/ (git-ignored): generated local keys, the agent's database, the agent's binding to the tools service (tools.json,
   written by ops/local/tools_lifecycle.py / live_demo_check.py). Without a binding the agent uses its simulated shop.
-Nothing here touches another the tools service instance (for example one on port 8000 with data/tools.sqlite3).
+Nothing here touches another tools service instance (for example one on port 8000 with data/tools.sqlite3).
 """
 
 import argparse
@@ -132,6 +133,15 @@ def command(service: str, simulated: bool = False, no_auth: bool = False) -> tup
         AGENT_LOG_JSON="0",
     )
     binding = VAR / "tools.json"
+    tools_python = venv_python("services/tools")
+    if not binding.exists() and tools_python and not simulated:
+        # No tool is created yet: connect the agent to the tools service anyway (no tenant yet), so the tool-setup pages work.
+        # ops/local/tools_lifecycle.py fills in the shop's tools later.
+        binding.write_text(json.dumps({
+            "command": [tools_python, "-m", "tools_service.mcp_server"], "cwd": str(ROOT / "services" / "tools"),
+            "env": {"PYTHONPATH": "."}, "database": "data/integration.sqlite3", "sandbox_hosts": f"127.0.0.1:{PORTS['sandbox']}",
+            "api_url": f"http://127.0.0.1:{PORTS['tools']}", "builder_url": f"http://127.0.0.1:{PORTS['tools']}", "tenants": {},
+        }, indent=2), encoding="utf-8")  # fmt: skip
     if binding.exists():
         sync_live_settings(binding)
         env["AGENT_TOOLS_CONFIG"] = str(binding)
@@ -291,9 +301,30 @@ def status() -> int:
     return 0
 
 
+def down() -> int:
+    """Stop the services this script starts: whatever listens on their ports (the same ports `status` reports)."""
+    stopped = 0
+    for service in ORDER:
+        port = PORTS[service]
+        if os.name == "nt":
+            listing = subprocess.run(["netstat", "-ano", "-p", "TCP"], capture_output=True, text=True, check=False).stdout
+            pids = {line.split()[-1] for line in listing.splitlines() if f"127.0.0.1:{port} " in line and "LISTENING" in line}
+            commands = [["taskkill", "/F", "/T", "/PID", pid] for pid in pids]
+        else:
+            listing = subprocess.run(["lsof", "-t", f"-iTCP:{port}", "-sTCP:LISTEN"], capture_output=True, text=True, check=False).stdout
+            commands = [["kill", pid] for pid in listing.split()]
+        for command_line in commands:
+            subprocess.run(command_line, capture_output=True, check=False)
+            stopped += 1
+        if commands:
+            print(f"stopped {service} (port {port})")
+    print("nothing was running" if not stopped else "all stopped")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("service", choices=["up", "status", *ORDER])
+    parser.add_argument("service", choices=["up", "down", "status", *ORDER])
     parser.add_argument("--simulated", action="store_true", help="agent: use the agent's simulated safety/RAG, not the knowledge service")
     parser.add_argument("--port", type=int, help="another port (e.g. a second agent for looking at the pages)")
     parser.add_argument("--no-auth", action="store_true", help="agent: sign-in off (AGENT_AUTH_REQUIRED=0); local only")
@@ -302,6 +333,8 @@ def main() -> int:
         return up(args.simulated)
     if args.service == "status":
         return status()
+    if args.service == "down":
+        return down()
     if args.port:
         PORTS[args.service] = args.port
     cmd, cwd, env = command(args.service, args.simulated, args.no_auth)

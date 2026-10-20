@@ -178,6 +178,12 @@ def writes(http: httpx.Client, tools_http: httpx.Client, artifact_id: str) -> No
 
 
 def main() -> int:
+    if not (VAR / "tools.json").exists() or not (VAR / "lifecycle_order.json").exists():
+        print("The tools are not created yet. With a model provider in services/tools/.env, run once:\n"
+              "  services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool order\n"
+              "  services/agent/.venv/Scripts/python ops/local/tools_lifecycle.py --tool ticket\n"
+              "then restart (serve.py down, serve.py up) and run this again.")
+        return 2
     binding = json.loads((VAR / "tools.json").read_text(encoding="utf-8"))
     tenant = binding["tenants"][T]
     state = json.loads((VAR / "lifecycle_order.json").read_text(encoding="utf-8"))

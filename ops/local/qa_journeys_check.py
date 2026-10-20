@@ -1,6 +1,6 @@
 """Journeys through the running stack's real HTTP surface (what the chat, inbox and dashboard pages call). TEST-ONLY.
 
-Needs `python ops/local/serve.py up` (sign-in on) and the admin in ops/local/var/local_admin.txt. Prints PASS/FAIL per
+Needs `python ops/local/serve.py up` (sign-in on); it creates its own test manager the first time. Prints PASS/FAIL per
 check and exits 1 when any failed. It does not drive a browser (no browser automation is installed in this repository);
 the pages' own behaviour is covered by the dashboard's vitest suite and was exercised by hand in the in-app browser.
 
@@ -8,11 +8,11 @@ the pages' own behaviour is covered by the dashboard's vitest suite and was exer
 """
 
 import contextlib
-import re
 import sys
 import uuid
 from pathlib import Path
 
+import e2e_chat
 import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -34,13 +34,9 @@ def say(http: httpx.Client, conversation: str, text: str) -> dict:
 
 @contextlib.contextmanager
 def signed_in():
-    note = (ROOT / "ops" / "local" / "var" / "local_admin.txt").read_text(encoding="utf-8")
-    email = re.search(r"<([^>]+)>", note).group(1)  # type: ignore[union-attr]
-    password = re.search(r"password:\s*(\S+)", note).group(1)  # type: ignore[union-attr]
-    http = httpx.Client(timeout=120)
-    reply = http.post(f"{B}/v1/auth/login", json={"email": email, "password": password})
-    assert reply.status_code == 200, "sign-in failed"
-    http.headers["X-CSRF-Token"] = reply.json()["csrf_token"]
+    """A signed-in test manager: e2e_chat creates it on first use, so nothing has to be set up by hand."""
+    http = httpx.Client(base_url=B, timeout=120)
+    http.headers.update(e2e_chat.manager(http))
     try:
         yield http
     finally:

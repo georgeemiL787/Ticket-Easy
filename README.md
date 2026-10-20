@@ -161,7 +161,15 @@ Things to try in the chat (the demo shop is "Nile Style"; it understands English
 
 `make demo` answers by rules and needs no internet. `make demo-full` adds a local AI model (about 5 GB the first time, 8 GB of free memory). `make demo-live` runs the agent against the real knowledge service and starts the tools service too; it needs Ollama with `ollama pull bge-m3` done once. `make logs` shows what it does, `make down` stops it (your data is kept), `make reset` deletes what it stored.
 
-The inbox and the dashboard need a sign-in: `make demo` creates `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). Every setting is explained in `.env.example`. To run everything without Docker, including the business tools in their sandbox and live-demo modes, follow [docs/INTEGRATION.md](docs/INTEGRATION.md).
+The inbox and the dashboard need a sign-in: `make demo` creates `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). Every setting is explained in `.env.example`. To run everything without Docker (needs Python 3.12+, Node 20+ and [uv](https://docs.astral.sh/uv/)):
+
+```bash
+python ops/local/setup.py        # once: environments, knowledge index, dashboard build, settings files
+python ops/local/serve.py up     # starts all services; `serve.py down` stops them
+python ops/local/e2e_chat.py     # optional: checks the whole stack end to end
+```
+
+Create the two demo business tools once, with a model key (Groq or OpenRouter, or a running Ollama) in `services/tools/.env`; without them the agent uses its built-in demo shop and everything else still works (steps in [docs/INTEGRATION.md](docs/INTEGRATION.md), which also covers the sandbox and live-demo modes).
 
 ---
 

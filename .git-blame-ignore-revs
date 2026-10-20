@@ -22,3 +22,6 @@ b394efb174ee7982fee0b03cec4762143d9d4050
 
 # Rename saved values, the admin header, the MCP server name and the tool connection file
 7016be84ae792eaf62deaaaf271ffe12ab587e5e
+
+# Remove team and track names from tests and code comments
+28ef902e4271dae62960f31f607175bfcceb3e3f

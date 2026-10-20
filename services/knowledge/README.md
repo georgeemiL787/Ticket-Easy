@@ -1,4 +1,4 @@
-# Ticket-Easy · Knowledge service: AI Safety + RAG
+# Ticket-Easy · Knowledge service
 
 The knowledge service answers two questions for the agent:
 
@@ -6,6 +6,8 @@ The knowledge service answers two questions for the agent:
 2. **Is this action allowed?** (Safety & Guardrails): a deterministic `allow` / `deny` / `require_human` decision with the rule and citation behind it.
 
 The knowledge service never talks to the customer (the agent) and never executes tools (the tools service).
+
+**Run its tests:** `cd services/knowledge && PYTHONPATH=src python -m pytest -q` (no Ollama or API key needed).
 
 Everything is free and runs locally: embeddings come from Ollama (`bge-m3`). The only LLM use is OpenRouter `:free` models for *proposing* rules and a second opinion on risk. Nothing that controls execution depends on an LLM.
 

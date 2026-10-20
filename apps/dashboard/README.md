@@ -1,7 +1,9 @@
-# Ticket-Easy dashboard
+# Ticket-Easy · Dashboard
 
 The manager dashboard (React, Vite, TypeScript, Recharts). It reads the agent service's `/v1/dashboard/*` API and is
 served by that service at `/dashboard`.
+
+**Run its tests:** `npm test` from `apps/dashboard/` (and `npm run typecheck`).
 
 ## Use it
 

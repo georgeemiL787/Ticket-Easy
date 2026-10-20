@@ -2,19 +2,138 @@
 
 **Plug in your business. Get a customer-service agent that actually does the work.**
 
-Ticket-Easy is an AI agent for Egyptian businesses that answers customers in their own language, takes real actions on your systems, and knows exactly when to hand over to a human. You give it your policies and your data. It gives you a support team that never sleeps and never makes something up.
+Ticket-Easy is an AI agent for Egyptian businesses. It answers customers in their own language, takes real actions on your systems within the limits you set, and hands over to a person, with a full briefing, the moment it should not act.
 
 ---
 
-## One product, three services
+## Watch the demo
 
-| What owners see | Service | Folder |
+| Language | Video | What it shows |
 |---|---|---|
-| Knowledge: documents, search, guardrail rules | Knowledge service | `services/knowledge/` |
-| The assistant, chat, inbox, dashboard, onboarding | Agent service | `services/agent/` (+ `apps/dashboard/`) |
-| Tools: turn an API description into safe tools | Tools service | `services/tools/` |
+| English | [Business demo (English)](https://drive.google.com/file/d/11M3dIk6nNhw7h3NHtOAoz1LTh4T6d6dR/view?usp=sharing) | Ticket-Easy shown to a business owner, narrated in English |
+| Arabic | [Business demo (Arabic)](https://drive.google.com/file/d/1nhfriQphCIe3XJleemFjyXSOWCRUhWWf/view?usp=sharing) | The same demo, narrated in Arabic |
 
-An owner sets a business up in the dashboard: **Set up a business** (profile, policies, rules, API connection, tools, test chat, go live). The folder names are historical; the plan is in `docs/plan/TICKET_EASY_MASTER_PLAN.md` and its progress in `docs/plan/TICKET_EASY_MASTER_PROGRESS.md`. Schemas: `contracts/README.md`.
+---
+
+## Why Ticket-Easy
+
+Every business gets the same messages all day: *where is my order, why did my bill change, can I move my booking, I want a refund.* People answering them is slow and expensive at night. A scripted chatbot breaks on the first real question. A custom build takes months. None of them write the way Egyptians do: Arabic, English, and both in one sentence.
+
+Ticket-Easy does three things a scripted bot does not:
+
+- **It reads your policies and follows them.** It answers from your documents and shows the exact passage it used. If the answer is not there, it says so instead of guessing.
+- **It acts, within limits you set.** The platform builds tools from your API description: look up an order, open a ticket, create a return. Every action is checked against your rules first. "Refunds within 14 days" is a wall the agent cannot cross.
+- **It knows when to stop.** Fraud signals, regulator complaints, anything outside policy: the case goes to a person with the conversation, the customer's data, what the agent already tried and a suggested next step. Nobody asks the customer to repeat anything.
+
+It works for any business with written policies and customer data. We start with e-commerce and telecom, and a new industry needs a schema and a set of policies, not a new project.
+
+---
+
+## How it works
+
+### System architecture
+
+```mermaid
+flowchart LR
+  customer["Customer<br/>web chat"] -->|HTTP| agent
+  staff["Support staff<br/>inbox"] -->|HTTP| agent
+  manager["Manager<br/>dashboard"] -->|HTTP| agent
+  subgraph services["Ticket-Easy services"]
+    agent["Agent service · port 8010<br/>chat, inbox and dashboard pages"]
+    knowledge["Knowledge service · port 8001<br/>policy search, safety screen,<br/>rule checker"]
+    tools["Tools service · port 8101<br/>turns an API description<br/>into approved tools"]
+  end
+  agent -->|"HTTP JSON"| knowledge
+  agent -->|"MCP, one process<br/>per customer identity"| tools
+  agent -->|"REST: owner pages,<br/>approvals"| tools
+  agent --> agentdb[("Agent database<br/>conversations, decision logs,<br/>cases")]
+  knowledge --> knowledgedata[("Documents, search index<br/>and approved rules")]
+  tools --> toolsdb[("Tools database<br/>proposals and approved tools")]
+  knowledge -->|"embeddings"| ollama["Ollama<br/>bge-m3, runs locally"]
+  agent -->|HTTPS| models["AI models<br/>Groq"]
+  tools -->|HTTPS| models
+  tools -->|"HTTP, the owner's<br/>approved connection"| shop["The shop's own API"]
+```
+
+Three separate services talk to each other only over the network; none uses another's code. The **agent service** is the only one customers and staff reach, and it also serves the manager dashboard. The **knowledge service** finds policy passages, screens risky messages and checks every action against the approved rules. The **tools service** turns a shop's API description into tools the owner approves, and the agent calls them over MCP. AI models are used for understanding, planning and wording; local embeddings (Ollama with bge-m3) power the search.
+
+### What happens to a message
+
+```mermaid
+flowchart TD
+  A["Customer message"] --> B["Load the conversation memory"]
+  B --> C["Understand: language, intent, details"]
+  C --> D{"Risky topic, or the customer<br/>asks for a person?"}
+  D -- yes --> H["Hand over to a person"]
+  D -- no --> E["The agent decides what to do"]
+  E --> F{"What is needed?"}
+  F -- "a question" --> G["Find policy passages<br/>and answer only from them"]
+  F -- "a look-up" --> I["Read the order<br/>only the customer's own"]
+  F -- "a missing detail" --> Q["Ask the customer"]
+  F -- "an action" --> J["Checks: identity, ownership,<br/>permission, policy"]
+  J --> K{"Allowed?"}
+  K -- no --> H
+  K -- yes --> L["Customer confirms,<br/>or a person approves"]
+  L --> M["Do it once"]
+  M --> N["Verify the result"]
+  N --> O{"Verified?"}
+  O -- no --> H
+  O -- yes --> R
+  G --> R["Write the reply in the customer's language,<br/>checked against the facts"]
+  I --> R
+  Q --> R
+  R --> S["Save the decision log"]
+  H --> T["Briefing and case in the inbox"]
+  T --> U["A person claims the case,<br/>reads the briefing"]
+  U --> V["Replies, approves or rejects,<br/>or hands back to the agent"]
+  V --> S
+```
+
+Every message ends in one outcome: an answer, a question, a confirmation, an action, a refusal or a hand-over, and the decision log records why. A write is never repeated automatically: if its result is unclear, the case goes to a person.
+
+### Inside the agent
+
+```mermaid
+flowchart TB
+  subgraph AI["AI jobs: they propose"]
+    reader["Message reader<br/>language, intent, details"]
+    planner["Planner<br/>plans, picks one move at a time,<br/>replans"]
+    kagent["Knowledge agent<br/>answers only from found passages"]
+    reviewer["Reviewer<br/>can only make things stricter"]
+    writer["Reply writer"]
+    helpers["Handoff summary<br/>and history summarizer"]
+  end
+  subgraph CODE["Code: it decides"]
+    movecheck["Move check<br/>on the menu, limits, arguments"]
+    gates["Action gates<br/>identity, ownership, permission,<br/>policy check"]
+    confirm["Customer confirmation<br/>or person approval"]
+    verify["Result verification"]
+    facts["Facts check on every reply<br/>no new number, date, id or link"]
+  end
+  fallback["Fixed step flow<br/>used when the AI is off, fails<br/>or is refused twice in a row"]
+  reader --> planner
+  planner -->|"one move: look up, search policy,<br/>propose action, ask, hand over, reply"| movecheck
+  movecheck --> gates
+  gates --> confirm
+  confirm --> verify
+  planner --> kagent
+  kagent --> facts
+  planner --> writer
+  writer --> facts
+  reviewer -.->|"blocks, never loosens"| facts
+  reviewer -.->|"second look at a write"| gates
+  movecheck -.->|"refused moves go back"| planner
+  movecheck -.->|"gives up"| fallback
+  fallback --> gates
+  classDef ai fill:#e8f0fe,stroke:#4a6fa5,color:#1b2b45
+  classDef code fill:#e6f4ea,stroke:#3b7d4f,color:#12301c
+  classDef fb fill:#fdf3e1,stroke:#b07a1f,color:#3b2a08
+  class reader,planner,kagent,reviewer,writer,helpers ai
+  class movecheck,gates,confirm,verify,facts code
+  class fallback fb
+```
+
+*AI proposes, code decides.* A move is only a proposal: it never calls a tool, clears a safety flag or skips a check by itself. The planner and the reviewer use the strong model slot, the message reader, the reply writer and the summaries use the small slot, and search uses the local embedding model.[^models] Handoff and the history summaries are checked too: a text that adds a number, date or id that was not in the source is rejected and a fixed template is used.
 
 ---
 
@@ -26,110 +145,82 @@ You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) runni
 make demo
 ```
 
-The first start takes a few minutes (it builds the service and the dashboard). When it is ready it prints three links:
+The first start takes a few minutes. When it is ready it prints three links:
 
 | Link | What you see |
 |---|---|
-| <http://localhost:8010/chat?tenant_id=shop_001> | the customer chat. Try: `Where is my order NS-20877?` then the phone `01012345601`; `What is your return policy?`; or `I want a refund for order NS-20934` then `01098765405` (a large refund needs a person) |
-| <http://localhost:8010/inbox> | where the support team takes over: claim the case from the chat above, read the briefing, approve or reject the refund |
-| <http://localhost:8010/dashboard> | the manager dashboard, already filled with example conversations from the last two weeks, with the alerts page |
+| <http://localhost:8010/chat?tenant_id=shop_001> | the customer chat |
+| <http://localhost:8010/inbox> | where staff take over a case |
+| <http://localhost:8010/dashboard> | the manager dashboard, already filled with example conversations |
 
-The demo shop is "Nile Style". It speaks English, Egyptian Arabic and Arabizi (Arabic written in Latin letters, like `3ayez araga3 el order`).
-This version answers by rules and needs no internet. For the version where an AI model also helps to understand messages, run
-`make demo-full` instead (it downloads a model of about 5 GB the first time and needs a computer with 8 GB of free memory).
+Things to try in the chat (the demo shop is "Nile Style"; it understands English, Egyptian Arabic and Arabizi such as `3ayez araga3 el order`):
 
-To run the agent against the real knowledge service (policy search, safety screen, rule checker) use `make demo-live`. It needs Ollama on your computer with `ollama pull bge-m3` done once; without it the knowledge service falls back to keyword-only search. The Docker demos use the simulated shop.
+- `Where is my order NS-20877?`, then the phone `01012345601`: the agent verifies you and reads the order.
+- `What is your return policy?`: it answers from the policy and shows the passage.
+- `I want a refund for order NS-20934`, then `01098765405`: a large refund needs a person. Open the **inbox**, claim the case, read the briefing, approve or reject the refund, and watch the dashboard update.
 
-To run all three services together locally, with business tools that the tools service generated and published as TEST-ONLY **Sandbox** tools or as **Live Demo** tools that call an owner-configured real API (never a production release), follow [docs/INTEGRATION.md](docs/INTEGRATION.md): `python ops/local/serve.py up`, the tool lifecycle `ops/local/tools_lifecycle.py`, the real-API check `ops/local/live_demo_check.py`, and the end-to-end checks `ops/local/e2e_chat.py` / `e2e_live_chat.py`. Managers see each tool's environment, check API connections and disable tools on the dashboard's **Business tools** page.
+`make demo` answers by rules and needs no internet. `make demo-full` adds a local AI model (about 5 GB the first time, 8 GB of free memory). `make demo-live` runs the agent against the real knowledge service and starts the tools service too; it needs Ollama with `ollama pull bge-m3` done once. `make logs` shows what it does, `make down` stops it (your data is kept), `make reset` deletes what it stored.
 
-Other commands: `make logs` (watch what it does), `make down` (stop it; your conversations are kept), `make reset` (stop and
-delete everything it stored). Every setting is explained in `.env.example`; copy it to `.env` to change one.
-The inbox and the dashboard need a sign-in. `make demo` creates the admin `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). More people: `python -m agent_service create-user --email ... --name ... --role agent|manager|admin --tenants shop_001`.
+The inbox and the dashboard need a sign-in: `make demo` creates `admin@example.com` and prints its password once (lost it? `make urls` shows how to reset). Every setting is explained in `.env.example`. To run everything without Docker, including the business tools in their sandbox and live-demo modes, follow [docs/INTEGRATION.md](docs/INTEGRATION.md).
 
 ---
 
-## The problem
+## What it can do
 
-Every business in Egypt gets the same messages, all day, on WhatsApp, Instagram and web chat: *where is my order, why did my bill change, can I move my booking, I want a refund.*
-
-Today the choices are bad:
-
-- **Hire people** to answer the same questions on shifts. Expensive, slow at night, inconsistent.
-- **Buy a chatbot** that follows a script. Customers ask one real question, it breaks, they type "human", staff switch it off.
-- **Build something custom** with an agency. Months of work, every policy change is a new invoice.
-
-And none of them speak the way Egyptians actually write: Arabic, English, and both mixed in the same sentence.
-
-## The idea
-
-Ticket-Easy does three things no scripted bot does:
-
-**1. It reads your policies and follows them.**
-Upload your return policy, your FAQ, your tariff sheet. The agent answers from those documents and shows the customer the exact passage it relied on. If the answer is not in your documents, it says so instead of guessing.
-
-**2. It acts, within limits you set.**
-Give it your data structure and the platform builds the tools itself: look up an order, open a ticket, create a return, change a plan. Every action is checked against your rules first. "Refunds within 14 days" is not a suggestion to the agent; it is a wall it cannot cross.
-
-**3. It knows when to stop.**
-Fraud signals, regulator complaints, safety issues, anything outside policy: the case goes to a human immediately, with the full conversation, the customer's data, what the agent already tried, and a suggested next step. Your team picks up without asking the customer to repeat anything.
-
-## Why it is different
-
-| Scripted chatbots | Ticket-Easy |
-|---|---|
-| Follow a flow someone drew | Read your actual policy documents |
-| Break on unexpected questions | Answer from your knowledge or admit they cannot |
-| Talk only | Look up, create and update records |
-| Need a developer for every change | Upload a new document; the agent updates |
-| Formal Arabic or English only | Egyptian Arabic, English, and Arabizi mixed |
-| Escalate a bare transcript | Escalate a full briefing a human can act on |
-
-## Who it is for
-
-Any business with written policies and customer data. We start where the message volume, and the pain, is highest:
-
-- E-commerce and online retail
-- Telecom, ISPs and subscription services
-- Fintech and lending
-- Hospitality and travel
-- Airlines
-
-The same engine works for a new industry with a schema and a set of policies, not a new project.
-
-## What a customer experiences
-
-> **Customer, 11 pm, WhatsApp:** "el order mesh wesel lel delivery w ana 3ayez a3raf feen"
->
-> **Ticket-Easy:** verifies the phone number and order id, pulls the live status, explains the delivery policy with the passage it came from, and offers to open a ticket with the courier. Done in one exchange.
->
-> The next customer asks for a refund on day 20. The agent explains the 14-day rule, cites it, and passes the case to a human with everything attached. The human approves an exception in two clicks. The customer is answered in the same thread.
-
-## What a business owner experiences
-
-Upload documents. Connect a data source. Review the tools the platform proposes and switch on the ones you want. Set your tone and rules in plain language. Test-chat. Go live. Afterwards, one screen shows what the agent answered, what it did, what it could not do, and which document you should upload next.
-
-No flows to draw. No scripts to write. No developer on call.
+- **Languages:** English, Egyptian Arabic, mixed Arabic-English, and Arabizi.
+- **Real actions, with checks and approvals:** look-ups, returns, refunds, cancellations, vouchers, tickets. Writes are confirmed by the customer, large ones approved by a person, and the result is verified before the agent says "done".
+- **Hand-over with a full briefing:** the conversation, the customer's data, the policy passages used, what was tried and why it stopped.
+- **A manager dashboard:** what was answered, what was done, what the agent could not do, alerts, and which document to add next.
+- **Tools generated from an API description:** an owner uploads an OpenAPI file, reviews the proposed tools, tests them in a sandbox and switches them on.
 
 ## Built with safety first
 
-- The agent never acts without passing a policy check it cannot override.
-- High-risk actions default to human approval.
-- Every answer and every action is logged and traceable to its source.
-- Identity is verified before any customer data is touched.
+- The agent never invents: no policy claim without a passage, no order fact without a result from the shop, no "done" without a verified result.
+- Every action passes the same checks in the same order, and a check that cannot run stops the action and hands the case to a person.
+- High-risk actions need a person; a person can never turn a "no" from the rules into a "yes".
+- Identity is verified before any customer data is touched, and one customer can never read another's order.
+- Every answer and every action is logged with the reason.
+
+## Results
+
+Measured on the evaluation set; every figure comes from the [evaluation and cost report](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md) (section 1.2 unless noted).
+
+| What | Result | Source in the report |
+|---|---|---|
+| Scripted safety scenarios (real refunds, cancellations, vouchers, exchanges) | 83 of 83 pass, 0 unsafe actions | section 1.2 |
+| Guardrail cases | 44 of 44, 0 blocked actions executed | section 1.2 |
+| Finding the right policy passage (recall@5, held-out questions) | shop_001 89.29%, noon_eg 97.5%, telco_001 82.22% | section 1.2 |
+| Understanding the customer (intent), English / Arabic / mixed | 95.0% / 95.0% / 93.3% | section 1.2 |
+| Reply in the customer's language | 99.5% | section 1.2 |
+| Cost so far | $0 spent; the measured tokens would cost 3.843 USD per 1,000 messages at paid list prices | section 2.6 |
+
+The report also lists the honest gaps against the targets (section 1.7).
+
+## Project layout
+
+| Folder | What is in it |
+|---|---|
+| [`services/knowledge/`](services/knowledge/README.md) | The knowledge service: documents, search, safety screen, rule checker |
+| [`services/agent/`](services/agent/README.md) | The agent service: chat, understanding, decisions, actions, hand-off, inbox |
+| [`services/tools/`](services/tools/README.md) | The tools service: API description in, approved tools out |
+| [`apps/dashboard/`](apps/dashboard/README.md) | The manager dashboard (React), built into the agent |
+| `ops/local/` | Start all services locally and the end-to-end checks |
+| `ops/` | `check_names.py` and `check_links.py`, the two repository-wide checks |
+| [`contracts/`](contracts/README.md) | The published data formats between the services |
+| `docs/` | Guides, plans and reports |
+| `docker-compose.yml`, `Makefile` | The one-command demo |
+
+## For developers
+
+- Each service has its own README: [knowledge](services/knowledge/README.md), [agent](services/agent/README.md), [tools](services/tools/README.md), [dashboard](apps/dashboard/README.md).
+- [docs/INTEGRATION.md](docs/INTEGRATION.md): how the three services work together and how to run them locally.
+- [contracts/README.md](contracts/README.md): the published data formats.
+- [docs/ownership.md](docs/ownership.md): who looks after what. [docs/reports/](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md) and `docs/plan/`: the reports and plans.
+- Checks that run on every pull request: three test suites, the dashboard build, the JSON schemas, the scenarios, and two repository-wide checks you can run yourself: `python ops/check_names.py` and `python ops/check_links.py`.
 
 ## Where we are
 
-Concept and proof-of-concept stage. Five people are building the core: the agent, the knowledge engine, the policy guardrails, the tool generator, and the human hand-off. The first demo shows one business going from documents to a working, policy-bound agent, and a second industry onboarded from a schema in under an hour.
-
-## Join us
-
-We are looking for:
-
-- **Pilot partners**: a business willing to put the agent in front of real customers on one use case and help shape it for their industry.
-- **Builders**: engineers who want to work on agents that take real actions safely, Arabic-first retrieval, and policy-as-code.
-- **Advisors**: people who have run customer operations in Egypt and know where bots fail.
-
-If any of that is you, let's talk.
+Concept and proof-of-concept stage. The first demo takes one business from documents to a working, policy-bound agent, and onboards a second industry from a schema in under an hour. We are looking for pilot partners, builders who like agents that take real actions safely, and advisors who have run customer operations in Egypt.
 
 ---
 
@@ -142,3 +233,5 @@ If any of that is you, let's talk.
 - Omar Essam ([@omarEssam-11](https://github.com/omarEssam-11))
 - Basel Elhofy ([@Basel-Elhofy](https://github.com/Basel-Elhofy))
 - Basmala Hesham ([@pasmala2004](https://github.com/pasmala2004))
+
+[^models]: Which model runs each job is set in the agent's settings (`AGENT_LLM_MODEL_<JOB>`); the minimum stack and its cost are in section 2.1 of the [evaluation and cost report](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md).

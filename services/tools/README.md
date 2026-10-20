@@ -1,6 +1,8 @@
-  # Ticket-Easy — the tools service
+# Ticket-Easy · Tools service
 
 Local business-tool discovery, AI proposal generation, clarification reconciliation, and owner approval **to build**. Approved artifacts run against sandbox connectors and can be published to the local MCP server as sandbox tools or, when the operator switches Live Demo on, as **Live Demo** tools that call the owner-configured real API (see "Live Demo"). A tool becomes **production** only through an admin's promotion with an automatic checklist (see "Production"); nothing else makes `production_ready` true.
+
+**Run its tests:** `cd services/tools && uv run pytest -q`.
 
 ## Quick start (Windows PowerShell)
 

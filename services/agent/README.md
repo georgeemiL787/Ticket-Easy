@@ -1,6 +1,8 @@
-# Ticket-Easy agent service
+# Ticket-Easy · Agent service
 
-The agent builds the core of Ticket-Easy: the service that receives every customer message (English, Egyptian Arabic, mixed or Arabizi), understands it, and decides exactly one outcome: answer, clarify, verify identity, ask for confirmation, execute an action, refuse, or hand off to a human. Every decision is recorded with its reasons in a decision trace.
+The agent service is the core of Ticket-Easy: it receives every customer message (English, Egyptian Arabic, mixed or Arabizi), understands it, and decides exactly one outcome: answer, clarify, verify identity, ask for confirmation, execute an action, refuse, or hand off to a human. Every decision is recorded with its reasons in a decision trace.
+
+**Run its tests:** `make test` from `services/agent/` (it needs its own virtual environment: see Install, test, run below).
 
 It also owns the human side (handoff briefing, inbox, approvals) and the manager dashboard. Until the knowledge service (policy search, rule checker) and the tools service (shop actions) are ready, the agent runs against its own simulated services and the demo shop "Nile Style", so the whole product can be built and tested without them. The product plan is in `docs/plan/Ticket-Easy_Implementation_Plan.md`; project rules for contributors and Claude Code sessions are in `CLAUDE.md`.
 

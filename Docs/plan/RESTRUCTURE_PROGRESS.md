@@ -18,3 +18,4 @@ The dashboard type check, its tests and its build also pass.
 
 | Step | Date | Suites | Notes |
 |---|---|---|---|
+| 2 (R2a) | 20 Oct 2026 | Agent 4,065 passed (1 deselected), knowledge 1,002 passed, tools 718 passed (1 skipped), dashboard 104 passed | The three services moved under services/ (agent, knowledge, tools), the dashboard to apps/dashboard and the local scripts to ops/local. Every script, Dockerfile, compose file, workflow and path now points at the new folders. The agent image build also needed the shared stylesheet copied into its dashboard stage. Virtual environments must be recreated. |

@@ -6,26 +6,26 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "orchestrator/src/**"
-      - "orchestrator/fixtures/**"
-      - "orchestrator/config/**"
-      - "orchestrator/data/**"
-      - "orchestrator/scenarios/**"
-      - "orchestrator/tests/adversarial/**"
-      - "orchestrator/tests/integration/test_a_safety_property.py"
-      - "orchestrator/tests/integration/test_a_leak_scan.py"
+      - "services/agent/src/**"
+      - "services/agent/fixtures/**"
+      - "services/agent/config/**"
+      - "services/agent/data/**"
+      - "services/agent/scenarios/**"
+      - "services/agent/tests/adversarial/**"
+      - "services/agent/tests/integration/test_a_safety_property.py"
+      - "services/agent/tests/integration/test_a_leak_scan.py"
       - ".github/workflows/safety.yml"
   push:
     branches: [main]
     paths:
-      - "orchestrator/src/**"
-      - "orchestrator/fixtures/**"
-      - "orchestrator/config/**"
-      - "orchestrator/data/**"
-      - "orchestrator/scenarios/**"
-      - "orchestrator/tests/adversarial/**"
-      - "orchestrator/tests/integration/test_a_safety_property.py"
-      - "orchestrator/tests/integration/test_a_leak_scan.py"
+      - "services/agent/src/**"
+      - "services/agent/fixtures/**"
+      - "services/agent/config/**"
+      - "services/agent/data/**"
+      - "services/agent/scenarios/**"
+      - "services/agent/tests/adversarial/**"
+      - "services/agent/tests/integration/test_a_safety_property.py"
+      - "services/agent/tests/integration/test_a_leak_scan.py"
       - ".github/workflows/safety.yml"
   workflow_dispatch:
 
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: orchestrator
+        working-directory: services/agent
     env:
       # the property test has four fixed seeds; this adds a fifth, so five different seeds must all hold
       TEAM_B_EXTRA_SEEDS: "424242"
@@ -53,8 +53,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            orchestrator/requirements.txt
-            orchestrator/requirements-dev.txt
+            services/agent/requirements.txt
+            services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Adversarial suite (customers who try to trick the agent)
         run: |

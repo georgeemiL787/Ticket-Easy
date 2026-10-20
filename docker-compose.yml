@@ -8,7 +8,7 @@
 x-team-b: &team-b
   build:
     context: .
-    dockerfile: orchestrator/Dockerfile
+    dockerfile: services/agent/Dockerfile
   image: ticket-easy-team-b
   ports:
     - "${TEAM_B_PORT:-8010}:8010"
@@ -95,11 +95,11 @@ services:
   team-a:
     build:
       context: .
-      dockerfile: rag/Dockerfile
+      dockerfile: services/knowledge/Dockerfile
     image: ticket-easy-team-a
     profiles: ["live"]
     volumes:
-      - team_a_var:/app/rag/var
+      - team_a_var:/app/services/knowledge/var
     restart: unless-stopped
     environment:
       # embeddings (bge-m3) come from the Ollama on the host machine: `ollama pull bge-m3` once.

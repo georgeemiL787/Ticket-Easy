@@ -1,6 +1,6 @@
-# Every change to the repository is checked here: the agent service (orchestrator/), the knowledge service (rag/),
-# the tools service (tool_generation_mcp/) and the dashboard app (dashboard/).
-# The jobs below are the "required checks" to switch on in the branch protection of main (see orchestrator/docs/ci.md).
+# Every change to the repository is checked here: the agent service (services/agent/), the knowledge service (services/knowledge/),
+# the tools service (services/tools/) and the dashboard app (apps/dashboard/).
+# The jobs below are the "required checks" to switch on in the branch protection of main (see services/agent/docs/ci.md).
 name: CI
 
 on:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: orchestrator
+        working-directory: services/agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,8 +30,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            orchestrator/requirements.txt
-            orchestrator/requirements-dev.txt
+            services/agent/requirements.txt
+            services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - run: ruff check .
       - run: ruff format --check .
@@ -48,7 +48,7 @@ jobs:
       TEAM_B_STORE: ${{ matrix.store }}
     defaults:
       run:
-        working-directory: orchestrator
+        working-directory: services/agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -56,8 +56,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            orchestrator/requirements.txt
-            orchestrator/requirements-dev.txt
+            services/agent/requirements.txt
+            services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - run: pytest -q
 
@@ -66,14 +66,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: rag
+        working-directory: services/knowledge
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: rag/requirements.txt
+          cache-dependency-path: services/knowledge/requirements.txt
       - run: pip install -r requirements.txt pytest
       - run: python -m pytest -q
         env:
@@ -84,14 +84,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: tool_generation_mcp
+        working-directory: services/tools
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
           enable-cache: true
-          cache-dependency-glob: tool_generation_mcp/uv.lock
+          cache-dependency-glob: services/tools/uv.lock
       - run: uv sync --locked
       - run: uv run pytest -q
 
@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: orchestrator
+        working-directory: services/agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -108,8 +108,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            orchestrator/requirements.txt
-            orchestrator/requirements-dev.txt
+            services/agent/requirements.txt
+            services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Run every scenario and show the table in the job summary
         run: |
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: orchestrator
+        working-directory: services/agent
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -137,14 +137,14 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            orchestrator/requirements.txt
-            orchestrator/requirements-dev.txt
+            services/agent/requirements.txt
+            services/agent/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Export the schemas again and compare with the committed ones
         run: |
           python scripts/export_schemas.py > /dev/null
           git diff --exit-code -- contracts/schemas || {
-            echo "::error::contracts/schemas differ from the models: run 'python scripts/export_schemas.py' in orchestrator/ and commit the result"
+            echo "::error::contracts/schemas differ from the models: run 'python scripts/export_schemas.py' in services/agent/ and commit the result"
             exit 1
           }
 
@@ -153,14 +153,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: dashboard
+        working-directory: apps/dashboard
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: dashboard/package-lock.json
+          cache-dependency-path: apps/dashboard/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -172,6 +172,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the agent image
-        run: docker build -f orchestrator/Dockerfile -t ticket-easy-team-b:ci .
+        run: docker build -f services/agent/Dockerfile -t ticket-easy-team-b:ci .
       - name: Build the knowledge image
-        run: docker build -f rag/Dockerfile -t ticket-easy-team-a:ci .
+        run: docker build -f services/knowledge/Dockerfile -t ticket-easy-team-a:ci .

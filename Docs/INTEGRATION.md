@@ -17,12 +17,12 @@ the platform production-ready (see "Limits").
 
 | Team | Folder | Runs as | Responsibility |
 |---|---|---|---|
-| A: safety + RAG | `rag/` | FastAPI, port 8001 | `classify_risk`, `search_knowledge` / `get_passage` (cited policy passages), `check_action` (allow / deny / require_human) |
-| B: brain + handoff | `orchestrator/` (+ `dashboard/`) | FastAPI, port 8010 | the only customer-facing service: chat, identity check, gate order, confirmation, tool calls, result verification, handoff, manager dashboard |
-| C: tool generation + MCP | `tool_generation_mcp/` | FastAPI owner pages + REST, port 8101; an MCP stdio server per identity, started by Team B | OpenAPI discovery, model-written proposals, owner review and approval, artifact build, sandbox / live tests, publication, MCP `tools/list` / `tools/call` re-checked on every call |
-| local APIs | `integration/nile_sandbox/` | sandbox 8102, demo-shop 8103 | the Nile Style shop API (same customers and orders as Team B's demo shop); demo-shop is a second, separate deployment with its own credentials |
+| A: safety + RAG | `services/knowledge/` | FastAPI, port 8001 | `classify_risk`, `search_knowledge` / `get_passage` (cited policy passages), `check_action` (allow / deny / require_human) |
+| B: brain + handoff | `services/agent/` (+ `apps/dashboard/`) | FastAPI, port 8010 | the only customer-facing service: chat, identity check, gate order, confirmation, tool calls, result verification, handoff, manager dashboard |
+| C: tool generation + MCP | `services/tools/` | FastAPI owner pages + REST, port 8101; an MCP stdio server per identity, started by Team B | OpenAPI discovery, model-written proposals, owner review and approval, artifact build, sandbox / live tests, publication, MCP `tools/list` / `tools/call` re-checked on every call |
+| local APIs | `ops/local/nile_sandbox/` | sandbox 8102, demo-shop 8103 | the Nile Style shop API (same customers and orders as Team B's demo shop); demo-shop is a second, separate deployment with its own credentials |
 
-All in one Git repository. `tool_generation_mcp/.git` is a separate local-only repository with no remote; it is not used.
+All in one Git repository. `services/tools/.git` is a separate local-only repository with no remote; it is not used.
 
 ## 2. A customer message, end to end
 
@@ -48,17 +48,17 @@ keep using Team B's stand-in shop.
 
 | Boundary | Protocol | Contract |
 |---|---|---|
-| Browser → Team B | HTTP JSON | `POST /v1/conversations/{id}/messages` → `AgentReply`; staff pages need sign-in (cookie + CSRF), roles in `orchestrator/src/team_b/api/auth.py` |
-| Team B → Team A | HTTP JSON | `orchestrator/src/team_b/adapters/team_a_http.py` (`TEAM_B_MODE=live`) |
-| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `orchestrator/src/team_b/adapters/team_c_mcp.py` (client), `team_c_tools.py` (binding, identity, environment, result mapping) |
+| Browser → Team B | HTTP JSON | `POST /v1/conversations/{id}/messages` → `AgentReply`; staff pages need sign-in (cookie + CSRF), roles in `services/agent/src/team_b/api/auth.py` |
+| Team B → Team A | HTTP JSON | `services/agent/src/team_b/adapters/team_a_http.py` (`TEAM_B_MODE=live`) |
+| Team B → Team C tools | MCP over stdio (JSON-RPC, protocol 2025-06-18) | `services/agent/src/team_b/adapters/team_c_mcp.py` (client), `team_c_tools.py` (binding, identity, environment, result mapping) |
 | Team B → Team C management | HTTP JSON, loopback | publications, proposals, connectors, disable, connection check (`team_c_admin.py`) |
 | Team C → API | HTTPS/HTTP JSON, bearer or OAuth2 password per identity | the artifact's steps; no redirects; size and time limits; destination re-checked before each run |
 | Owner → Team C | Team C's own pages / `/api/v1` | request, answer, approve, connector (environment), build, identities, connection check, tests, publish, disable |
 
 ### Binding a Team B tool to a Team C tool
 
-`TEAM_B_TEAM_C_CONFIG` names a JSON file (example `orchestrator/config/team_c.example.json`; the scripts write
-`integration/var/team_c.json`). Per business: the Team C `business_id`, `identities` (verified Team B customer id →
+`TEAM_B_TEAM_C_CONFIG` names a JSON file (example `services/agent/config/team_c.example.json`; the scripts write
+`ops/local/var/team_c.json`). Per business: the Team C `business_id`, `identities` (verified Team B customer id →
 Team C identity name) and `tools` (Team B tool name → Team C `proposal_id`, optional `arguments` / `fields` renames,
 `reference_field` for creates, `environments`). The adapter enforces:
 
@@ -97,10 +97,10 @@ after a disable and after any `tool_not_published`. A cached definition never by
 
 Everything below is configuration; no source file is edited.
 
-1. **Operator** (once per machine): copy `integration/live_demo.example.env` to `integration/live_demo.env`
+1. **Operator** (once per machine): copy `ops/local/live_demo.example.env` to `ops/local/live_demo.env`
    (git-ignored) and set `LIVE_DEMO_ENABLED=true`, `LIVE_DEMO_HOSTS=<host:port of the real API>`. Keep
    `LIVE_DEMO_PRIVATE_HOSTS` empty unless the API is on a private development network. Restart Team C and Team B
-   (`integration/serve.py` passes these settings to Team C's web app and to the MCP server Team B starts).
+   (`ops/local/serve.py` passes these settings to Team C's web app and to the MCP server Team B starts).
 2. **Owner**, in Team C (`http://127.0.0.1:8101`): create the business, upload the API's OpenAPI file (only the
    operations you want; the server URL in it is only a suggestion), request the tool, answer the questions, accept the
    access policy, approve.
@@ -115,7 +115,7 @@ Everything below is configuration; no source file is edited.
 
 Or let a script do 2-5 against your API: fill `LIVE_DEMO_BASE_URL`, `LIVE_DEMO_SPEC`, `LIVE_DEMO_GOAL`,
 `LIVE_DEMO_TEST_ARGUMENTS` and the demo account's `LIVE_DEMO_TOKEN` (or `LIVE_DEMO_USERNAME` / `LIVE_DEMO_PASSWORD`) in
-`integration/live_demo.env`, then `orchestrator/.venv/Scripts/python integration/live_demo_check.py --api custom`. For a tool
+`ops/local/live_demo.env`, then `services/agent/.venv/Scripts/python ops/local/live_demo_check.py --api custom`. For a tool
 that reads the caller's own records it stops once and asks you to accept the access policy in Team C's page (which
 response field proves ownership is your decision).
 
@@ -128,13 +128,13 @@ Live Demo off blocks the next call.
 
 ### Production (local deployment)
 
-A tested tool is **promoted** to production by a signed-in Team B **admin** (Business tools page -> Promote to production: a note, a rollback contact, and for writes the explicit acceptance that the API has no idempotency). Team C builds the production twin, runs its whole checklist (evidence, customer scoping, identical content, secret, smoke check, idempotency, rollback contact) and refuses unless all pass. Production tools use ONE business service credential for every customer; Team B sends the VERIFIED customer's id as trusted context (`_meta.ticketeasy.context.customer_id`, never an argument), and Team C refuses any record that is not that customer's. See `tool_generation_mcp/README.md`, "Production".
+A tested tool is **promoted** to production by a signed-in Team B **admin** (Business tools page -> Promote to production: a note, a rollback contact, and for writes the explicit acceptance that the API has no idempotency). Team C builds the production twin, runs its whole checklist (evidence, customer scoping, identical content, secret, smoke check, idempotency, rollback contact) and refuses unless all pass. Production tools use ONE business service credential for every customer; Team B sends the VERIFIED customer's id as trusted context (`_meta.ticketeasy.context.customer_id`, never an argument), and Team C refuses any record that is not that customer's. See `services/tools/README.md`, "Production".
 
-Local setup: copy `integration/production.example.env` to `integration/production.env` (git-ignored) and run `integration/serve.py up`. That also starts `nile-prod` (port 8104), a SEPARATE Nile shop deployment whose service token may act for any customer (so only Team C keeps customers apart), generates `integration/var/prod_service.key` (the credential; Team C reads it through a `file:` reference, because the MCP process Team B starts has a deliberately small environment) and `team_c_admin.key` (the admin token; Team B and the scripts send it, Team C's REST changes then require it). `integration/production_check.py --phase promote|bind|chat` runs the real thing: connector, promotion, the real production MCP process (own order succeeds, another customer's order is refused although the API would have allowed it, no/undeclared context, smuggled arguments), the customer chat, a confirmed write that lands as exactly one ticket, an admin rollback from the dashboard and the agent no longer using the tool. It is a LOCAL deployment with synthetic data, not a real production API.
+Local setup: copy `ops/local/production.example.env` to `ops/local/production.env` (git-ignored) and run `ops/local/serve.py up`. That also starts `nile-prod` (port 8104), a SEPARATE Nile shop deployment whose service token may act for any customer (so only Team C keeps customers apart), generates `ops/local/var/prod_service.key` (the credential; Team C reads it through a `file:` reference, because the MCP process Team B starts has a deliberately small environment) and `team_c_admin.key` (the admin token; Team B and the scripts send it, Team C's REST changes then require it). `ops/local/production_check.py --phase promote|bind|chat` runs the real thing: connector, promotion, the real production MCP process (own order succeeds, another customer's order is refused although the API would have allowed it, no/undeclared context, smuggled arguments), the customer chat, a confirmed write that lands as exactly one ticket, an admin rollback from the dashboard and the agent no longer using the tool. It is a LOCAL deployment with synthetic data, not a real production API.
 
 ### Automatic tool tests
 
-`integration/team_c_lifecycle.py` no longer hard-codes test identities and order ids: after the build it declares the Nile sandbox's fixture endpoints on the connector (`NILE_SANDBOX_FIXTURE_KEY`, set for Team C by `integration/serve.py`), saves the demo customers' identities (needed by Team B's chat), and makes one `POST /artifacts/{id}/auto-test` call. `--manual-tests` keeps the old hand-written tests. `integration/autotest_check.py` runs this for every Nile tool and checks that each reaches ready_to_publish with only `auto.*` evidence tests. The dashboard's Business tools page shows each built tool's state (Not tested / Testing… / Needs you / Ready to publish / Published) and a **Run automatic tests** button (manager; `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test`, which only tests: it never approves or publishes).
+`ops/local/team_c_lifecycle.py` no longer hard-codes test identities and order ids: after the build it declares the Nile sandbox's fixture endpoints on the connector (`NILE_SANDBOX_FIXTURE_KEY`, set for Team C by `ops/local/serve.py`), saves the demo customers' identities (needed by Team B's chat), and makes one `POST /artifacts/{id}/auto-test` call. `--manual-tests` keeps the old hand-written tests. `ops/local/autotest_check.py` runs this for every Nile tool and checks that each reaches ready_to_publish with only `auto.*` evidence tests. The dashboard's Business tools page shows each built tool's state (Not tested / Testing… / Needs you / Ready to publish / Published) and a **Run automatic tests** button (manager; `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test`, which only tests: it never approves or publishes).
 
 ## 5. The interface
 
@@ -152,39 +152,39 @@ Local setup: copy `integration/production.example.env` to `integration/productio
 
 ## 6. Run it locally
 
-Prerequisites: Python 3.13, Node 20+, `uv` (Team C), a model provider for Team C proposals (`tool_generation_mcp/.env`, Groq /
+Prerequisites: Python 3.13, Node 20+, `uv` (Team C), a model provider for Team C proposals (`services/tools/.env`, Groq /
 OpenRouter / Ollama). Ollama with `bge-m3` is optional for Team A (keyword search without it).
 
 ```powershell
 # once: virtualenvs (git-ignored), Team A's index, the dashboard
-python -m venv rag/.venv; rag/.venv/Scripts/python -m pip install -r rag/requirements.txt
-python -m venv orchestrator/.venv; orchestrator/.venv/Scripts/python -m pip install -e team_b -r orchestrator/requirements-dev.txt
-cd tool_generation_mcp; uv sync --locked; cd ..
-cd rag; $env:PYTHONPATH="src"; .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings; cd ..
-cd dashboard; npm ci; npm run build; cd ..
-copy integration/live_demo.example.env integration/live_demo.env   # optional: Live Demo
+python -m venv services/knowledge/.venv; services/knowledge/.venv/Scripts/python -m pip install -r services/knowledge/requirements.txt
+python -m venv services/agent/.venv; services/agent/.venv/Scripts/python -m pip install -e services/agent -r services/agent/requirements-dev.txt
+cd services/tools; uv sync --locked; cd ..
+cd services/knowledge; $env:PYTHONPATH="src"; .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings; cd ..
+cd apps/dashboard; npm ci; npm run build; cd ..
+copy ops/local/live_demo.example.env ops/local/live_demo.env   # optional: Live Demo
 ```
 
 Start everything (checks the setup first, starts in order, waits for health, reuses services that already run, refuses
-a port held by another program, logs to `integration/var/logs/`):
+a port held by another program, logs to `ops/local/var/logs/`):
 
 ```powershell
-python integration/serve.py up
-python integration/serve.py status     # in another terminal: what runs, Live Demo settings, setup warnings
+python ops/local/serve.py up
+python ops/local/serve.py status     # in another terminal: what runs, Live Demo settings, setup warnings
 ```
 
 Create tools (once; both resume where they stopped):
 
 ```powershell
-orchestrator/.venv/Scripts/python integration/team_c_lifecycle.py --tool order     # sandbox: model proposal → … → publish
-orchestrator/.venv/Scripts/python integration/team_c_lifecycle.py --tool ticket
-orchestrator/.venv/Scripts/python integration/team_c_lifecycle.py --tool order --environment live_demo   # Live Demo on demo-shop
-orchestrator/.venv/Scripts/python integration/team_c_lifecycle.py --tool ticket --environment live_demo
-orchestrator/.venv/Scripts/python integration/live_demo_check.py                   # Live Demo on GitHub's real public API
+services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool order     # sandbox: model proposal → … → publish
+services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool ticket
+services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool order --environment live_demo   # Live Demo on demo-shop
+services/agent/.venv/Scripts/python ops/local/team_c_lifecycle.py --tool ticket --environment live_demo
+services/agent/.venv/Scripts/python ops/local/live_demo_check.py                   # Live Demo on GitHub's real public API
 ```
 
-Restart Team B after a binding changes (`integration/var/team_c.json`). Sign-in for the inbox and dashboard:
-`cd orchestrator; $env:TEAM_B_STORE="sqlite"; $env:TEAM_B_DB_PATH="../integration/var/team_b.sqlite3"; .venv/Scripts/python -m team_b create-user --email you@example.com --name You --role manager --tenants shop_001 --generate-password`.
+Restart Team B after a binding changes (`ops/local/var/team_c.json`). Sign-in for the inbox and dashboard:
+`cd services/agent; $env:TEAM_B_STORE="sqlite"; $env:TEAM_B_DB_PATH="../../ops/local/var/team_b.sqlite3"; .venv/Scripts/python -m team_b create-user --email you@example.com --name You --role manager --tenants shop_001 --generate-password`.
 Demo customers: C-100 (alice, phone 01012345601), C-101 (bob, 01123456702).
 
 ### Troubleshooting
@@ -194,7 +194,7 @@ Demo customers: C-100 (alice, phone 01012345601), C-101 (bob, 01123456702).
 | `serve.py up`: `ERROR … port N is used by another program` | another process holds the port (`status` says "another program"); stop it |
 | Business tools: tool `missing`, reason `environment_not_allowed` | the publication is Live Demo but the binding allows only sandbox (or the reverse): set `environments` |
 | reason `ambiguous` | the same tool is published in two allowed environments (or two artifacts): disable one or narrow `environments` |
-| publication `blocked`, `live_demo_disabled` | `LIVE_DEMO_ENABLED` is off for Team C (or the MCP server): fix `integration/live_demo.env`, restart Team C and Team B |
+| publication `blocked`, `live_demo_disabled` | `LIVE_DEMO_ENABLED` is off for Team C (or the MCP server): fix `ops/local/live_demo.env`, restart Team C and Team B |
 | connector check `configuration failed: destination_not_allowed` | the host:port is not in `LIVE_DEMO_HOSTS` |
 | `destination_unsafe` | the host resolves to a private/loopback/metadata address; use a public API (or, for a dev network, `LIVE_DEMO_PRIVATE_HOSTS`) |
 | check `authentication failed` / calls `authentication_failed` | wrong or revoked credential: replace the identity on the artifact page |
@@ -207,22 +207,22 @@ Automated suites (mocked or in-process targets where noted):
 
 | Suite | Command | Result |
 |---|---|---|
-| Team A | `cd rag; $env:PYTHONPATH="src"; .venv/Scripts/python -m pytest -q` | 973 passed |
-| Team B (adapter, API, auth, live opt-in, categories) | `cd orchestrator; .venv/Scripts/python -m pytest -q; make lint` | 3833 passed; ruff, format, mypy clean |
-| Team C (incl. `tests/test_live_demo.py`, mocked target) | `cd tool_generation_mcp; .venv/Scripts/python -m pytest -q` | 634 passed |
-| Dashboard | `cd dashboard; npm test; npm run build` | 49 passed; build ok |
+| Team A | `cd services/knowledge; $env:PYTHONPATH="src"; .venv/Scripts/python -m pytest -q` | 973 passed |
+| Team B (adapter, API, auth, live opt-in, categories) | `cd services/agent; .venv/Scripts/python -m pytest -q; make lint` | 3833 passed; ruff, format, mypy clean |
+| Team C (incl. `tests/test_live_demo.py`, mocked target) | `cd services/tools; .venv/Scripts/python -m pytest -q` | 634 passed |
+| Dashboard | `cd apps/dashboard; npm test; npm run build` | 49 passed; build ok |
 
 Real runs with all services up:
 
 | Script | Target | Result |
 |---|---|---|
-| `integration/live_demo_check.py` | **GitHub's real public REST API** (`api.github.com`, unauthenticated public read) | 12/12: model proposal → owner approval → Live Demo connector → real connection check → live test → publish → MCP discovery and a real call matching an independent read → invalid argument rejected → a real 404 = `failed`/`not_found` → disable refuses the next call |
-| `integration/e2e_live_chat.py` | the separate local **demo-shop** deployment as Live Demo target (synthetic data, allowed through `LIVE_DEMO_PRIVATE_HOSTS`; **not an external API**) | 22/22: chat read and confirmed write through Live Demo, verified at the API, nothing sent to the sandbox, uncertain live write not retried, connection check, disable, revoked credential fails honestly |
-| `integration/e2e_chat.py` | sandbox | 33/33: the original Team A + Team B + Team C sandbox flow, unchanged |
+| `ops/local/live_demo_check.py` | **GitHub's real public REST API** (`api.github.com`, unauthenticated public read) | 12/12: model proposal → owner approval → Live Demo connector → real connection check → live test → publish → MCP discovery and a real call matching an independent read → invalid argument rejected → a real 404 = `failed`/`not_found` → disable refuses the next call |
+| `ops/local/e2e_live_chat.py` | the separate local **demo-shop** deployment as Live Demo target (synthetic data, allowed through `LIVE_DEMO_PRIVATE_HOSTS`; **not an external API**) | 22/22: chat read and confirmed write through Live Demo, verified at the API, nothing sent to the sandbox, uncertain live write not retried, connection check, disable, revoked credential fails honestly |
+| `ops/local/e2e_chat.py` | sandbox | 33/33: the original Team A + Team B + Team C sandbox flow, unchanged |
 
 Not verified with a real external API: **authenticated** calls (bearer / OAuth2) and **writes** against an external
 system, because no external credentials were available. The code path is the one the demo-shop and GitHub runs use;
-to verify it, fill `integration/live_demo.env` and run `live_demo_check.py --api custom`.
+to verify it, fill `ops/local/live_demo.env` and run `live_demo_check.py --api custom`.
 
 ## 8. Limits (not production)
 

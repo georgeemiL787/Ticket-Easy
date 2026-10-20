@@ -5,7 +5,7 @@
       "name": "nile-sandbox",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "sandbox"
       ],
       "port": 8102
@@ -14,7 +14,7 @@
       "name": "demo-shop",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "demo-shop"
       ],
       "port": 8103
@@ -23,7 +23,7 @@
       "name": "team-c",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "team-c"
       ],
       "port": 8101
@@ -32,7 +32,7 @@
       "name": "team-a",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "team-a"
       ],
       "port": 8001
@@ -41,7 +41,7 @@
       "name": "team-b",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "team-b"
       ],
       "port": 8010
@@ -50,7 +50,7 @@
       "name": "team-b-noauth-8011",
       "runtimeExecutable": "python",
       "runtimeArgs": [
-        "integration/serve.py",
+        "ops/local/serve.py",
         "team-b",
         "--port",
         "8011",

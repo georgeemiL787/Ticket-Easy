@@ -1,7 +1,7 @@
 """Live Demo, end to end against a REAL external API: configure, check, generate, approve, build, test, publish, call.
 
 Needs Team C running with Live Demo switched on (integration/live_demo.env, see live_demo.example.env) and a model
-provider for Team C (team_c/.env). Every owner decision is made through Team C's own API and labelled LIVE DEMO
+provider for Team C (tool_generation_mcp/.env). Every owner decision is made through Team C's own API and labelled LIVE DEMO
 (owner decision recorded by integration/live_demo_check.py). Nothing here is simulated:
 
   1. a Live Demo business and the owner's OpenAPI file           6. the owner's identity (credential) for that API
@@ -13,8 +13,8 @@ provider for Team C (team_c/.env). Every owner decision is made through Team C's
                                                                      the same API, invalid arguments, a real not-found,
                                                                      disable -> refused, republish (unless --leave-disabled)
 
-    team_b/.venv/Scripts/python.exe integration/live_demo_check.py               # GitHub's public repository read
-    team_b/.venv/Scripts/python.exe integration/live_demo_check.py --api custom  # your API, from integration/live_demo.env
+    orchestrator/.venv/Scripts/python.exe integration/live_demo_check.py               # GitHub's public repository read
+    orchestrator/.venv/Scripts/python.exe integration/live_demo_check.py --api custom  # your API, from integration/live_demo.env
 
 The default API is GitHub's public REST API (unauthenticated reads of public repositories: real responses, no account,
 no personal data; GitHub allows 60 such calls per hour per address). --api custom uses LIVE_DEMO_BASE_URL,
@@ -38,7 +38,7 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "integration"))
-sys.path.insert(0, str(ROOT / "team_b" / "src"))
+sys.path.insert(0, str(ROOT / "orchestrator" / "src"))
 from serve import live_settings  # noqa: E402
 from team_c_lifecycle import TEAM_C, Owner, step, wait_for_proposal  # noqa: E402
 
@@ -149,11 +149,11 @@ async def through_mcp(state: dict[str, Any], api: dict[str, Any]) -> dict[str, A
     """Team C's real MCP server, through Team B's own MCP client (the path the assistant uses)."""
     from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
-    python = ROOT / "team_c" / ".venv" / ("Scripts/python.exe" if (ROOT / "team_c" / ".venv" / "Scripts").exists() else "bin/python")
+    python = ROOT / "tool_generation_mcp" / ".venv" / ("Scripts/python.exe" if (ROOT / "tool_generation_mcp" / ".venv" / "Scripts").exists() else "bin/python")
     env = {"PYTHONPATH": ".", **{k: v for k, v in live_settings().items() if k.startswith("LIVE_DEMO_") and k in (
         "LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")}}  # fmt: skip
     session = McpStdioSession([str(python), "-m", "team_c.mcp_server", "--business-id", state["business_id"], "--identity", "demo",
-                               "--database", "data/integration.sqlite3"], cwd=str(ROOT / "team_c"), env=env)  # fmt: skip
+                               "--database", "data/integration.sqlite3"], cwd=str(ROOT / "tool_generation_mcp"), env=env)  # fmt: skip
     await session.start()
     out: dict[str, Any] = {}
     try:

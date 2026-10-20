@@ -1,5 +1,5 @@
-# Every change to the repository is checked here. Team B's service is in team_b/, the dashboard app in dashboard/.
-# The jobs below are the "required checks" to switch on in the branch protection of main and team-b (see team_b/docs/ci.md).
+# Every change to the repository is checked here. Team B's service is in orchestrator/, the dashboard app in dashboard/.
+# The jobs below are the "required checks" to switch on in the branch protection of main and team-b (see orchestrator/docs/ci.md).
 name: CI
 
 on:
@@ -28,8 +28,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            team_b/requirements.txt
-            team_b/requirements-dev.txt
+            orchestrator/requirements.txt
+            orchestrator/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - run: ruff check .
       - run: ruff format --check .
@@ -54,8 +54,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            team_b/requirements.txt
-            team_b/requirements-dev.txt
+            orchestrator/requirements.txt
+            orchestrator/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - run: pytest -q
 
@@ -72,8 +72,8 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            team_b/requirements.txt
-            team_b/requirements-dev.txt
+            orchestrator/requirements.txt
+            orchestrator/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Run every scenario and show the table in the job summary
         run: |
@@ -101,14 +101,14 @@ jobs:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
-            team_b/requirements.txt
-            team_b/requirements-dev.txt
+            orchestrator/requirements.txt
+            orchestrator/requirements-dev.txt
       - run: pip install -e . -r requirements-dev.txt
       - name: Export the schemas again and compare with the committed ones
         run: |
           python scripts/export_schemas.py > /dev/null
           git diff --exit-code -- contracts/schemas || {
-            echo "::error::contracts/schemas differ from the models: run 'python scripts/export_schemas.py' in team_b/ and commit the result"
+            echo "::error::contracts/schemas differ from the models: run 'python scripts/export_schemas.py' in orchestrator/ and commit the result"
             exit 1
           }
 
@@ -136,8 +136,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the image
-        if: hashFiles('team_b/Dockerfile') != ''
-        run: docker build -f team_b/Dockerfile -t ticket-easy-team-b:ci .
+        if: hashFiles('orchestrator/Dockerfile') != ''
+        run: docker build -f orchestrator/Dockerfile -t ticket-easy-team-b:ci .
       - name: No Dockerfile yet
-        if: hashFiles('team_b/Dockerfile') == ''
-        run: echo "team_b/Dockerfile does not exist yet (one-command startup is built by Track A); nothing to build."
+        if: hashFiles('orchestrator/Dockerfile') == ''
+        run: echo "orchestrator/Dockerfile does not exist yet (one-command startup is built by Track A); nothing to build."

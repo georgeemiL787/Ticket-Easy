@@ -1,7 +1,7 @@
 """Run Team C's real tool lifecycle for the Nile Style sandbox shop and bind the result into Team B.
 
 Needs the sandbox API (integration/serve.py sandbox) and Team C (integration/serve.py team-c) running, and a model
-provider configured for Team C (team_c/.env: Groq, OpenRouter or Ollama). It drives Team C's own API and forms exactly
+provider configured for Team C (tool_generation_mcp/.env: Groq, OpenRouter or Ollama). It drives Team C's own API and forms exactly
 as an owner would in its pages, with every owner decision labelled sandbox-only:
 
   business -> upload the sandbox OpenAPI -> request a tool (the model triages and generates a proposal)
@@ -15,7 +15,7 @@ Nothing here approves on anyone's behalf without saying so: approvals are record
 Progress is kept in integration/var/lifecycle.json so a failed run resumes without asking the model again; --fresh
 starts over. Credentials (sandbox tokens) are written only to Team C's database through its form, never printed.
 
-    team_b/.venv/Scripts/python.exe integration/team_c_lifecycle.py [--fresh] [--tool order|ticket]
+    orchestrator/.venv/Scripts/python.exe integration/team_c_lifecycle.py [--fresh] [--tool order|ticket]
 """
 
 import argparse
@@ -36,7 +36,7 @@ API = TEAM_C + "/api/v1"
 SANDBOX = "http://127.0.0.1:8102"
 DEMO_SHOP = "http://127.0.0.1:8103"  # a second, separate deployment of the shop API (integration/serve.py demo-shop)
 LABEL = "sandbox-only integration run (integration/team_c_lifecycle.py):"
-# Team B's own customers (team_b/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
+# Team B's own customers (orchestrator/fixtures/shop_001/backend.json) and the sandbox identity each one acts as in Team C.
 IDENTITIES = {
     "alice": ("C-100", "NS-20877"), "bob": ("C-101", "NS-20790"),
     "carol": ("C-105", "NS-20955"), "dan": ("C-104", "NS-20960"),  # carol: a processing order, dan: a pending one
@@ -410,7 +410,7 @@ def fill_missing_outputs(binding: dict[str, Any], declared: dict[str, Any]) -> N
 def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], environment: str = "sandbox") -> Path:
     path = VAR / "team_c.json"
     config = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    team_c_dir = ROOT / "team_c"
+    team_c_dir = ROOT / "tool_generation_mcp"
     python = team_c_dir / ".venv" / "Scripts" / "python.exe"
     if not python.exists():
         python = team_c_dir / ".venv" / "bin" / "python"
@@ -421,7 +421,7 @@ def write_binding(state: dict[str, Any], tool: str, content: dict[str, Any], env
     tenant = config.setdefault("tenants", {}).setdefault("shop_001", {})
     tenant["business_id"] = state["business_id"]
     tenant["identities"] = {customer: name for name, (customer, _) in IDENTITIES.items()}
-    spec = json.loads((ROOT / "team_b" / "fixtures" / "shop_001" / "tools.json").read_text(encoding="utf-8"))
+    spec = json.loads((ROOT / "orchestrator" / "fixtures" / "shop_001" / "tools.json").read_text(encoding="utf-8"))
     declared = next(t for t in spec["tools"] if t["name"] == TOOLS[tool]["team_b"])
     wanted = list(declared["output_schema"].get("properties") or {})
     inputs = list((content.get("input_schema") or {}).get("properties") or {})

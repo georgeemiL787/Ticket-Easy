@@ -15,7 +15,7 @@ three dashboard screens call, as a signed-in manager, with the owner's own choic
 It counts the POSTs the owner needs (the plan's goal: at most 5) and fails if a plaintext credential is found in Team C's
 database. It changes state on purpose (a new tools-service business is NOT created: it reuses shop_001's binding).
 
-    team_b/.venv/Scripts/python.exe integration/tools_flow_check.py [--tenant shop_001]
+    orchestrator/.venv/Scripts/python.exe integration/tools_flow_check.py [--tenant shop_001]
 """
 
 import argparse
@@ -122,7 +122,7 @@ def main() -> int:
         step("owner effort and secrets")
         e2e_chat.check("the owner needed at most 5 changes (import, connect check, prepare, approve, publish, activate = 6 counting the check and activation)",
                        len(POSTS) <= 6, POSTS)
-        db = ROOT / "team_c" / "data" / "integration.sqlite3"
+        db = ROOT / "tool_generation_mcp" / "data" / "integration.sqlite3"
         if db.exists():
             with sqlite3.connect(db) as conn:
                 rows_ = conn.execute("SELECT content FROM sandbox_connectors").fetchall()

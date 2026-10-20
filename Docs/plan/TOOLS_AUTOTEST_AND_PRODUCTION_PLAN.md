@@ -22,7 +22,7 @@ Status: plan only (2026-10-12). Written to be implemented step by step. Read the
 
 - **Owner approval stays human.** Automation may test, diagnose, fix test *setup* and mark "ready". It never approves a
   proposal, never accepts an access policy, never approves a model repair, and never promotes to production by itself.
-- **Evidence rules are not weakened.** `team_c/team_c/publishing.py` `evidence()` / `next_steps()` stay the
+- **Evidence rules are not weakened.** `tool_generation_mcp/team_c/publishing.py` `evidence()` / `next_steps()` stay the
   definition of "may publish". Automation produces that evidence; it doesn't bypass it.
 - **Writes are never retried blindly.** Uncertain outcomes stay uncertain (`partial`, `outcome_unknown`).
 - **The model never sees credentials** and never chooses an identity.
@@ -62,15 +62,15 @@ Implement:
 - `integration/nile_sandbox/app.py`: add `/_fixtures/*` next to the existing harness routes. Records with a requested
   state = copy a template order and set `order_status` / dates so the state's preconditions hold. Keep the harness
   routes for the existing scripts.
-- `team_c/team_c/fixtures.py` (new): `FixtureClient(connector, settings)` with `accounts()`, `record()`, `kinds()`,
+- `tool_generation_mcp/team_c/fixtures.py` (new): `FixtureClient(connector, settings)` with `accounts()`, `record()`, `kinds()`,
   `reset()`, `state()`. Same safety as the executor: sandbox destinations only, no redirects, timeouts, size limits,
   and the key read from the environment variable named by `key_ref`.
-- `team_c/team_c/services/connectors.py`: `save()` accepts optional `fixtures` (sandbox only); `listing()` shows
+- `tool_generation_mcp/team_c/services/connectors.py`: `save()` accepts optional `fixtures` (sandbox only); `listing()` shows
   `fixtures: configured | none` (never the key); the connection check gets a `fixtures` step (`GET /_fixtures/kinds`).
 
 ## 1.2 Derive the test plan from the artifact (deterministic, no model needed)
 
-New `team_c/team_c/autotest.py` with `plan(artifact, view, fixture_kinds) -> TestPlan`. Derive scenarios from what
+New `tool_generation_mcp/team_c/autotest.py` with `plan(artifact, view, fixture_kinds) -> TestPlan`. Derive scenarios from what
 Team C already knows. Don't invent new rules; mirror `publishing.evidence()` and `next_steps()` so the plan is exactly
 what publication needs:
 
@@ -142,8 +142,8 @@ computed from tests, evidence and publications (not stored, so it can't drift).
 
 ## 1.5 Team B and the dashboard
 
-- `team_b/src/team_b/adapters/team_c_admin.py`: `auto_test(artifact_id)`, `run(run_id)`.
-- `team_b/src/team_b/api/business_tools.py`: per Team C proposal, show `readiness_state` and the latest auto-test run
+- `orchestrator/src/team_b/adapters/team_c_admin.py`: `auto_test(artifact_id)`, `run(run_id)`.
+- `orchestrator/src/team_b/api/business_tools.py`: per Team C proposal, show `readiness_state` and the latest auto-test run
   summary. Add `POST /v1/dashboard/business-tools/artifacts/{id}/auto-test` (manager; the artifact must belong to the
   tenant's business, else 404; add the route to `ROLES` in `api/auth.py`).
 - `dashboard/src/pages/BusinessTools.tsx`: under Tool proposals, a **Run automatic tests** button and the state badge
@@ -154,7 +154,7 @@ computed from tests, evidence and publications (not stored, so it can't drift).
 
 ## 1.6 Tests for Part 1
 
-- `team_c/tests/test_autotest.py` (in-process service-desk fixture + a mock fixture provider):
+- `tool_generation_mcp/tests/test_autotest.py` (in-process service-desk fixture + a mock fixture provider):
   - plan derivation for each row of §1.2 (pure function);
   - a record-scope tool reaches `ready_to_publish` with zero identities configured beforehand;
   - a tool whose state precondition needs `pending` gets a `pending` record;
@@ -195,7 +195,7 @@ service-account execution on behalf of many users is unsupported. That is the co
 ## 2.2 New execution mode: service credential + trusted customer context
 
 **Team C**
-- `team_c/team_c/compiler/policies.py` / `artifacts.py`: new caller-access mechanism `service_credential_scoped`:
+- `tool_generation_mcp/team_c/compiler/policies.py` / `artifacts.py`: new caller-access mechanism `service_credential_scoped`:
   - allowed only when **every** record-scope requirement has a Team C check (`response_field_matches_context`). No
     `unrestricted`, and no `api_filtered` reliance for data scope: data-scope outputs must be filtered by Team C
     against the context too (new mechanism `output_rows_match_context`: drop rows whose owner field differs, or fail
@@ -209,7 +209,7 @@ service-account execution on behalf of many users is unsupported. That is the co
   - the context is never logged in full (only a hash), never returned, and never reaches a model;
   - **trust boundary:** this is safe only because the stdio process is spawned by Team B and nobody else can write to
     it. Document it; any network transport needs mutual authentication first.
-- `team_c/team_c/executor.py`: `credentials()` for `service_credential_scoped` takes the service secret from
+- `tool_generation_mcp/team_c/executor.py`: `credentials()` for `service_credential_scoped` takes the service secret from
   `secret_ref` and the context from the call (not from a stored identity). The identity context check then compares
   against the call's context.
 
@@ -237,8 +237,8 @@ service-account execution on behalf of many users is unsupported. That is the co
 
 ## 2.4 Promotion: sandbox-tested → production (human decision, automated checks)
 
-New table `promotions` (migration in `team_c/team_c/persistence/migrations/versions.py`, next version number) and
-service `team_c/team_c/services/promotion.py`:
+New table `promotions` (migration in `tool_generation_mcp/team_c/persistence/migrations/versions.py`, next version number) and
+service `tool_generation_mcp/team_c/services/promotion.py`:
 
 `promote(source_artifact_id, production_connector_id, actor, note)`:
 1. The source artifact is published (sandbox or Live Demo) with complete evidence (`publication_problems` empty).
@@ -271,7 +271,7 @@ per tenant; default on) and notify through the existing `TEAM_B_ALERT_WEBHOOK`.
 
 ## 2.5 Idempotency for production writes
 
-- Discovery (`team_c/team_c/discovery.py`): detect an `Idempotency-Key` header parameter (or a documented body field)
+- Discovery (`tool_generation_mcp/team_c/discovery.py`): detect an `Idempotency-Key` header parameter (or a documented body field)
   on write operations and record `idempotency: header|field|none`.
 - `executor.py`: for production writes with `idempotency != none`, send Team B's `ToolCallRequest.idempotency_key`
   (already sha256(tenant|conversation|proposal)) through a new trusted MCP `_meta.ticketeasy.idempotency_key`, never as
@@ -342,18 +342,18 @@ Disable and rollback work on the next call.
 9. Promotion service + checklist + rollback + auto-disable (2.4).
 10. Idempotency (2.5).
 11. Team B + dashboard + Team C pages (2.6).
-12. Security hardening (2.7), then `production_check.py`, then docs (`Docs/INTEGRATION.md`, `team_c/README.md`,
-    `team_b/CLAUDE.md`).
+12. Security hardening (2.7), then `production_check.py`, then docs (`Docs/INTEGRATION.md`, `tool_generation_mcp/README.md`,
+    `orchestrator/CLAUDE.md`).
 
 ## Notes for the implementer
 
-- Read before editing: `team_c/team_c/publishing.py`, `services/building.py` (`run_sandbox`, `run_sandbox_test`,
+- Read before editing: `tool_generation_mcp/team_c/publishing.py`, `services/building.py` (`run_sandbox`, `run_sandbox_test`,
   `fix_and_retest`, `suggest_test_inputs`), `repair.py` (`diagnose`), `services/publication.py`, `connectors.py`,
-  `executor.py`, `team_b/src/team_b/adapters/team_c_tools.py`, `team_b/CLAUDE.md` (rules for Team B changes).
-- Team B tests must never start Team C: extend `team_b/tests/fake_team_c_mcp.py` instead.
-- Team A's test suite rewrites `team_a/data/telecom/telco_001/schema.sql`. Restore it with
-  `git restore -- team_a/data/telecom/telco_001/schema.sql` after running Team A's tests; don't commit it.
-- Generated files: after changing Team B dashboard models, run `python scripts/export_schemas.py` in `team_b/` and
+  `executor.py`, `orchestrator/src/team_b/adapters/team_c_tools.py`, `orchestrator/CLAUDE.md` (rules for Team B changes).
+- Team B tests must never start Team C: extend `orchestrator/tests/fake_team_c_mcp.py` instead.
+- Team A's test suite rewrites `rag/data/telecom/telco_001/schema.sql`. Restore it with
+  `git restore -- rag/data/telecom/telco_001/schema.sql` after running Team A's tests; don't commit it.
+- Generated files: after changing Team B dashboard models, run `python scripts/export_schemas.py` in `orchestrator/` and
   `npm run types` in `dashboard/`.
 - Use Python heredocs carefully on Windows bash: `\n` inside an unquoted Python string in a heredoc becomes a real
   newline. Write edit scripts to files instead.

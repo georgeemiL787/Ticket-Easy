@@ -1,0 +1,51 @@
+{
+  "command": [
+    "../../tool_generation_mcp/.venv/Scripts/python.exe",
+    "-m",
+    "team_c.mcp_server"
+  ],
+  "cwd": "../../tool_generation_mcp",
+  "env": {
+    "PYTHONPATH": ".",
+    "LIVE_DEMO_ENABLED": "true",
+    "LIVE_DEMO_HOSTS": "api.example.com:443"
+  },
+  "database": "data/integration.sqlite3",
+  "sandbox_hosts": "127.0.0.1:8102",
+  "api_url": "http://127.0.0.1:8101",
+  "builder_url": "http://127.0.0.1:8101",
+  "list_timeout_s": 15,
+  "call_timeout_s": 30,
+  "tenants": {
+    "shop_001": {
+      "business_id": "<the Team C business id>",
+      "identities": {
+        "C-100": "alice",
+        "C-101": "bob"
+      },
+      "tools": {
+        "get_order": {
+          "proposal_id": "<the Team C proposal id of the order-lookup tool>",
+          "fields": {
+            "order_status": "/order_details/order_status",
+            "customer_id": "/order_details/customer_id"
+          },
+          "environments": [
+            "live_demo"
+          ]
+        },
+        "create_ticket": {
+          "proposal_id": "<the Team C proposal id of the ticket tool>",
+          "fields": {
+            "reference_id": "Ticket ID",
+            "status": "Ticket Status"
+          },
+          "reference_field": "reference_id",
+          "environments": [
+            "sandbox"
+          ]
+        }
+      }
+    }
+  }
+}

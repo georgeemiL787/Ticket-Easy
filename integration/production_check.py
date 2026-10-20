@@ -5,9 +5,9 @@ synthetic data), with ONE service token that may act for any customer, which is 
 NOT a real production API; it proves the part that matters: nothing in the API keeps customers apart, Team C does. To start it copy
 integration/production.example.env to integration/production.env and restart the services (serve.py up). Run the phases in order:
 
-  team_b/.venv/Scripts/python.exe integration/production_check.py --phase promote   # Team C only: connector, promotion, the real production MCP process
-  team_b/.venv/Scripts/python.exe integration/production_check.py --phase bind      # write Team B's binding for production; then RESTART Team B
-  team_b/.venv/Scripts/python.exe integration/production_check.py --phase chat      # the customer chat, the dashboard promote/rollback, rollback
+  orchestrator/.venv/Scripts/python.exe integration/production_check.py --phase promote   # Team C only: connector, promotion, the real production MCP process
+  orchestrator/.venv/Scripts/python.exe integration/production_check.py --phase bind      # write Team B's binding for production; then RESTART Team B
+  orchestrator/.venv/Scripts/python.exe integration/production_check.py --phase chat      # the customer chat, the dashboard promote/rollback, rollback
 
 Needs: sandbox, nile-prod, Team C (with the PRODUCTION_* settings), Team A and Team B running, and the sandbox lifecycle done for the order and
 ticket tools (integration/team_c_lifecycle.py), whose sandbox-published, tested artifacts are what gets promoted. Every owner decision is
@@ -28,7 +28,7 @@ import httpx
 ROOT = Path(__file__).resolve().parents[1]
 VAR = ROOT / "integration" / "var"
 sys.path.insert(0, str(ROOT / "integration"))
-sys.path.insert(0, str(ROOT / "team_b" / "src"))
+sys.path.insert(0, str(ROOT / "orchestrator" / "src"))
 import serve  # noqa: E402
 import team_c_lifecycle as lifecycle  # noqa: E402
 from e2e_chat import RESULTS, Chat, check  # noqa: E402
@@ -210,12 +210,12 @@ def admin(http: httpx.Client) -> dict[str, str]:
     if not key.exists():
         key.write_text(_secrets.token_urlsafe(18), encoding="utf-8")
     password = key.read_text(encoding="utf-8").strip()
-    python = ROOT / "team_b" / ".venv" / "Scripts" / "python.exe"
+    python = ROOT / "orchestrator" / ".venv" / "Scripts" / "python.exe"
     env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
     base = [str(python if python.exists() else sys.executable), "-m", "team_b", "create-user", "--email", "e2e-admin@example.com",
             "--name", "E2E Admin", "--role", "admin", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):
-        subprocess.run([*base, extra], cwd=ROOT / "team_b", env=env, capture_output=True, check=False)
+        subprocess.run([*base, extra], cwd=ROOT / "orchestrator", env=env, capture_output=True, check=False)
     r = http.post("/v1/auth/login", json={"email": "e2e-admin@example.com", "password": password})
     r.raise_for_status()
     return {"X-CSRF-Token": r.json()["csrf_token"]}

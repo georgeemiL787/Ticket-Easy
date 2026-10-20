@@ -32,10 +32,10 @@ D4 Team A service keys bound to tenants (off when unset) · D6 migrations 007 (b
 stored test credentials · D8 light theme opt-in per surface · D9 darker `-text` tokens for text. D5 (repo moves): see P7.
 
 ## P1 · Design tokens
-`team_b/web/shared/aurora-light.css` (new; `aurora.css` imports it; the dashboard imports the same file, so there is one source),
+`orchestrator/web/shared/aurora-light.css` (new; `aurora.css` imports it; the dashboard imports the same file, so there is one source),
 scoped to `:root[data-theme="aurora-light"]`, so nothing existing changes. Buttons, header/nav, states, badges, cards, focus
-ring, 44px targets, reduced motion, fonts incl. IBM Plex Sans Arabic. `team_b/scripts/check_contrast.py` + `tests/unit/test_contrast.py`
-(text roles >= 4.5, accents >= 3). `team_b/web/shared/tokens.html` is a preview page (not screenshotted).
+ring, 44px targets, reduced motion, fonts incl. IBM Plex Sans Arabic. `orchestrator/scripts/check_contrast.py` + `tests/unit/test_contrast.py`
+(text roles >= 4.5, accents >= 3). `orchestrator/web/shared/tokens.html` is a preview page (not screenshotted).
 
 ## P2 · Bundles
 `domain/bundle.py`, `adapters/bundle_repository.py` (memory + sqlite, migration 007), `bundles.py` (BundleRegistry = the
@@ -90,7 +90,7 @@ Arabic/RTL, mobile widths, the inbox, the other dashboard pages, Chat/Inbox with
 ## P7 · Repo restructuring (D5: only the low-risk part)
 Done: root `README.md` product framing, `contracts/README.md` index.
 Not done, on purpose: renaming `Docs/` to `docs/`, moving `team_a|b|c/` and `dashboard/` into new folders (venvs are not movable on Windows,
-and CI, Docker and `serve.py` paths all change), removing `team_c/.git`, dead code and scratch databases (needs your confirmation first).
+and CI, Docker and `serve.py` paths all change), removing `tool_generation_mcp/.git`, dead code and scratch databases (needs your confirmation first).
 These can be done later one step at a time; nothing else depends on them.
 
 ## QA pass through the running stack (2026-10-13)

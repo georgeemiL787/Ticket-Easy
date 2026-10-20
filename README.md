@@ -10,9 +10,9 @@ Ticket-Easy is an AI agent for Egyptian businesses that answers customers in the
 
 | What owners see | Service | Folder |
 |---|---|---|
-| Knowledge: documents, search, guardrail rules | Knowledge service | `team_a/` |
-| The assistant, chat, inbox, dashboard, onboarding | Agent service | `team_b/` (+ `dashboard/`) |
-| Tools: turn an API description into safe tools | Tools service | `team_c/` |
+| Knowledge: documents, search, guardrail rules | Knowledge service | `rag/` |
+| The assistant, chat, inbox, dashboard, onboarding | Agent service | `orchestrator/` (+ `dashboard/`) |
+| Tools: turn an API description into safe tools | Tools service | `tool_generation_mcp/` |
 
 An owner sets a business up in the dashboard: **Set up a business** (profile, policies, rules, API connection, tools, test chat, go live). The folder names are historical; the plan is in `Docs/plan/TICKET_EASY_MASTER_PLAN.md` and its progress in `Docs/plan/TICKET_EASY_MASTER_PROGRESS.md`. Schemas: `contracts/README.md`.
 

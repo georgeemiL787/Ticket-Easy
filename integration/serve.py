@@ -39,7 +39,7 @@ PRODUCTION_ENV = ROOT / "integration" / "production.env"
 PORTS = {"sandbox": 8102, "demo-shop": 8103, "nile-prod": 8104, "team-c": 8101, "team-a": 8001, "team-b": 8010}
 # nile-prod (a production-like shop deployment with a service token) starts only when integration/production.env exists
 ORDER = ("sandbox", "demo-shop", *(("nile-prod",) if PRODUCTION_ENV.exists() else ()), "team-c", "team-a", "team-b")
-TEAMS = {"sandbox": "team_b", "demo-shop": "team_b", "nile-prod": "team_b", "team-c": "team_c", "team-a": "team_a", "team-b": "team_b"}
+TEAMS = {"sandbox": "orchestrator", "demo-shop": "orchestrator", "nile-prod": "orchestrator", "team-c": "tool_generation_mcp", "team-a": "rag", "team-b": "orchestrator"}
 LIVE_KEYS = ("LIVE_DEMO_ENABLED", "LIVE_DEMO_HOSTS", "LIVE_DEMO_PRIVATE_HOSTS", "LIVE_DEMO_CALLS_PER_MINUTE")
 # the PRODUCTION_* lines of integration/production.env; the smoke settings belong to Team C's web app only
 PRODUCTION_KEYS = ("PRODUCTION_ENABLED", "PRODUCTION_HOSTS", "PRODUCTION_PRIVATE_HOSTS", "PRODUCTION_CALLS_PER_MINUTE",
@@ -106,16 +106,16 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
             env.update({k: v for k, v in production.items() if k in PRODUCTION_KEYS + SMOKE_KEYS})
             env.update(PRODUCTION_AUDIT_DIR=str(VAR / "audit"), TEAM_C_ADMIN_TOKEN=secret("team_c_admin.key"))
         args = ["-m", "uvicorn", "team_c.web:create_app", "--factory", "--host", "127.0.0.1"]
-        return [python, *args, "--port", port], ROOT / "team_c", env
+        return [python, *args, "--port", port], ROOT / "tool_generation_mcp", env
     if service == "team-a":
         env["PYTHONPATH"] = "src"
         env["ADMIN_API_KEY"] = secret("team_a_admin.key")  # the knowledge pages (documents, index, rules) go through it
         env["SERVICE_API_KEY"] = secret("team_a_service.key")  # only a caller that sends it may search or check actions
         args = ["-m", "uvicorn", "team_a.service:app", "--app-dir", "src", "--host", "127.0.0.1"]
-        return [python, *args, "--port", port], ROOT / "team_a", env
+        return [python, *args, "--port", port], ROOT / "rag", env
     # Team B reads only the process environment, so load its own .env here (AI model, per-job models, agent mode).
     # A variable already set in the shell wins, and the fixed values below (mode, database, keys) win over the file.
-    for key, value in live_settings(ROOT / "team_b" / ".env").items():
+    for key, value in live_settings(ROOT / "orchestrator" / ".env").items():
         if key.startswith("TEAM_B_") and key not in os.environ and value:
             env[key] = value.split(" #", 1)[0].strip()
     env.update(
@@ -138,7 +138,7 @@ def command(service: str, standin: bool = False, no_auth: bool = False) -> tuple
     if PRODUCTION_ENV.exists():
         env["TEAM_C_ADMIN_TOKEN"] = secret("team_c_admin.key")  # Team B's service credential TO Team C (admin actions)
     args = ["-m", "uvicorn", "team_b.api.app:app", "--app-dir", "src", "--host", "127.0.0.1"]
-    return [python, *args, "--port", port], ROOT / "team_b", env
+    return [python, *args, "--port", port], ROOT / "orchestrator", env
 
 
 def sync_live_settings(binding: Path) -> None:
@@ -193,15 +193,15 @@ def port_taken(port: int) -> bool:
 def preflight() -> list[str]:
     """Problems that stop a service, and warnings that limit what works; nothing secret is printed."""
     problems = []
-    for team in ("team_a", "team_b", "team_c"):
+    for team in ("rag", "orchestrator", "tool_generation_mcp"):
         if venv_python(team) is None:
             problems.append(f"ERROR   {team}/.venv is missing (Docs/INTEGRATION.md, 'Run it locally')")
-    if not (ROOT / "team_a" / "var" / "index" / "shop_001").exists():
-        problems.append("ERROR   Team A has no index for shop_001: cd team_a; PYTHONPATH=src .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings")
-    if not (ROOT / "team_b" / "web" / "dashboard" / "index.html").exists():
+    if not (ROOT / "rag" / "var" / "index" / "shop_001").exists():
+        problems.append("ERROR   Team A has no index for shop_001: cd rag; PYTHONPATH=src .venv/Scripts/python -m team_a ingest --tenant shop_001 --no-embeddings")
+    if not (ROOT / "orchestrator" / "web" / "dashboard" / "index.html").exists():
         problems.append("WARNING the dashboard is not built (cd dashboard; npm ci; npm run build): /dashboard will say so")
-    if not (ROOT / "team_c" / ".env").exists():
-        problems.append("WARNING team_c/.env is missing: Team C runs, but proposal generation needs a model provider (team_c/.env.example)")
+    if not (ROOT / "tool_generation_mcp" / ".env").exists():
+        problems.append("WARNING tool_generation_mcp/.env is missing: Team C runs, but proposal generation needs a model provider (tool_generation_mcp/.env.example)")
     if not (VAR / "team_c.json").exists():
         problems.append("WARNING no Team C binding (integration/var/team_c.json): Team B serves every tool from its stand-in shop")
     live = live_settings()

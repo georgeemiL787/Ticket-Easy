@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useI18n } from "../i18n";
 
-/** The light "aurora" theme (team_b/web/shared/aurora-light.css) while a restyled page is open. */
+/** The light "aurora" theme (orchestrator/web/shared/aurora-light.css) while a restyled page is open. */
 export function useLightTheme(): void {
   useEffect(() => {
     const root = document.documentElement;

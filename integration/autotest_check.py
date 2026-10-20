@@ -8,7 +8,7 @@ ready_to_publish (the lifecycle then publishes it to the sandbox) and every evid
 
 Needs the sandbox and Team C running (integration/serve.py up):
 
-    team_b/.venv/Scripts/python.exe integration/autotest_check.py [--fresh] [--tool order ...]
+    orchestrator/.venv/Scripts/python.exe integration/autotest_check.py [--fresh] [--tool order ...]
 """
 
 import argparse

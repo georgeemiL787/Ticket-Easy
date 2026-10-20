@@ -4,7 +4,7 @@ Needs `python integration/serve.py up` (sign-in on) and the admin in integration
 check and exits 1 when any failed. It does not drive a browser (no browser automation is installed in this repository);
 the pages' own behaviour is covered by the dashboard's vitest suite and was exercised by hand in the in-app browser.
 
-    team_b/.venv/Scripts/python.exe integration/qa_journeys_check.py
+    orchestrator/.venv/Scripts/python.exe integration/qa_journeys_check.py
 """
 
 import contextlib

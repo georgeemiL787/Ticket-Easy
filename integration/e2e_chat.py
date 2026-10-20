@@ -5,7 +5,7 @@ Team B's get_order is bound to Team C's published order-lookup tool. Every custo
 chat API; the business-tools calls go through Team B as a signed-in manager; Team C's own records (executions) and the
 sandbox's harness state are read independently. Prints PASS/FAIL per check and exits 1 when any check failed.
 
-    team_b/.venv/Scripts/python.exe integration/e2e_chat.py
+    orchestrator/.venv/Scripts/python.exe integration/e2e_chat.py
 
 It changes state on purpose: it disables the order-lookup publication through Team B, checks the agent
 stops using it, then publishes the same tested artifact again through Team C's API and checks Team B discovers it.
@@ -63,12 +63,12 @@ def manager(http: httpx.Client) -> dict[str, str]:
     if not key.exists():
         key.write_text(secrets.token_urlsafe(18), encoding="utf-8")
     password = key.read_text(encoding="utf-8").strip()
-    python = ROOT / "team_b" / ".venv" / "Scripts" / "python.exe"
+    python = ROOT / "orchestrator" / ".venv" / "Scripts" / "python.exe"
     env = dict(os.environ, TEAM_B_STORE="sqlite", TEAM_B_DB_PATH=str(VAR / "team_b.sqlite3"))
     base = [str(python if python.exists() else sys.executable), "-m", "team_b", "create-user", "--email", "e2e-manager@example.com",
             "--name", "E2E Manager", "--role", "manager", "--tenants", T, "--password", password]  # fmt: skip
     for extra in ("--if-missing", "--reset-password"):
-        subprocess.run([*base, extra], cwd=ROOT / "team_b", env=env, capture_output=True, check=False)
+        subprocess.run([*base, extra], cwd=ROOT / "orchestrator", env=env, capture_output=True, check=False)
     r = http.post("/v1/auth/login", json={"email": "e2e-manager@example.com", "password": password})
     r.raise_for_status()
     return {"X-CSRF-Token": r.json()["csrf_token"]}
@@ -92,7 +92,7 @@ def mcp_executions(team_c: httpx.Client, artifact_id: str) -> list[dict[str, Any
 
 async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> dict[str, Any]:
     """What Team C's MCP server itself answers (Team B's own client, real server process): the contract checks."""
-    sys.path.insert(0, str(ROOT / "team_b" / "src"))
+    sys.path.insert(0, str(ROOT / "orchestrator" / "src"))
     from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",
@@ -113,7 +113,7 @@ async def direct_mcp(binding: dict[str, Any], tenant: dict[str, Any], tool: str)
 
 
 async def call_old_name(binding: dict[str, Any], tenant: dict[str, Any], tool: str) -> Any:
-    sys.path.insert(0, str(ROOT / "team_b" / "src"))
+    sys.path.insert(0, str(ROOT / "orchestrator" / "src"))
     from team_b.adapters.team_c_mcp import McpRemoteError, McpStdioSession
 
     command = [*binding["command"], "--business-id", tenant["business_id"], "--identity", "alice",

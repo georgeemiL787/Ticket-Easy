@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: "/dashboard/",
   plugins: [react()],
-  build: { outDir: "../team_b/web/dashboard", emptyOutDir: true },
+  build: { outDir: "../orchestrator/web/dashboard", emptyOutDir: true },
   server: { fs: { allow: [".."] }, proxy: { "/v1": "http://127.0.0.1:8010" } }, // `npm run dev` talks to `make run`
   test: { environment: "jsdom", globals: true, setupFiles: ["./src/test/setup.ts"], css: false },
 });

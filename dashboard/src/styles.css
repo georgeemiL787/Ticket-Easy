@@ -1,4 +1,4 @@
-/* The manager dashboard, in the light aurora look. Colours come from team_b/web/shared/aurora-light.css (imported after this
+/* The manager dashboard, in the light aurora look. Colours come from orchestrator/web/shared/aurora-light.css (imported after this
    sheet in main.tsx): text, muted text, borders, accents and states. Only what is specific to the dashboard is defined here.
    Layout uses logical properties (inline/block, start/end) so the sheet works left-to-right and right-to-left. */
 :root {
@@ -745,7 +745,7 @@ a.primary { display: inline-block; padding: 8px 14px; border-radius: 12px; backg
 
 /* =====================================================================================================================
    Light redesign: glass sidebar and top bar, KPI cards, tables, forms, states.
-   Values come from team_b/web/shared/aurora-light.css (imported in main.tsx), the same file the chat and inbox use.
+   Values come from orchestrator/web/shared/aurora-light.css (imported in main.tsx), the same file the chat and inbox use.
    ===================================================================================================================== */
 :root {
   --panel: var(--glass);

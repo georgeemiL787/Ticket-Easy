@@ -1,0 +1,741 @@
+{
+  "$defs": {
+    "BusinessTool": {
+      "properties": {
+        "api_host": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Host"
+        },
+        "artifact_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Sha256"
+        },
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environment"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "operation_kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operation Kind"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposal Id"
+        },
+        "proposal_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposal Version"
+        },
+        "publication_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Id"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "source": {
+          "enum": [
+            "team_c",
+            "standin"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "available",
+            "missing",
+            "blocked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "team_c_tool": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Team C Tool"
+        },
+        "used_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "used_by",
+        "source",
+        "status"
+      ],
+      "title": "BusinessTool",
+      "type": "object"
+    },
+    "ConnectorCheck": {
+      "properties": {
+        "check": {
+          "title": "Check",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "check",
+        "status"
+      ],
+      "title": "ConnectorCheck",
+      "type": "object"
+    },
+    "PromotionCheck": {
+      "properties": {
+        "detail": {
+          "default": "",
+          "title": "Detail",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "ok"
+      ],
+      "title": "PromotionCheck",
+      "type": "object"
+    },
+    "TeamCConnector": {
+      "properties": {
+        "checked_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checked At"
+        },
+        "checks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ConnectorCheck"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Environment"
+        },
+        "host": {
+          "title": "Host",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "identities": {
+          "title": "Identities",
+          "type": "integer"
+        },
+        "ready": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ready"
+        }
+      },
+      "required": [
+        "id",
+        "environment",
+        "host",
+        "identities"
+      ],
+      "title": "TeamCConnector",
+      "type": "object"
+    },
+    "TeamCPromotion": {
+      "properties": {
+        "actor": {
+          "title": "Actor",
+          "type": "string"
+        },
+        "checklist": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PromotionCheck"
+          },
+          "title": "Checklist",
+          "type": "array"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "production_artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Production Artifact Id"
+        },
+        "publication_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Publication Id"
+        },
+        "rollback_contact": {
+          "title": "Rollback Contact",
+          "type": "string"
+        },
+        "rollback_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rollback Note"
+        },
+        "rolled_back_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back At"
+        },
+        "rolled_back_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rolled Back By"
+        },
+        "source_artifact_id": {
+          "title": "Source Artifact Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "source_artifact_id",
+        "status",
+        "actor",
+        "note",
+        "rollback_contact"
+      ],
+      "title": "TeamCPromotion",
+      "type": "object"
+    },
+    "TeamCProposal": {
+      "properties": {
+        "artifact_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Id"
+        },
+        "auto_test_question": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auto Test Question"
+        },
+        "auto_test_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Auto Test Status"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "promotable": {
+          "default": false,
+          "title": "Promotable",
+          "type": "boolean"
+        },
+        "promoted": {
+          "default": false,
+          "title": "Promoted",
+          "type": "boolean"
+        },
+        "readiness_state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Readiness State"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "state"
+      ],
+      "title": "TeamCProposal",
+      "type": "object"
+    },
+    "TeamCPublication": {
+      "properties": {
+        "bound_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bound To"
+        },
+        "disabled_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Disabled At"
+        },
+        "effective_status": {
+          "title": "Effective Status",
+          "type": "string"
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "execution_enabled": {
+          "default": false,
+          "title": "Execution Enabled",
+          "type": "boolean"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "problem": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Problem"
+        },
+        "production_ready": {
+          "title": "Production Ready",
+          "type": "boolean"
+        },
+        "promotion_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Promotion Id"
+        },
+        "proposal_id": {
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Published At"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "tool_name": {
+          "title": "Tool Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "tool_name",
+        "status",
+        "effective_status",
+        "environment",
+        "production_ready",
+        "proposal_id",
+        "version"
+      ],
+      "title": "TeamCPublication",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "builder_base": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Builder Base"
+    },
+    "builder_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Builder Url"
+    },
+    "business_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Business Id"
+    },
+    "configured": {
+      "title": "Configured",
+      "type": "boolean"
+    },
+    "connectors": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCConnector"
+      },
+      "title": "Connectors",
+      "type": "array"
+    },
+    "listed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Listed At"
+    },
+    "live_tools": {
+      "default": 0,
+      "title": "Live Tools",
+      "type": "integer"
+    },
+    "mapped_customers": {
+      "default": 0,
+      "title": "Mapped Customers",
+      "type": "integer"
+    },
+    "production_connector": {
+      "default": false,
+      "title": "Production Connector",
+      "type": "boolean"
+    },
+    "production_tools": {
+      "default": 0,
+      "title": "Production Tools",
+      "type": "integer"
+    },
+    "promotions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCPromotion"
+      },
+      "title": "Promotions",
+      "type": "array"
+    },
+    "proposals": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCProposal"
+      },
+      "title": "Proposals",
+      "type": "array"
+    },
+    "publications": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/TeamCPublication"
+      },
+      "title": "Publications",
+      "type": "array"
+    },
+    "publications_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Publications Error"
+    },
+    "sandbox_only": {
+      "default": true,
+      "title": "Sandbox Only",
+      "type": "boolean"
+    },
+    "team_c_error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Team C Error"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "tools": {
+      "items": {
+        "$ref": "#/$defs/BusinessTool"
+      },
+      "title": "Tools",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "configured",
+    "tools"
+  ],
+  "title": "DashboardBusinessTools",
+  "type": "object"
+}

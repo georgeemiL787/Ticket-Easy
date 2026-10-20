@@ -7,11 +7,11 @@
 **/.pytest_cache
 **/.mypy_cache
 **/.ruff_cache
-team_b/tests
-team_b/loadtest/out
-team_b/web/dashboard
-team_a/tests
-team_a/.venv
-team_a/scripts
+orchestrator/tests
+orchestrator/loadtest/out
+orchestrator/web/dashboard
+rag/tests
+rag/.venv
+rag/scripts
 team_c
 Docs

@@ -1,6 +1,6 @@
 """Nile Style sandbox shop API: the business API Team C compiles tools against in the integrated demo (TEST-ONLY).
 
-It serves the same customers and orders as Team B's demo shop (team_b/fixtures/shop_001/backend.json, copied in memory
+It serves the same customers and orders as Team B's demo shop (orchestrator/fixtures/shop_001/backend.json, copied in memory
 at start), so the customer Team B verifies by phone is the same customer whose sandbox credential Team C uses.
 
 Behavior and access rules, fixed before any tool is generated:
@@ -39,7 +39,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DATA = ROOT / "team_b" / "fixtures" / "shop_001" / "backend.json"
+DEFAULT_DATA = ROOT / "orchestrator" / "fixtures" / "shop_001" / "backend.json"
 
 
 class Order(BaseModel):

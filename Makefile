@@ -1,4 +1,4 @@
-# One-command demo of the whole stack (needs Docker). The service's own commands are in team_b/Makefile.
+# One-command demo of the whole stack (needs Docker). The service's own commands are in orchestrator/Makefile.
 # make demo        start the demo (no AI model) and fill the dashboard with example conversations
 # make demo-full   the same plus a local AI model (Ollama, qwen3:8b: the first start downloads about 5 GB)
 # make demo-live  Team B with the real Team A (policy search, safety, rules); needs Ollama on the host with bge-m3 pulled

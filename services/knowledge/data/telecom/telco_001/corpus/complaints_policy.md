@@ -28,7 +28,7 @@ Based on: Masr Connect's own internal rule (no operator publishes this).
 
 `complaints_policy@v2#s3`
 
-If a complaint is not resolved or the customer is not satisfied, it goes to a senior team. The customer can also escalate to the National Telecom Regulatory Authority (NTRA) by calling 155, or through the My NTRA app, the NTRA website, e-mail or WhatsApp.
+If a complaint is not resolved or the customer is not satisfied, it goes to senior staff. The customer can also escalate to the National Telecom Regulatory Authority (NTRA) by calling 155, or through the My NTRA app, the NTRA website, e-mail or WhatsApp.
 
 <div dir="rtl">إذا لم تُحل الشكوى أو لم يكن العميل راضيًا تُحول لفريق متخصص. ويمكن للعميل أيضًا التصعيد للجهاز القومي لتنظيم الاتصالات بالاتصال على 155 أو عن طريق تطبيق My NTRA أو موقع الجهاز أو البريد الإلكتروني أو واتساب.</div>
 

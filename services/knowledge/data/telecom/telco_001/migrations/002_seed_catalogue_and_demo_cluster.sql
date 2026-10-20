@@ -27,7 +27,7 @@ INSERT INTO root_cause_catalog (cause_code, scope, layer, title_en, title_ar, cu
  'Your line''s network settings don''t match your plan. We can refresh them for you.',
  'إعدادات خطك على الشبكة مش مطابقة لباقتك. نقدر نحدّثها من عندنا.', 1),
 ('POOR_COVERAGE', 'user', 'coverage', 'Weak signal where you are', 'الإشارة ضعيفة في مكانك',
- 'The signal where you are is weak. We''ve passed your location to our network team.',
+ 'The signal where you are is weak. We''ve passed your location to our network department.',
  'الإشارة في مكانك ضعيفة. بلّغنا فريق الشبكة بمكانك.', 0),
 ('CELL_DOWN', 'infrastructure', 'access', 'Nearby tower not working', 'البرج اللي جنبك واقف',
  'The tower serving your area has a fault. Our engineers are working on it.',

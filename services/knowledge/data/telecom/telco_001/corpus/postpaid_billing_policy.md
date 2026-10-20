@@ -38,7 +38,7 @@ Based on: [NTRA list of customer rights (consent, 1 week notice before cut-off, 
 
 `postpaid_billing_policy@v2#s4`
 
-A customer may dispute any charge within 60 days of the bill date. While a dispute is open, the disputed amount does not count toward suspension. Customer service opens disputes; the billing team decides adjustments, and adjustments above 500 EGP need a supervisor.
+A customer may dispute any charge within 60 days of the bill date. While a dispute is open, the disputed amount does not count toward suspension. Customer service opens disputes; the billing department decides adjustments, and adjustments above 500 EGP need a supervisor.
 
 <div dir="rtl">يحق للعميل الاعتراض على أي مبلغ خلال 60 يومًا من تاريخ الفاتورة. أثناء فتح الاعتراض لا يُحتسب المبلغ المعترض عليه ضمن أسباب الإيقاف. خدمة العملاء تفتح الاعتراض، وفريق الفواتير يقرر التسوية، والتسويات فوق 500 جنيه تحتاج موافقة مشرف.</div>
 

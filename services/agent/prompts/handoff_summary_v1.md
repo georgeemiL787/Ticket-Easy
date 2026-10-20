@@ -2,7 +2,7 @@
 
 Prompt for the AI-written handoff summary. The file name is the prompt version recorded on the case. The model sees only
 the structured briefing (never the raw conversation outside it). Its text is checked by code (check_grounded in
-brain/composer.py) against that briefing: any number, date, id, amount, currency, link or citation that is not in the
+replies/composer.py) against that briefing: any number, date, id, amount, currency, link or citation that is not in the
 briefing makes the whole summary be rejected and the template summary is used. The model never writes a factual field
 (customer, orders, amounts, policy quotes, actions, failures); it only writes the summary and a suggested next step.
 

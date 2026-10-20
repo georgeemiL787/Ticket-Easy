@@ -11398,7 +11398,7 @@
         "layer": "coverage",
         "title_en": "Weak signal where you are",
         "title_ar": "الإشارة ضعيفة في مكانك",
-        "customer_text_en": "The signal where you are is weak. We've passed your location to our network team.",
+        "customer_text_en": "The signal where you are is weak. We've passed your location to our network department.",
         "customer_text_ar": "الإشارة في مكانك ضعيفة. بلّغنا فريق الشبكة بمكانك.",
         "remotely_fixable": 0
       },

@@ -160,7 +160,7 @@ Source: `postpaid_billing_policy@v2#s5`
 **Can you remove a charge from my bill?**  
 ممكن تشيلوا مبلغ من الفاتورة؟ · _momken tsheelo mablagh men el fatora?_
 
-I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.
+I can open a dispute for you. The billing department decides on the adjustment; amounts over 500 EGP also need a supervisor.
 
 <div dir="rtl">أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان.</div>
 
@@ -518,7 +518,7 @@ Source: `complaints_policy@v2#s1`
 **My complaint was not solved. What now?**  
 الشكوى متحلتش، اعمل ايه؟ · _el shakwa matetlatsh, a3mel eh?_
 
-I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.
+I'll escalate it to senior staff. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.
 
 <div dir="rtl">هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب.</div>
 

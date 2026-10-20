@@ -129,7 +129,7 @@ INTENTS = {
             "arabizi": ["fe {amount} gneh 3al fatora ma3rafhomsh", "3ayez a3tered 3al fatora"],
         },
         "reply": {
-            "en": "I can open a dispute; the billing team decides the adjustment, and amounts over 500 EGP also need a supervisor.",
+            "en": "I can open a dispute; the billing department decides the adjustment, and amounts over 500 EGP also need a supervisor.",
             "ar": "أقدر أفتحلك اعتراض، وفريق الفواتير بيقرر التسوية، واللي فوق 500 جنيه محتاج موافقة مشرف.",
             "arabizi": "a2dar aftahlak e3terad, w fare2 el fawateer by2arar el taswya.",
         },
@@ -311,7 +311,7 @@ INTENTS = {
             "arabizi": ["di talet marra ashtekey w ma7adesh 3amal 7aga!", "3ayez akalem modeer 7alan"],
         },
         "reply": {
-            "en": "I'm sorry this hasn't been fixed. I'm passing your case to the senior team with the full history now.",
+            "en": "I'm sorry this hasn't been fixed. I'm passing your case to senior staff with the full history now.",
             "ar": "آسف إن المشكلة متحلتش. هحول حالتك دلوقتي للفريق المتخصص بكل التفاصيل.",
             "arabizi": "asef en el moshkela matetlatsh. ha7awel 7altak delwa2ty lel fare2 el motakhases.",
         },
@@ -367,7 +367,7 @@ INTENTS = {
             "arabizi": ["7ad kalemny w 2al eno men masr connect w 6alab el kod", "7ad 3amal badal fa2ed le ra2my"],
         },
         "reply": {
-            "en": "Thank you for telling us. I'm passing this to our security team urgently; never share codes with anyone.",
+            "en": "Thank you for telling us. I'm passing this to our security department urgently; never share codes with anyone.",
             "ar": "شكرًا إنك بلغتنا. هحول ده لفريق الأمان فورًا، ومتديش أي كود لأي حد.",
             "arabizi": "shokran enak ballaghtna. ha7awel da le fare2 el aman fawran.",
         },

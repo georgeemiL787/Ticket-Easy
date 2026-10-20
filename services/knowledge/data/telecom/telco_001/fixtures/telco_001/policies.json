@@ -465,7 +465,7 @@
       "version": "v2",
       "section": "4. Bill disputes",
       "language": "en",
-      "text": "A customer may dispute any charge within 60 days of the bill date. While a dispute is open, the disputed amount does not count toward suspension. Customer service opens disputes; the billing team decides adjustments, and adjustments above 500 EGP need a supervisor.",
+      "text": "A customer may dispute any charge within 60 days of the bill date. While a dispute is open, the disputed amount does not count toward suspension. Customer service opens disputes; the billing department decides adjustments, and adjustments above 500 EGP need a supervisor.",
       "keywords": [
         "dispute bill",
         "wrong bill",
@@ -1747,7 +1747,7 @@
       "version": "v2",
       "section": "3. Escalation to NTRA",
       "language": "en",
-      "text": "If a complaint is not resolved or the customer is not satisfied, it goes to a senior team. The customer can also escalate to the National Telecom Regulatory Authority (NTRA) by calling 155, or through the My NTRA app, the NTRA website, e-mail or WhatsApp.",
+      "text": "If a complaint is not resolved or the customer is not satisfied, it goes to senior staff. The customer can also escalate to the National Telecom Regulatory Authority (NTRA) by calling 155, or through the My NTRA app, the NTRA website, e-mail or WhatsApp.",
       "keywords": [
         "escalate",
         "ntra",
@@ -2164,7 +2164,7 @@
         "arabizi": "momken tsheelo mablagh men el fatora?"
       },
       "answer": {
-        "en": "I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.",
+        "en": "I can open a dispute for you. The billing department decides on the adjustment; amounts over 500 EGP also need a supervisor.",
         "ar": "أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان."
       },
       "citation": "postpaid_billing_policy@v2#s4"
@@ -2658,7 +2658,7 @@
         "arabizi": "el shakwa matetlatsh, a3mel eh?"
       },
       "answer": {
-        "en": "I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
+        "en": "I'll escalate it to senior staff. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
         "ar": "هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب."
       },
       "citation": "complaints_policy@v2#s3"

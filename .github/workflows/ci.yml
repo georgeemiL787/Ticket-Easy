@@ -186,3 +186,14 @@ jobs:
           python-version: "3.12"
       - name: Every relative link in a Markdown file points at something that exists
         run: python ops/check_links.py
+
+  names:
+    name: Names
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: No old service-letter, core or fake-service names in any tracked file or file name
+        run: python ops/check_names.py

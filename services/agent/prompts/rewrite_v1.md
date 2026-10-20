@@ -1,7 +1,7 @@
 # rewrite_v1
 
 Rewording prompt for the AI model. The file name is the prompt version recorded on the trace. The reworded text is
-checked by code (check_grounded in brain/composer.py): any number, date, id, amount, link or citation that is not in the
+checked by code (check_grounded in replies/composer.py): any number, date, id, amount, link or citation that is not in the
 original is rejected and the original is sent instead. Policy quotes are never sent to the model.
 
 ## system

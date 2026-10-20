@@ -1,7 +1,7 @@
 # orchestrator_v1
 
 Orchestrator prompt. The file name is the prompt version. The model plans the customer's message as one to five steps
-and picks ONE move at a time; code (brain/agent_loop.py, brain/agent_reads.py) checks the move, runs it, and shows the
+and picks ONE move at a time; code (agent/loop.py, agent/reads.py) checks the move, runs it, and shows the
 result in the next ask. The model never talks to the customer: replies come from templates and verified data, so it
 chooses the reply (which template, which passages) and never writes the words. A move that breaks a rule is refused
 and the refusal is shown, so the next move can differ.

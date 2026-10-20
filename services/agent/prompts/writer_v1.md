@@ -3,7 +3,7 @@
 Reply-writer prompt (job "writer"). Every reply has a PLAN made by code (or chosen by the orchestrator): the decision,
 what the reply is for, the verified facts it may hold, a question it must ask, and the citations. The model writes the
 reply freely from the plan, in the customer's language and tone, reacting to what they said. Code checks the text
-(brain/writer.py): any number, date, id, amount, link or citation that is not in the plan or the fallback text, a dropped
+(replies/writer.py): any number, date, id, amount, link or citation that is not in the plan or the fallback text, a dropped
 fact, a promise of a colleague the plan does not make, or a confirmation that no longer asks yes or no means the text is
 sent back once with the problems, then replaced by the fixed template. Policy quotes are added after the reply by code.
 

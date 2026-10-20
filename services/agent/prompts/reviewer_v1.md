@@ -3,7 +3,7 @@
 Reviewer prompt (job "reviewer"). One file for the reviewer's two checks. The reviewer is the second line after code:
 it can only make things STRICTER. Task "action" is the policy reviewer (it replaces policy_agent_v2 on this path, with
 the same rules): the model reads the shop's own policy passages and picks a route for a write; code
-(brain/reviewer.py) keeps the stricter of that and the rule checker's, so a model can never turn a deny or a
+(agent/reviewer.py) keeps the stricter of that and the rule checker's, so a model can never turn a deny or a
 require_human into an allow. Task "reply" checks a reply the writer produced, after the code fact check passed.
 
 ## system

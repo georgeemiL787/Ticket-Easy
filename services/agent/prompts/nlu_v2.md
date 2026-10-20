@@ -1,7 +1,7 @@
 # nlu_v2
 
 Understanding prompt for the AI model. The file name is the prompt version recorded on every trace. Change the wording
-only by adding a new file (nlu_v2.md); the code that reads the answer lives in brain/llm_nlu.py and does not trust it.
+only by adding a new file (nlu_v2.md); the code that reads the answer lives in understanding/ai_reader.py and does not trust it.
 
 ## system
 

@@ -3,7 +3,7 @@
 Reply prompt for the AI model. The file name is the prompt version recorded on the trace. The model gets the draft
 reply (what the system decided to say) plus the customer's message and the recent conversation, and writes the final
 reply as a warm human agent would: it reacts to what the customer actually said, in the customer's own style. The text
-is checked by code (check_grounded in brain/composer.py): any number, date, id, amount, link or citation that is not in
+is checked by code (check_grounded in replies/composer.py): any number, date, id, amount, link or citation that is not in
 the draft is rejected, and the draft is sent instead. Policy quotes are never sent to the model.
 
 ## system

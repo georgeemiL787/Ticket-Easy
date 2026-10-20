@@ -2,7 +2,7 @@
 
 Small-talk prompt for the AI model. The file name is the prompt version recorded on the trace. It is used only when the
 customer's whole message is a greeting, a check-in ("how are you"), thanks or a goodbye. The model answers the person
-the way a friendly shop assistant would and offers help. The text is checked by code (brain/smalltalk.py): it may not
+the way a friendly shop assistant would and offers help. The text is checked by code (replies/smalltalk.py): it may not
 contain any number, date, order, amount, policy, promise or colleague, and anything unusual means the fixed greeting is
 sent instead.
 

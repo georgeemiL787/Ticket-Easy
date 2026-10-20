@@ -1,7 +1,7 @@
 # knowledge_answer_v1
 
 Policy-answer prompt. The model answers the customer's question from the retrieved passages only, in the customer's
-own register, and names the passages it used. Code (brain/knowledge_llm.py) checks that it added no number, date, id
+own register, and names the passages it used. Code (knowledge/ai_steps.py) checks that it added no number, date, id
 or link the passages do not contain; otherwise the passages are quoted verbatim.
 
 ## system

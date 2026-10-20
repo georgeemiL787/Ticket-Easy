@@ -175,7 +175,7 @@
     "question_en": "Can you remove a charge from my bill?",
     "question_ar": "ممكن تشيلوا مبلغ من الفاتورة؟",
     "question_arabizi": "momken tsheelo mablagh men el fatora?",
-    "answer_en": "I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.",
+    "answer_en": "I can open a dispute for you. The billing department decides on the adjustment; amounts over 500 EGP also need a supervisor.",
     "answer_ar": "أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان.",
     "citation": "postpaid_billing_policy@v2#s4"
   },
@@ -555,7 +555,7 @@
     "question_en": "My complaint was not solved. What now?",
     "question_ar": "الشكوى متحلتش، اعمل ايه؟",
     "question_arabizi": "el shakwa matetlatsh, a3mel eh?",
-    "answer_en": "I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
+    "answer_en": "I'll escalate it to senior staff. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
     "answer_ar": "هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب.",
     "citation": "complaints_policy@v2#s3"
   },

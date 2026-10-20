@@ -3,7 +3,7 @@
 Knowledge-agent prompt (job "knowledge"). One file for the three small tasks of the agent that answers policy and FAQ
 questions: write the search, write a DIFFERENT search when the first found nothing useful, and answer from the passages
 found. It replaces knowledge_query_v1 and knowledge_answer_v1 on the agent's path (those stay for the old path). Code
-(brain/knowledge_agent.py) searches in between, keeps only passages that were really retrieved, and checks the answer:
+(knowledge/agent.py) searches in between, keeps only passages that were really retrieved, and checks the answer:
 no number, date, id or link the passages do not contain, only retrieved passages cited, no promise of a colleague.
 
 ## system

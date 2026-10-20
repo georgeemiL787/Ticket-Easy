@@ -74,7 +74,7 @@ FAQ = [
      "من التطبيق أو إنستاباي أو الفيزا أو فوري أو المحفظة أو الخصم المباشر أو أي فرع.",
      "postpaid_billing_policy@v2#s5"),
     ("billing", "Can you remove a charge from my bill?", "ممكن تشيلوا مبلغ من الفاتورة؟", "momken tsheelo mablagh men el fatora?",
-     "I can open a dispute for you. The billing team decides on the adjustment; amounts over 500 EGP also need a supervisor.",
+     "I can open a dispute for you. The billing department decides on the adjustment; amounts over 500 EGP also need a supervisor.",
      "أقدر أفتحلك اعتراض، وفريق الفواتير هو اللي بيقرر التسوية، والمبالغ اللي فوق 500 جنيه محتاجة موافقة مشرف كمان.",
      "postpaid_billing_policy@v2#s4"),
     # bundles
@@ -230,7 +230,7 @@ FAQ = [
      "تمام، أقدر أفتحهالك هنا وهتاخد رقم مرجعي بيبدأ بـ CMP-. شكاوى الفواتير بتتحل في 3 أيام عمل، والشبكة في 5، والباقي في 7.",
      "complaints_policy@v2#s1"),
     ("complaints", "My complaint was not solved. What now?", "الشكوى متحلتش، اعمل ايه؟", "el shakwa matetlatsh, a3mel eh?",
-     "I'll escalate it to the senior team. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
+     "I'll escalate it to senior staff. You can also complain to the regulator, NTRA, on 155 or through the My NTRA app, its website or WhatsApp.",
      "هصعدها للفريق المتخصص، وتقدر كمان تشتكي لجهاز تنظيم الاتصالات على 155 أو من تطبيق My NTRA أو موقعه أو واتساب.",
      "complaints_policy@v2#s3"),
     # privacy

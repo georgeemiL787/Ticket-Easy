@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-SETS = Path(__file__).resolve().parents[3] / "team_b" / "eval" / "conversations"
+SETS = Path(__file__).resolve().parents[3] / "orchestrator" / "eval" / "conversations"
 
 
 def decisions(gold):

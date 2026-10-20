@@ -16,7 +16,7 @@ from team_a.knowledge.retrieval import _cosines
 from team_a.policy.risk import classify_risk
 from team_a.schemas import ClassifyRiskRequest
 
-SUMMARY = Path(__file__).resolve().parents[2] / "team_b" / "scripts" / "usage_summary.py"
+SUMMARY = Path(__file__).resolve().parents[2] / "orchestrator" / "scripts" / "usage_summary.py"
 KEY = "sk-or-v1-very-secret"
 USAGE = {"prompt_tokens": 210, "completion_tokens": 45, "completion_tokens_details": {"reasoning_tokens": 5}}
 

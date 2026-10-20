@@ -5,7 +5,7 @@ Run with TEAM_B_LLM=none, PYTHONUTF8=1 (console encoding only), commit 4944d18 +
 | Measure | Result | File |
 |---|---|---|
 | NLU intent accuracy (155 labelled messages) | 87.7% (136/155); baseline 87.42% (151 messages), so within the allowed -0.02 | nlu_rules.txt |
-| 240 conversations: intent / decision / citation | 62.5% / 66.2% / 36.0% (all styles) | team_b/reports/eval_presentation_rules_2026-10-16.json, .md |
+| 240 conversations: intent / decision / citation | 62.5% / 66.2% / 36.0% (all styles) | orchestrator/reports/eval_presentation_rules_2026-10-16.json, .md |
 | locale match | 98.9% | same |
 | handoff precision / recall | 74.2% / 82.1% | same |
 | solved without a person | 205 of 212 (85.4%) | same |

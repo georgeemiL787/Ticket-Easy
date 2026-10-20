@@ -11,7 +11,7 @@ from team_c.storage import Store, now, uid
 
 CONTENT = json.dumps(dict(proposals=[], capability_gaps=[]))
 HOSTS = {"api.groq.com": "groq", "openrouter.ai": "openrouter", "127.0.0.1": "ollama"}
-SUMMARY = Path(__file__).resolve().parents[2] / "team_b" / "scripts" / "usage_summary.py"
+SUMMARY = Path(__file__).resolve().parents[2] / "orchestrator" / "scripts" / "usage_summary.py"
 KEYS = dict(groq_api_key="gsk-secret-one", groq_api_key_2="gsk-secret-two")
 
 

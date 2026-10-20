@@ -2,14 +2,14 @@
 
 All agent-mode numbers are measured on the Groq free tier. Knowledge service: the real one (live mode) unless marked "stand-in".
 
-## Headline agent-mode run, real knowledge service (team_b/reports/eval_presentation_agent_live_<style>_2026-10-17.*)
+## Headline agent-mode run, real knowledge service (orchestrator/reports/eval_presentation_agent_live_<style>_2026-10-17.*)
 | style | conversations | intent | decision | citation | wrong actions | unbacked facts | fallbacks | reply time p50 / p95 |
 |---|---|---|---|---|---|---|---|---|
 | en | 60 | 95.0% | 80.3% | 68.0% | 0 | 0 | 0 | 7 s / 32 s |
 | ar | 60 | 95.0% | 84.5% | 76.0% | 0 | 0 | 0 | 7 s / 31 s |
 | mixed | 60 | 93.3% | 80.3% | 68.0% | 0 | 0 | 0 | 6 s / 31 s |
 Arabizi (15 sampled) did not complete cleanly (17 of 21 turns fell back: rate limits); not reported.
-The earlier run on the keyword stand-in is team_b/reports/eval_presentation_agent_<style>_2026-10-16.*: citation 68.0 / 68.0 / 68.0.
+The earlier run on the keyword stand-in is orchestrator/reports/eval_presentation_agent_<style>_2026-10-16.*: citation 68.0 / 68.0 / 68.0.
 
 ## What the diagnosis found
 - The 8 "unbacked facts" of the first run were false alarms of the evaluation (greeting "...today" = النهاردة). Fixed.

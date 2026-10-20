@@ -39,7 +39,7 @@ export TEAM_B_LLM_FALLBACK_MODEL_JUDGE=openai/gpt-oss-20b
 # every AI helper on
 export TEAM_B_LLM_REWRITE=1 TEAM_B_LLM_POLICY=1 TEAM_B_LLM_KNOWLEDGE=1 TEAM_B_LLM_REVIEW=1
 export TEAM_B_AGENT_MODE=on
-# free-plan waiting needs a long turn limit (as in team_b/docs/agent_comparison.md)
+# free-plan waiting needs a long turn limit (as in orchestrator/docs/agent_comparison.md)
 export TEAM_B_AGENT_TURN_TIMEOUT_S=240
 export TEAM_B_LLM_MAX_WAIT_S=120
 

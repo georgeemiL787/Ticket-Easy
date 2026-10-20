@@ -47,8 +47,8 @@ One detailed Markdown report (chart-ready tables you can paste into slides):
 
 Supporting raw outputs stay under:
 
-- `team_a/reports/` (or stdout captured into `Docs/output/eval_runs/`)
-- `team_b/reports/eval_*_<date>.json|.md`
+- `rag/reports/` (or stdout captured into `Docs/output/eval_runs/`)
+- `orchestrator/reports/eval_*_<date>.json|.md`
 - `Docs/output/eval_runs/` — consolidated CSVs/JSON excerpts for charts, and the token usage logs (`usage_*.jsonl`)
 
 **Naming in the report:** the report says **knowledge service** (team_a), **conversation service** (team_b) and **tool service** (team_c). Team letters appear only in commands and file paths, never in headings, tables or narrative.
@@ -101,17 +101,17 @@ flowchart TD
 | Model comparison    | `python -m team_b eval-nlu --mode llm` once per Groq model (see Part 2)                                                                        | intent accuracy + tokens + latency per model                                    |
 | Scenarios           | `python -m team_b.scripts.scenario_report` / `make scenarios`                                                                                       | **83** active pass                                                              |
 | Safety spot-check   | Existing adversarial/property suites already in CI; cite latest green + reconfirm eval measures `wrong_or_unapproved_actions=0`, `unbacked_facts=0` | Must stay **0**                                                                 |
-| Tool service        | Cite `[team_c/E2E_FINAL_REPORT.md](team_c/E2E_FINAL_REPORT.md)` + run focused gate tests if needed                                                  | Publication/sandbox verdicts                                                    |
+| Tool service        | Cite `[tool_generation_mcp/E2E_FINAL_REPORT.md](tool_generation_mcp/E2E_FINAL_REPORT.md)` + run focused gate tests if needed                                                  | Publication/sandbox verdicts                                                    |
 
 ### Full 240 AI run on the free tier (locked)
 
 The AI run is **agent mode** (`--agent-mode on`), because that is what we present.
 
-**All AI helpers on.** In code, the four AI helper switches default to off (`team_b/src/team_b/config.py`: `llm_rewrite`, `llm_policy`, `llm_knowledge`, `llm_review` = False); only `.env.example` turns them on. Every AI run (the 240 agent run and the model comparison) must set `TEAM_B_LLM_REWRITE=1`, `TEAM_B_LLM_POLICY=1`, `TEAM_B_LLM_KNOWLEDGE=1`, `TEAM_B_LLM_REVIEW=1`, plus a model for every job (orchestrator, reader, knowledge, reviewer, writer, summary, judge). Before the long run, check one trace: it must show agent moves and the AI writer, knowledge and reviewer steps, not templates.
+**All AI helpers on.** In code, the four AI helper switches default to off (`orchestrator/src/team_b/config.py`: `llm_rewrite`, `llm_policy`, `llm_knowledge`, `llm_review` = False); only `.env.example` turns them on. Every AI run (the 240 agent run and the model comparison) must set `TEAM_B_LLM_REWRITE=1`, `TEAM_B_LLM_POLICY=1`, `TEAM_B_LLM_KNOWLEDGE=1`, `TEAM_B_LLM_REVIEW=1`, plus a model for every job (orchestrator, reader, knowledge, reviewer, writer, summary, judge). Before the long run, check one trace: it must show agent moves and the AI writer, knowledge and reviewer steps, not templates.
 
 Several keys in one process do not add speed: the LLM client only switches key when one hits a rate limit, and all keys share one rate budget per model. Separate processes each get their own budget, so:
 
-1. Make four folders, one per style: `eval_runs/sets/en/en.jsonl`, `.../ar/ar.jsonl`, `.../mixed/mixed.jsonl`, `.../arabizi/arabizi.jsonl` (copies of `team_b/eval/conversations/*.jsonl`).
+1. Make four folders, one per style: `eval_runs/sets/en/en.jsonl`, `.../ar/ar.jsonl`, `.../mixed/mixed.jsonl`, `.../arabizi/arabizi.jsonl` (copies of `orchestrator/eval/conversations/*.jsonl`).
 2. Start four processes at the same time, each with its own Groq key and the same model settings:
    `TEAM_B_LLM_API_KEY=<key N> python -m team_b eval --set eval_runs/sets/<style> --llm --agent-mode on --judge --label presentation_agent_<style> --resume`
 3. If a process stops on the daily limit, re-run the same command later; `--resume` continues where it stopped.
@@ -122,7 +122,7 @@ Arabizi is run last and may use `--per-style` to keep it small. Every latency fi
 ### Extra validation (only where it strengthens the story)
 
 1. **Style rollups:** Add EN+AR+mixed aggregate tables (exclude Arabizi from headline %).
-2. **Baseline delta:** `eval-compare` presentation run vs `[team_b/eval/baseline_phase0.json](team_b/eval/baseline_phase0.json)` / `[eval_baseline.json](team_b/eval/eval_baseline.json)`, and agent run vs rules run.
+2. **Baseline delta:** `eval-compare` presentation run vs `[orchestrator/eval/baseline_phase0.json](orchestrator/eval/baseline_phase0.json)` / `[eval_baseline.json](orchestrator/eval/eval_baseline.json)`, and agent run vs rules run.
 3. **Safety invariant block:** One table proving zero wrong writes / unbacked facts on the fresh run (the sales "trust" slide).
 4. **Scenario coverage check:** Confirm shop_001 + noon_eg file counts and zero pending.
 5. **Retrieval split hygiene:** Reconfirm test numbers only on held-out splits (no `--sweep` on test).
@@ -136,7 +136,7 @@ No new product features. The only code changes are the token usage log (Part 2) 
 3. **Knowledge service tables** — per tenant recall@5 / no-answer; guardrails
 4. **Conversation service tables** — NLU; conversation metrics (intent/decision/citation/locale/handoff); rules run vs agent run side by side, rules shown as the starting point that agent mode improves on
 5. **Tool service** — tool publication / E2E credibility (not chat quality %)
-6. **How results are shared** — committed baselines, `reports/`, GitHub artifacts, dashboard metrics (`[team_b/docs/metrics.md](team_b/docs/metrics.md)`)
+6. **How results are shared** — committed baselines, `reports/`, GitHub artifacts, dashboard metrics (`[orchestrator/docs/metrics.md](orchestrator/docs/metrics.md)`)
 7. **Honest gaps** — conversation accuracy vs 0.90/0.92/0.95 targets; framed as roadmap + model-stack opportunity (ties to Part 2)
 
 ---
@@ -145,7 +145,7 @@ No new product features. The only code changes are the token usage log (Part 2) 
 
 ### Token usage: measured, not estimated
 
-Every model answer already contains its exact token counts (`usage.prompt_tokens`, `usage.completion_tokens`); the conversation service reads them only to settle its rate limiter and then drops them (`team_b/src/team_b/adapters/llm.py`, `_settle`).
+Every model answer already contains its exact token counts (`usage.prompt_tokens`, `usage.completion_tokens`); the conversation service reads them only to settle its rate limiter and then drops them (`orchestrator/src/team_b/adapters/llm.py`, `_settle`).
 
 Small instrumentation change: when an environment variable such as `TEAM_B_USAGE_LOG=<path>` is set, the LLM client appends one JSON line per call: time, job (reader, orchestrator, knowledge, reviewer, writer, summary, judge), model, provider host, input tokens, output tokens, latency, status, run label. **Never prompt or reply text, customer data or keys.** Off by default; no effect on behaviour. Each eval process writes its own log under `Docs/output/eval_runs/`.
 
@@ -340,4 +340,4 @@ Arabizi: one appendix sentence ("also measured; dialect writer optional").
 7. Build model comparison + token/cost tables from the usage logs and public prices
 8. Write `[Docs/output/Ticket-Easy_Eval_and_Cost_Report.md](Docs/output/Ticket-Easy_Eval_and_Cost_Report.md)` with chart-ready Markdown tables and source citations
 
-**Verify:** every headline % traces to a file under `eval_runs/` or `team_b/reports/`; every token figure traces to a usage log or is labelled "estimated"; the token tables cover all three services; what-if models are marked "hypothetical, not tested" and only appear in cost tables; safety cells are 0; Arabizi not in primary charts; no team letters in the report text.
+**Verify:** every headline % traces to a file under `eval_runs/` or `orchestrator/reports/`; every token figure traces to a usage log or is labelled "estimated"; the token tables cover all three services; what-if models are marked "hypothetical, not tested" and only appear in cost tables; safety cells are 0; Arabizi not in primary charts; no team letters in the report text.

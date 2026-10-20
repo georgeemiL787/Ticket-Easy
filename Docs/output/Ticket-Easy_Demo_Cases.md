@@ -2,7 +2,7 @@
 
 Every case below was run against the live system (agent mode ON, Groq gpt-oss-120b orchestrator) and the replies shown are what it actually answered. Demo date is pinned to 2026-09-28.
 
-**Important:** the shop data lives in memory and each write can only happen once. Run every case once, in this order. To reset it, restart the stack: `team_b/.venv/Scripts/python.exe integration/serve.py up` (with the team_b/.env values loaded).
+**Important:** the shop data lives in memory and each write can only happen once. Run every case once, in this order. To reset it, restart the stack: `orchestrator/.venv/Scripts/python.exe integration/serve.py up` (with the orchestrator/.env values loaded).
 
 ## Links
 
@@ -153,7 +153,7 @@ Case 1, then Case 3, Case 4, Case 5, Case 2, Case 8. Cases 6 and 7 are backups.
 - A refund or return always asks for the reason first. Give a short one. "I changed my mind" and "المنتج وصل بايظ" work; a size reason becomes an exchange, and the Arabizi sentence "ana ghayart ra2yi" is misread as thanks.
 - Cancelling the shipped order NS-20899 ends in a handoff to a colleague, because that lookup can fail; present it as "a human decides".
 - A Team C tool error shows as "I could not look that up right now". The agent never invents data and hands over.
-- Logs: integration/var/logs/*.log. Status: `team_b/.venv/Scripts/python.exe integration/serve.py status`.
+- Logs: integration/var/logs/*.log. Status: `orchestrator/.venv/Scripts/python.exe integration/serve.py status`.
 
 ---
 

@@ -58,7 +58,7 @@ If a prompt breaks things badly, `git reset --hard HEAD` takes you back to your 
    ```
 2. Keys go in `.env` files or your shell only, never in a committed file:
    - `GROQ_KEY_1` … `GROQ_KEY_4`: four Groq keys (one per parallel process in E4).
-   - For the tool service in E5b: `GROQ_API_KEY` (and optionally `GROQ_API_KEY_2` to `_4`) in `team_c/.env`, with `LLM_PRIMARY=groq`. For the knowledge service in E5b: `OPENROUTER_API_KEY` in `team_a/.env`.
+   - For the tool service in E5b: `GROQ_API_KEY` (and optionally `GROQ_API_KEY_2` to `_4`) in `tool_generation_mcp/.env`, with `LLM_PRIMARY=groq`. For the knowledge service in E5b: `OPENROUTER_API_KEY` in `rag/.env`.
 3. For the knowledge service evaluations with embeddings, have Ollama running with `bge-m3` pulled (`ollama pull bge-m3`). Without it, retrieval falls back to keywords and E2 says so.
 
 ---
@@ -73,7 +73,7 @@ Make sure the branch works before we measure anything: every test suite of the t
 <context>
 This branch (eval-cost-report) was made from a+b+c-integration: 21 commits on top of main that have never been run in CI; some integration scripts were only syntax-checked. The services: conversation service in team_b, knowledge service in team_a, tool service in team_c, dashboard in dashboard/.
 
-Read first: team_b/CLAUDE.md, team_b/Makefile, team_a/README.md, team_a/pytest.ini, team_c/README.md, team_c/pyproject.toml.
+Read first: orchestrator/CLAUDE.md, orchestrator/Makefile, rag/README.md, rag/pytest.ini, tool_generation_mcp/README.md, tool_generation_mcp/pyproject.toml.
 </context>
 
 <task>
@@ -112,9 +112,9 @@ When an environment variable is set, the conversation service writes one line pe
 </goal>
 
 <context>
-team_b/src/team_b/adapters/llm.py (OpenAICompatibleLLM) receives every model answer. In _settle it reads response.json()["usage"]["total_tokens"] only to settle the rate limiter, then drops it. Clients are built per job in adapters/llm_registry.py (llm_for(role), _client, _build); jobs are reader, orchestrator, knowledge, reviewer, writer, writer_egyptian, summary, judge. A backup model may be tried (_ask_backup). The eval command (python -m team_b eval, eval_conversations.py) and eval-nlu use the same registry.
+orchestrator/src/team_b/adapters/llm.py (OpenAICompatibleLLM) receives every model answer. In _settle it reads response.json()["usage"]["total_tokens"] only to settle the rate limiter, then drops it. Clients are built per job in adapters/llm_registry.py (llm_for(role), _client, _build); jobs are reader, orchestrator, knowledge, reviewer, writer, writer_egyptian, summary, judge. A backup model may be tried (_ask_backup). The eval command (python -m team_b eval, eval_conversations.py) and eval-nlu use the same registry.
 
-Read first: team_b/CLAUDE.md, adapters/llm.py, adapters/llm_registry.py, adapters/llm_limits.py, __main__.py, eval_conversations.py.
+Read first: orchestrator/CLAUDE.md, adapters/llm.py, adapters/llm_registry.py, adapters/llm_limits.py, __main__.py, eval_conversations.py.
 </context>
 
 <task>
@@ -123,7 +123,7 @@ Read first: team_b/CLAUDE.md, adapters/llm.py, adapters/llm_registry.py, adapter
 3. Pass the job name to the client from the registry (a constructor argument is fine).
 4. Writing is append-only, safe when several processes write different files, and never raises: on any error, log a warning once and carry on.
 5. Document the line format in Docs/output/eval_runs/USAGE_LOG_FORMAT.md: every field, its meaning, and the rule that the knowledge and tool services (E1b) write exactly the same fields.
-6. A small script team_b/scripts/usage_summary.py: reads one or more JSONL logs and prints totals per service, run_label, job and model (calls, ok calls, input, output, total tokens, average tokens per ok call, latency p50/p95), and can write the same as CSV with --csv.
+6. A small script orchestrator/scripts/usage_summary.py: reads one or more JSONL logs and prints totals per service, run_label, job and model (calls, ok calls, input, output, total tokens, average tokens per ok call, latency p50/p95), and can write the same as CSV with --csv.
 7. Tests with the existing fake transport or FakeLLM: numbers written correctly; missing usage gives null; a 429 line has status rate_limited and null tokens; the file never contains prompt text, reply text or a key; log off means no file is created; usage_summary totals add up.
 </task>
 
@@ -153,11 +153,11 @@ The knowledge service and the tool service write the same token usage log as the
 </goal>
 
 <context>
-The format is in Docs/output/eval_runs/USAGE_LOG_FORMAT.md (E1); team_b/scripts/usage_summary.py reads it. AI calls outside the conversation service:
-- Knowledge service (team_a): team_a/src/team_a/llm.py is an OpenRouter client restricted to free models (ids ending in :free), used for rule extraction from policy documents (policy/extract.py, command: python -m team_a rules extract --document ...) and as a second opinion in risk classification (policy/risk.py). Embeddings come from bge-m3 through Ollama's /api/embed (knowledge/embeddings.py), for documents at indexing (ingest, db build) and for each search query.
-- Tool service (team_c): every model call goes through team_c/team_c/llm/router.py and the providers in llm/ (groq.py, openrouter.py, ollama.py, openai_compat.py). ProviderResponse already carries a usage dict, currently written only into a "model_response" diagnostic. Calls include triage, generation, reconciliation, revision and suggestion. Groq keys rotate GROQ_API_KEY to GROQ_API_KEY_4 on rate limits.
+The format is in Docs/output/eval_runs/USAGE_LOG_FORMAT.md (E1); orchestrator/scripts/usage_summary.py reads it. AI calls outside the conversation service:
+- Knowledge service (team_a): rag/src/team_a/llm.py is an OpenRouter client restricted to free models (ids ending in :free), used for rule extraction from policy documents (policy/extract.py, command: python -m team_a rules extract --document ...) and as a second opinion in risk classification (policy/risk.py). Embeddings come from bge-m3 through Ollama's /api/embed (knowledge/embeddings.py), for documents at indexing (ingest, db build) and for each search query.
+- Tool service (team_c): every model call goes through tool_generation_mcp/team_c/llm/router.py and the providers in llm/ (groq.py, openrouter.py, ollama.py, openai_compat.py). ProviderResponse already carries a usage dict, currently written only into a "model_response" diagnostic. Calls include triage, generation, reconciliation, revision and suggestion. Groq keys rotate GROQ_API_KEY to GROQ_API_KEY_4 on rate limits.
 
-Read first: Docs/output/eval_runs/USAGE_LOG_FORMAT.md, team_b/scripts/usage_summary.py, team_a/README.md, team_a/src/team_a/config.py, llm.py, policy/extract.py, policy/risk.py, knowledge/embeddings.py; team_c/README.md, team_c/team_c/config.py, llm/router.py, llm/types.py, llm/groq.py, llm/openrouter.py, llm/ollama.py.
+Read first: Docs/output/eval_runs/USAGE_LOG_FORMAT.md, orchestrator/scripts/usage_summary.py, rag/README.md, rag/src/team_a/config.py, llm.py, policy/extract.py, policy/risk.py, knowledge/embeddings.py; tool_generation_mcp/README.md, tool_generation_mcp/team_c/config.py, llm/router.py, llm/types.py, llm/groq.py, llm/openrouter.py, llm/ollama.py.
 </context>
 
 <task>
@@ -195,9 +195,9 @@ Fresh knowledge service results for the report: retrieval quality on three busin
 </goal>
 
 <context>
-Commands (team_a/src/team_a/__main__.py): python -m team_a eval-retrieval --tenant X [--split dev|test] [--sweep, dev only]; eval-guardrails [--tenant]; eval-scenarios --tenant noon_eg (needs db build); db build [--tenant X]. Recorded results in team_a/README.md: shop_001 recall@5 89.3%, noon_eg 97.5%, guardrails 44/44. No result exists yet for telco_001. Embeddings come from bge-m3 through Ollama; without it retrieval falls back to keywords.
+Commands (rag/src/team_a/__main__.py): python -m team_a eval-retrieval --tenant X [--split dev|test] [--sweep, dev only]; eval-guardrails [--tenant]; eval-scenarios --tenant noon_eg (needs db build); db build [--tenant X]. Recorded results in rag/README.md: shop_001 recall@5 89.3%, noon_eg 97.5%, guardrails 44/44. No result exists yet for telco_001. Embeddings come from bge-m3 through Ollama; without it retrieval falls back to keywords.
 
-Read first: team_a/README.md, team_a/src/team_a/__main__.py, team_a/src/team_a/evaluation.py.
+Read first: rag/README.md, rag/src/team_a/__main__.py, rag/src/team_a/evaluation.py.
 </context>
 
 <task>
@@ -233,9 +233,9 @@ Fresh rules-only results (no AI model) for the conversation service: understandi
 </goal>
 
 <context>
-Commands: python -m team_b eval-nlu --mode rules (155 labelled messages in eval/nlu_labelled.jsonl; baseline in eval/nlu_baseline.json, 87.42%); python -m team_b eval --set eval/conversations --label presentation_rules (240 conversations, 60 per style: en, ar, mixed, arabizi; reports go to team_b/reports/eval_<label>_<date>.json and .md); make scenarios (runs tests/integration/test_scenarios.py then scripts/scenario_report.py). Baselines: team_b/eval/baseline_phase0.json and team_b/eval/eval_baseline.json. Earlier rules results: intent 62.5%, decision 66.2%, citation 36.0%.
+Commands: python -m team_b eval-nlu --mode rules (155 labelled messages in eval/nlu_labelled.jsonl; baseline in eval/nlu_baseline.json, 87.42%); python -m team_b eval --set eval/conversations --label presentation_rules (240 conversations, 60 per style: en, ar, mixed, arabizi; reports go to orchestrator/reports/eval_<label>_<date>.json and .md); make scenarios (runs tests/integration/test_scenarios.py then scripts/scenario_report.py). Baselines: orchestrator/eval/baseline_phase0.json and orchestrator/eval/eval_baseline.json. Earlier rules results: intent 62.5%, decision 66.2%, citation 36.0%.
 
-Read first: team_b/CLAUDE.md, __main__.py, eval_conversations.py (docstring), nlu_eval.py, scripts/scenario_report.py.
+Read first: orchestrator/CLAUDE.md, __main__.py, eval_conversations.py (docstring), nlu_eval.py, scripts/scenario_report.py.
 </context>
 
 <task>
@@ -251,7 +251,7 @@ Read first: team_b/CLAUDE.md, __main__.py, eval_conversations.py (docstring), nl
 
 <done_when>The NLU output, the presentation_rules report, the scenario output and the comparison exist.</done_when>
 
-<verify>ls team_b/reports/eval_presentation_rules_*; ls Docs/output/eval_runs/conversation/</verify>
+<verify>ls orchestrator/reports/eval_presentation_rules_*; ls Docs/output/eval_runs/conversation/</verify>
 
 <report>NLU accuracy vs baseline; the 240 rules results per style (intent, decision, citation, locale, handoff precision/recall, solved without a person); scenario counts; the two safety numbers; differences vs phase0.</report>
 ```
@@ -271,15 +271,15 @@ Run the full 240-conversation test in agent mode with every AI helper on, on the
 </goal>
 
 <context>
-Within one process, several keys add no speed: adapters/llm.py only moves to the next key on HTTP 429, and adapters/llm_limits.py keeps one rate budget per (server, model). Separate processes each get their own budget. eval supports --set (a folder of .jsonl files), --llm, --agent-mode on, --judge, --label, --resume, --batch, --per-style. In code the four AI helper switches default to off (config.py: llm_rewrite, llm_policy, llm_knowledge, llm_review = False); only .env.example turns them on, so the run must set them. The token usage log is TEAM_B_USAGE_LOG and TEAM_B_USAGE_RUN_LABEL (E1). Keys are in GROQ_KEY_1 to GROQ_KEY_4 in my shell or a local untracked env file. The earlier small comparison (team_b/docs/agent_comparison.md) needed a raised turn time limit because of free-plan waiting.
+Within one process, several keys add no speed: adapters/llm.py only moves to the next key on HTTP 429, and adapters/llm_limits.py keeps one rate budget per (server, model). Separate processes each get their own budget. eval supports --set (a folder of .jsonl files), --llm, --agent-mode on, --judge, --label, --resume, --batch, --per-style. In code the four AI helper switches default to off (config.py: llm_rewrite, llm_policy, llm_knowledge, llm_review = False); only .env.example turns them on, so the run must set them. The token usage log is TEAM_B_USAGE_LOG and TEAM_B_USAGE_RUN_LABEL (E1). Keys are in GROQ_KEY_1 to GROQ_KEY_4 in my shell or a local untracked env file. The earlier small comparison (orchestrator/docs/agent_comparison.md) needed a raised turn time limit because of free-plan waiting.
 
 Models (current documented free setup, from .env.example): orchestrator and reviewer openai/gpt-oss-120b with reasoning_effort low; reader, knowledge, writer, summary qwen/qwen3.8-27b with openai/gpt-oss-20b as backup; judge openai/gpt-oss-20b; base URL https://api.groq.com/openai/v1; RPM and TPM values under the free plan as in .env.example.
 
-Read first: team_b/CLAUDE.md, .env.example (the AI section), config.py, __main__.py, eval_conversations.py, adapters/llm.py, team_b/docs/agent_comparison.md.
+Read first: orchestrator/CLAUDE.md, .env.example (the AI section), config.py, __main__.py, eval_conversations.py, adapters/llm.py, orchestrator/docs/agent_comparison.md.
 </context>
 
 <task>
-1. Make four folders with one style each: Docs/output/eval_runs/sets/{en,ar,mixed,arabizi}/<style>.jsonl, copied from team_b/eval/conversations/.
+1. Make four folders with one style each: Docs/output/eval_runs/sets/{en,ar,mixed,arabizi}/<style>.jsonl, copied from orchestrator/eval/conversations/.
 2. Write Docs/output/eval_runs/agent_env.sh.example (committed, no keys) listing every setting the run needs: TEAM_B_LLM, base URL, model per job, backup models, reasoning effort, RPM/TPM, TEAM_B_LLM_REWRITE=1, TEAM_B_LLM_POLICY=1, TEAM_B_LLM_KNOWLEDGE=1, TEAM_B_LLM_REVIEW=1, TEAM_B_AGENT_MODE=on, the turn time limit used in agent_comparison.md, and TEAM_B_USAGE_LOG / TEAM_B_USAGE_RUN_LABEL placeholders. Keys come from the shell, never from this file.
 3. Smoke test with one key: two English conversations, label smoke_agent. Open the trace or report and confirm: agent moves recorded (agent mode really ran, not "unavailable: no model"), the AI writer, knowledge and reviewer steps ran (replies are not templates), and the usage log has lines for orchestrator, reader, knowledge, reviewer and writer. Stop and report if any of these is missing.
 4. Write Docs/output/eval_runs/run_agent_parallel.sh: starts four background processes, style N with GROQ_KEY_N, each: python -m team_b eval --set Docs/output/eval_runs/sets/<style> --llm --agent-mode on --judge --resume --label presentation_agent_<style>, with TEAM_B_LLM_API_KEY set to that one key, TEAM_B_USAGE_LOG=Docs/output/eval_runs/usage/agent_<style>.jsonl and TEAM_B_USAGE_RUN_LABEL=presentation_agent_<style>; each process logs to Docs/output/eval_runs/logs/<style>.log; the script waits and prints which styles finished and which stopped. The Arabizi process uses --per-style so it stays small (state the number). Keys are never echoed.
@@ -293,7 +293,7 @@ Never print, log or commit a key. Do not lower quality settings or cut conversat
 
 <done_when>presentation_agent_en, _ar, _mixed and _arabizi reports exist with all conversations completed, or the report says exactly which are incomplete and how many conversations they have.</done_when>
 
-<verify>ls team_b/reports/eval_presentation_agent_*; python team_b/scripts/usage_summary.py Docs/output/eval_runs/usage/agent_*.jsonl</verify>
+<verify>ls orchestrator/reports/eval_presentation_agent_*; python orchestrator/scripts/usage_summary.py Docs/output/eval_runs/usage/agent_*.jsonl</verify>
 
 <report>Per style: completed conversations, intent, decision, citation, fallbacks, the two safety numbers, latency p50/p95, total tokens; and anything that needs resuming.</report>
 ```
@@ -317,7 +317,7 @@ python -m team_b eval-nlu --mode llm [--data FILE] measures intent accuracy on l
 
 Models: openai/gpt-oss-20b, qwen/qwen3.8-27b, openai/gpt-oss-120b (reasoning_effort low for the gpt-oss models, as in .env.example).
 
-Read first: team_b/__main__.py, nlu_eval.py, adapters/llm_registry.py, .env.example.
+Read first: orchestrator/__main__.py, nlu_eval.py, adapters/llm_registry.py, .env.example.
 </context>
 
 <task>
@@ -353,9 +353,9 @@ Measure the two costs the conversation tests cannot see: the one-time cost to on
 </goal>
 
 <context>
-Usage logs exist in all three services (E1, E1b): TEAM_A_USAGE_LOG / TEAM_C_USAGE_LOG with run labels. Tool service live generation: from team_c, uv run python -m scripts.live_smoke --provider groq --example ecommerce (uses team_c/examples/ecommerce.json and ecommerce-business.txt; Groq keys GROQ_API_KEY to GROQ_API_KEY_4 in team_c's environment, model GROQ_MODEL, default openai/gpt-oss-120b). Knowledge service: python -m team_a rules extract --tenant shop_001 --document <file> (OpenRouter free models, OPENROUTER_API_KEY), python -m team_a ingest --tenant shop_001 (document embeddings), python -m team_a risk "<message>" (risk check, second opinion when OpenRouter is configured). The 40-message sample from E5 is Docs/output/eval_runs/models/sample40.jsonl. Retrieval query tokens were logged in E2.
+Usage logs exist in all three services (E1, E1b): TEAM_A_USAGE_LOG / TEAM_C_USAGE_LOG with run labels. Tool service live generation: from team_c, uv run python -m scripts.live_smoke --provider groq --example ecommerce (uses tool_generation_mcp/examples/ecommerce.json and ecommerce-business.txt; Groq keys GROQ_API_KEY to GROQ_API_KEY_4 in team_c's environment, model GROQ_MODEL, default openai/gpt-oss-120b). Knowledge service: python -m team_a rules extract --tenant shop_001 --document <file> (OpenRouter free models, OPENROUTER_API_KEY), python -m team_a ingest --tenant shop_001 (document embeddings), python -m team_a risk "<message>" (risk check, second opinion when OpenRouter is configured). The 40-message sample from E5 is Docs/output/eval_runs/models/sample40.jsonl. Retrieval query tokens were logged in E2.
 
-Read first: team_c/README.md (live smoke section), team_c/scripts/live_smoke.py, team_a/src/team_a/__main__.py, team_a/README.md, Docs/output/eval_runs/USAGE_LOG_FORMAT.md.
+Read first: tool_generation_mcp/README.md (live smoke section), tool_generation_mcp/scripts/live_smoke.py, rag/src/team_a/__main__.py, rag/README.md, Docs/output/eval_runs/USAGE_LOG_FORMAT.md.
 </context>
 
 <task>
@@ -372,7 +372,7 @@ Never print or commit a key. No code changes. Do not approve rules, publish tool
 
 <done_when>Both CSV files exist and every row traces to a usage log.</done_when>
 
-<verify>python team_b/scripts/usage_summary.py Docs/output/eval_runs/usage/onboarding_*.jsonl Docs/output/eval_runs/usage/knowledge_*.jsonl</verify>
+<verify>python orchestrator/scripts/usage_summary.py Docs/output/eval_runs/usage/onboarding_*.jsonl Docs/output/eval_runs/usage/knowledge_*.jsonl</verify>
 
 <report>Total tokens for one onboarding (tools, rules, embeddings separately), tokens per search query, tokens per risk check, and anything that did not finish.</report>
 ```
@@ -392,9 +392,9 @@ Turn the per-style agent runs and the rules run into the headline tables: one me
 </goal>
 
 <context>
-Inputs: team_b/reports/eval_presentation_rules_*.json (E3), team_b/reports/eval_presentation_agent_{en,ar,mixed,arabizi}_*.json (E4), team_b/eval/baseline_phase0.json, team_b/eval/eval_baseline.json, usage logs from all three services in Docs/output/eval_runs/usage/, and onboarding_measured.csv and knowledge_per_message.csv (E5b). Each report JSON holds per-turn results as well as per-style percentages.
+Inputs: orchestrator/reports/eval_presentation_rules_*.json (E3), orchestrator/reports/eval_presentation_agent_{en,ar,mixed,arabizi}_*.json (E4), orchestrator/eval/baseline_phase0.json, orchestrator/eval/eval_baseline.json, usage logs from all three services in Docs/output/eval_runs/usage/, and onboarding_measured.csv and knowledge_per_message.csv (E5b). Each report JSON holds per-turn results as well as per-style percentages.
 
-Read first: team_b/src/team_b/eval_conversations.py (the report structure and how each measure is computed), team_b/src/team_b/eval_compare.py, one of the report JSON files.
+Read first: orchestrator/src/team_b/eval_conversations.py (the report structure and how each measure is computed), orchestrator/src/team_b/eval_compare.py, one of the report JSON files.
 </context>
 
 <task>
@@ -473,7 +473,7 @@ Write Docs/output/Ticket-Easy_Eval_and_Cost_Report.md: a sales-oriented but hone
 </goal>
 
 <context>
-Inputs: everything under Docs/output/eval_runs/ (knowledge/, conversation/, models/, tables/, usage/), team_b/reports/eval_presentation_*, team_c/E2E_FINAL_REPORT.md, .github/workflows/eval.yml, team_b/docs/metrics.md. Structure and framing are in Docs/plan/Eval_Cost_Presentation_Plan.md (report outline in Part 1, Part 2 tables, "Report narrative").
+Inputs: everything under Docs/output/eval_runs/ (knowledge/, conversation/, models/, tables/, usage/), orchestrator/reports/eval_presentation_*, tool_generation_mcp/E2E_FINAL_REPORT.md, .github/workflows/eval.yml, orchestrator/docs/metrics.md. Structure and framing are in Docs/plan/Eval_Cost_Presentation_Plan.md (report outline in Part 1, Part 2 tables, "Report narrative").
 
 Read first: the plan, then every input file.
 </context>

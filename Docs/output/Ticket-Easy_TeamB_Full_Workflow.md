@@ -6,9 +6,9 @@ Written for: teammates and reviewers who need to understand how a customer messa
 
 | Marker | Meaning |
 |---|---|
-| 🟧 **TEAM B** | Built by Team B (`team_b/`): the agent brain, orchestration and human handoff |
-| 🟦 Team A | Knowledge search (RAG), rule checker, risk screen (`team_a/`) |
-| 🟩 Team C | Tool builder and shop actions (`team_c/`) |
+| 🟧 **TEAM B** | Built by Team B (`orchestrator/`): the agent brain, orchestration and human handoff |
+| 🟦 Team A | Knowledge search (RAG), rule checker, risk screen (`rag/`) |
+| 🟩 Team C | Tool builder and shop actions (`tool_generation_mcp/`) |
 | 🤖 | An **AI agent**: calls the language model with a system prompt |
 | ⚙️ | Plain code, no model call |
 
@@ -224,7 +224,7 @@ Other rules: writes are never retried automatically (uncertain outcome becomes `
 
 ## 6. The AI agents (🤖)
 
-Each agent is **one model call with a fixed system prompt**, then a code check, then a fallback. None of them loops, picks tools or plans. Prompts live in `team_b/prompts/` and the file name is the version recorded on every trace.
+Each agent is **one model call with a fixed system prompt**, then a code check, then a fallback. None of them loops, picks tools or plans. Prompts live in `orchestrator/prompts/` and the file name is the version recorded on every trace.
 
 ```mermaid
 flowchart LR
@@ -382,7 +382,7 @@ While a person owns the chat the agent stays quiet and later customer messages a
 ## 10. Where Team B's code lives
 
 ```
-team_b/
+orchestrator/
   src/team_b/
     brain/        orchestrator, pipeline, stages, nlu, llm_nlu, knowledge, knowledge_llm, lookup,
                   actions, gates, identity, slots, choices, composer, rewrite, handoff, approval,

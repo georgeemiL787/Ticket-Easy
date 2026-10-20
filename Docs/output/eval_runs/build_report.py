@@ -185,13 +185,13 @@ add("The gap is concentrated in policy questions. On the policy topics the agent
 add("")
 add("---")
 add("")
-add("[^1]: `.github/workflows/eval.yml`, `team_b/eval/baseline_phase0.json`, `team_b/eval/nlu_baseline.json`, `Docs/output/eval_runs/E0_health_check.md`.")
+add("[^1]: `.github/workflows/eval.yml`, `orchestrator/eval/baseline_phase0.json`, `orchestrator/eval/nlu_baseline.json`, `Docs/output/eval_runs/E0_health_check.md`.")
 add("[^2]: `Docs/output/eval_runs/tables/per_style.csv`.")
 add("[^3]: `Docs/output/eval_runs/knowledge/summary.json` and the command outputs in the same folder; recorded at commit `" + summary["commit"] + "`.")
 add("[^4]: `tables/headline.csv`, `tables/per_style.csv`, `tables/safety.csv`, `conversation/compare_agent_vs_rules_live.txt`, `reports/eval_presentation_agent_live_*_2026-10-17.json`, `reports/eval_live_rules_*.json`, `diagnosis/longlive_*.jsonl`, `conversation/scenarios.txt`, `conversation/README_E4_followup.md`.")
-add("[^5]: `team_c/E2E_FINAL_REPORT.md`, `knowledge/onboarding_tools_live_smoke.txt`, `usage/onboarding_tools.jsonl`, `conversation/../E0_health_check.md`.")
-add("[^6]: `team_b/docs/metrics.md`, `.github/workflows/eval.yml`.")
-add("[^7]: `team_b/docs/launch_readiness.md` (targets), `tables/headline.csv`, `diagnosis/live_en_policy.jsonl`, `conversation/README_E4_followup.md`.")
+add("[^5]: `tool_generation_mcp/E2E_FINAL_REPORT.md`, `knowledge/onboarding_tools_live_smoke.txt`, `usage/onboarding_tools.jsonl`, `conversation/../E0_health_check.md`.")
+add("[^6]: `orchestrator/docs/metrics.md`, `.github/workflows/eval.yml`.")
+add("[^7]: `orchestrator/docs/launch_readiness.md` (targets), `tables/headline.csv`, `diagnosis/live_en_policy.jsonl`, `conversation/README_E4_followup.md`.")
 add("")
 
 # ------------------------------------------------------------------ Part 2

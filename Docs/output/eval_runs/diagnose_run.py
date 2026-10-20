@@ -1,7 +1,7 @@
 """Run conversations and keep EVERYTHING about each turn, so a wrong citation or an unbacked fact can be explained.
 
 The normal evaluation report only counts. This helper runs the same conversations the same way (same container, same
-checks, from team_b/src/team_b/eval_conversations.py) and writes one JSON line per turn: what the customer said, the
+checks, from orchestrator/src/team_b/eval_conversations.py) and writes one JSON line per turn: what the customer said, the
 gold, the decision, the citations, the full reply, the facts the check flagged, the facts the session held, and why
 it was marked wrong. Nothing in the product is changed.
 

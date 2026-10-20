@@ -14,7 +14,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, "team_b/src")
+sys.path.insert(0, "orchestrator/src")
 from team_b.brain.composer import check_grounded  # noqa: E402
 
 RUNS = Path("Docs/output/eval_runs")

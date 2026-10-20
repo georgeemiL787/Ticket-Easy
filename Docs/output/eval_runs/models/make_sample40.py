@@ -6,7 +6,7 @@ from pathlib import Path
 
 SEED = 20261017
 TARGET = {"en": 12, "ar": 12, "mixed": 11, "arabizi": 5}
-rows = [json.loads(l) for l in Path("team_b/eval/nlu_labelled.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+rows = [json.loads(l) for l in Path("orchestrator/eval/nlu_labelled.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
 rng = random.Random(SEED)
 picked = []
 for language, count in TARGET.items():

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Long-conversation set (team_b/eval/long, 24 conversations of 5-7 turns) in agent mode, three processes at once.
+# Long-conversation set (orchestrator/eval/long, 24 conversations of 5-7 turns) in agent mode, three processes at once.
 # One conversation at a time per process (several at once makes the free plan answer 429 and the agent fall back).
 # Needs GROQ_KEY_1..22 in the environment (never in this repository). Output: diagnosis/long_<style>.jsonl
 set -u
@@ -13,7 +13,7 @@ run() {  # style, keys...
   local style="$1"; shift
   (
     export TEAM_B_LLM_API_KEY="$(keys "$@")" TEAM_B_USAGE_LOG="$RUNS/usage/long_$style.jsonl" TEAM_B_USAGE_RUN_LABEL="long_$style"
-    "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/team_b/eval/long" --llm --agent-mode on --style "$style" --concurrency 1 \
+    "$PY" "$RUNS/diagnose_run.py" --set "$ROOT/orchestrator/eval/long" --llm --agent-mode on --style "$style" --concurrency 1 \
       --out "$RUNS/diagnosis/long_$style.jsonl" > "$RUNS/logs/long_$style.log" 2>&1
   ) &
 }

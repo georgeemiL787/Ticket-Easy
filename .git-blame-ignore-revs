@@ -4,3 +4,6 @@
 
 # Rename the knowledge package to knowledge_service
 1faa29cc9c894f36c3984581148f807dd83d8186
+
+# Rename the tools package to tools_service
+b0a7d460789e036ea4896d31a42c5036aebbe516

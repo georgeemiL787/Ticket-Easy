@@ -269,4 +269,3 @@ The report also lists the honest gaps against the targets (section 1.7).
 - Basel Elhofy ([@Basel-Elhofy](https://github.com/Basel-Elhofy))
 - Basmala Hesham ([@pasmala2004](https://github.com/pasmala2004))
 
-[^models]: Which model runs each job is set in the agent's settings (`AGENT_LLM_MODEL_<JOB>`); the minimum stack and its cost are in section 2.1 of the [evaluation and cost report](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md).

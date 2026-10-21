@@ -137,6 +137,44 @@ flowchart TB
 
 ---
 
+## Where the tools come from
+
+Nobody writes integration code for Ticket-Easy. The owner gives the **tools service** the shop's API description (an OpenAPI file, uploaded or fetched from the running system), and the service turns it into tools the agent can call. The AI only proposes; the owner approves, and code builds, tests and publishes.
+
+```mermaid
+flowchart TD
+  A["Owner uploads the shop's<br/>OpenAPI description"] --> B["Inventory: every operation read,<br/>sorted into business areas"]
+  B --> C["Owner picks the areas<br/>the tools should cover"]
+  C --> D["AI proposes tools:<br/>which operations, in what order,<br/>which inputs come from the customer,<br/>from an earlier step, or from settings"]
+  D --> E{"Grounding check<br/>does every step, field and<br/>link exist in the API?"}
+  E -- "no, one retry with the errors" --> D
+  E -- yes --> F["Owner review:<br/>who may use the tool, answers to the<br/>AI's questions, answers re-checked"]
+  F --> G["Owner approves to build"]
+  G --> H["Build the tool artifact<br/>no AI: fixed, hashed, immutable"]
+  H --> I["Sandbox tests, or one click<br/>of automatic tests: own record works,<br/>another customer's record is refused"]
+  I --> J{"Passed?"}
+  J -- "wiring defect" --> K["Bounded AI repair<br/>rewire only, max 2 tries,<br/>then back to the owner"]
+  K --> F
+  J -- yes --> L["Publish over MCP<br/>sandbox or Live Demo"]
+  L --> M["The agent lists and calls the tool<br/>for the verified customer"]
+  L -.->|"admin promotion, every check<br/>must pass"| N["Production tool<br/>one service credential, customer<br/>match checked on every call"]
+  N --> M
+```
+
+1. **Discover.** The service reads the API offline and keeps the original file. Large APIs are split into business areas and processed in batches, so any size of API fits the model.
+2. **Propose.** The model, with structured output only, drafts each tool: the operations to call, their order and where every input comes from. It cannot run anything.
+3. **Ground.** Code rejects any proposal that names an operation, field or link the API does not have, or that maps a value to an incompatible type. A failed proposal is retried once with the errors; it is never replaced by a canned one.
+4. **Review.** The owner decides who may use the tool (the customer's own records only, for example) and answers the AI's questions in plain language. Another model call checks the answers, and approval stays blocked until every question is resolved.
+5. **Build.** An approved proposal is compiled, without any model, into an immutable artifact: steps, schemas, access rules and limits, all hashed. Anything the executor cannot do exactly (an unsupported auth or parameter style) is refused at this point rather than guessed.
+6. **Test.** Tests run against a sandbox copy of the shop: a normal success, the customer's own record, and an attempt to read someone else's record that must be refused. If a test fails because of a bad mapping, the model may repair it, twice at most; it can rewire steps but never add operations or loosen access.
+7. **Publish.** Only a tool with passing evidence is published, as an MCP tool, for the sandbox or as a Live Demo tool against the owner's real API. Every call re-checks the approval, the access rules and the latest test results, so disabling a tool takes effect on the next call.
+8. **Use.** The agent discovers the tools over MCP, one process per customer identity, so no tool argument can choose whose data to read. Results come back with a status the agent must respect: a partial or unknown write is never treated as success and goes to a person.
+9. **Production.** A tool becomes production only when an admin promotes it and every automatic check passes (same approved version, access scoped to the verified customer, rate limits, a rollback contact, a smoke check). One service credential then serves all customers, and the tools service itself checks, on every call, that the record belongs to the customer. An error spike rolls the tool back automatically.
+
+Details, settings and the full list of limits are in the [tools service README](services/tools/README.md).
+
+---
+
 ## Run the demo
 
 You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) running. Nothing else: no Python, no Node.
@@ -179,14 +217,15 @@ Create the two demo business tools once, with a model key (Groq or OpenRouter, o
 - **Real actions, with checks and approvals:** look-ups, returns, refunds, cancellations, vouchers, tickets. Writes are confirmed by the customer, large ones approved by a person, and the result is verified before the agent says "done".
 - **Hand-over with a full briefing:** the conversation, the customer's data, the policy passages used, what was tried and why it stopped.
 - **A manager dashboard:** what was answered, what was done, what the agent could not do, alerts, and which document to add next.
-- **Tools generated from an API description:** an owner uploads an OpenAPI file, reviews the proposed tools, tests them in a sandbox and switches them on.
+- **Tools generated from an API description:** an owner uploads an OpenAPI file, reviews the proposed tools, tests them in a sandbox and switches them on (see [Where the tools come from](#where-the-tools-come-from)).
 
 ## Built with safety first
 
 - The agent never invents: no policy claim without a passage, no order fact without a result from the shop, no "done" without a verified result.
 - Every action passes the same checks in the same order, and a check that cannot run stops the action and hands the case to a person.
 - High-risk actions need a person; a person can never turn a "no" from the rules into a "yes".
-- Identity is verified before any customer data is touched, and one customer can never read another's order.
+- Identity is verified before any customer data is touched, and one customer can never read another's order. Generated tools enforce this too: a tool is published only after a test proves another customer's record is refused.
+- AI never builds a tool on its own: every tool is checked against the API, approved by the owner, tested, and re-checked on every call.
 - Every answer and every action is logged with the reason.
 
 ## Results
@@ -217,18 +256,6 @@ The report also lists the honest gaps against the targets (section 1.7).
 | [`contracts/`](contracts/README.md) | The published data formats between the services |
 | `docs/` | Guides, plans and reports |
 | `docker-compose.yml`, `Makefile` | The one-command demo |
-
-## For developers
-
-- Each service has its own README: [knowledge](services/knowledge/README.md), [agent](services/agent/README.md), [tools](services/tools/README.md), [dashboard](apps/dashboard/README.md).
-- [docs/INTEGRATION.md](docs/INTEGRATION.md): how the three services work together and how to run them locally.
-- [contracts/README.md](contracts/README.md): the published data formats.
-- [docs/ownership.md](docs/ownership.md): who looks after what. [docs/reports/](docs/reports/Ticket-Easy_Eval_and_Cost_Report.md) and `docs/plan/`: the reports and plans.
-- Checks that run on every pull request: three test suites, the dashboard build, the JSON schemas, the scenarios, and two repository-wide checks you can run yourself: `python ops/check_names.py` and `python ops/check_links.py`.
-
-## Where we are
-
-Concept and proof-of-concept stage. The first demo takes one business from documents to a working, policy-bound agent, and onboards a second industry from a schema in under an hour. We are looking for pilot partners, builders who like agents that take real actions safely, and advisors who have run customer operations in Egypt.
 
 ---
 

@@ -9,6 +9,8 @@ var/
 .env
 __pycache__/
 *.pyc
+.deepeval/
+.deepeval-cache/
 
 # Generated SQLite data layer (rebuild with: python -m team_a db build)
 *.sqlite

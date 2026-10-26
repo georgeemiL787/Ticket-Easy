@@ -24,6 +24,8 @@ python -m pytest                          # 262 tests, no Ollama or API key need
 uvicorn team_a.service:app --app-dir src --port 8001
 ```
 
+DeepEval (optional): `.venv\Scripts\pip install -r requirements-eval.txt`, then `python -m team_a eval-rag --tenant shop_001 --split test`. Deterministic metrics need no judge. `--llm` adds contextual relevancy and needs `TEAM_A_RAG_EVAL_MODEL` (local Ollama by default).
+
 ## CLI
 
 | Command | What it does |
@@ -38,6 +40,7 @@ uvicorn team_a.service:app --app-dir src --port 8001
 | `python -m team_a rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
 | `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
 | `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
+| `python -m team_a eval-rag [--split test] [--llm] [--keyword]` | DeepEval on the same questions: section hit (recall@5) plus abstention on unanswerable rows. `--llm` adds contextual relevancy (install `requirements-eval.txt`, set `TEAM_A_RAG_EVAL_MODEL`) |
 | `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
 | `python -m team_a db build [--tenant X] [--reset] [--no-embeddings]` / `db stats` / `db query "<sql>"` | Build, count, or query (read-only) the SQLite data layer; see below |
 | `python -m team_a eval-scenarios [--tenant noon_eg]` | Retrieval smoke test on a tenant's scenarios, read from the database |

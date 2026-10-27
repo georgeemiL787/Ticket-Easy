@@ -220,7 +220,7 @@ The report also lists the honest gaps against the targets (section 1.7): replies
 | [`contracts/`](contracts/README.md) | The published data formats between the services |
 | `ops/local/` | Start all services locally, the demo shop API, the tool lifecycle and the end-to-end checks |
 | `ops/` | `check_names.py` and `check_links.py`, the two repository-wide checks |
-| [`docs/`](docs/ownership.md) | Guides ([integration](docs/INTEGRATION.md), [who owns what](docs/ownership.md)), plans and reports |
+| [`docs/`](docs/INTEGRATION.md) | Guides (such as [integration](docs/INTEGRATION.md)), plans and reports |
 | `docker-compose.yml`, `Makefile` | The one-command demo |
 
 ---
@@ -239,4 +239,3 @@ The report also lists the honest gaps against the targets (section 1.7): replies
 - Basel Elhofy ([@Basel-Elhofy](https://github.com/Basel-Elhofy))
 - Basmala Hesham ([@pasmala2004](https://github.com/pasmala2004))
 
-Who looks after which part is on the [ownership page](docs/ownership.md).

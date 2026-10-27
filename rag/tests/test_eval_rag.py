@@ -48,6 +48,36 @@ def test_collect_samples_reads_gold_section_ids(keyword_index):
     assert samples[0].gold_texts and samples[0].gold_texts[0].startswith("return_policy@v2#s2:")
 
 
+def test_judge_rejects_openrouter(monkeypatch):
+    monkeypatch.setenv("TEAM_A_RAG_EVAL_BASE_URL", "https://openrouter.ai/api/v1")
+    monkeypatch.setenv("TEAM_A_RAG_EVAL_MODEL", "x")
+    from team_a.eval_rag import _judge
+    with pytest.raises(SystemExit, match="Groq or local Ollama"):
+        _judge("ollama")
+
+
+def test_load_labels_synthetic(keyword_index, tmp_path):
+    from team_a.eval_rag import DIAGNOSIS_DIR, LABELS_FILE, load_labels
+
+    path = tmp_path / "labels.jsonl"
+    path.write_text(
+        '{"id": "az-syn-30d", "style": "arabizi", "question": "kam yom?", '
+        '"reply": "30 yom targee3.", "citations": ["return_policy@v2#s2"], '
+        '"label": 0, "reason": "invents 30 days"}\n',
+        encoding="utf-8",
+    )
+    samples = load_labels(path, keyword_index)
+    assert len(samples) == 1
+    assert samples[0].label == 0
+    assert samples[0].retrieved_texts and "return_policy@v2#s2" in samples[0].retrieved_texts[0]
+    if not (DIAGNOSIS_DIR / "live_en_policy.jsonl").exists():
+        pytest.skip("diagnosis logs not in this checkout")
+    full = load_labels(LABELS_FILE, keyword_index)
+    assert len(full) == 30
+    assert {s.style for s in full} >= {"en", "ar", "arabizi"}
+    assert any(s.label == 0 for s in full) and any(s.label == 1 for s in full)
+
+
 def test_deepeval_metrics_consume_expected_section_ids():
     pytest.importorskip("deepeval")
     from team_a.eval_rag import Sample, as_test_case, abstention_metric, section_hit_metric

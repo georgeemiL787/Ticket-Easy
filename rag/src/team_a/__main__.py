@@ -8,7 +8,7 @@
   python -m team_a rules list|approve|reject|edit|extract ...
   python -m team_a explain R-RETURN-14D --tenant shop_001
   python -m team_a eval-retrieval [--split dev|test] [--sweep]   (sweep: dev only)
-  python -m team_a eval-rag [--split dev|test] [--llm] [--keyword]
+  python -m team_a eval-rag [--split dev|test] [--llm] [--keyword] [--judge ollama|groq]
   python -m team_a eval-guardrails
   python -m team_a eval-scenarios [--tenant noon_eg]              (needs: db build)
   python -m team_a export-schemas
@@ -129,7 +129,8 @@ def cmd_eval_scenarios(args) -> None:
 def cmd_eval_rag(args) -> None:
     from team_a.eval_rag import eval_rag
 
-    eval_rag(args.tenant, split=args.split, llm=args.llm, keyword=args.keyword, limit=args.limit)
+    eval_rag(args.tenant, split=args.split, llm=args.llm, keyword=args.keyword, limit=args.limit,
+             metric=args.metric, replies=args.replies, labels=args.labels, judge=args.judge, out=args.out)
 
 
 def cmd_eval_guardrails(args) -> None:
@@ -233,9 +234,14 @@ def main(argv: list[str] | None = None) -> None:
     p = sub.add_parser("eval-rag", help="DeepEval on the retrieval benchmark (expected policy sections)")
     tenant(p)
     p.add_argument("--split", choices=("dev", "test"), default="test")
-    p.add_argument("--llm", action="store_true", help="add contextual relevancy (needs TEAM_A_RAG_EVAL_MODEL)")
+    p.add_argument("--llm", action="store_true", help="add contextual relevancy (Ollama or Groq judge)")
     p.add_argument("--keyword", action="store_true", help="skip embeddings (no Ollama)")
     p.add_argument("--limit", type=int, help="score only the first N questions (smoke)")
+    p.add_argument("--metric", choices=("relevancy", "faithfulness"), default="relevancy")
+    p.add_argument("--replies", type=Path, help="diagnosis jsonl of logged bot replies (faithfulness)")
+    p.add_argument("--labels", type=Path, help="hand-labelled faithfulness jsonl (compare a judge)")
+    p.add_argument("--judge", choices=("ollama", "groq"), default="ollama")
+    p.add_argument("--out", type=Path, help="write the report JSON here")
     p.set_defaults(func=cmd_eval_rag)
 
     p = sub.add_parser("eval-scenarios", help="retrieval smoke test on a tenant's scenarios (from the db)")

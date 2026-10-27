@@ -1,0 +1,30 @@
+{"id": "en-01", "source": "live_en_policy", "conversation": "en-01", "label": 1, "reason": "14-day return window is in return_policy@v2#s2"}
+{"id": "en-02", "source": "live_en_policy", "conversation": "en-02", "label": 1, "reason": "10 days is still inside the cited 14-day window"}
+{"id": "en-07", "source": "live_en_policy", "conversation": "en-07", "label": 1, "reason": "50/70/1500 shipping figures match shipping_policy@v1#s3"}
+{"id": "en-08", "source": "live_en_policy", "conversation": "en-08", "label": 1, "reason": "delivery fees paraphrase the same shipping passage"}
+{"id": "en-10", "source": "live_en_policy", "conversation": "en-10", "label": 1, "reason": "shipping fee paraphrase"}
+{"id": "en-11", "source": "live_en_policy", "conversation": "en-11", "label": 1, "reason": "COD up to 5000 is in the cited shipping and FAQ passages"}
+{"id": "en-15", "source": "live_en_policy", "conversation": "en-15", "label": 1, "reason": "7-14 / 3 / 5 day refund times are in refund_policy@v1#s2"}
+{"id": "en-16", "source": "live_en_policy", "conversation": "en-16", "label": 1, "reason": "refund timing paraphrase of the cited refund passages"}
+{"id": "en-syn-30d", "style": "en", "question": "How many days do I have to return an item?", "reply": "You have 30 days from delivery to return anything, no questions asked.", "citations": ["return_policy@v2#s2"], "label": 0, "reason": "invents a 30-day window; the cited passage says 14"}
+{"id": "en-syn-free-ship", "style": "en", "question": "How much does shipping cost?", "reply": "Shipping is always free on every order.", "citations": ["shipping_policy@v1#s3"], "label": 0, "reason": "drops the 50/70 fees and the 1500 free-shipping threshold"}
+{"id": "ar-01", "source": "agent_ar_all", "conversation": "ar-01", "label": 1, "reason": "Egyptian Arabic 14-day paraphrase of return_policy@v2#s2"}
+{"id": "ar-03", "source": "agent_ar_all", "conversation": "ar-03", "label": 1, "reason": "10 days still inside the 14-day window"}
+{"id": "ar-07", "source": "agent_ar_all", "conversation": "ar-07", "label": 1, "reason": "50/70/1500 shipping figures"}
+{"id": "ar-08", "source": "agent_ar_all", "conversation": "ar-08", "label": 1, "reason": "delivery-fee paraphrase"}
+{"id": "ar-11", "source": "agent_ar_all", "conversation": "ar-11", "label": 1, "reason": "COD up to 5000"}
+{"id": "ar-12", "source": "agent_ar_all", "conversation": "ar-12", "label": 1, "reason": "cash on arrival up to 5000"}
+{"id": "ar-14", "source": "agent_ar_all", "conversation": "ar-14", "label": 1, "reason": "card refund 7-14 business days after inspection"}
+{"id": "ar-15", "source": "agent_ar_all", "conversation": "ar-15", "label": 1, "reason": "verbatim refund timing quote"}
+{"id": "ar-syn-30d", "style": "ar", "question": "مدة الاسترجاع كام يوم؟", "reply": "تقدر ترجع خلال 30 يوم من الاستلام من غير شروط.", "citations": ["return_policy@v2#s2"], "label": 0, "reason": "invents 30 days"}
+{"id": "ar-syn-cod", "style": "ar", "question": "هل في دفع عند الاستلام؟", "reply": "أيوه، الدفع عند الاستلام متاح لأي مبلغ من غير حد.", "citations": ["shipping_policy@v1#s4"], "label": 0, "reason": "drops the 5000 EGP COD cap"}
+{"id": "az-01", "source": "live_rules_after_fix", "conversation": "arabizi-01", "label": 1, "reason": "rules-mode quote of the 14-day return passage"}
+{"id": "az-02", "source": "live_rules_after_fix", "conversation": "arabizi-02", "label": 1, "reason": "quotes return and refund 14-day passages"}
+{"id": "az-11", "source": "live_rules_after_fix", "conversation": "arabizi-11", "label": 1, "reason": "quoted FAQ payment methods (COD 5000) even though a second passage is off-topic"}
+{"id": "az-15", "source": "live_rules_after_fix", "conversation": "arabizi-15", "label": 1, "reason": "quotes refund timing passages"}
+{"id": "az-syn-ship", "style": "arabizi", "question": "el shahn bkam?", "reply": "el shahn 50 geneh lel qahera wel giza, 70 lel ba2y. loa el order 1500 aw aktar ba3d el khesomat, el shahn bbalash.", "citations": ["shipping_policy@v1#s3"], "label": 1, "reason": "new Arabizi paraphrase; logs only had template quotes"}
+{"id": "az-syn-return", "style": "arabizi", "question": "kam yom 3andy 3shan araga3?", "reply": "3andak 14 yom men tarikh el estelam. ba3d keda mafeesh esterga3.", "citations": ["return_policy@v2#s2"], "label": 1, "reason": "new Arabizi paraphrase of the 14-day window"}
+{"id": "az-syn-cod", "style": "arabizi", "question": "fi dafa3 3and el estlam?", "reply": "aywa, cash on delivery le7ad 5000 geneh. fo2 keda lazem tedfa3 ablaha.", "citations": ["shipping_policy@v1#s4"], "label": 1, "reason": "new Arabizi COD paraphrase"}
+{"id": "az-syn-30d", "style": "arabizi", "question": "kam yom 3andy 3shan araga3?", "reply": "3andak 30 yom targee3 men 8er shoroot.", "citations": ["return_policy@v2#s2"], "label": 0, "reason": "invents 30 days; Arabizi paraphrases were missing from the logs"}
+{"id": "az-syn-free", "style": "arabizi", "question": "el shahn bkam?", "reply": "el shahn bbalash 3ala tool 3ala ay order.", "citations": ["shipping_policy@v1#s3"], "label": 0, "reason": "claims always-free shipping"}
+{"id": "az-syn-cod-nocap", "style": "arabizi", "question": "fi dafa3 3and el estlam?", "reply": "aywa cash 3and el estlam 3ala ay mablagh.", "citations": ["shipping_policy@v1#s4"], "label": 0, "reason": "drops the 5000 EGP cap"}

@@ -1,3 +1,4 @@
 # Optional RAG evaluation extra. The 262-test suite does not need this.
 # From rag/:  pip install -r requirements-eval.txt
 deepeval>=4.0
+ollama>=0.4

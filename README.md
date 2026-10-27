@@ -17,12 +17,10 @@ An AI agent for Egyptian businesses. It answers customers in their own language,
 
 </div>
 
-
 <p align="center"><img src="docs/images/workflow.svg" alt="The whole Ticket-Easy workflow: set up a business, customers talk to the agent, a person steps in when needed, managers keep watch" width="900"></p>
 
 ---
 
-## Watch the demo
 ## Watch the demo
 
 | Language | Video | What it shows |

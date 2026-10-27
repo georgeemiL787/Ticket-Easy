@@ -46,20 +46,9 @@ It works for any business with written policies and customer data. The agent shi
 
 ### The three services
 
-```mermaid
-flowchart LR
-  customer(["Customer chat"]) --> agent
-  staff(["Staff inbox"]) --> agent
-  manager(["Manager dashboard"]) --> agent
-  agent["<b>Agent service</b><br/>port 8010"] -->|HTTP| knowledge["<b>Knowledge service</b><br/>port 8001"]
-  agent -->|MCP| tools["<b>Tools service</b><br/>port 8101"]
-  tools -->|"approved connection"| shop["The shop's API"]
-  agent -.-> models["AI models"]
-  classDef svc fill:#e8f0fe,stroke:#4a6fa5,color:#1b2b45
-  class agent,knowledge,tools svc
-```
+<p align="center"><img src="docs/images/architecture.svg" alt="Ticket-Easy architecture: the agent service talks to the knowledge service over HTTP and to the tools service over MCP" width="900"></p>
 
-The three services talk to each other only over the network; none uses another's code. The **agent service** is the only one customers and staff reach, and it also serves the manager dashboard. The **knowledge service** finds policy passages, screens risky messages and checks every action against the approved rules. The **tools service** turns a shop's API description into tools the owner approves, and the agent calls them over MCP. AI models are used for understanding, planning and wording; local embeddings (Ollama with bge-m3) power the search.
+The three services talk to each other only over the network; none uses another's code. Customers, staff and managers reach only the **agent service**. The **knowledge service** finds the policy passage and decides whether an action is allowed. The **tools service** turns the shop's API description into tools the owner approves.
 
 | Service | Port | Folder | Owns |
 |---|---|---|---|
@@ -69,37 +58,19 @@ The three services talk to each other only over the network; none uses another's
 
 ### What happens to a message
 
-```mermaid
-flowchart LR
-  A(["Customer message"]) --> B["Understand:<br/>language, intent, details"]
-  B --> D{"Risky, or asks<br/>for a person?"}
-  D -- yes --> H["Hand over to a person<br/>with a briefing"]
-  D -- no --> E["Agent decides:<br/>answer, look up, ask, or act"]
-  E --> J{"Checks and<br/>approval pass?"}
-  J -- no --> H
-  J -- yes --> M["Do it once<br/>and verify"]
-  M --> R["Reply in the customer's<br/>language, checked against facts"]
-  H --> S["Decision log"]
-  R --> S
-  classDef ok fill:#e6f4ea,stroke:#3b7d4f,color:#12301c
-  classDef stop fill:#fce8e6,stroke:#c5221f,color:#410e0b
-  class M,R,S ok
-  class H stop
-```
+<p align="center"><img src="docs/images/message-flow.svg" alt="One customer message goes through understand, screen, decide, check, do and reply, with a hand-over to a person at any risky step" width="900"></p>
 
-Every message ends in one outcome: an answer, a question, a confirmation, an action, a refusal or a hand-over, and the decision log records why. A write is never repeated automatically: if its result is unclear, the case goes to a person.
+Follow the example above: the customer asks for a return in Arabizi. The agent reads the language, the intent and the order number. The rule check says a refund this large needs a person, so the case goes to the inbox with a full briefing instead of the agent refunding on its own. Once staff approve, the agent checks again with the order as it is now, runs the refund exactly once, verifies it and replies in Arabizi.
 
-### Inside the agent
+### AI proposes, code decides
 
-AI jobs (message reader, planner, knowledge agent, reviewer, reply writer, summaries) only propose. Code decides: it checks each move, applies the action checks, asks for confirmation or approval, verifies the result and checks every reply against the facts. A fixed step flow takes over when the AI is off, fails or is refused twice in a row.
+<p align="center"><img src="docs/images/ai-vs-code.svg" alt="AI jobs only propose; code checks moves, actions, policy, confirmation and facts" width="900"></p>
 
-> **AI proposes, code decides.** A move is only a proposal: it never calls a tool, clears a safety flag or skips a check by itself. The planner and the reviewer use the strong model slot, the message reader, the reply writer and the summaries use the small slot, and search uses the local embedding model. Handoff and the history summaries are checked too: a text that adds a number, date or id that was not in the source is rejected and a fixed template is used.
+A move chosen by the AI is only a proposal: it never calls a tool, clears a safety flag or skips a check by itself. The planner and the reviewer use the strong model, the message reader, reply writer and summaries use the small one, and search uses a local embedding model. A summary or reply that adds a number, date or id that was not in the source is rejected and a fixed template is used instead.
 
 ### The order every action goes through
 
-Details complete, identity verified, order read, ownership, permission, safety screen, policy check, confirmation, a second check, run once, verify the result.
-
-A check that cannot run stops the action and hands the case to a person. A person can approve what the rules allow with approval; a person can never turn a "no" from the rules into a "yes".
+<p align="center"><img src="docs/images/action-checks.svg" alt="The 11 checks: who is asking, is it allowed, do it safely" width="900"></p>
 
 ---
 
@@ -107,33 +78,31 @@ A check that cannot run stops the action and hands the case to a person. A perso
 
 Nobody writes integration code for Ticket-Easy. The owner gives the **tools service** the shop's API description (an OpenAPI file, uploaded or fetched from the running system), and the service turns it into tools the agent can call. The AI only proposes; the owner approves, and code builds, tests and publishes.
 
-```mermaid
-flowchart LR
-  A["Owner uploads<br/>the OpenAPI file"] --> B["AI proposes tools"]
-  B --> C{"Grounding check<br/>against the API"}
-  C -- "fails: one retry" --> B
-  C -- passes --> D["Owner reviews<br/>and approves"]
-  D --> E["Build and test<br/>no AI, in a sandbox"]
-  E --> F["Publish over MCP"]
-  classDef ai fill:#e8f0fe,stroke:#4a6fa5,color:#1b2b45
-  classDef human fill:#fdf3e1,stroke:#b07a1f,color:#3b2a08
-  classDef code fill:#e6f4ea,stroke:#3b7d4f,color:#12301c
-  class B ai
-  class A,D human
-  class C,E,F code
-```
+<p align="center"><img src="docs/images/tools-pipeline.svg" alt="Tool generation: upload, propose, ground, review, build and test, publish" width="900"></p>
+
+The checks that matter most:
+
+- **Grounding:** code rejects any proposal that names an operation, field or link the API does not have. A failed proposal is retried once with the errors and is never replaced by a canned one.
+- **No AI in the build:** an approved proposal is compiled into an immutable, hashed artifact. Anything the executor cannot do exactly is refused rather than guessed.
+- **A safety test before publishing:** the sandbox test includes an attempt to read another customer's record, and it must be refused.
+- **One customer per process:** the agent calls tools over MCP with one process per customer identity, so no tool argument can choose whose data to read. A partial or unknown write is never treated as success.
+
+<details>
+<summary><b>The nine stages in detail</b></summary>
 
 <table>
 <tr><td width="150"><b>1 · Discover</b></td><td>The service reads the API offline and keeps the original file. Large APIs are split into business areas and processed in batches, so any size of API fits the model.</td></tr>
 <tr><td><b>2 · Propose</b></td><td>The model, with structured output only, drafts each tool: the operations to call, their order and where every input comes from. It cannot run anything.</td></tr>
-<tr><td><b>3 · Ground</b></td><td>Code rejects any proposal that names an operation, field or link the API does not have, or that maps a value to an incompatible type. A failed proposal is retried once with the errors; it is never replaced by a canned one.</td></tr>
-<tr><td><b>4 · Review</b></td><td>The owner decides who may use the tool (the customer's own records only, for example) and answers the AI's questions in plain language. Another model call checks the answers, and approval stays blocked until every question is resolved.</td></tr>
-<tr><td><b>5 · Build</b></td><td>An approved proposal is compiled, without any model, into an immutable artifact: steps, schemas, access rules and limits, all hashed. Anything the executor cannot do exactly (an unsupported auth or parameter style) is refused at this point rather than guessed.</td></tr>
-<tr><td><b>6 · Test</b></td><td>Tests run against a sandbox copy of the shop: a normal success, the customer's own record, and an attempt to read someone else's record that must be refused. If a test fails because of a bad mapping, the model may repair it, twice at most; it can rewire steps but never add operations or loosen access.</td></tr>
+<tr><td><b>3 · Ground</b></td><td>Code rejects any proposal that names an operation, field or link the API does not have, or that maps a value to an incompatible type.</td></tr>
+<tr><td><b>4 · Review</b></td><td>The owner decides who may use the tool (the customer's own records only, for example) and answers the AI's questions in plain language. Approval stays blocked until every question is resolved.</td></tr>
+<tr><td><b>5 · Build</b></td><td>An approved proposal is compiled, without any model, into an immutable artifact: steps, schemas, access rules and limits, all hashed.</td></tr>
+<tr><td><b>6 · Test</b></td><td>Tests run against a sandbox copy of the shop: a normal success, the customer's own record, and another customer's record, which must be refused. If a test fails because of a bad mapping, the model may repair it, twice at most; it can rewire steps but never add operations or loosen access.</td></tr>
 <tr><td><b>7 · Publish</b></td><td>Only a tool with passing evidence is published, as an MCP tool, for the sandbox or as a Live Demo tool against the owner's real API. Every call re-checks the approval, the access rules and the latest test results, so disabling a tool takes effect on the next call.</td></tr>
-<tr><td><b>8 · Use</b></td><td>The agent discovers the tools over MCP, one process per customer identity, so no tool argument can choose whose data to read. Results come back with a status the agent must respect: a partial or unknown write is never treated as success and goes to a person.</td></tr>
-<tr><td><b>9 · Production</b></td><td>A tool becomes production only when an admin promotes it and every automatic check passes (same approved version, access scoped to the verified customer, rate limits, a rollback contact, a smoke check). One service credential then serves all customers, and the tools service itself checks, on every call, that the record belongs to the customer. An error spike rolls the tool back automatically.</td></tr>
+<tr><td><b>8 · Use</b></td><td>The agent discovers the tools over MCP and calls them for the verified customer only.</td></tr>
+<tr><td><b>9 · Production</b></td><td>A tool becomes production only when an admin promotes it and every automatic check passes (same approved version, access scoped to the verified customer, rate limits, a rollback contact, a smoke check). An error spike rolls the tool back automatically.</td></tr>
 </table>
+
+</details>
 
 Details, settings and the full list of limits are in the [tools service README](services/tools/README.md); how the agent and the tools service fit together is in [docs/INTEGRATION.md](docs/INTEGRATION.md).
 

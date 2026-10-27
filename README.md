@@ -17,8 +17,12 @@ An AI agent for Egyptian businesses. It answers customers in their own language,
 
 </div>
 
+
+<p align="center"><img src="docs/images/workflow.svg" alt="The whole Ticket-Easy workflow: set up a business, customers talk to the agent, a person steps in when needed, managers keep watch" width="900"></p>
+
 ---
 
+## Watch the demo
 ## Watch the demo
 
 | Language | Video | What it shows |
@@ -64,7 +68,7 @@ Follow the example above: the customer asks for a return in Arabizi. The agent r
 
 ### AI proposes, code decides
 
-<p align="center"><img src="docs/images/ai-vs-code.svg" alt="AI jobs only propose; code checks moves, actions, policy, confirmation and facts" width="900"></p>
+<p align="center"><img src="docs/images/ai-architecture.svg" alt="AI architecture: the AI jobs propose, code checks and decides, with a fixed step flow as a safety net" width="900"></p>
 
 A move chosen by the AI is only a proposal: it never calls a tool, clears a safety flag or skips a check by itself. The planner and the reviewer use the strong model, the message reader, reply writer and summaries use the small one, and search uses a local embedding model. A summary or reply that adds a number, date or id that was not in the source is rejected and a fixed template is used instead.
 

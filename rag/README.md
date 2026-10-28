@@ -24,7 +24,7 @@ python -m pytest                          # 262 tests, no Ollama or API key need
 uvicorn team_a.service:app --app-dir src --port 8001
 ```
 
-DeepEval (optional): `.venv\Scripts\pip install -r requirements-eval.txt`, then `python -m team_a eval-rag --tenant shop_001 --split test`. Deterministic metrics need no judge. `--llm` adds contextual relevancy (Ollama by default; `--judge groq` for Groq). `--labels eval/faithfulness_labels.jsonl` compares a judge to the 30 hand labels. Judges are Groq or local Ollama only.
+DeepEval (optional): `.venv\Scripts\pip install -r requirements-eval.txt`, then `python -m team_a eval-rag --tenant shop_001 --split test`. Deterministic metrics need no judge. `--llm` adds contextual relevancy (Ollama by default; `--judge groq` for Groq). `--labels eval/faithfulness_labels.jsonl` compares a judge to the 30 hand labels. Judges are Groq or local Ollama only. Full write-up, commands, and 27 Oct 2026 numbers: [eval/README.md](eval/README.md).
 
 ## CLI
 

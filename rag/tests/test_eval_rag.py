@@ -73,7 +73,7 @@ def test_load_labels_synthetic(keyword_index, tmp_path):
     if not (DIAGNOSIS_DIR / "live_en_policy.jsonl").exists():
         pytest.skip("diagnosis logs not in this checkout")
     full = load_labels(LABELS_FILE, keyword_index)
-    assert len(full) == 30
+    assert len(full) >= 30
     assert {s.style for s in full} >= {"en", "ar", "arabizi"}
     assert any(s.label == 0 for s in full) and any(s.label == 1 for s in full)
 

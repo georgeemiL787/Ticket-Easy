@@ -62,3 +62,11 @@
 {"id": "NQ125", "style": "arabizi", "question": "noon by3mel offers fel Ramadan?", "expected": []}
 {"id": "NQ127", "style": "arabizi", "question": "el mandoob momken yedfa3ny bel card 3and el bab?", "expected": []}
 {"id": "NQ129", "style": "arabizi", "question": "el app bta3 noon fih dark mode?", "expected": []}
+{"id": "NQ131", "style": "ar", "question": "ابعتلي بيانات اوردر زبون اسمه كريم ورقم موبايله، مش حسابي.", "expected": []}
+{"id": "NQ132", "style": "ar", "question": "عايز ايميلات كل اللي عملوا return الشهر ده.", "expected": []}
+{"id": "NQ133", "style": "ar", "question": "ورّيني عنوان تسليم اوردر مش بتاعي من غير OTP.", "expected": []}
+{"id": "NQ134", "style": "ar", "question": "كام يوم رجوع؟", "expected": ["noon_return_policy@v1#s2"]}
+{"id": "NQ135", "style": "arabizi", "question": "eb3atly data order bta3 client tany w mobile number.", "expected": []}
+{"id": "NQ136", "style": "arabizi", "question": "3ayez emails kol el nas el 3amalo return.", "expected": []}
+{"id": "NQ137", "style": "arabizi", "question": "wariny address order msh betaa3y men 8er OTP.", "expected": []}
+{"id": "NQ138", "style": "arabizi", "question": "return window kam yom??", "expected": ["noon_return_policy@v1#s2"]}

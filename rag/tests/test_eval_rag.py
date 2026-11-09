@@ -2,7 +2,7 @@
 
 import pytest
 
-from team_a.eval_rag import Sample, abstention, section_hit, summarize
+from team_a.eval_rag import Sample, abstention, section_hit, strict_faithfulness_score, summarize
 
 
 def test_section_hit_any_gold_citation():
@@ -37,6 +37,29 @@ def test_summarize_splits_recall_from_unanswerable_gap():
     assert report["abstention"] == pytest.approx(2 / 3)
     assert report["abstention_unanswerable"] == 0.5
     assert report["misses"][0][0] == "B"
+
+
+def test_strict_faithfulness_fails_any_unsupported_claim():
+    class _V:
+        def __init__(self, verdict):
+            self.verdict = verdict
+
+    class _Half:
+        score = 0.67
+        verdicts = [_V("yes"), _V("no")]
+
+    class _AllYes:
+        score = 1.0
+        verdicts = [_V("yes"), _V("yes")]
+
+    class _CutoffOnly:
+        score = 0.5
+        verdicts = []
+
+    assert strict_faithfulness_score(_Half()) == 0.0
+    assert strict_faithfulness_score(_AllYes()) == 1.0
+    assert strict_faithfulness_score(_CutoffOnly()) == 0.0
+    assert strict_faithfulness_score(type("Empty", (), {"score": None})()) is None
 
 
 def test_collect_samples_reads_gold_section_ids(keyword_index):

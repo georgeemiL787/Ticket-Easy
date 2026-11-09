@@ -17,6 +17,7 @@ def test_tenant_without_override_uses_the_global_thresholds(monkeypatch):
 
 def test_tenant_override_comes_from_its_manifest():
     assert tenant_thresholds("noon_eg") == (0.6, 4.0)
+    assert tenant_thresholds("telco_001") == (0.52, 4.0)
     assert tenant_thresholds("no_such_tenant") == (config.settings.min_cosine, config.settings.min_bm25)
 
 
@@ -34,6 +35,7 @@ def test_confidence_floor_is_off_unless_configured(built_db, monkeypatch):
     from team_a.knowledge.retrieval import tenant_min_top_score
 
     assert tenant_min_top_score("shop_001") == 0.0 and tenant_min_top_score("noon_eg") == 0.0
+    assert tenant_min_top_score("telco_001") == 0.0
     req = SearchKnowledgeRequest(request_id="t", tenant_id="noon_eg", query="EMI refund to the same credit card")
     normal = repository.search_knowledge(req, None, built_db)
     assert normal.passages

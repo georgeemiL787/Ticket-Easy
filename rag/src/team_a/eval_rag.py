@@ -12,6 +12,8 @@ repeating that suite:
   actually address the question. Diagnoses word-overlap hits on unanswerable queries.
 - faithfulness (`--replies` / `--labels`): whether a logged (or synthetic) reply
   is supported by the cited passage texts, not by gold section IDs alone.
+  Pass/fail vs labels uses score ≥ 0.5. Reports also include a strict score
+  (any unsupported claim → 0) because 0.5 lets half-true replies through.
 
 The judge is local Ollama by default, or Groq. OpenRouter is rejected.
 Telemetry is off; nothing is sent to Confident AI.
@@ -42,6 +44,8 @@ STYLE_NOTE = (
     "or Arabizi (Egyptian Arabic in Latin letters and digits, e.g. 3ayez araga3). "
     "Judge the meaning, not the script."
 )
+RELEVANCY_PASS = 0.5
+FAITHFULNESS_PASS = 1.0  # any unsupported claim fails; 0.5 let half-true replies through
 
 
 @dataclass
@@ -68,6 +72,24 @@ def section_hit(expected: list[str], retrieved: list[str]) -> float | None:
 def abstention(expected: list[str], retrieved: list[str]) -> float:
     """1 if we retrieved something exactly when the question is answerable."""
     return float(bool(expected) == bool(retrieved))
+
+
+def _verdict_value(verdict) -> str:
+    raw = getattr(verdict, "verdict", verdict)
+    return str(getattr(raw, "value", raw)).strip().lower()
+
+
+def strict_faithfulness_score(metric) -> float | None:
+    """0 if any claim is unsupported, else DeepEval's fraction (1.0 when all yes)."""
+    score = getattr(metric, "score", None)
+    if score is None:
+        return None
+    for item in getattr(metric, "verdicts", None) or []:
+        if _verdict_value(item) == "no":
+            return 0.0
+    if float(score) < FAITHFULNESS_PASS:
+        return 0.0
+    return float(score)
 
 
 def collect_samples(tenant_id: str, split: str, index: TenantIndex, embedder,
@@ -366,14 +388,16 @@ def _score_metric(name: str, samples: list[Sample], judge: str) -> dict:
     reasons = any(s.label is not None for s in samples)
     if name == "relevancy":
         def make():
-            return ContextualRelevancyMetric(threshold=0.5, model=model, include_reason=reasons,
+            return ContextualRelevancyMetric(threshold=RELEVANCY_PASS, model=model, include_reason=reasons,
                                              async_mode=False, evaluation_template=relevancy_template())
         need = lambda s: bool(s.retrieved_texts)  # noqa: E731
+        pass_at = RELEVANCY_PASS
     elif name == "faithfulness":
         def make():
-            return FaithfulnessMetric(threshold=0.5, model=model, include_reason=reasons,
+            return FaithfulnessMetric(threshold=RELEVANCY_PASS, model=model, include_reason=reasons,
                                      async_mode=False, evaluation_template=faithfulness_template())
         need = lambda s: bool(s.reply and s.retrieved_texts)  # noqa: E731
+        pass_at = RELEVANCY_PASS
     else:
         raise ValueError(name)
 
@@ -390,9 +414,15 @@ def _score_metric(name: str, samples: list[Sample], judge: str) -> dict:
             score, reason = None, str(exc)
         row = {"id": sample.id, "style": sample.style, "answerable": bool(sample.expected),
                "score": score, "reason": reason, "label": sample.label}
+        if name == "faithfulness" and score is not None:
+            row["strict_score"] = strict_faithfulness_score(metric)
         if sample.label is not None and score is not None:
-            pred = 1.0 if score >= 0.5 else 0.0
+            pred = 1.0 if score >= pass_at else 0.0
             row["agree"] = pred == sample.label
+            if "strict_score" in row:
+                row["strict_agree"] = (
+                    (1.0 if row["strict_score"] >= FAITHFULNESS_PASS else 0.0) == sample.label
+                )
         scored.append(row)
         if not sample.expected and score is not None:
             unanswerable_hits.append(score)
@@ -402,9 +432,12 @@ def _score_metric(name: str, samples: list[Sample], judge: str) -> dict:
         print(f"  {name:12} {sample.id:12} {shown}{mark}  {sample.question[:50]}{extra}")
     labelled = [r for r in scored if r.get("label") is not None]
     per_style: dict[str, list[bool]] = defaultdict(list)
+    strict_style: dict[str, list[bool]] = defaultdict(list)
     for r in labelled:
         if "agree" in r:
             per_style[r["style"]].append(r["agree"])
+        if "strict_agree" in r:
+            strict_style[r["style"]].append(r["strict_agree"])
     return {
         name: _mean([r["score"] for r in scored if r["score"] is not None]),
         f"{name}_unanswerable_hits": _mean(unanswerable_hits),
@@ -413,6 +446,8 @@ def _score_metric(name: str, samples: list[Sample], judge: str) -> dict:
         "agreement": _mean([float(r["agree"]) for r in labelled if "agree" in r]),
         "agreement_n": len(labelled),
         "agreement_per_style": {s: f"{sum(v)}/{len(v)}" for s, v in sorted(per_style.items())},
+        "strict_agreement": _mean([float(r["strict_agree"]) for r in labelled if "strict_agree" in r]),
+        "strict_agreement_per_style": {s: f"{sum(v)}/{len(v)}" for s, v in sorted(strict_style.items())},
         "judge": judge,
     }
 
@@ -514,6 +549,10 @@ def eval_rag(tenant_id: str, split: str = "test", llm: bool = False,
         print(f"faithfulness agreement vs labels     {agr:.2%} ({report['agreement_n']})"
               if agr is not None else "agreement  n/a")
         print(f"  per style: {report.get('agreement_per_style')}")
+        strict = report.get("strict_agreement")
+        if strict is not None:
+            print(f"  strict (any unsupported claim fails) {strict:.2%}  "
+                  f"{report.get('strict_agreement_per_style')}")
         _write_report(report, out)
         return report
 

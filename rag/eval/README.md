@@ -108,7 +108,7 @@ $env:DEEPEVAL_TELEMETRY_OPT_OUT = "1"
 python -m pytest tests/test_eval_rag.py -q
 ```
 
-Hybrid retrieval needs `bge-m3`. The numbers below are **keyword-only** (`--keyword`) because that embed model was not pulled on this machine. Deterministic metrics still match `eval-retrieval` on the same index.
+Hybrid retrieval needs `bge-m3` (`ollama pull bge-m3`, then `python -m team_a ingest --tenant <id>`). Keyword-only numbers (`--keyword`) are in §6; hybrid numbers (31 Oct 2026, after pulling `bge-m3`) are in [FINDINGS.md](FINDINGS.md).
 
 Judges:
 
@@ -146,9 +146,9 @@ python -m team_a eval-rag --tenant shop_001 --split test --keyword
 Contextual relevancy:
 
 ```powershell
-python -m team_a eval-rag --tenant shop_001 --split test --keyword --llm --judge ollama --out var/eval/shop_001_relevancy.json
-python -m team_a eval-rag --tenant noon_eg --split test --keyword --llm --judge ollama --out var/eval/noon_eg_relevancy.json
-python -m team_a eval-rag --tenant telco_001 --split test --keyword --llm --judge ollama --out var/eval/telco_001_relevancy.json
+python -m team_a eval-rag --tenant shop_001 --split test --llm --judge ollama --out var/eval/shop_001_hybrid_relevancy.json
+python -m team_a eval-rag --tenant noon_eg --split test --llm --judge ollama --out var/eval/noon_eg_hybrid_relevancy.json
+python -m team_a eval-rag --tenant telco_001 --split test --llm --judge ollama --out var/eval/telco_001_hybrid_relevancy.json
 ```
 
 Faithfulness on logged shop_001 replies (diagnosis jsonl with `reply` + `citations`):
@@ -203,6 +203,16 @@ How to read this:
 - **section_hit** is the same idea as existing recall@5. Keyword-only is a bit below the hybrid figures in `rag/README.md` (shop 89.3%, noon 97.5%).
 - **Relevancy ~56–58%** on shop/noon means many returned passages only weakly address the question. That is the word-overlap problem.
 - **Unanswerable hits ~15%** on shop/noon is the useful number: when we wrongly retrieve, the judge usually says the passage is irrelevant. On **telco**, that jumps to **46%** — off-topic questions still pull passages the judge thinks are on-topic. Arabizi section hit on telco (19/30) is the weak style.
+
+### Hybrid relevancy (31 Oct 2026, `bge-m3`, no `--keyword`)
+
+| Tenant | section_hit | no-answer recall | relevancy | unanswerable hits (want low) |
+|---|---|---|---|---|
+| shop_001 | **89.3%** | 77.8% | 29.5% (29) | **0.0%** |
+| noon_eg | **97.5%** | 62.5% | 40.5% (48) | 18.2% |
+| telco_001 | **82.2%** | **33.3%** | 69.7% (92) | **43.9%** |
+
+Shop/noon section_hit now match the shipped figures. Shop off-topic hits look irrelevant (0%). Telco still does not: hybrid *raises* answerable recall and *lowers* no-answer recall. A `min_top_score=0.50` floor helped telco **dev** abstention and cut **test** Arabizi to 15/30, so it was not shipped. Details: [FINDINGS.md](FINDINGS.md).
 
 ### Faithfulness (shop_001 logged replies)
 
@@ -303,10 +313,10 @@ Keep as labelled. Two notes, not relabels:
 ## 12. What this does *not* claim
 
 - It does not replace `eval-retrieval`. Recall and no-answer P/R stay there.
-- Keyword-only runs are not the shipped hybrid numbers. Re-run without `--keyword` once `bge-m3` is available if you need those.
+- Keyword-only runs are the 27 Oct baseline. Hybrid (`bge-m3`) numbers are in §6 and [FINDINGS.md](FINDINGS.md).
 - 91% faithfulness on live quotes is not “the bot is grounded.” It means quoted policy matches the citation. Use the 54 labels for invented facts.
-- telco 75% relevancy with 46% on unanswerable hits is a **retrieval** finding, not a DeepEval bug.
-- 30/30 on the first label set was too small; 48/54 on qwen3:8b is the number to quote.
+- telco ~44% relevancy on unanswerable hits is a **retrieval** finding (hybrid did not fix it; a confidence floor hurt held-out Arabizi).
+- 30/30 on the first label set was too small; **48/54** on qwen3:8b at ≥ 0.5 is the number to quote. Forcing every claim to pass dropped that to 41/54 (false alarms on “14” vs “1:4”).
 
 ---
 
@@ -318,12 +328,16 @@ JSON reports (local, gitignored):
 rag/var/eval/shop_001_relevancy.json
 rag/var/eval/noon_eg_relevancy.json
 rag/var/eval/telco_001_relevancy.json
+rag/var/eval/shop_001_hybrid_relevancy.json
+rag/var/eval/noon_eg_hybrid_relevancy.json
+rag/var/eval/telco_001_hybrid_relevancy.json
 rag/var/eval/shop_001_faithfulness.json
 rag/var/eval/labels_ollama.json
 rag/var/eval/labels_ollama_4b.json
 rag/var/eval/labels_groq.json
 rag/var/eval/labels_ollama_ar_script.json
 rag/var/eval/labels_ragas.json
+rag/var/eval/labels_ollama_strict.json
 ```
 
 PR link if you want one: https://github.com/georgeemiL787/Ticket-Easy/pull/new/cursor/deepeval-rag-eval

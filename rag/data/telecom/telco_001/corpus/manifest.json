@@ -4,7 +4,7 @@
   "retrieval_thresholds": {
     "min_cosine": 0.52,
     "min_bm25": 4.0,
-    "chosen_on": "telco_001 dev split (eval-retrieval --sweep), 2026-10-08; min_top_score off (no gain on dev)"
+    "chosen_on": "telco_001 dev split (eval-retrieval --sweep), 2026-10-31, hybrid bge-m3. Cosine/BM25 0.52/4.0 (88/102, na_rec 0.67). pick_top_score tied 0.0/0.40/0.44 with no extra abstention. A 0.50 floor raised dev na_rec to 0.75 but cut held-out Arabizi recall (15/30), so min_top_score stays off."
   },
   "documents": [
     {

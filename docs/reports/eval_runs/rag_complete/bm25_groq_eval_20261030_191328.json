@@ -1,0 +1,1963 @@
+{
+  "run_at": "2026-10-30T17:01:07.460184+00:00",
+  "groq_model": "openai/gpt-oss-120b",
+  "embeddings": "unavailable",
+  "retrieval_mode": "bm25_only",
+  "tenants": {
+    "shop_001": {
+      "dev": {
+        "recall_at_5": 0.41379310344827586,
+        "no_answer_precision": 0.18181818181818182,
+        "no_answer_recall": 0.3333333333333333,
+        "n_questions": 33
+      },
+      "test": {
+        "recall_at_5": 0.4838709677419355,
+        "no_answer_precision": 0.5333333333333333,
+        "no_answer_recall": 0.8888888888888888,
+        "n_questions": 37,
+        "mean_faithfulness": 0.6923076923076923,
+        "mean_correctness": 0.6153846153846154,
+        "n_judged": 13
+      }
+    },
+    "noon_eg": {
+      "dev": {
+        "recall_at_5": 0.5471698113207547,
+        "no_answer_precision": 0.38461538461538464,
+        "no_answer_recall": 0.4166666666666667,
+        "n_questions": 65
+      },
+      "test": {
+        "recall_at_5": 0.48,
+        "no_answer_precision": 0.38461538461538464,
+        "no_answer_recall": 0.4166666666666667,
+        "n_questions": 64,
+        "mean_faithfulness": 0.7727272727272727,
+        "mean_correctness": 0.6818181818181818,
+        "n_judged": 22
+      }
+    },
+    "telco_001": {
+      "dev": {
+        "recall_at_5": 0.5777777777777777,
+        "no_answer_precision": 0.16666666666666666,
+        "no_answer_recall": 0.4166666666666667,
+        "n_questions": 102
+      },
+      "test": {
+        "recall_at_5": 0.5888888888888889,
+        "no_answer_precision": 0.14814814814814814,
+        "no_answer_recall": 0.3333333333333333,
+        "n_questions": 102,
+        "mean_faithfulness": 0.4523809523809524,
+        "mean_correctness": 0.30952380952380953,
+        "n_judged": 42
+      }
+    }
+  },
+  "failure_analysis": {
+    "shop_001": [
+      {
+        "id": "Q01",
+        "question": "How many days do I have to return an item?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s2"
+        ],
+        "got": [
+          "shipping_policy@v1#s2",
+          "shipping_policy@v1#s6"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q01",
+        "question": "How many days do I have to return an item?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s2"
+        ],
+        "got": [
+          "shipping_policy@v1#s2",
+          "shipping_policy@v1#s6"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q03",
+        "question": "momken araga3 el 7aga ba3d kam yom?",
+        "style": "arabizi",
+        "expected": [
+          "return_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q03",
+        "question": "momken araga3 el 7aga ba3d kam yom?",
+        "style": "arabizi",
+        "expected": [
+          "return_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q04",
+        "question": "Can I return underwear or swimwear?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q04",
+        "question": "Can I return underwear or swimwear?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q05",
+        "question": "هل ينفع أرجع برفان فتحته؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q05",
+        "question": "هل ينفع أرجع برفان فتحته؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q10",
+        "question": "Can I exchange for a different size?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s5"
+        ],
+        "got": [
+          "faq@v1#q03"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q10",
+        "question": "Can I exchange for a different size?",
+        "style": "en",
+        "expected": [
+          "return_policy@v2#s5"
+        ],
+        "got": [
+          "faq@v1#q03"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q11",
+        "question": "momken abadel el ma2as b size akbar?",
+        "style": "arabizi",
+        "expected": [
+          "return_policy@v2#s5",
+          "faq@v1#q03"
+        ],
+        "got": [
+          "faq@v1#q03"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q15",
+        "question": "لو القطعة اتغسلت ينفع ترجع؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s3"
+        ],
+        "got": [
+          "refund_policy@v1#s5"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q15",
+        "question": "لو القطعة اتغسلت ينفع ترجع؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s3"
+        ],
+        "got": [
+          "refund_policy@v1#s5"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q26",
+        "question": "الأوردر متأخر، ليا تعويض؟",
+        "style": "ar",
+        "expected": [
+          "shipping_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q26",
+        "question": "الأوردر متأخر، ليا تعويض؟",
+        "style": "ar",
+        "expected": [
+          "shipping_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q29",
+        "question": "إزاي ألغي الطلب؟",
+        "style": "ar",
+        "expected": [
+          "shipping_policy@v1#s8"
+        ],
+        "got": [
+          "return_policy@v2#s7",
+          "faq@v1#q10",
+          "faq@v1#q07",
+          "refund_policy@v1#s4",
+          "return_policy@v2#s3"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q29",
+        "question": "إزاي ألغي الطلب؟",
+        "style": "ar",
+        "expected": [
+          "shipping_policy@v1#s8"
+        ],
+        "got": [
+          "return_policy@v2#s7",
+          "faq@v1#q10",
+          "faq@v1#q07",
+          "refund_policy@v1#s4",
+          "return_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q33",
+        "question": "How long does a refund to my card take?",
+        "style": "en",
+        "expected": [
+          "refund_policy@v1#s2"
+        ],
+        "got": [
+          "shipping_policy@v1#s4",
+          "faq@v1#q05"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q33",
+        "question": "How long does a refund to my card take?",
+        "style": "en",
+        "expected": [
+          "refund_policy@v1#s2"
+        ],
+        "got": [
+          "shipping_policy@v1#s4",
+          "faq@v1#q05"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q40",
+        "question": "mawa3eed el shoghl emta?",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q01"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q40",
+        "question": "mawa3eed el shoghl emta?",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q01"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q52",
+        "question": "momken a8ayar el size ba3d ma akked el order?",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q10"
+        ],
+        "got": [
+          "faq@v1#q03",
+          "shipping_policy@v1#s9",
+          "shipping_policy@v1#s5",
+          "shipping_policy@v1#s8",
+          "shipping_policy@v1#s6"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q52",
+        "question": "momken a8ayar el size ba3d ma akked el order?",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q10"
+        ],
+        "got": [
+          "faq@v1#q03",
+          "shipping_policy@v1#s9",
+          "shipping_policy@v1#s5",
+          "shipping_policy@v1#s8",
+          "shipping_policy@v1#s6"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q55",
+        "question": "el 7aga mesh 3aleha el tiket, momken trga3?",
+        "style": "arabizi",
+        "expected": [
+          "return_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q55",
+        "question": "el 7aga mesh 3aleha el tiket, momken trga3?",
+        "style": "arabizi",
+        "expected": [
+          "return_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q56",
+        "question": "لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s1"
+        ],
+        "got": [
+          "return_policy@v1#s3",
+          "return_policy@v2#s6",
+          "return_policy@v2#s8",
+          "refund_policy@v1#s4",
+          "return_policy@v2#s3"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q56",
+        "question": "لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟",
+        "style": "ar",
+        "expected": [
+          "return_policy@v2#s1"
+        ],
+        "got": [
+          "return_policy@v1#s3",
+          "return_policy@v2#s6",
+          "return_policy@v2#s8",
+          "refund_policy@v1#s4",
+          "return_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "Q57",
+        "question": "ana mesh 3aref a5tar anhy ma2as",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q03"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q57",
+        "question": "ana mesh 3aref a5tar anhy ma2as",
+        "style": "arabizi",
+        "expected": [
+          "faq@v1#q03"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "Q58",
+        "question": "I paid part of the order with a voucher, will I get that amount back in cash?",
+        "style": "en",
+        "expected": [
+          "refund_policy@v1#s4"
+        ],
+        "got": [
+          "shipping_policy@v1#s4",
+          "shipping_policy@v1#s6",
+          "faq@v1#q07",
+          "shipping_policy@v1#s9",
+          "shipping_policy@v1#s5"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "Q58",
+        "question": "I paid part of the order with a voucher, will I get that amount back in cash?",
+        "style": "en",
+        "expected": [
+          "refund_policy@v1#s4"
+        ],
+        "got": [
+          "shipping_policy@v1#s4",
+          "shipping_policy@v1#s6",
+          "faq@v1#q07",
+          "shipping_policy@v1#s9",
+          "shipping_policy@v1#s5"
+        ],
+        "failure_type": "no_answer_returned"
+      }
+    ],
+    "noon_eg": [
+      {
+        "id": "NQ006",
+        "question": "Can I return a perfume after I've tried it?",
+        "style": "en",
+        "expected": [
+          "noon_return_policy@v1#s5"
+        ],
+        "got": [
+          "noon_return_policy@v1#s17",
+          "noon_return_policy@v1#s3",
+          "noon_return_policy@v1#s30",
+          "noon_return_policy@v1#s24",
+          "noon_return_policy@v1#s22"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ006",
+        "question": "Can I return a perfume after I've tried it?",
+        "style": "en",
+        "expected": [
+          "noon_return_policy@v1#s5"
+        ],
+        "got": [
+          "noon_return_policy@v1#s17",
+          "noon_return_policy@v1#s3",
+          "noon_return_policy@v1#s30",
+          "noon_return_policy@v1#s24",
+          "noon_return_policy@v1#s22"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "NQ010",
+        "question": "My son played with the toy once, can it still be returned?",
+        "style": "en",
+        "expected": [
+          "noon_return_policy@v1#s9"
+        ],
+        "got": [
+          "noon_return_policy@v1#s29",
+          "noon_return_policy@v1#s22",
+          "noon_return_policy@v1#s3",
+          "noon_return_policy@v1#s24",
+          "noon_return_policy@v1#s4"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ012",
+        "question": "Can I return groceries?",
+        "style": "en",
+        "expected": [
+          "noon_return_policy@v1#s11",
+          "noon_return_policy@v1#s19"
+        ],
+        "got": [
+          "noon_return_policy@v1#s21",
+          "noon_return_policy@v1#s20",
+          "noon_return_policy@v1#s0",
+          "noon_return_policy@v1#s2",
+          "noon_return_policy@v1#s17"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ012",
+        "question": "Can I return groceries?",
+        "style": "en",
+        "expected": [
+          "noon_return_policy@v1#s11",
+          "noon_return_policy@v1#s19"
+        ],
+        "got": [
+          "noon_return_policy@v1#s21",
+          "noon_return_policy@v1#s20",
+          "noon_return_policy@v1#s0",
+          "noon_return_policy@v1#s2",
+          "noon_return_policy@v1#s17"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "NQ034",
+        "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ034",
+        "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ036",
+        "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ036",
+        "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ038",
+        "question": "ينفع أرجع هدوم غسلتها؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ038",
+        "question": "ينفع أرجع هدوم غسلتها؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ040",
+        "question": "أزياء التنكر بتترجع ولا لأ؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s9"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ040",
+        "question": "أزياء التنكر بتترجع ولا لأ؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s9"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ042",
+        "question": "المنتجات الغذائية بترجع؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s11",
+          "noon_return_policy@v1#s19"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ042",
+        "question": "المنتجات الغذائية بترجع؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s11",
+          "noon_return_policy@v1#s19"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ044",
+        "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s15"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ044",
+        "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s15"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ046",
+        "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s18",
+          "noon_return_policy@v1#s23"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ046",
+        "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s18",
+          "noon_return_policy@v1#s23"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ048",
+        "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s20"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ048",
+        "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s20"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ050",
+        "question": "الفلوس بترجع فين لو دفعت بالفيزا؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s24",
+          "noon_return_policy@v1#s25"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ050",
+        "question": "الفلوس بترجع فين لو دفعت بالفيزا؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s24",
+          "noon_return_policy@v1#s25"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ052",
+        "question": "استرجاع فلوس تابي بياخد قد إيه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s27"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ052",
+        "question": "استرجاع فلوس تابي بياخد قد إيه؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s27"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ054",
+        "question": "ليه الاسترداد جالي على دفعات؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s29"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ054",
+        "question": "ليه الاسترداد جالي على دفعات؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s29"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ056",
+        "question": "إزاي أتواصل مع خدمة عملاء نون؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s31"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ056",
+        "question": "إزاي أتواصل مع خدمة عملاء نون؟",
+        "style": "ar",
+        "expected": [
+          "noon_return_policy@v1#s31"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ062",
+        "question": "momken arga3 el sharabat?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ062",
+        "question": "momken arga3 el sharabat?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s6"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ064",
+        "question": "el bedsheets etfata7et, momken a3mel return?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s7"
+        ],
+        "got": [
+          "noon_return_policy@v1#s21",
+          "noon_return_policy@v1#s20",
+          "noon_return_policy@v1#s0",
+          "noon_return_policy@v1#s2",
+          "noon_return_policy@v1#s17"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ068",
+        "question": "el ketab mafto7 bas msh mesta3mal, arga3o?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s14"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ068",
+        "question": "el ketab mafto7 bas msh mesta3mal, arga3o?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s14"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ072",
+        "question": "el 7aga men Minutes fiha garantee, a3mel eh?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s20"
+        ],
+        "got": [
+          "noon_return_policy@v1#s1",
+          "noon_return_policy@v1#s19",
+          "noon_return_policy@v1#s21",
+          "noon_return_policy@v1#s23",
+          "noon_return_policy@v1#s22"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ074",
+        "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s23",
+          "noon_return_policy@v1#s18"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ074",
+        "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s23",
+          "noon_return_policy@v1#s18"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "NQ078",
+        "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s28"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "NQ078",
+        "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?",
+        "style": "arabizi",
+        "expected": [
+          "noon_return_policy@v1#s28"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      }
+    ],
+    "telco_001": [
+      {
+        "id": "FAQ-004-arabizi",
+        "question": "el 5at by2fel law mastakhdemtosh?",
+        "style": "arabizi",
+        "expected": [
+          "prepaid_recharge_policy@v3#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-004-arabizi",
+        "question": "el 5at by2fel law mastakhdemtosh?",
+        "style": "arabizi",
+        "expected": [
+          "prepaid_recharge_policy@v3#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-008-arabizi",
+        "question": "a7awel rased le ra2am tany ezay?",
+        "style": "arabizi",
+        "expected": [
+          "prepaid_recharge_policy@v3#s6"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-008-arabizi",
+        "question": "a7awel rased le ra2am tany ezay?",
+        "style": "arabizi",
+        "expected": [
+          "prepaid_recharge_policy@v3#s6"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-010-en",
+        "question": "I recharged but the balance didn't arrive.",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "privacy_policy@v2#s3",
+          "contract_policy@v1#s4",
+          "postpaid_billing_policy@v2#s2",
+          "prepaid_recharge_policy@v3#s3",
+          "prepaid_recharge_policy@v3#s0"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-010-ar",
+        "question": "شحنت والرصيد منزلش.",
+        "style": "ar",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "bundles_policy@v4#s3",
+          "prepaid_recharge_policy@v3#s0",
+          "prepaid_recharge_policy@v3#s6",
+          "prepaid_recharge_policy@v3#s5",
+          "prepaid_recharge_policy@v3#s3"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-010-arabizi",
+        "question": "shahant w el rased manzelsh.",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-010-arabizi",
+        "question": "shahant w el rased manzelsh.",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-012-en",
+        "question": "When do I have to pay my bill?",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s2"
+        ],
+        "got": [
+          "bundles_policy@v4#s5",
+          "porting_policy@v2#s3",
+          "porting_policy@v2#s2",
+          "bundles_policy@v4#s4",
+          "home_internet_policy@v3#s2"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-012-arabizi",
+        "question": "lazem adfa3 el fatora emta?",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-012-arabizi",
+        "question": "lazem adfa3 el fatora emta?",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-014-ar",
+        "question": "الفاتورة جاية عالية عن العادي.",
+        "style": "ar",
+        "expected": [
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "got": [
+          "bundles_policy@v4#s3",
+          "bundles_policy@v4#s5",
+          "postpaid_billing_policy@v2#s1",
+          "postpaid_billing_policy@v2#s2",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-014-arabizi",
+        "question": "el fatora gaya 3alya 3an el 3ady.",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-014-arabizi",
+        "question": "el fatora gaya 3alya 3an el 3ady.",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-016-en",
+        "question": "I paid my bill but it still shows unpaid.",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "postpaid_billing_policy@v2#s2",
+          "porting_policy@v2#s2",
+          "roaming_policy@v2#s3",
+          "postpaid_billing_policy@v2#s3",
+          "privacy_policy@v2#s3"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-016-en",
+        "question": "I paid my bill but it still shows unpaid.",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "postpaid_billing_policy@v2#s2",
+          "porting_policy@v2#s2",
+          "roaming_policy@v2#s3",
+          "postpaid_billing_policy@v2#s3",
+          "privacy_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-016-ar",
+        "question": "دفعت الفاتورة ولسه ظاهرة مش مدفوعة.",
+        "style": "ar",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "prepaid_recharge_policy@v3#s0",
+          "postpaid_billing_policy@v2#s1",
+          "refund_policy@v3#s5",
+          "postpaid_billing_policy@v2#s2",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-016-ar",
+        "question": "دفعت الفاتورة ولسه ظاهرة مش مدفوعة.",
+        "style": "ar",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [
+          "prepaid_recharge_policy@v3#s0",
+          "postpaid_billing_policy@v2#s1",
+          "refund_policy@v3#s5",
+          "postpaid_billing_policy@v2#s2",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-016-arabizi",
+        "question": "dafa3t el fatora w lessa zahra msh madfo3a.",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-016-arabizi",
+        "question": "dafa3t el fatora w lessa zahra msh madfo3a.",
+        "style": "arabizi",
+        "expected": [
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-018-arabizi",
+        "question": "momken tsheelo mablagh men el fatora?",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-018-arabizi",
+        "question": "momken tsheelo mablagh men el fatora?",
+        "style": "en",
+        "expected": [
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-020-en",
+        "question": "How do I stop my bundle from renewing?",
+        "style": "en",
+        "expected": [
+          "bundles_policy@v4#s2"
+        ],
+        "got": [
+          "home_internet_policy@v3#s2",
+          "privacy_policy@v2#s4",
+          "refund_policy@v3#s1",
+          "bundles_policy@v4#s4",
+          "postpaid_billing_policy@v2#s2"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-020-en",
+        "question": "How do I stop my bundle from renewing?",
+        "style": "en",
+        "expected": [
+          "bundles_policy@v4#s2"
+        ],
+        "got": [
+          "home_internet_policy@v3#s2",
+          "privacy_policy@v2#s4",
+          "refund_policy@v3#s1",
+          "bundles_policy@v4#s4",
+          "postpaid_billing_policy@v2#s2"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-020-arabizi",
+        "question": "aw2af tagdeed el ba2a ezay?",
+        "style": "arabizi",
+        "expected": [
+          "bundles_policy@v4#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-020-arabizi",
+        "question": "aw2af tagdeed el ba2a ezay?",
+        "style": "arabizi",
+        "expected": [
+          "bundles_policy@v4#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-024-arabizi",
+        "question": "el ba2a 5elset abl me3ad el tagdeed, a3mel eh?",
+        "style": "arabizi",
+        "expected": [
+          "bundles_policy@v4#s5"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-024-arabizi",
+        "question": "el ba2a 5elset abl me3ad el tagdeed, a3mel eh?",
+        "style": "arabizi",
+        "expected": [
+          "bundles_policy@v4#s5"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-026-arabizi",
+        "question": "eshtarakt fe ba2a bel 8alat, momken felousy terga3?",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s1"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-026-arabizi",
+        "question": "eshtarakt fe ba2a bel 8alat, momken felousy terga3?",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s1"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-028-arabizi",
+        "question": "byet5asam meny 3ala khedma 3omry ma eshtarakt feeha.",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-028-arabizi",
+        "question": "byet5asam meny 3ala khedma 3omry ma eshtarakt feeha.",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-030-ar",
+        "question": "الفلوس بترجع على الفيزا في قد ايه؟",
+        "style": "ar",
+        "expected": [
+          "refund_policy@v3#s5"
+        ],
+        "got": [
+          "roaming_policy@v2#s3",
+          "home_internet_policy@v3#s3",
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-030-ar",
+        "question": "الفلوس بترجع على الفيزا في قد ايه؟",
+        "style": "ar",
+        "expected": [
+          "refund_policy@v3#s5"
+        ],
+        "got": [
+          "roaming_policy@v2#s3",
+          "home_internet_policy@v3#s3",
+          "postpaid_billing_policy@v2#s5"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-030-arabizi",
+        "question": "el felous btrga3 3al visa fe ad eh?",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s5"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-030-arabizi",
+        "question": "el felous btrga3 3al visa fe ad eh?",
+        "style": "arabizi",
+        "expected": [
+          "refund_policy@v3#s5"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-032-en",
+        "question": "I lost my SIM. Can you send me a new one?",
+        "style": "en",
+        "expected": [
+          "sim_policy@v2#s2"
+        ],
+        "got": [
+          "sim_policy@v2#s1",
+          "sim_policy@v2#s3",
+          "sim_policy@v2#s5",
+          "porting_policy@v2#s3",
+          "prepaid_recharge_policy@v3#s6"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-032-arabizi",
+        "question": "el shee7a da3et, momken teb3atoly wa7da gdeda?",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-032-arabizi",
+        "question": "el shee7a da3et, momken teb3atoly wa7da gdeda?",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-034-arabizi",
+        "question": "el mobile etsara2.",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s3"
+        ],
+        "got": [
+          "porting_policy@v2#s1",
+          "porting_policy@v2#s2",
+          "prepaid_recharge_policy@v3#s1",
+          "complaints_policy@v2#s1",
+          "privacy_policy@v2#s2"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-034-arabizi",
+        "question": "el mobile etsara2.",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s3"
+        ],
+        "got": [
+          "porting_policy@v2#s1",
+          "porting_policy@v2#s2",
+          "prepaid_recharge_policy@v3#s1",
+          "complaints_policy@v2#s1",
+          "privacy_policy@v2#s2"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-038-en",
+        "question": "Can I move my line to my brother's name?",
+        "style": "en",
+        "expected": [
+          "sim_policy@v2#s5"
+        ],
+        "got": [
+          "porting_policy@v2#s1",
+          "porting_policy@v2#s2",
+          "contract_policy@v1#s4",
+          "sim_policy@v2#s3",
+          "prepaid_recharge_policy@v3#s4"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-038-en",
+        "question": "Can I move my line to my brother's name?",
+        "style": "en",
+        "expected": [
+          "sim_policy@v2#s5"
+        ],
+        "got": [
+          "porting_policy@v2#s1",
+          "porting_policy@v2#s2",
+          "contract_policy@v1#s4",
+          "sim_policy@v2#s3",
+          "prepaid_recharge_policy@v3#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-038-arabizi",
+        "question": "yenfa3 an2el el 5at b esm a5oya?",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-038-arabizi",
+        "question": "yenfa3 an2el el 5at b esm a5oya?",
+        "style": "arabizi",
+        "expected": [
+          "sim_policy@v2#s5"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-040-ar",
+        "question": "انقل رقمي لمصر كونكت ازاي؟",
+        "style": "ar",
+        "expected": [
+          "porting_policy@v2#s1"
+        ],
+        "got": [
+          "porting_policy@v2#s2",
+          "complaints_policy@v2#s0",
+          "roaming_policy@v2#s0",
+          "refund_policy@v3#s0",
+          "contract_policy@v1#s0"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-040-arabizi",
+        "question": "a2el ra2my le masr connect ezay?",
+        "style": "arabizi",
+        "expected": [
+          "porting_policy@v2#s1"
+        ],
+        "got": [
+          "prepaid_recharge_policy@v3#s1",
+          "complaints_policy@v2#s0",
+          "roaming_policy@v2#s0",
+          "refund_policy@v3#s0",
+          "contract_policy@v1#s0"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-040-arabizi",
+        "question": "a2el ra2my le masr connect ezay?",
+        "style": "arabizi",
+        "expected": [
+          "porting_policy@v2#s1"
+        ],
+        "got": [
+          "prepaid_recharge_policy@v3#s1",
+          "complaints_policy@v2#s0",
+          "roaming_policy@v2#s0",
+          "refund_policy@v3#s0",
+          "contract_policy@v1#s0"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-042-arabizi",
+        "question": "yenfa3 an2el el net el manzely le shereka tanya?",
+        "style": "arabizi",
+        "expected": [
+          "porting_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-042-arabizi",
+        "question": "yenfa3 an2el el net el manzely le shereka tanya?",
+        "style": "arabizi",
+        "expected": [
+          "porting_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-044-ar",
+        "question": "التجوال وقف وانا مسافر.",
+        "style": "ar",
+        "expected": [
+          "roaming_policy@v2#s3"
+        ],
+        "got": [
+          "roaming_policy@v2#s1",
+          "roaming_policy@v2#s2",
+          "roaming_policy@v2#s3",
+          "roaming_policy@v2#s0"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-044-arabizi",
+        "question": "el roaming wa2af w ana msafer.",
+        "style": "arabizi",
+        "expected": [
+          "roaming_policy@v2#s3"
+        ],
+        "got": [
+          "roaming_policy@v2#s1",
+          "roaming_policy@v2#s2",
+          "roaming_policy@v2#s3",
+          "roaming_policy@v2#s0"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-046-en",
+        "question": "When will the technician come to install my internet?",
+        "style": "en",
+        "expected": [
+          "home_internet_policy@v3#s1"
+        ],
+        "got": [
+          "home_internet_policy@v3#s1",
+          "bundles_policy@v4#s5",
+          "home_internet_policy@v3#s3",
+          "bundles_policy@v4#s4",
+          "home_internet_policy@v3#s2"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-046-ar",
+        "question": "الفني هييجي يركب النت امتى؟",
+        "style": "ar",
+        "expected": [
+          "home_internet_policy@v3#s1"
+        ],
+        "got": [
+          "home_internet_policy@v3#s1",
+          "home_internet_policy@v3#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-046-arabizi",
+        "question": "el fanny hayeegy yrakeb el net emta?",
+        "style": "en",
+        "expected": [
+          "home_internet_policy@v3#s1"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-046-arabizi",
+        "question": "el fanny hayeegy yrakeb el net emta?",
+        "style": "en",
+        "expected": [
+          "home_internet_policy@v3#s1"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-048-en",
+        "question": "My internet speed is much lower than my plan.",
+        "style": "en",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [
+          "home_internet_policy@v3#s2",
+          "home_internet_policy@v3#s3",
+          "bundles_policy@v4#s3",
+          "postpaid_billing_policy@v2#s2",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-048-ar",
+        "question": "سرعة النت أقل بكتير من الباقة.",
+        "style": "ar",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [
+          "home_internet_policy@v3#s3",
+          "home_internet_policy@v3#s2",
+          "refund_policy@v3#s1",
+          "bundles_policy@v4#s4",
+          "bundles_policy@v4#s5"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-048-arabizi",
+        "question": "sor3et el net a2al b keteer men el ba2a.",
+        "style": "arabizi",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-048-arabizi",
+        "question": "sor3et el net a2al b keteer men el ba2a.",
+        "style": "arabizi",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-050-en",
+        "question": "Will I pay for the technician visit?",
+        "style": "en",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [
+          "home_internet_policy@v3#s3",
+          "home_internet_policy@v3#s1",
+          "bundles_policy@v4#s5",
+          "porting_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-050-ar",
+        "question": "هدفع فلوس زيارة الفني؟",
+        "style": "ar",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [
+          "home_internet_policy@v3#s3",
+          "home_internet_policy@v3#s1"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-050-arabizi",
+        "question": "hadfa3 felous zeyaret el fanny?",
+        "style": "arabizi",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-050-arabizi",
+        "question": "hadfa3 felous zeyaret el fanny?",
+        "style": "arabizi",
+        "expected": [
+          "home_internet_policy@v3#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-052-en",
+        "question": "How do I cancel my contract early?",
+        "style": "en",
+        "expected": [
+          "contract_policy@v1#s2"
+        ],
+        "got": [
+          "contract_policy@v1#s2",
+          "home_internet_policy@v3#s2",
+          "contract_policy@v1#s4",
+          "contract_policy@v1#s1",
+          "home_internet_policy@v3#s1"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-052-ar",
+        "question": "الغي العقد قبل ميعاده ازاي؟",
+        "style": "ar",
+        "expected": [
+          "contract_policy@v1#s2"
+        ],
+        "got": [
+          "home_internet_policy@v3#s1",
+          "contract_policy@v1#s1",
+          "privacy_policy@v2#s1",
+          "roaming_policy@v2#s1",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-052-ar",
+        "question": "الغي العقد قبل ميعاده ازاي؟",
+        "style": "ar",
+        "expected": [
+          "contract_policy@v1#s2"
+        ],
+        "got": [
+          "home_internet_policy@v3#s1",
+          "contract_policy@v1#s1",
+          "privacy_policy@v2#s1",
+          "roaming_policy@v2#s1",
+          "bundles_policy@v4#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-052-arabizi",
+        "question": "alghy el 3a2d abl me3ado ezay?",
+        "style": "arabizi",
+        "expected": [
+          "contract_policy@v1#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-052-arabizi",
+        "question": "alghy el 3a2d abl me3ado ezay?",
+        "style": "arabizi",
+        "expected": [
+          "contract_policy@v1#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-054-en",
+        "question": "Can you cancel my line here?",
+        "style": "en",
+        "expected": [
+          "contract_policy@v1#s4"
+        ],
+        "got": [
+          "contract_policy@v1#s4",
+          "prepaid_recharge_policy@v3#s4",
+          "sim_policy@v2#s3",
+          "sim_policy@v2#s1",
+          "postpaid_billing_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-054-ar",
+        "question": "ممكن تلغولي الخط من هنا؟",
+        "style": "ar",
+        "expected": [
+          "contract_policy@v1#s4"
+        ],
+        "got": [
+          "contract_policy@v1#s4",
+          "prepaid_recharge_policy@v3#s4",
+          "privacy_policy@v2#s3",
+          "sim_policy@v2#s5",
+          "sim_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-054-arabizi",
+        "question": "momken tlghooly el 5at men hena?",
+        "style": "arabizi",
+        "expected": [
+          "contract_policy@v1#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-054-arabizi",
+        "question": "momken tlghooly el 5at men hena?",
+        "style": "arabizi",
+        "expected": [
+          "contract_policy@v1#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-056-en",
+        "question": "My complaint was not solved. What now?",
+        "style": "en",
+        "expected": [
+          "complaints_policy@v2#s3"
+        ],
+        "got": [
+          "complaints_policy@v2#s3",
+          "complaints_policy@v2#s1",
+          "postpaid_billing_policy@v2#s2",
+          "refund_policy@v3#s1",
+          "postpaid_billing_policy@v2#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-056-ar",
+        "question": "الشكوى متحلتش، اعمل ايه؟",
+        "style": "ar",
+        "expected": [
+          "complaints_policy@v2#s3"
+        ],
+        "got": [
+          "complaints_policy@v2#s1",
+          "complaints_policy@v2#s2",
+          "complaints_policy@v2#s3",
+          "refund_policy@v3#s2"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-056-arabizi",
+        "question": "el shakwa matetlatsh, a3mel eh?",
+        "style": "arabizi",
+        "expected": [
+          "complaints_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-056-arabizi",
+        "question": "el shakwa matetlatsh, a3mel eh?",
+        "style": "arabizi",
+        "expected": [
+          "complaints_policy@v2#s3"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-058-en",
+        "question": "Can you send me my call log?",
+        "style": "en",
+        "expected": [
+          "privacy_policy@v2#s2"
+        ],
+        "got": [
+          "privacy_policy@v2#s2",
+          "prepaid_recharge_policy@v3#s6"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-058-ar",
+        "question": "ممكن تبعتلي سجل المكالمات؟",
+        "style": "ar",
+        "expected": [
+          "privacy_policy@v2#s2"
+        ],
+        "got": [
+          "privacy_policy@v2#s2",
+          "roaming_policy@v2#s3",
+          "privacy_policy@v2#s4",
+          "prepaid_recharge_policy@v3#s4"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-058-arabizi",
+        "question": "momken teb3atly sigel el mokalmat?",
+        "style": "arabizi",
+        "expected": [
+          "privacy_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-058-arabizi",
+        "question": "momken teb3atly sigel el mokalmat?",
+        "style": "arabizi",
+        "expected": [
+          "privacy_policy@v2#s2"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      },
+      {
+        "id": "FAQ-060-en",
+        "question": "How do I stop promotional messages?",
+        "style": "en",
+        "expected": [
+          "privacy_policy@v2#s4"
+        ],
+        "got": [
+          "privacy_policy@v2#s4",
+          "postpaid_billing_policy@v2#s2",
+          "postpaid_billing_policy@v2#s3"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-060-ar",
+        "question": "اوقف الرسايل الدعائية ازاي؟",
+        "style": "ar",
+        "expected": [
+          "privacy_policy@v2#s4"
+        ],
+        "got": [
+          "privacy_policy@v2#s4",
+          "privacy_policy@v2#s2",
+          "bundles_policy@v4#s2"
+        ],
+        "failure_type": "no_answer_returned"
+      },
+      {
+        "id": "FAQ-060-arabizi",
+        "question": "aw2af el rasayel el de3aeya ezay?",
+        "style": "arabizi",
+        "expected": [
+          "privacy_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "missed_retrieval"
+      },
+      {
+        "id": "FAQ-060-arabizi",
+        "question": "aw2af el rasayel el de3aeya ezay?",
+        "style": "arabizi",
+        "expected": [
+          "privacy_policy@v2#s4"
+        ],
+        "got": [],
+        "failure_type": "hallucination_gap"
+      }
+    ]
+  },
+  "api_usage": {
+    "groq_calls": 289,
+    "input_tokens": 64303,
+    "output_tokens": 23270,
+    "estimated_cost_usd": 0.0563
+  },
+  "limitations": [
+    "Embeddings unavailable - hybrid retrieval comparison blocked",
+    "BM25-only retrieval may miss semantic matches",
+    "Cannot compare dense vs. sparse retrieval strategies"
+  ]
+}

@@ -1,0 +1,1978 @@
+{
+  "dev": {
+    "recall_at_5": 0.5471698113207547,
+    "no_answer_precision": 0.38461538461538464,
+    "no_answer_recall": 0.4166666666666667,
+    "n_questions": 65
+  },
+  "test": {
+    "recall_at_5": 0.48,
+    "no_answer_precision": 0.38461538461538464,
+    "no_answer_recall": 0.4166666666666667,
+    "n_questions": 64,
+    "mean_faithfulness": 0.7727272727272727,
+    "mean_correctness": 0.6818181818181818,
+    "n_judged": 22
+  },
+  "failure_cases": [
+    {
+      "id": "NQ006",
+      "question": "Can I return a perfume after I've tried it?",
+      "style": "en",
+      "expected": [
+        "noon_return_policy@v1#s5"
+      ],
+      "got": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ006",
+      "question": "Can I return a perfume after I've tried it?",
+      "style": "en",
+      "expected": [
+        "noon_return_policy@v1#s5"
+      ],
+      "got": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "NQ010",
+      "question": "My son played with the toy once, can it still be returned?",
+      "style": "en",
+      "expected": [
+        "noon_return_policy@v1#s9"
+      ],
+      "got": [
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s4"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ012",
+      "question": "Can I return groceries?",
+      "style": "en",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "got": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ012",
+      "question": "Can I return groceries?",
+      "style": "en",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "got": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "NQ034",
+      "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s2"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ034",
+      "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s2"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ036",
+      "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s4"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ036",
+      "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s4"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ038",
+      "question": "ينفع أرجع هدوم غسلتها؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ038",
+      "question": "ينفع أرجع هدوم غسلتها؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ040",
+      "question": "أزياء التنكر بتترجع ولا لأ؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s9"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ040",
+      "question": "أزياء التنكر بتترجع ولا لأ؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s9"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ042",
+      "question": "المنتجات الغذائية بترجع؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ042",
+      "question": "المنتجات الغذائية بترجع؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ044",
+      "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s15"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ044",
+      "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s15"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ046",
+      "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s23"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ046",
+      "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s23"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ048",
+      "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ048",
+      "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ050",
+      "question": "الفلوس بترجع فين لو دفعت بالفيزا؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s25"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ050",
+      "question": "الفلوس بترجع فين لو دفعت بالفيزا؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s25"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ052",
+      "question": "استرجاع فلوس تابي بياخد قد إيه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s27"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ052",
+      "question": "استرجاع فلوس تابي بياخد قد إيه؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s27"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ054",
+      "question": "ليه الاسترداد جالي على دفعات؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ054",
+      "question": "ليه الاسترداد جالي على دفعات؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ056",
+      "question": "إزاي أتواصل مع خدمة عملاء نون؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s31"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ056",
+      "question": "إزاي أتواصل مع خدمة عملاء نون؟",
+      "style": "ar",
+      "expected": [
+        "noon_return_policy@v1#s31"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ062",
+      "question": "momken arga3 el sharabat?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ062",
+      "question": "momken arga3 el sharabat?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ064",
+      "question": "el bedsheets etfata7et, momken a3mel return?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s7"
+      ],
+      "got": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ068",
+      "question": "el ketab mafto7 bas msh mesta3mal, arga3o?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s14"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ068",
+      "question": "el ketab mafto7 bas msh mesta3mal, arga3o?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s14"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ072",
+      "question": "el 7aga men Minutes fiha garantee, a3mel eh?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "got": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s22"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ074",
+      "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ074",
+      "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "NQ078",
+      "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s28"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "NQ078",
+      "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?",
+      "style": "arabizi",
+      "expected": [
+        "noon_return_policy@v1#s28"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    }
+  ],
+  "dev_results": [
+    {
+      "id": "NQ001",
+      "question": "Does the return policy apply to products sold by third-party sellers on noon?",
+      "expected": [
+        "noon_return_policy@v1#s1"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s10",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s2"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ003",
+      "question": "How long does it take for a returned item to reach noon?",
+      "expected": [
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s22"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s4"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ005",
+      "question": "Who decides whether a defective electronic product is repaired or refunded?",
+      "expected": [
+        "noon_return_policy@v1#s4"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s7",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ007",
+      "question": "Can swimwear be returned?",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s6",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s8",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s9"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ009",
+      "question": "What are the conditions for returning sports and outdoor equipment?",
+      "expected": [
+        "noon_return_policy@v1#s8"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s8",
+        "noon_return_policy@v1#s5",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ011",
+      "question": "Can I return a baby bath product that is still sealed?",
+      "expected": [
+        "noon_return_policy@v1#s10"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s10",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ013",
+      "question": "Can I return car accessories that I opened?",
+      "expected": [
+        "noon_return_policy@v1#s12"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s10",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s5",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ015",
+      "question": "Can I return a book with a torn page?",
+      "expected": [
+        "noon_return_policy@v1#s14"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s14",
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ017",
+      "question": "What is the return rule for office supplies?",
+      "expected": [
+        "noon_return_policy@v1#s16"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s16",
+        "noon_return_policy@v1#s15",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ019",
+      "question": "If I miss both redelivery attempts, will noon contact me?",
+      "expected": [
+        "noon_return_policy@v1#s18"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s31"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ021",
+      "question": "My Minutes product has a warranty tag, can noon take it back?",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s12"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ023",
+      "question": "How many delivery attempts does Minutes make for a declined return?",
+      "expected": [
+        "noon_return_policy@v1#s23"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ025",
+      "question": "Why did my card refund show up as noon credits first?",
+      "expected": [
+        "noon_return_policy@v1#s25"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ027",
+      "question": "How long do Tamara refunds take?",
+      "expected": [
+        "noon_return_policy@v1#s27"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s26"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ029",
+      "question": "Is the shipping fee refunded when I return an item?",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s15"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ031",
+      "question": "Where can I check my refund status?",
+      "expected": [
+        "noon_return_policy@v1#s30"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ033",
+      "question": "سياسة الإرجاع دي بتنطبق على المنتجات اللي بيبيعها بائعين تانيين على نون؟",
+      "expected": [
+        "noon_return_policy@v1#s1"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ035",
+      "question": "بعد ما المرتجع يوصل المخزن بياخد كام يوم عشان يتراجع؟",
+      "expected": [
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s22"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ037",
+      "question": "المكملات الغذائية والفيتامينات ينفع ترجع؟",
+      "expected": [
+        "noon_return_policy@v1#s5"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ039",
+      "question": "ركبت الدولاب ومش عاجبني، ينفع أرجعه؟",
+      "expected": [
+        "noon_return_policy@v1#s7"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ041",
+      "question": "الحفاضات ينفع ترجع؟",
+      "expected": [
+        "noon_return_policy@v1#s10"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ043",
+      "question": "عدة الشغل لازم ترجع بالكتالوج والإكسسوارات؟",
+      "expected": [
+        "noon_return_policy@v1#s13",
+        "noon_return_policy@v1#s16"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ045",
+      "question": "لو المرتجع اترفض، نون هيحاول يوصلهولي كام مرة؟",
+      "expected": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ047",
+      "question": "هل منتجات الأكل من نون مينتس بترجع؟",
+      "expected": [
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s11"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ049",
+      "question": "مدة الإرجاع في نون مينتس كام يوم؟",
+      "expected": [
+        "noon_return_policy@v1#s21"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ051",
+      "question": "استرداد الكارت بيوصل بعد قد إيه؟",
+      "expected": [
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s22"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ053",
+      "question": "لو دافع بالتقسيط على البطاقة، البنك ممكن ياخد رسوم على الاسترجاع؟",
+      "expected": [
+        "noon_return_policy@v1#s28"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ055",
+      "question": "الاسترداد مكتوب عليه Approved ومعداش الفلوس، أكلم مين؟",
+      "expected": [
+        "noon_return_policy@v1#s30"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s30"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ057",
+      "question": "kam yom 3andi a3mel return lel 7aga men noon?",
+      "expected": [
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s21"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ059",
+      "question": "el refund byakhod ad eh lel credit card ba3d ma el return yewsal?",
+      "expected": [
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s25"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s25"
+      ],
+      "hit": 3
+    },
+    {
+      "id": "NQ061",
+      "question": "el makeup lw fata7to momken arga3o?",
+      "expected": [
+        "noon_return_policy@v1#s5"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ063",
+      "question": "el gazma lazem terga3 fel 3elba bta3etha?",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ065",
+      "question": "el treadmill mesta3mal mara wa7da, arga3o?",
+      "expected": [
+        "noon_return_policy@v1#s8"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ067",
+      "question": "kit el 3arabeya fih 3eib sena3a, arga3o ezay?",
+      "expected": [
+        "noon_return_policy@v1#s12"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ069",
+      "question": "el adawat el maktabeya lw mesta3mala momken teraga3?",
+      "expected": [
+        "noon_return_policy@v1#s16",
+        "noon_return_policy@v1#s13"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ071",
+      "question": "noon Minutes betraga3 el electronics?",
+      "expected": [
+        "noon_return_policy@v1#s19"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ073",
+      "question": "Minutes return window kam yom?",
+      "expected": [
+        "noon_return_policy@v1#s21"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s1"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ075",
+      "question": "law dafa3t cash 3and el estelam, el refund byroo7 feen?",
+      "expected": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s26"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s24"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ077",
+      "question": "el refund bta3 tabby byakhod kam yom?",
+      "expected": [
+        "noon_return_policy@v1#s27"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ079",
+      "question": "masaref el COD btetrad?",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s29"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ081",
+      "question": "rakam customer service bta3 noon kam?",
+      "expected": [
+        "noon_return_policy@v1#s31"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s18"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ082",
+      "question": "Can I cancel my order before it ships?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ084",
+      "question": "How much does delivery cost to Alexandria?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s24"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ086",
+      "question": "Can I change my delivery address after placing the order?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s18"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ088",
+      "question": "What is the interest rate on valU installments?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ090",
+      "question": "إزاي أستخدم كوبون خصم؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ092",
+      "question": "ممكن ألغي الأوردر بعد ما اتشحن؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ094",
+      "question": "إزاي أغير رقم موبايلي في الحساب؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ096",
+      "question": "هل فيه خصم للطلبات الكبيرة للشركات؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ098",
+      "question": "3ayez a8ayar el size bta3 el t-shirt, momken exchange?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ100",
+      "question": "fe promo code lel order el gdid?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ102",
+      "question": "noon One subscription b kam?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ104",
+      "question": "momken a3mel order men gher account?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s30"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ106",
+      "question": "How long does delivery take to Cairo?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ108",
+      "question": "Is cash on delivery available for orders above 10,000 EGP?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s23"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ110",
+      "question": "How do I add a new delivery address to my account?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s26"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ112",
+      "question": "Does noon sell refurbished phones?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ114",
+      "question": "الطلب بيوصل في نفس اليوم في القاهرة؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ116",
+      "question": "إزاي أضيف عنوان جديد للتوصيل؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ118",
+      "question": "إزاي أكتب تقييم للمنتج؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ120",
+      "question": "فيه شحن مجاني فوق مبلغ معين؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ122",
+      "question": "el order momken yewsal el nharda?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ124",
+      "question": "momken a8ayar el phone number bta3 el account?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s30"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ126",
+      "question": "ezay a3mel review lel product?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ128",
+      "question": "momken atlob men noon w ana barra masr?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    }
+  ],
+  "test_results": [
+    {
+      "id": "NQ002",
+      "question": "What does the 'Enjoy hassle-free returns' tag mean?",
+      "expected": [
+        "noon_return_policy@v1#s2"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ004",
+      "question": "Can I return a laptop if I already opened the box?",
+      "expected": [
+        "noon_return_policy@v1#s4"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s5",
+        "noon_return_policy@v1#s18"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ006",
+      "question": "Can I return a perfume after I've tried it?",
+      "expected": [
+        "noon_return_policy@v1#s5"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ008",
+      "question": "Is furniture returnable on noon?",
+      "expected": [
+        "noon_return_policy@v1#s7"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s7",
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s6",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ010",
+      "question": "My son played with the toy once, can it still be returned?",
+      "expected": [
+        "noon_return_policy@v1#s9"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s4"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ012",
+      "question": "Can I return groceries?",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ014",
+      "question": "Are used power tools accepted for return?",
+      "expected": [
+        "noon_return_policy@v1#s13"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s13",
+        "noon_return_policy@v1#s7",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s5"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ016",
+      "question": "Can I return an unused pet carrier in its original box?",
+      "expected": [
+        "noon_return_policy@v1#s15"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s15",
+        "noon_return_policy@v1#s6",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s8"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ018",
+      "question": "What happens if noon rejects my returned item?",
+      "expected": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s8"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ020",
+      "question": "Which categories can be returned in noon Minutes?",
+      "expected": [
+        "noon_return_policy@v1#s19"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s1"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ022",
+      "question": "How long do I have to return a defective item bought from Minutes?",
+      "expected": [
+        "noon_return_policy@v1#s21"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s7",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ024",
+      "question": "Where does my refund go if I paid with a gift card?",
+      "expected": [
+        "noon_return_policy@v1#s24"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s25"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ026",
+      "question": "Can I move my cash refund from noon credits to my bank account?",
+      "expected": [
+        "noon_return_policy@v1#s26"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ028",
+      "question": "Can an order paid with credit card instalments be refunded to my wallet?",
+      "expected": [
+        "noon_return_policy@v1#s28"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3",
+        "noon_return_policy@v1#s25"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ030",
+      "question": "Can I change my refund method after the refund is issued?",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ032",
+      "question": "What is noon Egypt's support email?",
+      "expected": [
+        "noon_return_policy@v1#s31"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s27"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ034",
+      "question": "المنتج اللي مفيهوش علامة الإرجاع ينفع أرجعه؟",
+      "expected": [
+        "noon_return_policy@v1#s2"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ036",
+      "question": "الموبايل فيه عيب صناعة، لازم أرجعه بالعلبة والكتالوج؟",
+      "expected": [
+        "noon_return_policy@v1#s4"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ038",
+      "question": "ينفع أرجع هدوم غسلتها؟",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ040",
+      "question": "أزياء التنكر بتترجع ولا لأ؟",
+      "expected": [
+        "noon_return_policy@v1#s9"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ042",
+      "question": "المنتجات الغذائية بترجع؟",
+      "expected": [
+        "noon_return_policy@v1#s11",
+        "noon_return_policy@v1#s19"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ044",
+      "question": "أكل الكلاب والحيوانات الأليفة بيترجع؟",
+      "expected": [
+        "noon_return_policy@v1#s15"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ046",
+      "question": "لو مردتش على نون بعد ما المرتجع اترفض، المنتج هيحصله إيه؟",
+      "expected": [
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s23"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ048",
+      "question": "منتج مينتس لازم يكون مقفول عشان أرجعه؟",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ050",
+      "question": "الفلوس بترجع فين لو دفعت بالفيزا؟",
+      "expected": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s25"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ052",
+      "question": "استرجاع فلوس تابي بياخد قد إيه؟",
+      "expected": [
+        "noon_return_policy@v1#s27"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ054",
+      "question": "ليه الاسترداد جالي على دفعات؟",
+      "expected": [
+        "noon_return_policy@v1#s29"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ056",
+      "question": "إزاي أتواصل مع خدمة عملاء نون؟",
+      "expected": [
+        "noon_return_policy@v1#s31"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ058",
+      "question": "el return yeb2a accepted emta? lama a2adem el talab?",
+      "expected": [
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s20"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s7",
+        "noon_return_policy@v1#s5",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ060",
+      "question": "el mobile fatahto w el seal et4al, momken arga3o?",
+      "expected": [
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s20"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s20"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ062",
+      "question": "momken arga3 el sharabat?",
+      "expected": [
+        "noon_return_policy@v1#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ064",
+      "question": "el bedsheets etfata7et, momken a3mel return?",
+      "expected": [
+        "noon_return_policy@v1#s7"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ066",
+      "question": "3arabeyet el baby lessa fel carton, arga3ha?",
+      "expected": [
+        "noon_return_policy@v1#s10"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s10",
+        "noon_return_policy@v1#s19"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ068",
+      "question": "el ketab mafto7 bas msh mesta3mal, arga3o?",
+      "expected": [
+        "noon_return_policy@v1#s14"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ070",
+      "question": "el return et-rafad, el 7aga hate2'ad fel hub ad eh?",
+      "expected": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s0"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ072",
+      "question": "el 7aga men Minutes fiha garantee, a3mel eh?",
+      "expected": [
+        "noon_return_policy@v1#s20"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s19",
+        "noon_return_policy@v1#s21",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "NQ074",
+      "question": "law ma talabtesh el 7aga ba3d el reject, hatetrami?",
+      "expected": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ076",
+      "question": "el refund el cash ynfa3 yetla3 3ala el bank?",
+      "expected": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s24"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s29"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "NQ078",
+      "question": "dafa3t bel ta2seet 3ala el visa, el flous hatrga3 ezay?",
+      "expected": [
+        "noon_return_policy@v1#s28"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "NQ080",
+      "question": "el refund status mesh approved wala declined, a3mel eh?",
+      "expected": [
+        "noon_return_policy@v1#s30"
+      ],
+      "retrieved": [
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "NQ083",
+      "question": "Will noon refund the difference if the price drops after I buy?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ085",
+      "question": "How do I become a seller on noon?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ087",
+      "question": "Does noon offer gift wrapping?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ089",
+      "question": "How do I reset my noon account password?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s26",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s27",
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s24"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ091",
+      "question": "التوصيل للصعيد بياخد كام يوم؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ093",
+      "question": "نون بيشحن لبره مصر؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ095",
+      "question": "فيه فروع لنون أقدر أستلم منها؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ097",
+      "question": "إمتى عروض الجمعة البيضاء؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ099",
+      "question": "el order bta3y et2akhar, feen el tracking?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s30",
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ101",
+      "question": "momken adfa3 b instapay?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ103",
+      "question": "el delivery fel weekend shaghal?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17",
+        "noon_return_policy@v1#s29",
+        "noon_return_policy@v1#s24"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ105",
+      "question": "el mandoob mabyrodsh 3al telephone, a3mel eh?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ107",
+      "question": "Can I place an order by phone?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s28"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ109",
+      "question": "Do you deliver on Fridays?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ111",
+      "question": "Can I track my order on the noon app?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ113",
+      "question": "How do I leave a review for a product?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s12",
+        "noon_return_policy@v1#s4",
+        "noon_return_policy@v1#s20",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ115",
+      "question": "ممكن أدفع بفودافون كاش؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ117",
+      "question": "نون بيبيع موبايلات مستعملة؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ119",
+      "question": "رقم الطلب بتاعي فين في الإيميل؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ121",
+      "question": "إزاي أفعل حساب نون الجديد؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "NQ123",
+      "question": "fe free delivery law el order kbeer?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s2",
+        "noon_return_policy@v1#s23",
+        "noon_return_policy@v1#s18",
+        "noon_return_policy@v1#s17"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ125",
+      "question": "noon by3mel offers fel Ramadan?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ127",
+      "question": "el mandoob momken yedfa3ny bel card 3and el bab?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s28",
+        "noon_return_policy@v1#s25",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "NQ129",
+      "question": "el app bta3 noon fih dark mode?",
+      "expected": [],
+      "retrieved": [
+        "noon_return_policy@v1#s1",
+        "noon_return_policy@v1#s31",
+        "noon_return_policy@v1#s24",
+        "noon_return_policy@v1#s22",
+        "noon_return_policy@v1#s3"
+      ],
+      "hit": null
+    }
+  ]
+}

@@ -1,0 +1,1217 @@
+{
+  "dev": {
+    "recall_at_5": 0.41379310344827586,
+    "no_answer_precision": 0.18181818181818182,
+    "no_answer_recall": 0.3333333333333333,
+    "n_questions": 33
+  },
+  "test": {
+    "recall_at_5": 0.4838709677419355,
+    "no_answer_precision": 0.5333333333333333,
+    "no_answer_recall": 0.8888888888888888,
+    "n_questions": 37,
+    "mean_faithfulness": 0.6923076923076923,
+    "mean_correctness": 0.6153846153846154,
+    "n_judged": 13
+  },
+  "failure_cases": [
+    {
+      "id": "Q01",
+      "question": "How many days do I have to return an item?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "got": [
+        "shipping_policy@v1#s2",
+        "shipping_policy@v1#s6"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q01",
+      "question": "How many days do I have to return an item?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "got": [
+        "shipping_policy@v1#s2",
+        "shipping_policy@v1#s6"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q03",
+      "question": "momken araga3 el 7aga ba3d kam yom?",
+      "style": "arabizi",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q03",
+      "question": "momken araga3 el 7aga ba3d kam yom?",
+      "style": "arabizi",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q04",
+      "question": "Can I return underwear or swimwear?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q04",
+      "question": "Can I return underwear or swimwear?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q05",
+      "question": "هل ينفع أرجع برفان فتحته؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q05",
+      "question": "هل ينفع أرجع برفان فتحته؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q10",
+      "question": "Can I exchange for a different size?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s5"
+      ],
+      "got": [
+        "faq@v1#q03"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q10",
+      "question": "Can I exchange for a different size?",
+      "style": "en",
+      "expected": [
+        "return_policy@v2#s5"
+      ],
+      "got": [
+        "faq@v1#q03"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q11",
+      "question": "momken abadel el ma2as b size akbar?",
+      "style": "arabizi",
+      "expected": [
+        "return_policy@v2#s5",
+        "faq@v1#q03"
+      ],
+      "got": [
+        "faq@v1#q03"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q15",
+      "question": "لو القطعة اتغسلت ينفع ترجع؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "got": [
+        "refund_policy@v1#s5"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q15",
+      "question": "لو القطعة اتغسلت ينفع ترجع؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "got": [
+        "refund_policy@v1#s5"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q26",
+      "question": "الأوردر متأخر، ليا تعويض؟",
+      "style": "ar",
+      "expected": [
+        "shipping_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q26",
+      "question": "الأوردر متأخر، ليا تعويض؟",
+      "style": "ar",
+      "expected": [
+        "shipping_policy@v1#s6"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q29",
+      "question": "إزاي ألغي الطلب؟",
+      "style": "ar",
+      "expected": [
+        "shipping_policy@v1#s8"
+      ],
+      "got": [
+        "return_policy@v2#s7",
+        "faq@v1#q10",
+        "faq@v1#q07",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q29",
+      "question": "إزاي ألغي الطلب؟",
+      "style": "ar",
+      "expected": [
+        "shipping_policy@v1#s8"
+      ],
+      "got": [
+        "return_policy@v2#s7",
+        "faq@v1#q10",
+        "faq@v1#q07",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q33",
+      "question": "How long does a refund to my card take?",
+      "style": "en",
+      "expected": [
+        "refund_policy@v1#s2"
+      ],
+      "got": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q05"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q33",
+      "question": "How long does a refund to my card take?",
+      "style": "en",
+      "expected": [
+        "refund_policy@v1#s2"
+      ],
+      "got": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q05"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q40",
+      "question": "mawa3eed el shoghl emta?",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q01"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q40",
+      "question": "mawa3eed el shoghl emta?",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q01"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q52",
+      "question": "momken a8ayar el size ba3d ma akked el order?",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q10"
+      ],
+      "got": [
+        "faq@v1#q03",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q52",
+      "question": "momken a8ayar el size ba3d ma akked el order?",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q10"
+      ],
+      "got": [
+        "faq@v1#q03",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q55",
+      "question": "el 7aga mesh 3aleha el tiket, momken trga3?",
+      "style": "arabizi",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q55",
+      "question": "el 7aga mesh 3aleha el tiket, momken trga3?",
+      "style": "arabizi",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q56",
+      "question": "لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s1"
+      ],
+      "got": [
+        "return_policy@v1#s3",
+        "return_policy@v2#s6",
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q56",
+      "question": "لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟",
+      "style": "ar",
+      "expected": [
+        "return_policy@v2#s1"
+      ],
+      "got": [
+        "return_policy@v1#s3",
+        "return_policy@v2#s6",
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "failure_type": "no_answer_returned"
+    },
+    {
+      "id": "Q57",
+      "question": "ana mesh 3aref a5tar anhy ma2as",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q03"
+      ],
+      "got": [],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q57",
+      "question": "ana mesh 3aref a5tar anhy ma2as",
+      "style": "arabizi",
+      "expected": [
+        "faq@v1#q03"
+      ],
+      "got": [],
+      "failure_type": "hallucination_gap"
+    },
+    {
+      "id": "Q58",
+      "question": "I paid part of the order with a voucher, will I get that amount back in cash?",
+      "style": "en",
+      "expected": [
+        "refund_policy@v1#s4"
+      ],
+      "got": [
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s6",
+        "faq@v1#q07",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5"
+      ],
+      "failure_type": "missed_retrieval"
+    },
+    {
+      "id": "Q58",
+      "question": "I paid part of the order with a voucher, will I get that amount back in cash?",
+      "style": "en",
+      "expected": [
+        "refund_policy@v1#s4"
+      ],
+      "got": [
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s6",
+        "faq@v1#q07",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5"
+      ],
+      "failure_type": "no_answer_returned"
+    }
+  ],
+  "dev_results": [
+    {
+      "id": "Q02",
+      "question": "ممكن أرجع المنتج بعد كام يوم؟",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "retrieved": [
+        "refund_policy@v1#s1",
+        "return_policy@v2#s7",
+        "return_policy@v2#s2",
+        "refund_policy@v1#s2",
+        "return_policy@v1#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q06",
+      "question": "ينفع araga3 3atr fata7to?",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q07",
+      "question": "The shoes arrived damaged, what should I do?",
+      "expected": [
+        "return_policy@v2#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q08",
+      "question": "المنتج وصلني مكسور أعمل ايه؟",
+      "expected": [
+        "return_policy@v2#s6"
+      ],
+      "retrieved": [
+        "return_policy@v1#s3",
+        "return_policy@v2#s6",
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q09",
+      "question": "el montag wesel maksoor a3mel eh",
+      "expected": [
+        "return_policy@v2#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q13",
+      "question": "How do I submit a return request?",
+      "expected": [
+        "return_policy@v2#s7"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q14",
+      "question": "el mandoob hayeegy emta yestelem el morta ga3?",
+      "expected": [
+        "return_policy@v2#s7"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q16",
+      "question": "How long does delivery take to Alexandria?",
+      "expected": [
+        "shipping_policy@v1#s2"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s2",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s7",
+        "shipping_policy@v1#s0"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q17",
+      "question": "التوصيل للصعيد بياخد قد ايه؟",
+      "expected": [
+        "shipping_policy@v1#s2"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q18",
+      "question": "el tawseel l Aswan byakhod kam yom?",
+      "expected": [
+        "shipping_policy@v1#s2"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q20",
+      "question": "el sha7n bala4 emta?",
+      "expected": [
+        "shipping_policy@v1#s3"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q21",
+      "question": "مصاريف الشحن للمحافظات كام؟",
+      "expected": [
+        "shipping_policy@v1#s3"
+      ],
+      "retrieved": [
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "refund_policy@v1#s5",
+        "return_policy@v2#s7",
+        "return_policy@v2#s6"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q27",
+      "question": "el order et2akhar 5 ayam, fe kobon?",
+      "expected": [
+        "shipping_policy@v1#s6"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s2"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q28",
+      "question": "What happens if I'm not home when the courier comes?",
+      "expected": [
+        "shipping_policy@v1#s7"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s6",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s7",
+        "shipping_policy@v1#s1",
+        "faq@v1#q03"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q34",
+      "question": "الفلوس بترجع على المحفظة في قد ايه؟",
+      "expected": [
+        "refund_policy@v1#s2"
+      ],
+      "retrieved": [
+        "refund_policy@v1#s2"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q35",
+      "question": "el flos btrga3 emta law dafa3t cash?",
+      "expected": [
+        "refund_policy@v1#s2"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q02"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q36",
+      "question": "لو المبلغ كبير أكتر من 3000 جنيه بيترد عادي؟",
+      "expected": [
+        "refund_policy@v1#s3"
+      ],
+      "retrieved": [
+        "refund_policy@v1#s3",
+        "refund_policy@v1#s1",
+        "refund_policy@v1#s2",
+        "faq@v1#q02",
+        "return_policy@v2#s8"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q37",
+      "question": "Are shipping fees refunded?",
+      "expected": [
+        "refund_policy@v1#s4",
+        "return_policy@v2#s8"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s3",
+        "shipping_policy@v1#s7",
+        "shipping_policy@v1#s0",
+        "shipping_policy@v1#s8",
+        "faq@v1#q10"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q38",
+      "question": "There is a payment on my card I did not make",
+      "expected": [
+        "refund_policy@v1#s6"
+      ],
+      "retrieved": [
+        "faq@v1#q04",
+        "shipping_policy@v1#s4",
+        "faq@v1#q02",
+        "shipping_policy@v1#s1",
+        "faq@v1#q05"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q41",
+      "question": "Do you have a store I can visit?",
+      "expected": [
+        "faq@v1#q04"
+      ],
+      "retrieved": [
+        "faq@v1#q04"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q43",
+      "question": "Do you ship to Saudi Arabia?",
+      "expected": [
+        "faq@v1#q08",
+        "shipping_policy@v1#s1"
+      ],
+      "retrieved": [
+        "faq@v1#q08",
+        "shipping_policy@v1#s1"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "Q44",
+      "question": "نقاط الولاء بتنتهي امتى؟",
+      "expected": [
+        "faq@v1#q09"
+      ],
+      "retrieved": [
+        "faq@v1#q09"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q45",
+      "question": "fe ta8lef hedeya?",
+      "expected": [
+        "faq@v1#q05"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q48",
+      "question": "el gaw 3amel eh el naharda?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q49",
+      "question": "What is the price of bitcoin today?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q53",
+      "question": "My order is still on the way, can I get my money back now?",
+      "expected": [
+        "refund_policy@v1#s5"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6",
+        "faq@v1#q10"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q54",
+      "question": "الفلوس بترجع امتى بعد ما المرتجع يوصل المخزن؟",
+      "expected": [
+        "refund_policy@v1#s1"
+      ],
+      "retrieved": [
+        "refund_policy@v1#s1",
+        "refund_policy@v1#s5",
+        "faq@v1#q10",
+        "faq@v1#q06",
+        "return_policy@v2#s4"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q59",
+      "question": "المندوب جه مرتين ومكنتش موجود، الطلب هيروح فين؟",
+      "expected": [
+        "shipping_policy@v1#s7"
+      ],
+      "retrieved": [
+        "return_policy@v2#s7",
+        "faq@v1#q10",
+        "faq@v1#q07",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q60",
+      "question": "el nekat bta3et el loyalty bt5las emta?",
+      "expected": [
+        "faq@v1#q09"
+      ],
+      "retrieved": [
+        "faq@v1#q09"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q66",
+      "question": "عندكم خدمة تفصيل هدوم حسب الطلب؟",
+      "expected": [],
+      "retrieved": [
+        "return_policy@v2#s2",
+        "faq@v1#q01",
+        "refund_policy@v1#s2",
+        "return_policy@v2#s7",
+        "refund_policy@v1#s3"
+      ],
+      "hit": null
+    },
+    {
+      "id": "Q67",
+      "question": "هل المنتجات بتاعتكم صناعة مصرية؟",
+      "expected": [],
+      "retrieved": [
+        "return_policy@v2#s6",
+        "return_policy@v2#s4",
+        "return_policy@v2#s3",
+        "faq@v1#q10",
+        "faq@v1#q07"
+      ],
+      "hit": null
+    },
+    {
+      "id": "Q69",
+      "question": "How do I delete my account?",
+      "expected": [],
+      "retrieved": [
+        "faq@v1#q06"
+      ],
+      "hit": null
+    },
+    {
+      "id": "Q70",
+      "question": "el website by2a3 kteer, fe app 3al mobile?",
+      "expected": [],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q02"
+      ],
+      "hit": null
+    }
+  ],
+  "test_results": [
+    {
+      "id": "Q01",
+      "question": "How many days do I have to return an item?",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s2",
+        "shipping_policy@v1#s6"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q03",
+      "question": "momken araga3 el 7aga ba3d kam yom?",
+      "expected": [
+        "return_policy@v2#s2"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q04",
+      "question": "Can I return underwear or swimwear?",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q05",
+      "question": "هل ينفع أرجع برفان فتحته؟",
+      "expected": [
+        "return_policy@v2#s4"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q10",
+      "question": "Can I exchange for a different size?",
+      "expected": [
+        "return_policy@v2#s5"
+      ],
+      "retrieved": [
+        "faq@v1#q03"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q11",
+      "question": "momken abadel el ma2as b size akbar?",
+      "expected": [
+        "return_policy@v2#s5",
+        "faq@v1#q03"
+      ],
+      "retrieved": [
+        "faq@v1#q03"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q12",
+      "question": "بيتخصم كام مصاريف شحن لما أرجع المنتج؟",
+      "expected": [
+        "return_policy@v2#s8"
+      ],
+      "retrieved": [
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s6",
+        "return_policy@v2#s7",
+        "return_policy@v1#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q15",
+      "question": "لو القطعة اتغسلت ينفع ترجع؟",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "retrieved": [
+        "refund_policy@v1#s5"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q19",
+      "question": "How much is shipping to Cairo?",
+      "expected": [
+        "shipping_policy@v1#s3"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s3",
+        "shipping_policy@v1#s1",
+        "shipping_policy@v1#s0",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s2"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q22",
+      "question": "Is cash on delivery available for a 6000 pound order?",
+      "expected": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q02"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s7",
+        "faq@v1#q02",
+        "faq@v1#q01"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "Q23",
+      "question": "momken adfa3 cash 3and el estelam?",
+      "expected": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q02"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q02"
+      ],
+      "hit": 2
+    },
+    {
+      "id": "Q24",
+      "question": "Can I change the delivery address after the order shipped?",
+      "expected": [
+        "shipping_policy@v1#s5"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s7",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s6"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q25",
+      "question": "3ayez a8ayar el 3onwan bta3 el order",
+      "expected": [
+        "shipping_policy@v1#s5"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6",
+        "faq@v1#q10"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q26",
+      "question": "الأوردر متأخر، ليا تعويض؟",
+      "expected": [
+        "shipping_policy@v1#s6"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q29",
+      "question": "إزاي ألغي الطلب؟",
+      "expected": [
+        "shipping_policy@v1#s8"
+      ],
+      "retrieved": [
+        "return_policy@v2#s7",
+        "faq@v1#q10",
+        "faq@v1#q07",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q30",
+      "question": "3ayez al8y el order",
+      "expected": [
+        "shipping_policy@v1#s8"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6",
+        "faq@v1#q10"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q31",
+      "question": "How can I track my order?",
+      "expected": [
+        "shipping_policy@v1#s9"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6",
+        "faq@v1#q10"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q32",
+      "question": "fein el order bta3y? 3ayez atba3o",
+      "expected": [
+        "shipping_policy@v1#s9"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6",
+        "faq@v1#q10"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q33",
+      "question": "How long does a refund to my card take?",
+      "expected": [
+        "refund_policy@v1#s2"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "faq@v1#q05"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q39",
+      "question": "خدمة العملاء بتشتغل لحد الساعة كام؟",
+      "expected": [
+        "faq@v1#q01"
+      ],
+      "retrieved": [
+        "faq@v1#q01",
+        "refund_policy@v1#s3",
+        "return_policy@v2#s2",
+        "faq@v1#q06",
+        "return_policy@v2#s6"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q40",
+      "question": "mawa3eed el shoghl emta?",
+      "expected": [
+        "faq@v1#q01"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q42",
+      "question": "ينفع استخدم كوبونين في نفس الطلب؟",
+      "expected": [
+        "faq@v1#q07"
+      ],
+      "retrieved": [
+        "faq@v1#q07",
+        "return_policy@v2#s7",
+        "faq@v1#q10",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q46",
+      "question": "Do you sell laptops or phones?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q47",
+      "question": "هل عندكم وظائف خالية؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q50",
+      "question": "مين كسب ماتش الأهلي امبارح؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q51",
+      "question": "إزاي أغير رقم الموبايل اللي على حسابي؟",
+      "expected": [
+        "faq@v1#q06"
+      ],
+      "retrieved": [
+        "faq@v1#q06",
+        "return_policy@v2#s3",
+        "return_policy@v2#s7"
+      ],
+      "hit": 1
+    },
+    {
+      "id": "Q52",
+      "question": "momken a8ayar el size ba3d ma akked el order?",
+      "expected": [
+        "faq@v1#q10"
+      ],
+      "retrieved": [
+        "faq@v1#q03",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5",
+        "shipping_policy@v1#s8",
+        "shipping_policy@v1#s6"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q55",
+      "question": "el 7aga mesh 3aleha el tiket, momken trga3?",
+      "expected": [
+        "return_policy@v2#s3"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q56",
+      "question": "لو اشتريت من موزع تاني ينفع أرجع المنتج عندكم؟",
+      "expected": [
+        "return_policy@v2#s1"
+      ],
+      "retrieved": [
+        "return_policy@v1#s3",
+        "return_policy@v2#s6",
+        "return_policy@v2#s8",
+        "refund_policy@v1#s4",
+        "return_policy@v2#s3"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q57",
+      "question": "ana mesh 3aref a5tar anhy ma2as",
+      "expected": [
+        "faq@v1#q03"
+      ],
+      "retrieved": [],
+      "hit": 0
+    },
+    {
+      "id": "Q58",
+      "question": "I paid part of the order with a voucher, will I get that amount back in cash?",
+      "expected": [
+        "refund_policy@v1#s4"
+      ],
+      "retrieved": [
+        "shipping_policy@v1#s4",
+        "shipping_policy@v1#s6",
+        "faq@v1#q07",
+        "shipping_policy@v1#s9",
+        "shipping_policy@v1#s5"
+      ],
+      "hit": 0
+    },
+    {
+      "id": "Q61",
+      "question": "Can you recommend a good recipe for koshari?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q62",
+      "question": "ممكن تترجملي الجملة دي للفرنساوي؟",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q63",
+      "question": "meen a7san la3eeb kora fel 3alam?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q64",
+      "question": "3ayez a7gez tazkaret 2atr l Aswan",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    },
+    {
+      "id": "Q65",
+      "question": "Do you offer installment plans with valU?",
+      "expected": [],
+      "retrieved": [
+        "faq@v1#q05"
+      ],
+      "hit": null
+    },
+    {
+      "id": "Q68",
+      "question": "fe discount lel tolab?",
+      "expected": [],
+      "retrieved": [],
+      "hit": null
+    }
+  ]
+}

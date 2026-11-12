@@ -1,0 +1,29 @@
+{
+  "run_at": "2026-10-30T16:25:58.913095+00:00",
+  "groq_model": "openai/gpt-oss-120b",
+  "embeddings": "unavailable",
+  "retrieval_mode": "bm25_only",
+  "tenants": {
+    "shop_001": {
+      "error": "'BM25' object has no attribute 'score'"
+    },
+    "noon_eg": {
+      "error": "'BM25' object has no attribute 'score'"
+    },
+    "telco_001": {
+      "error": "'BM25' object has no attribute 'score'"
+    }
+  },
+  "failure_analysis": {},
+  "api_usage": {
+    "groq_calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "estimated_cost_usd": 0.0
+  },
+  "limitations": [
+    "Embeddings unavailable - hybrid retrieval comparison blocked",
+    "BM25-only retrieval may miss semantic matches",
+    "Cannot compare dense vs. sparse retrieval strategies"
+  ]
+}

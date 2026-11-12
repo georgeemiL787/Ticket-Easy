@@ -1,0 +1,8 @@
+{
+  "pdf_generated": true,
+  "tool_used": "reportlab",
+  "pdf_path": "e:\\Ticket-easy\\Ticket-Easy\\reports\\rag_evaluation_and_chunking_comparison.pdf",
+  "source_markdown": "e:\\Ticket-easy\\Ticket-Easy\\reports\\rag_evaluation_and_chunking_comparison.md",
+  "generation_date": "2026-10-30",
+  "notes": "PDF generated using reportlab after pandoc was not found and weasyprint failed due to missing GTK dependencies on Windows. Reportlab successfully converted the markdown report to PDF format."
+}

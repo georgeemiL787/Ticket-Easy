@@ -1,0 +1,12 @@
+{
+  "status": "BLOCKED",
+  "environment": {
+    "groq_available": true,
+    "groq_model": "openai/gpt-oss-120b",
+    "ollama_available": false,
+    "ollama_model": "bge-m3:latest",
+    "errors": [
+      "Ollama unavailable: Ollama embedding call failed ([WinError 10061] No connection could be made because the target machine actively refused it). Is Ollama running and is 'bge-m3' pulled? Try: ollama pull bge-m3"
+    ]
+  }
+}

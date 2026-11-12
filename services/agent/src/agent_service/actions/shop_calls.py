@@ -16,6 +16,7 @@ from agent_service.contracts.tools import ToolCallRequest, ToolResult, ToolSpec
 from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.domain.trace import ToolCallRecord, TraceStep
 from agent_service.handoff.redaction import redact
+from agent_service.observability import get_langfuse, mask_pii_dict
 from agent_service.turn.context import Step, TurnContext
 
 ATTEMPTS = 2  # the call, and one retry in the same turn
@@ -68,37 +69,75 @@ def _record(
 
 async def call_read(ctx: TurnContext, tool: str, arguments: dict[str, Any]) -> ReadOutcome:
     """Call a read tool; retry once if the failure is retryable. Never raises for a shop failure."""
-    capabilities = ctx.deps.capabilities
-    if capabilities is None:
-        return ReadOutcome(None, "NO_SHOP")
-    outcome = ReadOutcome(None, "NO_ATTEMPT")
-    for _ in range(ATTEMPTS):
-        request = ToolCallRequest(
-            request_id=uuid.uuid4().hex,
-            tool=tool,
-            arguments=arguments,
-            idempotency_key=uuid.uuid4().hex,
-            acting_customer_id=acting_customer(ctx),
-        )
-        started = time.perf_counter()
-        retryable = False
+    langfuse = get_langfuse()
+    span = None
+    if langfuse is not None:
         try:
-            result = await capabilities.call_tool(ctx.tenant.tenant_id, request)
-        except UpstreamError as exc:
-            outcome, retryable = ReadOutcome(None, exc.code), exc.retryable
-            _record(ctx, request, started, None, exc.code)
-        else:
-            code = result.error_code if result.status == "error" else None
-            _record(ctx, request, started, result, code)
-            outcome, retryable = ReadOutcome(result, code), result.retryable
-            if result.status == "success":
-                return outcome
-        ctx.errors.append(f"{tool} failed: {outcome.error_code}")
-        if outcome.error_code == "TOOL_NOT_PUBLISHED" and ctx.deps.registry is not None:
-            ctx.deps.registry.drop(ctx.tenant.tenant_id)  # the remembered tool list is out of date
-        if not retryable:
-            break
-    return outcome
+            span = langfuse.span(
+                name="shop_tool_call",
+                metadata={"tool": tool, "operation": "read"},
+                input=mask_pii_dict(arguments),
+            )
+        except Exception:
+            pass
+    
+    try:
+        capabilities = ctx.deps.capabilities
+        if capabilities is None:
+            result = ReadOutcome(None, "NO_SHOP")
+            if span is not None:
+                try:
+                    span.end(output={"success": False, "error": "NO_SHOP"})
+                except Exception:
+                    pass
+            return result
+        
+        outcome = ReadOutcome(None, "NO_ATTEMPT")
+        for attempt in range(ATTEMPTS):
+            request = ToolCallRequest(
+                request_id=uuid.uuid4().hex,
+                tool=tool,
+                arguments=arguments,
+                idempotency_key=uuid.uuid4().hex,
+                acting_customer_id=acting_customer(ctx),
+            )
+            started = time.perf_counter()
+            retryable = False
+            try:
+                result = await capabilities.call_tool(ctx.tenant.tenant_id, request)
+            except UpstreamError as exc:
+                outcome, retryable = ReadOutcome(None, exc.code), exc.retryable
+                _record(ctx, request, started, None, exc.code)
+            else:
+                code = result.error_code if result.status == "error" else None
+                _record(ctx, request, started, result, code)
+                outcome, retryable = ReadOutcome(result, code), result.retryable
+                if result.status == "success":
+                    if span is not None:
+                        try:
+                            span.end(output={"success": True, "attempts": attempt + 1})
+                        except Exception:
+                            pass
+                    return outcome
+            ctx.errors.append(f"{tool} failed: {outcome.error_code}")
+            if outcome.error_code == "TOOL_NOT_PUBLISHED" and ctx.deps.registry is not None:
+                ctx.deps.registry.drop(ctx.tenant.tenant_id)  # the remembered tool list is out of date
+            if not retryable:
+                break
+        
+        if span is not None:
+            try:
+                span.end(output={"success": False, "error": outcome.error_code, "attempts": ATTEMPTS})
+            except Exception:
+                pass
+        return outcome
+    except Exception as exc:
+        if span is not None:
+            try:
+                span.end(level="ERROR", status_message=str(exc))
+            except Exception:
+                pass
+        raise
 
 
 def output_complete(tool: ToolSpec | None, data: dict[str, Any]) -> bool:

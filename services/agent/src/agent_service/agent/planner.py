@@ -16,7 +16,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from agent_service.domain.agent import AgentPlan, AgentStepRecord, AgentView, MoveProposal, PlanStep, parse_move
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii
 from agent_service.ports import LLMClient
 from agent_service.understanding.ai_reader import PromptTemplate
 
@@ -110,12 +110,49 @@ class LLMPlanner:
     async def next_move(self, view: AgentView) -> MoveProposal:
         user = self.user_prompt(view)
         problem = ""
-        for _ in range(2):  # one repair attempt, then the loop falls back
-            ask = user if not problem else f"{user}\n\nYour last answer was not usable ({problem}). Answer again."
-            data = await self._llm.complete_json(system=self._prompt.system, user=ask, schema_hint=SCHEMA_HINT)
+        
+        langfuse = get_langfuse()
+        span = None
+        if langfuse is not None:
             try:
-                return parse_answer(data)
-            except (UnusableAnswer, ValidationError, ValueError) as exc:
-                problem = str(exc).splitlines()[0][:200]
-                log.warning("planner_answer_unusable", problem=problem)
-        raise UnusableAnswer(problem)
+                span = langfuse.span(
+                    name="planner_next_move",
+                    metadata={
+                        "locale": view.locale,
+                        "active_request": view.active_request,
+                        "moves_so_far": len(view.moves),
+                    },
+                    input={"message": mask_pii(view.message), "plan_status": view.plan.model_dump() if view.plan else None},
+                )
+            except Exception:
+                pass
+        
+        try:
+            for _ in range(2):  # one repair attempt, then the loop falls back
+                ask = user if not problem else f"{user}\n\nYour last answer was not usable ({problem}). Answer again."
+                data = await self._llm.complete_json(system=self._prompt.system, user=ask, schema_hint=SCHEMA_HINT)
+                try:
+                    result = parse_answer(data)
+                    if span is not None:
+                        try:
+                            span.end(output={"move_kind": result.move.get("kind") if isinstance(result.move, dict) else type(result.move).__name__})
+                        except Exception:
+                            pass
+                    return result
+                except (UnusableAnswer, ValidationError, ValueError) as exc:
+                    problem = str(exc).splitlines()[0][:200]
+                    log.warning("planner_answer_unusable", problem=problem)
+            
+            if span is not None:
+                try:
+                    span.end(level="ERROR", status_message=f"unusable after repair: {problem}")
+                except Exception:
+                    pass
+            raise UnusableAnswer(problem)
+        except Exception as exc:
+            if span is not None:
+                try:
+                    span.end(level="ERROR", status_message=str(exc))
+                except Exception:
+                    pass
+            raise

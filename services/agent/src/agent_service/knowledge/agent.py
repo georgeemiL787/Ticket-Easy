@@ -24,7 +24,7 @@ from agent_service.domain.session import SessionState
 from agent_service.domain.understanding import Locale
 from agent_service.handoff.redaction import redact
 from agent_service.knowledge.ai_steps import MAX_ANSWER_CHARS, MAX_QUERY_CHARS, _history
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii
 from agent_service.ports import LLMClient
 from agent_service.replies.composer import check_grounded, promises_handover
 from agent_service.replies.rewrite import REGISTER
@@ -114,6 +114,18 @@ class KnowledgeAgent:
         """Search (and once more, differently, if needed), then answer from the passages or say what is missing.
 
         `search` raises whatever the policy search raises when it is down: the caller decides what that means."""
+        langfuse = get_langfuse()
+        span = None
+        if langfuse is not None:
+            try:
+                span = langfuse.span(
+                    name="knowledge_agent_research",
+                    metadata={"locale": locale.value, "min_score": min_score},
+                    input={"message": mask_pii(message), "first_query": first_query},
+                )
+            except Exception:
+                pass
+        
         tried: list[str] = []
         steps: list[str] = []
 
@@ -136,36 +148,77 @@ class KnowledgeAgent:
             if again and again not in tried:
                 steps.append("wrote a different search")
                 passages = await look(again)
+        
         if not passages:
-            return NotFound("the policy search found nothing for: " + "; ".join(tried), tuple(tried))
+            result = NotFound("the policy search found nothing for: " + "; ".join(tried), tuple(tried))
+            if span is not None:
+                try:
+                    span.end(output={"found": False, "queries": tried})
+                except Exception:
+                    pass
+            return result
 
         shown = "\n".join(f"[{p.citation}] {p.text}" for p in passages)
         data = await self._ask("answer", message, session, passages=shown, locale=locale)
         found = Found(passages, queries=tuple(tried), retried=retried, steps=steps)
         if data is None:
-            return Found(passages, queries=found.queries, retried=retried, steps=steps, detail="model failed: quoted")
+            result = Found(passages, queries=found.queries, retried=retried, steps=steps, detail="model failed: quoted")
+            if span is not None:
+                try:
+                    span.end(output={"found": True, "passages": len(passages), "worded": False, "reason": "model_failed"})
+                except Exception:
+                    pass
+            return result
+        
         if data.get("answerable") is False:
             missing = data.get("missing")
-            return NotFound(
+            result = NotFound(
                 str(missing).strip()[:200]
                 if isinstance(missing, str) and missing.strip()
                 else "the passages do not say",
                 tuple(tried),
             )
+            if span is not None:
+                try:
+                    span.end(output={"found": False, "passages": len(passages), "answerable": False})
+                except Exception:
+                    pass
+            return result
+        
         text, raw = data.get("answer"), data.get("citations")
         known = {p.citation for p in passages}
         cited = (
             tuple(dict.fromkeys(c for c in raw if isinstance(c, str) and c in known)) if isinstance(raw, list) else ()
         )
         if not isinstance(text, str) or not text.strip() or not cited:
-            return Found(
+            result = Found(
                 passages, queries=found.queries, retried=retried, steps=steps, detail="unusable answer: quoted"
             )
+            if span is not None:
+                try:
+                    span.end(output={"found": True, "passages": len(passages), "worded": False, "reason": "unusable"})
+                except Exception:
+                    pass
+            return result
+        
         text = text.strip()
         problems = check_grounded(text, [*(p.text for p in passages), message])
         if promises_handover(text):
             problems.append("promises a colleague, but no case is opened by an answer")
         if problems or len(text) > MAX_ANSWER_CHARS:
             detail = "; ".join(problems[:4]) or "the reply is too long"
-            return Found(passages, "", cited, found.queries, f"not used: {detail}", retried, steps)
-        return Found(passages, text, cited, found.queries, "worded by the model", retried, steps)
+            result = Found(passages, "", cited, found.queries, f"not used: {detail}", retried, steps)
+            if span is not None:
+                try:
+                    span.end(output={"found": True, "passages": len(passages), "worded": False, "reason": detail})
+                except Exception:
+                    pass
+            return result
+        
+        result = Found(passages, text, cited, found.queries, "worded by the model", retried, steps)
+        if span is not None:
+            try:
+                span.end(output={"found": True, "passages": len(passages), "worded": True, "citations": len(cited)})
+            except Exception:
+                pass
+        return result

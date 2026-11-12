@@ -25,7 +25,7 @@ from collections import deque
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii_dict
 
 log = get_logger(__name__)
 
@@ -141,10 +141,38 @@ class McpStdioSession:
         """The raw CallToolResult. Raises McpUnavailable (not sent), McpLost (outcome unknown) or McpRemoteError.
         `meta` is the request's `_meta` (a production call carries ticketeasy.context and
         ticketeasy.idempotency_key there, never in the arguments)."""
-        params: dict[str, Any] = {"name": name, "arguments": arguments}
-        if meta:
-            params["_meta"] = meta
-        return await self.request("tools/call", params, timeout_s=timeout_s)
+        langfuse = get_langfuse()
+        span = None
+        if langfuse is not None:
+            try:
+                span = langfuse.span(
+                    name="mcp_tool_call",
+                    metadata={"tool": name, "timeout_s": timeout_s},
+                    input=mask_pii_dict(arguments),
+                )
+            except Exception:
+                pass
+        
+        try:
+            params: dict[str, Any] = {"name": name, "arguments": arguments}
+            if meta:
+                params["_meta"] = meta
+            result = await self.request("tools/call", params, timeout_s=timeout_s)
+            
+            if span is not None:
+                try:
+                    span.end(output=mask_pii_dict(result))
+                except Exception:
+                    pass
+            
+            return result
+        except Exception as exc:
+            if span is not None:
+                try:
+                    span.end(level="ERROR", status_message=str(exc))
+                except Exception:
+                    pass
+            raise
 
     async def request(self, method: str, params: dict[str, Any], *, timeout_s: float) -> dict[str, Any]:
         if self._loop is None or not self.alive:

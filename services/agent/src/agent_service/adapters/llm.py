@@ -15,11 +15,12 @@ import time
 from typing import Any
 
 import httpx
+from langfuse import observe, get_client
 
 from agent_service.adapters.llm_limits import RateLimiter, Reservation
 from agent_service.adapters.usage_log import UsageLog, provider_host
 from agent_service.contracts.errors import InvalidLLMOutput, UpstreamError
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii
 
 SERVICE = "llm"
 log = get_logger(__name__)
@@ -82,6 +83,7 @@ class OpenAICompatibleLLM:
         self._limiter = limiter  # the (server, model) budget shared with every job on this model, or None
         self.model = model
 
+    @observe(as_type="generation")
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
     ) -> dict[str, Any]:
@@ -95,15 +97,49 @@ class OpenAICompatibleLLM:
             ],
         }
         tokens = (len(system) + len(user) + len(hint)) // CHARS_PER_TOKEN + ANSWER_TOKENS
-        response = await self._post(self._body(payload), tokens)
-        if response.status_code == 400 and self._json_mode and "response_format" in response.text:
-            self._json_mode = False  # this server has no JSON mode: ask in words only
+        
+        try:
             response = await self._post(self._body(payload), tokens)
-        if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
-            self._reasoning_effort = None  # this model has no such setting: stop sending it
-            response = await self._post(self._body(payload), tokens)
-        return parse_json_object(self._content(response))
+            if response.status_code == 400 and self._json_mode and "response_format" in response.text:
+                self._json_mode = False  # this server has no JSON mode: ask in words only
+                response = await self._post(self._body(payload), tokens)
+            if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
+                self._reasoning_effort = None  # this model has no such setting: stop sending it
+                response = await self._post(self._body(payload), tokens)
+            result = parse_json_object(self._content(response))
+            
+            # Update observation with token usage if Langfuse is enabled
+            if get_langfuse():
+                try:
+                    client = get_client()
+                    usage_data = response.json().get("usage", {}) if response.status_code == 200 else {}
+                    if usage_data:
+                        client.update_current_generation(
+                            usage={
+                                "input": usage_data.get("prompt_tokens"),
+                                "output": usage_data.get("completion_tokens"),
+                                "total": usage_data.get("total_tokens"),
+                            },
+                            model=self._model,
+                            metadata={"provider": self._host, "temperature": temperature},
+                        )
+                except Exception:
+                    pass  # Silent failure for tracing
+            
+            return result
+        except Exception as exc:
+            if get_langfuse():
+                try:
+                    client = get_client()
+                    client.update_current_generation(
+                        level="ERROR",
+                        status_message=str(exc),
+                    )
+                except Exception:
+                    pass
+            raise
 
+    @observe(as_type="generation")
     async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
         """The answer as plain text, with no JSON format asked for (for a small model that cannot keep one)."""
         payload: dict[str, Any] = {
@@ -115,11 +151,44 @@ class OpenAICompatibleLLM:
         body = dict(payload)
         if self._reasoning_effort:
             body["reasoning_effort"] = self._reasoning_effort
-        response = await self._post(body, tokens)
-        if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
-            self._reasoning_effort = None
-            response = await self._post(payload, tokens)
-        return self._content(response)
+        
+        try:
+            response = await self._post(body, tokens)
+            if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
+                self._reasoning_effort = None
+                response = await self._post(payload, tokens)
+            result = self._content(response)
+            
+            # Update observation with token usage if Langfuse is enabled
+            if get_langfuse():
+                try:
+                    client = get_client()
+                    usage_data = response.json().get("usage", {}) if response.status_code == 200 else {}
+                    if usage_data:
+                        client.update_current_generation(
+                            usage={
+                                "input": usage_data.get("prompt_tokens"),
+                                "output": usage_data.get("completion_tokens"),
+                                "total": usage_data.get("total_tokens"),
+                            },
+                            model=self._model,
+                            metadata={"provider": self._host, "temperature": temperature},
+                        )
+                except Exception:
+                    pass  # Silent failure for tracing
+            
+            return result
+        except Exception as exc:
+            if get_langfuse():
+                try:
+                    client = get_client()
+                    client.update_current_generation(
+                        level="ERROR",
+                        status_message=str(exc),
+                    )
+                except Exception:
+                    pass
+            raise
 
     def _body(self, payload: dict[str, Any]) -> dict[str, Any]:
         body = dict(payload)

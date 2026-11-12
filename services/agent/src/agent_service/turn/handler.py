@@ -47,6 +47,8 @@ from agent_service.turn.context import MAX_QUEUED_RUNS, Deps, Handler, PlannedIn
 from agent_service.turn.pipeline import run_turn
 from agent_service.turn.stages import handoff_handler, smalltalk_handler
 from agent_service.understanding.rules import NLU, RuleBasedNLU
+from agent_service.observability import get_langfuse, mask_pii
+from langfuse import observe, get_client
 
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English ask_rephrase text
 
@@ -147,6 +149,7 @@ class Orchestrator:
             changes["planner"] = planner
         self._deps = replace(self._deps, **changes)
 
+    @observe(name="agent_turn")
     async def handle_turn(
         self, tenant_id: str, conversation_id: str, text: str, *, request_id: str | None = None, channel: str = "web"
     ) -> AgentReply:
@@ -155,10 +158,87 @@ class Orchestrator:
         If another writer saved the session first (a second process on the same database), the turn is redone once on
         the fresh session; a second conflict is raised to the caller. Nothing is stored for a failed attempt."""
         tenant = self._tenants.get(tenant_id)
+        
+        # Set trace attributes if Langfuse is enabled
+        if get_langfuse():
+            try:
+                import hashlib
+                client = get_client()
+                
+                # Anonymize user_id
+                user_id = hashlib.sha256(conversation_id.encode()).hexdigest()[:16]
+                
+                # Update current span/trace with metadata
+                try:
+                    client.update_current_span(
+                        name="agent_turn",
+                        input={"message": mask_pii(text)},
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "channel": channel,
+                            "session_id": conversation_id,
+                            "user_id": user_id,
+                        },
+                        tags=["ticket-easy", tenant_id, channel],
+                        session_id=conversation_id,
+                        user_id=user_id,
+                    )
+                except Exception:
+                    # Try update_current_observation as fallback
+                    client.update_current_observation(
+                        name="agent_turn",
+                        input={"message": mask_pii(text)},
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "channel": channel,
+                            "session_id": conversation_id,
+                            "user_id": user_id,
+                        },
+                    )
+            except Exception:
+                pass  # Silent failure for tracing
+        
         try:
-            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+            result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
         except SessionConflictError:
-            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+            result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+        
+        # Update trace with output if Langfuse is enabled
+        if get_langfuse():
+            try:
+                client = get_client()
+                
+                # Update with output
+                try:
+                    client.update_current_span(
+                        output={"reply": mask_pii(result.text), "decision": result.decision.value if result.decision else None},
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "channel": channel,
+                            "language": result.locale.value if result.locale else None,
+                            "handoff": result.decision.value == "handoff" if result.decision else False,
+                            "escalation_reason": result.escalation.value if result.escalation else None,
+                        },
+                    )
+                except Exception:
+                    # Try update_current_observation as fallback
+                    client.update_current_observation(
+                        output={"reply": mask_pii(result.text), "decision": result.decision.value if result.decision else None},
+                        metadata={
+                            "tenant_id": tenant_id,
+                            "channel": channel,
+                            "language": result.locale.value if result.locale else None,
+                            "handoff": result.decision.value == "handoff" if result.decision else False,
+                            "escalation_reason": result.escalation.value if result.escalation else None,
+                        },
+                    )
+                
+                # Flush after each turn in dev
+                client.flush()
+            except Exception:
+                pass  # Silent failure for tracing
+        
+        return result
 
     async def push_to_customer(
         self, tenant_id: str, conversation_id: str, text: str, *, role: str = "human_agent"

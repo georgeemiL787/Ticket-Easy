@@ -30,7 +30,7 @@ from agent_service.domain.trace import DecisionTrace, PolicyRecord
 from agent_service.domain.understanding import Language
 from agent_service.handoff.redaction import redact
 from agent_service.knowledge.answers import quote_citations
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger
 from agent_service.replies.summarizer import add_ai_summary
 from agent_service.turn.context import TurnContext
 from agent_service.turn.transcript import transcript_from_traces
@@ -363,40 +363,76 @@ async def open_case(
 
     `pending_approval` is the action a human must approve (reason approval_required); it is recorded on the case
     and on the briefing."""
-    session = ctx.session
-    waiting = (
-        PendingApproval(
-            proposal_id=pending_approval.proposal_id,
-            tool=pending_approval.tool,
-            capability=pending_approval.capability,
-            arguments=dict(pending_approval.arguments),
-            reason=detail,
+    langfuse = get_langfuse()
+    span = None
+    if langfuse is not None:
+        try:
+            span = langfuse.span(
+                name="handoff_open_case",
+                metadata={
+                    "reason": reason.value,
+                    "has_approval": pending_approval is not None,
+                },
+                input={"detail": detail, "tried": list(tried)},
+            )
+        except Exception:
+            pass
+    
+    try:
+        session = ctx.session
+        waiting = (
+            PendingApproval(
+                proposal_id=pending_approval.proposal_id,
+                tool=pending_approval.tool,
+                capability=pending_approval.capability,
+                arguments=dict(pending_approval.arguments),
+                reason=detail,
+            )
+            if pending_approval is not None
+            else None
         )
-        if pending_approval is not None
-        else None
-    )
-    package = await build_package(ctx, reason, detail, waiting, tried)
-    if ctx.deps.llm is not None:
-        outcome = await add_ai_summary(ctx.deps.llm, package)
-        package = outcome.package
-        ctx.versions["handoff_summary"] = f"{outcome.status}: {outcome.detail}"
-        ctx.versions["handoff_summary_prompt"] = package.prompt_version or "handoff_summary_v1"
-    case = HandoffCase(
-        case_id=f"case-{uuid.uuid4().hex[:12]}",
-        tenant_id=session.tenant_id,
-        conversation_id=session.conversation_id,
-        package=package,
-        pending_approval=waiting,
-        created_at=ctx.now,
-        updated_at=ctx.now,
-    )
-    await ctx.deps.cases.add(case)
-    session.status = "handed_off"
-    session.handoff_case_id = case.case_id
-    session.last_escalation = reason
-    session.handoff_notice_sent = False
-    log.info(
-        "handoff_created", case_id=case.case_id, reason=reason.value, priority=case.package.priority,
-        summary_source=case.package.summary_source,
-    )  # fmt: skip
-    return case.case_id
+        package = await build_package(ctx, reason, detail, waiting, tried)
+        if ctx.deps.llm is not None:
+            outcome = await add_ai_summary(ctx.deps.llm, package)
+            package = outcome.package
+            ctx.versions["handoff_summary"] = f"{outcome.status}: {outcome.detail}"
+            ctx.versions["handoff_summary_prompt"] = package.prompt_version or "handoff_summary_v1"
+        case = HandoffCase(
+            case_id=f"case-{uuid.uuid4().hex[:12]}",
+            tenant_id=session.tenant_id,
+            conversation_id=session.conversation_id,
+            package=package,
+            pending_approval=waiting,
+            created_at=ctx.now,
+            updated_at=ctx.now,
+        )
+        await ctx.deps.cases.add(case)
+        session.status = "handed_off"
+        session.handoff_case_id = case.case_id
+        session.last_escalation = reason
+        session.handoff_notice_sent = False
+        log.info(
+            "handoff_created", case_id=case.case_id, reason=reason.value, priority=case.package.priority,
+            summary_source=case.package.summary_source,
+        )  # fmt: skip
+        
+        if span is not None:
+            try:
+                span.end(
+                    output={
+                        "case_id": case.case_id,
+                        "priority": case.package.priority,
+                        "summary_source": case.package.summary_source,
+                    }
+                )
+            except Exception:
+                pass
+        
+        return case.case_id
+    except Exception as exc:
+        if span is not None:
+            try:
+                span.end(level="ERROR", status_message=str(exc))
+            except Exception:
+                pass
+        raise

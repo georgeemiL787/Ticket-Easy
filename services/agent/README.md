@@ -19,6 +19,26 @@ make run            # API on http://127.0.0.1:8010
 Other targets: `make fmt` (auto-fix style), `make cov` (coverage), `make scenarios` (conversation scenarios).
 Without `make`, run the commands from the `Makefile` directly.
 
+## Observability
+
+Langfuse tracing is optional. When enabled, every customer turn is traced with nested spans for LLM calls, policy gate decisions, agent planning, and tool executions. PII is masked before transmission.
+
+**Setup:**
+```bash
+# Get keys from https://cloud.langfuse.com (free tier available)
+# Add to .env:
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com
+```
+
+**Test:**
+```bash
+python test_langfuse.py
+```
+
+When keys are not set, the app runs normally without tracing.
+
 ## The support inbox (`/inbox`)
 
 A browser page for support staff: a list of cases (most urgent first, then oldest), filters, and a case page with the

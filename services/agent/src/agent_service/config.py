@@ -63,6 +63,9 @@ ENV_VARS: dict[str, str] = {
     "bundles": "AGENT_BUNDLES",
     "usage_log": "AGENT_USAGE_LOG",
     "usage_run_label": "AGENT_USAGE_RUN_LABEL",
+    "langfuse_public_key": "LANGFUSE_PUBLIC_KEY",
+    "langfuse_secret_key": "LANGFUSE_SECRET_KEY",
+    "langfuse_host": "LANGFUSE_HOST",
 }
 
 # The jobs the AI model does. Each may use its own model (and provider, backup model, limits); see RoleSettings.
@@ -198,6 +201,9 @@ class Settings(BaseModel):
     retention_days: int = Field(default=90, ge=1)  # older conversations, traces and finished cases are deleted
     usage_log: str = ""  # a file path: one JSON line per AI request with the provider's token counts. Empty = off
     usage_run_label: str = ""  # free text written into every usage line (which run it belongs to)
+    langfuse_public_key: str = ""  # Langfuse observability keys (all three needed for tracing, empty = off)
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_host: str = ""
 
     @model_validator(mode="after")
     def _openrouter_needs_a_key(self) -> Self:

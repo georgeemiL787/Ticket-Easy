@@ -20,7 +20,7 @@ from agent_service.contracts.base import PlugModel
 from agent_service.contracts.errors import UpstreamError
 from agent_service.contracts.evidence import Passage, PastTicketResult, RetrievalResult, RiskAssessment
 from agent_service.contracts.policy import CheckActionRequest, PolicyDecision
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii_dict
 
 SERVICE = "knowledge"
 log = get_logger(__name__)
@@ -182,21 +182,58 @@ class HttpPolicyGate:
         self._client = client
 
     async def check_action(self, request: CheckActionRequest) -> PolicyDecision:
-        decision = await self._client.call(
-            PolicyDecision, "POST", "/v1/policy/check-action", body=_check_action_body(request)
-        )
-        approval = request.human_approval
-        if decision.decision == "require_human" and approval is not None:
-            return decision.model_copy(
-                update={
-                    "decision": "allow",
-                    "reason_code": "APPROVED_BY_HUMAN",
-                    "rationale": f"{decision.reason_code} was approved by {approval.approved_by} "
-                    f"(case {approval.case_id}). {decision.rationale}",
-                    "user_message": None,
-                }
+        langfuse = get_langfuse()
+        span = None
+        if langfuse is not None:
+            try:
+                span = langfuse.span(
+                    name="policy_gate_check",
+                    metadata={
+                        "action": request.action,
+                        "operation_kind": request.tool.operation_kind,
+                        "risk": request.tool.risk,
+                    },
+                    input=mask_pii_dict({"action": request.action, "arguments": request.arguments}),
+                )
+            except Exception:
+                pass
+        
+        try:
+            decision = await self._client.call(
+                PolicyDecision, "POST", "/v1/policy/check-action", body=_check_action_body(request)
             )
-        return decision
+            approval = request.human_approval
+            if decision.decision == "require_human" and approval is not None:
+                decision = decision.model_copy(
+                    update={
+                        "decision": "allow",
+                        "reason_code": "APPROVED_BY_HUMAN",
+                        "rationale": f"{decision.reason_code} was approved by {approval.approved_by} "
+                        f"(case {approval.case_id}). {decision.rationale}",
+                        "user_message": None,
+                    }
+                )
+            
+            if span is not None:
+                try:
+                    span.end(
+                        output={
+                            "decision": decision.decision,
+                            "reason_code": decision.reason_code,
+                            "approved": approval is not None,
+                        }
+                    )
+                except Exception:
+                    pass
+            
+            return decision
+        except Exception as exc:
+            if span is not None:
+                try:
+                    span.end(level="ERROR", status_message=str(exc))
+                except Exception:
+                    pass
+            raise
 
 
 def _check_action_body(request: CheckActionRequest) -> dict[str, Any]:

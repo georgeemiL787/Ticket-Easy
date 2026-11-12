@@ -26,7 +26,7 @@ from agent_service.domain.session import SessionState
 from agent_service.domain.tenant import TenantConfig
 from agent_service.domain.understanding import Frustration, IntentCandidate, Language, NLUResult
 from agent_service.handoff.redaction import redact
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii
 from agent_service.ports import LLMClient
 from agent_service.understanding.language import LANGUAGE_TRUST
 from agent_service.understanding.rules import RuleBasedNLU, extract_order_ids, extract_phone
@@ -122,12 +122,44 @@ class LLMNLU:
 
     async def understand(self, text: str, session: SessionState | None, tenant: TenantConfig) -> NLUResult:
         base = self._rules.understand_sync(text, session, tenant)
+        
+        langfuse = get_langfuse()
+        span = None
+        if langfuse is not None:
+            try:
+                span = langfuse.span(
+                    name="nlu_understand",
+                    metadata={"prompt_version": self._prompt.version},
+                    input={"message": mask_pii(text)},
+                )
+            except Exception:
+                pass
+        
         try:
             reading = await self._ask(text, session, tenant)
         except Exception as exc:  # timeout, outage, nonsense twice: the rules' answer stands
             log.warning("nlu_fallback", reason=type(exc).__name__, prompt=self._prompt.version)
-            return base.model_copy(update={"method": "rules_fallback", "prompt_version": self._prompt.version})
-        return self._merge(base, reading, text, tenant)
+            result = base.model_copy(update={"method": "rules_fallback", "prompt_version": self._prompt.version})
+            if span is not None:
+                try:
+                    span.end(output={"method": "rules_fallback", "reason": type(exc).__name__})
+                except Exception:
+                    pass
+            return result
+        
+        result = self._merge(base, reading, text, tenant)
+        if span is not None:
+            try:
+                span.end(
+                    output={
+                        "language": result.language.value,
+                        "intents": [i.name for i in result.intents],
+                        "method": result.method,
+                    }
+                )
+            except Exception:
+                pass
+        return result
 
     # ---- asking ----
 

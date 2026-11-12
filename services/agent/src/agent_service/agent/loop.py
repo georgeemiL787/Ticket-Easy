@@ -52,7 +52,7 @@ from agent_service.domain.agent import (
 )
 from agent_service.domain.decision import Decision
 from agent_service.handoff.redaction import redact, redact_mapping
-from agent_service.observability import get_logger
+from agent_service.observability import get_langfuse, get_logger, mask_pii
 from agent_service.replies.composer import PLACEHOLDERS, default_composer
 from agent_service.turn.context import COMPLETED, Step, TurnContext, locale_of
 from agent_service.understanding.choices import describe_orders, label_of
@@ -425,14 +425,40 @@ async def _loop(ctx: TurnContext) -> Step:
 
 async def run_agent(ctx: TurnContext) -> Step:
     """The step this turn ends with, or AgentFallback (the usual stages then run). See the module text."""
+    langfuse = get_langfuse()
+    span = None
+    if langfuse is not None:
+        try:
+            span = langfuse.span(name="agent_loop", metadata={"max_moves": ctx.deps.agent_max_moves})
+        except Exception:
+            pass
+    
     try:
         async with asyncio.timeout(ctx.deps.agent_turn_timeout_s):
             step = await _loop(ctx)
     except TimeoutError as exc:
         reason = f"the turn took longer than {ctx.deps.agent_turn_timeout_s:g} seconds"
+        if span is not None:
+            try:
+                span.end(level="ERROR", output={"reason": reason, "moves": len(ctx.agent_steps)})
+            except Exception:
+                pass
         if not ctx.agent_wrote:
             raise AgentFallback(reason) from exc
         step = _give_up(ctx, reason)
+    else:
+        if span is not None:
+            try:
+                span.end(
+                    output={
+                        "decision": step.decision.value,
+                        "moves": len(ctx.agent_steps),
+                        "awaiting": step.awaiting,
+                    }
+                )
+            except Exception:
+                pass
+    
     pending = step.awaiting
     waits = pending in ("confirmation", "detail", "order_choice", "intent_choice") or (pending or "").startswith(
         "slot:"

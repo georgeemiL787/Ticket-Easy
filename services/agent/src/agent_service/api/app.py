@@ -30,7 +30,7 @@ from agent_service.api.ratelimit import RateLimiter
 from agent_service.config import PROJECT_ROOT, Settings, unknown_setting_warnings
 from agent_service.container import Container, build_container
 from agent_service.monitoring.alerts import alert_loop
-from agent_service.observability import bind_context, clear_context, configure_logging, get_logger
+from agent_service.observability import bind_context, clear_context, configure_logging, flush_langfuse, get_logger, init_langfuse
 from agent_service.retention import retention_loop
 
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -103,6 +103,11 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             configure_logging(json_logs=resolved.log_json)
             for warning in unknown_setting_warnings():
                 log.warning(warning)
+            # Initialize Langfuse if keys are provided
+            if resolved.langfuse_public_key and resolved.langfuse_secret_key and resolved.langfuse_host:
+                secret = resolved.langfuse_secret_key.get_secret_value() if resolved.langfuse_secret_key else ""
+                if init_langfuse(resolved.langfuse_public_key, secret, resolved.langfuse_host):
+                    log.info("langfuse_enabled", host=resolved.langfuse_host)
             built = build_container(resolved)
         app.state.container = built
         app.state.events = built.events
@@ -124,6 +129,8 @@ def create_app(*, settings: Settings | None = None, container: Container | None 
             await asyncio.gather(*tasks, return_exceptions=True)
             if built.tools is not None:
                 await built.tools.aclose()  # stop the tools service MCP server processes
+            flush_langfuse()  # Flush pending Langfuse events on shutdown
+            log.info("shutdown_complete")
 
     app = FastAPI(title="Ticket-Easy agent service", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)

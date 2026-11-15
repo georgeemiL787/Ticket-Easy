@@ -190,6 +190,8 @@ Only rows with a reply **and** citations are scored (47 of those logs).
 
 Keyword-only indexes. Judge for relevancy/faithfulness: local `qwen3:8b`, except Groq in the label tables.
 
+**Current retrieval.test sizes (15 Nov 2026 noise / telco pass):** shop **69** (23/23/23), noon **90** (30/30/30), telco **126** (42/42/42; matching dev). Rows include unauthorized PII asks, incomplete phrasing, and (telco) clean off-topic + coverage questions; see [FINDINGS.md](FINDINGS.md). Tables below are the **original measured runs** on the pre-pad sizes (37 / 64 / 102).
+
 ### Contextual relevancy
 
 | Tenant | Questions | Unanswerable | section_hit (= recall@5) | abstention | no-answer recall | relevancy (on retrieved) | relevancy on unanswerable hits (want low) |

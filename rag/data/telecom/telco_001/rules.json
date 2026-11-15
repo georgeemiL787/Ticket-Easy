@@ -27,10 +27,10 @@
         "ar": "للأسف استرداد الباقة متاح خلال 24 ساعة بس من الاشتراك والمدة دي عدت.",
         "en": "Bundle refunds are only possible within 24 hours of subscribing, and that time has passed."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-BUNDLE-REFUND-USAGE",
@@ -58,10 +58,10 @@
         "ar": "للأسف اتستخدم أكتر من 5% من الباقة فمش هقدر أرجع قيمتها.",
         "en": "More than 5% of the bundle has been used, so it can't be refunded."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-REFUND-AGENT-CAP",
@@ -89,10 +89,10 @@
         "ar": "المبلغ أكبر من 200 جنيه فمحتاج موافقة مشرف، هحول الطلب له.",
         "en": "The amount is over 200 EGP, so a supervisor needs to approve it. I'm passing it on."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-REFUND-CONFIRMED",
@@ -120,10 +120,10 @@
         "ar": "مش لاقي في السجلات إن الخصم ده غلط أو متكرر، هحولك لزميل يراجعه.",
         "en": "The records don't show this charge as wrong or duplicated; I'll pass it to a colleague to review."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-VAS-REFUND-30D",
@@ -151,10 +151,10 @@
         "ar": "الاسترداد بيكون عن آخر 30 يوم بس.",
         "en": "Refunds cover the last 30 days at most."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-DISPUTE-60D",
@@ -182,10 +182,10 @@
         "ar": "الاعتراض متاح خلال 60 يوم من تاريخ الفاتورة والمدة دي عدت.",
         "en": "Disputes must be raised within 60 days of the invoice date, and that has passed."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-ADJUST-SUPERVISOR",
@@ -213,10 +213,10 @@
         "ar": "المبلغ أكبر من 500 جنيه فهحول الاعتراض لمشرف.",
         "en": "The amount is over 500 EGP, so I'm passing the dispute to a supervisor."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-PORT-OUT-4M",
@@ -244,10 +244,10 @@
         "ar": "نقل الرقم متاح بعد 4 شهور من ملكية الخط.",
         "en": "Porting out is possible once you have owned the line for 4 months."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-PORT-OUT-UNPAID",
@@ -275,10 +275,10 @@
         "ar": "لازم تسدد آخر فاتورة الأول قبل نقل الرقم.",
         "en": "The latest bill must be paid before porting out."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-SIM-SWAP-STORE",
@@ -299,10 +299,10 @@
         "ar": "بدل الفاقد بيتعمل في الفرع بس بالبطاقة الأصلية.",
         "en": "A SIM replacement is only done in a store with the original national ID."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-LINE-CANCEL-STORE",
@@ -323,10 +323,10 @@
         "ar": "إلغاء الخط بيكون من الفرع بس.",
         "en": "Lines are cancelled in a store only."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-SALEFNY-LOW-BALANCE",
@@ -354,10 +354,10 @@
         "ar": "سلفني متاحة لما الرصيد يكون أقل من 5 جنيه.",
         "en": "Salefny is available when your balance is under 5 EGP."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-SALEFNY-ONE",
@@ -385,10 +385,10 @@
         "ar": "عليك سلفة لسه متسددتش، أول ما تشحن هتقدر تتسلف تاني.",
         "en": "You still have an unpaid Salefny; once your next recharge repays it you can borrow again."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-ROAMING-POSTPAID-BILLS",
@@ -423,10 +423,10 @@
         "ar": "خطك لسه مسددش 4 فواتير، فتفعيل التجوال محتاج تأمين 750 جنيه، هحولك لزميل يكمل معاك.",
         "en": "Your line hasn't paid 4 bills yet, so roaming needs a 750 EGP deposit. I'll pass you to a colleague to arrange it."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-PLAN-CHANGE-ONCE",
@@ -461,10 +461,10 @@
         "ar": "غيرت النظام مرة في الدورة دي بالفعل، تقدر تغيره تاني من الدورة الجاية.",
         "en": "You already changed plan this cycle; you can change again next cycle."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-BUNDLE-BALANCE",
@@ -502,10 +502,10 @@
         "ar": "الرصيد مش كفاية للباقة دي.",
         "en": "Your balance isn't enough for this bundle."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-OUTAGE-COMP-24H",
@@ -533,10 +533,10 @@
         "ar": "التعويض بيكون للأعطال اللي أكتر من 24 ساعة متصلة.",
         "en": "Compensation applies to outages longer than 24 continuous hours."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-TRANSFER-LIMIT",
@@ -564,10 +564,10 @@
         "ar": "التحويل من 1 لـ 50 جنيه في المرة.",
         "en": "Transfers are 1 to 50 EGP each."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     },
     {
       "rule_id": "R-PUK-OWNER",
@@ -595,10 +595,10 @@
         "ar": "لازم أتأكد إنك صاحب الخط الأول.",
         "en": "I need to verify you're the line owner first."
       },
-      "approval_status": "proposed",
+      "approval_status": "approved",
       "effective_date": "2026-09-01",
-      "approved_by": null,
-      "approved_at": null
+      "approved_by": "parity-bootstrap",
+      "approved_at": "2026-11-15T10:40:31.703309+00:00"
     }
   ]
 }

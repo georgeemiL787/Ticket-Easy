@@ -39,7 +39,7 @@ DeepEval (optional): `.venv\Scripts\pip install -r requirements-eval.txt`, then 
 | `python -m team_a rules list [--status proposed]` | Review queue |
 | `python -m team_a rules extract [--document return_policy]` | LLM proposes candidate rules (stored as `proposed`) |
 | `python -m team_a rules approve <id> --reviewer <name>` / `reject` / `edit <id> changes.json` | Review workflow; any edit sends a rule back to `proposed`. `approve` refuses a rule that would break a guardrail case |
-| `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | 70-question benchmark split into dev (33) and held-out test (37); `--sweep` runs on dev only |
+| `python -m team_a eval-retrieval [--split dev\|test] [--sweep]` | Retrieval benchmark (shop: dev 42 / test 69; also noon_eg and telco_001); `--sweep` runs on dev only |
 | `python -m team_a eval-rag [--split test] [--llm] [--keyword] [--judge ollama\|groq] [--labels FILE] [--replies FILE]` | DeepEval on the same questions: section hit (recall@5) plus abstention. `--llm` adds contextual relevancy; `--replies` / `--labels` score faithfulness of logged or labelled replies |
 | `python -m team_a eval-guardrails` | 44 guardrail cases; exits non-zero on any failure |
 | `python -m team_a db build [--tenant X] [--reset] [--no-embeddings]` / `db stats` / `db query "<sql>"` | Build, count, or query (read-only) the SQLite data layer; see below |
@@ -121,8 +121,8 @@ Rule conditions read **`facts`** (verified backend data) by default. `arguments`
 | No-answer precision / recall, **held-out test** (9 unanswerable) | **87.5% / 77.8%** |
 | Retrieval recall@5, dev sweep (27 answerable) | 92.6% (ar 8/9, Arabizi 9/9, en 8/9) |
 | No-answer precision / recall, dev sweep (6 unanswerable) | 100% / 50.0% |
-| Guardrail cases | **44/44**, 0 blocked actions executed |
-| Unit tests | 262 passed |
+| Guardrail cases | shop **44/44**; telco **36/36**; 0 blocked actions executed |
+| Unit tests | see `pytest` in `rag/` |
 
 Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so dev numbers are optimistic. The held-out test numbers are the real estimate.
 
@@ -134,6 +134,8 @@ Thresholds (`MIN_COSINE=0.58`, `MIN_BM25=2.5`) were chosen on the dev split, so 
 | No-answer precision / recall | 35.7% / 41.7% | **93.8% / 62.5%** (24 off-topic) |
 
 No-answer recall is the weak spot: off-topic questions that share words with the page (delivery, order, phone) still return passages, so the agent must check that a passage actually answers the question. An optional confidence floor on the top passage's score (`min_top_score` in `retrieval_thresholds`, swept by `eval-retrieval --sweep`) exists but is off: on noon it rejected 92% of off-topic questions but cut recall to 80% at the same test accuracy. `eval-scenarios` (noon's own customer scenarios, not used for tuning): expected-section recall@5 78%, 3/4 no-evidence cases empty.
+
+**telco_001** (Masr Connect): hybrid thresholds `0.52` / `4.0` in `corpus/manifest.json`; retrieval.dev/test **126** each (**42/42/42** styles) with unauthorized/incomplete noise, clean off-topic, and coverage rows; **36** guardrails; **19** approved rules; `resolutions.jsonl`; `mock/telco_scenarios.json` for `eval-scenarios --tenant telco_001`. Rebuild DB with `python -m team_a db build` after `data/telecom/telco_001/scripts/generate.py`. Orchestrator agent support is still pending.
 
 **Latency** (warm, through the API, bge-m3 half on GPU): a search is ~110 ms, of which ~95 ms is the query embedding; a repeated query is ~12 ms (embeddings are cached per text); structured lookups ~1-3 ms. The service loads the model at start-up and asks Ollama to keep it loaded for `OLLAMA_KEEP_ALIVE` (default 30m), so the first query after idle no longer pays the ~13 s load. Keeping it loaded holds ~1.3 GB of memory; lower the value on a small machine.
 
@@ -161,12 +163,12 @@ One derived database, `var/db/team_a.sqlite` (gitignored), holding every tenant'
 - `data/resolutions/shop_001.jsonl`: 7 seed precedents (redacted, no mandatory-risk cases), each citing an approved rule.
 - `data/synonyms/arabizi.json`: reviewed query expansions for Arabizi and dialect words.
 - `data/risk/keywords.json`: escalation keywords in Arabic, English and Arabizi.
-- `data/benchmark/`: 70 retrieval questions split into dev and held-out test, and the 44 guardrail cases.
+- `data/e-commerce/shop_001/benchmark/`: retrieval.dev (42) / retrieval.test (69), style-balanced with unauthorized and incomplete noise, plus 44 guardrail cases.
 - `data/corpus/noon_eg/`, `data/mock/`: see [Data layer](#data-layer-sqlite). The noon policy text is a structured rewrite of noon's public page; all people, phones, emails and orders are fictional.
 
 ## Known limitations
 
-- The held-out test set is small (37 questions, 9 unanswerable; one question moves recall about 3.6 points), so treat retrieval numbers as rough. When adding questions, keep the stratified split, sweep on dev only and score test once.
+- Shop held-out test is 69 questions (23 per style); treat retrieval percentages as rough when the set grows. Keep the stratified split, sweep on dev only and score test once.
 - Unanswerable shop questions the corpus doesn't cover, such as instalment plans, are the weakest retrieval area.
 - Matching English or Arabizi queries to Arabic text by keyword depends on the reviewed list in `data/synonyms/arabizi.json` (and, for noon_eg, Arabic/Arabizi to English in `noon_eg.json`), and there's no Arabic suffix stemming. Wording the list doesn't cover can miss.
 - Risk keywords handle spelling variants, but miss new vocabulary (e.g. "someone changed the phone number on my account") and dropped Arabizi vowels. Substring matching over-flags ("court shoes" escalates as legal), which fails safe.

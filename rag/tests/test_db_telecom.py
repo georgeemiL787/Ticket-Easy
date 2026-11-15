@@ -84,18 +84,26 @@ def test_telecom_search_cites_telecom_policies(built_db):
     assert all(c.split("@")[0].endswith("_policy") for c in citations)
 
 
-def test_imported_telecom_rules_have_no_effect_until_approved():
+def test_approved_telecom_rules_drive_check_action():
     rules = RuleStore(T).all()
-    assert len(rules) == 19 and {r.approval_status for r in rules} == {"proposed"}
-    req = CheckActionRequest.model_validate({
+    assert len(rules) == 19 and {r.approval_status for r in rules} == {"approved"}
+    allow = CheckActionRequest.model_validate({
         "request_id": "t", "tenant_id": T,
         "tool": {"name": "refund_bundle", "operation_kind": "create", "risk": "medium"},
         "facts": {"hours_since_subscription": 1, "quota_used_percent": 1},
         "identity": {"verified": True, "customer_id": "TC-D001", "method": "line+nid_last4"},
         "as_of": "2026-10-08",
     })
-    decision = check_action(req, RuleStore(T))
-    assert decision.decision == "require_human" and decision.reason_code == "NO_RULE_SIDE_EFFECT"
+    assert check_action(allow, RuleStore(T)).decision == "allow"
+    deny = CheckActionRequest.model_validate({
+        "request_id": "t", "tenant_id": T,
+        "tool": {"name": "sim_swap", "operation_kind": "update", "risk": "high"},
+        "facts": {},
+        "identity": {"verified": True, "customer_id": "TC-D001", "method": "line+nid_last4"},
+        "as_of": "2026-10-08",
+    })
+    decision = check_action(deny, RuleStore(T))
+    assert decision.decision == "deny" and decision.reason_code == "RULE_BLOCKED"
 
 
 def test_missing_telecom_source_says_how_to_generate_it(tmp_path):

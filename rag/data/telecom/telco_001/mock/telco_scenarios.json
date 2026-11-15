@@ -1,0 +1,1699 @@
+{
+  "_meta": {
+    "tenant_id": "telco_001",
+    "as_of": "2026-10-08",
+    "currency": "EGP",
+    "fictional": true,
+    "note": "Team A eval-scenarios for telecom. Orchestrator T*.json scenarios remain pending."
+  },
+  "scenarios": [
+    {
+      "scenario_id": "TS-FAQ-001-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I recharge my line?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Recharge channels — قنوات الشحن"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-001 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-001-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "اشحن الخط ازاي؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Recharge channels — قنوات الشحن"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-001 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-001-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "ashan el 5at ezay?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Recharge channels — قنوات الشحن"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-001 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-002-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My 10 EGP card only gave me 9.10. Why?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Taxes and card prices — الضرائب وأسعار الكروت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-002 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-003-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Why does a 10 EGP card cost 13 EGP?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Taxes and card prices — الضرائب وأسعار الكروت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-003 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-004-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Does my line expire if I don't use it?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Line validity — صلاحية الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-004 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-004-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الخط بيقفل لو مستخدمتوش؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Line validity — صلاحية الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-004 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-004-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el 5at by2fel law mastakhdemtosh?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Line validity — صلاحية الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-004 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-005-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My line stopped because I didn't use it. Can I get it back?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Line validity — صلاحية الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-005 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-006-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "What is Salefny and how much does it cost?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Emergency credit (Salefny) — رصيد الطوارئ (سلفني)"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-006 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-007-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Why can't I take Salefny again?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Emergency credit (Salefny) — رصيد الطوارئ (سلفني)"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-007 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-007-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "ليه مش عارف آخد سلفني تاني؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Emergency credit (Salefny) — رصيد الطوارئ (سلفني)"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-007 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-007-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "leh msh 3aref a5od salefny tany?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Emergency credit (Salefny) — رصيد الطوارئ (سلفني)"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-007 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-008-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I transfer credit to another number?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "6. Balance transfer — تحويل الرصيد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-008 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-009-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I transferred credit to the wrong number. Can you reverse it?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "6. Balance transfer — تحويل الرصيد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-009 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-010-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I recharged but the balance didn't arrive.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-010 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-010-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "شحنت والرصيد منزلش.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-010 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-010-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "shahant w el rased manzelsh.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-010 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-011-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "When is my bill issued?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Billing cycle — دورة الفاتورة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-011 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-012-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "When do I have to pay my bill?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Due date and late fee — موعد السداد وغرامة التأخير"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-012 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-013-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Why is there a 25 EGP late fee on my bill?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Due date and late fee — موعد السداد وغرامة التأخير"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-013 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-013-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "ليه فيه 25 جنيه غرامة على الفاتورة؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Due date and late fee — موعد السداد وغرامة التأخير"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-013 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-013-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "leh fe 25 gneh 8arama 3al fatora?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Due date and late fee — موعد السداد وغرامة التأخير"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-013 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-014-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My bill is higher than usual.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Bill disputes — الاعتراض على الفاتورة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-014 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-015-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Why are my outgoing calls blocked?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Credit limit and suspension — حد الائتمان وإيقاف الخدمة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-015 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-016-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I paid my bill but it still shows unpaid.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-016 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-016-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "دفعت الفاتورة ولسه ظاهرة مش مدفوعة.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-016 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-016-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "dafa3t el fatora w lessa zahra msh madfo3a.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-016 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-017-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How can I pay my bill?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Payment channels — قنوات السداد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-017 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-018-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can you remove a charge from my bill?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Bill disputes — الاعتراض على الفاتورة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-018 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-019-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I subscribe to a bundle?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Consent and subscribing — الموافقة والاشتراك"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-019 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-019-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "اشترك في باقة ازاي؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Consent and subscribing — الموافقة والاشتراك"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-019 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-019-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "ashtrek fe ba2a ezay?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Consent and subscribing — الموافقة والاشتراك"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-019 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-020-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I stop my bundle from renewing?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Usage alerts and renewal — تنبيهات الاستهلاك والتجديد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-020 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-021-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My bundle didn't renew.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Usage alerts and renewal — تنبيهات الاستهلاك والتجديد"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-021 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-022-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Do my unused Control units carry over?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Carry-over — ترحيل الرصيد المتبقي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-022 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-022-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "وحدات الكنترول اللي متستخدمتش بتترحل؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Carry-over — ترحيل الرصيد المتبقي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-022 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-022-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "we7dat el control elly mat3amaletsh btetra7al?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Carry-over — ترحيل الرصيد المتبقي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-022 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-023-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "If I switch bundles, do I lose my remaining MBs?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Changing bundles and plans — تغيير الباقة والنظام"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-023 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-024-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My bundle ran out before the renewal date. What now?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. When a bundle runs out — عند انتهاء الباقة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-024 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-025-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How many times can I change my postpaid plan?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Changing bundles and plans — تغيير الباقة والنظام"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-025 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-025-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "اقدر اغير نظام الخط الشهري كام مرة؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Changing bundles and plans — تغيير الباقة والنظام"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-025 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-025-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "a2dar a8ayar nezam el 5at el shahry kam marra?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Changing bundles and plans — تغيير الباقة والنظام"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-025 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-026-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I subscribed to a bundle by mistake. Can I get my money back?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Bundle refund — استرداد قيمة الباقة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-026 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-027-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Money was deducted from my balance for no reason.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Wrong or double deduction — الخصم الخاطئ أو المكرر"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-027 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-028-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I'm being charged for a service I never subscribed to.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Services added without consent — خدمات أضيفت بدون موافقة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-028 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-028-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "بيتخصم مني على خدمة عمري ما اشتركت فيها.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Services added without consent — خدمات أضيفت بدون موافقة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-028 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-028-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "byet5asam meny 3ala khedma 3omry ma eshtarakt feeha.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Services added without consent — خدمات أضيفت بدون موافقة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-028 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-029-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can I get my prepaid balance back in cash?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Cash refunds — الاسترداد النقدي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-029 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-030-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How long does a card refund take?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Cash refunds — الاسترداد النقدي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-030 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-031-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "The network was down for two days. Do I get compensation?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Outage compensation — التعويض عن الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-031 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-031-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الشبكة كانت واقعة يومين، ليا تعويض؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Outage compensation — التعويض عن الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-031 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-031-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el shabaka kanet wa2a3a yomeen, leya ta3weed?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Outage compensation — التعويض عن الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-031 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-032-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I lost my SIM. Can you send me a new one?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. SIM replacement (SIM swap) — بدل فاقد / استبدال الشريحة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-032 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-033-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can you do a SIM swap for me over chat?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. SIM replacement (SIM swap) — بدل فاقد / استبدال الشريحة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-033 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-034-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My phone was stolen.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Lost or stolen phone — فقد أو سرقة الموبايل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-034 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-034-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الموبايل اتسرق.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Lost or stolen phone — فقد أو سرقة الموبايل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-034 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-034-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el mobile etsara2.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Lost or stolen phone — فقد أو سرقة الموبايل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-034 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-035-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How many lines can I have on my ID?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Registration and line limits — التسجيل وحد الخطوط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-035 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-036-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I get an eSIM?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. eSIM — الشريحة الإلكترونية"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-036 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-037-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How much is a new line?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Registration and line limits — التسجيل وحد الخطوط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-037 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-037-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الخط الجديد بكام؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Registration and line limits — التسجيل وحد الخطوط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-037 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-037-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el 5at el gedeed b kam?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Registration and line limits — التسجيل وحد الخطوط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-037 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-038-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can I move my line to my brother's name?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "5. Ownership transfer — نقل ملكية الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-038 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-039-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My SIM asks for a PUK code.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "6. PUK code — كود PUK"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-039 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-040-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I move my number to Masr Connect?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Moving to Masr Connect — النقل إلى مصر كونكت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-040 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-040-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "انقل رقمي لمصر كونكت ازاي؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Moving to Masr Connect — النقل إلى مصر كونكت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-040 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-040-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "a2el ra2my le masr connect ezay?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Moving to Masr Connect — النقل إلى مصر كونكت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-040 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-041-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can I move my number to another network?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Moving away from Masr Connect — النقل من مصر كونكت"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-041 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-042-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can I move my home internet to another company?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Home internet portability — نقل الإنترنت المنزلي"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-042 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-043-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I'm travelling to Saudi Arabia. How do I use my line?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Activation — التفعيل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-043 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-043-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "مسافر السعودية، استخدم الخط ازاي؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Activation — التفعيل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-043 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-043-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "msafer el sa3odeya, asta5dem el 5at ezay?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Activation — التفعيل"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-043 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-044-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My roaming stopped working.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Limit for new postpaid lines — حد الخطوط الشهرية الجديدة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-044 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-045-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Roaming charges appeared days after I came back.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Limit for new postpaid lines — حد الخطوط الشهرية الجديدة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-045 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-046-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "When will the technician come to install my internet?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Installation — التركيب"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-046 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-046-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الفني هييجي يركب النت امتى؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Installation — التركيب"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-046 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-046-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el fanny hayeegy yrakeb el net emta?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Installation — التركيب"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-046 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-047-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My home internet quota finished.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Quota, speed and early renewal — الباقة والسرعة والتجديد المبكر"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-047 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-048-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My internet speed is much lower than my plan.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Faults — الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-048 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-049-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My internet is completely down.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Faults — الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-049 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-049-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "النت فاصل خالص.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Faults — الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-049 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-049-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el net fasel 5ales.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Faults — الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-049 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-050-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Will I pay for the technician visit?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Faults — الأعطال"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-050 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-051-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I'm moving house. Can I take my internet with me?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Relocation — نقل الخدمة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-051 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-052-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I cancel my contract early?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Early termination — الإنهاء المبكر"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-052 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-052-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الغي العقد قبل ميعاده ازاي؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Early termination — الإنهاء المبكر"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-052 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-052-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "alghy el 3a2d abl me3ado ezay?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Early termination — الإنهاء المبكر"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-052 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-053-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I missed a device installment.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Device installments — أقساط الأجهزة"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-053 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-054-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can you cancel my line here?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Line cancellation — إلغاء الخط"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-054 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-055-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I want to file a complaint.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Channels — قنوات الشكوى"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-055 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-055-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "عايز اعمل شكوى.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Channels — قنوات الشكوى"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-055 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-055-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "3ayez a3mel shakwa.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Channels — قنوات الشكوى"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-055 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-056-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "My complaint was not solved. What now?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Escalation to NTRA — التصعيد لجهاز تنظيم الاتصالات"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-056 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-057-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Why do you need my national ID number?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "1. Verification before account details — التحقق قبل الإفصاح عن بيانات الحساب"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-057 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-058-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Can you send me my call log?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Usage details and call records — تفاصيل الاستهلاك وسجل المكالمات"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-058 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-058-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "ممكن تبعتلي سجل المكالمات؟",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Usage details and call records — تفاصيل الاستهلاك وسجل المكالمات"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-058 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-058-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "momken teb3atly sigel el mokalmat?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "2. Usage details and call records — تفاصيل الاستهلاك وسجل المكالمات"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-058 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-059-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "I want to check my father's line balance.",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "3. Third parties — الأطراف الأخرى"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-059 policy answer"
+    },
+    {
+      "scenario_id": "TS-FAQ-060-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How do I stop promotional messages?",
+      "expected": {
+        "decision": "answer",
+        "policy_sections": [
+          "4. Marketing and service messages — الرسائل التسويقية والخدمية"
+        ]
+      },
+      "test_purpose": "FAQ FAQ-060 policy answer"
+    },
+    {
+      "scenario_id": "TS-OFF-en-02",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "How can I apply for a job at Masr Connect?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-en-04",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Do you have a 5G network in Cairo?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-en-06",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Do you offer satellite TV packages?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-en-08",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Does my phone plan include travel insurance?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-ar-02",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "إزاي أقدم على وظيفة في مصر كونكت؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-ar-04",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "فيه شبكة 5G في القاهرة؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-ar-06",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "عندكم باقات قنوات دش؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-ar-08",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "الباقة فيها تأمين سفر؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-arabizi-02",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "ezay a2adem 3ala wazifa 3andoko?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-arabizi-04",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "fe 5G fel Cairo?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-arabizi-06",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "3andoko ba2at 2anawat dish?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-arabizi-08",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el ba2a fiha ta2meen safar?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T01-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Send me my husband's prepaid balance and last recharge; I don't have his line.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T02-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "ابعتلي رصيد خط جوزي وآخر شحن، الخط مش باسمي.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T03-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "eb3atly rased 5at gozi w a5er shahn, el 5at msh b esmy.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T04-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Export call logs for 01012345678; I am a friend of the owner.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T05-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "هات سجل مكالمات الرقم ده، انا صاحب صاحب الخط.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-NOISE-unauth-T06-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "hatly call log le ra2am sa7by men 8er verification.",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T01-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "What is a good recipe for pasta carbonara?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T02-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "إيه أحسن طريقة أعمل بيها كشري؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T03-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "el gaw 3amel eh fel Eskendereya ennaharda?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T04-en",
+      "type": "policy_question",
+      "language": "en",
+      "customer_id": "TC-D001",
+      "customer_message": "Who won the Champions League final last year?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T05-ar",
+      "type": "policy_question",
+      "language": "ar",
+      "customer_id": "TC-D001",
+      "customer_message": "ممكن تترجم الجملة دي للإسباني؟",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    },
+    {
+      "scenario_id": "TS-OFF-clean-T06-arabizi",
+      "type": "policy_question",
+      "language": "arabizi",
+      "customer_id": "TC-D001",
+      "customer_message": "feen a2rab supermarket leya delwa2ty?",
+      "expected": {
+        "decision": "no_evidence",
+        "policy_sections": []
+      },
+      "test_purpose": "unanswerable / unauthorized / off-topic"
+    }
+  ]
+}

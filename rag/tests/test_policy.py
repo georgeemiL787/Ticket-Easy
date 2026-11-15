@@ -36,8 +36,9 @@ def test_demo_day_20_refund_is_denied_with_citation_and_message():
     assert "R-REFUND-14D" in decision.rationale
 
 
-def test_guardrail_benchmark_passes_with_zero_unsafe_actions():
-    assert eval_guardrails("shop_001")
+@pytest.mark.parametrize("tenant", ["shop_001", "telco_001"])
+def test_guardrail_benchmark_passes_with_zero_unsafe_actions(tenant):
+    assert eval_guardrails(tenant)
 
 
 def test_unapproved_rules_have_no_effect(rule_store):

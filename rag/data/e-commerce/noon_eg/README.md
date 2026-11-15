@@ -54,7 +54,7 @@ Built 2026-10-08. The shop's fixed "today" stays 2026-10-08, like the hand-built
 | `mock/` | the full data the database loads: hand-built records first, then the generated ones |
 | `tickets.jsonl` | 1,518 past tickets (hand-built first) |
 | `scripts/` | `generate.py` (with `catalog.py`, `texts.py`) builds `mock/` and `tickets.jsonl` from `seed/`; `verify.py` runs 30 checks; `rebuild.sh` does generate, `db build`, verify |
-| `benchmark/` | 129 retrieval questions (dev 65 / test 64), written before tuning |
+| `benchmark/` | 155 retrieval questions (dev 65 / test 90); original 129 written before tuning, later padded with unauthorized/incomplete noise |
 | `synonyms.json` | Arabic/Arabizi to the policy's English wording, for this tenant only |
 
 ## Rebuilding

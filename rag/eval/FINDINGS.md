@@ -84,3 +84,29 @@ Vs keyword-only: shop/noon section_hit match the shipped hybrid figures in `rag/
 Re-judged the same 54 with that binary rule as the pass bar: **41/54 (76%)**, en 12/16, ar 14/16, az 15/22. False alarms came from the judge reading “14 days” as “1:4 days” and failing the whole reply. Gold-0 rows the judge scores **1.00** (half-true / wrong Arabizi numbers) still pass. So the rule does not catch the 1.00 misses and it over-punishes number-format noise.
 
 **Keep ≥ 0.5 as the label agreement number.** Strict score is extra diagnostics in the JSON (`strict_score`, `strict_agree`). Report: `var/eval/labels_ollama_strict.json`.
+
+---
+
+## 15 Nov 2026 — retrieval noise + telco eval data pass
+
+Benchmark sets now include unauthorized third-party/PII asks (`expected: []`), incomplete/telegraphic phrasing (with gold where a section still applies), and (telco only) extra clean off-topic rows that avoid brand-overlap wording, plus a few coverage questions for previously unused policy sections.
+
+| Tenant | test styles (en/ar/arabizi) | Notes |
+|---|---|---|
+| shop_001 | 23/23/23 (dev 14/14/14) | Noise on test + light pad on dev |
+| noon_eg | 30/30/30 | en unauthorized + incomplete grid filled |
+| telco_001 | 42/42/42 per split (dev=test size) | `NOISE-*`, `OFF-clean-*`, `COVER-*` hand-appended; legacy `OFF-*` kept |
+
+### Telco Team A parity (15 Nov 2026 follow-up)
+
+Closed for the knowledge/policy service:
+
+- `benchmark/guardrails.jsonl` (36 cases) + all 19 rules **approved**; `eval-guardrails --tenant telco_001` passes.
+- `resolutions.jsonl` (7 precedents) + `mock/telco_scenarios.json` for `eval-scenarios`.
+- Loader accepts scenarios-only mock tenants (no shop/noon customers file required).
+
+Still open outside this RAG parity pass:
+
+- No telco faithfulness label set (DeepEval labels remain shop-only).
+- `min_top_score` still **off**.
+- Orchestrator agent scenarios under `scenarios/telco_001/` still **pending**; no `orchestrator/config/tenants/telco_001.json`.

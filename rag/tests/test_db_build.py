@@ -49,9 +49,12 @@ def test_build_loads_every_tenant(built_db):
     assert counts["noon_eg"]["past_tickets"] == 1518
     assert counts["shop_001"]["policy_passages"] == 40 and counts["shop_001"]["past_tickets"] == 20
     assert counts["shop_001"]["orders"] == 16 and counts["shop_001"]["rules_mirror"] == 33
-    assert counts["shop_001"]["benchmark_questions"] == 70 + 44
+    assert counts["shop_001"]["benchmark_questions"] == 111 + 44
     assert counts["telco_001"]["policy_passages"] == 59 and counts["telco_001"]["past_tickets"] == 527
-    assert counts["telco_001"]["rules_mirror"] == 19 and counts["telco_001"]["benchmark_questions"] == 204
+    assert counts["telco_001"]["rules_mirror"] == 19
+    assert counts["telco_001"]["benchmark_questions"] == 252 + 36  # retrieval + guardrails
+    assert counts["telco_001"]["eval_scenarios"] >= 60
+    assert counts["telco_001"]["resolutions_mirror"] == 7
     _, rows = loader.query("SELECT tenant_id, category FROM tenants ORDER BY tenant_id", db_path=built_db)
     assert rows == [("noon_eg", "e-commerce"), ("shop_001", "e-commerce"), ("telco_001", "telecom")]
 

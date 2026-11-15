@@ -124,49 +124,55 @@ def _read_meta_file(tenant_id: str, path: Path, key: str, data: MockData) -> lis
 
 def _read_noon_style(tenant_id: str, folder: Path, prefix: str) -> MockData:
     data = MockData()
-    for c in _read_meta_file(tenant_id, folder / f"{prefix}_customers.json", "customers", data):
-        _check_keys("customer", c, _N_CUSTOMER)
-        data.customers.append({
-            "customer_id": c["customer_id"], "name": c["name_en"], "name_ar": c.get("name_ar"),
-            "phone": c.get("phone"), "email": c.get("email"), "city": c.get("city"),
-            "preferred_language": c.get("preferred_language"), "verified": _bool(c.get("verified")),
-            "verified_via": c.get("verified_via"), "wallet_balance": c.get("noon_wallet_egp"),
-            "member_since": c.get("member_since"),
-        })
-    for o in _read_meta_file(tenant_id, folder / f"{prefix}_orders.json", "orders", data):
-        _check_keys("order", o, _N_ORDER)
-        data.orders.append({
-            "order_id": o["order_id"], "customer_id": o["customer_id"], "order_section": o.get("section"),
-            "order_status": o["status"], "payment_method": o.get("payment_method"),
-            "placed_at": o.get("placed_at"), "expected_delivery_date": o.get("expected_delivery_date"),
-            "delivered_at": o.get("delivered_at"), "shipping_fee": o.get("shipping_fee_egp", 0),
-            "cod_fee": o.get("cod_fee_egp", 0), "order_total": o["total_egp"],
-        })
-        for line_no, i in enumerate(o["items"], start=1):
-            _check_keys("item", i, _N_ITEM)
-            data.items.append({
-                "item_id": i["item_id"], "order_id": o["order_id"], "line_no": line_no, "sku": i.get("sku"),
-                "name": i["name"], "product_category": i["category"],
-                "product_subcategory": i.get("product_subcategory"), "qty": i["qty"],
-                "unit_price": i["price_egp"], "item_condition": i.get("item_condition"),
-                "is_clearance": _bool(i.get("is_clearance")),
-                "return_eligible_tag": _bool(i.get("return_eligible_tag")),
-                "warranty_tag": _bool(i.get("warranty_tag")),
+    customers_path = folder / f"{prefix}_customers.json"
+    if customers_path.exists():
+        for c in _read_meta_file(tenant_id, customers_path, "customers", data):
+            _check_keys("customer", c, _N_CUSTOMER)
+            data.customers.append({
+                "customer_id": c["customer_id"], "name": c["name_en"], "name_ar": c.get("name_ar"),
+                "phone": c.get("phone"), "email": c.get("email"), "city": c.get("city"),
+                "preferred_language": c.get("preferred_language"), "verified": _bool(c.get("verified")),
+                "verified_via": c.get("verified_via"), "wallet_balance": c.get("noon_wallet_egp"),
+                "member_since": c.get("member_since"),
             })
-    for r in _read_meta_file(tenant_id, folder / f"{prefix}_returns.json", "returns", data):
-        _check_keys("return", r, _N_RETURN)
-        data.returns.append({
-            "return_id": r["return_id"], "order_id": r["order_id"], "customer_id": r["customer_id"],
-            "payment_method": r.get("payment_method"), "return_status": r["status"],
-            "requested_at": r.get("requested_at"), "received_at": r.get("received_at"),
-            "qc_result": r.get("qc_result"), "refund_amount": r.get("refund_amount_egp"),
-            "refund_destination": r.get("refund_destination"),
-            "refund_initiated_at": r.get("refund_initiated_at"),
-            "refund_completed_at": r.get("refund_completed_at"),
-            "delivery_attempts_failed": r.get("delivery_attempts_failed"),
-            "hub_hold_started_at": r.get("hub_hold_started_at"),
-            "hub_hold_business_days": r.get("hub_hold_business_days"), "notes": r.get("notes"),
-        })
+    orders_path = folder / f"{prefix}_orders.json"
+    if orders_path.exists():
+        for o in _read_meta_file(tenant_id, orders_path, "orders", data):
+            _check_keys("order", o, _N_ORDER)
+            data.orders.append({
+                "order_id": o["order_id"], "customer_id": o["customer_id"], "order_section": o.get("section"),
+                "order_status": o["status"], "payment_method": o.get("payment_method"),
+                "placed_at": o.get("placed_at"), "expected_delivery_date": o.get("expected_delivery_date"),
+                "delivered_at": o.get("delivered_at"), "shipping_fee": o.get("shipping_fee_egp", 0),
+                "cod_fee": o.get("cod_fee_egp", 0), "order_total": o["total_egp"],
+            })
+            for line_no, i in enumerate(o["items"], start=1):
+                _check_keys("item", i, _N_ITEM)
+                data.items.append({
+                    "item_id": i["item_id"], "order_id": o["order_id"], "line_no": line_no, "sku": i.get("sku"),
+                    "name": i["name"], "product_category": i["category"],
+                    "product_subcategory": i.get("product_subcategory"), "qty": i["qty"],
+                    "unit_price": i["price_egp"], "item_condition": i.get("item_condition"),
+                    "is_clearance": _bool(i.get("is_clearance")),
+                    "return_eligible_tag": _bool(i.get("return_eligible_tag")),
+                    "warranty_tag": _bool(i.get("warranty_tag")),
+                })
+    returns_path = folder / f"{prefix}_returns.json"
+    if returns_path.exists():
+        for r in _read_meta_file(tenant_id, returns_path, "returns", data):
+            _check_keys("return", r, _N_RETURN)
+            data.returns.append({
+                "return_id": r["return_id"], "order_id": r["order_id"], "customer_id": r["customer_id"],
+                "payment_method": r.get("payment_method"), "return_status": r["status"],
+                "requested_at": r.get("requested_at"), "received_at": r.get("received_at"),
+                "qc_result": r.get("qc_result"), "refund_amount": r.get("refund_amount_egp"),
+                "refund_destination": r.get("refund_destination"),
+                "refund_initiated_at": r.get("refund_initiated_at"),
+                "refund_completed_at": r.get("refund_completed_at"),
+                "delivery_attempts_failed": r.get("delivery_attempts_failed"),
+                "hub_hold_started_at": r.get("hub_hold_started_at"),
+                "hub_hold_business_days": r.get("hub_hold_business_days"), "notes": r.get("notes"),
+            })
     scenarios_file = folder / f"{prefix}_scenarios.json"
     if scenarios_file.exists():
         data.scenarios = _read_meta_file(tenant_id, scenarios_file, "scenarios", data)
@@ -182,4 +188,10 @@ def read_mock(tenant_id: str) -> MockData:
         raise ValueError(f"More than one *_customers.json in {folder}")
     if customers:
         return _read_noon_style(tenant_id, folder, customers[0].name.removesuffix("_customers.json"))
+    scenarios = sorted(folder.glob("*_scenarios.json"))
+    if len(scenarios) > 1:
+        raise ValueError(f"More than one *_scenarios.json in {folder}")
+    if scenarios:
+        # Telecom-style: scenarios without shop/noon customers/orders files.
+        return _read_noon_style(tenant_id, folder, scenarios[0].name.removesuffix("_scenarios.json"))
     return MockData()  # a tenant with documents only

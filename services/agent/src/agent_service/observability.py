@@ -180,11 +180,18 @@ def init_langfuse(public_key: str, secret_key: str, host: str) -> bool:
     
     try:
         # The Python SDK v5 uses OpenTelemetry internally - no manual setup needed!
-        # Just importing langfuse and using @observe handles everything
-        from langfuse import get_client
+        # Configure with global mask function for PII protection
+        from langfuse import Langfuse
+        
+        # Initialize client with global mask to catch any automatic captures
+        client = Langfuse(
+            public_key=public_key,
+            secret_key=secret_key,
+            host=host,
+            mask=mask_pii,  # Global PII masking for all auto-captured data
+        )
         
         # Test auth
-        client = get_client()
         auth_result = client.auth_check()
         if not auth_result:
             log = get_logger(__name__)

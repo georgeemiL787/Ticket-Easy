@@ -149,7 +149,7 @@ class Orchestrator:
             changes["planner"] = planner
         self._deps = replace(self._deps, **changes)
 
-    @observe(name="agent_turn")
+    @observe(name="agent_turn", capture_input=False, capture_output=False)
     async def handle_turn(
         self, tenant_id: str, conversation_id: str, text: str, *, request_id: str | None = None, channel: str = "web"
     ) -> AgentReply:
@@ -168,7 +168,7 @@ class Orchestrator:
                 # Anonymize user_id
                 user_id = hashlib.sha256(conversation_id.encode()).hexdigest()[:16]
                 
-                # Update current span/trace with metadata
+                # Update current span/trace with metadata - masked input only
                 try:
                     client.update_current_span(
                         name="agent_turn",
@@ -203,15 +203,25 @@ class Orchestrator:
         except SessionConflictError:
             result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
         
-        # Update trace with output if Langfuse is enabled
+        # Update trace with minimal masked output if Langfuse is enabled
         if get_langfuse():
             try:
                 client = get_client()
                 
+                # Minimal output: decision, language, handoff - no raw text or full result
+                minimal_output = {
+                    "decision": result.decision.value if result.decision else None,
+                    "language": result.locale.value if result.locale else None,
+                    "handoff": result.decision.value == "handoff" if result.decision else False,
+                }
+                
+                if result.escalation:
+                    minimal_output["escalation_reason"] = result.escalation.value
+                
                 # Update with output
                 try:
                     client.update_current_span(
-                        output={"reply": mask_pii(result.text), "decision": result.decision.value if result.decision else None},
+                        output=minimal_output,
                         metadata={
                             "tenant_id": tenant_id,
                             "channel": channel,
@@ -223,7 +233,7 @@ class Orchestrator:
                 except Exception:
                     # Try update_current_observation as fallback
                     client.update_current_observation(
-                        output={"reply": mask_pii(result.text), "decision": result.decision.value if result.decision else None},
+                        output=minimal_output,
                         metadata={
                             "tenant_id": tenant_id,
                             "channel": channel,

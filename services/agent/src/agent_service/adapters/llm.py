@@ -83,7 +83,7 @@ class OpenAICompatibleLLM:
         self._limiter = limiter  # the (server, model) budget shared with every job on this model, or None
         self.model = model
 
-    @observe(as_type="generation")
+    @observe(as_type="generation", capture_input=False, capture_output=False)
     async def complete_json(
         self, *, system: str, user: str, schema_hint: dict[str, Any], temperature: float = 0.0
     ) -> dict[str, Any]:
@@ -98,6 +98,21 @@ class OpenAICompatibleLLM:
         }
         tokens = (len(system) + len(user) + len(hint)) // CHARS_PER_TOKEN + ANSWER_TOKENS
         
+        # Set masked input for generation span
+        if get_langfuse():
+            try:
+                client = get_client()
+                client.update_current_generation(
+                    input={
+                        "system": mask_pii(system[:200]),  # First 200 chars only
+                        "user": mask_pii(user[:200]),
+                    },
+                    model=self._model,
+                    metadata={"provider": self._host, "temperature": temperature},
+                )
+            except Exception:
+                pass
+        
         try:
             response = await self._post(self._body(payload), tokens)
             if response.status_code == 400 and self._json_mode and "response_format" in response.text:
@@ -108,13 +123,14 @@ class OpenAICompatibleLLM:
                 response = await self._post(self._body(payload), tokens)
             result = parse_json_object(self._content(response))
             
-            # Update observation with token usage if Langfuse is enabled
+            # Update observation with token usage and minimal output if Langfuse is enabled
             if get_langfuse():
                 try:
                     client = get_client()
                     usage_data = response.json().get("usage", {}) if response.status_code == 200 else {}
                     if usage_data:
                         client.update_current_generation(
+                            output={"status": "success"},  # Minimal output, no raw JSON
                             usage={
                                 "input": usage_data.get("prompt_tokens"),
                                 "output": usage_data.get("completion_tokens"),
@@ -132,6 +148,7 @@ class OpenAICompatibleLLM:
                 try:
                     client = get_client()
                     client.update_current_generation(
+                        output={"status": "error"},
                         level="ERROR",
                         status_message=str(exc),
                     )
@@ -139,7 +156,7 @@ class OpenAICompatibleLLM:
                     pass
             raise
 
-    @observe(as_type="generation")
+    @observe(as_type="generation", capture_input=False, capture_output=False)
     async def complete_text(self, *, system: str, user: str, temperature: float = 0.0) -> str:
         """The answer as plain text, with no JSON format asked for (for a small model that cannot keep one)."""
         payload: dict[str, Any] = {
@@ -152,6 +169,21 @@ class OpenAICompatibleLLM:
         if self._reasoning_effort:
             body["reasoning_effort"] = self._reasoning_effort
         
+        # Set masked input for generation span
+        if get_langfuse():
+            try:
+                client = get_client()
+                client.update_current_generation(
+                    input={
+                        "system": mask_pii(system[:200]),  # First 200 chars only
+                        "user": mask_pii(user[:200]),
+                    },
+                    model=self._model,
+                    metadata={"provider": self._host, "temperature": temperature},
+                )
+            except Exception:
+                pass
+        
         try:
             response = await self._post(body, tokens)
             if response.status_code == 400 and self._reasoning_effort and "reasoning_effort" in response.text:
@@ -159,13 +191,14 @@ class OpenAICompatibleLLM:
                 response = await self._post(payload, tokens)
             result = self._content(response)
             
-            # Update observation with token usage if Langfuse is enabled
+            # Update observation with token usage and minimal output if Langfuse is enabled
             if get_langfuse():
                 try:
                     client = get_client()
                     usage_data = response.json().get("usage", {}) if response.status_code == 200 else {}
                     if usage_data:
                         client.update_current_generation(
+                            output={"status": "success", "length": len(result)},  # Minimal output, no raw text
                             usage={
                                 "input": usage_data.get("prompt_tokens"),
                                 "output": usage_data.get("completion_tokens"),
@@ -183,6 +216,7 @@ class OpenAICompatibleLLM:
                 try:
                     client = get_client()
                     client.update_current_generation(
+                        output={"status": "error"},
                         level="ERROR",
                         status_message=str(exc),
                     )

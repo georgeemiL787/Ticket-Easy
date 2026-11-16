@@ -47,8 +47,10 @@ from agent_service.turn.context import MAX_QUEUED_RUNS, Deps, Handler, PlannedIn
 from agent_service.turn.pipeline import run_turn
 from agent_service.turn.stages import handoff_handler, smalltalk_handler
 from agent_service.understanding.rules import NLU, RuleBasedNLU
-from agent_service.observability import get_langfuse, mask_pii
-from langfuse import observe, get_client
+from agent_service.observability import get_langfuse, mask_pii, get_logger
+from langfuse import observe, propagate_attributes
+
+log = get_logger(__name__)
 
 CLARIFY_TEXT = "Could you tell me a little more about what you need help with?"  # the English ask_rephrase text
 
@@ -163,58 +165,71 @@ class Orchestrator:
         if get_langfuse():
             try:
                 import hashlib
-                client = get_client()
+                import os
                 
                 # Anonymize user_id
                 user_id = hashlib.sha256(conversation_id.encode()).hexdigest()[:16]
                 
-                # Update current span with masked input and metadata
-                client.update_current_span(
-                    name="agent_turn",
-                    input={"message": mask_pii(text)},
+                # Base tags
+                tags = ["ticket-easy", tenant_id, channel]
+                
+                # Add extra tags from env or header (for redteam, etc.)
+                extra_tags_env = os.getenv("LANGFUSE_EXTRA_TAGS", "")
+                if extra_tags_env:
+                    tags.extend(t.strip() for t in extra_tags_env.split(",") if t.strip())
+                
+                # Propagate attributes to all child spans
+                with propagate_attributes(
+                    session_id=conversation_id,
+                    user_id=user_id,
+                    tags=tags,
                     metadata={
                         "tenant_id": tenant_id,
                         "channel": channel,
-                        "session_id": conversation_id,
-                        "user_id": user_id,
-                        "tags": ["ticket-easy", tenant_id, channel],
-                    },
-                )
-            except Exception:
-                pass  # Silent failure for tracing
-        
-        try:
-            result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
-        except SessionConflictError:
-            result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
-        
-        # Update trace with minimal masked output if Langfuse is enabled
-        if get_langfuse():
-            try:
-                client = get_client()
-                
-                # Minimal output: decision, language, handoff - no raw text or full result
-                minimal_output = {
-                    "decision": result.decision.value if result.decision else None,
-                    "language": result.locale.value if result.locale else None,
-                    "handoff": result.decision.value == "handoff" if result.decision else False,
-                }
-                
-                # Update with output
-                client.update_current_span(
-                    output=minimal_output,
-                    metadata={
+                    }
+                ):
+                    # Update current span with masked input
+                    from langfuse import get_client
+                    client = get_client()
+                    client.update_current_span(
+                        name="agent_turn",
+                        input={"message": mask_pii(text)},
+                    )
+                    
+                    # Run the turn
+                    try:
+                        result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+                    except SessionConflictError:
+                        result = await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+                    
+                    # Update with minimal masked output
+                    minimal_output = {
+                        "decision": result.decision.value if result.decision else None,
                         "language": result.locale.value if result.locale else None,
                         "handoff": result.decision.value == "handoff" if result.decision else False,
-                    },
-                )
-                
-                # Flush after each turn in dev
-                client.flush()
-            except Exception:
-                pass  # Silent failure for tracing
+                    }
+                    
+                    client.update_current_span(
+                        output=minimal_output,
+                        metadata={
+                            "language": result.locale.value if result.locale else None,
+                            "handoff": result.decision.value == "handoff" if result.decision else False,
+                        },
+                    )
+                    
+                    # Flush after each turn
+                    client.flush()
+                    
+                    return result
+            except Exception as e:
+                log.warning("langfuse_trace_error", error=str(e), exc_info=True)
+                # Fall through to non-traced execution
         
-        return result
+        # Non-traced execution
+        try:
+            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
+        except SessionConflictError:
+            return await run_turn(self._deps, tenant, conversation_id, text, request_id=request_id, channel=channel)
 
     async def push_to_customer(
         self, tenant_id: str, conversation_id: str, text: str, *, role: str = "human_agent"

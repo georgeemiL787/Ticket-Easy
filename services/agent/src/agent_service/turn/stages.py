@@ -24,7 +24,10 @@ from agent_service.domain.trace import ToolCallRecord, TraceStep
 from agent_service.domain.understanding import IntentCandidate, Locale
 from agent_service.handoff.cases import open_case, priority_for
 from agent_service.handoff.redaction import redact
-from agent_service.observability import get_logger
+from agent_service.observability import get_logger, get_langfuse, mask_pii
+from langfuse import observe, get_client
+
+log = get_logger(__name__)
 from agent_service.replies.composer import default_composer
 from agent_service.turn.context import COMPLETED, PlannedIntent, Step, TurnContext, locale_of
 from agent_service.understanding import freetext, multi
@@ -107,22 +110,59 @@ async def handed_off_check(ctx: TurnContext) -> str:
 # ---- reading the message ----
 
 
+@observe(name="nlu_understand", capture_input=False, capture_output=False)
 async def understand(ctx: TurnContext) -> str:
     """Language, intents, details, yes/no, wants a person, frustration. Never stops the turn."""
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                input={"message": mask_pii(ctx.text)},
+                metadata={"tenant_id": ctx.tenant.tenant_id}
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="understand_input", exc_info=True)
+    
     try:
         ctx.understanding = await ctx.deps.nlu.understand(ctx.text, ctx.session, ctx.tenant)
     except Exception:  # even the rules failed: carry on without a reading
         log.exception("understanding_failed")
         ctx.errors.append("understanding failed")
+        if get_langfuse():
+            try:
+                client = get_client()
+                client.update_current_span(
+                    output={"status": "failed", "error": "understanding failed"},
+                    level="ERROR"
+                )
+            except Exception as e:
+                log.warning("langfuse_span_update_error", step="understand_error", exc_info=True)
         return "failed: continuing without a reading"
     result = ctx.understanding
     ctx.override_notice = looks_like_override(ctx.text)
     if result.language_confidence >= LANGUAGE_TRUST:
         ctx.session.language = result.language  # a message with no language content keeps the old one
     names = ",".join(i.name for i in result.intents) or "none"
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                output={
+                    "method": result.method,
+                    "language": result.language.value,
+                    "intents": names,
+                    "wants_human": result.wants_human
+                }
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="understand_output", exc_info=True)
+    
     return f"{result.method}: language={result.language.value} intents={names}"
 
 
+@observe(name="risk_screen", capture_input=False, capture_output=False)
 async def risk_screen(ctx: TurnContext) -> str:
     """Ask the safety screen. A flagged message goes to a human; a screen that cannot answer is noted, never guessed."""
     flags = list(ctx.understanding.safety_flags) if ctx.understanding else []
@@ -152,6 +192,7 @@ async def risk_screen(ctx: TurnContext) -> str:
         ctx.risk = assessment
         flags += [c for c in assessment.categories if c not in flags]
     ctx.session.risk_categories = list(dict.fromkeys([*ctx.session.risk_categories, *flags]))
+    
     if (assessment is not None and assessment.flagged) or (ctx.understanding and ctx.understanding.safety_flags):
         ctx.step = Step(
             Decision.HANDOFF,
@@ -160,7 +201,31 @@ async def risk_screen(ctx: TurnContext) -> str:
             escalation=EscalationReason.MANDATORY_RISK,
             awaiting="human",
         )
+        if get_langfuse():
+            try:
+                client = get_client()
+                client.update_current_span(
+                    output={
+                        "flagged": True,
+                        "categories": flags
+                    }
+                )
+            except Exception as e:
+                log.warning("langfuse_span_update_error", step="risk_screen_flagged", exc_info=True)
         return f"flagged: {', '.join(flags)}"
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                output={
+                    "flagged": False,
+                    "screen_available": not ctx.risk_unavailable
+                }
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="risk_screen_clear", exc_info=True)
+    
     return "screen unavailable: actions stay blocked until it answers" if ctx.risk_unavailable else "clear"
 
 
@@ -448,6 +513,7 @@ async def frustration(ctx: TurnContext) -> str:
     return "high again: handed over"
 
 
+@observe(name="plan_intent", capture_input=False, capture_output=False)
 async def plan(ctx: TurnContext) -> str:
     """Pick what to work on: small talk if that is all there is, else the intent in progress."""
     understanding, session = ctx.understanding, ctx.session
@@ -461,6 +527,19 @@ async def plan(ctx: TurnContext) -> str:
         ctx.plan = PlannedIntent(session.active_intent, _kind(ctx, session.active_intent))
     else:
         ctx.plan = None
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                output={
+                    "plan": ctx.plan.name if ctx.plan else None,
+                    "kind": ctx.plan.kind if ctx.plan else None
+                }
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="plan", exc_info=True)
+    
     return f"{ctx.plan.name} ({ctx.plan.kind})" if ctx.plan else "nothing to work on"
 
 
@@ -706,6 +785,7 @@ async def queue(ctx: TurnContext) -> str:
     return f"ran {ran} queued intent(s)" if ran else "nothing queued"
 
 
+@observe(name="handoff_case", capture_input=False, capture_output=False)
 async def handoff(ctx: TurnContext) -> str:
     """A stage chose to escalate: open the case. (A stub: the real briefing is built by the handoff step.)"""
     step = ctx.step
@@ -717,4 +797,18 @@ async def handoff(ctx: TurnContext) -> str:
     ctx.session.agent_questions = 0
     ctx.handoff_case_id = case_id
     ctx.step = replace(step, awaiting="human")
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                output={
+                    "case_id": case_id,
+                    "escalation_reason": step.escalation.value,
+                    "priority": priority_for(ctx.tenant, step.escalation)
+                }
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="handoff", exc_info=True)
+    
     return f"case {case_id} opened ({priority_for(ctx.tenant, step.escalation)})"

@@ -22,7 +22,8 @@ from agent_service.domain.decision import Decision, EscalationReason
 from agent_service.domain.trace import EvidenceRef
 from agent_service.domain.understanding import Language
 from agent_service.knowledge.agent import Found, NotFound
-from agent_service.observability import get_logger
+from agent_service.observability import get_logger, get_langfuse, mask_pii
+from langfuse import observe, get_client
 from agent_service.turn.context import Step, TurnContext, locale_of
 from agent_service.understanding.text import normalize
 
@@ -188,6 +189,7 @@ def _search_down(exc: SearchUnavailable) -> Step:
     )
 
 
+@observe(name="knowledge_answer", capture_input=False, capture_output=False)
 async def answer(ctx: TurnContext) -> Step:
     """The reply to a policy question: retrieved passages quoted with citations, or an honest "no evidence"."""
     name = ctx.plan.name if ctx.plan else "knowledge"
@@ -210,6 +212,21 @@ async def answer(ctx: TurnContext) -> Step:
             quoted = tuple(p for p in passages if p.citation in verdict.citations)[: MAX_QUOTED + 1]
             text = verdict.text or None
     _record(ctx, quoted)
+    
+    if get_langfuse():
+        try:
+            client = get_client()
+            client.update_current_span(
+                input={"query": mask_pii(ctx.text)[:200]},  # Truncated and masked
+                output={
+                    "status": "answered",
+                    "num_citations": len(quoted),
+                    "citations": [p.citation for p in quoted]
+                }
+            )
+        except Exception as e:
+            log.warning("langfuse_span_update_error", step="knowledge_answer", exc_info=True)
+    
     return Step(
         Decision.ANSWER,
         reason=f"answered {name} from {', '.join(p.citation for p in quoted)}",

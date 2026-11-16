@@ -189,6 +189,10 @@ def init_langfuse(public_key: str, secret_key: str, host: str) -> bool:
     """Initialize Langfuse client. Returns True if successful, False if disabled or failed."""
     global _LANGFUSE_ENABLED
     
+    # Already initialized
+    if _LANGFUSE_ENABLED:
+        return True
+    
     if not public_key or not secret_key or not host:
         return False
     

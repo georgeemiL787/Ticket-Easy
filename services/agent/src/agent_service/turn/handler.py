@@ -168,33 +168,18 @@ class Orchestrator:
                 # Anonymize user_id
                 user_id = hashlib.sha256(conversation_id.encode()).hexdigest()[:16]
                 
-                # Update current span/trace with metadata - masked input only
-                try:
-                    client.update_current_span(
-                        name="agent_turn",
-                        input={"message": mask_pii(text)},
-                        metadata={
-                            "tenant_id": tenant_id,
-                            "channel": channel,
-                            "session_id": conversation_id,
-                            "user_id": user_id,
-                        },
-                        tags=["ticket-easy", tenant_id, channel],
-                        session_id=conversation_id,
-                        user_id=user_id,
-                    )
-                except Exception:
-                    # Try update_current_observation as fallback
-                    client.update_current_observation(
-                        name="agent_turn",
-                        input={"message": mask_pii(text)},
-                        metadata={
-                            "tenant_id": tenant_id,
-                            "channel": channel,
-                            "session_id": conversation_id,
-                            "user_id": user_id,
-                        },
-                    )
+                # Update current span with masked input and metadata
+                client.update_current_span(
+                    name="agent_turn",
+                    input={"message": mask_pii(text)},
+                    metadata={
+                        "tenant_id": tenant_id,
+                        "channel": channel,
+                        "session_id": conversation_id,
+                        "user_id": user_id,
+                        "tags": ["ticket-easy", tenant_id, channel],
+                    },
+                )
             except Exception:
                 pass  # Silent failure for tracing
         
@@ -215,33 +200,14 @@ class Orchestrator:
                     "handoff": result.decision.value == "handoff" if result.decision else False,
                 }
                 
-                if result.escalation:
-                    minimal_output["escalation_reason"] = result.escalation.value
-                
                 # Update with output
-                try:
-                    client.update_current_span(
-                        output=minimal_output,
-                        metadata={
-                            "tenant_id": tenant_id,
-                            "channel": channel,
-                            "language": result.locale.value if result.locale else None,
-                            "handoff": result.decision.value == "handoff" if result.decision else False,
-                            "escalation_reason": result.escalation.value if result.escalation else None,
-                        },
-                    )
-                except Exception:
-                    # Try update_current_observation as fallback
-                    client.update_current_observation(
-                        output=minimal_output,
-                        metadata={
-                            "tenant_id": tenant_id,
-                            "channel": channel,
-                            "language": result.locale.value if result.locale else None,
-                            "handoff": result.decision.value == "handoff" if result.decision else False,
-                            "escalation_reason": result.escalation.value if result.escalation else None,
-                        },
-                    )
+                client.update_current_span(
+                    output=minimal_output,
+                    metadata={
+                        "language": result.locale.value if result.locale else None,
+                        "handoff": result.decision.value == "handoff" if result.decision else False,
+                    },
+                )
                 
                 # Flush after each turn in dev
                 client.flush()

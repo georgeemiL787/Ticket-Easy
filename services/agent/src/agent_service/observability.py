@@ -129,25 +129,45 @@ _ADDRESS_KEYWORDS = re.compile(
 )
 
 
-def mask_pii(text: str) -> str:
-    """Mask emails, phone numbers, order IDs, card numbers, and addresses before sending to Langfuse."""
-    if not isinstance(text, str):
-        return text
-    masked = _EMAIL_PATTERN.sub("[EMAIL]", text)
-    masked = _PHONE_PATTERN.sub("[PHONE]", masked)
-    masked = _ORDER_ID_PATTERN.sub("[ORDER_ID]", masked)
-    masked = _CARD_PATTERN.sub("[CARD]", masked)
-    # Basic address detection: if contains address keywords, mask the whole line
-    if _ADDRESS_KEYWORDS.search(masked):
-        lines = masked.split("\n")
-        masked_lines = []
-        for line in lines:
-            if _ADDRESS_KEYWORDS.search(line):
-                masked_lines.append("[ADDRESS]")
-            else:
-                masked_lines.append(line)
-        masked = "\n".join(masked_lines)
-    return masked
+def mask_pii(data):
+    """Recursively mask PII in strings, dicts, lists. Returns input unchanged for other types. Never raises."""
+    try:
+        if data is None:
+            return None
+        
+        if isinstance(data, str):
+            # Mask emails, phone numbers, order IDs, card numbers, and addresses
+            masked = _EMAIL_PATTERN.sub("[EMAIL]", data)
+            masked = _PHONE_PATTERN.sub("[PHONE]", masked)
+            masked = _ORDER_ID_PATTERN.sub("[ORDER_ID]", masked)
+            masked = _CARD_PATTERN.sub("[CARD]", masked)
+            # Basic address detection: if contains address keywords, mask the whole line
+            if _ADDRESS_KEYWORDS.search(masked):
+                lines = masked.split("\n")
+                masked_lines = []
+                for line in lines:
+                    if _ADDRESS_KEYWORDS.search(line):
+                        masked_lines.append("[ADDRESS]")
+                    else:
+                        masked_lines.append(line)
+                masked = "\n".join(masked_lines)
+            return masked
+        
+        elif isinstance(data, dict):
+            return {key: mask_pii(value) for key, value in data.items()}
+        
+        elif isinstance(data, list):
+            return [mask_pii(item) for item in data]
+        
+        elif isinstance(data, tuple):
+            return tuple(mask_pii(item) for item in data)
+        
+        else:
+            # For int, float, bool, and other types, return as-is
+            return data
+    except Exception:
+        # Never raise - return original data on any error
+        return data
 
 
 def mask_pii_dict(data: dict[str, Any]) -> dict[str, Any]:
